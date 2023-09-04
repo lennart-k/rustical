@@ -1,0 +1,22 @@
+[package]
+name = "rustical_dav"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web = "4.4.0"
+actix-web-httpauth = "0.8.0"
+anyhow = { version = "1.0.75", features = ["backtrace"] }
+base64 = "0.21.3"
+derive_more = "0.99.17"
+futures-util = "0.3.28"
+quick-xml = { version = "0.30.0", features = [
+  "serde",
+  "serde-types",
+  "serialize",
+] }
+roxmltree = "0.18.0"
+rustical_store = { path = "../store/" }
+serde = { version = "1.0.188", features = ["serde_derive", "derive"] }
+serde_json = "1.0.105"
+tokio = { version = "1.32.0", features = ["sync", "full"] }

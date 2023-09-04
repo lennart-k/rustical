@@ -1,0 +1,12 @@
+[package]
+name = "rustical_api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web = "4.4.0"
+anyhow = { version = "1.0.75", features = ["backtrace"] }
+rustical_store = { path = "../store/" }
+serde = "1.0.188"
+serde_json = "1.0.105"
+tokio = { version = "1.32.0", features = ["sync"] }

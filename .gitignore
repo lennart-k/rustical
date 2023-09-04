@@ -1,0 +1,6 @@
+/target
+crates/*/target
+
+db.json
+config.toml
+schema.sql
