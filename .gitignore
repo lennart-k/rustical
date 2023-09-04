@@ -1,5 +1,7 @@
 /target
 crates/*/target
+# For libraries ignore Cargo.lock
+crates/*/Cargo.lock
 
 db.json
 config.toml
