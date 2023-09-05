@@ -1,10 +1,10 @@
-use crate::{Context, Error};
+use crate::{CalDavContext, Error};
 use actix_web::web::{Data, Path};
 use actix_web::HttpResponse;
 use rustical_store::calendar::CalendarStore;
 
 pub async fn delete_event<C: CalendarStore>(
-    context: Data<Context<C>>,
+    context: Data<CalDavContext<C>>,
     path: Path<(String, String, String)>,
 ) -> Result<HttpResponse, Error> {
     let (_principal, mut cid, uid) = path.into_inner();
@@ -23,7 +23,7 @@ pub async fn delete_event<C: CalendarStore>(
 }
 
 pub async fn get_event<C: CalendarStore>(
-    context: Data<Context<C>>,
+    context: Data<CalDavContext<C>>,
     path: Path<(String, String, String)>,
 ) -> Result<HttpResponse, Error> {
     let (_principal, mut cid, uid) = path.into_inner();
@@ -44,7 +44,7 @@ pub async fn get_event<C: CalendarStore>(
 }
 
 pub async fn put_event<C: CalendarStore>(
-    context: Data<Context<C>>,
+    context: Data<CalDavContext<C>>,
     path: Path<(String, String, String)>,
     body: String,
 ) -> Result<HttpResponse, Error> {

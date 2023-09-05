@@ -6,7 +6,7 @@ use crate::{
         generate_multistatus, parse_propfind, write_invalid_props_response,
         write_propstat_response, write_resourcetype,
     },
-    Context, Error,
+    CalDavContext, Error,
 };
 use actix_web::{
     http::{header::ContentType, StatusCode},
@@ -90,7 +90,7 @@ pub async fn route_propfind_principal<C: CalendarStore>(
     body: String,
     request: HttpRequest,
     auth: BasicAuth,
-    context: Data<Context<C>>,
+    context: Data<CalDavContext<C>>,
     depth: Depth,
 ) -> Result<HttpResponse, Error> {
     let props = parse_propfind(&body).map_err(|_e| Error::BadRequest)?;

@@ -15,7 +15,7 @@ pub mod namespace;
 mod propfind;
 pub mod routes;
 
-pub struct Context<C: CalendarStore> {
+pub struct CalDavContext<C: CalendarStore> {
     pub prefix: String,
     pub store: Arc<RwLock<C>>,
 }
@@ -41,7 +41,7 @@ pub fn configure_dav<C: CalendarStore>(
         }
     });
 
-    cfg.app_data(Data::new(Context { prefix, store }))
+    cfg.app_data(Data::new(CalDavContext { prefix, store }))
         .service(
             web::resource("{path:.*}")
                 // Without the guard this service would handle all requests

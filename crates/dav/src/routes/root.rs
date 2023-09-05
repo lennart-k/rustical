@@ -16,7 +16,7 @@ use crate::{
         generate_multistatus, parse_propfind, write_invalid_props_response,
         write_propstat_response, write_resourcetype,
     },
-    Context, Error,
+    CalDavContext, Error,
 };
 
 // Executes the PROPFIND request and returns a XML string to be written into a <mulstistatus> object.
@@ -68,7 +68,7 @@ pub async fn route_propfind_root<C: CalendarStore>(
     body: String,
     request: HttpRequest,
     auth: BasicAuth,
-    context: Data<Context<C>>,
+    context: Data<CalDavContext<C>>,
 ) -> Result<HttpResponse, Error> {
     let props = parse_propfind(&body).map_err(|_e| Error::BadRequest)?;
 

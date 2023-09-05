@@ -3,7 +3,7 @@ use crate::propfind::{
     generate_multistatus, parse_propfind, write_invalid_props_response, write_propstat_response,
     write_resourcetype,
 };
-use crate::{Context, Error};
+use crate::{CalDavContext, Error};
 use actix_web::http::header::ContentType;
 use actix_web::http::StatusCode;
 use actix_web::web::{Data, Path};
@@ -70,7 +70,7 @@ async fn handle_report_calendar_query(
 }
 
 pub async fn route_report_calendar<C: CalendarStore>(
-    context: Data<Context<C>>,
+    context: Data<CalDavContext<C>>,
     body: String,
     path: Path<(String, String)>,
     request: HttpRequest,
@@ -172,7 +172,7 @@ pub async fn route_propfind_calendar<C: CalendarStore>(
     body: String,
     request: HttpRequest,
     auth: BasicAuth,
-    context: Data<Context<C>>,
+    context: Data<CalDavContext<C>>,
 ) -> Result<HttpResponse, Error> {
     let (_principal, cid) = path.into_inner();
     let calendar = context
