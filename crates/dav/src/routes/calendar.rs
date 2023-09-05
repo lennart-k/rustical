@@ -94,6 +94,7 @@ pub fn generate_propfind_calendar_response(
     props: Vec<&str>,
     principal: &str,
     path: &str,
+    prefix: &str,
     calendar: &Calendar,
 ) -> Result<String> {
     let mut props = props;
@@ -126,8 +127,7 @@ pub fn generate_propfind_calendar_response(
                             writer
                                 .create_element("href")
                                 .write_text_content(BytesText::new(&format!(
-                                    // TODO: Replace hard-coded string
-                                    "/dav/{principal}/",
+                                    "{prefix}/{principal}/",
                                 )))?;
                             Ok(())
                         })?;
@@ -189,6 +189,7 @@ pub async fn route_propfind_calendar<C: CalendarStore>(
         props.clone(),
         auth.user_id(),
         request.path(),
+        &context.prefix,
         &calendar,
     )
     .map_err(|_e| Error::InternalError)?;

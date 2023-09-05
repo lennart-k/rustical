@@ -26,6 +26,7 @@ pub async fn generate_propfind_principal_response(
     props: Vec<&str>,
     principal: &str,
     path: &str,
+    prefix: &str,
 ) -> Result<String, quick_xml::Error> {
     let mut props = props;
     if props.contains(&"allprops") {
@@ -55,8 +56,9 @@ pub async fn generate_propfind_principal_response(
                     writer.create_element(prop).write_inner_content(|writer| {
                         writer
                             .create_element("href")
-                            // TODO: Replace hard-coded string
-                            .write_text_content(BytesText::new(&format!("/dav/{principal}/",)))?;
+                            .write_text_content(BytesText::new(&format!(
+                                "{prefix}/{principal}/",
+                            )))?;
                         Ok(())
                     })?;
                 }
@@ -67,8 +69,7 @@ pub async fn generate_propfind_principal_response(
                             writer
                                 .create_element("href")
                                 .write_text_content(BytesText::new(&format!(
-                                    // TODO: Replace hard-coded string
-                                    "/dav/{principal}/"
+                                    "{prefix}/{principal}/"
                                 )))?;
                             Ok(())
                         })?;
@@ -111,6 +112,7 @@ pub async fn route_propfind_principal<C: CalendarStore>(
                     props.clone(),
                     auth.user_id(),
                     &format!("{}/{}", request.path(), cal.id),
+                    &context.prefix,
                     &cal,
                 )
                 .map_err(|_e| Error::InternalError)?,
@@ -119,9 +121,14 @@ pub async fn route_propfind_principal<C: CalendarStore>(
     }
 
     responses.push(
-        generate_propfind_principal_response(props.clone(), auth.user_id(), request.path())
-            .await
-            .map_err(|_e| Error::InternalError)?,
+        generate_propfind_principal_response(
+            props.clone(),
+            auth.user_id(),
+            request.path(),
+            &context.prefix,
+        )
+        .await
+        .map_err(|_e| Error::InternalError)?,
     );
 
     let output = generate_multistatus(vec![Namespace::Dav, Namespace::CalDAV], |writer| {

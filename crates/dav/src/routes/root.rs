@@ -1,5 +1,6 @@
 use actix_web::{
     http::{header::ContentType, StatusCode},
+    web::Data,
     HttpRequest, HttpResponse,
 };
 use actix_web_httpauth::extractors::basic::BasicAuth;
@@ -7,6 +8,7 @@ use quick_xml::{
     events::{BytesText, Event},
     Writer,
 };
+use rustical_store::calendar::CalendarStore;
 
 use crate::{
     namespace::Namespace,
@@ -14,7 +16,7 @@ use crate::{
         generate_multistatus, parse_propfind, write_invalid_props_response,
         write_propstat_response, write_resourcetype,
     },
-    Error,
+    Context, Error,
 };
 
 // Executes the PROPFIND request and returns a XML string to be written into a <mulstistatus> object.
@@ -22,6 +24,7 @@ pub async fn generate_propfind_root_response(
     props: Vec<&str>,
     principal: &str,
     path: &str,
+    prefix: &str,
 ) -> Result<String, quick_xml::Error> {
     let mut props = props;
     if props.contains(&"allprops") {
@@ -45,7 +48,7 @@ pub async fn generate_propfind_root_response(
                                 .create_element("href")
                                 .write_text_content(BytesText::new(
                                     // TODO: Replace hard-coded string
-                                    &format!("/dav/{principal}",),
+                                    &format!("{prefix}/{principal}"),
                                 ))?;
                             Ok(())
                         })?;
@@ -61,17 +64,22 @@ pub async fn generate_propfind_root_response(
     Ok(std::str::from_utf8(&output_buffer)?.to_string())
 }
 
-pub async fn route_propfind_root(
+pub async fn route_propfind_root<C: CalendarStore>(
     body: String,
     request: HttpRequest,
     auth: BasicAuth,
+    context: Data<Context<C>>,
 ) -> Result<HttpResponse, Error> {
     let props = parse_propfind(&body).map_err(|_e| Error::BadRequest)?;
 
-    let responses_string =
-        generate_propfind_root_response(props.clone(), auth.user_id(), request.path())
-            .await
-            .map_err(|_e| Error::InternalError)?;
+    let responses_string = generate_propfind_root_response(
+        props.clone(),
+        auth.user_id(),
+        request.path(),
+        &context.prefix,
+    )
+    .await
+    .map_err(|_e| Error::InternalError)?;
 
     let output = generate_multistatus(vec![Namespace::Dav, Namespace::CalDAV], |writer| {
         writer.write_event(Event::Text(BytesText::from_escaped(responses_string)))?;

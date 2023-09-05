@@ -41,7 +41,6 @@ pub fn configure_dav<C: CalendarStore>(
         }
     });
 
-    // cfg.app_data(store)
     cfg.app_data(Data::new(Context { prefix, store }))
         .service(
             web::resource("{path:.*}")
@@ -51,7 +50,7 @@ pub fn configure_dav<C: CalendarStore>(
         )
         .service(
             web::resource("")
-                .route(web::method(propfind_method()).to(root::route_propfind_root))
+                .route(web::method(propfind_method()).to(root::route_propfind_root::<C>))
                 .wrap(auth.clone()),
         )
         .service(
