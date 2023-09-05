@@ -38,14 +38,20 @@ async fn main() -> Result<()> {
         }
     }));
 
+    let auth = match config.auth {
+        config::AuthConfig::Htpasswd(config) => 1,
+        _ => panic!("invalid auth config"),
+    };
+
     HttpServer::new(move || {
         let cal_store = cal_store.clone();
         App::new()
             .wrap(Logger::new("[%s] %r"))
             .wrap(NormalizePath::trim())
-            .service(web::scope("/caldav").configure(|cfg| {
-                configure_dav(cfg, "/caldav".to_string(), cal_store.clone().into())
-            }))
+            .service(
+                web::scope("/caldav")
+                    .configure(|cfg| configure_dav(cfg, "/caldav".to_string(), cal_store.clone())),
+            )
             .service(
                 web::scope("/.well-known")
                     .configure(|cfg| configure_well_known(cfg, "/dav".to_string())),
