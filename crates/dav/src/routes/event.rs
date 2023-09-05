@@ -1,18 +1,18 @@
-use crate::Error;
+use crate::{Context, Error};
 use actix_web::web::{Data, Path};
 use actix_web::HttpResponse;
 use rustical_store::calendar::CalendarStore;
-use tokio::sync::RwLock;
 
 pub async fn delete_event<C: CalendarStore>(
-    store: Data<RwLock<C>>,
+    context: Data<Context<C>>,
     path: Path<(String, String, String)>,
 ) -> Result<HttpResponse, Error> {
     let (_principal, mut cid, uid) = path.into_inner();
     if cid.ends_with(".ics") {
         cid.truncate(cid.len() - 4);
     }
-    store
+    context
+        .store
         .write()
         .await
         .delete_event(&uid)
@@ -23,14 +23,15 @@ pub async fn delete_event<C: CalendarStore>(
 }
 
 pub async fn get_event<C: CalendarStore>(
-    store: Data<RwLock<C>>,
+    context: Data<Context<C>>,
     path: Path<(String, String, String)>,
 ) -> Result<HttpResponse, Error> {
     let (_principal, mut cid, uid) = path.into_inner();
     if cid.ends_with(".ics") {
         cid.truncate(cid.len() - 4);
     }
-    let event = store
+    let event = context
+        .store
         .read()
         .await
         .get_event(&uid)
@@ -43,7 +44,7 @@ pub async fn get_event<C: CalendarStore>(
 }
 
 pub async fn put_event<C: CalendarStore>(
-    store: Data<RwLock<C>>,
+    context: Data<Context<C>>,
     path: Path<(String, String, String)>,
     body: String,
 ) -> Result<HttpResponse, Error> {
@@ -53,7 +54,8 @@ pub async fn put_event<C: CalendarStore>(
         cid.truncate(cid.len() - 4);
     }
     dbg!(&body);
-    store
+    context
+        .store
         .write()
         .await
         .upsert_event(uid, body)

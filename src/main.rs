@@ -9,6 +9,7 @@ use clap::Parser;
 use config::{CalendarStoreConfig, JsonCalendarStoreConfig};
 use rustical_api::configure_api;
 use rustical_dav::{configure_dav, configure_well_known};
+use rustical_frontend::configure_frontend;
 use rustical_store::calendar::JsonCalendarStore;
 use tokio::sync::RwLock;
 
@@ -45,15 +46,19 @@ async fn main() -> Result<()> {
         App::new()
             .wrap(Logger::new("[%s] %r"))
             .wrap(NormalizePath::trim())
-            .service(
-                web::scope("/dav").configure(|cfg| configure_dav(cfg, cal_store.clone().into())),
-            )
+            .service(web::scope("/caldav").configure(|cfg| {
+                configure_dav(cfg, "/caldav".to_string(), cal_store.clone().into())
+            }))
             .service(
                 web::scope("/.well-known")
                     .configure(|cfg| configure_well_known(cfg, "/dav".to_string())),
             )
             .service(
                 web::scope("/api").configure(|cfg| configure_api(cfg, cal_store.clone().into())),
+            )
+            .service(
+                web::scope("/frontend")
+                    .configure(|cfg| configure_frontend(cfg, cal_store.clone().into())),
             )
     })
     .bind(("0.0.0.0", 4000))?

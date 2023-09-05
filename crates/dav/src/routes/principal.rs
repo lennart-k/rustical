@@ -6,7 +6,7 @@ use crate::{
         generate_multistatus, parse_propfind, write_invalid_props_response,
         write_propstat_response, write_resourcetype,
     },
-    Error,
+    Context, Error,
 };
 use actix_web::{
     http::{header::ContentType, StatusCode},
@@ -20,7 +20,6 @@ use quick_xml::{
     Writer,
 };
 use rustical_store::calendar::CalendarStore;
-use tokio::sync::RwLock;
 
 // Executes the PROPFIND request and returns a XML string to be written into a <mulstistatus> object.
 pub async fn generate_propfind_principal_response(
@@ -90,7 +89,7 @@ pub async fn route_propfind_principal<C: CalendarStore>(
     body: String,
     request: HttpRequest,
     auth: BasicAuth,
-    store: Data<RwLock<C>>,
+    context: Data<Context<C>>,
     depth: Depth,
 ) -> Result<HttpResponse, Error> {
     let props = parse_propfind(&body).map_err(|_e| Error::BadRequest)?;
@@ -98,7 +97,8 @@ pub async fn route_propfind_principal<C: CalendarStore>(
     let mut responses = Vec::new();
     // also get calendars:
     if depth != Depth::Zero {
-        let cals = store
+        let cals = context
+            .store
             .read()
             .await
             .get_calendars()

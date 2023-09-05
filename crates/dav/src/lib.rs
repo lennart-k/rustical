@@ -6,6 +6,7 @@ use error::Error;
 use routes::{calendar, event, principal, root};
 use rustical_store::calendar::CalendarStore;
 use std::str::FromStr;
+use std::sync::Arc;
 use tokio::sync::RwLock;
 
 pub mod depth_extractor;
@@ -14,11 +15,20 @@ pub mod namespace;
 mod propfind;
 pub mod routes;
 
+pub struct Context<C: CalendarStore> {
+    pub prefix: String,
+    pub store: Arc<RwLock<C>>,
+}
+
 pub fn configure_well_known(cfg: &mut web::ServiceConfig, caldav_root: String) {
     cfg.service(web::redirect("/caldav", caldav_root).permanent());
 }
 
-pub fn configure_dav<C: CalendarStore>(cfg: &mut web::ServiceConfig, store: Data<RwLock<C>>) {
+pub fn configure_dav<C: CalendarStore>(
+    cfg: &mut web::ServiceConfig,
+    prefix: String,
+    store: Arc<RwLock<C>>,
+) {
     let propfind_method = || Method::from_str("PROPFIND").unwrap();
     let report_method = || Method::from_str("REPORT").unwrap();
 
@@ -31,7 +41,8 @@ pub fn configure_dav<C: CalendarStore>(cfg: &mut web::ServiceConfig, store: Data
         }
     });
 
-    cfg.app_data(store)
+    // cfg.app_data(store)
+    cfg.app_data(Data::new(Context { prefix, store }))
         .service(
             web::resource("{path:.*}")
                 // Without the guard this service would handle all requests

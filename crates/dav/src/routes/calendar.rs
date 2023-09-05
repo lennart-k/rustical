@@ -3,7 +3,7 @@ use crate::propfind::{
     generate_multistatus, parse_propfind, write_invalid_props_response, write_propstat_response,
     write_resourcetype,
 };
-use crate::Error;
+use crate::{Context, Error};
 use actix_web::http::header::ContentType;
 use actix_web::http::StatusCode;
 use actix_web::web::{Data, Path};
@@ -17,7 +17,6 @@ use rustical_store::calendar::{Calendar, CalendarStore, Event};
 use std::collections::HashSet;
 use std::ops::Deref;
 use std::sync::Arc;
-use tokio::sync::RwLock;
 
 async fn handle_report_calendar_query(
     query_node: Node<'_, '_>,
@@ -71,7 +70,7 @@ async fn handle_report_calendar_query(
 }
 
 pub async fn route_report_calendar<C: CalendarStore>(
-    store: Data<RwLock<C>>,
+    context: Data<Context<C>>,
     body: String,
     path: Path<(String, String)>,
     request: HttpRequest,
@@ -80,7 +79,7 @@ pub async fn route_report_calendar<C: CalendarStore>(
 
     let doc = roxmltree::Document::parse(&body).map_err(|_e| Error::InternalError)?;
     let query_node = doc.root_element();
-    let events = store.read().await.get_events(&cid).await.unwrap();
+    let events = context.store.read().await.get_events(&cid).await.unwrap();
 
     // TODO: implement filtering
     match query_node.tag_name().name() {
@@ -173,10 +172,11 @@ pub async fn route_propfind_calendar<C: CalendarStore>(
     body: String,
     request: HttpRequest,
     auth: BasicAuth,
-    store: Data<RwLock<C>>,
+    context: Data<Context<C>>,
 ) -> Result<HttpResponse, Error> {
     let (_principal, cid) = path.into_inner();
-    let calendar = store
+    let calendar = context
+        .store
         .read()
         .await
         .get_calendar(&cid)
