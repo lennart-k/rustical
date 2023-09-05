@@ -28,18 +28,15 @@ async fn main() -> Result<()> {
 
     let args = Args::parse();
     let config: Config = toml::from_str(&fs::read_to_string(&args.config_file)?)?;
-    // TODO: Clean this jank up as soon more configuration options appear
-    let db_path = match config.calendar_store {
-        CalendarStoreConfig::Json(JsonCalendarStoreConfig { db_path }) => db_path,
-    };
 
-    let cal_store = Arc::new(RwLock::new(
-        if let Ok(json) = fs::read_to_string(&db_path) {
-            serde_json::from_str::<JsonCalendarStore>(&json)?
-        } else {
-            JsonCalendarStore::new(db_path.to_string())
-        },
-    ));
+    let cal_store = Arc::new(RwLock::new(match &config.calendar_store {
+        CalendarStoreConfig::Json(JsonCalendarStoreConfig { db_path }) => {
+            match fs::read_to_string(db_path) {
+                Ok(json) => serde_json::from_str::<JsonCalendarStore>(&json).unwrap(),
+                Err(_) => JsonCalendarStore::new(db_path.to_string()),
+            }
+        }
+    }));
 
     HttpServer::new(move || {
         let cal_store = cal_store.clone();
