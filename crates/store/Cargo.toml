@@ -9,7 +9,16 @@ edition = "2021"
 anyhow = { version = "1.0.75", features = ["backtrace"] }
 async-trait = "0.1.73"
 serde = { version = "1.0.188", features = ["derive", "rc"] }
-serde_json = "1.0.105"
 sha2 = "0.10.7"
-sqlx = { version = "0.7.1", features = ["sqlx-sqlite", "sqlx-postgres", "uuid", "time", "chrono", "postgres", "sqlite", "runtime-tokio"] }
+sqlx = { version = "0.7.1", features = [
+  "sqlx-sqlite",
+  "sqlx-postgres",
+  "uuid",
+  "time",
+  "chrono",
+  "postgres",
+  "sqlite",
+  "runtime-tokio",
+] }
 tokio = { version = "1.32.0", features = ["sync", "full"] }
+toml = "0.7.6"
