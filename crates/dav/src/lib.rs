@@ -25,8 +25,10 @@ pub fn configure_well_known(cfg: &mut web::ServiceConfig, caldav_root: String) {
 }
 
 pub fn configure_dav<C: CalendarStore>(
+pub fn configure_dav<A: CheckAuthentication, C: CalendarStore>(
     cfg: &mut web::ServiceConfig,
     prefix: String,
+    auth: Arc<A>,
     store: Arc<RwLock<C>>,
 ) {
     let propfind_method = || Method::from_str("PROPFIND").unwrap();

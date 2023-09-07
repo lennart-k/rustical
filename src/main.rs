@@ -1,6 +1,3 @@
-use std::fs;
-use std::sync::Arc;
-
 use crate::config::Config;
 use actix_web::middleware::{Logger, NormalizePath};
 use actix_web::{web, App, HttpServer};
@@ -8,9 +5,12 @@ use anyhow::Result;
 use clap::Parser;
 use config::{CalendarStoreConfig, TomlCalendarStoreConfig};
 use rustical_api::configure_api;
+use rustical_auth::AuthProvider;
 use rustical_dav::{configure_dav, configure_well_known};
 use rustical_frontend::configure_frontend;
 use rustical_store::calendar::TomlCalendarStore;
+use std::fs;
+use std::sync::Arc;
 use tokio::sync::RwLock;
 
 mod config;
@@ -38,20 +38,16 @@ async fn main() -> Result<()> {
         }
     }));
 
-    let auth = match config.auth {
-        config::AuthConfig::Htpasswd(config) => 1,
-        _ => panic!("invalid auth config"),
-    };
+    let auth: Arc<AuthProvider> = Arc::new(config.auth.into());
 
     HttpServer::new(move || {
         let cal_store = cal_store.clone();
         App::new()
             .wrap(Logger::new("[%s] %r"))
             .wrap(NormalizePath::trim())
-            .service(
-                web::scope("/caldav")
-                    .configure(|cfg| configure_dav(cfg, "/caldav".to_string(), cal_store.clone())),
-            )
+            .service(web::scope("/caldav").configure(|cfg| {
+                configure_dav(cfg, "/caldav".to_string(), auth.clone(), cal_store.clone())
+            }))
             .service(
                 web::scope("/.well-known")
                     .configure(|cfg| configure_well_known(cfg, "/caldav".to_string())),
