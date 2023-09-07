@@ -5,8 +5,10 @@ edition = "2021"
 
 [dependencies]
 rustical_store = { path = "./crates/store/" }
+rustical_auth = { path = "./crates/auth/" }
 rustical_api = { path = "./crates/api/" }
 rustical_dav = { path = "./crates/dav/" }
+rustical_frontend = { path = "./crates/frontend/" }
 serde = { version = "1.0.188", features = ["derive"] }
 tokio = { version = "1.32.0", features = [
   "net",
@@ -19,6 +21,5 @@ tracing = "0.1.37"
 env_logger = "0.10.0"
 actix-web = "4.4.0"
 anyhow = { version = "1.0.75", features = ["backtrace"] }
-serde_json = "1.0.105"
 toml = "0.7.6"
 clap = { version = "4.4.2", features = ["derive", "env"] }
