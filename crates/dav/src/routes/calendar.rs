@@ -119,6 +119,7 @@ pub fn generate_propfind_calendar_response(
                 "calendar-description",
                 "owner",
                 "calendar-color",
+                "max-resource-size",
             ]
             .iter(),
         );
@@ -196,6 +197,11 @@ pub fn generate_propfind_calendar_response(
                     writer
                         .create_element("getcontenttype")
                         .write_text_content(BytesText::new("text/calendar"))?;
+                }
+                "max-resource-size" => {
+                    writer
+                        .create_element("max-resource-size")
+                        .write_text_content(BytesText::new("10000000"))?;
                 }
                 "allprops" => {}
                 _ => invalid_props.push(prop),
