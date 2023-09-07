@@ -1,3 +1,4 @@
+use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use crate::namespace::Namespace;
 use crate::propfind::{
     generate_multistatus, parse_propfind, write_invalid_props_response, write_propstat_response,
@@ -8,7 +9,6 @@ use actix_web::http::header::ContentType;
 use actix_web::http::StatusCode;
 use actix_web::web::{Data, Path};
 use actix_web::{HttpRequest, HttpResponse};
-use actix_web_httpauth::extractors::basic::BasicAuth;
 use anyhow::Result;
 use quick_xml::events::BytesText;
 use quick_xml::Writer;
@@ -69,12 +69,14 @@ async fn handle_report_calendar_query(
         .body(output))
 }
 
-pub async fn route_report_calendar<C: CalendarStore>(
+pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore>(
     context: Data<CalDavContext<C>>,
     body: String,
     path: Path<(String, String)>,
     request: HttpRequest,
+    _auth: AuthInfoExtractor<A>,
 ) -> Result<HttpResponse, Error> {
+    // TODO: Check authorization
     let (_principal, cid) = path.into_inner();
 
     let doc = roxmltree::Document::parse(&body).map_err(|_e| Error::InternalError)?;
@@ -167,13 +169,14 @@ pub fn generate_propfind_calendar_response(
     Ok(std::str::from_utf8(&output_buffer)?.to_string())
 }
 
-pub async fn route_propfind_calendar<C: CalendarStore>(
+pub async fn route_propfind_calendar<A: CheckAuthentication, C: CalendarStore>(
     path: Path<(String, String)>,
     body: String,
     request: HttpRequest,
-    auth: BasicAuth,
     context: Data<CalDavContext<C>>,
+    auth: AuthInfoExtractor<A>,
 ) -> Result<HttpResponse, Error> {
+    // TODO: Check authorization
     let (_principal, cid) = path.into_inner();
     let calendar = context
         .store
@@ -187,7 +190,7 @@ pub async fn route_propfind_calendar<C: CalendarStore>(
 
     let responses_string = generate_propfind_calendar_response(
         props.clone(),
-        auth.user_id(),
+        &auth.inner.user_id,
         request.path(),
         &context.prefix,
         &calendar,

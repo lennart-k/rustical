@@ -1,12 +1,16 @@
 use crate::{CalDavContext, Error};
 use actix_web::web::{Data, Path};
 use actix_web::HttpResponse;
+use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use rustical_store::calendar::CalendarStore;
 
-pub async fn delete_event<C: CalendarStore>(
+pub async fn delete_event<A: CheckAuthentication, C: CalendarStore>(
     context: Data<CalDavContext<C>>,
     path: Path<(String, String, String)>,
+    auth: AuthInfoExtractor<A>,
 ) -> Result<HttpResponse, Error> {
+    let _user = auth.inner.user_id;
+    // TODO: verify whether user is authorized
     let (_principal, mut cid, uid) = path.into_inner();
     if cid.ends_with(".ics") {
         cid.truncate(cid.len() - 4);
@@ -22,13 +26,12 @@ pub async fn delete_event<C: CalendarStore>(
     Ok(HttpResponse::Ok().body(""))
 }
 
-pub async fn get_event<C: CalendarStore>(
+pub async fn get_event<A: CheckAuthentication, C: CalendarStore>(
     context: Data<CalDavContext<C>>,
     path: Path<(String, String, String)>,
+    _auth: AuthInfoExtractor<A>,
 ) -> Result<HttpResponse, Error> {
-    let (_principal, mut cid, uid) = path.into_inner();
-    if cid.ends_with(".ics") {
-        cid.truncate(cid.len() - 4);
+    // TODO: verify whether user is authorized
     }
     let event = context
         .store
@@ -43,10 +46,11 @@ pub async fn get_event<C: CalendarStore>(
         .body(event.to_ics().to_string()))
 }
 
-pub async fn put_event<C: CalendarStore>(
+pub async fn put_event<A: CheckAuthentication, C: CalendarStore>(
     context: Data<CalDavContext<C>>,
     path: Path<(String, String, String)>,
     body: String,
+    _auth: AuthInfoExtractor<A>,
 ) -> Result<HttpResponse, Error> {
     let (_principal, mut cid, uid) = path.into_inner();
     // Incredibly bodged method of normalising the uid but works for a prototype

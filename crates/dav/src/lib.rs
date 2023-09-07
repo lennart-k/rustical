@@ -1,9 +1,9 @@
 use actix_web::http::Method;
 use actix_web::web::{self, Data};
 use actix_web::{guard, HttpResponse, Responder};
-use actix_web_httpauth::middleware::HttpAuthentication;
 use error::Error;
 use routes::{calendar, event, principal, root};
+use rustical_auth::CheckAuthentication;
 use rustical_store::calendar::CalendarStore;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -24,7 +24,6 @@ pub fn configure_well_known(cfg: &mut web::ServiceConfig, caldav_root: String) {
     cfg.service(web::redirect("/caldav", caldav_root).permanent());
 }
 
-pub fn configure_dav<C: CalendarStore>(
 pub fn configure_dav<A: CheckAuthentication, C: CalendarStore>(
     cfg: &mut web::ServiceConfig,
     prefix: String,
@@ -34,16 +33,9 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore>(
     let propfind_method = || Method::from_str("PROPFIND").unwrap();
     let report_method = || Method::from_str("REPORT").unwrap();
 
-    let auth = HttpAuthentication::basic(|req, creds| async move {
-        if creds.user_id().is_empty() {
-            // not authenticated
-            Err((actix_web::error::ErrorUnauthorized("Unauthorized"), req))
-        } else {
-            Ok(req)
-        }
-    });
 
     cfg.app_data(Data::new(CalDavContext { prefix, store }))
+        .app_data(Data::from(auth))
         .service(
             web::resource("{path:.*}")
                 // Without the guard this service would handle all requests
@@ -52,26 +44,24 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore>(
         )
         .service(
             web::resource("")
-                .route(web::method(propfind_method()).to(root::route_propfind_root::<C>))
-                .wrap(auth.clone()),
+                .route(web::method(propfind_method()).to(root::route_propfind_root::<A, C>)),
         )
         .service(
-            web::resource("/{principal}")
-                .route(web::method(propfind_method()).to(principal::route_propfind_principal::<C>))
-                .wrap(auth.clone()),
+            web::resource("/{principal}").route(
+                web::method(propfind_method()).to(principal::route_propfind_principal::<A, C>),
+            ),
         )
         .service(
             web::resource("/{principal}/{calendar}")
-                .route(web::method(report_method()).to(calendar::route_report_calendar::<C>))
-                .route(web::method(propfind_method()).to(calendar::route_propfind_calendar::<C>))
-                .wrap(auth.clone()),
+                .route(web::method(report_method()).to(calendar::route_report_calendar::<A, C>))
+                .route(web::method(propfind_method()).to(calendar::route_propfind_calendar::<A, C>))
+                .route(web::method(mkcol_method()).to(calendar::route_mkcol_calendar::<A, C>)),
         )
         .service(
             web::resource("/{principal}/{calendar}/{event}")
-                .route(web::method(Method::DELETE).to(event::delete_event::<C>))
-                .route(web::method(Method::GET).to(event::get_event::<C>))
-                .route(web::method(Method::PUT).to(event::put_event::<C>))
-                .wrap(auth.clone()),
+                .route(web::method(Method::DELETE).to(event::delete_event::<A, C>))
+                .route(web::method(Method::GET).to(event::get_event::<A, C>))
+                .route(web::method(Method::PUT).to(event::put_event::<A, C>)),
         );
 }
 

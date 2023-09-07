@@ -3,11 +3,11 @@ use actix_web::{
     web::Data,
     HttpRequest, HttpResponse,
 };
-use actix_web_httpauth::extractors::basic::BasicAuth;
 use quick_xml::{
     events::{BytesText, Event},
     Writer,
 };
+use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use rustical_store::calendar::CalendarStore;
 
 use crate::{
@@ -64,22 +64,19 @@ pub async fn generate_propfind_root_response(
     Ok(std::str::from_utf8(&output_buffer)?.to_string())
 }
 
-pub async fn route_propfind_root<C: CalendarStore>(
+pub async fn route_propfind_root<A: CheckAuthentication, C: CalendarStore>(
     body: String,
     request: HttpRequest,
-    auth: BasicAuth,
     context: Data<CalDavContext<C>>,
+    auth: AuthInfoExtractor<A>,
 ) -> Result<HttpResponse, Error> {
+    let principal = &auth.inner.user_id;
     let props = parse_propfind(&body).map_err(|_e| Error::BadRequest)?;
 
-    let responses_string = generate_propfind_root_response(
-        props.clone(),
-        auth.user_id(),
-        request.path(),
-        &context.prefix,
-    )
-    .await
-    .map_err(|_e| Error::InternalError)?;
+    let responses_string =
+        generate_propfind_root_response(props.clone(), principal, request.path(), &context.prefix)
+            .await
+            .map_err(|_e| Error::InternalError)?;
 
     let output = generate_multistatus(vec![Namespace::Dav, Namespace::CalDAV], |writer| {
         writer.write_event(Event::Text(BytesText::from_escaped(responses_string)))?;

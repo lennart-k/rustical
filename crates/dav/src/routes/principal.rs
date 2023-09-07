@@ -13,12 +13,12 @@ use actix_web::{
     web::Data,
     HttpRequest, HttpResponse,
 };
-use actix_web_httpauth::extractors::basic::BasicAuth;
 use anyhow::Result;
 use quick_xml::{
     events::{BytesText, Event},
     Writer,
 };
+use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use rustical_store::calendar::CalendarStore;
 
 // Executes the PROPFIND request and returns a XML string to be written into a <mulstistatus> object.
@@ -86,13 +86,14 @@ pub async fn generate_propfind_principal_response(
     Ok(std::str::from_utf8(&output_buffer)?.to_string())
 }
 
-pub async fn route_propfind_principal<C: CalendarStore>(
+pub async fn route_propfind_principal<A: CheckAuthentication, C: CalendarStore>(
     body: String,
     request: HttpRequest,
-    auth: BasicAuth,
+    auth: AuthInfoExtractor<A>,
     context: Data<CalDavContext<C>>,
     depth: Depth,
 ) -> Result<HttpResponse, Error> {
+    let user = &auth.inner.user_id;
     let props = parse_propfind(&body).map_err(|_e| Error::BadRequest)?;
 
     let mut responses = Vec::new();
@@ -110,7 +111,7 @@ pub async fn route_propfind_principal<C: CalendarStore>(
             responses.push(
                 generate_propfind_calendar_response(
                     props.clone(),
-                    auth.user_id(),
+                    &auth.inner.user_id,
                     &format!("{}/{}", request.path(), cal.id),
                     &context.prefix,
                     &cal,
@@ -121,14 +122,9 @@ pub async fn route_propfind_principal<C: CalendarStore>(
     }
 
     responses.push(
-        generate_propfind_principal_response(
-            props.clone(),
-            auth.user_id(),
-            request.path(),
-            &context.prefix,
-        )
-        .await
-        .map_err(|_e| Error::InternalError)?,
+        generate_propfind_principal_response(props.clone(), user, request.path(), &context.prefix)
+            .await
+            .map_err(|_e| Error::InternalError)?,
     );
 
     let output = generate_multistatus(vec![Namespace::Dav, Namespace::CalDAV], |writer| {
