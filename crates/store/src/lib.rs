@@ -1,2 +1,2 @@
 pub mod calendar;
-pub mod users;
+pub mod models;
