@@ -52,10 +52,11 @@ pub async fn put_event<A: CheckAuthentication, C: CalendarStore>(
     body: String,
     _auth: AuthInfoExtractor<A>,
 ) -> Result<HttpResponse, Error> {
-    let (_principal, mut cid, uid) = path.into_inner();
+    // TODO: verify whether user is authorized
+    let (_principal, cid, mut uid) = path.into_inner();
     // Incredibly bodged method of normalising the uid but works for a prototype
-    if cid.ends_with(".ics") {
-        cid.truncate(cid.len() - 4);
+    if uid.ends_with(".ics") {
+        uid.truncate(uid.len() - 4);
     }
     dbg!(&body);
     context
