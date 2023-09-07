@@ -107,6 +107,7 @@ pub fn generate_propfind_calendar_response(
                 "current-user-principal",
                 "displayname",
                 "supported-calendar-component-set",
+                "supported-calendar-data",
                 "getcontenttype",
                 "calendar-description",
                 "owner",
@@ -165,6 +166,21 @@ pub fn generate_propfind_calendar_response(
                             writer
                                 .create_element("C:comp")
                                 .with_attribute(("name", "VEVENT"))
+                                .write_empty()?;
+                            Ok(())
+                        })?;
+                }
+                "supported-calendar-data" => {
+                    writer
+                        .create_element("C:supported-calendar-data")
+                        .write_inner_content(|writer| {
+                            // <cal:calendar-data content-type="text/calendar" version="2.0" />
+                            writer
+                                .create_element("C:calendar-data")
+                                .with_attributes(vec![
+                                    ("content-type", "text/calendar"),
+                                    ("version", "2.0"),
+                                ])
                                 .write_empty()?;
                             Ok(())
                         })?;
