@@ -9,6 +9,7 @@ pub enum Namespace {
     CardDAV,
     ICal,
     CServer,
+    Nextcloud,
 }
 
 impl Namespace {
@@ -19,6 +20,7 @@ impl Namespace {
             Self::CardDAV => "urn:ietf:params:xml:ns:carddav",
             Self::ICal => "http://apple.com/ns/ical/",
             Self::CServer => "http://calendarserver.org/ns/",
+            Self::Nextcloud => "http://nextcloud.com/ns",
         }
     }
 
@@ -30,6 +32,7 @@ impl Namespace {
             Self::CardDAV => "xmlns:CARD",
             Self::ICal => "xmlns:IC",
             Self::CServer => "xmlns:CS",
+            Self::Nextcloud => "xmlns:NEXTC",
         }
     }
 }
