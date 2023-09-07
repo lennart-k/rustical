@@ -103,7 +103,7 @@ pub async fn route_propfind_principal<A: CheckAuthentication, C: CalendarStore>(
             .store
             .read()
             .await
-            .get_calendars()
+            .get_calendars(user)
             .await
             .map_err(|_e| Error::InternalError)?;
 

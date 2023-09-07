@@ -32,6 +32,7 @@ impl Event {
 pub struct Calendar {
     pub id: String,
     pub name: Option<String>,
+    pub owner: String,
     pub ics: String,
 }
 
@@ -40,12 +41,12 @@ impl Calendar {}
 #[async_trait]
 pub trait CalendarStore: Send + Sync + 'static {
     async fn get_calendar(&self, id: &str) -> Result<Calendar>;
-    async fn get_calendars(&self) -> Result<Vec<Calendar>>;
+    async fn get_calendars(&self, owner: &str) -> Result<Vec<Calendar>>;
 
     async fn get_events(&self, cid: &str) -> Result<Vec<Event>>;
-    async fn get_event(&self, uid: &str) -> Result<Event>;
-    async fn upsert_event(&mut self, uid: String, ics: String) -> Result<()>;
-    async fn delete_event(&mut self, uid: &str) -> Result<()>;
+    async fn get_event(&self, cid: &str, uid: &str) -> Result<Event>;
+    async fn upsert_event(&mut self, cid: String, uid: String, ics: String) -> Result<()>;
+    async fn delete_event(&mut self, cid: &str, uid: &str) -> Result<()>;
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -73,17 +74,18 @@ impl TomlCalendarStore {
 }
 
 #[async_trait]
-impl CalendarStore for JsonCalendarStore {
+impl CalendarStore for TomlCalendarStore {
     async fn get_calendar(&self, id: &str) -> Result<Calendar> {
         Ok(self.calendars.get(id).ok_or(anyhow!("not found"))?.clone())
     }
 
-    async fn get_calendars(&self) -> Result<Vec<Calendar>> {
-        Ok(vec![Calendar {
-            id: "test".to_string(),
-            name: Some("test".to_string()),
-            ics: "asd".to_string(),
-        }])
+    async fn get_calendars(&self, user: &str) -> Result<Vec<Calendar>> {
+        Ok(self
+            .calendars
+            .values()
+            .filter(|Calendar { owner, .. }| owner == user)
+            .cloned()
+            .collect())
     }
 
     async fn get_events(&self, _cid: &str) -> Result<Vec<Event>> {
