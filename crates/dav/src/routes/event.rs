@@ -61,7 +61,6 @@ pub async fn put_event<A: CheckAuthentication, C: CalendarStore>(
     if uid.ends_with(".ics") {
         uid.truncate(uid.len() - 4);
     }
-    dbg!(&body);
     context
         .store
         .write()
