@@ -6,11 +6,11 @@ use actix_web::middleware::{Logger, NormalizePath};
 use actix_web::{web, App, HttpServer};
 use anyhow::Result;
 use clap::Parser;
-use config::{CalendarStoreConfig, JsonCalendarStoreConfig};
+use config::{CalendarStoreConfig, TomlCalendarStoreConfig};
 use rustical_api::configure_api;
 use rustical_dav::{configure_dav, configure_well_known};
 use rustical_frontend::configure_frontend;
-use rustical_store::calendar::JsonCalendarStore;
+use rustical_store::calendar::TomlCalendarStore;
 use tokio::sync::RwLock;
 
 mod config;
@@ -30,10 +30,10 @@ async fn main() -> Result<()> {
     let config: Config = toml::from_str(&fs::read_to_string(&args.config_file)?)?;
 
     let cal_store = Arc::new(RwLock::new(match &config.calendar_store {
-        CalendarStoreConfig::Json(JsonCalendarStoreConfig { db_path }) => {
+        CalendarStoreConfig::Toml(TomlCalendarStoreConfig { db_path }) => {
             match fs::read_to_string(db_path) {
-                Ok(json) => serde_json::from_str::<JsonCalendarStore>(&json).unwrap(),
-                Err(_) => JsonCalendarStore::new(db_path.to_string()),
+                Ok(content) => toml::from_str::<TomlCalendarStore>(&content).unwrap(),
+                Err(_) => TomlCalendarStore::new(db_path.to_string()),
             }
         }
     }));

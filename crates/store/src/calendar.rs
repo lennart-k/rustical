@@ -49,15 +49,15 @@ pub trait CalendarStore: Send + Sync + 'static {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct JsonCalendarStore {
+pub struct TomlCalendarStore {
     calendars: HashMap<String, Calendar>,
-    events: HashMap<String, Event>,
+    events: HashMap<String, HashMap<String, Event>>,
     path: String,
 }
 
-impl JsonCalendarStore {
+impl TomlCalendarStore {
     pub fn new(path: String) -> Self {
-        JsonCalendarStore {
+        TomlCalendarStore {
             calendars: HashMap::new(),
             events: HashMap::new(),
             path,
@@ -66,8 +66,8 @@ impl JsonCalendarStore {
 
     pub async fn save(&self) -> Result<()> {
         let mut file = File::create(&self.path).await?;
-        let json = serde_json::to_string_pretty(&self)?;
-        file.write_all(json.as_bytes()).await?;
+        let output = toml::to_string_pretty(&self)?;
+        file.write_all(output.as_bytes()).await?;
         Ok(())
     }
 }

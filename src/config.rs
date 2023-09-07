@@ -1,14 +1,14 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct JsonCalendarStoreConfig {
+pub struct TomlCalendarStoreConfig {
     pub db_path: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(tag = "backend", rename_all = "snake_case")]
 pub enum CalendarStoreConfig {
-    Json(JsonCalendarStoreConfig),
+    Toml(TomlCalendarStoreConfig),
 }
 
 #[derive(Debug, Deserialize, Serialize)]
