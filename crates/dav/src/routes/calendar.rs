@@ -119,6 +119,7 @@ pub fn generate_propfind_calendar_response(
                 "calendar-description",
                 "owner",
                 "calendar-color",
+                "current-user-privilege-set",
                 "max-resource-size",
             ]
             .iter(),
@@ -202,6 +203,31 @@ pub fn generate_propfind_calendar_response(
                     writer
                         .create_element("max-resource-size")
                         .write_text_content(BytesText::new("10000000"))?;
+                }
+                "current-user-privilege-set" => {
+                    writer
+                        .create_element("current-user-privilege-set")
+                        // These are just hard-coded for now and will possibly change in the future
+                        .write_inner_content(|writer| {
+                            for privilege in [
+                                "read",
+                                "read-acl",
+                                "write",
+                                "write-acl",
+                                "write-content",
+                                "read-current-user-privilege-set",
+                                "bind",
+                                "unbind",
+                            ] {
+                                writer.create_element("privilege").write_inner_content(
+                                    |writer| {
+                                        writer.create_element(privilege).write_empty()?;
+                                        Ok(())
+                                    },
+                                )?;
+                            }
+                            Ok(())
+                        })?;
                 }
                 "allprops" => {}
                 _ => invalid_props.push(prop),
