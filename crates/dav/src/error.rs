@@ -23,6 +23,11 @@ impl actix_web::error::ResponseError for Error {
     }
 
     fn error_response(&self) -> HttpResponse {
-        HttpResponse::build(self.status_code()).body(self.to_string())
+        match self {
+            Error::Unauthorized => HttpResponse::build(self.status_code())
+                .append_header(("WWW-Authenticate", "Basic"))
+                .body(self.to_string()),
+            _ => HttpResponse::build(self.status_code()).body(self.to_string()),
+        }
     }
 }
