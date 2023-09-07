@@ -3,6 +3,6 @@ crates/*/target
 # For libraries ignore Cargo.lock
 crates/*/Cargo.lock
 
-db.json
+db.toml
 config.toml
 schema.sql
