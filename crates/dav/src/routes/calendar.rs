@@ -109,6 +109,7 @@ pub fn generate_propfind_calendar_response(
                 "supported-calendar-component-set",
                 "getcontenttype",
                 "calendar-description",
+                "owner",
             ]
             .iter(),
         );
@@ -122,17 +123,15 @@ pub fn generate_propfind_calendar_response(
         for prop in props {
             match prop {
                 "resourcetype" => write_resourcetype(writer, vec!["C:calendar", "collection"])?,
-                "current-user-principal" => {
-                    writer
-                        .create_element("current-user-principal")
-                        .write_inner_content(|writer| {
-                            writer
-                                .create_element("href")
-                                .write_text_content(BytesText::new(&format!(
-                                    "{prefix}/{principal}/",
-                                )))?;
-                            Ok(())
-                        })?;
+                "current-user-principal" | "owner" => {
+                    writer.create_element(prop).write_inner_content(|writer| {
+                        writer
+                            .create_element("href")
+                            .write_text_content(BytesText::new(&format!(
+                                "{prefix}/{principal}/",
+                            )))?;
+                        Ok(())
+                    })?;
                 }
                 "displayname" => {
                     let el = writer.create_element("displayname");
