@@ -127,12 +127,15 @@ pub async fn route_propfind_principal<A: CheckAuthentication, C: CalendarStore>(
             .map_err(|_e| Error::InternalError)?,
     );
 
-    let output = generate_multistatus(vec![Namespace::Dav, Namespace::CalDAV], |writer| {
-        for response in responses {
-            writer.write_event(Event::Text(BytesText::from_escaped(response)))?;
-        }
-        Ok(())
-    })
+    let output = generate_multistatus(
+        vec![Namespace::Dav, Namespace::CalDAV, Namespace::ICal],
+        |writer| {
+            for response in responses {
+                writer.write_event(Event::Text(BytesText::from_escaped(response)))?;
+            }
+            Ok(())
+        },
+    )
     .map_err(|_e| Error::InternalError)?;
 
     println!("{}", &output);

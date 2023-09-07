@@ -33,6 +33,8 @@ pub struct Calendar {
     pub id: String,
     pub name: Option<String>,
     pub owner: String,
+    pub description: Option<String>,
+    pub color: Option<String>,
     pub ics: String,
 }
 

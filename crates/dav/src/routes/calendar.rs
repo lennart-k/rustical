@@ -110,6 +110,7 @@ pub fn generate_propfind_calendar_response(
                 "getcontenttype",
                 "calendar-description",
                 "owner",
+                "calendar-color",
             ]
             .iter(),
         );
@@ -137,6 +138,22 @@ pub fn generate_propfind_calendar_response(
                     let el = writer.create_element("displayname");
                     if let Some(name) = calendar.clone().name {
                         el.write_text_content(BytesText::new(&name))?;
+                    } else {
+                        el.write_empty()?;
+                    }
+                }
+                "calendar-color" => {
+                    let el = writer.create_element("IC:calendar-color");
+                    if let Some(color) = calendar.clone().color {
+                        el.write_text_content(BytesText::new(&color))?;
+                    } else {
+                        el.write_empty()?;
+                    }
+                }
+                "calendar-description" => {
+                    let el = writer.create_element("C:calendar-description");
+                    if let Some(description) = calendar.clone().description {
+                        el.write_text_content(BytesText::new(&description))?;
                     } else {
                         el.write_empty()?;
                     }
@@ -196,12 +213,15 @@ pub async fn route_propfind_calendar<A: CheckAuthentication, C: CalendarStore>(
     )
     .map_err(|_e| Error::InternalError)?;
 
-    let output = generate_multistatus(vec![Namespace::Dav, Namespace::CalDAV], |writer| {
-        writer.write_event(quick_xml::events::Event::Text(BytesText::from_escaped(
-            responses_string,
-        )))?;
-        Ok(())
-    })
+    let output = generate_multistatus(
+        vec![Namespace::Dav, Namespace::CalDAV, Namespace::ICal],
+        |writer| {
+            writer.write_event(quick_xml::events::Event::Text(BytesText::from_escaped(
+                responses_string,
+            )))?;
+            Ok(())
+        },
+    )
     .map_err(|_e| Error::InternalError)?;
 
     Ok(HttpResponse::MultiStatus()
