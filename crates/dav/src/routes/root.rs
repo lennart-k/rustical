@@ -1,3 +1,11 @@
+use crate::{
+    namespace::Namespace,
+    propfind::{
+        generate_multistatus, parse_propfind, write_invalid_props_response,
+        write_propstat_response, write_resourcetype,
+    },
+    CalDavContext, Error,
+};
 use actix_web::{
     http::{header::ContentType, StatusCode},
     web::Data,
@@ -9,15 +17,6 @@ use quick_xml::{
 };
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use rustical_store::calendar::CalendarStore;
-
-use crate::{
-    namespace::Namespace,
-    propfind::{
-        generate_multistatus, parse_propfind, write_invalid_props_response,
-        write_propstat_response, write_resourcetype,
-    },
-    CalDavContext, Error,
-};
 
 // Executes the PROPFIND request and returns a XML string to be written into a <mulstistatus> object.
 pub async fn generate_propfind_root_response(
@@ -46,10 +45,9 @@ pub async fn generate_propfind_root_response(
                         .write_inner_content(|writer| {
                             writer
                                 .create_element("href")
-                                .write_text_content(BytesText::new(
-                                    // TODO: Replace hard-coded string
-                                    &format!("{prefix}/{principal}"),
-                                ))?;
+                                .write_text_content(BytesText::new(&format!(
+                                    "{prefix}/{principal}"
+                                )))?;
                             Ok(())
                         })?;
                 }
