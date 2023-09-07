@@ -54,7 +54,7 @@ async fn main() -> Result<()> {
             )
             .service(
                 web::scope("/.well-known")
-                    .configure(|cfg| configure_well_known(cfg, "/dav".to_string())),
+                    .configure(|cfg| configure_well_known(cfg, "/caldav".to_string())),
             )
             .service(
                 web::scope("/api").configure(|cfg| configure_api(cfg, cal_store.clone().into())),
