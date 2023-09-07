@@ -6,6 +6,7 @@ use quick_xml::events::attributes::Attribute;
 pub enum Namespace {
     Dav,
     CalDAV,
+    CardDAV,
     ICal,
     CServer,
 }
@@ -15,6 +16,7 @@ impl Namespace {
         match self {
             Self::Dav => "DAV:",
             Self::CalDAV => "urn:ietf:params:xml:ns:caldav",
+            Self::CardDAV => "urn:ietf:params:xml:ns:carddav",
             Self::ICal => "http://apple.com/ns/ical/",
             Self::CServer => "http://calendarserver.org/ns/",
         }
@@ -25,6 +27,7 @@ impl Namespace {
         match self {
             Self::Dav => "xmlns",
             Self::CalDAV => "xmlns:C",
+            Self::CardDAV => "xmlns:CARD",
             Self::ICal => "xmlns:IC",
             Self::CServer => "xmlns:CS",
         }
