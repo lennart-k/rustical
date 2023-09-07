@@ -53,7 +53,14 @@ async fn handle_report_calendar_query(
                                     .create_element("C:calendar-data")
                                     .write_text_content(BytesText::new(event.to_ics()))?;
                             }
-                            _ => {}
+                            "getcontenttype" => {
+                                writer
+                                    .create_element("getcontenttype")
+                                    .write_text_content(BytesText::new("text/calendar"))?;
+                            }
+                            prop => {
+                                dbg!(prop);
+                            }
                         }
                     }
                     Ok(())
