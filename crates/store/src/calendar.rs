@@ -88,23 +88,38 @@ impl CalendarStore for TomlCalendarStore {
             .collect())
     }
 
-    async fn get_events(&self, _cid: &str) -> Result<Vec<Event>> {
-        Ok(self.events.values().cloned().collect())
+    async fn get_events(&self, cid: &str) -> Result<Vec<Event>> {
+        if let Some(events) = self.events.get(cid) {
+            Ok(events.values().cloned().collect())
+        } else {
+            Ok(Vec::new())
+        }
     }
 
-    async fn get_event(&self, uid: &str) -> Result<Event> {
-        Ok(self.events.get(uid).ok_or(anyhow!("not found"))?.clone())
+    async fn get_event(&self, cid: &str, uid: &str) -> Result<Event> {
+        let events = self.events.get(cid).ok_or(anyhow!("not found"))?;
+        Ok(events.get(uid).ok_or(anyhow!("not found"))?.clone())
     }
 
-    async fn upsert_event(&mut self, uid: String, ics: String) -> Result<()> {
-        self.events.insert(uid.clone(), Event { uid, ics });
+    async fn upsert_event(&mut self, cid: String, uid: String, ics: String) -> Result<()> {
+        let events = self.events.entry(cid).or_insert(HashMap::new());
+        events.insert(
+            uid.clone(),
+            Event {
+                uid,
+                ics,
+                summary: None,
+            },
+        );
         self.save().await.unwrap();
         Ok(())
     }
 
-    async fn delete_event(&mut self, uid: &str) -> Result<()> {
-        self.events.remove(uid);
-        self.save().await?;
+    async fn delete_event(&mut self, cid: &str, uid: &str) -> Result<()> {
+        if let Some(events) = self.events.get_mut(cid) {
+            events.remove(uid);
+            self.save().await?;
+        }
         Ok(())
     }
 }

@@ -19,7 +19,7 @@ pub async fn delete_event<A: CheckAuthentication, C: CalendarStore>(
         .store
         .write()
         .await
-        .delete_event(&uid)
+        .delete_event(&cid, &uid)
         .await
         .map_err(|_e| Error::InternalError)?;
 
@@ -32,12 +32,15 @@ pub async fn get_event<A: CheckAuthentication, C: CalendarStore>(
     _auth: AuthInfoExtractor<A>,
 ) -> Result<HttpResponse, Error> {
     // TODO: verify whether user is authorized
+    let (_principal, cid, mut uid) = path.into_inner();
+    if uid.ends_with(".ics") {
+        uid.truncate(uid.len() - 4);
     }
     let event = context
         .store
         .read()
         .await
-        .get_event(&uid)
+        .get_event(&cid, &uid)
         .await
         .map_err(|_e| Error::NotFound)?;
 
@@ -63,7 +66,7 @@ pub async fn put_event<A: CheckAuthentication, C: CalendarStore>(
         .store
         .write()
         .await
-        .upsert_event(uid, body)
+        .upsert_event(cid, uid, body)
         .await
         .map_err(|_e| Error::InternalError)?;
 
