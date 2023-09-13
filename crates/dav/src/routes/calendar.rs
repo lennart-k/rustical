@@ -1,7 +1,5 @@
 use crate::namespace::Namespace;
-use crate::propfind::{
-    generate_mkcol_response, generate_multistatus, write_propstat_element, write_propstat_response,
-};
+use crate::propfind::{generate_multistatus, write_propstat_response};
 use crate::proptypes::write_string_prop;
 use crate::{CalDavContext, Error};
 use actix_web::http::header::ContentType;

@@ -136,22 +136,3 @@ where
         std::str::from_utf8(&output_buffer)?
     ))
 }
-
-pub fn generate_mkcol_response<'a, F, A>(namespaces: A, closure: F) -> Result<String>
-where
-    F: FnOnce(&mut Writer<&mut Vec<u8>>) -> Result<(), quick_xml::Error>,
-    A: IntoIterator,
-    A::Item: Into<Attribute<'a>>,
-{
-    let mut output_buffer = Vec::new();
-    let mut writer = Writer::new_with_indent(&mut output_buffer, b' ', 2);
-    writer
-        .create_element("mkcol-response")
-        .with_attributes(namespaces)
-        .write_inner_content(closure)?;
-
-    Ok(format!(
-        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n{}",
-        std::str::from_utf8(&output_buffer)?
-    ))
-}
