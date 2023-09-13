@@ -6,7 +6,7 @@ use async_trait::async_trait;
 use quick_xml::Writer;
 use rustical_auth::AuthInfo;
 
-use crate::propfind::{write_invalid_props_response, write_propstat_response};
+use crate::xml_snippets::{write_invalid_props_response, write_propstat_response};
 
 // A resource is identified by a URI and has properties
 // A resource can also be a collection

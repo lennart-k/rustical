@@ -17,11 +17,11 @@ use tokio::sync::RwLock;
 pub mod depth_extractor;
 pub mod error;
 pub mod namespace;
-mod propfind;
 pub mod proptypes;
 pub mod resource;
 pub mod resources;
 pub mod routes;
+mod xml_snippets;
 
 pub struct CalDavContext<C: CalendarStore> {
     pub prefix: String,

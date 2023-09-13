@@ -1,4 +1,4 @@
-use crate::{propfind::write_resourcetype, resource::Resource};
+use crate::{resource::Resource, xml_snippets::write_resourcetype};
 use actix_web::HttpRequest;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;

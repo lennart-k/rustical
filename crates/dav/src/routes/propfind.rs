@@ -1,8 +1,8 @@
 use crate::depth_extractor::Depth;
 use crate::error::Error;
 use crate::namespace::Namespace;
-use crate::propfind::generate_multistatus;
 use crate::resource::{HandlePropfind, Resource};
+use crate::xml_snippets::generate_multistatus;
 use crate::CalDavContext;
 use actix_web::http::header::ContentType;
 use actix_web::web::{Data, Path};

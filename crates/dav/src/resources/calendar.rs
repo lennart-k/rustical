@@ -9,9 +9,9 @@ use rustical_store::calendar::{Calendar, CalendarStore};
 use tokio::sync::RwLock;
 
 use crate::{
-    propfind::write_resourcetype,
     proptypes::{write_href_prop, write_string_prop},
     resource::Resource,
+    xml_snippets::write_resourcetype,
 };
 
 pub struct CalendarResource<C: CalendarStore> {

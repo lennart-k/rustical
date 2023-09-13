@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::{propfind::write_resourcetype, proptypes::write_href_prop, resource::Resource};
+use crate::{proptypes::write_href_prop, resource::Resource, xml_snippets::write_resourcetype};
 use actix_web::{web::Data, HttpRequest};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;

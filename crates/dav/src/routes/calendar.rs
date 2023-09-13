@@ -1,7 +1,7 @@
 use crate::namespace::Namespace;
-use crate::propfind::generate_multistatus;
 use crate::resource::HandlePropfind;
 use crate::resources::event::EventResource;
+use crate::xml_snippets::generate_multistatus;
 use crate::{CalDavContext, Error};
 use actix_web::http::header::ContentType;
 use actix_web::web::{Data, Path};
