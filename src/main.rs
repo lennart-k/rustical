@@ -8,7 +8,7 @@ use rustical_api::configure_api;
 use rustical_auth::AuthProvider;
 use rustical_dav::{configure_dav, configure_well_known};
 use rustical_frontend::configure_frontend;
-use rustical_store::calendar::TomlCalendarStore;
+use rustical_store::toml_store::TomlCalendarStore;
 use std::fs;
 use std::sync::Arc;
 use tokio::sync::RwLock;
