@@ -6,3 +6,4 @@ a calendar server
 
 - [ ] Access Control
 - [ ] ICS parsing
+  - [ ] Datetime parsing
