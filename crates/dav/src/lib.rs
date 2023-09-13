@@ -86,6 +86,7 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore>(
     .service(
         web::resource("/{principal}/{calendar}/{event}")
             .route(web::method(propfind_method()).to(route_new_propfind::<A, EventResource, C>))
+            .route(web::method(propfind_method()).to(route_new_propfind::<A, EventResource<C>, C>))
             .route(web::method(Method::DELETE).to(event::delete_event::<A, C>))
             .route(web::method(Method::GET).to(event::get_event::<A, C>))
             .route(web::method(Method::PUT).to(event::put_event::<A, C>)),

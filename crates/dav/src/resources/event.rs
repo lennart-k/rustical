@@ -1,15 +1,21 @@
-use crate::resource::Resource;
-use actix_web::HttpRequest;
+use std::sync::Arc;
+
+use crate::{proptypes::write_string_prop, resource::Resource};
+use actix_web::{web::Data, HttpRequest};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
+use rustical_store::calendar::{CalendarStore, Event};
+use tokio::sync::RwLock;
 
-pub struct EventResource {
-    path: String,
+pub struct EventResource<C: CalendarStore> {
+    pub cal_store: Arc<RwLock<C>>,
+    pub path: String,
+    pub event: Event,
 }
 
 #[async_trait(?Send)]
-impl Resource for EventResource {
+impl<C: CalendarStore> Resource for EventResource<C> {
     type UriComponents = (String, String, String); // principal, calendar, event
     type MemberType = Self;
 
@@ -24,23 +30,47 @@ impl Resource for EventResource {
     async fn acquire_from_request(
         req: HttpRequest,
         _auth_info: AuthInfo,
-        _uri_components: Self::UriComponents,
+        uri_components: Self::UriComponents,
         _prefix: String,
     ) -> Result<Self> {
+        let (_principal, cid, uid) = uri_components;
+
+        let cal_store = req
+            .app_data::<Data<RwLock<C>>>()
+            .ok_or(anyhow!("no calendar store in app_data!"))?
+            .clone()
+            .into_inner();
+
+        let event = cal_store.read().await.get_event(&cid, &uid).await?;
+
         Ok(Self {
+            cal_store,
+            event,
             path: req.path().to_string(),
         })
     }
 
     fn write_prop<W: std::io::Write>(
         &self,
-        _writer: &mut quick_xml::Writer<W>,
-        _prop: &str,
+        writer: &mut quick_xml::Writer<W>,
+        prop: &str,
     ) -> Result<()> {
-        Err(anyhow!("invalid prop!"))
+        match prop {
+            "getetag" => {
+                write_string_prop(writer, "getetag", &self.event.get_etag())?;
+            }
+            "calendar-data" => {
+                write_string_prop(writer, "C:calendar-data", self.event.to_ics())?;
+            }
+            "getcontenttype" => {
+                write_string_prop(writer, "getcontenttype", "text/calendar;charset=utf-8")?;
+            }
+            _ => return Err(anyhow!("invalid prop!")),
+        };
+        Ok(())
     }
 
     fn list_dead_props() -> Vec<&'static str> {
-        vec![]
+        vec!["getetag", "calendar-data", "getcontenttype"]
     }
 }
