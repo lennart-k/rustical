@@ -1,5 +1,7 @@
 use crate::namespace::Namespace;
-use crate::propfind::{generate_multistatus, write_propstat_response};
+use crate::propfind::{
+    generate_mkcol_response, generate_multistatus, write_propstat_element, write_propstat_response,
+};
 use crate::proptypes::write_string_prop;
 use crate::{CalDavContext, Error};
 use actix_web::http::header::ContentType;
@@ -167,24 +169,26 @@ pub async fn route_mkcol_calendar<A: CheckAuthentication, C: CalendarStore>(
         _ => return Err(Error::BadRequest),
     }
 
-    for set_node in mkcol_node.children() {
-        if set_node.tag_name().name() != "set" {
-            return Err(Error::BadRequest);
-        }
-        let prop_node = set_node.first_element_child().ok_or(Error::BadRequest)?;
-        if prop_node.tag_name().name() != "prop" {
-            return Err(Error::BadRequest);
-        }
-        handle_mkcol_calendar_set(
-            &context.store,
-            prop_node,
-            cid.clone(),
-            auth.inner.user_id.clone(),
-        )
-        .await
-        .map_err(|_e| Error::InternalError)?;
+    // TODO: Why does the spec (rfc5689) allow multiple <set/> elements but only one resource? :/
+    // Well, for now just bother with the first one
+    let set_node = mkcol_node.first_element_child().ok_or(Error::BadRequest)?;
+    match set_node.tag_name().name() {
+        "set" => {}
+        _ => return Err(Error::BadRequest),
     }
 
-    println!("{body}");
-    Err(Error::InternalError)
+    let prop_node = set_node.first_element_child().ok_or(Error::BadRequest)?;
+    if prop_node.tag_name().name() != "prop" {
+        return Err(Error::BadRequest);
+    }
+    handle_mkcol_calendar_set(
+        &context.store,
+        prop_node,
+        cid.clone(),
+        auth.inner.user_id.clone(),
+    )
+    .await
+    .map_err(|_e| Error::InternalError)?;
+
+    Ok(HttpResponse::Created().body(""))
 }

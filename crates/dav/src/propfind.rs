@@ -70,6 +70,29 @@ pub fn write_invalid_props_response<W: Write>(
     Ok(())
 }
 
+pub fn write_propstat_element<F, W: Write>(
+    writer: &mut Writer<W>,
+    status: StatusCode,
+    prop_closure: F,
+) -> Result<(), quick_xml::Error>
+where
+    F: FnOnce(&mut Writer<W>) -> Result<(), quick_xml::Error>,
+{
+    writer
+        .create_element("propstat")
+        .write_inner_content(|writer| {
+            writer
+                .create_element("prop")
+                .write_inner_content(prop_closure)?;
+
+            writer
+                .create_element("status")
+                .write_text_content(BytesText::new(&format!("HTTP/1.1 {}", status)))?;
+            Ok(())
+        })?;
+    Ok(())
+}
+
 // Writes a propstat response into a multistatus
 // closure hooks into the <prop> element
 pub fn write_propstat_response<F, W: Write>(
@@ -88,18 +111,7 @@ where
                 .create_element("href")
                 .write_text_content(BytesText::new(href))?;
 
-            writer
-                .create_element("propstat")
-                .write_inner_content(|writer| {
-                    writer
-                        .create_element("prop")
-                        .write_inner_content(prop_closure)?;
-
-                    writer
-                        .create_element("status")
-                        .write_text_content(BytesText::new(&format!("HTTP/1.1 {}", status)))?;
-                    Ok(())
-                })?;
+            write_propstat_element(writer, status, prop_closure)?;
 
             Ok(())
         })?;
@@ -116,6 +128,25 @@ where
     let mut writer = Writer::new_with_indent(&mut output_buffer, b' ', 2);
     writer
         .create_element("multistatus")
+        .with_attributes(namespaces)
+        .write_inner_content(closure)?;
+
+    Ok(format!(
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n{}",
+        std::str::from_utf8(&output_buffer)?
+    ))
+}
+
+pub fn generate_mkcol_response<'a, F, A>(namespaces: A, closure: F) -> Result<String>
+where
+    F: FnOnce(&mut Writer<&mut Vec<u8>>) -> Result<(), quick_xml::Error>,
+    A: IntoIterator,
+    A::Item: Into<Attribute<'a>>,
+{
+    let mut output_buffer = Vec::new();
+    let mut writer = Writer::new_with_indent(&mut output_buffer, b' ', 2);
+    writer
+        .create_element("mkcol-response")
         .with_attributes(namespaces)
         .write_inner_content(closure)?;
 
