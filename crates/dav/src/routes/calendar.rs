@@ -1,17 +1,16 @@
 use crate::namespace::Namespace;
-use crate::propfind::{generate_multistatus, write_propstat_response};
-use crate::proptypes::write_string_prop;
+use crate::propfind::generate_multistatus;
+use crate::resource::HandlePropfind;
+use crate::resources::event::EventResource;
 use crate::{CalDavContext, Error};
 use actix_web::http::header::ContentType;
-use actix_web::http::StatusCode;
 use actix_web::web::{Data, Path};
 use actix_web::{HttpRequest, HttpResponse};
 use anyhow::Result;
+use quick_xml::events::BytesText;
 use roxmltree::{Node, NodeType};
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use rustical_store::calendar::{Calendar, CalendarStore, Event};
-use std::collections::HashSet;
-use std::ops::Deref;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -34,52 +33,37 @@ async fn _parse_filter(filter_node: &Node<'_, '_>) {
     }
 }
 
-async fn handle_report_calendar_query(
+async fn handle_report_calendar_query<C: CalendarStore>(
     query_node: Node<'_, '_>,
     request: HttpRequest,
     events: Vec<Event>,
+    cal_store: Arc<RwLock<C>>,
 ) -> Result<HttpResponse, Error> {
     let prop_node = query_node
         .children()
         .find(|n| n.node_type() == NodeType::Element && n.tag_name().name() == "prop")
         .ok_or(Error::BadRequest)?;
 
-    let props: Arc<HashSet<&str>> = Arc::new(
-        prop_node
-            .children()
-            .map(|node| node.tag_name().name())
-            .collect(),
-    );
+    let props: Vec<&str> = prop_node
+        .children()
+        .map(|node| node.tag_name().name())
+        .collect();
     let output = generate_multistatus(vec![Namespace::Dav, Namespace::CalDAV], |writer| {
         for event in events {
-            write_propstat_response(
-                writer,
-                &format!("{}/{}", request.path(), event.get_uid()),
-                StatusCode::OK,
-                |writer| {
-                    for prop in props.deref() {
-                        match *prop {
-                            "getetag" => {
-                                write_string_prop(writer, "getetag", &event.get_etag())?;
-                            }
-                            "calendar-data" => {
-                                write_string_prop(writer, "C:calendar-data", event.to_ics())?;
-                            }
-                            "getcontenttype" => {
-                                write_string_prop(
-                                    writer,
-                                    "getcontenttype",
-                                    "text/calendar;charset=utf-8",
-                                )?;
-                            }
-                            prop => {
-                                dbg!(prop);
-                            }
-                        }
-                    }
-                    Ok(())
-                },
-            )?;
+            let path = format!("{}/{}", request.path(), event.get_uid());
+            let event_resource = EventResource {
+                cal_store: cal_store.clone(),
+                path: path.clone(),
+                event,
+            };
+            // TODO: proper error handling
+            let propfind_result = event_resource
+                .propfind(props.clone())
+                .map_err(|_e| quick_xml::Error::TextNotFound)?;
+
+            writer.write_event(quick_xml::events::Event::Text(BytesText::from_escaped(
+                propfind_result,
+            )))?;
         }
         Ok(())
     })
@@ -112,7 +96,7 @@ pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore>(
         "calendar-multiget" => {}
         _ => return Err(Error::BadRequest),
     };
-    handle_report_calendar_query(query_node, request, events).await
+    handle_report_calendar_query(query_node, request, events, context.store.clone()).await
 }
 
 pub async fn handle_mkcol_calendar_set<C: CalendarStore>(
