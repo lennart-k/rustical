@@ -21,3 +21,4 @@ rustical_auth = { path = "../auth/" }
 serde = { version = "1.0.188", features = ["serde_derive", "derive"] }
 serde_json = "1.0.105"
 tokio = { version = "1.32.0", features = ["sync", "full"] }
+async-trait = "0.1.73"

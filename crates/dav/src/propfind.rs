@@ -1,3 +1,5 @@
+use std::io::Write;
+
 use actix_web::http::StatusCode;
 use anyhow::{anyhow, Result};
 use quick_xml::{
@@ -23,17 +25,19 @@ pub fn parse_propfind(body: &str) -> Result<Vec<&str>> {
         return Ok(Vec::new());
     };
 
-    match prop_node.tag_name().name() {
+    let props = match prop_node.tag_name().name() {
         "prop" => Ok(prop_node
             .children()
             .map(|node| node.tag_name().name())
             .collect()),
         _ => Err(anyhow!("invalid prop tag")),
-    }
+    };
+    dbg!(body, &props);
+    props
 }
 
-pub fn write_resourcetype(
-    writer: &mut Writer<&mut Vec<u8>>,
+pub fn write_resourcetype<W: Write>(
+    writer: &mut Writer<W>,
     types: Vec<&str>,
 ) -> Result<(), quick_xml::Error> {
     writer
@@ -47,8 +51,8 @@ pub fn write_resourcetype(
     Ok(())
 }
 
-pub fn write_invalid_props_response(
-    writer: &mut Writer<&mut Vec<u8>>,
+pub fn write_invalid_props_response<W: Write>(
+    writer: &mut Writer<W>,
     href: &str,
     invalid_props: Vec<&str>,
 ) -> Result<(), quick_xml::Error> {
@@ -68,14 +72,14 @@ pub fn write_invalid_props_response(
 
 // Writes a propstat response into a multistatus
 // closure hooks into the <prop> element
-pub fn write_propstat_response<F>(
-    writer: &mut Writer<&mut Vec<u8>>,
+pub fn write_propstat_response<F, W: Write>(
+    writer: &mut Writer<W>,
     href: &str,
     status: StatusCode,
     prop_closure: F,
 ) -> Result<(), quick_xml::Error>
 where
-    F: FnOnce(&mut Writer<&mut Vec<u8>>) -> Result<(), quick_xml::Error>,
+    F: FnOnce(&mut Writer<W>) -> Result<(), quick_xml::Error>,
 {
     writer
         .create_element("response")
