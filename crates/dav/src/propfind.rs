@@ -1,40 +1,11 @@
 use std::io::Write;
 
 use actix_web::http::StatusCode;
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use quick_xml::{
     events::{attributes::Attribute, BytesText},
     Writer,
 };
-
-pub fn parse_propfind(body: &str) -> Result<Vec<&str>> {
-    if body.is_empty() {
-        // if body is empty, allprops must be returned (RFC 4918)
-        return Ok(vec!["allprops"]);
-    }
-    let doc = roxmltree::Document::parse(body)?;
-
-    let propfind_node = doc.root_element();
-    if propfind_node.tag_name().name() != "propfind" {
-        return Err(anyhow!("invalid tag"));
-    }
-
-    let prop_node = if let Some(el) = propfind_node.first_element_child() {
-        el
-    } else {
-        return Ok(Vec::new());
-    };
-
-    let props = match prop_node.tag_name().name() {
-        "prop" => Ok(prop_node
-            .children()
-            .map(|node| node.tag_name().name())
-            .collect()),
-        _ => Err(anyhow!("invalid prop tag")),
-    };
-    dbg!(body, &props);
-    props
-}
 
 pub fn write_resourcetype<W: Write>(
     writer: &mut Writer<W>,
