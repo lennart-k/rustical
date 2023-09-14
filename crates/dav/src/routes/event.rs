@@ -1,8 +1,27 @@
-use crate::{CalDavContext, Error};
+use crate::CalDavContext;
+use actix_web::http::StatusCode;
 use actix_web::web::{Data, Path};
-use actix_web::HttpResponse;
+use actix_web::{HttpResponse, ResponseError};
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use rustical_store::calendar::CalendarStore;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error(transparent)]
+    Other(#[from] anyhow::Error),
+}
+
+impl ResponseError for Error {
+    fn status_code(&self) -> actix_web::http::StatusCode {
+        match self {
+            Self::Other(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+    fn error_response(&self) -> HttpResponse<actix_web::body::BoxBody> {
+        HttpResponse::build(self.status_code()).body(self.to_string())
+    }
+}
 
 pub async fn delete_event<A: CheckAuthentication, C: CalendarStore>(
     context: Data<CalDavContext<C>>,
@@ -15,13 +34,7 @@ pub async fn delete_event<A: CheckAuthentication, C: CalendarStore>(
     if cid.ends_with(".ics") {
         cid.truncate(cid.len() - 4);
     }
-    context
-        .store
-        .write()
-        .await
-        .delete_event(&cid, &uid)
-        .await
-        .map_err(|_e| Error::InternalError)?;
+    context.store.write().await.delete_event(&cid, &uid).await?;
 
     Ok(HttpResponse::Ok().body(""))
 }
@@ -36,13 +49,7 @@ pub async fn get_event<A: CheckAuthentication, C: CalendarStore>(
     if uid.ends_with(".ics") {
         uid.truncate(uid.len() - 4);
     }
-    let event = context
-        .store
-        .read()
-        .await
-        .get_event(&cid, &uid)
-        .await
-        .map_err(|_e| Error::NotFound)?;
+    let event = context.store.read().await.get_event(&cid, &uid).await?;
 
     Ok(HttpResponse::Ok()
         .insert_header(("ETag", event.get_etag()))
@@ -66,8 +73,7 @@ pub async fn put_event<A: CheckAuthentication, C: CalendarStore>(
         .write()
         .await
         .upsert_event(cid, uid, body)
-        .await
-        .map_err(|_e| Error::InternalError)?;
+        .await?;
 
     Ok(HttpResponse::Ok().body(""))
 }
