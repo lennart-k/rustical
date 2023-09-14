@@ -1,4 +1,3 @@
-use crate::depth_extractor::Depth;
 use crate::CalDavContext;
 use actix_web::http::header::ContentType;
 use actix_web::http::StatusCode;
@@ -7,6 +6,7 @@ use actix_web::{HttpRequest, HttpResponse};
 use anyhow::Result;
 use quick_xml::events::BytesText;
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
+use rustical_dav::depth_extractor::Depth;
 use rustical_dav::namespace::Namespace;
 use rustical_dav::resource::{HandlePropfind, Resource};
 use rustical_dav::xml_snippets::generate_multistatus;

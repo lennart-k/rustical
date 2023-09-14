@@ -14,7 +14,6 @@ use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-pub mod depth_extractor;
 pub mod error;
 pub mod proptypes;
 pub mod resources;
