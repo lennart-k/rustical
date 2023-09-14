@@ -1,5 +1,6 @@
 use crate::resources::event::EventResource;
-use crate::{CalDavContext, Error};
+use crate::CalDavContext;
+use crate::Error;
 use actix_web::http::header::ContentType;
 use actix_web::web::{Data, Path};
 use actix_web::{HttpRequest, HttpResponse};
@@ -57,17 +58,14 @@ async fn handle_report_calendar_query<C: CalendarStore>(
                 event,
             };
             // TODO: proper error handling
-            let propfind_result = event_resource
-                .propfind(props.clone())
-                .map_err(|_e| quick_xml::Error::TextNotFound)?;
+            let propfind_result = event_resource.propfind(props.clone())?;
 
             writer.write_event(quick_xml::events::Event::Text(BytesText::from_escaped(
                 propfind_result,
             )))?;
         }
         Ok(())
-    })
-    .map_err(|_e| Error::InternalError)?;
+    })?;
 
     Ok(HttpResponse::MultiStatus()
         .content_type(ContentType::xml())
@@ -169,8 +167,7 @@ pub async fn route_mkcol_calendar<A: CheckAuthentication, C: CalendarStore>(
         cid.clone(),
         auth.inner.user_id.clone(),
     )
-    .await
-    .map_err(|_e| Error::InternalError)?;
+    .await?;
 
     Ok(HttpResponse::Created().body(""))
 }
