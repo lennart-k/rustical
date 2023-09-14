@@ -1,0 +1,7 @@
+[package]
+name = "rustical_dav"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+quick-xml = "0.30.0"

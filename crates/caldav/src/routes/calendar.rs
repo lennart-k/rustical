@@ -1,4 +1,4 @@
-use crate::namespace::Namespace;
+use rustical_dav::namespace::Namespace;
 use crate::resource::HandlePropfind;
 use crate::resources::event::EventResource;
 use crate::xml_snippets::generate_multistatus;

@@ -1,5 +1,4 @@
 use crate::depth_extractor::Depth;
-use crate::namespace::Namespace;
 use crate::resource::{HandlePropfind, Resource};
 use crate::xml_snippets::generate_multistatus;
 use crate::CalDavContext;
@@ -10,6 +9,7 @@ use actix_web::{HttpRequest, HttpResponse};
 use anyhow::Result;
 use quick_xml::events::BytesText;
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
+use rustical_dav::namespace::Namespace;
 use rustical_store::calendar::CalendarStore;
 use thiserror::Error;
 

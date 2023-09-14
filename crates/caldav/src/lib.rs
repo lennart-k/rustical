@@ -16,7 +16,6 @@ use tokio::sync::RwLock;
 
 pub mod depth_extractor;
 pub mod error;
-pub mod namespace;
 pub mod proptypes;
 pub mod resource;
 pub mod resources;
