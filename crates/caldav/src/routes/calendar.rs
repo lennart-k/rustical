@@ -49,19 +49,22 @@ async fn handle_report_calendar_query<C: CalendarStore>(
         .children()
         .map(|node| node.tag_name().name())
         .collect();
-    let output = generate_multistatus(vec![Namespace::Dav, Namespace::CalDAV], |writer| {
-        for event in events {
-            let path = format!("{}/{}", request.path(), event.get_uid());
-            let event_resource = EventResource {
-                cal_store: cal_store.clone(),
-                path: path.clone(),
-                event,
-            };
-            // TODO: proper error handling
-            let propfind_result = event_resource.propfind(props.clone())?;
 
+    let mut event_results = Vec::new();
+    for event in events {
+        let path = format!("{}/{}", request.path(), event.get_uid());
+        let event_resource = EventResource {
+            cal_store: cal_store.clone(),
+            path: path.clone(),
+            event,
+        };
+        event_results.push(event_resource.propfind(props.clone())?);
+    }
+
+    let output = generate_multistatus(vec![Namespace::Dav, Namespace::CalDAV], |writer| {
+        for result in event_results {
             writer.write_event(quick_xml::events::Event::Text(BytesText::from_escaped(
-                propfind_result,
+                result,
             )))?;
         }
         Ok(())
