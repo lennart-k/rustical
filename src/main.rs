@@ -6,7 +6,7 @@ use clap::Parser;
 use config::{CalendarStoreConfig, TomlCalendarStoreConfig};
 use rustical_api::configure_api;
 use rustical_auth::AuthProvider;
-use rustical_dav::{configure_dav, configure_well_known};
+use rustical_caldav::{configure_dav, configure_well_known};
 use rustical_frontend::configure_frontend;
 use rustical_store::toml_store::TomlCalendarStore;
 use std::fs;

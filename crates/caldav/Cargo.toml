@@ -1,5 +1,5 @@
 [package]
-name = "rustical_dav"
+name = "rustical_caldav"
 version = "0.1.0"
 edition = "2021"
 
