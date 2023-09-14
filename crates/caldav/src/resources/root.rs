@@ -1,9 +1,9 @@
-use crate::{resource::Resource, xml_snippets::write_resourcetype};
 use actix_web::HttpRequest;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use quick_xml::events::BytesText;
 use rustical_auth::AuthInfo;
+use rustical_dav::{resource::Resource, xml_snippets::write_resourcetype};
 
 pub struct RootResource {
     prefix: String,

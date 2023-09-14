@@ -4,4 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+actix-web = "4.4.0"
+anyhow = "1.0.75"
+async-trait = "0.1.73"
 quick-xml = "0.30.0"
+rustical_auth = { path = "../auth/" }

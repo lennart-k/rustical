@@ -1,11 +1,12 @@
 use std::sync::Arc;
 
-use crate::{proptypes::write_href_prop, resource::Resource, xml_snippets::write_resourcetype};
+use crate::proptypes::write_href_prop;
 use actix_web::{web::Data, HttpRequest};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use quick_xml::events::BytesText;
 use rustical_auth::AuthInfo;
+use rustical_dav::{resource::Resource, xml_snippets::write_resourcetype};
 use rustical_store::calendar::CalendarStore;
 use tokio::sync::RwLock;
 

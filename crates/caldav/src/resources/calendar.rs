@@ -8,11 +8,8 @@ use rustical_auth::AuthInfo;
 use rustical_store::calendar::{Calendar, CalendarStore};
 use tokio::sync::RwLock;
 
-use crate::{
-    proptypes::{write_href_prop, write_string_prop},
-    resource::Resource,
-    xml_snippets::write_resourcetype,
-};
+use crate::proptypes::{write_href_prop, write_string_prop};
+use rustical_dav::{resource::Resource, xml_snippets::write_resourcetype};
 
 pub struct CalendarResource<C: CalendarStore> {
     pub cal_store: Arc<RwLock<C>>,

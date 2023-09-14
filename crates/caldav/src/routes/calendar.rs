@@ -1,7 +1,4 @@
-use rustical_dav::namespace::Namespace;
-use crate::resource::HandlePropfind;
 use crate::resources::event::EventResource;
-use crate::xml_snippets::generate_multistatus;
 use crate::{CalDavContext, Error};
 use actix_web::http::header::ContentType;
 use actix_web::web::{Data, Path};
@@ -10,6 +7,9 @@ use anyhow::Result;
 use quick_xml::events::BytesText;
 use roxmltree::{Node, NodeType};
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
+use rustical_dav::namespace::Namespace;
+use rustical_dav::resource::HandlePropfind;
+use rustical_dav::xml_snippets::generate_multistatus;
 use rustical_store::calendar::{Calendar, CalendarStore, Event};
 use std::sync::Arc;
 use tokio::sync::RwLock;

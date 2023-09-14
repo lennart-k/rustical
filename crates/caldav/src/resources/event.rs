@@ -1,11 +1,11 @@
-use std::sync::Arc;
-
-use crate::{proptypes::write_string_prop, resource::Resource};
+use crate::proptypes::write_string_prop;
 use actix_web::{web::Data, HttpRequest};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
+use rustical_dav::resource::Resource;
 use rustical_store::calendar::{CalendarStore, Event};
+use std::sync::Arc;
 use tokio::sync::RwLock;
 
 pub struct EventResource<C: CalendarStore> {
