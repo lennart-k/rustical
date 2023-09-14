@@ -41,7 +41,7 @@ impl<R: Resource> HandlePropfind for R {
         if props.contains(&"allprops") {
             if props.len() != 1 {
                 // allprops MUST be the only queried prop per spec
-                return Err(anyhow!("allprops MUST be the only quereid prop"));
+                return Err(anyhow!("allprops MUST be the only queried prop"));
             }
             props = R::list_dead_props();
         }
