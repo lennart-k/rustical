@@ -60,7 +60,7 @@ impl<C: CalendarStore> Resource for EventResource<C> {
                 write_string_prop(writer, "getetag", &self.event.get_etag())?;
             }
             "calendar-data" => {
-                write_string_prop(writer, "C:calendar-data", self.event.to_ics())?;
+                write_string_prop(writer, "C:calendar-data", self.event.as_ics())?;
             }
             "getcontenttype" => {
                 write_string_prop(writer, "getcontenttype", "text/calendar;charset=utf-8")?;

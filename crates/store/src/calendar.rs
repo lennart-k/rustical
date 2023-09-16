@@ -19,11 +19,11 @@ impl Event {
     pub fn get_etag(&self) -> String {
         let mut hasher = Sha256::new();
         hasher.update(&self.uid);
-        hasher.update(self.to_ics());
+        hasher.update(self.as_ics());
         format!("{:x}", hasher.finalize())
     }
 
-    pub fn to_ics(&self) -> &str {
+    pub fn as_ics(&self) -> &str {
         &self.ics
     }
 }

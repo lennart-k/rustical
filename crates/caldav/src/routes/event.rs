@@ -53,7 +53,7 @@ pub async fn get_event<A: CheckAuthentication, C: CalendarStore>(
 
     Ok(HttpResponse::Ok()
         .insert_header(("ETag", event.get_etag()))
-        .body(event.to_ics().to_string()))
+        .body(event.as_ics().to_string()))
 }
 
 pub async fn put_event<A: CheckAuthentication, C: CalendarStore>(
