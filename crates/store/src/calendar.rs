@@ -1,17 +1,63 @@
-use anyhow::Result;
+use std::io::BufReader;
+
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
+use ical::generator::{Emitter, IcalCalendar};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone)]
 pub struct Event {
     uid: String,
-    ics: String,
+    cal: IcalCalendar,
+}
+
+// Custom implementation for Event (de)serialization
+impl<'de> Deserialize<'de> for Event {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct Inner {
+            uid: String,
+            ics: String,
+        }
+        let Inner { uid, ics } = Inner::deserialize(deserializer)?;
+        Self::from_ics(uid, ics).map_err(serde::de::Error::custom)
+    }
+}
+impl Serialize for Event {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        #[derive(Serialize)]
+        struct Inner {
+            uid: String,
+            ics: String,
+        }
+        Inner::serialize(
+            &Inner {
+                uid: self.get_uid().to_string(),
+                ics: self.get_ics().to_string(),
+            },
+            serializer,
+        )
+    }
 }
 
 impl Event {
-    pub fn from_ics(uid: String, ics: String) -> Self {
-        Self { uid, ics }
+    pub fn from_ics(uid: String, ics: String) -> Result<Self> {
+        let mut parser = ical::IcalParser::new(BufReader::new(ics.as_bytes()));
+        let cal = parser.next().ok_or(anyhow!("no calendar :("))??;
+        if parser.next().is_some() {
+            return Err(anyhow!("multiple calendars!"));
+        }
+        if cal.events.len() == 2 {
+            return Err(anyhow!("multiple events"));
+        }
+        Ok(Self { uid, cal })
     }
     pub fn get_uid(&self) -> &str {
         &self.uid
@@ -19,12 +65,12 @@ impl Event {
     pub fn get_etag(&self) -> String {
         let mut hasher = Sha256::new();
         hasher.update(&self.uid);
-        hasher.update(self.as_ics());
+        hasher.update(self.get_ics());
         format!("{:x}", hasher.finalize())
     }
 
-    pub fn as_ics(&self) -> &str {
-        &self.ics
+    pub fn get_ics(&self) -> String {
+        self.cal.generate()
     }
 }
 
@@ -37,8 +83,6 @@ pub struct Calendar {
     pub color: Option<String>,
     pub timezone: Option<String>,
 }
-
-impl Calendar {}
 
 #[async_trait]
 pub trait CalendarStore: Send + Sync + 'static {

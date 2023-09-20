@@ -24,3 +24,6 @@ serde_json = "1.0.105"
 tokio = { version = "1.32.0", features = ["sync", "full"] }
 async-trait = "0.1.73"
 thiserror = "1.0.48"
+ical = { git = "https://github.com/Peltoche/ical-rs.git", rev = "4f7aeb0", features = [
+  "generator",
+] }

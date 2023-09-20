@@ -22,3 +22,6 @@ sqlx = { version = "0.7.1", features = [
 ] }
 tokio = { version = "1.32.0", features = ["sync", "full"] }
 toml = "0.7.6"
+ical = { git = "https://github.com/Peltoche/ical-rs.git", rev = "4f7aeb0", features = [
+  "generator",
+] }
