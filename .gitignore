@@ -4,5 +4,8 @@ crates/*/target
 crates/*/Cargo.lock
 
 db.toml
+db.sqlite3
 config.toml
 schema.sql
+
+/.idea
