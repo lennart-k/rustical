@@ -4,7 +4,8 @@ use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
 use rustical_dav::resource::Resource;
-use rustical_store::calendar::{CalendarStore, Event};
+use rustical_store::calendar::CalendarStore;
+use rustical_store::event::Event;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
