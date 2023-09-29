@@ -524,13 +524,15 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "chrono"
-version = "0.4.30"
+version = "0.4.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "defd4e7873dbddba6c7c91e199c7fcb946abc4a6a4ac3195400bcfb01b5de877"
+checksum = "7f2c685bad3eb3d45a01354cedb7d5faa66194d1d58ba6e267a8de788f79db38"
 dependencies = [
  "android-tzdata",
  "iana-time-zone",
+ "js-sys",
  "num-traits",
+ "wasm-bindgen",
  "windows-targets",
 ]
 
@@ -1104,6 +1106,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f31827a206f56af32e590ba56d5d2d085f558508192593743f16b2306495269f"
 dependencies = [
  "cc",
+]
+
+[[package]]
+name = "ical"
+version = "0.7.0"
+source = "git+https://github.com/Peltoche/ical-rs.git?rev=4f7aeb0#4f7aeb0bc39d159e8349750f0bea6ff4992e479a"
+dependencies = [
+ "thiserror",
 ]
 
 [[package]]
@@ -1736,14 +1746,29 @@ dependencies = [
  "base64 0.21.3",
  "derive_more",
  "futures-util",
+ "ical",
  "quick-xml",
  "roxmltree",
  "rustical_auth",
+ "rustical_dav",
  "rustical_store",
  "serde",
  "serde_json",
  "thiserror",
  "tokio",
+]
+
+[[package]]
+name = "rustical_dav"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "anyhow",
+ "async-trait",
+ "derive_more",
+ "futures-util",
+ "quick-xml",
+ "rustical_auth",
 ]
 
 [[package]]
@@ -1766,6 +1791,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "chrono",
+ "ical",
+ "lazy_static",
+ "regex",
  "serde",
  "sha2",
  "sqlx",
