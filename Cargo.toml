@@ -8,7 +8,6 @@ rustical_store = { path = "./crates/store/" }
 rustical_auth = { path = "./crates/auth/" }
 rustical_api = { path = "./crates/api/" }
 rustical_caldav = { path = "./crates/caldav/" }
-rustical_frontend = { path = "./crates/frontend/" }
 serde = { version = "1.0.188", features = ["derive"] }
 tokio = { version = "1.32.0", features = [
   "net",

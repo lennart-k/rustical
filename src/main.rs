@@ -7,7 +7,6 @@ use config::{CalendarStoreConfig, TomlCalendarStoreConfig};
 use rustical_api::configure_api;
 use rustical_auth::AuthProvider;
 use rustical_caldav::{configure_dav, configure_well_known};
-use rustical_frontend::configure_frontend;
 use rustical_store::toml_store::TomlCalendarStore;
 use std::fs;
 use std::sync::Arc;
@@ -54,10 +53,6 @@ async fn main() -> Result<()> {
             )
             .service(
                 web::scope("/api").configure(|cfg| configure_api(cfg, cal_store.clone().into())),
-            )
-            .service(
-                web::scope("/frontend")
-                    .configure(|cfg| configure_frontend(cfg, cal_store.clone().into())),
             )
     })
     .bind(("0.0.0.0", 4000))?
