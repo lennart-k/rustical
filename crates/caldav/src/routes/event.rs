@@ -23,7 +23,7 @@ impl ResponseError for Error {
     }
 }
 
-pub async fn delete_event<A: CheckAuthentication, C: CalendarStore>(
+pub async fn delete_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     context: Data<CalDavContext<C>>,
     path: Path<(String, String, String)>,
     auth: AuthInfoExtractor<A>,
@@ -39,7 +39,7 @@ pub async fn delete_event<A: CheckAuthentication, C: CalendarStore>(
     Ok(HttpResponse::Ok().body(""))
 }
 
-pub async fn get_event<A: CheckAuthentication, C: CalendarStore>(
+pub async fn get_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     context: Data<CalDavContext<C>>,
     path: Path<(String, String, String)>,
     _auth: AuthInfoExtractor<A>,
@@ -56,7 +56,7 @@ pub async fn get_event<A: CheckAuthentication, C: CalendarStore>(
         .body(event.get_ics()))
 }
 
-pub async fn put_event<A: CheckAuthentication, C: CalendarStore>(
+pub async fn put_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     context: Data<CalDavContext<C>>,
     path: Path<(String, String, String)>,
     body: String,

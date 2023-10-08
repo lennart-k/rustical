@@ -6,14 +6,17 @@ use actix_web::{
 use rustical_store::calendar::CalendarStore;
 use tokio::sync::RwLock;
 
-pub fn configure_api<C: CalendarStore>(cfg: &mut web::ServiceConfig, store: Data<RwLock<C>>) {
+pub fn configure_api<C: CalendarStore + ?Sized>(
+    cfg: &mut web::ServiceConfig,
+    store: Data<RwLock<C>>,
+) {
     cfg.app_data(store).route(
         "/{cid}/events",
         web::method(Method::GET).to(get_events::<C>),
     );
 }
 
-pub async fn get_events<C: CalendarStore>(
+pub async fn get_events<C: CalendarStore + ?Sized>(
     store: Data<RwLock<C>>,
     path: Path<String>,
 ) -> impl Responder {

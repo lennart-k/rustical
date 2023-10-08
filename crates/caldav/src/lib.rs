@@ -19,7 +19,7 @@ pub mod proptypes;
 pub mod resources;
 pub mod routes;
 
-pub struct CalDavContext<C: CalendarStore> {
+pub struct CalDavContext<C: CalendarStore + ?Sized> {
     pub prefix: String,
     pub store: Arc<RwLock<C>>,
 }
@@ -28,7 +28,7 @@ pub fn configure_well_known(cfg: &mut web::ServiceConfig, caldav_root: String) {
     cfg.service(web::redirect("/caldav", caldav_root).permanent());
 }
 
-pub fn configure_dav<A: CheckAuthentication, C: CalendarStore>(
+pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     cfg: &mut web::ServiceConfig,
     prefix: String,
     auth: Arc<A>,

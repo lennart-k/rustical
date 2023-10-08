@@ -35,7 +35,7 @@ async fn _parse_filter(filter_node: &Node<'_, '_>) {
     }
 }
 
-async fn handle_report_calendar_query<C: CalendarStore>(
+async fn handle_report_calendar_query<C: CalendarStore + ?Sized>(
     query_node: Node<'_, '_>,
     request: HttpRequest,
     events: Vec<Event>,
@@ -76,7 +76,7 @@ async fn handle_report_calendar_query<C: CalendarStore>(
         .body(output))
 }
 
-pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore>(
+pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     context: Data<CalDavContext<C>>,
     body: String,
     path: Path<(String, String)>,
@@ -101,7 +101,7 @@ pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore>(
     handle_report_calendar_query(query_node, request, events, context.store.clone()).await
 }
 
-pub async fn handle_mkcol_calendar_set<C: CalendarStore>(
+pub async fn handle_mkcol_calendar_set<C: CalendarStore + ?Sized>(
     store: &RwLock<C>,
     prop_node: Node<'_, '_>,
     cid: String,
@@ -139,7 +139,7 @@ pub async fn handle_mkcol_calendar_set<C: CalendarStore>(
     Ok(())
 }
 
-pub async fn route_mkcol_calendar<A: CheckAuthentication, C: CalendarStore>(
+pub async fn route_mkcol_calendar<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     path: Path<(String, String)>,
     body: String,
     auth: AuthInfoExtractor<A>,

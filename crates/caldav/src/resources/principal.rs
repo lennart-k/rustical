@@ -12,7 +12,7 @@ use tokio::sync::RwLock;
 
 use super::calendar::CalendarResource;
 
-pub struct PrincipalCalendarsResource<C: CalendarStore> {
+pub struct PrincipalCalendarsResource<C: CalendarStore + ?Sized> {
     prefix: String,
     principal: String,
     path: String,
@@ -20,7 +20,7 @@ pub struct PrincipalCalendarsResource<C: CalendarStore> {
 }
 
 #[async_trait(?Send)]
-impl<C: CalendarStore> Resource for PrincipalCalendarsResource<C> {
+impl<C: CalendarStore + ?Sized> Resource for PrincipalCalendarsResource<C> {
     type UriComponents = ();
     type MemberType = CalendarResource<C>;
 

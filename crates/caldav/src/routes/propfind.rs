@@ -66,7 +66,7 @@ fn parse_propfind(body: &str) -> Result<Vec<&str>, Error> {
     }
 }
 
-pub async fn route_propfind<A: CheckAuthentication, R: Resource, C: CalendarStore>(
+pub async fn route_propfind<A: CheckAuthentication, R: Resource, C: CalendarStore + ?Sized>(
     path: Path<R::UriComponents>,
     body: String,
     req: HttpRequest,

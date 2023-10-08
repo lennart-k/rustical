@@ -9,14 +9,14 @@ use rustical_store::event::Event;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-pub struct EventResource<C: CalendarStore> {
+pub struct EventResource<C: CalendarStore + ?Sized> {
     pub cal_store: Arc<RwLock<C>>,
     pub path: String,
     pub event: Event,
 }
 
 #[async_trait(?Send)]
-impl<C: CalendarStore> Resource for EventResource<C> {
+impl<C: CalendarStore + ?Sized> Resource for EventResource<C> {
     type UriComponents = (String, String, String); // principal, calendar, event
     type MemberType = Self;
 

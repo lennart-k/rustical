@@ -11,7 +11,7 @@ use tokio::sync::RwLock;
 use crate::proptypes::{write_href_prop, write_string_prop};
 use rustical_dav::{resource::Resource, xml_snippets::write_resourcetype};
 
-pub struct CalendarResource<C: CalendarStore> {
+pub struct CalendarResource<C: CalendarStore + ?Sized> {
     pub cal_store: Arc<RwLock<C>>,
     pub calendar: Calendar,
     pub path: String,
@@ -20,7 +20,7 @@ pub struct CalendarResource<C: CalendarStore> {
 }
 
 #[async_trait(?Send)]
-impl<C: CalendarStore> Resource for CalendarResource<C> {
+impl<C: CalendarStore + ?Sized> Resource for CalendarResource<C> {
     type MemberType = Self;
     type UriComponents = (String, String); // principal, calendar_id
 
