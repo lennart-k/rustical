@@ -22,3 +22,15 @@ actix-web = "4.4.0"
 anyhow = { version = "1.0.75", features = ["backtrace"] }
 toml = "0.7.6"
 clap = { version = "4.4.2", features = ["derive", "env"] }
+sqlx = { version = "0.7.1", features = [
+  "sqlx-sqlite",
+  "sqlx-postgres",
+  "uuid",
+  "time",
+  "chrono",
+  "postgres",
+  "sqlite",
+  "runtime-tokio",
+  "migrate",
+] }
+async-trait = "0.1.73"

@@ -7,9 +7,15 @@ pub struct TomlCalendarStoreConfig {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+pub struct SqliteCalendarStoreConfig {
+    pub db_url: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(tag = "backend", rename_all = "snake_case")]
 pub enum CalendarStoreConfig {
     Toml(TomlCalendarStoreConfig),
+    Sqlite(SqliteCalendarStoreConfig),
 }
 
 #[derive(Debug, Deserialize, Serialize)]

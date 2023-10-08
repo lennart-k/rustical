@@ -19,6 +19,7 @@ sqlx = { version = "0.7.1", features = [
   "postgres",
   "sqlite",
   "runtime-tokio",
+  "migrate",
 ] }
 tokio = { version = "1.32.0", features = ["sync", "full"] }
 toml = "0.7.6"

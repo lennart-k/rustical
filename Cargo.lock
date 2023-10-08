@@ -1644,6 +1644,7 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "anyhow",
+ "async-trait",
  "clap",
  "env_logger",
  "rustical_api",
@@ -1651,6 +1652,7 @@ dependencies = [
  "rustical_caldav",
  "rustical_store",
  "serde",
+ "sqlx",
  "tokio",
  "toml",
  "tracing",
