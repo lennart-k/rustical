@@ -10,6 +10,7 @@ use rustical_caldav::{configure_dav, configure_well_known};
 use rustical_store::calendar::CalendarStore;
 use rustical_store::sqlite_store::SqliteCalendarStore;
 use rustical_store::toml_store::TomlCalendarStore;
+use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::SqlitePool;
 use std::fs;
 use std::sync::Arc;
@@ -39,7 +40,13 @@ async fn main() -> Result<()> {
             }))
         }
         CalendarStoreConfig::Sqlite(SqliteCalendarStoreConfig { db_url }) => {
-            let db = SqlitePool::connect(db_url).await?;
+            let db = SqlitePool::connect_with(
+                SqliteConnectOptions::new()
+                    .filename(db_url)
+                    .create_if_missing(true),
+            )
+            .await?;
+            sqlx::migrate!("./migrations").run(&db).await?;
             Arc::new(RwLock::new(SqliteCalendarStore::new(Arc::new(db))))
         }
     };
