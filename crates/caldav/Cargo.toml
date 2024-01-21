@@ -4,26 +4,26 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-actix-web = "4.4.0"
-actix-web-httpauth = "0.8.0"
-anyhow = { version = "1.0.75", features = ["backtrace"] }
-base64 = "0.21.3"
-derive_more = "0.99.17"
-futures-util = "0.3.28"
-quick-xml = { version = "0.30.0", features = [
+actix-web = "4.4"
+actix-web-httpauth = "0.8"
+anyhow = { version = "1.0", features = ["backtrace"] }
+base64 = "0.21"
+derive_more = "0.99"
+futures-util = "0.3"
+quick-xml = { version = "0.30", features = [
   "serde",
   "serde-types",
   "serialize",
 ] }
-roxmltree = "0.18.0"
+roxmltree = "0.19"
 rustical_store = { path = "../store/" }
 rustical_dav = { path = "../dav/" }
 rustical_auth = { path = "../auth/" }
-serde = { version = "1.0.188", features = ["serde_derive", "derive"] }
-serde_json = "1.0.105"
-tokio = { version = "1.32.0", features = ["sync", "full"] }
-async-trait = "0.1.73"
-thiserror = "1.0.48"
+serde = { version = "1.0", features = ["serde_derive", "derive"] }
+serde_json = "1.0"
+tokio = { version = "1.35", features = ["sync", "full"] }
+async-trait = "0.1"
+thiserror = "1.0"
 ical = { git = "https://github.com/Peltoche/ical-rs.git", features = [
   "generator",
 ] }

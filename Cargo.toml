@@ -8,21 +8,21 @@ rustical_store = { path = "./crates/store/" }
 rustical_auth = { path = "./crates/auth/" }
 rustical_api = { path = "./crates/api/" }
 rustical_caldav = { path = "./crates/caldav/" }
-serde = { version = "1.0.188", features = ["derive"] }
-tokio = { version = "1.32.0", features = [
+serde = { version = "1.0", features = ["derive"] }
+tokio = { version = "1.35", features = [
   "net",
   "tracing",
   "macros",
   "rt-multi-thread",
   "full",
 ] }
-tracing = "0.1.37"
-env_logger = "0.10.0"
-actix-web = "4.4.0"
-anyhow = { version = "1.0.75", features = ["backtrace"] }
-toml = "0.7.6"
-clap = { version = "4.4.2", features = ["derive", "env"] }
-sqlx = { version = "0.7.1", features = [
+tracing = "0.1"
+env_logger = "0.11"
+actix-web = "4.4"
+anyhow = { version = "1.0", features = ["backtrace"] }
+toml = "0.8"
+clap = { version = "4.4", features = ["derive", "env"] }
+sqlx = { version = "0.7", features = [
   "sqlx-sqlite",
   "sqlx-postgres",
   "uuid",
@@ -33,4 +33,4 @@ sqlx = { version = "0.7.1", features = [
   "runtime-tokio",
   "migrate",
 ] }
-async-trait = "0.1.73"
+async-trait = "0.1"
