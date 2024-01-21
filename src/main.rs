@@ -69,7 +69,7 @@ async fn main() -> Result<()> {
                 web::scope("/api").configure(|cfg| configure_api(cfg, cal_store.clone().into())),
             )
     })
-    .bind(("0.0.0.0", 4000))?
+    .bind((config.http.host, config.http.port))?
     .run()
     .await?;
     Ok(())

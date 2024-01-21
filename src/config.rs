@@ -2,6 +2,12 @@ use rustical_auth::{AuthProvider, HtpasswdAuthConfig};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
+pub struct HttpConfig {
+    pub host: String,
+    pub port: u16,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 pub struct TomlCalendarStoreConfig {
     pub db_path: String,
 }
@@ -40,4 +46,5 @@ impl From<AuthConfig> for AuthProvider {
 pub struct Config {
     pub calendar_store: CalendarStoreConfig,
     pub auth: AuthConfig,
+    pub http: HttpConfig,
 }
