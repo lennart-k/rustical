@@ -9,3 +9,5 @@ config.toml
 schema.sql
 
 /.idea
+
+.env
