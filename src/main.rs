@@ -23,16 +23,15 @@ mod config;
 struct Args {
     #[arg(short, long, env)]
     config_file: String,
+    #[arg(long, env, help = "Run database migrations (only for sql store)")]
+    migrate: bool,
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
-    env_logger::init_from_env(env_logger::Env::default().default_filter_or("info"));
-
-    let args = Args::parse();
-    let config: Config = toml::from_str(&fs::read_to_string(&args.config_file)?)?;
-
-    let cal_store: Arc<RwLock<dyn CalendarStore>> = match &config.calendar_store {
+async fn get_cal_store(
+    migrate: bool,
+    config: &CalendarStoreConfig,
+) -> Result<Arc<RwLock<dyn CalendarStore>>> {
+    let cal_store: Arc<RwLock<dyn CalendarStore>> = match &config {
         CalendarStoreConfig::Toml(TomlCalendarStoreConfig { db_path }) => {
             Arc::new(RwLock::new(match fs::read_to_string(db_path) {
                 Ok(content) => toml::from_str::<TomlCalendarStore>(&content).unwrap(),
@@ -46,10 +45,24 @@ async fn main() -> Result<()> {
                     .create_if_missing(true),
             )
             .await?;
-            sqlx::migrate!("./migrations").run(&db).await?;
-            Arc::new(RwLock::new(SqliteCalendarStore::new(Arc::new(db))))
+            if migrate {
+                println!("Running database migrations");
+                sqlx::migrate!("./migrations").run(&db).await?;
+            }
+            Arc::new(RwLock::new(SqliteCalendarStore::new(db)))
         }
     };
+    Ok(cal_store)
+}
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    env_logger::init_from_env(env_logger::Env::default().default_filter_or("info"));
+
+    let args = Args::parse();
+    let config: Config = toml::from_str(&fs::read_to_string(&args.config_file)?)?;
+
+    let cal_store = get_cal_store(args.migrate, &config.calendar_store).await?;
 
     let auth: Arc<AuthProvider> = Arc::new(config.auth.into());
 
