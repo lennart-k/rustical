@@ -10,7 +10,8 @@ CREATE TABLE calendars (
 CREATE TABLE events (
   uid TEXT NOT NULL,
   cid TEXT NOT NULL,
+  ics TEXT NOT NULL,
   PRIMARY KEY (cid, uid),
-  FOREIGN KEY (cid) REFERENCES calendars(uid)
+  FOREIGN KEY (cid) REFERENCES calendars(id)
 );
 
