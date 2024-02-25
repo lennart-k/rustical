@@ -114,7 +114,7 @@ impl<C: CalendarStore + ?Sized> Resource for CalendarResource<C> {
                             .create_element("C:comp")
                             .with_attribute(("name", "VEVENT"))
                             .write_empty()?;
-                        Ok(())
+                        Ok::<(), quick_xml::Error>(())
                     })?;
             }
             "supported-calendar-data" => {
@@ -129,7 +129,7 @@ impl<C: CalendarStore + ?Sized> Resource for CalendarResource<C> {
                                 ("version", "2.0"),
                             ])
                             .write_empty()?;
-                        Ok(())
+                        Ok::<(), quick_xml::Error>(())
                     })?;
             }
             "getcontenttype" => {
@@ -157,10 +157,10 @@ impl<C: CalendarStore + ?Sized> Resource for CalendarResource<C> {
                                 .create_element("privilege")
                                 .write_inner_content(|writer| {
                                     writer.create_element(privilege).write_empty()?;
-                                    Ok(())
+                                    Ok::<(), quick_xml::Error>(())
                                 })?;
                         }
-                        Ok(())
+                        Ok::<(), quick_xml::Error>(())
                     })?;
             }
             _ => {

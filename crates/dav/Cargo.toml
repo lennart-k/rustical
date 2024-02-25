@@ -9,5 +9,5 @@ anyhow = "1.0"
 async-trait = "0.1"
 derive_more = "0.99"
 futures-util = "0.3"
-quick-xml = "0.30"
+quick-xml = "0.31"
 rustical_auth = { path = "../auth/" }

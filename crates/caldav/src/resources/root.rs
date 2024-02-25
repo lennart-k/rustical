@@ -54,7 +54,7 @@ impl Resource for RootResource {
                                 "{}/{}",
                                 self.prefix, self.principal
                             )))?;
-                        Ok(())
+                        Ok::<(), quick_xml::Error>(())
                     })?;
             }
             _ => return Err(anyhow!("invalid prop!")),

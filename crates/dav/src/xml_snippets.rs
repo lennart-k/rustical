@@ -17,7 +17,7 @@ pub fn write_resourcetype<W: Write>(
             for resourcetype in types {
                 writer.create_element(resourcetype).write_empty()?;
             }
-            Ok(())
+            Ok::<(), quick_xml::Error>(())
         })?;
     Ok(())
 }
@@ -35,7 +35,7 @@ pub fn write_invalid_props_response<W: Write>(
         for prop in invalid_props {
             writer.create_element(prop).write_empty()?;
         }
-        Ok(())
+        Ok::<(), quick_xml::Error>(())
     })?;
 
     Ok(())
@@ -59,7 +59,7 @@ where
             writer
                 .create_element("status")
                 .write_text_content(BytesText::new(&format!("HTTP/1.1 {}", status)))?;
-            Ok(())
+            Ok::<(), quick_xml::Error>(())
         })?;
     Ok(())
 }
@@ -84,7 +84,7 @@ where
 
             write_propstat_element(writer, status, prop_closure)?;
 
-            Ok(())
+            Ok::<(), quick_xml::Error>(())
         })?;
     Ok(())
 }

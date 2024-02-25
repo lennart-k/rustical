@@ -92,7 +92,7 @@ impl<C: CalendarStore + ?Sized> Resource for PrincipalCalendarsResource<C> {
                                 "{}/{}/",
                                 self.prefix, self.principal
                             )))?;
-                        Ok(())
+                        Ok::<(), quick_xml::Error>(())
                     })?;
             }
             "allprops" => {}
