@@ -6,10 +6,8 @@ use clap::Parser;
 use config::{CalendarStoreConfig, SqliteCalendarStoreConfig, TomlCalendarStoreConfig};
 use rustical_auth::AuthProvider;
 use rustical_store::calendar::CalendarStore;
-use rustical_store::sqlite_store::SqliteCalendarStore;
+use rustical_store::sqlite_store::{create_db_pool, SqliteCalendarStore};
 use rustical_store::toml_store::TomlCalendarStore;
-use sqlx::sqlite::SqliteConnectOptions;
-use sqlx::SqlitePool;
 use std::fs;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -38,16 +36,7 @@ async fn get_cal_store(
             }))
         }
         CalendarStoreConfig::Sqlite(SqliteCalendarStoreConfig { db_url }) => {
-            let db = SqlitePool::connect_with(
-                SqliteConnectOptions::new()
-                    .filename(db_url)
-                    .create_if_missing(true),
-            )
-            .await?;
-            if migrate {
-                println!("Running database migrations");
-                sqlx::migrate!("./migrations").run(&db).await?;
-            }
+            let db = create_db_pool(db_url, migrate).await?;
             Arc::new(RwLock::new(SqliteCalendarStore::new(db)))
         }
     };

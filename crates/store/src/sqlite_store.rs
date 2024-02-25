@@ -1,6 +1,6 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use sqlx::SqlitePool;
+use sqlx::{sqlite::SqliteConnectOptions, Pool, Sqlite, SqlitePool};
 
 use crate::{
     calendar::{Calendar, CalendarStore},
@@ -110,4 +110,18 @@ impl CalendarStore for SqliteCalendarStore {
             .await?;
         Ok(())
     }
+}
+
+pub async fn create_db_pool(db_url: &str, migrate: bool) -> anyhow::Result<Pool<Sqlite>>{
+    let db = SqlitePool::connect_with(
+        SqliteConnectOptions::new()
+            .filename(db_url)
+            .create_if_missing(true),
+    )
+    .await?;
+    if migrate {
+        println!("Running database migrations");
+        sqlx::migrate!("./migrations").run(&db).await?;
+    }
+    Ok(db)
 }
