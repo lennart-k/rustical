@@ -1,10 +1,8 @@
 use crate::timestamps::{parse_datetime, parse_duration};
 use anyhow::{anyhow, Result};
 use chrono::{Duration, NaiveDateTime, Timelike};
-use ical::{
-    generator::{Emitter, IcalCalendar},
-    parser::Component,
-};
+use ical::generator::Emitter;
+use ical::parser::{ical::component::IcalCalendar, Component};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::io::BufReader;

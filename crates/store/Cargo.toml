@@ -23,9 +23,7 @@ sqlx = { version = "0.7", features = [
 ] }
 tokio = { version = "1.35", features = ["sync", "full"] }
 toml = "0.8"
-ical = { git = "https://github.com/Peltoche/ical-rs.git", features = [
-  "generator",
-] }
+ical = { version = "0.10", features = ["generator", "serde"] }
 chrono = "0.4"
 regex = "1.10"
 lazy_static = "1.4"
