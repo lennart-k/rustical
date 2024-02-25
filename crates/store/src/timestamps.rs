@@ -36,7 +36,7 @@ pub fn parse_duration(string: &str) -> Result<Duration> {
 }
 
 #[test]
-pub fn test_parse_duration() {
+fn test_parse_duration() {
     assert_eq!(parse_duration("P12W").unwrap(), Duration::weeks(12));
     assert_eq!(parse_duration("P12D").unwrap(), Duration::days(12));
     assert_eq!(parse_duration("PT12H").unwrap(), Duration::hours(12));
