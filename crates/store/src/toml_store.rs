@@ -10,7 +10,7 @@ use tokio::{fs::File, io::AsyncWriteExt};
 pub struct TomlCalendarStore {
     calendars: HashMap<String, Calendar>,
     events: HashMap<String, HashMap<String, Event>>,
-    path: String,
+    path: Option<String>,
 }
 
 impl TomlCalendarStore {
@@ -18,14 +18,24 @@ impl TomlCalendarStore {
         TomlCalendarStore {
             calendars: HashMap::new(),
             events: HashMap::new(),
-            path,
+            path: Some(path),
+        }
+    }
+
+    pub fn test() -> Self {
+        TomlCalendarStore {
+            calendars: HashMap::new(),
+            events: HashMap::new(),
+            path: None,
         }
     }
 
     pub async fn save(&self) -> Result<()> {
-        let mut file = File::create(&self.path).await?;
         let output = toml::to_string_pretty(&self)?;
-        file.write_all(output.as_bytes()).await?;
+        if let Some(path) = &self.path {
+            let mut file = File::create(path).await?;
+            file.write_all(output.as_bytes()).await?;
+        }
         Ok(())
     }
 }
