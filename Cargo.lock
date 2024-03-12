@@ -1651,6 +1651,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "rstest_reuse"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "88530b681abe67924d42cca181d070e3ac20e0740569441a9e35a7cedd2b34a4"
+dependencies = [
+ "quote",
+ "rand",
+ "rustc_version",
+ "syn 2.0.50",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1674,7 +1686,6 @@ dependencies = [
  "async-trait",
  "clap",
  "env_logger",
- "rustical_api",
  "rustical_auth",
  "rustical_caldav",
  "rustical_store",
@@ -1683,18 +1694,6 @@ dependencies = [
  "tokio",
  "toml",
  "tracing",
-]
-
-[[package]]
-name = "rustical_api"
-version = "0.1.0"
-dependencies = [
- "actix-web",
- "anyhow",
- "rustical_store",
- "serde",
- "serde_json",
- "tokio",
 ]
 
 [[package]]
@@ -1755,6 +1754,7 @@ dependencies = [
  "lazy_static",
  "regex",
  "rstest",
+ "rstest_reuse",
  "serde",
  "sha2",
  "sqlx",

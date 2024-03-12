@@ -4,7 +4,6 @@ use actix_web::body::MessageBody;
 use actix_web::dev::{ServiceFactory, ServiceRequest, ServiceResponse};
 use actix_web::middleware::{Logger, NormalizePath};
 use actix_web::{web, App};
-use rustical_api::configure_api;
 use rustical_auth::CheckAuthentication;
 use rustical_caldav::{configure_dav, configure_well_known};
 use rustical_store::calendar::CalendarStore;
@@ -32,5 +31,4 @@ pub fn make_app<CS: CalendarStore + ?Sized, A: CheckAuthentication>(
             web::scope("/.well-known")
                 .configure(|cfg| configure_well_known(cfg, "/caldav".to_string())),
         )
-        .service(web::scope("/api").configure(|cfg| configure_api(cfg, cal_store.clone().into())))
 }
