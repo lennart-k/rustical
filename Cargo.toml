@@ -4,6 +4,9 @@ version = "0.1.0"
 edition = "2021"
 resolver = "2"
 
+[workspace]
+members = ["crates/*"]
+
 [dependencies]
 rustical_store = { path = "./crates/store/" }
 rustical_auth = { path = "./crates/auth/" }
