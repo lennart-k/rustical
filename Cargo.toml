@@ -2,6 +2,7 @@
 name = "rustical"
 version = "0.1.0"
 edition = "2021"
+resolver = "2"
 
 [dependencies]
 rustical_store = { path = "./crates/store/" }
