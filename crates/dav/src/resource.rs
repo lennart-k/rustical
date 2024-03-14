@@ -1,10 +1,11 @@
-use std::io::Write;
+use std::{io::Write, str::FromStr};
 
 use actix_web::{http::StatusCode, HttpRequest};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use quick_xml::Writer;
 use rustical_auth::AuthInfo;
+use strum::VariantNames;
 
 use crate::xml_snippets::{write_invalid_props_response, write_propstat_response};
 
@@ -16,6 +17,7 @@ use crate::xml_snippets::{write_invalid_props_response, write_propstat_response}
 pub trait Resource: Sized {
     type MemberType: Resource;
     type UriComponents: Sized; // defines how the resource URI maps to parameters, i.e. /{principal}/{calendar} -> (String, String)
+    type PropType: FromStr + VariantNames;
 
     async fn acquire_from_request(
         req: HttpRequest,
@@ -27,8 +29,10 @@ pub trait Resource: Sized {
     fn get_path(&self) -> &str;
     async fn get_members(&self) -> Result<Vec<Self::MemberType>>;
 
-    fn list_dead_props() -> Vec<&'static str>;
-    fn write_prop<W: Write>(&self, writer: &mut Writer<W>, prop: &str) -> Result<()>;
+    fn list_dead_props() -> &'static [&'static str] {
+        Self::PropType::VARIANTS
+    }
+    fn write_prop<W: Write>(&self, writer: &mut Writer<W>, prop: Self::PropType) -> Result<()>;
 }
 
 pub trait HandlePropfind {
@@ -43,7 +47,7 @@ impl<R: Resource> HandlePropfind for R {
                 // allprops MUST be the only queried prop per spec
                 return Err(anyhow!("allprops MUST be the only queried prop"));
             }
-            props = R::list_dead_props();
+            props = R::list_dead_props().into();
         }
 
         let mut invalid_props = Vec::<&str>::new();
@@ -53,14 +57,20 @@ impl<R: Resource> HandlePropfind for R {
 
         write_propstat_response(&mut writer, self.get_path(), StatusCode::OK, |writer| {
             for prop in props {
-                // TODO: Fix error types
-                match self
-                    .write_prop(writer, prop)
-                    .map_err(|_e| quick_xml::Error::TextNotFound)
-                {
-                    Ok(_) => {}
-                    Err(_) => invalid_props.push(prop),
-                };
+                if let Ok(valid_prop) = R::PropType::from_str(prop) {
+                    // TODO: Fix error types
+                    match self
+                        .write_prop(writer, valid_prop)
+                        .map_err(|_e| quick_xml::Error::TextNotFound)
+                    {
+                        // TODO: clean this mess up
+                        Ok(_) => {}
+                        // not really an invalid prop, but some error happened
+                        Err(_) => invalid_props.push(prop),
+                    };
+                } else {
+                    invalid_props.push(prop);
+                }
             }
             Ok(())
         })?;

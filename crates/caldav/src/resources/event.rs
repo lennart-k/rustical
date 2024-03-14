@@ -7,6 +7,7 @@ use rustical_dav::resource::Resource;
 use rustical_store::calendar::CalendarStore;
 use rustical_store::event::Event;
 use std::sync::Arc;
+use strum::{EnumString, VariantNames};
 use tokio::sync::RwLock;
 
 pub struct EventResource<C: CalendarStore + ?Sized> {
@@ -15,10 +16,19 @@ pub struct EventResource<C: CalendarStore + ?Sized> {
     pub event: Event,
 }
 
+#[derive(EnumString, Debug, VariantNames)]
+#[strum(serialize_all = "kebab-case")]
+pub enum EventProp {
+    Getetag,
+    CalendarData,
+    Getcontenttype,
+}
+
 #[async_trait(?Send)]
 impl<C: CalendarStore + ?Sized> Resource for EventResource<C> {
     type UriComponents = (String, String, String); // principal, calendar, event
     type MemberType = Self;
+    type PropType = EventProp;
 
     fn get_path(&self) -> &str {
         &self.path
@@ -54,24 +64,19 @@ impl<C: CalendarStore + ?Sized> Resource for EventResource<C> {
     fn write_prop<W: std::io::Write>(
         &self,
         writer: &mut quick_xml::Writer<W>,
-        prop: &str,
+        prop: Self::PropType,
     ) -> Result<()> {
         match prop {
-            "getetag" => {
+            EventProp::Getetag => {
                 write_string_prop(writer, "getetag", &self.event.get_etag())?;
             }
-            "calendar-data" => {
+            EventProp::CalendarData => {
                 write_string_prop(writer, "C:calendar-data", &self.event.get_ics())?;
             }
-            "getcontenttype" => {
+            EventProp::Getcontenttype => {
                 write_string_prop(writer, "getcontenttype", "text/calendar;charset=utf-8")?;
             }
-            _ => return Err(anyhow!("invalid prop!")),
         };
         Ok(())
-    }
-
-    fn list_dead_props() -> Vec<&'static str> {
-        vec!["getetag", "calendar-data", "getcontenttype"]
     }
 }

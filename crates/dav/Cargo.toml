@@ -11,3 +11,4 @@ derive_more = "0.99"
 futures-util = "0.3"
 quick-xml = "0.31"
 rustical_auth = { path = "../auth/" }
+strum = "0.26.2"

@@ -4,6 +4,7 @@ use async_trait::async_trait;
 use quick_xml::events::BytesText;
 use rustical_auth::AuthInfo;
 use rustical_dav::{resource::Resource, xml_snippets::write_resourcetype};
+use strum::{EnumString, VariantNames};
 
 pub struct RootResource {
     prefix: String,
@@ -11,10 +12,18 @@ pub struct RootResource {
     path: String,
 }
 
+#[derive(EnumString, Debug, VariantNames)]
+#[strum(serialize_all = "kebab-case")]
+pub enum RootProp {
+    Resourcetype,
+    CurrentUserPrincipal,
+}
+
 #[async_trait(?Send)]
 impl Resource for RootResource {
     type UriComponents = ();
     type MemberType = Self;
+    type PropType = RootProp;
 
     fn get_path(&self) -> &str {
         &self.path
@@ -40,11 +49,11 @@ impl Resource for RootResource {
     fn write_prop<W: std::io::Write>(
         &self,
         writer: &mut quick_xml::Writer<W>,
-        prop: &str,
+        prop: Self::PropType,
     ) -> Result<()> {
         match prop {
-            "resourcetype" => write_resourcetype(writer, vec!["collection"])?,
-            "current-user-principal" => {
+            RootProp::Resourcetype => write_resourcetype(writer, vec!["collection"])?,
+            RootProp::CurrentUserPrincipal => {
                 writer
                     .create_element("current-user-principal")
                     .write_inner_content(|writer| {
@@ -57,12 +66,7 @@ impl Resource for RootResource {
                         Ok::<(), quick_xml::Error>(())
                     })?;
             }
-            _ => return Err(anyhow!("invalid prop!")),
         };
         Ok(())
-    }
-
-    fn list_dead_props() -> Vec<&'static str> {
-        vec!["resourcetype", "current-user-principal"]
     }
 }

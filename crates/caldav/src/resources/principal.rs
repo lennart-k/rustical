@@ -8,6 +8,7 @@ use quick_xml::events::BytesText;
 use rustical_auth::AuthInfo;
 use rustical_dav::{resource::Resource, xml_snippets::write_resourcetype};
 use rustical_store::calendar::CalendarStore;
+use strum::{EnumString, IntoStaticStr, VariantNames};
 use tokio::sync::RwLock;
 
 use super::calendar::CalendarResource;
@@ -19,10 +20,22 @@ pub struct PrincipalCalendarsResource<C: CalendarStore + ?Sized> {
     cal_store: Arc<RwLock<C>>,
 }
 
+#[derive(EnumString, Debug, VariantNames, IntoStaticStr)]
+#[strum(serialize_all = "kebab-case")]
+pub enum PrincipalProp {
+    Resourcetype,
+    CurrentUserPrincipal,
+    #[strum(serialize = "principal-URL")]
+    PrincipalUrl,
+    CalendarHomeSet,
+    CalendarUserAddressSet,
+}
+
 #[async_trait(?Send)]
 impl<C: CalendarStore + ?Sized> Resource for PrincipalCalendarsResource<C> {
     type UriComponents = ();
     type MemberType = CalendarResource<C>;
+    type PropType = PrincipalProp;
 
     fn get_path(&self) -> &str {
         &self.path
@@ -71,20 +84,23 @@ impl<C: CalendarStore + ?Sized> Resource for PrincipalCalendarsResource<C> {
     fn write_prop<W: std::io::Write>(
         &self,
         writer: &mut quick_xml::Writer<W>,
-        prop: &str,
+        prop: Self::PropType,
     ) -> Result<()> {
         match prop {
-            "resourcetype" => write_resourcetype(writer, vec!["principal", "collection"])?,
-            "current-user-principal" | "principal-URL" => {
+            PrincipalProp::Resourcetype => {
+                write_resourcetype(writer, vec!["principal", "collection"])?
+            }
+            PrincipalProp::CurrentUserPrincipal | PrincipalProp::PrincipalUrl => {
                 write_href_prop(
                     writer,
-                    prop,
+                    prop.into(),
                     &format!("{}/{}/", self.prefix, self.principal),
                 )?;
             }
-            "calendar-home-set" | "calendar-user-address-set" => {
+            PrincipalProp::CalendarHomeSet | PrincipalProp::CalendarUserAddressSet => {
+                let propname: &'static str = prop.into();
                 writer
-                    .create_element(&format!("C:{prop}"))
+                    .create_element(&format!("C:{propname}"))
                     .write_inner_content(|writer| {
                         writer
                             .create_element("href")
@@ -95,21 +111,7 @@ impl<C: CalendarStore + ?Sized> Resource for PrincipalCalendarsResource<C> {
                         Ok::<(), quick_xml::Error>(())
                     })?;
             }
-            "allprops" => {}
-            _ => {
-                return Err(anyhow!("invalid prop"));
-            }
         };
         Ok(())
-    }
-
-    fn list_dead_props() -> Vec<&'static str> {
-        vec![
-            "resourcetype",
-            "current-user-principal",
-            "principal-URL",
-            "calendar-home-set",
-            "calendar-user-address-set",
-        ]
     }
 }

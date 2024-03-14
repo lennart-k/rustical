@@ -6,6 +6,7 @@ use async_trait::async_trait;
 use quick_xml::{events::BytesText, Writer};
 use rustical_auth::AuthInfo;
 use rustical_store::calendar::{Calendar, CalendarStore};
+use strum::{EnumString, IntoStaticStr, VariantNames};
 use tokio::sync::RwLock;
 
 use crate::proptypes::{write_href_prop, write_string_prop};
@@ -19,10 +20,27 @@ pub struct CalendarResource<C: CalendarStore + ?Sized> {
     pub principal: String,
 }
 
+#[derive(EnumString, Debug, VariantNames, IntoStaticStr)]
+#[strum(serialize_all = "kebab-case")]
+pub enum CalendarProp {
+    Resourcetype,
+    CurrentUserPrincipal,
+    Displayname,
+    SupportedCalendarComponentSet,
+    SupportedCalendarData,
+    Getcontenttype,
+    CalendarDescription,
+    Owner,
+    CalendarColor,
+    CurrentUserPrivilegeSet,
+    MaxResourceSize,
+}
+
 #[async_trait(?Send)]
 impl<C: CalendarStore + ?Sized> Resource for CalendarResource<C> {
     type MemberType = Self;
     type UriComponents = (String, String); // principal, calendar_id
+    type PropType = CalendarProp;
 
     async fn acquire_from_request(
         req: HttpRequest,
@@ -56,33 +74,19 @@ impl<C: CalendarStore + ?Sized> Resource for CalendarResource<C> {
         Ok(vec![])
     }
 
-    #[inline]
-    fn list_dead_props() -> Vec<&'static str> {
-        vec![
-            "resourcetype",
-            "current-user-principal",
-            "displayname",
-            "supported-calendar-component-set",
-            "supported-calendar-data",
-            "getcontenttype",
-            "calendar-description",
-            "owner",
-            "calendar-color",
-            "current-user-privilege-set",
-            "max-resource-size",
-        ]
-    }
-    fn write_prop<W: Write>(&self, writer: &mut Writer<W>, prop: &str) -> Result<()> {
+    fn write_prop<W: Write>(&self, writer: &mut Writer<W>, prop: Self::PropType) -> Result<()> {
         match prop {
-            "resourcetype" => write_resourcetype(writer, vec!["C:calendar", "collection"])?,
-            "current-user-principal" | "owner" => {
+            CalendarProp::Resourcetype => {
+                write_resourcetype(writer, vec!["C:calendar", "collection"])?
+            }
+            CalendarProp::CurrentUserPrincipal | CalendarProp::Owner => {
                 write_href_prop(
                     writer,
-                    prop,
+                    prop.into(),
                     &format!("{}/{}/", self.prefix, self.principal),
                 )?;
             }
-            "displayname" => {
+            CalendarProp::Displayname => {
                 let el = writer.create_element("displayname");
                 if let Some(name) = self.calendar.clone().name {
                     el.write_text_content(BytesText::new(&name))?;
@@ -90,7 +94,7 @@ impl<C: CalendarStore + ?Sized> Resource for CalendarResource<C> {
                     el.write_empty()?;
                 }
             }
-            "calendar-color" => {
+            CalendarProp::CalendarColor => {
                 let el = writer.create_element("IC:calendar-color");
                 if let Some(color) = self.calendar.clone().color {
                     el.write_text_content(BytesText::new(&color))?;
@@ -98,7 +102,7 @@ impl<C: CalendarStore + ?Sized> Resource for CalendarResource<C> {
                     el.write_empty()?;
                 }
             }
-            "calendar-description" => {
+            CalendarProp::CalendarDescription => {
                 let el = writer.create_element("C:calendar-description");
                 if let Some(description) = self.calendar.clone().description {
                     el.write_text_content(BytesText::new(&description))?;
@@ -106,7 +110,7 @@ impl<C: CalendarStore + ?Sized> Resource for CalendarResource<C> {
                     el.write_empty()?;
                 }
             }
-            "supported-calendar-component-set" => {
+            CalendarProp::SupportedCalendarComponentSet => {
                 writer
                     .create_element("C:supported-calendar-component-set")
                     .write_inner_content(|writer| {
@@ -117,7 +121,7 @@ impl<C: CalendarStore + ?Sized> Resource for CalendarResource<C> {
                         Ok::<(), quick_xml::Error>(())
                     })?;
             }
-            "supported-calendar-data" => {
+            CalendarProp::SupportedCalendarData => {
                 writer
                     .create_element("C:supported-calendar-data")
                     .write_inner_content(|writer| {
@@ -132,13 +136,13 @@ impl<C: CalendarStore + ?Sized> Resource for CalendarResource<C> {
                         Ok::<(), quick_xml::Error>(())
                     })?;
             }
-            "getcontenttype" => {
+            CalendarProp::Getcontenttype => {
                 write_string_prop(writer, "getcontenttype", "text/calendar")?;
             }
-            "max-resource-size" => {
+            CalendarProp::MaxResourceSize => {
                 write_string_prop(writer, "max-resource-size", "10000000")?;
             }
-            "current-user-privilege-set" => {
+            CalendarProp::CurrentUserPrivilegeSet => {
                 writer
                     .create_element("current-user-privilege-set")
                     // These are just hard-coded for now and will possibly change in the future
@@ -162,9 +166,6 @@ impl<C: CalendarStore + ?Sized> Resource for CalendarResource<C> {
                         }
                         Ok::<(), quick_xml::Error>(())
                     })?;
-            }
-            _ => {
-                return Err(anyhow!("invalid prop"));
             }
         };
         Ok(())
