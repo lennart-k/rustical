@@ -58,6 +58,7 @@ pub fn parse_propfind(body: &str) -> Result<Vec<&str>, Error> {
     match prop_node.tag_name().name() {
         "prop" => Ok(prop_node
             .children()
+            .filter(|node| node.is_element())
             .map(|node| node.tag_name().name())
             .collect()),
         _ => Err(Error::InvalidPropfind(
