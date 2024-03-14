@@ -7,10 +7,7 @@ use serde::Serialize;
 use std::str::FromStr;
 use strum::{EnumProperty, VariantNames};
 
-use crate::{
-    tagname::TagName,
-    xml_snippets::{write_invalid_props_response, write_propstat_response},
-};
+use crate::xml_snippets::TagList;
 
 // A resource is identified by a URI and has properties
 // A resource can also be a collection
@@ -39,6 +36,26 @@ pub trait Resource: Sized {
     fn get_prop(&self, prop: Self::PropType) -> Result<Self::PropResponse>;
 }
 
+#[derive(Serialize)]
+struct PropWrapper<T: Serialize> {
+    #[serde(rename = "$value")]
+    prop: T,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "kebab-case")]
+struct PropstatElement<T: Serialize> {
+    prop: T,
+    status: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "kebab-case")]
+struct PropstatResponseElement<T: Serialize> {
+    href: String,
+    propstat: PropstatElement<T>,
+}
+
 pub trait HandlePropfind {
     fn propfind(&self, props: Vec<&str>) -> Result<String>;
 }
@@ -59,25 +76,45 @@ impl<R: Resource> HandlePropfind for R {
         let mut output_buffer = Vec::new();
         let mut writer = Writer::new_with_indent(&mut output_buffer, b' ', 2);
 
-        write_propstat_response(&mut writer, self.get_path(), StatusCode::OK, |writer| {
-            for prop in props {
-                if let Ok(valid_prop) = R::PropType::from_str(prop) {
-                    // TODO: Fix error types
-                    match self.get_prop(valid_prop.clone()) {
-                        Ok(response) => {
-                            writer
-                                .write_serializable(valid_prop.tagname(), &response)
-                                .map_err(|_e| quick_xml::Error::TextNotFound)?;
-                        }
-                        Err(_) => invalid_props.push(prop),
-                    };
-                } else {
-                    invalid_props.push(prop);
+        let mut prop_responses = Vec::new();
+        for prop in props {
+            if let Ok(valid_prop) = R::PropType::from_str(prop) {
+                match self.get_prop(valid_prop.clone()) {
+                    Ok(response) => {
+                        prop_responses.push(response);
+                    }
+                    Err(_) => invalid_props.push(prop),
                 }
+            } else {
+                invalid_props.push(prop);
             }
-            Ok(())
-        })?;
-        write_invalid_props_response(&mut writer, self.get_path(), invalid_props)?;
+        }
+
+        writer.write_serializable(
+            "response",
+            &PropstatResponseElement {
+                href: self.get_path().to_owned(),
+                propstat: PropstatElement {
+                    status: format!("HTTP/1.1 {}", StatusCode::OK),
+                    prop: PropWrapper {
+                        prop: prop_responses,
+                    },
+                },
+            },
+        )?;
+        if !invalid_props.is_empty() {
+            // TODO: proper error reporting
+            writer.write_serializable(
+                "response",
+                &PropstatResponseElement {
+                    href: self.get_path().to_owned(),
+                    propstat: PropstatElement {
+                        status: format!("HTTP/1.1 {}", StatusCode::NOT_FOUND),
+                        prop: TagList(invalid_props.iter().map(|&s| s.to_owned()).collect()),
+                    },
+                },
+            )?;
+        }
         Ok(std::str::from_utf8(&output_buffer)?.to_string())
     }
 }

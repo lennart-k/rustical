@@ -1,11 +1,6 @@
-use std::io::Write;
-
-use actix_web::http::StatusCode;
 use anyhow::Result;
-use quick_xml::{
-    events::{attributes::Attribute, BytesText},
-    Writer,
-};
+use quick_xml::{events::attributes::Attribute, Writer};
+use serde::ser::SerializeMap;
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -21,71 +16,19 @@ impl HrefElement {
 #[derive(Serialize)]
 pub struct TextNode(pub Option<String>);
 
-pub fn write_invalid_props_response<W: Write>(
-    writer: &mut Writer<W>,
-    href: &str,
-    invalid_props: Vec<&str>,
-) -> Result<(), quick_xml::Error> {
-    if invalid_props.is_empty() {
-        return Ok(());
-    };
+pub struct TagList(pub Vec<String>);
 
-    write_propstat_response(writer, href, StatusCode::NOT_FOUND, |writer| {
-        for prop in invalid_props {
-            writer.create_element(prop).write_empty()?;
+impl Serialize for TagList {
+    fn serialize<S>(&self, serializer: S) -> std::prelude::v1::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut el = serializer.serialize_map(Some(self.0.len()))?;
+        for tag in &self.0 {
+            el.serialize_entry(&tag, &())?;
         }
-        Ok::<(), quick_xml::Error>(())
-    })?;
-
-    Ok(())
-}
-
-pub fn write_propstat_element<F, W: Write>(
-    writer: &mut Writer<W>,
-    status: StatusCode,
-    prop_closure: F,
-) -> Result<(), quick_xml::Error>
-where
-    F: FnOnce(&mut Writer<W>) -> Result<(), quick_xml::Error>,
-{
-    writer
-        .create_element("propstat")
-        .write_inner_content(|writer| {
-            writer
-                .create_element("prop")
-                .write_inner_content(prop_closure)?;
-
-            writer
-                .create_element("status")
-                .write_text_content(BytesText::new(&format!("HTTP/1.1 {}", status)))?;
-            Ok::<(), quick_xml::Error>(())
-        })?;
-    Ok(())
-}
-
-// Writes a propstat response into a multistatus
-// closure hooks into the <prop> element
-pub fn write_propstat_response<F, W: Write>(
-    writer: &mut Writer<W>,
-    href: &str,
-    status: StatusCode,
-    prop_closure: F,
-) -> Result<(), quick_xml::Error>
-where
-    F: FnOnce(&mut Writer<W>) -> Result<(), quick_xml::Error>,
-{
-    writer
-        .create_element("response")
-        .write_inner_content(|writer| {
-            writer
-                .create_element("href")
-                .write_text_content(BytesText::new(href))?;
-
-            write_propstat_element(writer, status, prop_closure)?;
-
-            Ok::<(), quick_xml::Error>(())
-        })?;
-    Ok(())
+        el.end()
+    }
 }
 
 pub fn generate_multistatus<'a, F, A>(namespaces: A, closure: F) -> Result<String>
