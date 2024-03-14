@@ -37,7 +37,7 @@ impl actix_web::error::ResponseError for Error {
     }
 }
 
-fn parse_propfind(body: &str) -> Result<Vec<&str>, Error> {
+pub fn parse_propfind(body: &str) -> Result<Vec<&str>, Error> {
     if body.is_empty() {
         // if body is empty, allprops must be returned (RFC 4918)
         return Ok(vec!["allprops"]);
