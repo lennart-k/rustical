@@ -18,6 +18,7 @@ pub mod error;
 pub mod proptypes;
 pub mod resources;
 pub mod routes;
+pub mod tagname;
 
 pub struct CalDavContext<C: CalendarStore + ?Sized> {
     pub prefix: String,
