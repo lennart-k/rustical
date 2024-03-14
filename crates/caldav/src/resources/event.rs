@@ -1,4 +1,4 @@
-use crate::proptypes::write_string_prop;
+use crate::{proptypes::write_string_prop, tagname::TagName};
 use actix_web::{web::Data, HttpRequest};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
@@ -7,7 +7,7 @@ use rustical_dav::resource::Resource;
 use rustical_store::calendar::CalendarStore;
 use rustical_store::event::Event;
 use std::sync::Arc;
-use strum::{EnumString, VariantNames};
+use strum::{EnumProperty, EnumString, IntoStaticStr, VariantNames};
 use tokio::sync::RwLock;
 
 pub struct EventResource<C: CalendarStore + ?Sized> {
@@ -16,10 +16,11 @@ pub struct EventResource<C: CalendarStore + ?Sized> {
     pub event: Event,
 }
 
-#[derive(EnumString, Debug, VariantNames)]
+#[derive(EnumString, Debug, VariantNames, IntoStaticStr, EnumProperty)]
 #[strum(serialize_all = "kebab-case")]
 pub enum EventProp {
     Getetag,
+    #[strum(props(tagname = "C:calendar-data"))]
     CalendarData,
     Getcontenttype,
 }
@@ -68,13 +69,13 @@ impl<C: CalendarStore + ?Sized> Resource for EventResource<C> {
     ) -> Result<()> {
         match prop {
             EventProp::Getetag => {
-                write_string_prop(writer, "getetag", &self.event.get_etag())?;
+                write_string_prop(writer, prop.tagname(), &self.event.get_etag())?;
             }
             EventProp::CalendarData => {
-                write_string_prop(writer, "C:calendar-data", &self.event.get_ics())?;
+                write_string_prop(writer, prop.tagname(), &self.event.get_ics())?;
             }
             EventProp::Getcontenttype => {
-                write_string_prop(writer, "getcontenttype", "text/calendar;charset=utf-8")?;
+                write_string_prop(writer, prop.tagname(), "text/calendar;charset=utf-8")?;
             }
         };
         Ok(())

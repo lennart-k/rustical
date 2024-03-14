@@ -1,10 +1,11 @@
+use crate::tagname::TagName;
 use actix_web::HttpRequest;
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use async_trait::async_trait;
 use quick_xml::events::BytesText;
 use rustical_auth::AuthInfo;
 use rustical_dav::{resource::Resource, xml_snippets::write_resourcetype};
-use strum::{EnumString, VariantNames};
+use strum::{EnumProperty, EnumString, IntoStaticStr, VariantNames};
 
 pub struct RootResource {
     prefix: String,
@@ -12,7 +13,7 @@ pub struct RootResource {
     path: String,
 }
 
-#[derive(EnumString, Debug, VariantNames)]
+#[derive(EnumString, Debug, VariantNames, EnumProperty, IntoStaticStr)]
 #[strum(serialize_all = "kebab-case")]
 pub enum RootProp {
     Resourcetype,
@@ -55,7 +56,7 @@ impl Resource for RootResource {
             RootProp::Resourcetype => write_resourcetype(writer, vec!["collection"])?,
             RootProp::CurrentUserPrincipal => {
                 writer
-                    .create_element("current-user-principal")
+                    .create_element(prop.tagname())
                     .write_inner_content(|writer| {
                         writer
                             .create_element("href")

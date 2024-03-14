@@ -1,6 +1,4 @@
-use std::sync::Arc;
-
-use crate::proptypes::write_href_prop;
+use crate::{proptypes::write_href_prop, tagname::TagName};
 use actix_web::{web::Data, HttpRequest};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
@@ -8,7 +6,8 @@ use quick_xml::events::BytesText;
 use rustical_auth::AuthInfo;
 use rustical_dav::{resource::Resource, xml_snippets::write_resourcetype};
 use rustical_store::calendar::CalendarStore;
-use strum::{EnumString, IntoStaticStr, VariantNames};
+use std::sync::Arc;
+use strum::{EnumProperty, EnumString, IntoStaticStr, VariantNames};
 use tokio::sync::RwLock;
 
 use super::calendar::CalendarResource;
@@ -20,14 +19,16 @@ pub struct PrincipalCalendarsResource<C: CalendarStore + ?Sized> {
     cal_store: Arc<RwLock<C>>,
 }
 
-#[derive(EnumString, Debug, VariantNames, IntoStaticStr)]
+#[derive(EnumString, Debug, VariantNames, IntoStaticStr, EnumProperty)]
 #[strum(serialize_all = "kebab-case")]
 pub enum PrincipalProp {
     Resourcetype,
     CurrentUserPrincipal,
     #[strum(serialize = "principal-URL")]
     PrincipalUrl,
+    #[strum(props(tagname = "C:calendar-home-set"))]
     CalendarHomeSet,
+    #[strum(props(tagname = "C:calendar-user-address-set"))]
     CalendarUserAddressSet,
 }
 
@@ -98,9 +99,8 @@ impl<C: CalendarStore + ?Sized> Resource for PrincipalCalendarsResource<C> {
                 )?;
             }
             PrincipalProp::CalendarHomeSet | PrincipalProp::CalendarUserAddressSet => {
-                let propname: &'static str = prop.into();
                 writer
-                    .create_element(&format!("C:{propname}"))
+                    .create_element(prop.tagname())
                     .write_inner_content(|writer| {
                         writer
                             .create_element("href")
