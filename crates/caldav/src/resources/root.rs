@@ -1,10 +1,9 @@
-use crate::tagname::TagName;
 use actix_web::HttpRequest;
 use anyhow::Result;
 use async_trait::async_trait;
-use quick_xml::events::BytesText;
 use rustical_auth::AuthInfo;
-use rustical_dav::{resource::Resource, xml_snippets::write_resourcetype};
+use rustical_dav::{resource::Resource, xml_snippets::HrefElement};
+use serde::Serialize;
 use strum::{EnumProperty, EnumString, IntoStaticStr, VariantNames};
 
 pub struct RootResource {
@@ -13,11 +12,24 @@ pub struct RootResource {
     path: String,
 }
 
-#[derive(EnumString, Debug, VariantNames, EnumProperty, IntoStaticStr)]
+#[derive(EnumString, Debug, VariantNames, EnumProperty, IntoStaticStr, Clone)]
 #[strum(serialize_all = "kebab-case")]
 pub enum RootProp {
     Resourcetype,
     CurrentUserPrincipal,
+}
+
+#[derive(Serialize, Default)]
+#[serde(rename_all = "kebab-case")]
+pub struct Resourcetype {
+    collection: (),
+}
+
+#[derive(Serialize)]
+#[serde(untagged)]
+pub enum RootPropResponse {
+    Resourcetype(Resourcetype),
+    CurrentUser(HrefElement),
 }
 
 #[async_trait(?Send)]
@@ -25,6 +37,7 @@ impl Resource for RootResource {
     type UriComponents = ();
     type MemberType = Self;
     type PropType = RootProp;
+    type PropResponse = RootPropResponse;
 
     fn get_path(&self) -> &str {
         &self.path
@@ -47,27 +60,12 @@ impl Resource for RootResource {
         })
     }
 
-    fn write_prop<W: std::io::Write>(
-        &self,
-        writer: &mut quick_xml::Writer<W>,
-        prop: Self::PropType,
-    ) -> Result<()> {
+    fn get_prop(&self, prop: Self::PropType) -> Result<Self::PropResponse> {
         match prop {
-            RootProp::Resourcetype => write_resourcetype(writer, vec!["collection"])?,
-            RootProp::CurrentUserPrincipal => {
-                writer
-                    .create_element(prop.tagname())
-                    .write_inner_content(|writer| {
-                        writer
-                            .create_element("href")
-                            .write_text_content(BytesText::new(&format!(
-                                "{}/{}",
-                                self.prefix, self.principal
-                            )))?;
-                        Ok::<(), quick_xml::Error>(())
-                    })?;
-            }
-        };
-        Ok(())
+            RootProp::Resourcetype => Ok(RootPropResponse::Resourcetype(Resourcetype::default())),
+            RootProp::CurrentUserPrincipal => Ok(RootPropResponse::CurrentUser(HrefElement::new(
+                format!("{}/{}/", self.prefix, self.principal),
+            ))),
+        }
     }
 }

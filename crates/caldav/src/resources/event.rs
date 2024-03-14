@@ -1,11 +1,11 @@
-use crate::tagname::TagName;
 use actix_web::{web::Data, HttpRequest};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
-use rustical_dav::{resource::Resource, xml_snippets::TextElement};
+use rustical_dav::{resource::Resource, xml_snippets::TextNode};
 use rustical_store::calendar::CalendarStore;
 use rustical_store::event::Event;
+use serde::Serialize;
 use std::sync::Arc;
 use strum::{EnumProperty, EnumString, IntoStaticStr, VariantNames};
 use tokio::sync::RwLock;
@@ -16,7 +16,7 @@ pub struct EventResource<C: CalendarStore + ?Sized> {
     pub event: Event,
 }
 
-#[derive(EnumString, Debug, VariantNames, IntoStaticStr, EnumProperty)]
+#[derive(EnumString, Debug, VariantNames, IntoStaticStr, EnumProperty, Clone)]
 #[strum(serialize_all = "kebab-case")]
 pub enum EventProp {
     Getetag,
@@ -25,11 +25,20 @@ pub enum EventProp {
     Getcontenttype,
 }
 
+#[derive(Serialize)]
+#[serde(untagged)]
+pub enum PrincipalPropResponse {
+    Getetag(TextNode),
+    CalendarData(TextNode),
+    Getcontenttype(TextNode),
+}
+
 #[async_trait(?Send)]
 impl<C: CalendarStore + ?Sized> Resource for EventResource<C> {
     type UriComponents = (String, String, String); // principal, calendar, event
     type MemberType = Self;
     type PropType = EventProp;
+    type PropResponse = PrincipalPropResponse;
 
     fn get_path(&self) -> &str {
         &self.path
@@ -62,29 +71,17 @@ impl<C: CalendarStore + ?Sized> Resource for EventResource<C> {
         })
     }
 
-    fn write_prop<W: std::io::Write>(
-        &self,
-        writer: &mut quick_xml::Writer<W>,
-        prop: Self::PropType,
-    ) -> Result<()> {
+    fn get_prop(&self, prop: Self::PropType) -> Result<Self::PropResponse> {
         match prop {
-            EventProp::Getetag => {
-                writer.write_serializable(
-                    prop.tagname(),
-                    &TextElement(Some(self.event.get_etag())),
-                )?;
-            }
-            EventProp::CalendarData => {
-                writer
-                    .write_serializable(prop.tagname(), &TextElement(Some(self.event.get_ics())))?;
-            }
-            EventProp::Getcontenttype => {
-                writer.write_serializable(
-                    prop.tagname(),
-                    &TextElement(Some("text/calendar;charset=utf-8".to_owned())),
-                )?;
-            }
-        };
-        Ok(())
+            EventProp::Getetag => Ok(PrincipalPropResponse::Getetag(TextNode(Some(
+                self.event.get_etag(),
+            )))),
+            EventProp::CalendarData => Ok(PrincipalPropResponse::CalendarData(TextNode(Some(
+                self.event.get_ics(),
+            )))),
+            EventProp::Getcontenttype => Ok(PrincipalPropResponse::Getcontenttype(TextNode(Some(
+                "text/calendar;charset=utf-8".to_owned(),
+            )))),
+        }
     }
 }

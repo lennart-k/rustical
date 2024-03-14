@@ -6,21 +6,20 @@ use quick_xml::{
     events::{attributes::Attribute, BytesText},
     Writer,
 };
+use serde::Serialize;
 
-pub fn write_resourcetype<W: Write>(
-    writer: &mut Writer<W>,
-    types: Vec<&str>,
-) -> Result<(), quick_xml::Error> {
-    writer
-        .create_element("resourcetype")
-        .write_inner_content(|writer| {
-            for resourcetype in types {
-                writer.create_element(resourcetype).write_empty()?;
-            }
-            Ok::<(), quick_xml::Error>(())
-        })?;
-    Ok(())
+#[derive(Serialize)]
+pub struct HrefElement {
+    pub href: String,
 }
+impl HrefElement {
+    pub fn new(href: String) -> Self {
+        Self { href }
+    }
+}
+
+#[derive(Serialize)]
+pub struct TextNode(pub Option<String>);
 
 pub fn write_invalid_props_response<W: Write>(
     writer: &mut Writer<W>,

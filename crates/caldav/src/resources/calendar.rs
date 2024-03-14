@@ -1,19 +1,16 @@
-use std::{io::Write, sync::Arc};
-
 use actix_web::{web::Data, HttpRequest};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use quick_xml::Writer;
 use rustical_auth::AuthInfo;
-use rustical_store::calendar::{Calendar, CalendarStore};
-use strum::{EnumProperty, EnumString, IntoStaticStr, VariantNames};
-use tokio::sync::RwLock;
-
-use crate::tagname::TagName;
 use rustical_dav::{
     resource::Resource,
-    xml_snippets::{write_resourcetype, HrefElement, TextElement},
+    xml_snippets::{HrefElement, TextNode},
 };
+use rustical_store::calendar::{Calendar, CalendarStore};
+use serde::Serialize;
+use std::sync::Arc;
+use strum::{EnumProperty, EnumString, IntoStaticStr, VariantNames};
+use tokio::sync::RwLock;
 
 pub struct CalendarResource<C: CalendarStore + ?Sized> {
     pub cal_store: Arc<RwLock<C>>,
@@ -23,7 +20,98 @@ pub struct CalendarResource<C: CalendarStore + ?Sized> {
     pub principal: String,
 }
 
-#[derive(EnumString, Debug, VariantNames, IntoStaticStr, EnumProperty)]
+#[derive(Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct SupportedCalendarComponent(#[serde(rename = "@name")] pub &'static str);
+
+#[derive(Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct SupportedCalendarComponentSet {
+    #[serde(rename = "C:comp")]
+    pub comp: Vec<SupportedCalendarComponent>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct CalendarData {
+    content_type: &'static str,
+    version: &'static str,
+}
+
+impl Default for CalendarData {
+    fn default() -> Self {
+        Self {
+            content_type: "text/calendar;charset=utf-8",
+            version: "2.0",
+        }
+    }
+}
+
+#[derive(Serialize, Default)]
+#[serde(rename_all = "kebab-case")]
+pub struct SupportedCalendarData {
+    #[serde(rename = "C:calendar-data")]
+    calendar_data: CalendarData,
+}
+
+#[derive(Serialize, Default)]
+#[serde(rename_all = "kebab-case")]
+pub struct Resourcetype {
+    #[serde(rename = "C:calendar")]
+    calendar: (),
+    collection: (),
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum UserPrivilege {
+    Read,
+    ReadAcl,
+    Write,
+    WriteAcl,
+    WriteContent,
+    ReadCurrentUserPrivilegeSet,
+    Bind,
+    Unbind,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct UserPrivilegeWrapper {
+    #[serde(rename = "$value")]
+    privilege: UserPrivilege,
+}
+
+impl From<UserPrivilege> for UserPrivilegeWrapper {
+    fn from(value: UserPrivilege) -> Self {
+        Self { privilege: value }
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct UserPrivilegeSet {
+    privilege: Vec<UserPrivilegeWrapper>,
+}
+
+impl Default for UserPrivilegeSet {
+    fn default() -> Self {
+        Self {
+            privilege: vec![
+                UserPrivilege::Read.into(),
+                UserPrivilege::ReadAcl.into(),
+                UserPrivilege::Write.into(),
+                UserPrivilege::WriteAcl.into(),
+                UserPrivilege::WriteContent.into(),
+                UserPrivilege::ReadCurrentUserPrivilegeSet.into(),
+                UserPrivilege::Bind.into(),
+                UserPrivilege::Unbind.into(),
+            ],
+        }
+    }
+}
+
+#[derive(EnumString, Debug, VariantNames, IntoStaticStr, EnumProperty, Clone)]
 #[strum(serialize_all = "kebab-case")]
 pub enum CalendarProp {
     Resourcetype,
@@ -43,11 +131,27 @@ pub enum CalendarProp {
     MaxResourceSize,
 }
 
+#[derive(Serialize)]
+#[serde(untagged)]
+pub enum CalendarPropResponse {
+    Resourcetype(Resourcetype),
+    CurrentUser(HrefElement),
+    Displayname(TextNode),
+    CalendarColor(TextNode),
+    CalendarDescription(TextNode),
+    SupportedCalendarComponentSet(SupportedCalendarComponentSet),
+    SupportedCalendarData(SupportedCalendarData),
+    Getcontenttype(TextNode),
+    MaxResourceSize(TextNode),
+    CurrentUserPrivilegeSet(UserPrivilegeSet),
+}
+
 #[async_trait(?Send)]
 impl<C: CalendarStore + ?Sized> Resource for CalendarResource<C> {
     type MemberType = Self;
     type UriComponents = (String, String); // principal, calendar_id
     type PropType = CalendarProp;
+    type PropResponse = CalendarPropResponse;
 
     async fn acquire_from_request(
         req: HttpRequest,
@@ -81,93 +185,44 @@ impl<C: CalendarStore + ?Sized> Resource for CalendarResource<C> {
         Ok(vec![])
     }
 
-    fn write_prop<W: Write>(&self, writer: &mut Writer<W>, prop: Self::PropType) -> Result<()> {
+    fn get_prop(&self, prop: Self::PropType) -> Result<Self::PropResponse> {
         match prop {
             CalendarProp::Resourcetype => {
-                write_resourcetype(writer, vec!["C:calendar", "collection"])?
+                Ok(CalendarPropResponse::Resourcetype(Resourcetype::default()))
             }
             CalendarProp::CurrentUserPrincipal | CalendarProp::Owner => {
-                writer.write_serializable(
-                    prop.tagname(),
-                    &HrefElement::new(format!("{}/{}/", self.prefix, self.principal)),
-                )?;
+                Ok(CalendarPropResponse::CurrentUser(HrefElement::new(
+                    format!("{}/{}/", self.prefix, self.principal),
+                )))
             }
-            CalendarProp::Displayname => {
-                let name = self.calendar.name.clone();
-                writer.write_serializable(prop.tagname(), &TextElement(name))?;
-            }
-            CalendarProp::CalendarColor => {
-                let color = self.calendar.color.clone();
-                writer.write_serializable(prop.tagname(), &TextElement(color))?;
-            }
-            CalendarProp::CalendarDescription => {
-                let description = self.calendar.description.clone();
-                writer.write_serializable(prop.tagname(), &TextElement(description))?;
-            }
+            CalendarProp::Displayname => Ok(CalendarPropResponse::Displayname(TextNode(
+                self.calendar.name.clone(),
+            ))),
+            CalendarProp::CalendarColor => Ok(CalendarPropResponse::CalendarColor(TextNode(
+                self.calendar.color.clone(),
+            ))),
+            CalendarProp::CalendarDescription => Ok(CalendarPropResponse::CalendarDescription(
+                TextNode(self.calendar.description.clone()),
+            )),
             CalendarProp::SupportedCalendarComponentSet => {
-                writer
-                    .create_element(prop.tagname())
-                    .write_inner_content(|writer| {
-                        writer
-                            .create_element("C:comp")
-                            .with_attribute(("name", "VEVENT"))
-                            .write_empty()?;
-                        Ok::<(), quick_xml::Error>(())
-                    })?;
+                Ok(CalendarPropResponse::SupportedCalendarComponentSet(
+                    SupportedCalendarComponentSet {
+                        comp: vec![SupportedCalendarComponent("VEVENT")],
+                    },
+                ))
             }
-            CalendarProp::SupportedCalendarData => {
-                writer
-                    .create_element(prop.tagname())
-                    .write_inner_content(|writer| {
-                        // <cal:calendar-data content-type="text/calendar" version="2.0" />
-                        writer
-                            .create_element("C:calendar-data")
-                            .with_attributes(vec![
-                                ("content-type", "text/calendar"),
-                                ("version", "2.0"),
-                            ])
-                            .write_empty()?;
-                        Ok::<(), quick_xml::Error>(())
-                    })?;
-            }
-            CalendarProp::Getcontenttype => {
-                writer.write_serializable(
-                    prop.tagname(),
-                    &TextElement(Some("text/calendar".to_owned())),
-                )?;
-            }
-            CalendarProp::MaxResourceSize => {
-                writer.write_serializable(
-                    prop.tagname(),
-                    &TextElement(Some("10000000".to_owned())),
-                )?;
-            }
-            CalendarProp::CurrentUserPrivilegeSet => {
-                writer
-                    .create_element(prop.tagname())
-                    // These are just hard-coded for now and will possibly change in the future
-                    .write_inner_content(|writer| {
-                        for privilege in [
-                            "read",
-                            "read-acl",
-                            "write",
-                            "write-acl",
-                            "write-content",
-                            "read-current-user-privilege-set",
-                            "bind",
-                            "unbind",
-                        ] {
-                            writer
-                                .create_element("privilege")
-                                .write_inner_content(|writer| {
-                                    writer.create_element(privilege).write_empty()?;
-                                    Ok::<(), quick_xml::Error>(())
-                                })?;
-                        }
-                        Ok::<(), quick_xml::Error>(())
-                    })?;
-            }
-        };
-        Ok(())
+            CalendarProp::SupportedCalendarData => Ok(CalendarPropResponse::SupportedCalendarData(
+                SupportedCalendarData::default(),
+            )),
+            CalendarProp::Getcontenttype => Ok(CalendarPropResponse::Getcontenttype(TextNode(
+                Some("text/calendar;charset=utf-8".to_owned()),
+            ))),
+            CalendarProp::MaxResourceSize => Ok(CalendarPropResponse::MaxResourceSize(TextNode(
+                Some("10000000".to_owned()),
+            ))),
+            CalendarProp::CurrentUserPrivilegeSet => Ok(
+                CalendarPropResponse::CurrentUserPrivilegeSet(UserPrivilegeSet::default()),
+            ),
+        }
     }
 }

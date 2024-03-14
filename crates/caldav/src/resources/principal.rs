@@ -1,13 +1,10 @@
-use crate::tagname::TagName;
 use actix_web::{web::Data, HttpRequest};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
-use rustical_dav::{
-    resource::Resource,
-    xml_snippets::{write_resourcetype, HrefElement},
-};
+use rustical_dav::{resource::Resource, xml_snippets::HrefElement};
 use rustical_store::calendar::CalendarStore;
+use serde::Serialize;
 use std::sync::Arc;
 use strum::{EnumProperty, EnumString, IntoStaticStr, VariantNames};
 use tokio::sync::RwLock;
@@ -21,7 +18,21 @@ pub struct PrincipalCalendarsResource<C: CalendarStore + ?Sized> {
     cal_store: Arc<RwLock<C>>,
 }
 
-#[derive(EnumString, Debug, VariantNames, IntoStaticStr, EnumProperty)]
+#[derive(Serialize, Default)]
+#[serde(rename_all = "kebab-case")]
+pub struct Resourcetype {
+    principal: (),
+    collection: (),
+}
+
+#[derive(Serialize)]
+#[serde(untagged)]
+pub enum PrincipalPropResponse {
+    Resourcetype(Resourcetype),
+    CurrentUser(HrefElement),
+}
+
+#[derive(EnumString, Debug, VariantNames, IntoStaticStr, EnumProperty, Clone)]
 #[strum(serialize_all = "kebab-case")]
 pub enum PrincipalProp {
     Resourcetype,
@@ -39,6 +50,7 @@ impl<C: CalendarStore + ?Sized> Resource for PrincipalCalendarsResource<C> {
     type UriComponents = ();
     type MemberType = CalendarResource<C>;
     type PropType = PrincipalProp;
+    type PropResponse = PrincipalPropResponse;
 
     fn get_path(&self) -> &str {
         &self.path
@@ -83,26 +95,17 @@ impl<C: CalendarStore + ?Sized> Resource for PrincipalCalendarsResource<C> {
             path: req.path().to_string(),
         })
     }
-
-    fn write_prop<W: std::io::Write>(
-        &self,
-        writer: &mut quick_xml::Writer<W>,
-        prop: Self::PropType,
-    ) -> Result<()> {
+    fn get_prop(&self, prop: Self::PropType) -> Result<Self::PropResponse> {
         match prop {
             PrincipalProp::Resourcetype => {
-                write_resourcetype(writer, vec!["principal", "collection"])?
+                Ok(PrincipalPropResponse::Resourcetype(Resourcetype::default()))
             }
             PrincipalProp::CurrentUserPrincipal
             | PrincipalProp::PrincipalUrl
             | PrincipalProp::CalendarHomeSet
-            | PrincipalProp::CalendarUserAddressSet => {
-                writer.write_serializable(
-                    prop.tagname(),
-                    &HrefElement::new(format!("{}/{}/", self.prefix, self.principal)),
-                )?;
-            }
-        };
-        Ok(())
+            | PrincipalProp::CalendarUserAddressSet => Ok(PrincipalPropResponse::CurrentUser(
+                HrefElement::new(format!("{}/{}/", self.prefix, self.principal)),
+            )),
+        }
     }
 }

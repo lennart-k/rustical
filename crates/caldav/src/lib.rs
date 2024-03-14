@@ -17,7 +17,6 @@ use tokio::sync::RwLock;
 pub mod error;
 pub mod resources;
 pub mod routes;
-pub mod tagname;
 
 pub struct CalDavContext<C: CalendarStore + ?Sized> {
     pub prefix: String,
