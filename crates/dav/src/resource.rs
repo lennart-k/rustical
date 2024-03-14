@@ -71,11 +71,10 @@ impl<R: Resource> HandlePropfind for R {
             props = R::list_dead_props().into();
         }
 
-        let mut invalid_props = Vec::<&str>::new();
-
         let mut output_buffer = Vec::new();
         let mut writer = Writer::new_with_indent(&mut output_buffer, b' ', 2);
 
+        let mut invalid_props = Vec::<&str>::new();
         let mut prop_responses = Vec::new();
         for prop in props {
             if let Ok(valid_prop) = R::PropType::from_str(prop) {
