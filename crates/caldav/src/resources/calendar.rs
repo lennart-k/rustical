@@ -132,10 +132,11 @@ pub enum CalendarProp {
 }
 
 #[derive(Serialize)]
-#[serde(untagged)]
+#[serde(rename_all = "kebab-case")]
 pub enum CalendarPropResponse {
     Resourcetype(Resourcetype),
-    CurrentUser(HrefElement),
+    CurrentUserPrincipal(HrefElement),
+    Owner(HrefElement),
     Displayname(TextNode),
     CalendarColor(TextNode),
     CalendarDescription(TextNode),
@@ -190,11 +191,13 @@ impl<C: CalendarStore + ?Sized> Resource for CalendarResource<C> {
             CalendarProp::Resourcetype => {
                 Ok(CalendarPropResponse::Resourcetype(Resourcetype::default()))
             }
-            CalendarProp::CurrentUserPrincipal | CalendarProp::Owner => {
-                Ok(CalendarPropResponse::CurrentUser(HrefElement::new(
-                    format!("{}/{}/", self.prefix, self.principal),
-                )))
-            }
+            CalendarProp::CurrentUserPrincipal => Ok(CalendarPropResponse::CurrentUserPrincipal(
+                HrefElement::new(format!("{}/{}/", self.prefix, self.principal)),
+            )),
+            CalendarProp::Owner => Ok(CalendarPropResponse::Owner(HrefElement::new(format!(
+                "{}/{}/",
+                self.prefix, self.principal
+            )))),
             CalendarProp::Displayname => Ok(CalendarPropResponse::Displayname(TextNode(
                 self.calendar.name.clone(),
             ))),

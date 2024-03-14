@@ -26,7 +26,7 @@ pub enum EventProp {
 }
 
 #[derive(Serialize)]
-#[serde(untagged)]
+#[serde(rename_all = "kebab-case")]
 pub enum PrincipalPropResponse {
     Getetag(TextNode),
     CalendarData(TextNode),

@@ -26,7 +26,7 @@ pub struct Resourcetype {
 }
 
 #[derive(Serialize)]
-#[serde(untagged)]
+#[serde(rename_all = "kebab-case")]
 pub enum RootPropResponse {
     Resourcetype(Resourcetype),
     CurrentUser(HrefElement),

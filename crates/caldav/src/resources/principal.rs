@@ -26,10 +26,16 @@ pub struct Resourcetype {
 }
 
 #[derive(Serialize)]
-#[serde(untagged)]
+#[serde(rename_all = "kebab-case")]
 pub enum PrincipalPropResponse {
     Resourcetype(Resourcetype),
-    CurrentUser(HrefElement),
+    CurrentUserPrincipal(HrefElement),
+    #[serde(rename = "principal-URL")]
+    PrincipalUrl(HrefElement),
+    #[serde(rename = "C:calendar-home-set")]
+    CalendarHomeSet(HrefElement),
+    #[serde(rename = "C:calendar-user-address-set")]
+    CalendarUserAddressSet(HrefElement),
 }
 
 #[derive(EnumString, Debug, VariantNames, IntoStaticStr, EnumProperty, Clone)]
@@ -100,12 +106,20 @@ impl<C: CalendarStore + ?Sized> Resource for PrincipalCalendarsResource<C> {
             PrincipalProp::Resourcetype => {
                 Ok(PrincipalPropResponse::Resourcetype(Resourcetype::default()))
             }
-            PrincipalProp::CurrentUserPrincipal
-            | PrincipalProp::PrincipalUrl
-            | PrincipalProp::CalendarHomeSet
-            | PrincipalProp::CalendarUserAddressSet => Ok(PrincipalPropResponse::CurrentUser(
+            PrincipalProp::CurrentUserPrincipal => Ok(PrincipalPropResponse::CurrentUserPrincipal(
                 HrefElement::new(format!("{}/{}/", self.prefix, self.principal)),
             )),
+            PrincipalProp::PrincipalUrl => Ok(PrincipalPropResponse::PrincipalUrl(
+                HrefElement::new(format!("{}/{}/", self.prefix, self.principal)),
+            )),
+            PrincipalProp::CalendarHomeSet => Ok(PrincipalPropResponse::CalendarHomeSet(
+                HrefElement::new(format!("{}/{}/", self.prefix, self.principal)),
+            )),
+            PrincipalProp::CalendarUserAddressSet => {
+                Ok(PrincipalPropResponse::CalendarUserAddressSet(
+                    HrefElement::new(format!("{}/{}/", self.prefix, self.principal)),
+                ))
+            }
         }
     }
 }
