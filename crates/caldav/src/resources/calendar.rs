@@ -3,17 +3,17 @@ use std::{io::Write, sync::Arc};
 use actix_web::{web::Data, HttpRequest};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use quick_xml::{events::BytesText, Writer};
+use quick_xml::Writer;
 use rustical_auth::AuthInfo;
 use rustical_store::calendar::{Calendar, CalendarStore};
 use strum::{EnumProperty, EnumString, IntoStaticStr, VariantNames};
 use tokio::sync::RwLock;
 
-use crate::{
-    proptypes::{write_href_prop, write_string_prop},
-    tagname::TagName,
+use crate::tagname::TagName;
+use rustical_dav::{
+    resource::Resource,
+    xml_snippets::{write_resourcetype, HrefElement, TextElement},
 };
-use rustical_dav::{resource::Resource, xml_snippets::write_resourcetype};
 
 pub struct CalendarResource<C: CalendarStore + ?Sized> {
     pub cal_store: Arc<RwLock<C>>,
@@ -87,35 +87,22 @@ impl<C: CalendarStore + ?Sized> Resource for CalendarResource<C> {
                 write_resourcetype(writer, vec!["C:calendar", "collection"])?
             }
             CalendarProp::CurrentUserPrincipal | CalendarProp::Owner => {
-                write_href_prop(
-                    writer,
+                writer.write_serializable(
                     prop.tagname(),
-                    &format!("{}/{}/", self.prefix, self.principal),
+                    &HrefElement::new(format!("{}/{}/", self.prefix, self.principal)),
                 )?;
             }
             CalendarProp::Displayname => {
-                let el = writer.create_element(prop.tagname());
-                if let Some(name) = self.calendar.clone().name {
-                    el.write_text_content(BytesText::new(&name))?;
-                } else {
-                    el.write_empty()?;
-                }
+                let name = self.calendar.name.clone();
+                writer.write_serializable(prop.tagname(), &TextElement(name))?;
             }
             CalendarProp::CalendarColor => {
-                let el = writer.create_element(prop.tagname());
-                if let Some(color) = self.calendar.clone().color {
-                    el.write_text_content(BytesText::new(&color))?;
-                } else {
-                    el.write_empty()?;
-                }
+                let color = self.calendar.color.clone();
+                writer.write_serializable(prop.tagname(), &TextElement(color))?;
             }
             CalendarProp::CalendarDescription => {
-                let el = writer.create_element(prop.tagname());
-                if let Some(description) = self.calendar.clone().description {
-                    el.write_text_content(BytesText::new(&description))?;
-                } else {
-                    el.write_empty()?;
-                }
+                let description = self.calendar.description.clone();
+                writer.write_serializable(prop.tagname(), &TextElement(description))?;
             }
             CalendarProp::SupportedCalendarComponentSet => {
                 writer
@@ -144,10 +131,16 @@ impl<C: CalendarStore + ?Sized> Resource for CalendarResource<C> {
                     })?;
             }
             CalendarProp::Getcontenttype => {
-                write_string_prop(writer, prop.tagname(), "text/calendar")?;
+                writer.write_serializable(
+                    prop.tagname(),
+                    &TextElement(Some("text/calendar".to_owned())),
+                )?;
             }
             CalendarProp::MaxResourceSize => {
-                write_string_prop(writer, prop.tagname(), "10000000")?;
+                writer.write_serializable(
+                    prop.tagname(),
+                    &TextElement(Some("10000000".to_owned())),
+                )?;
             }
             CalendarProp::CurrentUserPrivilegeSet => {
                 writer

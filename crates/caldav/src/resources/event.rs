@@ -1,9 +1,9 @@
-use crate::{proptypes::write_string_prop, tagname::TagName};
+use crate::tagname::TagName;
 use actix_web::{web::Data, HttpRequest};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
-use rustical_dav::resource::Resource;
+use rustical_dav::{resource::Resource, xml_snippets::TextElement};
 use rustical_store::calendar::CalendarStore;
 use rustical_store::event::Event;
 use std::sync::Arc;
@@ -69,13 +69,20 @@ impl<C: CalendarStore + ?Sized> Resource for EventResource<C> {
     ) -> Result<()> {
         match prop {
             EventProp::Getetag => {
-                write_string_prop(writer, prop.tagname(), &self.event.get_etag())?;
+                writer.write_serializable(
+                    prop.tagname(),
+                    &TextElement(Some(self.event.get_etag())),
+                )?;
             }
             EventProp::CalendarData => {
-                write_string_prop(writer, prop.tagname(), &self.event.get_ics())?;
+                writer
+                    .write_serializable(prop.tagname(), &TextElement(Some(self.event.get_ics())))?;
             }
             EventProp::Getcontenttype => {
-                write_string_prop(writer, prop.tagname(), "text/calendar;charset=utf-8")?;
+                writer.write_serializable(
+                    prop.tagname(),
+                    &TextElement(Some("text/calendar;charset=utf-8".to_owned())),
+                )?;
             }
         };
         Ok(())

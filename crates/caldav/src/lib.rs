@@ -15,7 +15,6 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 
 pub mod error;
-pub mod proptypes;
 pub mod resources;
 pub mod routes;
 pub mod tagname;

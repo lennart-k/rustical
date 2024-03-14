@@ -1,10 +1,12 @@
-use crate::{proptypes::write_href_prop, tagname::TagName};
+use crate::tagname::TagName;
 use actix_web::{web::Data, HttpRequest};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use quick_xml::events::BytesText;
 use rustical_auth::AuthInfo;
-use rustical_dav::{resource::Resource, xml_snippets::write_resourcetype};
+use rustical_dav::{
+    resource::Resource,
+    xml_snippets::{write_resourcetype, HrefElement},
+};
 use rustical_store::calendar::CalendarStore;
 use std::sync::Arc;
 use strum::{EnumProperty, EnumString, IntoStaticStr, VariantNames};
@@ -91,25 +93,14 @@ impl<C: CalendarStore + ?Sized> Resource for PrincipalCalendarsResource<C> {
             PrincipalProp::Resourcetype => {
                 write_resourcetype(writer, vec!["principal", "collection"])?
             }
-            PrincipalProp::CurrentUserPrincipal | PrincipalProp::PrincipalUrl => {
-                write_href_prop(
-                    writer,
-                    prop.into(),
-                    &format!("{}/{}/", self.prefix, self.principal),
+            PrincipalProp::CurrentUserPrincipal
+            | PrincipalProp::PrincipalUrl
+            | PrincipalProp::CalendarHomeSet
+            | PrincipalProp::CalendarUserAddressSet => {
+                writer.write_serializable(
+                    prop.tagname(),
+                    &HrefElement::new(format!("{}/{}/", self.prefix, self.principal)),
                 )?;
-            }
-            PrincipalProp::CalendarHomeSet | PrincipalProp::CalendarUserAddressSet => {
-                writer
-                    .create_element(prop.tagname())
-                    .write_inner_content(|writer| {
-                        writer
-                            .create_element("href")
-                            .write_text_content(BytesText::new(&format!(
-                                "{}/{}/",
-                                self.prefix, self.principal
-                            )))?;
-                        Ok::<(), quick_xml::Error>(())
-                    })?;
             }
         };
         Ok(())
