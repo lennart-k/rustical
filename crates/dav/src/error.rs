@@ -13,8 +13,6 @@ pub enum Error {
     Unauthorized,
     #[error("Internal server error :(")]
     InternalError,
-    // #[error(transparent)]
-    // PropfindError(#[from] propfind::Error),
     #[error("Internal server error")]
     Other(#[from] anyhow::Error),
 }
@@ -27,7 +25,6 @@ impl actix_web::error::ResponseError for Error {
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::BadRequest => StatusCode::BAD_REQUEST,
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
-            // Self::PropfindError(e) => e.status_code(),
         }
     }
 
