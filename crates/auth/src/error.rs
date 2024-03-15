@@ -26,6 +26,8 @@ impl actix_web::error::ResponseError for Error {
         match self {
             Error::Unauthorized => HttpResponse::build(self.status_code())
                 .append_header(("WWW-Authenticate", "Basic"))
+                // This is an unfortunate workaround for https://github.com/actix/actix-web/issues/1805
+                .force_close()
                 .body(self.to_string()),
             _ => HttpResponse::build(self.status_code()).body(self.to_string()),
         }

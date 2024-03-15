@@ -1,5 +1,4 @@
 use crate::config::Config;
-use actix_web::http::KeepAlive;
 use actix_web::HttpServer;
 use anyhow::Result;
 use app::make_app;
@@ -57,8 +56,6 @@ async fn main() -> Result<()> {
 
     HttpServer::new(move || make_app(cal_store.clone(), auth.clone()))
         .bind((config.http.host, config.http.port))?
-        // This is an unfortunate workaround for https://github.com/actix/actix-web/issues/1805
-        .keep_alive(KeepAlive::Disabled)
         .run()
         .await?;
 
