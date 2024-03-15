@@ -1,6 +1,6 @@
-use actix_web::{HttpRequest, ResponseError};
-use futures_util::{future::Ready, Future};
+use actix_web::HttpRequest;
 
+use crate::error::Error;
 pub use extractor::AuthInfoExtractor;
 pub use htpasswd::{HtpasswdAuth, HtpasswdAuthConfig};
 pub use none::NoneAuth;
@@ -9,17 +9,13 @@ pub mod extractor;
 pub mod htpasswd;
 pub mod none;
 
+#[derive(Clone)]
 pub struct AuthInfo {
     pub user_id: String,
 }
 
 pub trait CheckAuthentication: Send + Sync + 'static {
-    type Error: ResponseError;
-    type Future: Future<Output = Result<AuthInfo, Self::Error>>
-    where
-        Self: Sized;
-
-    fn validate(&self, req: &HttpRequest) -> Self::Future
+    fn validate(&self, req: &HttpRequest) -> Result<AuthInfo, Error>
     where
         Self: Sized;
 }
@@ -31,10 +27,7 @@ pub enum AuthProvider {
 }
 
 impl CheckAuthentication for AuthProvider {
-    type Error = crate::error::Error;
-    type Future = Ready<Result<AuthInfo, Self::Error>>;
-
-    fn validate(&self, req: &HttpRequest) -> Self::Future
+    fn validate(&self, req: &HttpRequest) -> Result<AuthInfo, Error>
     where
         Self: Sized,
     {

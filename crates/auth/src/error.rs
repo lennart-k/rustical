@@ -1,7 +1,7 @@
 use actix_web::{http::StatusCode, HttpResponse};
 use derive_more::{Display, Error};
 
-#[derive(Debug, Display, Error)]
+#[derive(Debug, Display, Error, Clone)]
 pub enum Error {
     #[display(fmt = "Internal server error")]
     InternalError,

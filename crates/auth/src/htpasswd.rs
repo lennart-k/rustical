@@ -1,6 +1,6 @@
+use crate::error::Error;
 use actix_web::{http::header::Header, HttpRequest};
 use actix_web_httpauth::headers::authorization::{Authorization, Basic};
-use futures_util::future::{err, ok, Ready};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -22,10 +22,7 @@ pub struct HtpasswdAuthConfig {
 }
 
 impl CheckAuthentication for HtpasswdAuth {
-    type Error = crate::error::Error;
-    type Future = Ready<Result<AuthInfo, Self::Error>>;
-
-    fn validate(&self, req: &HttpRequest) -> Self::Future {
+    fn validate(&self, req: &HttpRequest) -> Result<AuthInfo, Error> {
         if let Ok(auth) = Authorization::<Basic>::parse(req) {
             let user_id = auth.as_ref().user_id();
             // Map None to empty password
@@ -34,19 +31,19 @@ impl CheckAuthentication for HtpasswdAuth {
             let user_config = if let Some(user_config) = self.config.users.get(user_id) {
                 user_config
             } else {
-                return err(crate::error::Error::Unauthorized);
+                return Err(crate::error::Error::Unauthorized);
             };
 
             if let Err(e) = password_auth::verify_password(password, &user_config.password) {
                 dbg!(e);
-                return err(crate::error::Error::Unauthorized);
+                return Err(crate::error::Error::Unauthorized);
             }
 
-            ok(AuthInfo {
+            Ok(AuthInfo {
                 user_id: user_id.to_string(),
             })
         } else {
-            err(crate::error::Error::Unauthorized)
+            Err(crate::error::Error::Unauthorized)
         }
     }
 }

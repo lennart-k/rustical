@@ -1,6 +1,7 @@
 use actix_web::{http::header::Header, HttpRequest};
 use actix_web_httpauth::headers::authorization::{Authorization, Basic};
-use futures_util::future::{err, ok, Ready};
+
+use crate::error::Error;
 
 use super::{AuthInfo, CheckAuthentication};
 
@@ -8,16 +9,13 @@ use super::{AuthInfo, CheckAuthentication};
 pub struct NoneAuth;
 
 impl CheckAuthentication for NoneAuth {
-    type Error = crate::error::Error;
-    type Future = Ready<Result<AuthInfo, Self::Error>>;
-
-    fn validate(&self, req: &HttpRequest) -> Self::Future {
+    fn validate(&self, req: &HttpRequest) -> Result<AuthInfo, Error> {
         if let Ok(auth) = Authorization::<Basic>::parse(req) {
-            ok(AuthInfo {
+            Ok(AuthInfo {
                 user_id: auth.as_ref().user_id().to_string(),
             })
         } else {
-            err(crate::error::Error::Unauthorized)
+            Err(crate::error::Error::Unauthorized)
         }
     }
 }
