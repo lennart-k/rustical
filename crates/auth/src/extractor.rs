@@ -8,6 +8,7 @@ use crate::error::Error;
 
 use super::{AuthInfo, CheckAuthentication};
 
+#[derive(Clone)]
 pub struct AuthInfoExtractor<A: CheckAuthentication> {
     pub inner: AuthInfo,
     pub _provider_type: PhantomData<A>,
@@ -29,14 +30,11 @@ where
     type Error = Error;
     type Future = Ready<Result<Self, Self::Error>>;
 
-    fn extract(req: &HttpRequest) -> Self::Future {
+    fn from_request(req: &HttpRequest, _: &mut Payload) -> Self::Future {
         let result = req.app_data::<Data<A>>().unwrap().validate(req);
         ready(result.map(|auth_info| Self {
             inner: auth_info,
             _provider_type: PhantomData,
         }))
-    }
-    fn from_request(req: &HttpRequest, _payload: &mut Payload) -> Self::Future {
-        Self::extract(req)
     }
 }
