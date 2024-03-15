@@ -2,6 +2,7 @@ use actix_web::{web::Data, HttpRequest};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
+use rustical_dav::error::Error;
 use rustical_dav::{resource::Resource, xml_snippets::TextNode};
 use rustical_store::calendar::CalendarStore;
 use rustical_store::event::Event;
@@ -53,7 +54,7 @@ impl<C: CalendarStore + ?Sized> Resource for EventResource<C> {
         _auth_info: AuthInfo,
         uri_components: Self::UriComponents,
         _prefix: String,
-    ) -> Result<Self> {
+    ) -> Result<Self, Error> {
         let (_principal, cid, uid) = uri_components;
 
         let cal_store = req

@@ -3,7 +3,7 @@ use actix_web::http::header::ContentType;
 use actix_web::http::StatusCode;
 use actix_web::web::{Data, Path};
 use actix_web::{HttpRequest, HttpResponse};
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use rustical_dav::depth_extractor::Depth;
 use rustical_dav::namespace::Namespace;
@@ -74,8 +74,9 @@ pub async fn route_propfind<A: CheckAuthentication, R: Resource, C: CalendarStor
     context: Data<CalDavContext<C>>,
     auth: AuthInfoExtractor<A>,
     depth: Depth,
-) -> Result<HttpResponse, Error> {
-    let props = parse_propfind(&body)?;
+) -> Result<HttpResponse, rustical_dav::error::Error> {
+    // TODO: fix errors
+    let props = parse_propfind(&body).map_err(|_e| anyhow!("propfing parsing error"))?;
     let auth_info = auth.inner;
 
     let resource = R::acquire_from_request(

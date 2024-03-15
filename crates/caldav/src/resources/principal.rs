@@ -2,6 +2,7 @@ use actix_web::{web::Data, HttpRequest};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
+use rustical_dav::error::Error;
 use rustical_dav::{resource::Resource, xml_snippets::HrefElement};
 use rustical_store::calendar::CalendarStore;
 use serde::Serialize;
@@ -88,7 +89,7 @@ impl<C: CalendarStore + ?Sized> Resource for PrincipalCalendarsResource<C> {
         auth_info: AuthInfo,
         _uri_components: Self::UriComponents,
         prefix: String,
-    ) -> Result<Self> {
+    ) -> Result<Self, Error> {
         let cal_store = req
             .app_data::<Data<RwLock<C>>>()
             .ok_or(anyhow!("no calendar store in app_data!"))?

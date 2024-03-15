@@ -14,3 +14,4 @@ rustical_auth = { path = "../auth/" }
 serde = { version = "1.0.197", features = ["derive"] }
 strum = "0.26"
 itertools = "0.12"
+thiserror = "1.0"

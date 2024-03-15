@@ -1,3 +1,4 @@
+use crate::{error::Error, xml_snippets::TagList};
 use actix_web::{http::StatusCode, HttpRequest};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
@@ -6,8 +7,6 @@ use rustical_auth::AuthInfo;
 use serde::Serialize;
 use std::str::FromStr;
 use strum::{EnumProperty, VariantNames};
-
-use crate::xml_snippets::TagList;
 
 // A resource is identified by a URI and has properties
 // A resource can also be a collection
@@ -25,7 +24,7 @@ pub trait Resource: Sized {
         auth_info: AuthInfo,
         uri_components: Self::UriComponents,
         prefix: String,
-    ) -> Result<Self>;
+    ) -> Result<Self, Error>;
 
     fn get_path(&self) -> &str;
     async fn get_members(&self) -> Result<Vec<Self::MemberType>>;

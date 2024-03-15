@@ -2,6 +2,7 @@ use actix_web::HttpRequest;
 use anyhow::Result;
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
+use rustical_dav::error::Error;
 use rustical_dav::{resource::Resource, xml_snippets::HrefElement};
 use serde::Serialize;
 use strum::{EnumProperty, EnumString, IntoStaticStr, VariantNames};
@@ -52,7 +53,7 @@ impl Resource for RootResource {
         auth_info: AuthInfo,
         _uri_components: Self::UriComponents,
         prefix: String,
-    ) -> Result<Self> {
+    ) -> Result<Self, Error> {
         Ok(Self {
             prefix,
             principal: auth_info.user_id,

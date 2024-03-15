@@ -1,7 +1,7 @@
 use actix_web::{http::StatusCode, HttpResponse};
 use thiserror::Error;
 
-use crate::routes::propfind;
+// use crate::routes::propfind;
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -13,8 +13,8 @@ pub enum Error {
     Unauthorized,
     #[error("Internal server error :(")]
     InternalError,
-    #[error(transparent)]
-    PropfindError(#[from] propfind::Error),
+    // #[error(transparent)]
+    // PropfindError(#[from] propfind::Error),
     #[error("Internal server error")]
     Other(#[from] anyhow::Error),
 }
@@ -27,7 +27,7 @@ impl actix_web::error::ResponseError for Error {
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::BadRequest => StatusCode::BAD_REQUEST,
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
-            Self::PropfindError(e) => e.status_code(),
+            // Self::PropfindError(e) => e.status_code(),
         }
     }
 

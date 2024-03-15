@@ -1,7 +1,6 @@
 use actix_web::http::Method;
 use actix_web::web::{self, Data};
 use actix_web::{guard, HttpResponse, Responder};
-use error::Error;
 use resources::calendar::CalendarResource;
 use resources::event::EventResource;
 use resources::principal::PrincipalCalendarsResource;
@@ -9,12 +8,12 @@ use resources::root::RootResource;
 use routes::propfind::route_propfind;
 use routes::{calendar, event};
 use rustical_auth::CheckAuthentication;
+use rustical_dav::error::Error;
 use rustical_store::calendar::CalendarStore;
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-pub mod error;
 pub mod resources;
 pub mod routes;
 
