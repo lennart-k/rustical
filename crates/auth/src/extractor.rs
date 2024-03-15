@@ -1,6 +1,8 @@
 use actix_web::{dev::Payload, web::Data, FromRequest, HttpRequest};
-use futures_util::Future;
-use std::{marker::PhantomData, task::Poll};
+use std::{
+    future::{ready, Ready},
+    marker::PhantomData,
+};
 
 use crate::error::Error;
 
@@ -20,35 +22,19 @@ impl<T: CheckAuthentication> From<AuthInfo> for AuthInfoExtractor<T> {
     }
 }
 
-pub struct AuthInfoExtractorFuture<A: CheckAuthentication>(Result<AuthInfo, Error>, PhantomData<A>);
-
-impl<A: CheckAuthentication> Future for AuthInfoExtractorFuture<A> {
-    type Output = Result<AuthInfoExtractor<A>, Error>;
-
-    fn poll(
-        self: std::pin::Pin<&mut Self>,
-        _cx: &mut std::task::Context<'_>,
-    ) -> std::task::Poll<Self::Output> {
-        match &self.0 {
-            Ok(auth_info) => Poll::Ready(Ok(AuthInfoExtractor {
-                inner: auth_info.clone(),
-                _provider_type: PhantomData,
-            })),
-            Err(err) => Poll::Ready(Err(err.clone())),
-        }
-    }
-}
-
 impl<A> FromRequest for AuthInfoExtractor<A>
 where
     A: CheckAuthentication,
 {
     type Error = Error;
-    type Future = AuthInfoExtractorFuture<A>;
+    type Future = Ready<Result<Self, Self::Error>>;
 
     fn extract(req: &HttpRequest) -> Self::Future {
         let result = req.app_data::<Data<A>>().unwrap().validate(req);
-        AuthInfoExtractorFuture(result, PhantomData)
+        ready(result.map(|auth_info| Self {
+            inner: auth_info,
+            _provider_type: PhantomData,
+        }))
     }
     fn from_request(req: &HttpRequest, _payload: &mut Payload) -> Self::Future {
         Self::extract(req)
