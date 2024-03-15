@@ -37,14 +37,16 @@ pub struct SupportedCalendarComponentSet {
 #[derive(Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct CalendarData {
+    #[serde(rename = "@content-type")]
     content_type: &'static str,
+    #[serde(rename = "@version")]
     version: &'static str,
 }
 
 impl Default for CalendarData {
     fn default() -> Self {
         Self {
-            content_type: "text/calendar;charset=utf-8",
+            content_type: "text/calendar",
             version: "2.0",
         }
     }
@@ -121,13 +123,13 @@ pub enum CalendarProp {
     CurrentUserPrincipal,
     Owner,
     Displayname,
-    #[strum(props(tagname = "IC:calendar-color"))]
+    // #[strum(props(tagname = "IC:calendar-color"))]
     CalendarColor,
-    #[strum(props(tagname = "C:calendar-description"))]
+    // #[strum(props(tagname = "C:calendar-description"))]
     CalendarDescription,
-    #[strum(props(tagname = "C:supported-calendar-component-set"))]
+    // #[strum(props(tagname = "C:supported-calendar-component-set"))]
     SupportedCalendarComponentSet,
-    #[strum(props(tagname = "C:supported-calendar-data"))]
+    // #[strum(props(tagname = "C:supported-calendar-data"))]
     SupportedCalendarData,
     Getcontenttype,
     CurrentUserPrivilegeSet,
@@ -141,9 +143,19 @@ pub enum CalendarPropResponse {
     CurrentUserPrincipal(HrefElement),
     Owner(HrefElement),
     Displayname(TextNode),
+    #[serde(rename = "IC:calendar-color", alias = "calendar-color")]
     CalendarColor(TextNode),
+    #[serde(rename = "C:calendar-description", alias = "calendar-description")]
     CalendarDescription(TextNode),
+    #[serde(
+        rename = "C:supported-calendar-component-set",
+        alias = "supported-calendar-component-set"
+    )]
     SupportedCalendarComponentSet(SupportedCalendarComponentSet),
+    #[serde(
+        rename = "C:supported-calendar-data",
+        alias = "supported-calendar-data"
+    )]
     SupportedCalendarData(SupportedCalendarData),
     Getcontenttype(TextNode),
     MaxResourceSize(TextNode),

@@ -29,7 +29,7 @@ pub struct Resourcetype {
 #[serde(rename_all = "kebab-case")]
 pub enum RootPropResponse {
     Resourcetype(Resourcetype),
-    CurrentUser(HrefElement),
+    CurrentUserPrincipal(HrefElement),
 }
 
 #[async_trait(?Send)]
@@ -63,9 +63,9 @@ impl Resource for RootResource {
     fn get_prop(&self, prop: Self::PropType) -> Result<Self::PropResponse> {
         match prop {
             RootProp::Resourcetype => Ok(RootPropResponse::Resourcetype(Resourcetype::default())),
-            RootProp::CurrentUserPrincipal => Ok(RootPropResponse::CurrentUser(HrefElement::new(
-                format!("{}/{}/", self.prefix, self.principal),
-            ))),
+            RootProp::CurrentUserPrincipal => Ok(RootPropResponse::CurrentUserPrincipal(
+                HrefElement::new(format!("{}/{}/", self.prefix, self.principal)),
+            )),
         }
     }
 }

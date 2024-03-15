@@ -1,7 +1,7 @@
 use actix_web::{http::StatusCode, HttpRequest};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use quick_xml::Writer;
+use itertools::Itertools;
 use rustical_auth::AuthInfo;
 use serde::Serialize;
 use std::str::FromStr;
@@ -51,18 +51,25 @@ struct PropstatElement<T: Serialize> {
 
 #[derive(Serialize)]
 #[serde(rename_all = "kebab-case")]
-struct PropstatResponseElement<T: Serialize> {
+struct PropstatResponseElement<T1: Serialize, T2: Serialize> {
     href: String,
-    propstat: PropstatElement<T>,
+    propstat: Vec<PropstatType<T1, T2>>,
+}
+
+#[derive(Serialize)]
+#[serde(untagged)]
+enum PropstatType<T1: Serialize, T2: Serialize> {
+    Normal(PropstatElement<T1>),
+    NotFound(PropstatElement<T2>),
 }
 
 pub trait HandlePropfind {
-    fn propfind(&self, props: Vec<&str>) -> Result<String>;
+    fn propfind(&self, props: Vec<&str>) -> Result<impl Serialize>;
 }
 
 impl<R: Resource> HandlePropfind for R {
-    fn propfind(&self, props: Vec<&str>) -> Result<String> {
-        let mut props = props;
+    fn propfind(&self, props: Vec<&str>) -> Result<impl Serialize> {
+        let mut props = props.into_iter().unique().collect_vec();
         if props.contains(&"allprops") {
             if props.len() != 1 {
                 // allprops MUST be the only queried prop per spec
@@ -70,9 +77,6 @@ impl<R: Resource> HandlePropfind for R {
             }
             props = R::list_dead_props().into();
         }
-
-        let mut output_buffer = Vec::new();
-        let mut writer = Writer::new_with_indent(&mut output_buffer, b' ', 2);
 
         let mut invalid_props = Vec::<&str>::new();
         let mut prop_responses = Vec::new();
@@ -89,31 +93,22 @@ impl<R: Resource> HandlePropfind for R {
             }
         }
 
-        writer.write_serializable(
-            "response",
-            &PropstatResponseElement {
-                href: self.get_path().to_owned(),
-                propstat: PropstatElement {
-                    status: format!("HTTP/1.1 {}", StatusCode::OK),
-                    prop: PropWrapper {
-                        prop: prop_responses,
-                    },
-                },
+        let mut propstats = Vec::new();
+        propstats.push(PropstatType::Normal(PropstatElement {
+            status: format!("HTTP/1.1 {}", StatusCode::OK),
+            prop: PropWrapper {
+                prop: prop_responses,
             },
-        )?;
+        }));
         if !invalid_props.is_empty() {
-            // TODO: proper error reporting
-            writer.write_serializable(
-                "response",
-                &PropstatResponseElement {
-                    href: self.get_path().to_owned(),
-                    propstat: PropstatElement {
-                        status: format!("HTTP/1.1 {}", StatusCode::NOT_FOUND),
-                        prop: TagList(invalid_props.iter().map(|&s| s.to_owned()).collect()),
-                    },
-                },
-            )?;
+            propstats.push(PropstatType::NotFound(PropstatElement {
+                status: format!("HTTP/1.1 {}", StatusCode::NOT_FOUND),
+                prop: TagList(invalid_props.iter().map(|&s| s.to_owned()).collect()),
+            }));
         }
-        Ok(std::str::from_utf8(&output_buffer)?.to_string())
+        Ok(PropstatResponseElement {
+            href: self.get_path().to_owned(),
+            propstat: propstats,
+        })
     }
 }

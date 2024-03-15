@@ -4,13 +4,13 @@ use actix_web::http::StatusCode;
 use actix_web::web::{Data, Path};
 use actix_web::{HttpRequest, HttpResponse};
 use anyhow::Result;
-use quick_xml::events::BytesText;
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use rustical_dav::depth_extractor::Depth;
 use rustical_dav::namespace::Namespace;
 use rustical_dav::resource::{HandlePropfind, Resource};
 use rustical_dav::xml_snippets::generate_multistatus;
 use rustical_store::calendar::CalendarStore;
+use serde::Serialize;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -76,7 +76,6 @@ pub async fn route_propfind<A: CheckAuthentication, R: Resource, C: CalendarStor
     depth: Depth,
 ) -> Result<HttpResponse, Error> {
     let props = parse_propfind(&body)?;
-    // let req_path = req.path().to_string();
     let auth_info = auth.inner;
 
     let resource = R::acquire_from_request(
@@ -87,21 +86,26 @@ pub async fn route_propfind<A: CheckAuthentication, R: Resource, C: CalendarStor
     )
     .await?;
 
-    let mut responses = vec![resource.propfind(props.clone())?];
+    let response = resource.propfind(props.clone())?;
+    let members = resource.get_members().await?;
+    let mut member_responses = Vec::new();
 
     if depth != Depth::Zero {
-        for member in resource.get_members().await? {
-            responses.push(member.propfind(props.clone())?);
+        for member in &members {
+            member_responses.push(member.propfind(props.clone())?);
         }
     }
 
     let output = generate_multistatus(
         vec![Namespace::Dav, Namespace::CalDAV, Namespace::ICal],
         |writer| {
-            for response in responses {
-                writer.write_event(quick_xml::events::Event::Text(BytesText::from_escaped(
-                    response,
-                )))?;
+            writer
+                .write_serializable("response", &response)
+                .map_err(|_e| quick_xml::Error::TextNotFound)?;
+            for response in member_responses {
+                writer
+                    .write_serializable("response", &response)
+                    .map_err(|_e| quick_xml::Error::TextNotFound)?;
             }
             Ok(())
         },
@@ -110,4 +114,18 @@ pub async fn route_propfind<A: CheckAuthentication, R: Resource, C: CalendarStor
     Ok(HttpResponse::MultiStatus()
         .content_type(ContentType::xml())
         .body(output))
+}
+
+#[derive(Serialize)]
+struct MultistatusElement<T1: Serialize, T2: Serialize> {
+    #[serde(rename = "$value")]
+    responses: Vec<T1>,
+    #[serde(rename = "$value")]
+    member_responses: Vec<T2>,
+    #[serde(rename = "@xmlns")]
+    ns_dav: &'static str,
+    #[serde(rename = "@xmlns:C")]
+    ns_caldav: &'static str,
+    #[serde(rename = "@xmlns:IC")]
+    ns_ical: &'static str,
 }

@@ -5,7 +5,6 @@ use actix_web::http::header::ContentType;
 use actix_web::web::{Data, Path};
 use actix_web::{HttpRequest, HttpResponse};
 use anyhow::Result;
-use quick_xml::events::BytesText;
 use roxmltree::{Node, NodeType};
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use rustical_dav::namespace::Namespace;
@@ -51,22 +50,28 @@ async fn handle_report_calendar_query<C: CalendarStore + ?Sized>(
         .map(|node| node.tag_name().name())
         .collect();
 
-    let mut event_results = Vec::new();
-    for event in events {
-        let path = format!("{}/{}", request.path(), event.get_uid());
-        let event_resource = EventResource {
-            cal_store: cal_store.clone(),
-            path: path.clone(),
-            event,
-        };
-        event_results.push(event_resource.propfind(props.clone())?);
-    }
+    let event_resources: Vec<_> = events
+        .iter()
+        .map(|event| {
+            let path = format!("{}/{}", request.path(), event.get_uid());
+            EventResource {
+                cal_store: cal_store.clone(),
+                path: path.clone(),
+                event: event.clone(),
+            }
+        })
+        .collect();
+    let event_results: Result<Vec<_>, _> = event_resources
+        .iter()
+        .map(|ev| ev.propfind(props.clone()))
+        .collect();
+    let event_responses = event_results?;
 
     let output = generate_multistatus(vec![Namespace::Dav, Namespace::CalDAV], |writer| {
-        for result in event_results {
-            writer.write_event(quick_xml::events::Event::Text(BytesText::from_escaped(
-                result,
-            )))?;
+        for result in event_responses {
+            writer
+                .write_serializable("response", &result)
+                .map_err(|_e| quick_xml::Error::TextNotFound)?;
         }
         Ok(())
     })?;
@@ -89,8 +94,6 @@ pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?S
     let doc = roxmltree::Document::parse(&body).map_err(|_e| Error::BadRequest)?;
     let query_node = doc.root_element();
     let events = context.store.read().await.get_events(&cid).await.unwrap();
-
-    dbg!(&body);
 
     // TODO: implement filtering
     match query_node.tag_name().name() {
