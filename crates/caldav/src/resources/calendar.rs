@@ -22,7 +22,10 @@ pub struct CalendarResource<C: CalendarStore + ?Sized> {
 
 #[derive(Serialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct SupportedCalendarComponent(#[serde(rename = "@name")] pub &'static str);
+pub struct SupportedCalendarComponent {
+    #[serde(rename = "@name")]
+    pub name: &'static str,
+}
 
 #[derive(Serialize)]
 #[serde(rename_all = "kebab-case")]
@@ -210,7 +213,7 @@ impl<C: CalendarStore + ?Sized> Resource for CalendarResource<C> {
             CalendarProp::SupportedCalendarComponentSet => {
                 Ok(CalendarPropResponse::SupportedCalendarComponentSet(
                     SupportedCalendarComponentSet {
-                        comp: vec![SupportedCalendarComponent("VEVENT")],
+                        comp: vec![SupportedCalendarComponent { name: "VEVENT" }],
                     },
                 ))
             }
