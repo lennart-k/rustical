@@ -7,7 +7,7 @@ use rustical_dav::{resource::Resource, xml_snippets::HrefElement};
 use rustical_store::calendar::CalendarStore;
 use serde::Serialize;
 use std::sync::Arc;
-use strum::{EnumProperty, EnumString, IntoStaticStr, VariantNames};
+use strum::{EnumString, IntoStaticStr, VariantNames};
 use tokio::sync::RwLock;
 
 use super::calendar::CalendarResource;
@@ -39,16 +39,14 @@ pub enum PrincipalPropResponse {
     CalendarUserAddressSet(HrefElement),
 }
 
-#[derive(EnumString, Debug, VariantNames, IntoStaticStr, EnumProperty, Clone)]
+#[derive(EnumString, Debug, VariantNames, IntoStaticStr, Clone)]
 #[strum(serialize_all = "kebab-case")]
 pub enum PrincipalProp {
     Resourcetype,
     CurrentUserPrincipal,
     #[strum(serialize = "principal-URL")]
     PrincipalUrl,
-    #[strum(props(tagname = "C:calendar-home-set"))]
     CalendarHomeSet,
-    #[strum(props(tagname = "C:calendar-user-address-set"))]
     CalendarUserAddressSet,
 }
 

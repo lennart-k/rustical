@@ -5,7 +5,7 @@ use rustical_auth::AuthInfo;
 use rustical_dav::error::Error;
 use rustical_dav::{resource::Resource, xml_snippets::HrefElement};
 use serde::Serialize;
-use strum::{EnumProperty, EnumString, IntoStaticStr, VariantNames};
+use strum::{EnumString, IntoStaticStr, VariantNames};
 
 pub struct RootResource {
     prefix: String,
@@ -13,7 +13,7 @@ pub struct RootResource {
     path: String,
 }
 
-#[derive(EnumString, Debug, VariantNames, EnumProperty, IntoStaticStr, Clone)]
+#[derive(EnumString, Debug, VariantNames, IntoStaticStr, Clone)]
 #[strum(serialize_all = "kebab-case")]
 pub enum RootProp {
     Resourcetype,

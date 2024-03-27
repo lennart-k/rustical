@@ -6,7 +6,7 @@ use itertools::Itertools;
 use rustical_auth::AuthInfo;
 use serde::Serialize;
 use std::str::FromStr;
-use strum::{EnumProperty, VariantNames};
+use strum::VariantNames;
 
 // A resource is identified by a URI and has properties
 // A resource can also be a collection
@@ -16,7 +16,7 @@ use strum::{EnumProperty, VariantNames};
 pub trait Resource: Sized {
     type MemberType: Resource;
     type UriComponents: Sized; // defines how the resource URI maps to parameters, i.e. /{principal}/{calendar} -> (String, String)
-    type PropType: FromStr + VariantNames + Into<&'static str> + EnumProperty + Clone;
+    type PropType: FromStr + VariantNames + Into<&'static str> + Clone;
     type PropResponse: Serialize;
 
     async fn acquire_from_request(

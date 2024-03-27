@@ -10,7 +10,7 @@ use rustical_dav::{
 use rustical_store::calendar::{Calendar, CalendarStore};
 use serde::Serialize;
 use std::sync::Arc;
-use strum::{EnumProperty, EnumString, IntoStaticStr, VariantNames};
+use strum::{EnumString, IntoStaticStr, VariantNames};
 use tokio::sync::RwLock;
 
 pub struct CalendarResource<C: CalendarStore + ?Sized> {
@@ -117,20 +117,16 @@ impl Default for UserPrivilegeSet {
     }
 }
 
-#[derive(EnumString, Debug, VariantNames, IntoStaticStr, EnumProperty, Clone)]
+#[derive(EnumString, Debug, VariantNames, IntoStaticStr, Clone)]
 #[strum(serialize_all = "kebab-case")]
 pub enum CalendarProp {
     Resourcetype,
     CurrentUserPrincipal,
     Owner,
     Displayname,
-    // #[strum(props(tagname = "IC:calendar-color"))]
     CalendarColor,
-    // #[strum(props(tagname = "C:calendar-description"))]
     CalendarDescription,
-    // #[strum(props(tagname = "C:supported-calendar-component-set"))]
     SupportedCalendarComponentSet,
-    // #[strum(props(tagname = "C:supported-calendar-data"))]
     SupportedCalendarData,
     Getcontenttype,
     CurrentUserPrivilegeSet,

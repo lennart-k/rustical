@@ -8,7 +8,7 @@ use rustical_store::calendar::CalendarStore;
 use rustical_store::event::Event;
 use serde::Serialize;
 use std::sync::Arc;
-use strum::{EnumProperty, EnumString, IntoStaticStr, VariantNames};
+use strum::{EnumString, IntoStaticStr, VariantNames};
 use tokio::sync::RwLock;
 
 pub struct EventResource<C: CalendarStore + ?Sized> {
@@ -17,11 +17,10 @@ pub struct EventResource<C: CalendarStore + ?Sized> {
     pub event: Event,
 }
 
-#[derive(EnumString, Debug, VariantNames, IntoStaticStr, EnumProperty, Clone)]
+#[derive(EnumString, Debug, VariantNames, IntoStaticStr, Clone)]
 #[strum(serialize_all = "kebab-case")]
 pub enum EventProp {
     Getetag,
-    #[strum(props(tagname = "C:calendar-data"))]
     CalendarData,
     Getcontenttype,
 }
