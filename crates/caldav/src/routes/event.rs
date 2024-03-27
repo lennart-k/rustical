@@ -42,10 +42,20 @@ pub async fn delete_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
 pub async fn get_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     context: Data<CalDavContext<C>>,
     path: Path<(String, String, String)>,
-    _auth: AuthInfoExtractor<A>,
+    auth: AuthInfoExtractor<A>,
 ) -> Result<HttpResponse, Error> {
     // TODO: verify whether user is authorized
-    let (_principal, cid, mut uid) = path.into_inner();
+    let (principal, cid, mut uid) = path.into_inner();
+    let auth_info = auth.inner;
+    if auth_info.user_id != principal {
+        return Ok(HttpResponse::Unauthorized().body(""));
+    }
+
+    let calendar = context.store.read().await.get_calendar(&cid).await?;
+    if auth_info.user_id != calendar.owner {
+        return Ok(HttpResponse::Unauthorized().body(""));
+    }
+
     if uid.ends_with(".ics") {
         uid.truncate(uid.len() - 4);
     }
@@ -60,10 +70,19 @@ pub async fn put_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     context: Data<CalDavContext<C>>,
     path: Path<(String, String, String)>,
     body: String,
-    _auth: AuthInfoExtractor<A>,
+    auth: AuthInfoExtractor<A>,
 ) -> Result<HttpResponse, Error> {
-    // TODO: verify whether user is authorized
-    let (_principal, cid, mut uid) = path.into_inner();
+    let (principal, cid, mut uid) = path.into_inner();
+    let auth_info = auth.inner;
+    if auth_info.user_id != principal {
+        return Ok(HttpResponse::Unauthorized().body(""));
+    }
+
+    let calendar = context.store.read().await.get_calendar(&cid).await?;
+    if auth_info.user_id != calendar.owner {
+        return Ok(HttpResponse::Unauthorized().body(""));
+    }
+
     // Incredibly bodged method of normalising the uid but works for a prototype
     if uid.ends_with(".ics") {
         uid.truncate(uid.len() - 4);
