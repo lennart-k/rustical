@@ -80,7 +80,7 @@ impl CalendarStore for TomlCalendarStore {
     }
 
     async fn upsert_event(&mut self, cid: String, uid: String, ics: String) -> Result<()> {
-        let events = self.events.entry(cid).or_insert(HashMap::new());
+        let events = self.events.entry(cid).or_default();
         events.insert(uid.clone(), Event::from_ics(uid, ics)?);
         self.save().await.unwrap();
         Ok(())

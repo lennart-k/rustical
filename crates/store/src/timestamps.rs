@@ -12,19 +12,19 @@ pub fn parse_duration(string: &str) -> Result<Duration> {
 
     let mut duration = Duration::zero();
     if let Some(weeks) = captures.name("W") {
-        duration = duration + Duration::weeks(weeks.as_str().parse()?);
+        duration += Duration::weeks(weeks.as_str().parse()?);
     }
     if let Some(days) = captures.name("D") {
-        duration = duration + Duration::days(days.as_str().parse()?);
+        duration += Duration::days(days.as_str().parse()?);
     }
     if let Some(hours) = captures.name("H") {
-        duration = duration + Duration::hours(hours.as_str().parse()?);
+        duration += Duration::hours(hours.as_str().parse()?);
     }
     if let Some(minutes) = captures.name("M") {
-        duration = duration + Duration::minutes(minutes.as_str().parse()?);
+        duration += Duration::minutes(minutes.as_str().parse()?);
     }
     if let Some(seconds) = captures.name("S") {
-        duration = duration + Duration::seconds(seconds.as_str().parse()?);
+        duration += Duration::seconds(seconds.as_str().parse()?);
     }
     if let Some(sign) = captures.name("sign") {
         if sign.as_str() == "-" {

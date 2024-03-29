@@ -82,7 +82,7 @@ impl Event {
 
     pub fn get_first_occurence(&self) -> Result<NaiveDateTime> {
         // This is safe since we enforce the event's existance in the constructor
-        let event = self.cal.events.get(0).unwrap();
+        let event = self.cal.events.first().unwrap();
         let dtstart = event
             .get_property("DTSTART")
             .ok_or(anyhow!("DTSTART property missing!"))?
@@ -94,7 +94,7 @@ impl Event {
 
     pub fn get_last_occurence(&self) -> Result<NaiveDateTime> {
         // This is safe since we enforce the event's existance in the constructor
-        let event = self.cal.events.get(0).unwrap();
+        let event = self.cal.events.first().unwrap();
 
         if event.get_property("RRULE").is_some() {
             // TODO: understand recurrence rules
