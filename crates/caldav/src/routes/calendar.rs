@@ -118,19 +118,19 @@ pub async fn handle_mkcol_calendar_set<C: CalendarStore + ?Sized>(
     for prop in prop_node.children() {
         match prop.tag_name().name() {
             "displayname" => {
-                cal.name = prop.text().map(|s| s.to_string());
+                cal.name = prop.text().map(str::to_string);
             }
             "timezone" => {
-                cal.timezone = prop.text().map(|s| s.to_string());
+                cal.timezone = prop.text().map(str::to_string);
             }
             "calendar-color" => {
-                cal.color = prop.text().map(|s| s.to_string());
+                cal.color = prop.text().map(str::to_string);
             }
             "calendar-description" => {
-                cal.description = prop.text().map(|s| s.to_string());
+                cal.description = prop.text().map(str::to_string);
             }
             "calendar-timezone" => {
-                cal.timezone = prop.text().map(|s| s.to_string());
+                cal.timezone = prop.text().map(str::to_string);
             }
             _ => {
                 println!("unsupported mkcol tag: {}", prop.tag_name().name())
