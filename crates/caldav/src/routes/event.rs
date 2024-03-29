@@ -46,13 +46,13 @@ pub async fn get_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
 ) -> Result<HttpResponse, Error> {
     // TODO: verify whether user is authorized
     let (principal, cid, mut uid) = path.into_inner();
-    let auth_info = auth.inner;
-    if auth_info.user_id != principal {
+
+    if auth.inner.user_id != principal {
         return Ok(HttpResponse::Unauthorized().body(""));
     }
 
     let calendar = context.store.read().await.get_calendar(&cid).await?;
-    if auth_info.user_id != calendar.owner {
+    if auth.inner.user_id != calendar.owner {
         return Ok(HttpResponse::Unauthorized().body(""));
     }
 
