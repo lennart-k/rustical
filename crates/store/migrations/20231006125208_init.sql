@@ -1,7 +1,7 @@
 CREATE TABLE calendars (
   id TEXT PRIMARY KEY NOT NULL,
-  name TEXT NOT NULL,
   owner TEXT NOT NULL,
+  name TEXT,
   description TEXT,
   color TEXT,
   timezone TEXT NOT NULL
