@@ -7,3 +7,5 @@ a calendar server
 - [ ] Access Control
 - [ ] ICS parsing
   - [ ] Datetime parsing
+- [ ] CardDAV
+- [ ] Testing such that I'm confident enough to use it myself :)
