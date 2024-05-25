@@ -17,7 +17,7 @@ pub trait Resource {
         Self::PropType::VARIANTS
     }
 
-    fn get_prop(&self, prop: Self::PropType) -> Result<Self::PropResponse>;
+    fn get_prop(&self, prefix: &str, prop: Self::PropType) -> Result<Self::PropResponse>;
 
     fn get_path(&self) -> &str;
 }
@@ -36,7 +36,6 @@ pub trait ResourceService: Sized {
         req: HttpRequest,
         auth_info: AuthInfo,
         path_components: Self::PathComponents,
-        prefix: String,
     ) -> Result<Self, Error>;
 
     async fn get_file(&self) -> Result<Self::File>;
@@ -73,13 +72,14 @@ enum PropstatType<T1: Serialize, T2: Serialize> {
 
 #[async_trait(?Send)]
 pub trait HandlePropfind {
-    async fn propfind(&self, props: Vec<&str>) -> Result<impl Serialize>;
+    async fn propfind(&self, prefix: &str, props: Vec<&str>) -> Result<impl Serialize>;
 }
 
 #[async_trait(?Send)]
 impl<R: Resource> HandlePropfind for R {
     async fn propfind(
         &self,
+        prefix: &str,
         props: Vec<&str>,
     ) -> Result<PropstatResponseElement<PropWrapper<Vec<R::PropResponse>>, TagList>> {
         let mut props = props.into_iter().unique().collect_vec();
@@ -95,7 +95,7 @@ impl<R: Resource> HandlePropfind for R {
         let mut prop_responses = Vec::new();
         for prop in props {
             if let Ok(valid_prop) = R::PropType::from_str(prop) {
-                match self.get_prop(valid_prop.clone()) {
+                match self.get_prop(prefix, valid_prop.clone()) {
                     Ok(response) => {
                         prop_responses.push(response);
                     }

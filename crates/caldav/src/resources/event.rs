@@ -47,7 +47,7 @@ impl Resource for EventFile {
         "asd"
     }
 
-    fn get_prop(&self, prop: Self::PropType) -> Result<Self::PropResponse> {
+    fn get_prop(&self, _prefix: &str, prop: Self::PropType) -> Result<Self::PropResponse> {
         match prop {
             EventProp::Getetag => Ok(PrincipalPropResponse::Getetag(TextNode(Some(
                 self.event.get_etag(),
@@ -76,7 +76,6 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResource<C> {
         req: HttpRequest,
         _auth_info: AuthInfo,
         path_components: Self::PathComponents,
-        _prefix: String,
     ) -> Result<Self, Error> {
         let (_principal, cid, uid) = path_components;
 

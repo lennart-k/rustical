@@ -87,15 +87,15 @@ pub async fn handle_propfind<
     let prefix = prefix.0.to_owned();
     let path_components = path.into_inner();
 
-    let resource_service = R::new(req, auth_info.clone(), path_components.clone(), prefix).await?;
+    let resource_service = R::new(req, auth_info.clone(), path_components.clone()).await?;
 
     let resource = resource_service.get_file().await?;
-    let response = resource.propfind(props.clone()).await?;
+    let response = resource.propfind(&prefix, props.clone()).await?;
     let mut member_responses = Vec::new();
 
     if depth != Depth::Zero {
         for member in resource_service.get_members(auth_info).await? {
-            member_responses.push(member.propfind(props.clone()).await?);
+            member_responses.push(member.propfind(&prefix, props.clone()).await?);
         }
     }
 

@@ -9,6 +9,7 @@ use roxmltree::{Node, NodeType};
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use rustical_dav::dav_resource::HandlePropfind;
 use rustical_dav::namespace::Namespace;
+use rustical_dav::propfind::ServicePrefix;
 use rustical_dav::xml_snippets::generate_multistatus;
 use rustical_store::calendar::{Calendar, CalendarStore};
 use rustical_store::event::Event;
@@ -39,6 +40,7 @@ async fn handle_report_calendar_query<C: CalendarStore + ?Sized>(
     _request: HttpRequest,
     events: Vec<Event>,
     _cal_store: Arc<RwLock<C>>,
+    prefix: &str,
 ) -> Result<HttpResponse, Error> {
     let prop_node = query_node
         .children()
@@ -62,7 +64,7 @@ async fn handle_report_calendar_query<C: CalendarStore + ?Sized>(
         .collect();
     let mut event_responses = Vec::new();
     for event_file in event_files {
-        event_responses.push(event_file.propfind(props.clone()).await?);
+        event_responses.push(event_file.propfind(prefix, props.clone()).await?);
     }
     // let event_results: Result<Vec<_>, _> = event_files
     //     .iter()
@@ -90,9 +92,11 @@ pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?S
     path: Path<(String, String)>,
     request: HttpRequest,
     _auth: AuthInfoExtractor<A>,
+    prefix: Data<ServicePrefix>,
 ) -> Result<HttpResponse, Error> {
     // TODO: Check authorization
     let (_principal, cid) = path.into_inner();
+    let prefix = &prefix.0;
 
     let doc = roxmltree::Document::parse(&body).map_err(|_e| Error::BadRequest)?;
     let query_node = doc.root_element();
@@ -104,7 +108,7 @@ pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?S
         "calendar-multiget" => {}
         _ => return Err(Error::BadRequest),
     };
-    handle_report_calendar_query(query_node, request, events, context.store.clone()).await
+    handle_report_calendar_query(query_node, request, events, context.store.clone(), prefix).await
 }
 
 pub async fn handle_mkcol_calendar_set<C: CalendarStore + ?Sized>(

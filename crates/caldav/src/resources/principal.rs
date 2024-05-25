@@ -15,14 +15,12 @@ use tokio::sync::RwLock;
 use super::calendar::CalendarFile;
 
 pub struct PrincipalResource<C: CalendarStore + ?Sized> {
-    prefix: String,
     principal: String,
     path: String,
     cal_store: Arc<RwLock<C>>,
 }
 
 pub struct PrincipalFile {
-    prefix: String,
     principal: String,
     path: String,
 }
@@ -63,23 +61,23 @@ impl Resource for PrincipalFile {
     type PropType = PrincipalProp;
     type PropResponse = PrincipalPropResponse;
 
-    fn get_prop(&self, prop: Self::PropType) -> Result<Self::PropResponse> {
+    fn get_prop(&self, prefix: &str, prop: Self::PropType) -> Result<Self::PropResponse> {
         match prop {
             PrincipalProp::Resourcetype => {
                 Ok(PrincipalPropResponse::Resourcetype(Resourcetype::default()))
             }
             PrincipalProp::CurrentUserPrincipal => Ok(PrincipalPropResponse::CurrentUserPrincipal(
-                HrefElement::new(format!("{}/{}/", self.prefix, self.principal)),
+                HrefElement::new(format!("{}/{}/", prefix, self.principal)),
             )),
             PrincipalProp::PrincipalUrl => Ok(PrincipalPropResponse::PrincipalUrl(
-                HrefElement::new(format!("{}/{}/", self.prefix, self.principal)),
+                HrefElement::new(format!("{}/{}/", prefix, self.principal)),
             )),
             PrincipalProp::CalendarHomeSet => Ok(PrincipalPropResponse::CalendarHomeSet(
-                HrefElement::new(format!("{}/{}/", self.prefix, self.principal)),
+                HrefElement::new(format!("{}/{}/", prefix, self.principal)),
             )),
             PrincipalProp::CalendarUserAddressSet => {
                 Ok(PrincipalPropResponse::CalendarUserAddressSet(
-                    HrefElement::new(format!("{}/{}/", self.prefix, self.principal)),
+                    HrefElement::new(format!("{}/{}/", prefix, self.principal)),
                 ))
             }
         }
@@ -100,7 +98,6 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResource<C> {
         req: HttpRequest,
         auth_info: AuthInfo,
         _path_components: Self::PathComponents,
-        prefix: String,
     ) -> Result<Self, rustical_dav::error::Error> {
         let cal_store = req
             .app_data::<Data<RwLock<C>>>()
@@ -112,14 +109,12 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResource<C> {
             cal_store,
             path: req.path().to_owned(),
             principal: auth_info.user_id,
-            prefix,
         })
     }
 
     async fn get_file(&self) -> Result<Self::File> {
         Ok(PrincipalFile {
             principal: self.principal.to_owned(),
-            prefix: self.prefix.to_owned(),
             path: self.path.to_owned(),
         })
     }
@@ -136,7 +131,6 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResource<C> {
             .map(|cal| CalendarFile {
                 calendar: cal,
                 principal: self.principal.to_owned(),
-                prefix: self.prefix.to_owned(),
                 path: self.path.to_owned(),
             })
             .collect())

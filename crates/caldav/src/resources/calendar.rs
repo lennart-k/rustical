@@ -14,7 +14,6 @@ use tokio::sync::RwLock;
 pub struct CalendarResource<C: CalendarStore + ?Sized> {
     pub cal_store: Arc<RwLock<C>>,
     pub path: String,
-    pub prefix: String,
     pub principal: String,
     pub calendar_id: String,
 }
@@ -160,7 +159,6 @@ pub enum CalendarPropResponse {
 pub struct CalendarFile {
     pub calendar: Calendar,
     pub principal: String,
-    pub prefix: String,
     pub path: String,
 }
 
@@ -168,17 +166,17 @@ impl Resource for CalendarFile {
     type PropType = CalendarProp;
     type PropResponse = CalendarPropResponse;
 
-    fn get_prop(&self, prop: Self::PropType) -> Result<Self::PropResponse> {
+    fn get_prop(&self, prefix: &str, prop: Self::PropType) -> Result<Self::PropResponse> {
         match prop {
             CalendarProp::Resourcetype => {
                 Ok(CalendarPropResponse::Resourcetype(Resourcetype::default()))
             }
             CalendarProp::CurrentUserPrincipal => Ok(CalendarPropResponse::CurrentUserPrincipal(
-                HrefElement::new(format!("{}/{}/", self.prefix, self.principal)),
+                HrefElement::new(format!("{}/{}/", prefix, self.principal)),
             )),
             CalendarProp::Owner => Ok(CalendarPropResponse::Owner(HrefElement::new(format!(
                 "{}/{}/",
-                self.prefix, self.principal
+                prefix, self.principal
             )))),
             CalendarProp::Displayname => Ok(CalendarPropResponse::Displayname(TextNode(
                 self.calendar.name.clone(),
@@ -232,7 +230,6 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResource<C> {
             .map_err(|_e| Error::NotFound)?;
         Ok(CalendarFile {
             calendar,
-            prefix: self.prefix.to_owned(),
             principal: self.principal.to_owned(),
             path: self.path.to_owned(),
         })
@@ -247,7 +244,6 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResource<C> {
         req: HttpRequest,
         auth_info: AuthInfo,
         path_components: Self::PathComponents,
-        prefix: String,
     ) -> Result<Self, rustical_dav::error::Error> {
         let cal_store = req
             .app_data::<Data<RwLock<C>>>()
@@ -256,7 +252,6 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResource<C> {
             .into_inner();
 
         Ok(Self {
-            prefix,
             path: req.path().to_owned(),
             principal: auth_info.user_id,
             calendar_id: path_components.1,

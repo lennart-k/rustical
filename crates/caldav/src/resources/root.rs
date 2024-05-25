@@ -9,7 +9,6 @@ use serde::Serialize;
 use strum::{EnumString, IntoStaticStr, VariantNames};
 
 pub struct RootResource {
-    prefix: String,
     principal: String,
     path: String,
 }
@@ -35,7 +34,6 @@ pub enum RootPropResponse {
 }
 
 pub struct RootFile {
-    pub prefix: String,
     pub principal: String,
     pub path: String,
 }
@@ -44,11 +42,11 @@ impl Resource for RootFile {
     type PropType = RootProp;
     type PropResponse = RootPropResponse;
 
-    fn get_prop(&self, prop: Self::PropType) -> Result<Self::PropResponse> {
+    fn get_prop(&self, prefix: &str, prop: Self::PropType) -> Result<Self::PropResponse> {
         match prop {
             RootProp::Resourcetype => Ok(RootPropResponse::Resourcetype(Resourcetype::default())),
             RootProp::CurrentUserPrincipal => Ok(RootPropResponse::CurrentUserPrincipal(
-                HrefElement::new(format!("{}/{}/", self.prefix, self.principal)),
+                HrefElement::new(format!("{}/{}/", prefix, self.principal)),
             )),
         }
     }
@@ -72,10 +70,8 @@ impl ResourceService for RootResource {
         req: HttpRequest,
         auth_info: AuthInfo,
         _path_components: Self::PathComponents,
-        prefix: String,
     ) -> Result<Self, Error> {
         Ok(Self {
-            prefix,
             principal: auth_info.user_id,
             path: req.path().to_string(),
         })
@@ -85,7 +81,6 @@ impl ResourceService for RootResource {
         Ok(RootFile {
             path: self.path.to_owned(),
             principal: self.principal.to_owned(),
-            prefix: self.prefix.to_owned(),
         })
     }
 }
