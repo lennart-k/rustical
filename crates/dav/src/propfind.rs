@@ -69,11 +69,7 @@ pub fn parse_propfind(body: &str) -> Result<Vec<&str>, Error> {
     }
 }
 
-pub async fn handle_propfind<
-    A: CheckAuthentication,
-    R: ResourceService + ?Sized,
-    // C: CalendarStore + ?Sized,
->(
+pub async fn handle_propfind<A: CheckAuthentication, R: ResourceService + ?Sized>(
     path: Path<R::PathComponents>,
     body: String,
     req: HttpRequest,
