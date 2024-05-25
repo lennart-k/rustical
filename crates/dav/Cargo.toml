@@ -13,6 +13,6 @@ quick-xml = "0.31"
 rustical_auth = { path = "../auth/" }
 serde = { version = "1.0.197", features = ["derive"] }
 strum = "0.26"
-itertools = "0.12"
+itertools = "0.13"
 thiserror = "1.0"
-roxmltree = "0.19"
+roxmltree = "0.20"

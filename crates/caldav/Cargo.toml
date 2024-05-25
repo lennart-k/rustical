@@ -15,7 +15,7 @@ quick-xml = { version = "0.31", features = [
   "serde-types",
   "serialize",
 ] }
-roxmltree = "0.19"
+roxmltree = "0.20"
 rustical_store = { path = "../store/" }
 rustical_dav = { path = "../dav/" }
 rustical_auth = { path = "../auth/" }
