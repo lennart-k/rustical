@@ -5,7 +5,7 @@ use actix_web::HttpRequest;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
-use rustical_dav::dav_resource::{Resource, ResourceService};
+use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml_snippets::HrefElement;
 use rustical_store::calendar::CalendarStore;
 use serde::Serialize;

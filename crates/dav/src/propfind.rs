@@ -1,7 +1,7 @@
-use crate::dav_resource::HandlePropfind;
-use crate::dav_resource::ResourceService;
 use crate::depth_extractor::Depth;
 use crate::namespace::Namespace;
+use crate::resource::HandlePropfind;
+use crate::resource::ResourceService;
 use crate::xml_snippets::generate_multistatus;
 use actix_web::http::header::ContentType;
 use actix_web::http::StatusCode;
