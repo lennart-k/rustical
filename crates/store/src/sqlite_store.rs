@@ -77,9 +77,9 @@ impl CalendarStore for SqliteCalendarStore {
         let events = sqlx::query_as!(EventRow, "SELECT uid, ics FROM events WHERE cid = ?", cid)
             .fetch_all(&self.db)
             .await?
-            .iter_mut()
+            .into_iter()
             // TODO: this is an ugly bodge :(
-            .filter_map(|row| row.clone().try_into().ok())
+            .filter_map(|row| row.try_into().ok())
             .collect();
         Ok(events)
     }
