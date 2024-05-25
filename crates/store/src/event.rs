@@ -1,7 +1,6 @@
 use crate::timestamps::{parse_datetime, parse_duration};
 use anyhow::{anyhow, Result};
 use chrono::{Duration, NaiveDateTime, Timelike};
-use ical::generator::Emitter;
 use ical::parser::{ical::component::IcalCalendar, Component};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -10,6 +9,7 @@ use std::io::BufReader;
 #[derive(Debug, Clone)]
 pub struct Event {
     uid: String,
+    ics: String,
     cal: IcalCalendar,
 }
 
@@ -60,7 +60,7 @@ impl Event {
         if cal.events.len() != 1 {
             return Err(anyhow!("multiple or no events"));
         }
-        let event = Self { uid, cal };
+        let event = Self { uid, cal, ics };
         // Run getters now to validate the input and ensure that they'll work later on
         event.get_first_occurence()?;
         event.get_last_occurence()?;
@@ -76,8 +76,8 @@ impl Event {
         format!("{:x}", hasher.finalize())
     }
 
-    pub fn get_ics(&self) -> String {
-        self.cal.generate()
+    pub fn get_ics(&self) -> &str {
+        &self.ics
     }
 
     pub fn get_first_occurence(&self) -> Result<NaiveDateTime> {
