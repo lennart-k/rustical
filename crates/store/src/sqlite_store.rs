@@ -56,13 +56,15 @@ impl CalendarStore for SqliteCalendarStore {
     }
 
     async fn insert_calendar(&mut self, cid: String, calendar: Calendar) -> Result<()> {
-        // TODO: :(
-        let name = calendar.name;
-        let description = calendar.description;
-        let owner = calendar.owner;
-        let color = calendar.color;
-        let timezone = calendar.timezone;
-        sqlx::query!("INSERT INTO calendars (id, name, description, owner, color, timezone) VALUES (?, ?, ?, ?, ?, ?)", cid, name, description, owner, color, timezone).execute(&self.db).await?;
+        sqlx::query!(
+            "INSERT INTO calendars (id, name, description, owner, color, timezone) VALUES (?, ?, ?, ?, ?, ?)",
+            cid,
+            calendar.name,
+            calendar.description,
+            calendar.owner,
+            calendar.color,
+            calendar.timezone
+        ).execute(&self.db).await?;
         Ok(())
     }
 
