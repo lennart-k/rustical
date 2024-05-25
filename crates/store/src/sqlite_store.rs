@@ -74,14 +74,12 @@ impl CalendarStore for SqliteCalendarStore {
     }
 
     async fn get_events(&self, cid: &str) -> Result<Vec<Event>> {
-        let events = sqlx::query_as!(EventRow, "SELECT uid, ics FROM events WHERE cid = ?", cid)
+        sqlx::query_as!(EventRow, "SELECT uid, ics FROM events WHERE cid = ?", cid)
             .fetch_all(&self.db)
             .await?
             .into_iter()
-            // TODO: this is an ugly bodge :(
-            .filter_map(|row| row.try_into().ok())
-            .collect();
-        Ok(events)
+            .map(|row| row.try_into())
+            .collect()
     }
 
     async fn get_event(&self, cid: &str, uid: &str) -> Result<Event> {
