@@ -94,10 +94,7 @@ pub async fn handle_propfind<
     let mut member_responses = Vec::new();
 
     if depth != Depth::Zero {
-        for member in resource_service
-            .get_members(auth_info, path_components)
-            .await?
-        {
+        for member in resource_service.get_members(auth_info).await? {
             member_responses.push(member.propfind(props.clone()).await?);
         }
     }

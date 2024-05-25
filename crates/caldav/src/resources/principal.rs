@@ -124,11 +124,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResource<C> {
         })
     }
 
-    async fn get_members(
-        &self,
-        _auth_info: AuthInfo,
-        _path_components: Self::PathComponents,
-    ) -> Result<Vec<Self::MemberType>> {
+    async fn get_members(&self, _auth_info: AuthInfo) -> Result<Vec<Self::MemberType>> {
         let calendars = self
             .cal_store
             .read()

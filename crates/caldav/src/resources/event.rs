@@ -68,11 +68,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResource<C> {
     type File = EventFile;
     type MemberType = EventFile;
 
-    async fn get_members(
-        &self,
-        _auth_info: AuthInfo,
-        _path_components: Self::PathComponents,
-    ) -> Result<Vec<Self::MemberType>> {
+    async fn get_members(&self, _auth_info: AuthInfo) -> Result<Vec<Self::MemberType>> {
         Ok(vec![])
     }
 

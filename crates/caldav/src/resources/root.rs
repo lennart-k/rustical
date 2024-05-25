@@ -64,11 +64,7 @@ impl ResourceService for RootResource {
     type MemberType = RootFile;
     type File = RootFile;
 
-    async fn get_members(
-        &self,
-        _auth_info: AuthInfo,
-        _path_components: Self::PathComponents,
-    ) -> Result<Vec<Self::MemberType>> {
+    async fn get_members(&self, _auth_info: AuthInfo) -> Result<Vec<Self::MemberType>> {
         Ok(vec![])
     }
 

@@ -238,11 +238,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResource<C> {
         })
     }
 
-    async fn get_members(
-        &self,
-        _auth_info: AuthInfo,
-        _path_components: Self::PathComponents,
-    ) -> Result<Vec<Self::MemberType>> {
+    async fn get_members(&self, _auth_info: AuthInfo) -> Result<Vec<Self::MemberType>> {
         // As of now the calendar resource has no members since events are shown with REPORT
         Ok(vec![])
     }

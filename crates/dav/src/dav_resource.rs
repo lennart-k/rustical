@@ -41,11 +41,7 @@ pub trait ResourceService: Sized {
 
     async fn get_file(&self) -> Result<Self::File>;
 
-    async fn get_members(
-        &self,
-        auth_info: AuthInfo,
-        path_components: Self::PathComponents,
-    ) -> Result<Vec<Self::MemberType>>;
+    async fn get_members(&self, auth_info: AuthInfo) -> Result<Vec<Self::MemberType>>;
 }
 
 #[derive(Serialize)]
