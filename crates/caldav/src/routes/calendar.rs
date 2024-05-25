@@ -3,7 +3,7 @@ use crate::CalDavContext;
 use crate::Error;
 use actix_web::http::header::ContentType;
 use actix_web::web::{Data, Path};
-use actix_web::{HttpRequest, HttpResponse};
+use actix_web::HttpResponse;
 use anyhow::Result;
 use roxmltree::{Node, NodeType};
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
@@ -13,7 +13,6 @@ use rustical_dav::propfind::ServicePrefix;
 use rustical_dav::xml_snippets::generate_multistatus;
 use rustical_store::calendar::{Calendar, CalendarStore};
 use rustical_store::event::Event;
-use std::sync::Arc;
 use tokio::sync::RwLock;
 
 async fn _parse_filter(filter_node: &Node<'_, '_>) {
@@ -35,11 +34,9 @@ async fn _parse_filter(filter_node: &Node<'_, '_>) {
     }
 }
 
-async fn handle_report_calendar_query<C: CalendarStore + ?Sized>(
+async fn handle_report_calendar_query(
     query_node: Node<'_, '_>,
-    _request: HttpRequest,
     events: Vec<Event>,
-    _cal_store: Arc<RwLock<C>>,
     prefix: &str,
 ) -> Result<HttpResponse, Error> {
     let prop_node = query_node
@@ -90,7 +87,6 @@ pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?S
     context: Data<CalDavContext<C>>,
     body: String,
     path: Path<(String, String)>,
-    request: HttpRequest,
     _auth: AuthInfoExtractor<A>,
     prefix: Data<ServicePrefix>,
 ) -> Result<HttpResponse, Error> {
@@ -108,7 +104,7 @@ pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?S
         "calendar-multiget" => {}
         _ => return Err(Error::BadRequest),
     };
-    handle_report_calendar_query(query_node, request, events, context.store.clone(), prefix).await
+    handle_report_calendar_query(query_node, events, prefix).await
 }
 
 pub async fn handle_mkcol_calendar_set<C: CalendarStore + ?Sized>(
