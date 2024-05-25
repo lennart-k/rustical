@@ -66,6 +66,13 @@ impl CalendarStore for SqliteCalendarStore {
         Ok(())
     }
 
+    async fn delete_calendar(&mut self, cid: &str) -> Result<()> {
+        sqlx::query!("DELETE FROM calendars WHERE id = ?", cid)
+            .execute(&self.db)
+            .await?;
+        Ok(())
+    }
+
     async fn get_events(&self, cid: &str) -> Result<Vec<Event>> {
         let events = sqlx::query_as!(EventRow, "SELECT uid, ics FROM events WHERE cid = ?", cid)
             .fetch_all(&self.db)

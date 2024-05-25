@@ -66,6 +66,11 @@ impl CalendarStore for TomlCalendarStore {
         }
     }
 
+    async fn delete_calendar(&mut self, cid: &str) -> Result<()> {
+        self.events.remove(cid);
+        Ok(())
+    }
+
     async fn get_events(&self, cid: &str) -> Result<Vec<Event>> {
         if let Some(events) = self.events.get(cid) {
             Ok(events.values().cloned().collect())
