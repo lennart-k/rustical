@@ -1748,6 +1748,7 @@ dependencies = [
  "futures-util",
  "itertools",
  "quick-xml",
+ "roxmltree",
  "rustical_auth",
  "serde",
  "strum",

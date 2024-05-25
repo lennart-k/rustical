@@ -1,4 +1,4 @@
-use crate::resources::event::EventResource;
+use crate::resources::event::EventFile;
 use crate::CalDavContext;
 use crate::Error;
 use actix_web::http::header::ContentType;
@@ -7,8 +7,8 @@ use actix_web::{HttpRequest, HttpResponse};
 use anyhow::Result;
 use roxmltree::{Node, NodeType};
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
+use rustical_dav::dav_resource::HandlePropfind;
 use rustical_dav::namespace::Namespace;
-use rustical_dav::resource::HandlePropfind;
 use rustical_dav::xml_snippets::generate_multistatus;
 use rustical_store::calendar::{Calendar, CalendarStore};
 use rustical_store::event::Event;
@@ -36,9 +36,9 @@ async fn _parse_filter(filter_node: &Node<'_, '_>) {
 
 async fn handle_report_calendar_query<C: CalendarStore + ?Sized>(
     query_node: Node<'_, '_>,
-    request: HttpRequest,
+    _request: HttpRequest,
     events: Vec<Event>,
-    cal_store: Arc<RwLock<C>>,
+    _cal_store: Arc<RwLock<C>>,
 ) -> Result<HttpResponse, Error> {
     let prop_node = query_node
         .children()
@@ -50,22 +50,25 @@ async fn handle_report_calendar_query<C: CalendarStore + ?Sized>(
         .map(|node| node.tag_name().name())
         .collect();
 
-    let event_resources: Vec<_> = events
-        .iter()
+    let event_files: Vec<_> = events
+        .into_iter()
         .map(|event| {
-            let path = format!("{}/{}", request.path(), event.get_uid());
-            EventResource {
-                cal_store: cal_store.clone(),
-                path: path.clone(),
-                event: event.clone(),
+            // TODO: fix
+            // let path = format!("{}/{}", request.path(), event.get_uid());
+            EventFile {
+                event, // cal_store: cal_store.clone(),
             }
         })
         .collect();
-    let event_results: Result<Vec<_>, _> = event_resources
-        .iter()
-        .map(|ev| ev.propfind(props.clone()))
-        .collect();
-    let event_responses = event_results?;
+    let mut event_responses = Vec::new();
+    for event_file in event_files {
+        event_responses.push(event_file.propfind(props.clone()).await?);
+    }
+    // let event_results: Result<Vec<_>, _> = event_files
+    //     .iter()
+    //     .map(|ev| ev.propfind(props.clone()))
+    //     .collect();
+    // let event_responses = event_results?;
 
     let output = generate_multistatus(vec![Namespace::Dav, Namespace::CalDAV], |writer| {
         for result in event_responses {
@@ -177,4 +180,17 @@ pub async fn route_mkcol_calendar<A: CheckAuthentication, C: CalendarStore + ?Si
     .await?;
 
     Ok(HttpResponse::Created().body(""))
+}
+
+pub async fn delete_calendar<A: CheckAuthentication, C: CalendarStore + ?Sized>(
+    context: Data<CalDavContext<C>>,
+    path: Path<(String, String)>,
+    auth: AuthInfoExtractor<A>,
+) -> Result<HttpResponse, Error> {
+    let _user = auth.inner.user_id;
+    // TODO: verify whether user is authorized
+    let (_principal, cid) = path.into_inner();
+    context.store.write().await.delete_calendar(&cid).await?;
+
+    Ok(HttpResponse::Ok().body(""))
 }

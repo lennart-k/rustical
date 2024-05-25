@@ -2,11 +2,9 @@ use actix_web::{web::Data, HttpRequest};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
+use rustical_dav::dav_resource::{Resource, ResourceService};
 use rustical_dav::error::Error;
-use rustical_dav::{
-    resource::Resource,
-    xml_snippets::{HrefElement, TextNode},
-};
+use rustical_dav::xml_snippets::{HrefElement, TextNode};
 use rustical_store::calendar::{Calendar, CalendarStore};
 use serde::Serialize;
 use std::sync::Arc;
@@ -15,10 +13,10 @@ use tokio::sync::RwLock;
 
 pub struct CalendarResource<C: CalendarStore + ?Sized> {
     pub cal_store: Arc<RwLock<C>>,
-    pub calendar: Calendar,
     pub path: String,
     pub prefix: String,
     pub principal: String,
+    pub calendar_id: String,
 }
 
 #[derive(Serialize)]
@@ -159,50 +157,16 @@ pub enum CalendarPropResponse {
     CurrentUserPrivilegeSet(UserPrivilegeSet),
 }
 
-#[async_trait(?Send)]
-impl<C: CalendarStore + ?Sized> Resource for CalendarResource<C> {
-    type MemberType = Self;
-    type UriComponents = (String, String); // principal, calendar_id
+pub struct CalendarFile {
+    pub calendar: Calendar,
+    pub principal: String,
+    pub prefix: String,
+    pub path: String,
+}
+
+impl Resource for CalendarFile {
     type PropType = CalendarProp;
     type PropResponse = CalendarPropResponse;
-
-    async fn acquire_from_request(
-        req: HttpRequest,
-        _auth_info: AuthInfo,
-        uri_components: Self::UriComponents,
-        prefix: String,
-    ) -> Result<Self, Error> {
-        let cal_store = req
-            .app_data::<Data<RwLock<C>>>()
-            .ok_or(anyhow!("no calendar store in app_data!"))?
-            .clone()
-            .into_inner();
-
-        let (principal, cid) = uri_components;
-        // TODO: fix errors
-        let calendar = cal_store
-            .read()
-            .await
-            .get_calendar(&cid)
-            .await
-            .map_err(|_e| Error::NotFound)?;
-        Ok(Self {
-            cal_store,
-            calendar,
-            path: req.path().to_string(),
-            prefix,
-            principal,
-        })
-    }
-
-    fn get_path(&self) -> &str {
-        &self.path
-    }
-
-    async fn get_members(&self) -> Result<Vec<Self::MemberType>> {
-        // As of now the calendar resource has no members
-        Ok(vec![])
-    }
 
     fn get_prop(&self, prop: Self::PropType) -> Result<Self::PropResponse> {
         match prop {
@@ -245,5 +209,62 @@ impl<C: CalendarStore + ?Sized> Resource for CalendarResource<C> {
                 CalendarPropResponse::CurrentUserPrivilegeSet(UserPrivilegeSet::default()),
             ),
         }
+    }
+
+    fn get_path(&self) -> &str {
+        &self.path
+    }
+}
+
+#[async_trait(?Send)]
+impl<C: CalendarStore + ?Sized> ResourceService for CalendarResource<C> {
+    type MemberType = CalendarFile;
+    type PathComponents = (String, String); // principal, calendar_id
+    type File = CalendarFile;
+
+    async fn get_file(&self) -> Result<Self::File> {
+        let calendar = self
+            .cal_store
+            .read()
+            .await
+            .get_calendar(&self.calendar_id)
+            .await
+            .map_err(|_e| Error::NotFound)?;
+        Ok(CalendarFile {
+            calendar,
+            prefix: self.prefix.to_owned(),
+            principal: self.principal.to_owned(),
+            path: self.path.to_owned(),
+        })
+    }
+
+    async fn get_members(
+        &self,
+        _auth_info: AuthInfo,
+        _path_components: Self::PathComponents,
+    ) -> Result<Vec<Self::MemberType>> {
+        // As of now the calendar resource has no members
+        Ok(vec![])
+    }
+
+    async fn new(
+        req: HttpRequest,
+        auth_info: AuthInfo,
+        path_components: Self::PathComponents,
+        prefix: String,
+    ) -> Result<Self, rustical_dav::error::Error> {
+        let cal_store = req
+            .app_data::<Data<RwLock<C>>>()
+            .ok_or(anyhow!("no calendar store in app_data!"))?
+            .clone()
+            .into_inner();
+
+        Ok(Self {
+            prefix,
+            path: req.path().to_owned(),
+            principal: auth_info.user_id,
+            calendar_id: path_components.1,
+            cal_store,
+        })
     }
 }

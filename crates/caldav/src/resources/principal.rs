@@ -1,22 +1,30 @@
-use actix_web::{web::Data, HttpRequest};
+use std::sync::Arc;
+
+use actix_web::web::Data;
+use actix_web::HttpRequest;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
-use rustical_dav::error::Error;
-use rustical_dav::{resource::Resource, xml_snippets::HrefElement};
+use rustical_dav::dav_resource::{Resource, ResourceService};
+use rustical_dav::xml_snippets::HrefElement;
 use rustical_store::calendar::CalendarStore;
 use serde::Serialize;
-use std::sync::Arc;
 use strum::{EnumString, IntoStaticStr, VariantNames};
 use tokio::sync::RwLock;
 
-use super::calendar::CalendarResource;
+use super::calendar::CalendarFile;
 
-pub struct PrincipalCalendarsResource<C: CalendarStore + ?Sized> {
+pub struct PrincipalResource<C: CalendarStore + ?Sized> {
     prefix: String,
     principal: String,
     path: String,
     cal_store: Arc<RwLock<C>>,
+}
+
+pub struct PrincipalFile {
+    prefix: String,
+    principal: String,
+    path: String,
 }
 
 #[derive(Serialize, Default)]
@@ -51,55 +59,10 @@ pub enum PrincipalProp {
 }
 
 #[async_trait(?Send)]
-impl<C: CalendarStore + ?Sized> Resource for PrincipalCalendarsResource<C> {
-    type UriComponents = ();
-    type MemberType = CalendarResource<C>;
+impl Resource for PrincipalFile {
     type PropType = PrincipalProp;
     type PropResponse = PrincipalPropResponse;
 
-    fn get_path(&self) -> &str {
-        &self.path
-    }
-
-    async fn get_members(&self) -> Result<Vec<Self::MemberType>> {
-        let calendars = self
-            .cal_store
-            .read()
-            .await
-            .get_calendars(&self.principal)
-            .await?;
-        let mut out = Vec::new();
-        for calendar in calendars {
-            let path = format!("{}/{}", &self.path, &calendar.id);
-            out.push(CalendarResource {
-                cal_store: self.cal_store.clone(),
-                calendar,
-                path,
-                prefix: self.prefix.clone(),
-                principal: self.principal.clone(),
-            })
-        }
-        Ok(out)
-    }
-
-    async fn acquire_from_request(
-        req: HttpRequest,
-        auth_info: AuthInfo,
-        _uri_components: Self::UriComponents,
-        prefix: String,
-    ) -> Result<Self, Error> {
-        let cal_store = req
-            .app_data::<Data<RwLock<C>>>()
-            .ok_or(anyhow!("no calendar store in app_data!"))?
-            .clone()
-            .into_inner();
-        Ok(Self {
-            cal_store,
-            prefix,
-            principal: auth_info.user_id,
-            path: req.path().to_string(),
-        })
-    }
     fn get_prop(&self, prop: Self::PropType) -> Result<Self::PropResponse> {
         match prop {
             PrincipalProp::Resourcetype => {
@@ -120,5 +83,66 @@ impl<C: CalendarStore + ?Sized> Resource for PrincipalCalendarsResource<C> {
                 ))
             }
         }
+    }
+
+    fn get_path(&self) -> &str {
+        &self.path
+    }
+}
+
+#[async_trait(?Send)]
+impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResource<C> {
+    type PathComponents = (String,);
+    type MemberType = CalendarFile;
+    type File = PrincipalFile;
+
+    async fn new(
+        req: HttpRequest,
+        auth_info: AuthInfo,
+        _path_components: Self::PathComponents,
+        prefix: String,
+    ) -> Result<Self, rustical_dav::error::Error> {
+        let cal_store = req
+            .app_data::<Data<RwLock<C>>>()
+            .ok_or(anyhow!("no calendar store in app_data!"))?
+            .clone()
+            .into_inner();
+
+        Ok(Self {
+            cal_store,
+            path: req.path().to_owned(),
+            principal: auth_info.user_id,
+            prefix,
+        })
+    }
+
+    async fn get_file(&self) -> Result<Self::File> {
+        Ok(PrincipalFile {
+            principal: self.principal.to_owned(),
+            prefix: self.prefix.to_owned(),
+            path: self.path.to_owned(),
+        })
+    }
+
+    async fn get_members(
+        &self,
+        _auth_info: AuthInfo,
+        _path_components: Self::PathComponents,
+    ) -> Result<Vec<Self::MemberType>> {
+        let calendars = self
+            .cal_store
+            .read()
+            .await
+            .get_calendars(&self.principal)
+            .await?;
+        Ok(calendars
+            .into_iter()
+            .map(|cal| CalendarFile {
+                calendar: cal,
+                principal: self.principal.to_owned(),
+                prefix: self.prefix.to_owned(),
+                path: self.path.to_owned(),
+            })
+            .collect())
     }
 }

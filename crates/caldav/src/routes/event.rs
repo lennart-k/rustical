@@ -63,7 +63,7 @@ pub async fn get_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
 
     Ok(HttpResponse::Ok()
         .insert_header(("ETag", event.get_etag()))
-        .body(event.get_ics()))
+        .body(event.get_ics().to_owned()))
 }
 
 pub async fn put_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(

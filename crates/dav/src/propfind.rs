@@ -1,17 +1,19 @@
-use crate::CalDavContext;
+use crate::dav_resource::HandlePropfind;
+use crate::dav_resource::ResourceService;
+use crate::depth_extractor::Depth;
+use crate::namespace::Namespace;
+use crate::xml_snippets::generate_multistatus;
 use actix_web::http::header::ContentType;
 use actix_web::http::StatusCode;
 use actix_web::web::{Data, Path};
 use actix_web::{HttpRequest, HttpResponse};
 use anyhow::{anyhow, Result};
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
-use rustical_dav::depth_extractor::Depth;
-use rustical_dav::namespace::Namespace;
-use rustical_dav::resource::{HandlePropfind, Resource};
-use rustical_dav::xml_snippets::generate_multistatus;
-use rustical_store::calendar::CalendarStore;
 use serde::Serialize;
 use thiserror::Error;
+
+// This is not the final place for this struct
+pub struct ServicePrefix(pub String);
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -67,33 +69,36 @@ pub fn parse_propfind(body: &str) -> Result<Vec<&str>, Error> {
     }
 }
 
-pub async fn route_propfind<A: CheckAuthentication, R: Resource, C: CalendarStore + ?Sized>(
-    path: Path<R::UriComponents>,
+pub async fn handle_propfind<
+    A: CheckAuthentication,
+    R: ResourceService + ?Sized,
+    // C: CalendarStore + ?Sized,
+>(
+    path: Path<R::PathComponents>,
     body: String,
     req: HttpRequest,
-    context: Data<CalDavContext<C>>,
+    prefix: Data<ServicePrefix>,
     auth: AuthInfoExtractor<A>,
     depth: Depth,
-) -> Result<HttpResponse, rustical_dav::error::Error> {
+) -> Result<HttpResponse, crate::error::Error> {
     // TODO: fix errors
-    let props = parse_propfind(&body).map_err(|_e| anyhow!("propfing parsing error"))?;
+    let props = parse_propfind(&body).map_err(|_e| anyhow!("propfind parsing error"))?;
     let auth_info = auth.inner;
+    let prefix = prefix.0.to_owned();
+    let path_components = path.into_inner();
 
-    let resource = R::acquire_from_request(
-        req,
-        auth_info,
-        path.into_inner(),
-        context.prefix.to_string(),
-    )
-    .await?;
+    let resource_service = R::new(req, auth_info.clone(), path_components.clone(), prefix).await?;
 
-    let response = resource.propfind(props.clone())?;
-    let members = resource.get_members().await?;
+    let resource = resource_service.get_file().await?;
+    let response = resource.propfind(props.clone()).await?;
     let mut member_responses = Vec::new();
 
     if depth != Depth::Zero {
-        for member in &members {
-            member_responses.push(member.propfind(props.clone())?);
+        for member in resource_service
+            .get_members(auth_info, path_components)
+            .await?
+        {
+            member_responses.push(member.propfind(props.clone()).await?);
         }
     }
 

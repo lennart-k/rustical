@@ -2,8 +2,9 @@ use actix_web::HttpRequest;
 use anyhow::Result;
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
+use rustical_dav::dav_resource::{Resource, ResourceService};
 use rustical_dav::error::Error;
-use rustical_dav::{resource::Resource, xml_snippets::HrefElement};
+use rustical_dav::xml_snippets::HrefElement;
 use serde::Serialize;
 use strum::{EnumString, IntoStaticStr, VariantNames};
 
@@ -33,25 +34,48 @@ pub enum RootPropResponse {
     CurrentUserPrincipal(HrefElement),
 }
 
-#[async_trait(?Send)]
-impl Resource for RootResource {
-    type UriComponents = ();
-    type MemberType = Self;
+pub struct RootFile {
+    pub prefix: String,
+    pub principal: String,
+    pub path: String,
+}
+
+impl Resource for RootFile {
     type PropType = RootProp;
     type PropResponse = RootPropResponse;
+
+    fn get_prop(&self, prop: Self::PropType) -> Result<Self::PropResponse> {
+        match prop {
+            RootProp::Resourcetype => Ok(RootPropResponse::Resourcetype(Resourcetype::default())),
+            RootProp::CurrentUserPrincipal => Ok(RootPropResponse::CurrentUserPrincipal(
+                HrefElement::new(format!("{}/{}/", self.prefix, self.principal)),
+            )),
+        }
+    }
 
     fn get_path(&self) -> &str {
         &self.path
     }
+}
 
-    async fn get_members(&self) -> Result<Vec<Self::MemberType>> {
+#[async_trait(?Send)]
+impl ResourceService for RootResource {
+    type PathComponents = ();
+    type MemberType = RootFile;
+    type File = RootFile;
+
+    async fn get_members(
+        &self,
+        _auth_info: AuthInfo,
+        _path_components: Self::PathComponents,
+    ) -> Result<Vec<Self::MemberType>> {
         Ok(vec![])
     }
 
-    async fn acquire_from_request(
+    async fn new(
         req: HttpRequest,
         auth_info: AuthInfo,
-        _uri_components: Self::UriComponents,
+        _path_components: Self::PathComponents,
         prefix: String,
     ) -> Result<Self, Error> {
         Ok(Self {
@@ -61,12 +85,11 @@ impl Resource for RootResource {
         })
     }
 
-    fn get_prop(&self, prop: Self::PropType) -> Result<Self::PropResponse> {
-        match prop {
-            RootProp::Resourcetype => Ok(RootPropResponse::Resourcetype(Resourcetype::default())),
-            RootProp::CurrentUserPrincipal => Ok(RootPropResponse::CurrentUserPrincipal(
-                HrefElement::new(format!("{}/{}/", self.prefix, self.principal)),
-            )),
-        }
+    async fn get_file(&self) -> Result<Self::File> {
+        Ok(RootFile {
+            path: self.path.to_owned(),
+            principal: self.principal.to_owned(),
+            prefix: self.prefix.to_owned(),
+        })
     }
 }

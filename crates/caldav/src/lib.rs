@@ -3,12 +3,12 @@ use actix_web::web::{self, Data};
 use actix_web::{guard, HttpResponse, Responder};
 use resources::calendar::CalendarResource;
 use resources::event::EventResource;
-use resources::principal::PrincipalCalendarsResource;
+use resources::principal::PrincipalResource;
 use resources::root::RootResource;
-use routes::propfind::route_propfind;
 use routes::{calendar, event};
 use rustical_auth::CheckAuthentication;
 use rustical_dav::error::Error;
+use rustical_dav::propfind::{handle_propfind, ServicePrefix};
 use rustical_store::calendar::CalendarStore;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -18,7 +18,6 @@ pub mod resources;
 pub mod routes;
 
 pub struct CalDavContext<C: CalendarStore + ?Sized> {
-    pub prefix: String,
     pub store: Arc<RwLock<C>>,
 }
 
@@ -32,14 +31,14 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     auth: Arc<A>,
     store: Arc<RwLock<C>>,
 ) {
-    let propfind_method = || Method::from_str("PROPFIND").unwrap();
-    let report_method = || Method::from_str("REPORT").unwrap();
-    let mkcol_method = || Method::from_str("MKCOL").unwrap();
+    let propfind_method = || web::method(Method::from_str("PROPFIND").unwrap());
+    let report_method = || web::method(Method::from_str("REPORT").unwrap());
+    let mkcol_method = || web::method(Method::from_str("MKCOL").unwrap());
 
     cfg.app_data(Data::new(CalDavContext {
-        prefix,
         store: store.clone(),
     }))
+    .app_data(Data::new(ServicePrefix(prefix)))
     .app_data(Data::from(store.clone()))
     .app_data(Data::from(auth))
     .service(
@@ -48,25 +47,25 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
             .guard(guard::Method(Method::OPTIONS))
             .to(options_handler),
     )
+    .service(web::resource("").route(propfind_method().to(handle_propfind::<A, RootResource>)))
     .service(
-        web::resource("").route(web::method(propfind_method()).to(route_propfind::<
-            A,
-            RootResource,
-            C,
-        >)),
+        web::resource("/{principal}")
+            .route(propfind_method().to(handle_propfind::<A, PrincipalResource<C>>)),
     )
-    .service(web::resource("/{principal}").route(
-        web::method(propfind_method()).to(route_propfind::<A, PrincipalCalendarsResource<C>, C>),
-    ))
+    // .service(DavResourceService::<PrincipalResource>::new("/{principal}"))
     .service(
         web::resource("/{principal}/{calendar}")
-            .route(web::method(report_method()).to(calendar::route_report_calendar::<A, C>))
-            .route(web::method(propfind_method()).to(route_propfind::<A, CalendarResource<C>, C>))
-            .route(web::method(mkcol_method()).to(calendar::route_mkcol_calendar::<A, C>)),
+            .route(report_method().to(calendar::route_report_calendar::<A, C>))
+            // .route(web::method(propfind_method()).to(route_propfind::<A, CalendarResource<C>, C>))
+            .route(propfind_method().to(handle_propfind::<A, CalendarResource<C>>))
+            .route(mkcol_method().to(calendar::route_mkcol_calendar::<A, C>))
+            .route(web::method(Method::DELETE).to(calendar::delete_calendar::<A, C>)),
     )
+    // .service(web::resource("/{principal}/{calendar}").route(route))
     .service(
         web::resource("/{principal}/{calendar}/{event}")
-            .route(web::method(propfind_method()).to(route_propfind::<A, EventResource<C>, C>))
+            // .route(web::method(propfind_method()).to(route_propfind::<A, EventResource<C>, C>))
+            .route(propfind_method().to(handle_propfind::<A, EventResource<C>>))
             .route(web::method(Method::DELETE).to(event::delete_event::<A, C>))
             .route(web::method(Method::GET).to(event::get_event::<A, C>))
             .route(web::method(Method::PUT).to(event::put_event::<A, C>)),

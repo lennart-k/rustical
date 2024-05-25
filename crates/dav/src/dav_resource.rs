@@ -8,35 +8,48 @@ use serde::Serialize;
 use std::str::FromStr;
 use strum::VariantNames;
 
+#[async_trait(?Send)]
+pub trait Resource {
+    type PropType: FromStr + VariantNames + Into<&'static str> + Clone;
+    type PropResponse: Serialize;
+
+    fn list_dead_props() -> &'static [&'static str] {
+        Self::PropType::VARIANTS
+    }
+
+    fn get_prop(&self, prop: Self::PropType) -> Result<Self::PropResponse>;
+
+    fn get_path(&self) -> &str;
+}
+
 // A resource is identified by a URI and has properties
 // A resource can also be a collection
 // A resource cannot be none, only Methods like PROPFIND, GET, REPORT, etc. can be exposed
 // A resource exists
 #[async_trait(?Send)]
-pub trait OldResource: Sized {
-    type MemberType: OldResource;
-    type UriComponents: Sized; // defines how the resource URI maps to parameters, i.e. /{principal}/{calendar} -> (String, String)
-    type PropType: FromStr + VariantNames + Into<&'static str> + Clone;
-    type PropResponse: Serialize;
+pub trait ResourceService: Sized {
+    type MemberType: Resource;
+    type PathComponents: Sized + Clone; // defines how the resource URI maps to parameters, i.e. /{principal}/{calendar} -> (String, String)
+    type File: Resource;
 
-    async fn acquire_from_request(
+    async fn new(
         req: HttpRequest,
         auth_info: AuthInfo,
-        uri_components: Self::UriComponents,
+        path_components: Self::PathComponents,
         prefix: String,
     ) -> Result<Self, Error>;
 
-    fn get_path(&self) -> &str;
-    async fn get_members(&self) -> Result<Vec<Self::MemberType>>;
+    async fn get_file(&self) -> Result<Self::File>;
 
-    fn list_dead_props() -> &'static [&'static str] {
-        Self::PropType::VARIANTS
-    }
-    fn get_prop(&self, prop: Self::PropType) -> Result<Self::PropResponse>;
+    async fn get_members(
+        &self,
+        auth_info: AuthInfo,
+        path_components: Self::PathComponents,
+    ) -> Result<Vec<Self::MemberType>>;
 }
 
 #[derive(Serialize)]
-struct PropWrapper<T: Serialize> {
+pub struct PropWrapper<T: Serialize> {
     #[serde(rename = "$value")]
     prop: T,
 }
@@ -50,7 +63,7 @@ struct PropstatElement<T: Serialize> {
 
 #[derive(Serialize)]
 #[serde(rename_all = "kebab-case")]
-struct PropstatResponseElement<T1: Serialize, T2: Serialize> {
+pub struct PropstatResponseElement<T1: Serialize, T2: Serialize> {
     href: String,
     propstat: Vec<PropstatType<T1, T2>>,
 }
@@ -62,12 +75,17 @@ enum PropstatType<T1: Serialize, T2: Serialize> {
     NotFound(PropstatElement<T2>),
 }
 
+#[async_trait(?Send)]
 pub trait HandlePropfind {
-    fn propfind(&self, props: Vec<&str>) -> Result<impl Serialize>;
+    async fn propfind(&self, props: Vec<&str>) -> Result<impl Serialize>;
 }
 
-impl<R: OldResource> HandlePropfind for R {
-    fn propfind(&self, props: Vec<&str>) -> Result<impl Serialize> {
+#[async_trait(?Send)]
+impl<R: Resource> HandlePropfind for R {
+    async fn propfind(
+        &self,
+        props: Vec<&str>,
+    ) -> Result<PropstatResponseElement<PropWrapper<Vec<R::PropResponse>>, TagList>> {
         let mut props = props.into_iter().unique().collect_vec();
         if props.contains(&"allprops") {
             if props.len() != 1 {
