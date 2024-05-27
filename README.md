@@ -8,4 +8,5 @@ a calendar server
 - [ ] ICS parsing
   - [ ] Datetime parsing
 - [ ] CardDAV
+- [ ] OIDC support
 - [ ] Testing such that I'm confident enough to use it myself :)
