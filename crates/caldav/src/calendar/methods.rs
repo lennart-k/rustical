@@ -1,4 +1,4 @@
-use crate::resources::event::EventFile;
+use crate::event::resource::EventFile;
 use crate::CalDavContext;
 use crate::Error;
 use actix_web::http::header::ContentType;

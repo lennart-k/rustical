@@ -2,8 +2,8 @@ use actix_web::http::Method;
 use actix_web::web::{self, Data};
 use actix_web::{guard, HttpResponse, Responder};
 use calendar::resource::CalendarResource;
+use event::resource::EventResource;
 use principal::PrincipalResource;
-use resources::event::EventResource;
 use root::RootResource;
 use rustical_auth::CheckAuthentication;
 use rustical_dav::error::Error;
@@ -12,11 +12,10 @@ use rustical_store::calendar::CalendarStore;
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-pub mod calendar;
 
+pub mod calendar;
 pub mod event;
 pub mod principal;
-pub mod resources;
 pub mod root;
 
 pub struct CalDavContext<C: CalendarStore + ?Sized> {
@@ -56,17 +55,17 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     )
     .service(
         web::resource("/{principal}/{calendar}")
-            .route(report_method().to(calendar::route::route_report_calendar::<A, C>))
+            .route(report_method().to(calendar::methods::route_report_calendar::<A, C>))
             .route(propfind_method().to(handle_propfind::<A, CalendarResource<C>>))
-            .route(mkcol_method().to(calendar::route::route_mkcol_calendar::<A, C>))
-            .route(web::method(Method::DELETE).to(calendar::route::delete_calendar::<A, C>)),
+            .route(mkcol_method().to(calendar::methods::route_mkcol_calendar::<A, C>))
+            .route(web::method(Method::DELETE).to(calendar::methods::delete_calendar::<A, C>)),
     )
     .service(
         web::resource("/{principal}/{calendar}/{event}")
             .route(propfind_method().to(handle_propfind::<A, EventResource<C>>))
-            .route(web::method(Method::DELETE).to(event::delete_event::<A, C>))
-            .route(web::method(Method::GET).to(event::get_event::<A, C>))
-            .route(web::method(Method::PUT).to(event::put_event::<A, C>)),
+            .route(web::method(Method::DELETE).to(event::methods::delete_event::<A, C>))
+            .route(web::method(Method::GET).to(event::methods::get_event::<A, C>))
+            .route(web::method(Method::PUT).to(event::methods::put_event::<A, C>)),
     );
 }
 
