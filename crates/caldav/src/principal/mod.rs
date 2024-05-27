@@ -12,7 +12,7 @@ use serde::Serialize;
 use strum::{EnumString, IntoStaticStr, VariantNames};
 use tokio::sync::RwLock;
 
-use super::calendar::CalendarFile;
+use crate::calendar::resource::CalendarFile;
 
 pub struct PrincipalResource<C: CalendarStore + ?Sized> {
     principal: String,

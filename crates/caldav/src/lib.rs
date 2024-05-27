@@ -1,11 +1,10 @@
 use actix_web::http::Method;
 use actix_web::web::{self, Data};
 use actix_web::{guard, HttpResponse, Responder};
-use resources::calendar::CalendarResource;
+use calendar::resource::CalendarResource;
+use principal::PrincipalResource;
 use resources::event::EventResource;
-use resources::principal::PrincipalResource;
-use resources::root::RootResource;
-use routes::{calendar, event};
+use root::RootResource;
 use rustical_auth::CheckAuthentication;
 use rustical_dav::error::Error;
 use rustical_dav::propfind::{handle_propfind, ServicePrefix};
@@ -13,9 +12,12 @@ use rustical_store::calendar::CalendarStore;
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+pub mod calendar;
 
+pub mod event;
+pub mod principal;
 pub mod resources;
-pub mod routes;
+pub mod root;
 
 pub struct CalDavContext<C: CalendarStore + ?Sized> {
     pub store: Arc<RwLock<C>>,
@@ -55,11 +57,11 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     // .service(DavResourceService::<PrincipalResource>::new("/{principal}"))
     .service(
         web::resource("/{principal}/{calendar}")
-            .route(report_method().to(calendar::route_report_calendar::<A, C>))
+            .route(report_method().to(calendar::route::route_report_calendar::<A, C>))
             // .route(web::method(propfind_method()).to(route_propfind::<A, CalendarResource<C>, C>))
             .route(propfind_method().to(handle_propfind::<A, CalendarResource<C>>))
-            .route(mkcol_method().to(calendar::route_mkcol_calendar::<A, C>))
-            .route(web::method(Method::DELETE).to(calendar::delete_calendar::<A, C>)),
+            .route(mkcol_method().to(calendar::route::route_mkcol_calendar::<A, C>))
+            .route(web::method(Method::DELETE).to(calendar::route::delete_calendar::<A, C>)),
     )
     // .service(web::resource("/{principal}/{calendar}").route(route))
     .service(
