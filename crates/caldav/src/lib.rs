@@ -54,19 +54,15 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
         web::resource("/{principal}")
             .route(propfind_method().to(handle_propfind::<A, PrincipalResource<C>>)),
     )
-    // .service(DavResourceService::<PrincipalResource>::new("/{principal}"))
     .service(
         web::resource("/{principal}/{calendar}")
             .route(report_method().to(calendar::route::route_report_calendar::<A, C>))
-            // .route(web::method(propfind_method()).to(route_propfind::<A, CalendarResource<C>, C>))
             .route(propfind_method().to(handle_propfind::<A, CalendarResource<C>>))
             .route(mkcol_method().to(calendar::route::route_mkcol_calendar::<A, C>))
             .route(web::method(Method::DELETE).to(calendar::route::delete_calendar::<A, C>)),
     )
-    // .service(web::resource("/{principal}/{calendar}").route(route))
     .service(
         web::resource("/{principal}/{calendar}/{event}")
-            // .route(web::method(propfind_method()).to(route_propfind::<A, EventResource<C>, C>))
             .route(propfind_method().to(handle_propfind::<A, EventResource<C>>))
             .route(web::method(Method::DELETE).to(event::delete_event::<A, C>))
             .route(web::method(Method::GET).to(event::get_event::<A, C>))
