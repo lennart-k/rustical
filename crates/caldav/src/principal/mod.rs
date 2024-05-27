@@ -97,8 +97,11 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResource<C> {
     async fn new(
         req: HttpRequest,
         auth_info: AuthInfo,
-        _path_components: Self::PathComponents,
+        (principal,): Self::PathComponents,
     ) -> Result<Self, rustical_dav::error::Error> {
+        if auth_info.user_id != principal {
+            return Err(rustical_dav::error::Error::Unauthorized);
+        }
         let cal_store = req
             .app_data::<Data<RwLock<C>>>()
             .ok_or(anyhow!("no calendar store in app_data!"))?
@@ -108,7 +111,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResource<C> {
         Ok(Self {
             cal_store,
             path: req.path().to_owned(),
-            principal: auth_info.user_id,
+            principal,
         })
     }
 
@@ -129,9 +132,9 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResource<C> {
         Ok(calendars
             .into_iter()
             .map(|cal| CalendarFile {
+                path: format!("{}/{}", &self.path, &cal.id),
                 calendar: cal,
                 principal: self.principal.to_owned(),
-                path: self.path.to_owned(),
             })
             .collect())
     }
