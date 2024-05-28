@@ -82,6 +82,7 @@ impl<R: Resource> HandlePropfind for R {
         prefix: &str,
         props: Vec<&str>,
     ) -> Result<PropstatResponseElement<PropWrapper<Vec<R::PropResponse>>, TagList>> {
+        // TODO: implement propname
         let mut props = props.into_iter().unique().collect_vec();
         if props.contains(&"allprops") {
             if props.len() != 1 {
