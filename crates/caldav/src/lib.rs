@@ -34,7 +34,7 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
 ) {
     let propfind_method = || web::method(Method::from_str("PROPFIND").unwrap());
     let report_method = || web::method(Method::from_str("REPORT").unwrap());
-    let mkcol_method = || web::method(Method::from_str("MKCOL").unwrap());
+    let mkcalendar_method = || web::method(Method::from_str("MKCALENDAR").unwrap());
 
     cfg.app_data(Data::new(CalDavContext {
         store: store.clone(),
@@ -57,7 +57,9 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
         web::resource("/{principal}/{calendar}")
             .route(report_method().to(calendar::methods::route_report_calendar::<A, C>))
             .route(propfind_method().to(handle_propfind::<A, CalendarResource<C>>))
-            .route(mkcol_method().to(calendar::methods::route_mkcol_calendar::<A, C>))
+            .route(
+                mkcalendar_method().to(calendar::methods::mkcalendar::route_mkcol_calendar::<A, C>),
+            )
             .route(web::method(Method::DELETE).to(calendar::methods::delete_calendar::<A, C>)),
     )
     .service(
