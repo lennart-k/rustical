@@ -14,6 +14,7 @@ use rustical_dav::xml_snippets::generate_multistatus;
 use rustical_store::calendar::CalendarStore;
 use rustical_store::event::Event;
 
+pub mod delete;
 pub mod mkcalendar;
 
 async fn handle_report_calendar_query(
@@ -87,17 +88,4 @@ pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?S
         _ => return Err(Error::BadRequest),
     };
     handle_report_calendar_query(query_node, events, prefix).await
-}
-
-pub async fn delete_calendar<A: CheckAuthentication, C: CalendarStore + ?Sized>(
-    context: Data<CalDavContext<C>>,
-    path: Path<(String, String)>,
-    auth: AuthInfoExtractor<A>,
-) -> Result<HttpResponse, Error> {
-    let _user = auth.inner.user_id;
-    // TODO: verify whether user is authorized
-    let (_principal, cid) = path.into_inner();
-    context.store.write().await.delete_calendar(&cid).await?;
-
-    Ok(HttpResponse::Ok().body(""))
 }

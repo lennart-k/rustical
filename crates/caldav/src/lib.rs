@@ -60,7 +60,10 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
             .route(
                 mkcalendar_method().to(calendar::methods::mkcalendar::route_mkcol_calendar::<A, C>),
             )
-            .route(web::method(Method::DELETE).to(calendar::methods::delete_calendar::<A, C>)),
+            .route(
+                web::method(Method::DELETE)
+                    .to(calendar::methods::delete::route_delete_calendar::<A, C>),
+            ),
     )
     .service(
         web::resource("/{principal}/{calendar}/{event}")
