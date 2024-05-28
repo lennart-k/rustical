@@ -96,12 +96,8 @@ impl<R: Resource> HandlePropfind for R {
         let mut prop_responses = Vec::new();
         for prop in props {
             if let Ok(valid_prop) = R::PropType::from_str(prop) {
-                match self.get_prop(prefix, valid_prop.clone()) {
-                    Ok(response) => {
-                        prop_responses.push(response);
-                    }
-                    Err(_) => invalid_props.push(prop),
-                }
+                let response = self.get_prop(prefix, valid_prop.clone())?;
+                prop_responses.push(response);
             } else {
                 invalid_props.push(prop);
             }
