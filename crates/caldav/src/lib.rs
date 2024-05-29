@@ -55,7 +55,7 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     )
     .service(
         web::resource("/{principal}/{calendar}")
-            .route(report_method().to(calendar::methods::route_report_calendar::<A, C>))
+            .route(report_method().to(calendar::methods::report::route_report_calendar::<A, C>))
             .route(propfind_method().to(route_propfind::<A, CalendarResource<C>>))
             .route(
                 mkcalendar_method().to(calendar::methods::mkcalendar::route_mkcol_calendar::<A, C>),
