@@ -1718,6 +1718,7 @@ dependencies = [
  "env_logger",
  "rustical_auth",
  "rustical_caldav",
+ "rustical_carddav",
  "rustical_store",
  "serde",
  "sqlx",
@@ -1740,6 +1741,29 @@ dependencies = [
 
 [[package]]
 name = "rustical_caldav"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "actix-web-httpauth",
+ "anyhow",
+ "async-trait",
+ "base64 0.22.1",
+ "derive_more",
+ "futures-util",
+ "quick-xml",
+ "roxmltree",
+ "rustical_auth",
+ "rustical_dav",
+ "rustical_store",
+ "serde",
+ "serde_json",
+ "strum",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "rustical_carddav"
 version = "0.1.0"
 dependencies = [
  "actix-web",
