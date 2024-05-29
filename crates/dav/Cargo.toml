@@ -9,7 +9,11 @@ anyhow = "1.0"
 async-trait = "0.1"
 derive_more = "0.99"
 futures-util = "0.3"
-quick-xml = "0.31"
+quick-xml = { version = "0.31", features = [
+  "serde",
+  "serde-types",
+  "serialize",
+] }
 rustical_auth = { path = "../auth/" }
 serde = { version = "1.0.197", features = ["derive"] }
 strum = "0.26"
