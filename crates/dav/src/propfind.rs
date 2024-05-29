@@ -16,14 +16,14 @@ pub struct ServicePrefix(pub String);
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
-struct PropElement {
+pub struct PropElement {
     #[serde(flatten)]
-    prop: TagList,
+    pub prop: TagList,
 }
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
-enum PropfindType {
+pub enum PropfindType {
     Propname,
     Allprop,
     Prop(PropElement),
@@ -38,16 +38,17 @@ struct PropfindElement {
 
 #[derive(Serialize)]
 #[serde(rename = "multistatus")]
-struct MultistatusElement<T1: Serialize, T2: Serialize> {
-    response: T1,
+pub struct MultistatusElement<T1: Serialize, T2: Serialize> {
     #[serde(rename = "response")]
-    member_responses: Vec<T2>,
+    pub responses: Vec<T1>,
+    #[serde(rename = "response")]
+    pub member_responses: Vec<T2>,
     #[serde(rename = "@xmlns")]
-    ns_dav: &'static str,
+    pub ns_dav: &'static str,
     #[serde(rename = "@xmlns:C")]
-    ns_caldav: &'static str,
+    pub ns_caldav: &'static str,
     #[serde(rename = "@xmlns:IC")]
-    ns_ical: &'static str,
+    pub ns_ical: &'static str,
 }
 
 pub async fn route_propfind<A: CheckAuthentication, R: ResourceService + ?Sized>(
@@ -91,7 +92,7 @@ pub async fn route_propfind<A: CheckAuthentication, R: ResourceService + ?Sized>
     let mut ser = quick_xml::se::Serializer::new(&mut output);
     ser.indent(' ', 4);
     MultistatusElement {
-        response,
+        responses: vec![response],
         member_responses,
         ns_dav: Namespace::Dav.as_str(),
         ns_caldav: Namespace::CalDAV.as_str(),
