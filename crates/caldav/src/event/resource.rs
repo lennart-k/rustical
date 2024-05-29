@@ -39,6 +39,11 @@ pub struct EventFile {
     pub event: Event,
 }
 
+impl From<Event> for EventFile {
+    fn from(event: Event) -> Self {
+        Self { event }
+    }
+}
 impl Resource for EventFile {
     type PropType = EventProp;
     type PropResponse = PrincipalPropResponse;
@@ -85,7 +90,6 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResource<C> {
             .clone()
             .into_inner();
 
-        // let event = cal_store.read().await.get_event(&cid, &uid).await?;
 
         Ok(Self {
             cal_store,
