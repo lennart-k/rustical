@@ -3,4 +3,5 @@ pub mod error;
 pub mod namespace;
 pub mod propfind;
 pub mod resource;
+pub mod xml;
 pub mod xml_snippets;
