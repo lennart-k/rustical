@@ -68,6 +68,7 @@ impl CalendarStore for TomlCalendarStore {
 
     async fn delete_calendar(&mut self, cid: &str) -> Result<()> {
         self.events.remove(cid);
+        self.save().await.unwrap();
         Ok(())
     }
 
