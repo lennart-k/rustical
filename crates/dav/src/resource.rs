@@ -1,4 +1,4 @@
-use crate::{error::Error, xml_snippets::TagList};
+use crate::{error::Error, xml::tag_list::TagList};
 use actix_web::{http::StatusCode, HttpRequest};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
@@ -10,7 +10,7 @@ use strum::VariantNames;
 
 #[async_trait(?Send)]
 pub trait Resource {
-    type PropType: FromStr + VariantNames + Into<&'static str> + Clone;
+    type PropType: FromStr + VariantNames + Clone;
     type PropResponse: Serialize;
 
     fn list_dead_props() -> &'static [&'static str] {
@@ -82,12 +82,19 @@ impl<R: Resource> HandlePropfind for R {
         prefix: &str,
         props: Vec<&str>,
     ) -> Result<PropstatResponseElement<PropWrapper<Vec<R::PropResponse>>, TagList>> {
-        // TODO: implement propname
-        let mut props = props.into_iter().unique().collect_vec();
-        if props.contains(&"allprops") {
+        let mut props = props;
+        if props.contains(&"propname") {
             if props.len() != 1 {
-                // allprops MUST be the only queried prop per spec
-                return Err(anyhow!("allprops MUST be the only queried prop"));
+                // propname MUST be the only queried prop per spec
+                return Err(anyhow!("propname MUST be the only queried prop"));
+            }
+            // TODO: implement propname
+            props = R::list_dead_props().into();
+        }
+        if props.contains(&"allprop") {
+            if props.len() != 1 {
+                // allprop MUST be the only queried prop per spec
+                return Err(anyhow!("allprop MUST be the only queried prop"));
             }
             props = R::list_dead_props().into();
         }
@@ -103,17 +110,20 @@ impl<R: Resource> HandlePropfind for R {
             }
         }
 
-        let mut propstats = Vec::new();
-        propstats.push(PropstatType::Normal(PropstatElement {
+        let mut propstats = vec![PropstatType::Normal(PropstatElement {
             status: format!("HTTP/1.1 {}", StatusCode::OK),
             prop: PropWrapper {
                 prop: prop_responses,
             },
-        }));
+        })];
         if !invalid_props.is_empty() {
             propstats.push(PropstatType::NotFound(PropstatElement {
                 status: format!("HTTP/1.1 {}", StatusCode::NOT_FOUND),
-                prop: TagList(invalid_props.iter().map(|&s| s.to_owned()).collect()),
+                prop: invalid_props
+                    .into_iter()
+                    .map(|s| s.to_owned())
+                    .collect_vec()
+                    .into(),
             }));
         }
         Ok(PropstatResponseElement {

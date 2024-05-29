@@ -7,7 +7,7 @@ use principal::PrincipalResource;
 use root::RootResource;
 use rustical_auth::CheckAuthentication;
 use rustical_dav::error::Error;
-use rustical_dav::propfind::{handle_propfind, ServicePrefix};
+use rustical_dav::propfind::{route_propfind, ServicePrefix};
 use rustical_store::calendar::CalendarStore;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -48,15 +48,15 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
             .guard(guard::Method(Method::OPTIONS))
             .to(options_handler),
     )
-    .service(web::resource("").route(propfind_method().to(handle_propfind::<A, RootResource>)))
+    .service(web::resource("").route(propfind_method().to(route_propfind::<A, RootResource>)))
     .service(
         web::resource("/{principal}")
-            .route(propfind_method().to(handle_propfind::<A, PrincipalResource<C>>)),
+            .route(propfind_method().to(route_propfind::<A, PrincipalResource<C>>)),
     )
     .service(
         web::resource("/{principal}/{calendar}")
             .route(report_method().to(calendar::methods::route_report_calendar::<A, C>))
-            .route(propfind_method().to(handle_propfind::<A, CalendarResource<C>>))
+            .route(propfind_method().to(route_propfind::<A, CalendarResource<C>>))
             .route(
                 mkcalendar_method().to(calendar::methods::mkcalendar::route_mkcol_calendar::<A, C>),
             )
@@ -67,7 +67,7 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     )
     .service(
         web::resource("/{principal}/{calendar}/{event}")
-            .route(propfind_method().to(handle_propfind::<A, EventResource<C>>))
+            .route(propfind_method().to(route_propfind::<A, EventResource<C>>))
             .route(web::method(Method::DELETE).to(event::methods::delete_event::<A, C>))
             .route(web::method(Method::GET).to(event::methods::get_event::<A, C>))
             .route(web::method(Method::PUT).to(event::methods::put_event::<A, C>)),

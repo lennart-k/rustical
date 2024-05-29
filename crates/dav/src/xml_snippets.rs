@@ -1,6 +1,5 @@
 use anyhow::Result;
 use quick_xml::{events::attributes::Attribute, Writer};
-use serde::ser::SerializeMap;
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -15,21 +14,6 @@ impl HrefElement {
 
 #[derive(Serialize)]
 pub struct TextNode(pub Option<String>);
-
-pub struct TagList(pub Vec<String>);
-
-impl Serialize for TagList {
-    fn serialize<S>(&self, serializer: S) -> std::prelude::v1::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let mut el = serializer.serialize_map(Some(self.0.len()))?;
-        for tag in &self.0 {
-            el.serialize_entry(&tag, &())?;
-        }
-        el.end()
-    }
-}
 
 pub fn generate_multistatus<'a, F, A>(namespaces: A, closure: F) -> Result<String>
 where
