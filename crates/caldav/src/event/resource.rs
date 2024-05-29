@@ -37,19 +37,15 @@ pub enum PrincipalPropResponse {
 
 pub struct EventFile {
     pub event: Event,
+    pub path: String,
 }
 
-impl From<Event> for EventFile {
-    fn from(event: Event) -> Self {
-        Self { event }
-    }
-}
 impl Resource for EventFile {
     type PropType = EventProp;
     type PropResponse = PrincipalPropResponse;
 
     fn get_path(&self) -> &str {
-        "asd"
+        &self.path
     }
 
     fn get_prop(&self, _prefix: &str, prop: Self::PropType) -> Result<Self::PropResponse> {
@@ -90,7 +86,6 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResource<C> {
             .clone()
             .into_inner();
 
-
         Ok(Self {
             cal_store,
             cid,
@@ -106,6 +101,9 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResource<C> {
             .await
             .get_event(&self.cid, &self.uid)
             .await?;
-        Ok(EventFile { event })
+        Ok(EventFile {
+            event,
+            path: self.path.to_owned(),
+        })
     }
 }
