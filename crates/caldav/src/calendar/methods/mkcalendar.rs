@@ -4,6 +4,7 @@ use actix_web::web::{Data, Path};
 use actix_web::HttpResponse;
 use anyhow::Result;
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
+use rustical_dav::xml::tag_list::TagList;
 use rustical_store::calendar::{Calendar, CalendarStore};
 use serde::{Deserialize, Serialize};
 
@@ -17,12 +18,27 @@ pub struct Resourcetype {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
+pub struct CalendarComponentElement {
+    #[serde(rename = "@name")]
+    name: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "kebab-case")]
+pub struct SupportedCalendarComponentSetElement {
+    #[serde(flatten)]
+    comp: Vec<CalendarComponentElement>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "kebab-case")]
 pub struct MkcolCalendarProp {
     resourcetype: Resourcetype,
     displayname: Option<String>,
     calendar_description: Option<String>,
     calendar_color: Option<String>,
     calendar_timezone: Option<String>,
+    supported_calendar_component_set: Option<SupportedCalendarComponentSetElement>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
