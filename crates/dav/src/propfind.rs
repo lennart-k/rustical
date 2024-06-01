@@ -96,7 +96,7 @@ pub async fn route_propfind<A: CheckAuthentication, R: ResourceService + ?Sized>
     let resource = resource_service.get_file().await?;
     let response = resource.propfind(&prefix, props).await?;
 
-    let mut output = String::new();
+    let mut output = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".to_owned();
     let mut ser = quick_xml::se::Serializer::new(&mut output);
     ser.indent(' ', 4);
     MultistatusElement {

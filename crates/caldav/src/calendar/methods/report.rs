@@ -193,7 +193,7 @@ pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?S
         );
     }
 
-    let mut output = String::new();
+    let mut output = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".to_owned();
     let mut ser = quick_xml::se::Serializer::new(&mut output);
     ser.indent(' ', 4);
     MultistatusElement {
