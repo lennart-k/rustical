@@ -1,27 +1,9 @@
 use crate::CalDavContext;
-use actix_web::http::StatusCode;
+use crate::Error;
 use actix_web::web::{Data, Path};
-use actix_web::{HttpResponse, ResponseError};
+use actix_web::HttpResponse;
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
-use rustical_store::store::CalendarStore;
-use thiserror::Error;
-
-#[derive(Debug, Error)]
-pub enum Error {
-    #[error(transparent)]
-    Other(#[from] anyhow::Error),
-}
-
-impl ResponseError for Error {
-    fn status_code(&self) -> actix_web::http::StatusCode {
-        match self {
-            Self::Other(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
-    fn error_response(&self) -> HttpResponse<actix_web::body::BoxBody> {
-        HttpResponse::build(self.status_code()).body(self.to_string())
-    }
-}
+use rustical_store::CalendarStore;
 
 pub async fn delete_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     context: Data<CalDavContext<C>>,

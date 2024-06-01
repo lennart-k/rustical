@@ -6,17 +6,19 @@ use event::resource::EventResource;
 use principal::PrincipalResource;
 use root::RootResource;
 use rustical_auth::CheckAuthentication;
-use rustical_dav::error::Error;
 use rustical_dav::propfind::{route_propfind, ServicePrefix};
-use rustical_store::store::CalendarStore;
+use rustical_store::CalendarStore;
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
 pub mod calendar;
+pub mod error;
 pub mod event;
 pub mod principal;
 pub mod root;
+
+pub use error::Error;
 
 pub struct CalDavContext<C: CalendarStore + ?Sized> {
     pub store: Arc<RwLock<C>>,

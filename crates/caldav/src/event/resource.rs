@@ -6,7 +6,7 @@ use rustical_dav::error::Error;
 use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml_snippets::TextNode;
 use rustical_store::event::Event;
-use rustical_store::store::CalendarStore;
+use rustical_store::CalendarStore;
 use serde::Serialize;
 use std::sync::Arc;
 use strum::{EnumString, IntoStaticStr, VariantNames};

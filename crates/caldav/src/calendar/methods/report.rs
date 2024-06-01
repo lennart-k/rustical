@@ -10,7 +10,7 @@ use rustical_dav::{
     resource::HandlePropfind,
 };
 use rustical_store::event::Event;
-use rustical_store::store::CalendarStore;
+use rustical_store::CalendarStore;
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
@@ -154,10 +154,7 @@ pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?S
         return Err(Error::Unauthorized);
     }
 
-    let request: ReportRequest = quick_xml::de::from_str(&body).map_err(|err| {
-        dbg!(err.to_string());
-        Error::InternalError
-    })?;
+    let request: ReportRequest = quick_xml::de::from_str(&body)?;
     let events = match request.clone() {
         ReportRequest::CalendarQuery(cal_query) => {
             get_events_calendar_query(cal_query, &cid, &cal_store).await?
@@ -178,7 +175,7 @@ pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?S
         }
         PropfindType::Propname => {
             // TODO: Implement
-            return Err(Error::InternalError);
+            return Err(Error::NotImplemented);
         }
         PropfindType::Prop(PropElement { prop: prop_tags }) => prop_tags.into(),
     };

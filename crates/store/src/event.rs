@@ -1,4 +1,7 @@
-use crate::timestamps::{parse_datetime, parse_duration};
+use crate::{
+    timestamps::{parse_datetime, parse_duration},
+    Error,
+};
 use anyhow::{anyhow, Result};
 use chrono::{Duration, NaiveDateTime, Timelike};
 use ical::parser::{ical::component::IcalCalendar, Component};
@@ -51,14 +54,14 @@ impl Serialize for Event {
 impl Event {
     // https://datatracker.ietf.org/doc/html/rfc4791#section-4.1
     // MUST NOT contain more than one calendar objects (VEVENT, VTODO, VJOURNAL)
-    pub fn from_ics(uid: String, ics: String) -> Result<Self> {
+    pub fn from_ics(uid: String, ics: String) -> Result<Self, Error> {
         let mut parser = ical::IcalParser::new(BufReader::new(ics.as_bytes()));
-        let cal = parser.next().ok_or(anyhow!("no calendar :("))??;
+        let cal = parser.next().ok_or(Error::NotFound)??;
         if parser.next().is_some() {
-            return Err(anyhow!("multiple calendars!"));
+            return Err(anyhow!("multiple calendars!").into());
         }
         if cal.events.len() != 1 {
-            return Err(anyhow!("multiple or no events"));
+            return Err(anyhow!("multiple or no events").into());
         }
         let event = Self { uid, cal, ics };
         // Run getters now to validate the input and ensure that they'll work later on

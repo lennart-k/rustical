@@ -5,7 +5,7 @@ use actix_web::HttpResponse;
 use anyhow::Result;
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use rustical_store::calendar::Calendar;
-use rustical_store::store::CalendarStore;
+use rustical_store::CalendarStore;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -69,10 +69,7 @@ pub async fn route_mkcol_calendar<A: CheckAuthentication, C: CalendarStore + ?Si
         return Err(Error::Unauthorized);
     }
 
-    let request: MkcalendarRequest = quick_xml::de::from_str(&body).map_err(|e| {
-        dbg!(e.to_string());
-        Error::BadRequest
-    })?;
+    let request: MkcalendarRequest = quick_xml::de::from_str(&body)?;
     let request = request.set.prop;
 
     let calendar = Calendar {

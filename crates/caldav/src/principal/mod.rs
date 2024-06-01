@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use rustical_auth::AuthInfo;
 use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml_snippets::HrefElement;
-use rustical_store::store::CalendarStore;
+use rustical_store::CalendarStore;
 use serde::Serialize;
 use strum::{EnumString, IntoStaticStr, VariantNames};
 use tokio::sync::RwLock;

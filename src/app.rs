@@ -5,7 +5,7 @@ use actix_web::dev::{ServiceFactory, ServiceRequest, ServiceResponse};
 use actix_web::middleware::{Logger, NormalizePath};
 use actix_web::{web, App};
 use rustical_auth::CheckAuthentication;
-use rustical_store::store::CalendarStore;
+use rustical_store::CalendarStore;
 use tokio::sync::RwLock;
 
 pub fn make_app<CS: CalendarStore + ?Sized, A: CheckAuthentication>(

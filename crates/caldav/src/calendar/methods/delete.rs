@@ -5,7 +5,7 @@ use actix_web::{
     HttpResponse,
 };
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
-use rustical_store::store::CalendarStore;
+use rustical_store::CalendarStore;
 
 pub async fn route_delete_calendar<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     context: Data<CalDavContext<C>>,
