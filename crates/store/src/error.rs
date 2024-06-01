@@ -3,6 +3,9 @@ pub enum Error {
     #[error("Not found")]
     NotFound,
 
+    #[error("Invalid ics input: {0}")]
+    InvalidIcs(String),
+
     #[error(transparent)]
     SqlxError(sqlx::Error),
 

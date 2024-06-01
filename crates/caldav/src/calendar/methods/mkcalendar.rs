@@ -2,7 +2,6 @@ use crate::CalDavContext;
 use crate::Error;
 use actix_web::web::{Data, Path};
 use actix_web::HttpResponse;
-use anyhow::Result;
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use rustical_store::calendar::Calendar;
 use rustical_store::CalendarStore;

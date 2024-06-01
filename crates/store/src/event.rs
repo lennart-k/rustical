@@ -58,10 +58,14 @@ impl Event {
         let mut parser = ical::IcalParser::new(BufReader::new(ics.as_bytes()));
         let cal = parser.next().ok_or(Error::NotFound)??;
         if parser.next().is_some() {
-            return Err(anyhow!("multiple calendars!").into());
+            return Err(Error::InvalidIcs(
+                "multiple calendars, only one allowed".to_owned(),
+            ));
         }
         if cal.events.len() != 1 {
-            return Err(anyhow!("multiple or no events").into());
+            return Err(Error::InvalidIcs(
+                "ics calendar must contain exactly one event".to_owned(),
+            ));
         }
         let event = Self { uid, cal, ics };
         // Run getters now to validate the input and ensure that they'll work later on

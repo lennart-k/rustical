@@ -1,6 +1,6 @@
 use crate::xml::tag_list::TagList;
+use crate::Error;
 use actix_web::{http::StatusCode, HttpRequest, ResponseError};
-use anyhow::anyhow;
 use async_trait::async_trait;
 use itertools::Itertools;
 use rustical_auth::AuthInfo;
@@ -97,7 +97,9 @@ impl<R: Resource> HandlePropfind for R {
         if props.contains(&"propname") {
             if props.len() != 1 {
                 // propname MUST be the only queried prop per spec
-                return Err(anyhow!("propname MUST be the only queried prop").into());
+                return Err(
+                    Error::BadRequest("allprop MUST be the only queried prop".to_owned()).into(),
+                );
             }
             // TODO: implement propname
             props = R::list_dead_props().into();
@@ -105,7 +107,9 @@ impl<R: Resource> HandlePropfind for R {
         if props.contains(&"allprop") {
             if props.len() != 1 {
                 // allprop MUST be the only queried prop per spec
-                return Err(anyhow!("allprop MUST be the only queried prop").into());
+                return Err(
+                    Error::BadRequest("allprop MUST be the only queried prop".to_owned()).into(),
+                );
             }
             props = R::list_dead_props().into();
         }

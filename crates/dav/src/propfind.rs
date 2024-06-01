@@ -7,7 +7,6 @@ use crate::Error;
 use actix_web::http::header::ContentType;
 use actix_web::web::{Data, Path};
 use actix_web::{HttpRequest, HttpResponse};
-use anyhow::Result;
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use serde::Deserialize;
 use serde::Serialize;

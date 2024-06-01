@@ -7,8 +7,8 @@ use thiserror::Error;
 pub enum Error {
     #[error("Not found")]
     NotFound,
-    #[error("Bad request")]
-    BadRequest,
+    #[error("Bad request: {0}")]
+    BadRequest(String),
     #[error("Unauthorized")]
     Unauthorized,
     #[error("Internal server error :(")]
@@ -25,7 +25,7 @@ impl actix_web::error::ResponseError for Error {
             Self::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
             Self::Other(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::NotFound => StatusCode::NOT_FOUND,
-            Self::BadRequest => StatusCode::BAD_REQUEST,
+            Self::BadRequest(_) => StatusCode::BAD_REQUEST,
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
             Self::XmlDecodeError(_) => StatusCode::BAD_REQUEST,
         }

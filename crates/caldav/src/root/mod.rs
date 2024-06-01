@@ -1,6 +1,5 @@
 use crate::Error;
 use actix_web::HttpRequest;
-use anyhow::Result;
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
 use rustical_dav::resource::{Resource, ResourceService};
