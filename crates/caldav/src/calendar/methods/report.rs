@@ -23,6 +23,8 @@ pub enum PropQuery {
     Propname,
 }
 
+// TODO: Implement all the other filters
+
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
 // <!ELEMENT calendar-query ((DAV:allprop | DAV:propname | DAV:prop)?, href+)>
@@ -34,6 +36,7 @@ pub struct CalendarMultigetRequest {
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
+#[allow(dead_code)]
 struct TimeRangeElement {
     #[serde(rename = "@start")]
     start: Option<String>,
@@ -43,6 +46,7 @@ struct TimeRangeElement {
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
+#[allow(dead_code)]
 struct ParamFilterElement {
     is_not_defined: Option<()>,
     text_match: Option<TextMatchElement>,
@@ -53,6 +57,7 @@ struct ParamFilterElement {
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
+#[allow(dead_code)]
 struct TextMatchElement {
     #[serde(rename = "@collation")]
     collation: String,
@@ -62,6 +67,7 @@ struct TextMatchElement {
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
+#[allow(dead_code)]
 struct PropFilterElement {
     is_not_defined: Option<()>,
     time_range: Option<TimeRangeElement>,
@@ -72,6 +78,7 @@ struct PropFilterElement {
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
+#[allow(dead_code)]
 struct CompFilterElement {
     is_not_defined: Option<()>,
     time_range: Option<TimeRangeElement>,
@@ -86,12 +93,14 @@ struct CompFilterElement {
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
+#[allow(dead_code)]
 struct FilterElement {
     comp_filter: CompFilterElement,
 }
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
+#[allow(dead_code)]
 // #[serde(rename = "calendar-query")]
 // <!ELEMENT calendar-query ((DAV:allprop | DAV:propname | DAV:prop)?, filter, timezone?)>
 pub struct CalendarQueryRequest {
@@ -109,7 +118,7 @@ pub enum ReportRequest {
 }
 
 async fn get_events_calendar_query<C: CalendarStore + ?Sized>(
-    cal_query: CalendarQueryRequest,
+    _cal_query: CalendarQueryRequest,
     cid: &str,
     store: &RwLock<C>,
 ) -> Result<Vec<Event>, Error> {
@@ -119,10 +128,10 @@ async fn get_events_calendar_query<C: CalendarStore + ?Sized>(
 
 async fn get_events_calendar_multiget<C: CalendarStore + ?Sized>(
     cal_query: CalendarMultigetRequest,
-    cid: &str,
-    store: &RwLock<C>,
+    _cid: &str,
+    _store: &RwLock<C>,
 ) -> Result<Vec<Event>, Error> {
-    let mut events = Vec::new();
+    let events = Vec::new();
     for href in cal_query.href {
         dbg!(href);
         // let uid =
