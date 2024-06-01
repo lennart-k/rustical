@@ -3,7 +3,7 @@ use actix_web::http::StatusCode;
 use actix_web::web::{Data, Path};
 use actix_web::{HttpResponse, ResponseError};
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
-use rustical_store::calendar::CalendarStore;
+use rustical_store::store::CalendarStore;
 use thiserror::Error;
 
 #[derive(Debug, Error)]

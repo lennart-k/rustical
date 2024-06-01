@@ -1,7 +1,7 @@
 use rstest::rstest;
 use rstest_reuse::{self, apply, template};
-use rustical_store::calendar::CalendarStore;
 use rustical_store::sqlite_store::create_test_store;
+use rustical_store::store::CalendarStore;
 use rustical_store::toml_store::TomlCalendarStore;
 
 const TIMEZONE: &str = include_str!("examples/timezone.ics");

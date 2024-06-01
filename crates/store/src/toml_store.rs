@@ -1,5 +1,6 @@
-use crate::calendar::{Calendar, CalendarStore};
+use crate::calendar::Calendar;
 use crate::event::Event;
+use crate::store::CalendarStore;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};

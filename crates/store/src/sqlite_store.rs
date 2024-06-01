@@ -2,10 +2,7 @@ use anyhow::Result;
 use async_trait::async_trait;
 use sqlx::{sqlite::SqliteConnectOptions, Pool, Sqlite, SqlitePool};
 
-use crate::{
-    calendar::{Calendar, CalendarStore},
-    event::Event,
-};
+use crate::{calendar::Calendar, event::Event, store::CalendarStore};
 
 #[derive(Debug)]
 pub struct SqliteCalendarStore {

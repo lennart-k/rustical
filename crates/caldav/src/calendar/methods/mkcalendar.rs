@@ -4,8 +4,8 @@ use actix_web::web::{Data, Path};
 use actix_web::HttpResponse;
 use anyhow::Result;
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
-use rustical_dav::xml::tag_list::TagList;
-use rustical_store::calendar::{Calendar, CalendarStore};
+use rustical_store::calendar::Calendar;
+use rustical_store::store::CalendarStore;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Clone, Debug)]

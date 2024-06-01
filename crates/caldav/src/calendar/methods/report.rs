@@ -9,7 +9,8 @@ use rustical_dav::{
     propfind::{MultistatusElement, PropElement, PropfindType, ServicePrefix},
     resource::HandlePropfind,
 };
-use rustical_store::{calendar::CalendarStore, event::Event};
+use rustical_store::event::Event;
+use rustical_store::store::CalendarStore;
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 

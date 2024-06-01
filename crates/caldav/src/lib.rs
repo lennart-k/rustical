@@ -8,7 +8,7 @@ use root::RootResource;
 use rustical_auth::CheckAuthentication;
 use rustical_dav::error::Error;
 use rustical_dav::propfind::{route_propfind, ServicePrefix};
-use rustical_store::calendar::CalendarStore;
+use rustical_store::store::CalendarStore;
 use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::RwLock;
