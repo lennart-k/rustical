@@ -28,6 +28,7 @@ pub enum PropQuery {
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
+#[allow(dead_code)]
 // <!ELEMENT calendar-query ((DAV:allprop | DAV:propname | DAV:prop)?, href+)>
 pub struct CalendarMultigetRequest {
     #[serde(flatten)]
@@ -128,17 +129,19 @@ async fn get_events_calendar_query<C: CalendarStore + ?Sized>(
 }
 
 async fn get_events_calendar_multiget<C: CalendarStore + ?Sized>(
-    cal_query: CalendarMultigetRequest,
-    _cid: &str,
-    _store: &RwLock<C>,
+    _cal_query: CalendarMultigetRequest,
+    cid: &str,
+    store: &RwLock<C>,
 ) -> Result<Vec<Event>, Error> {
-    let events = Vec::new();
-    for href in cal_query.href {
-        dbg!(href);
-        // let uid =
-        // events.push(store.read().await.get_event(cid, &uid))
-    }
-    Ok(events)
+    // TODO: proper implementation
+    Ok(store.read().await.get_events(cid).await?)
+    // let events = Vec::new();
+    // for href in cal_query.href {
+    //     dbg!(href);
+    //     // let uid =
+    //     // events.push(store.read().await.get_event(cid, &uid))
+    // }
+    // Ok(events)
 }
 
 pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?Sized>(
