@@ -25,14 +25,14 @@ pub struct CalendarComponentElement {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub struct SupportedCalendarComponentSetElement {
-    #[serde(flatten)]
+    #[serde(rename = "$value")]
     comp: Vec<CalendarComponentElement>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub struct MkcolCalendarProp {
-    resourcetype: Resourcetype,
+    resourcetype: Option<Resourcetype>,
     displayname: Option<String>,
     calendar_description: Option<String>,
     calendar_color: Option<String>,
@@ -51,11 +51,6 @@ pub struct PropElement<T: Serialize> {
 struct MkcalendarRequest {
     set: PropElement<MkcolCalendarProp>,
 }
-
-// TODO: Not sure yet what to send back :)
-#[derive(Serialize, Clone, Debug)]
-#[serde(rename = "mkcalendar-response")]
-struct MkcalendarResponse;
 
 pub async fn route_mkcol_calendar<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     path: Path<(String, String)>,
@@ -80,6 +75,20 @@ pub async fn route_mkcol_calendar<A: CheckAuthentication, C: CalendarStore + ?Si
         description: request.calendar_description,
     };
 
+    match context.store.read().await.get_calendar(&cid).await {
+        Err(rustical_store::Error::NotFound) => {
+            // No conflict, no worries
+        }
+        Ok(_) => {
+            // oh no, there's a conflict
+            return Ok(HttpResponse::Conflict().body("A calendar already exists at this URI"));
+        }
+        Err(err) => {
+            // some other error
+            return Err(err.into());
+        }
+    }
+
     match context
         .store
         .write()
@@ -87,10 +96,14 @@ pub async fn route_mkcol_calendar<A: CheckAuthentication, C: CalendarStore + ?Si
         .insert_calendar(cid, calendar)
         .await
     {
-        Ok(()) => {
-            let response = quick_xml::se::to_string(&MkcalendarResponse).unwrap();
-            Ok(HttpResponse::Created().body(response))
+        // The spec says we should return a mkcalendar-response but I don't know what goes into it.
+        // However, it works without one but breaks on iPadOS when using an empty one :)
+        Ok(()) => Ok(HttpResponse::Created()
+            .insert_header(("Cache-Control", "no-cache"))
+            .body("")),
+        Err(err) => {
+            dbg!(err.to_string());
+            Err(err.into())
         }
-        Err(_err) => Ok(HttpResponse::InternalServerError().body("")),
     }
 }
