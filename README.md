@@ -4,13 +4,15 @@ a calendar server
 
 ## Todo
 
+- [ ] CalDAV
+  - [ ] Support for VTODO, VJOURNAL
+  - [ ] Proper filtering for REPORT method
+  - [ ] ICS parsing
+    - [x] Datetime parsing
 - [ ] Access Control
   - [ ] OIDC support
+- [ ] CardDAV
 - [ ] Locking
 - [ ] Web UI
-- [ ] Support for VTODO, VJOURNAL
 - [ ] Hiding calendars instead of deleting them
-- [ ] ICS parsing
-  - [x] Datetime parsing
-- [ ] CardDAV
 - [ ] Testing such that I'm confident enough to use it myself :)
