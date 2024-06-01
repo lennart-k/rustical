@@ -66,8 +66,15 @@ pub async fn route_propfind<A: CheckAuthentication, R: ResourceService + ?Sized>
 
     let resource_service = R::new(req, auth_info.clone(), path_components.clone()).await?;
 
-    let propfind: PropfindElement =
-        quick_xml::de::from_str(&body).map_err(Error::XmlDecodeError)?;
+    // A request body is optional. If empty we MUST return all props
+    let propfind: PropfindElement = if !body.is_empty() {
+        quick_xml::de::from_str(&body).map_err(Error::XmlDecodeError)?
+    } else {
+        PropfindElement {
+            prop: PropfindType::Allprop,
+        }
+    };
+
     let props = match propfind.prop {
         PropfindType::Allprop => {
             vec!["allprop".to_owned()]
