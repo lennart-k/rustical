@@ -3,6 +3,7 @@ CREATE TABLE calendars (
   owner TEXT NOT NULL,
   name TEXT,
   description TEXT,
+  'order' INT DEFAULT 0 NOT NULL,
   color TEXT,
   timezone TEXT NOT NULL
 );

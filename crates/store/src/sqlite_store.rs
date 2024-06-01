@@ -35,7 +35,7 @@ impl CalendarStore for SqliteCalendarStore {
     async fn get_calendar(&self, id: &str) -> Result<Calendar, Error> {
         let cal = sqlx::query_as!(
             Calendar,
-            "SELECT id, name, owner, description, color, timezone FROM calendars WHERE id = ?",
+            r#"SELECT id, name, owner, "order", description, color, timezone FROM calendars WHERE id = ?"#,
             id
         )
         .fetch_one(&self.db)
@@ -46,7 +46,7 @@ impl CalendarStore for SqliteCalendarStore {
     async fn get_calendars(&self, _owner: &str) -> Result<Vec<Calendar>, Error> {
         let cals = sqlx::query_as!(
             Calendar,
-            "SELECT id, name, owner, description, color, timezone FROM calendars"
+            r#"SELECT id, name, owner, "order", description, color, timezone FROM calendars"#,
         )
         .fetch_all(&self.db)
         .await?;
@@ -55,11 +55,12 @@ impl CalendarStore for SqliteCalendarStore {
 
     async fn insert_calendar(&mut self, cid: String, calendar: Calendar) -> Result<(), Error> {
         sqlx::query!(
-            "INSERT INTO calendars (id, name, description, owner, color, timezone) VALUES (?, ?, ?, ?, ?, ?)",
+            r#"INSERT INTO calendars (id, name, description, owner, "order", color, timezone) VALUES (?, ?, ?, ?, ?, ?, ?)"#,
             cid,
             calendar.name,
             calendar.description,
             calendar.owner,
+            calendar.order,
             calendar.color,
             calendar.timezone
         ).execute(&self.db).await?;

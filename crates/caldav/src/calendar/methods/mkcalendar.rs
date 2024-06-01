@@ -36,6 +36,7 @@ pub struct MkcolCalendarProp {
     displayname: Option<String>,
     calendar_description: Option<String>,
     calendar_color: Option<String>,
+    order: Option<i64>,
     calendar_timezone: Option<String>,
     supported_calendar_component_set: Option<SupportedCalendarComponentSetElement>,
 }
@@ -69,6 +70,7 @@ pub async fn route_mkcol_calendar<A: CheckAuthentication, C: CalendarStore + ?Si
     let calendar = Calendar {
         id: cid.to_owned(),
         owner: principal,
+        order: request.order.unwrap_or(0),
         name: request.displayname,
         timezone: request.calendar_timezone,
         color: request.calendar_color,

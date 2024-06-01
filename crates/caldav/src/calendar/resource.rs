@@ -124,6 +124,7 @@ pub enum CalendarProp {
     Displayname,
     CalendarColor,
     CalendarDescription,
+    CalendarOrder,
     SupportedCalendarComponentSet,
     SupportedCalendarData,
     Getcontenttype,
@@ -142,6 +143,8 @@ pub enum CalendarPropResponse {
     CalendarColor(TextNode),
     #[serde(rename = "C:calendar-description", alias = "calendar-description")]
     CalendarDescription(TextNode),
+    #[serde(rename = "IC:calendar-description", alias = "calendar-description")]
+    CalendarOrder(TextNode),
     #[serde(
         rename = "C:supported-calendar-component-set",
         alias = "supported-calendar-component-set"
@@ -193,6 +196,9 @@ impl Resource for CalendarFile {
             CalendarProp::CalendarDescription => Ok(CalendarPropResponse::CalendarDescription(
                 TextNode(self.calendar.description.clone()),
             )),
+            CalendarProp::CalendarOrder => Ok(CalendarPropResponse::CalendarOrder(TextNode(
+                format!("{}", self.calendar.order).into(),
+            ))),
             CalendarProp::SupportedCalendarComponentSet => {
                 Ok(CalendarPropResponse::SupportedCalendarComponentSet(
                     SupportedCalendarComponentSet {
