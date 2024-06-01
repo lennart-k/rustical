@@ -29,8 +29,9 @@ pub enum EventProp {
 
 #[derive(Serialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum PrincipalPropResponse {
+pub enum EventPropResponse {
     Getetag(TextNode),
+    #[serde(rename = "C:calendar-data")]
     CalendarData(TextNode),
     Getcontenttype(TextNode),
 }
@@ -42,7 +43,7 @@ pub struct EventFile {
 
 impl Resource for EventFile {
     type PropType = EventProp;
-    type PropResponse = PrincipalPropResponse;
+    type PropResponse = EventPropResponse;
     type Error = Error;
 
     fn get_path(&self) -> &str {
@@ -55,13 +56,13 @@ impl Resource for EventFile {
         prop: Self::PropType,
     ) -> Result<Self::PropResponse, Self::Error> {
         match prop {
-            EventProp::Getetag => Ok(PrincipalPropResponse::Getetag(TextNode(Some(
+            EventProp::Getetag => Ok(EventPropResponse::Getetag(TextNode(Some(
                 self.event.get_etag(),
             )))),
-            EventProp::CalendarData => Ok(PrincipalPropResponse::CalendarData(TextNode(Some(
+            EventProp::CalendarData => Ok(EventPropResponse::CalendarData(TextNode(Some(
                 self.event.get_ics().to_owned(),
             )))),
-            EventProp::Getcontenttype => Ok(PrincipalPropResponse::Getcontenttype(TextNode(Some(
+            EventProp::Getcontenttype => Ok(EventPropResponse::Getcontenttype(TextNode(Some(
                 "text/calendar;charset=utf-8".to_owned(),
             )))),
         }
