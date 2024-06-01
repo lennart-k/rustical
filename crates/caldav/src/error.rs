@@ -5,6 +5,9 @@ pub enum Error {
     #[error("Unauthorized")]
     Unauthorized,
 
+    #[error("Not Found")]
+    NotFound,
+
     #[error("Not implemented")]
     NotImplemented,
 
@@ -33,6 +36,7 @@ impl actix_web::ResponseError for Error {
             Error::XmlDecodeError(_) => StatusCode::BAD_REQUEST,
             Error::NotImplemented => StatusCode::INTERNAL_SERVER_ERROR,
             Error::Other(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::NotFound => StatusCode::NOT_FOUND,
         }
     }
     fn error_response(&self) -> actix_web::HttpResponse<actix_web::body::BoxBody> {

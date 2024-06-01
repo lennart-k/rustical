@@ -1,8 +1,8 @@
+use crate::Error;
 use actix_web::{web::Data, HttpRequest};
-use anyhow::{anyhow, Result};
+use anyhow::anyhow;
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
-use rustical_dav::error::Error;
 use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml_snippets::TextNode;
 use rustical_store::event::Event;
@@ -43,12 +43,17 @@ pub struct EventFile {
 impl Resource for EventFile {
     type PropType = EventProp;
     type PropResponse = PrincipalPropResponse;
+    type Error = Error;
 
     fn get_path(&self) -> &str {
         &self.path
     }
 
-    fn get_prop(&self, _prefix: &str, prop: Self::PropType) -> Result<Self::PropResponse> {
+    fn get_prop(
+        &self,
+        _prefix: &str,
+        prop: Self::PropType,
+    ) -> Result<Self::PropResponse, Self::Error> {
         match prop {
             EventProp::Getetag => Ok(PrincipalPropResponse::Getetag(TextNode(Some(
                 self.event.get_etag(),
@@ -68,8 +73,12 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResource<C> {
     type PathComponents = (String, String, String); // principal, calendar, event
     type File = EventFile;
     type MemberType = EventFile;
+    type Error = Error;
 
-    async fn get_members(&self, _auth_info: AuthInfo) -> Result<Vec<Self::MemberType>> {
+    async fn get_members(
+        &self,
+        _auth_info: AuthInfo,
+    ) -> Result<Vec<Self::MemberType>, Self::Error> {
         Ok(vec![])
     }
 
@@ -77,7 +86,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResource<C> {
         req: HttpRequest,
         _auth_info: AuthInfo,
         path_components: Self::PathComponents,
-    ) -> Result<Self, Error> {
+    ) -> Result<Self, Self::Error> {
         let (_principal, cid, uid) = path_components;
 
         let cal_store = req
@@ -94,7 +103,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResource<C> {
         })
     }
 
-    async fn get_file(&self) -> Result<Self::File> {
+    async fn get_file(&self) -> Result<Self::File, Self::Error> {
         let event = self
             .cal_store
             .read()

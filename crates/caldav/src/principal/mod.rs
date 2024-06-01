@@ -1,14 +1,14 @@
-use std::sync::Arc;
-
+use crate::Error;
 use actix_web::web::Data;
 use actix_web::HttpRequest;
-use anyhow::{anyhow, Result};
+use anyhow::anyhow;
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
 use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml_snippets::HrefElement;
 use rustical_store::CalendarStore;
 use serde::Serialize;
+use std::sync::Arc;
 use strum::{EnumString, IntoStaticStr, VariantNames};
 use tokio::sync::RwLock;
 
@@ -60,8 +60,13 @@ pub enum PrincipalProp {
 impl Resource for PrincipalFile {
     type PropType = PrincipalProp;
     type PropResponse = PrincipalPropResponse;
+    type Error = Error;
 
-    fn get_prop(&self, prefix: &str, prop: Self::PropType) -> Result<Self::PropResponse> {
+    fn get_prop(
+        &self,
+        prefix: &str,
+        prop: Self::PropType,
+    ) -> Result<Self::PropResponse, Self::Error> {
         match prop {
             PrincipalProp::Resourcetype => {
                 Ok(PrincipalPropResponse::Resourcetype(Resourcetype::default()))
@@ -93,14 +98,15 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResource<C> {
     type PathComponents = (String,);
     type MemberType = CalendarFile;
     type File = PrincipalFile;
+    type Error = Error;
 
     async fn new(
         req: HttpRequest,
         auth_info: AuthInfo,
         (principal,): Self::PathComponents,
-    ) -> Result<Self, rustical_dav::error::Error> {
+    ) -> Result<Self, Self::Error> {
         if auth_info.user_id != principal {
-            return Err(rustical_dav::error::Error::Unauthorized);
+            return Err(Error::Unauthorized);
         }
         let cal_store = req
             .app_data::<Data<RwLock<C>>>()
@@ -115,14 +121,17 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResource<C> {
         })
     }
 
-    async fn get_file(&self) -> Result<Self::File> {
+    async fn get_file(&self) -> Result<Self::File, Self::Error> {
         Ok(PrincipalFile {
             principal: self.principal.to_owned(),
             path: self.path.to_owned(),
         })
     }
 
-    async fn get_members(&self, _auth_info: AuthInfo) -> Result<Vec<Self::MemberType>> {
+    async fn get_members(
+        &self,
+        _auth_info: AuthInfo,
+    ) -> Result<Vec<Self::MemberType>, Self::Error> {
         let calendars = self
             .cal_store
             .read()

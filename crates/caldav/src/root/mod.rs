@@ -1,8 +1,8 @@
+use crate::Error;
 use actix_web::HttpRequest;
 use anyhow::Result;
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
-use rustical_dav::error::Error;
 use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml_snippets::HrefElement;
 use serde::Serialize;
@@ -41,8 +41,13 @@ pub struct RootFile {
 impl Resource for RootFile {
     type PropType = RootProp;
     type PropResponse = RootPropResponse;
+    type Error = Error;
 
-    fn get_prop(&self, prefix: &str, prop: Self::PropType) -> Result<Self::PropResponse> {
+    fn get_prop(
+        &self,
+        prefix: &str,
+        prop: Self::PropType,
+    ) -> Result<Self::PropResponse, Self::Error> {
         match prop {
             RootProp::Resourcetype => Ok(RootPropResponse::Resourcetype(Resourcetype::default())),
             RootProp::CurrentUserPrincipal => Ok(RootPropResponse::CurrentUserPrincipal(
@@ -61,8 +66,12 @@ impl ResourceService for RootResource {
     type PathComponents = ();
     type MemberType = RootFile;
     type File = RootFile;
+    type Error = Error;
 
-    async fn get_members(&self, _auth_info: AuthInfo) -> Result<Vec<Self::MemberType>> {
+    async fn get_members(
+        &self,
+        _auth_info: AuthInfo,
+    ) -> Result<Vec<Self::MemberType>, Self::Error> {
         Ok(vec![])
     }
 
@@ -70,14 +79,14 @@ impl ResourceService for RootResource {
         req: HttpRequest,
         auth_info: AuthInfo,
         _path_components: Self::PathComponents,
-    ) -> Result<Self, Error> {
+    ) -> Result<Self, Self::Error> {
         Ok(Self {
             principal: auth_info.user_id,
             path: req.path().to_string(),
         })
     }
 
-    async fn get_file(&self) -> Result<Self::File> {
+    async fn get_file(&self) -> Result<Self::File, Self::Error> {
         Ok(RootFile {
             path: self.path.to_owned(),
             principal: self.principal.to_owned(),

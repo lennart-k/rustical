@@ -3,6 +3,7 @@ use crate::namespace::Namespace;
 use crate::resource::HandlePropfind;
 use crate::resource::ResourceService;
 use crate::xml::tag_list::TagList;
+use crate::Error;
 use actix_web::http::header::ContentType;
 use actix_web::web::{Data, Path};
 use actix_web::{HttpRequest, HttpResponse};
@@ -58,21 +59,22 @@ pub async fn route_propfind<A: CheckAuthentication, R: ResourceService + ?Sized>
     prefix: Data<ServicePrefix>,
     auth: AuthInfoExtractor<A>,
     depth: Depth,
-) -> Result<HttpResponse, crate::error::Error> {
+) -> Result<HttpResponse, R::Error> {
     let auth_info = auth.inner;
     let prefix = prefix.0.to_owned();
     let path_components = path.into_inner();
 
     let resource_service = R::new(req, auth_info.clone(), path_components.clone()).await?;
 
-    let propfind: PropfindElement = quick_xml::de::from_str(&body).unwrap();
+    let propfind: PropfindElement =
+        quick_xml::de::from_str(&body).map_err(Error::XmlDecodeError)?;
     let props = match propfind.prop {
         PropfindType::Allprop => {
             vec!["allprop".to_owned()]
         }
         PropfindType::Propname => {
             // TODO: Implement
-            return Err(crate::error::Error::InternalError);
+            return Err(Error::InternalError.into());
         }
         PropfindType::Prop(PropElement { prop: prop_tags }) => prop_tags.into(),
     };

@@ -13,6 +13,8 @@ pub enum Error {
     Unauthorized,
     #[error("Internal server error :(")]
     InternalError,
+    #[error(transparent)]
+    XmlDecodeError(#[from] quick_xml::DeError),
     #[error("Internal server error")]
     Other(#[from] anyhow::Error),
 }
@@ -25,6 +27,7 @@ impl actix_web::error::ResponseError for Error {
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::BadRequest => StatusCode::BAD_REQUEST,
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
+            Self::XmlDecodeError(_) => StatusCode::BAD_REQUEST,
         }
     }
 

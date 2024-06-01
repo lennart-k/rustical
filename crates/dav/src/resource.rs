@@ -1,6 +1,6 @@
-use crate::{error::Error, xml::tag_list::TagList};
-use actix_web::{http::StatusCode, HttpRequest};
-use anyhow::{anyhow, Result};
+use crate::xml::tag_list::TagList;
+use actix_web::{http::StatusCode, HttpRequest, ResponseError};
+use anyhow::anyhow;
 use async_trait::async_trait;
 use itertools::Itertools;
 use rustical_auth::AuthInfo;
@@ -12,12 +12,17 @@ use strum::VariantNames;
 pub trait Resource {
     type PropType: FromStr + VariantNames + Clone;
     type PropResponse: Serialize;
+    type Error: ResponseError + From<crate::Error> + From<anyhow::Error>;
 
     fn list_dead_props() -> &'static [&'static str] {
         Self::PropType::VARIANTS
     }
 
-    fn get_prop(&self, prefix: &str, prop: Self::PropType) -> Result<Self::PropResponse>;
+    fn get_prop(
+        &self,
+        prefix: &str,
+        prop: Self::PropType,
+    ) -> Result<Self::PropResponse, Self::Error>;
 
     fn get_path(&self) -> &str;
 }
@@ -28,19 +33,20 @@ pub trait Resource {
 // A resource exists
 #[async_trait(?Send)]
 pub trait ResourceService: Sized {
-    type MemberType: Resource;
+    type MemberType: Resource<Error = Self::Error>;
     type PathComponents: Sized + Clone; // defines how the resource URI maps to parameters, i.e. /{principal}/{calendar} -> (String, String)
-    type File: Resource;
+    type File: Resource<Error = Self::Error>;
+    type Error: ResponseError + From<crate::Error> + From<anyhow::Error>;
 
     async fn new(
         req: HttpRequest,
         auth_info: AuthInfo,
         path_components: Self::PathComponents,
-    ) -> Result<Self, Error>;
+    ) -> Result<Self, Self::Error>;
 
-    async fn get_file(&self) -> Result<Self::File>;
+    async fn get_file(&self) -> Result<Self::File, Self::Error>;
 
-    async fn get_members(&self, auth_info: AuthInfo) -> Result<Vec<Self::MemberType>>;
+    async fn get_members(&self, auth_info: AuthInfo) -> Result<Vec<Self::MemberType>, Self::Error>;
 }
 
 #[derive(Serialize)]
@@ -72,21 +78,26 @@ enum PropstatType<T1: Serialize, T2: Serialize> {
 
 #[async_trait(?Send)]
 pub trait HandlePropfind {
-    async fn propfind(&self, prefix: &str, props: Vec<&str>) -> Result<impl Serialize>;
+    type Error: ResponseError + From<crate::Error> + From<anyhow::Error>;
+
+    async fn propfind(&self, prefix: &str, props: Vec<&str>)
+        -> Result<impl Serialize, Self::Error>;
 }
 
 #[async_trait(?Send)]
 impl<R: Resource> HandlePropfind for R {
+    type Error = R::Error;
+
     async fn propfind(
         &self,
         prefix: &str,
         props: Vec<&str>,
-    ) -> Result<PropstatResponseElement<PropWrapper<Vec<R::PropResponse>>, TagList>> {
+    ) -> Result<PropstatResponseElement<PropWrapper<Vec<R::PropResponse>>, TagList>, R::Error> {
         let mut props = props;
         if props.contains(&"propname") {
             if props.len() != 1 {
                 // propname MUST be the only queried prop per spec
-                return Err(anyhow!("propname MUST be the only queried prop"));
+                return Err(anyhow!("propname MUST be the only queried prop").into());
             }
             // TODO: implement propname
             props = R::list_dead_props().into();
@@ -94,7 +105,7 @@ impl<R: Resource> HandlePropfind for R {
         if props.contains(&"allprop") {
             if props.len() != 1 {
                 // allprop MUST be the only queried prop per spec
-                return Err(anyhow!("allprop MUST be the only queried prop"));
+                return Err(anyhow!("allprop MUST be the only queried prop").into());
             }
             props = R::list_dead_props().into();
         }

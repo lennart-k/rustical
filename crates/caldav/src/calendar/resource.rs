@@ -1,8 +1,8 @@
+use crate::Error;
 use actix_web::{web::Data, HttpRequest};
-use anyhow::{anyhow, Result};
+use anyhow::anyhow;
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
-use rustical_dav::error::Error;
 use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml_snippets::{HrefElement, TextNode};
 use rustical_store::calendar::Calendar;
@@ -166,8 +166,13 @@ pub struct CalendarFile {
 impl Resource for CalendarFile {
     type PropType = CalendarProp;
     type PropResponse = CalendarPropResponse;
+    type Error = Error;
 
-    fn get_prop(&self, prefix: &str, prop: Self::PropType) -> Result<Self::PropResponse> {
+    fn get_prop(
+        &self,
+        prefix: &str,
+        prop: Self::PropType,
+    ) -> Result<Self::PropResponse, Self::Error> {
         match prop {
             CalendarProp::Resourcetype => {
                 Ok(CalendarPropResponse::Resourcetype(Resourcetype::default()))
@@ -220,8 +225,9 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResource<C> {
     type MemberType = CalendarFile;
     type PathComponents = (String, String); // principal, calendar_id
     type File = CalendarFile;
+    type Error = Error;
 
-    async fn get_file(&self) -> Result<Self::File> {
+    async fn get_file(&self) -> Result<Self::File, Error> {
         let calendar = self
             .cal_store
             .read()
@@ -236,7 +242,10 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResource<C> {
         })
     }
 
-    async fn get_members(&self, _auth_info: AuthInfo) -> Result<Vec<Self::MemberType>> {
+    async fn get_members(
+        &self,
+        _auth_info: AuthInfo,
+    ) -> Result<Vec<Self::MemberType>, Self::Error> {
         // As of now the calendar resource has no members since events are shown with REPORT
         Ok(vec![])
     }
@@ -245,7 +254,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResource<C> {
         req: HttpRequest,
         auth_info: AuthInfo,
         path_components: Self::PathComponents,
-    ) -> Result<Self, rustical_dav::error::Error> {
+    ) -> Result<Self, Self::Error> {
         let cal_store = req
             .app_data::<Data<RwLock<C>>>()
             .ok_or(anyhow!("no calendar store in app_data!"))?
