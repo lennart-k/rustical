@@ -67,6 +67,23 @@ impl CalendarStore for SqliteCalendarStore {
         Ok(())
     }
 
+    async fn update_calendar(&mut self, cid: String, calendar: Calendar) -> Result<(), Error> {
+        let result = sqlx::query!(
+            r#"UPDATE calendars SET name = ?, description = ?, owner = ?, "order" = ?, color = ?, timezone = ? WHERE id = ?"#,
+            calendar.name,
+            calendar.description,
+            calendar.owner,
+            calendar.order,
+            calendar.color,
+            calendar.timezone,
+            cid,
+        ).execute(&self.db).await?;
+        if result.rows_affected() == 0 {
+            return Err(Error::NotFound);
+        }
+        Ok(())
+    }
+
     async fn delete_calendar(&mut self, cid: &str) -> Result<(), Error> {
         sqlx::query!("DELETE FROM calendars WHERE id = ?", cid)
             .execute(&self.db)
@@ -97,6 +114,7 @@ impl CalendarStore for SqliteCalendarStore {
     }
 
     async fn upsert_event(&mut self, cid: String, uid: String, ics: String) -> Result<(), Error> {
+        // TODO: This is not actually an upsert
         // Do this extra step to ensure that the input is actually valid
         let _ = Event::from_ics(uid.to_owned(), ics.to_owned())?;
         sqlx::query!(

@@ -8,6 +8,7 @@ use crate::{calendar::Calendar, event::Event};
 pub trait CalendarStore: Send + Sync + 'static {
     async fn get_calendar(&self, id: &str) -> Result<Calendar, Error>;
     async fn get_calendars(&self, owner: &str) -> Result<Vec<Calendar>, Error>;
+    async fn update_calendar(&mut self, cid: String, calendar: Calendar) -> Result<(), Error>;
     async fn insert_calendar(&mut self, cid: String, calendar: Calendar) -> Result<(), Error>;
     async fn delete_calendar(&mut self, cid: &str) -> Result<(), Error>;
 

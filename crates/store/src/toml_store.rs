@@ -66,6 +66,15 @@ impl CalendarStore for TomlCalendarStore {
         }
     }
 
+    async fn update_calendar(&mut self, cid: String, calendar: Calendar) -> Result<(), Error> {
+        if let None = self.calendars.remove(&cid) {
+            // No old calendar to update, for consistency reasons throw an error
+            return Err(Error::NotFound);
+        }
+        self.calendars.insert(cid, calendar);
+        Ok(())
+    }
+
     async fn delete_calendar(&mut self, cid: &str) -> Result<(), Error> {
         self.events.remove(cid);
         self.save().await.unwrap();
