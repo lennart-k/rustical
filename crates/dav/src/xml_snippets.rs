@@ -1,6 +1,6 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct HrefElement {
     pub href: String,
 }
@@ -10,5 +10,5 @@ impl HrefElement {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct TextNode(pub Option<String>);
