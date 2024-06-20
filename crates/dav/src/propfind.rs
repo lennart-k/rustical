@@ -7,6 +7,7 @@ use crate::Error;
 use actix_web::http::header::ContentType;
 use actix_web::web::{Data, Path};
 use actix_web::{HttpRequest, HttpResponse};
+use log::debug;
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use serde::Deserialize;
 use serde::Serialize;
@@ -59,6 +60,7 @@ pub async fn route_propfind<A: CheckAuthentication, R: ResourceService + ?Sized>
     auth: AuthInfoExtractor<A>,
     depth: Depth,
 ) -> Result<HttpResponse, R::Error> {
+    debug!("{body}");
     let auth_info = auth.inner;
     let prefix = prefix.0.to_owned();
     let path_components = path.into_inner();
