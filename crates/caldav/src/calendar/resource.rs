@@ -125,6 +125,7 @@ pub enum CalendarPropName {
     Displayname,
     CalendarColor,
     CalendarDescription,
+    CalendarTimezone,
     CalendarOrder,
     SupportedCalendarComponentSet,
     SupportedCalendarData,
@@ -144,6 +145,8 @@ pub enum CalendarProp {
     CalendarColor(TextNode),
     #[serde(rename = "C:calendar-description", alias = "calendar-description")]
     CalendarDescription(TextNode),
+    #[serde(rename = "C:calendar-timezone", alias = "calendar-timezone")]
+    CalendarTimezone(TextNode),
     #[serde(rename = "IC:calendar-description", alias = "calendar-description")]
     CalendarOrder(TextNode),
     #[serde(
@@ -202,6 +205,9 @@ impl Resource for CalendarFile {
             CalendarPropName::CalendarDescription => Ok(CalendarProp::CalendarDescription(
                 TextNode(self.calendar.description.clone()),
             )),
+            CalendarPropName::CalendarTimezone => Ok(CalendarProp::CalendarTimezone(TextNode(
+                self.calendar.timezone.clone(),
+            ))),
             CalendarPropName::CalendarOrder => Ok(CalendarProp::CalendarOrder(TextNode(
                 format!("{}", self.calendar.order).into(),
             ))),
@@ -242,6 +248,10 @@ impl Resource for CalendarFile {
             }
             CalendarProp::CalendarDescription(TextNode(description)) => {
                 self.calendar.description = description;
+                Ok(())
+            }
+            CalendarProp::CalendarTimezone(TextNode(timezone)) => {
+                self.calendar.timezone = timezone;
                 Ok(())
             }
             CalendarProp::CalendarOrder(TextNode(order)) => {
