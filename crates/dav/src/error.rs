@@ -17,8 +17,8 @@ pub enum Error {
     #[error("Internal server error :(")]
     InternalError,
 
-    #[error("prop {0} is read-only")]
-    PropReadOnly(String),
+    #[error("prop is read-only")]
+    PropReadOnly,
 
     #[error(transparent)]
     XmlDecodeError(#[from] quick_xml::DeError),
@@ -36,7 +36,7 @@ impl actix_web::error::ResponseError for Error {
             Self::BadRequest(_) => StatusCode::BAD_REQUEST,
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
             Self::XmlDecodeError(_) => StatusCode::BAD_REQUEST,
-            Error::PropReadOnly(_) => StatusCode::CONFLICT,
+            Error::PropReadOnly => StatusCode::CONFLICT,
         }
     }
 
