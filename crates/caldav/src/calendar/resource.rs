@@ -1,3 +1,4 @@
+use crate::event::resource::EventFile;
 use crate::Error;
 use actix_web::{web::Data, HttpRequest};
 use anyhow::anyhow;
@@ -268,7 +269,7 @@ impl Resource for CalendarFile {
 
 #[async_trait(?Send)]
 impl<C: CalendarStore + ?Sized> ResourceService for CalendarResource<C> {
-    type MemberType = CalendarFile;
+    type MemberType = EventFile;
     type PathComponents = (String, String); // principal, calendar_id
     type File = CalendarFile;
     type Error = Error;
@@ -293,7 +294,18 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResource<C> {
         _auth_info: AuthInfo,
     ) -> Result<Vec<Self::MemberType>, Self::Error> {
         // As of now the calendar resource has no members since events are shown with REPORT
-        Ok(vec![])
+        Ok(self
+            .cal_store
+            .read()
+            .await
+            .get_events(&self.calendar_id)
+            .await?
+            .into_iter()
+            .map(|event| EventFile {
+                path: format!("{}/{}", self.path, &event.get_uid()),
+                event,
+            })
+            .collect())
     }
 
     async fn new(
