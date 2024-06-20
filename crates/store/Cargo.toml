@@ -23,10 +23,10 @@ sqlx = { version = "0.7", features = [
 ] }
 tokio = { version = "1.35", features = ["sync", "full"] }
 toml = "0.8"
-ical = { version = "0.10", features = ["generator", "serde"] }
+ical = { version = "0.11", features = ["generator", "serde"] }
 chrono = "0.4"
 regex = "1.10"
 lazy_static = "1.4"
-rstest = "0.18.2"
-rstest_reuse = "0.6.0"
+rstest = "0.21"
+rstest_reuse = "0.7.0"
 thiserror = "1.0.61"
