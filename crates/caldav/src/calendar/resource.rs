@@ -228,15 +228,37 @@ impl Resource for CalendarFile {
 
     fn set_prop(&mut self, prop: Self::Prop) -> Result<(), rustical_dav::Error> {
         match prop {
-            CalendarProp::CalendarColor(color) => {
-                self.calendar.color = color.0;
-            }
+            CalendarProp::Resourcetype(_) => Err(rustical_dav::Error::PropReadOnly),
+            CalendarProp::CurrentUserPrincipal(_) => Err(rustical_dav::Error::PropReadOnly),
+            CalendarProp::Owner(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Displayname(TextNode(name)) => {
                 self.calendar.name = name;
+                Ok(())
             }
-            _ => return Err(rustical_dav::Error::PropReadOnly),
+            CalendarProp::CalendarColor(TextNode(color)) => {
+                self.calendar.color = color;
+                Ok(())
+            }
+            CalendarProp::CalendarDescription(TextNode(description)) => {
+                self.calendar.description = description;
+                Ok(())
+            }
+            CalendarProp::CalendarOrder(TextNode(order)) => {
+                self.calendar.order = match order {
+                    Some(order) => order.parse().map_err(|_e| anyhow!("invalid order"))?,
+                    None => 0,
+                };
+                Ok(())
+            }
+            CalendarProp::SupportedCalendarComponentSet(_) => {
+                Err(rustical_dav::Error::PropReadOnly)
+            }
+            CalendarProp::SupportedCalendarData(_) => Err(rustical_dav::Error::PropReadOnly),
+            CalendarProp::Getcontenttype(_) => Err(rustical_dav::Error::PropReadOnly),
+            CalendarProp::MaxResourceSize(_) => Err(rustical_dav::Error::PropReadOnly),
+            CalendarProp::CurrentUserPrivilegeSet(_) => Err(rustical_dav::Error::PropReadOnly),
+            CalendarProp::Invalid => Err(rustical_dav::Error::PropReadOnly),
         }
-        Ok(())
     }
 
     fn get_path(&self) -> &str {
