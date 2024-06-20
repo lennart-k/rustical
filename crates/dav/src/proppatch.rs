@@ -10,6 +10,7 @@ use crate::Error;
 use actix_web::http::header::ContentType;
 use actix_web::http::StatusCode;
 use actix_web::{web::Path, HttpRequest, HttpResponse};
+use log::debug;
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use serde::{Deserialize, Serialize};
 
@@ -53,6 +54,8 @@ pub async fn route_proppatch<A: CheckAuthentication, R: ResourceService + ?Sized
     let path_components = path.into_inner();
     let href = req.path().to_owned();
     let resource_service = R::new(req, auth_info.clone(), path_components.clone()).await?;
+
+    debug!("{body}");
 
     // TODO: Implement remove!
     let PropertyupdateElement::<<R::File as Resource>::Prop> {
@@ -158,6 +161,7 @@ pub async fn route_proppatch<A: CheckAuthentication, R: ResourceService + ?Sized
     }
     .serialize(ser)
     .unwrap();
+    debug!("{output}");
 
     Ok(HttpResponse::MultiStatus()
         .content_type(ContentType::xml())
