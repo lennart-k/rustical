@@ -147,7 +147,7 @@ pub enum CalendarProp {
     CalendarDescription(TextNode),
     #[serde(rename = "C:calendar-timezone", alias = "calendar-timezone")]
     CalendarTimezone(TextNode),
-    #[serde(rename = "IC:calendar-description", alias = "calendar-description")]
+    #[serde(rename = "IC:calendar-order", alias = "calendar-order")]
     CalendarOrder(TextNode),
     #[serde(
         rename = "C:supported-calendar-component-set",
