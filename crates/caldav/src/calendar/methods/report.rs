@@ -1,3 +1,4 @@
+use crate::{event::resource::EventFile, Error};
 use actix_web::{
     http::header::ContentType,
     web::{Data, Path},
@@ -13,8 +14,6 @@ use rustical_store::event::Event;
 use rustical_store::CalendarStore;
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
-
-use crate::{event::resource::EventFile, Error};
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
