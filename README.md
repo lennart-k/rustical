@@ -17,3 +17,4 @@ a calendar server
 - [ ] Web UI
 - [ ] Hiding calendars instead of deleting them
 - [ ] Testing such that I'm confident enough to use it myself :)
+- [ ] WebDAV sync extension [RFC 6578](https://www.rfc-editor.org/rfc/rfc6578)
