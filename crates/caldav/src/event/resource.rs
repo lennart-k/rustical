@@ -3,11 +3,11 @@ use actix_web::{web::Data, HttpRequest};
 use anyhow::anyhow;
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
-use rustical_dav::resource::{Resource, ResourceService};
+use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml_snippets::TextNode;
 use rustical_store::event::Event;
 use rustical_store::CalendarStore;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use strum::{EnumString, IntoStaticStr, VariantNames};
 use tokio::sync::RwLock;
@@ -21,51 +21,58 @@ pub struct EventResource<C: CalendarStore + ?Sized> {
 
 #[derive(EnumString, Debug, VariantNames, IntoStaticStr, Clone)]
 #[strum(serialize_all = "kebab-case")]
-pub enum EventProp {
+pub enum EventPropName {
     Getetag,
     CalendarData,
     Getcontenttype,
 }
 
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize, Debug, Clone, IntoStaticStr)]
 #[serde(rename_all = "kebab-case")]
-pub enum EventPropResponse {
+pub enum EventProp {
     Getetag(TextNode),
     #[serde(rename = "C:calendar-data")]
     CalendarData(TextNode),
     Getcontenttype(TextNode),
+    #[serde(other)]
+    Invalid,
 }
 
+impl InvalidProperty for EventProp {
+    fn invalid_property(&self) -> bool {
+        matches!(self, Self::Invalid)
+    }
+}
+
+#[derive(Clone)]
 pub struct EventFile {
     pub event: Event,
     pub path: String,
 }
 
 impl Resource for EventFile {
-    type PropType = EventProp;
-    type PropResponse = EventPropResponse;
+    type PropName = EventPropName;
+    type Prop = EventProp;
     type Error = Error;
 
     fn get_path(&self) -> &str {
         &self.path
     }
 
-    fn get_prop(
-        &self,
-        _prefix: &str,
-        prop: Self::PropType,
-    ) -> Result<Self::PropResponse, Self::Error> {
+    fn get_prop(&self, _prefix: &str, prop: Self::PropName) -> Result<Self::Prop, Self::Error> {
         match prop {
-            EventProp::Getetag => Ok(EventPropResponse::Getetag(TextNode(Some(
-                self.event.get_etag(),
-            )))),
-            EventProp::CalendarData => Ok(EventPropResponse::CalendarData(TextNode(Some(
+            EventPropName::Getetag => Ok(EventProp::Getetag(TextNode(Some(self.event.get_etag())))),
+            EventPropName::CalendarData => Ok(EventProp::CalendarData(TextNode(Some(
                 self.event.get_ics().to_owned(),
             )))),
-            EventProp::Getcontenttype => Ok(EventPropResponse::Getcontenttype(TextNode(Some(
+            EventPropName::Getcontenttype => Ok(EventProp::Getcontenttype(TextNode(Some(
                 "text/calendar;charset=utf-8".to_owned(),
             )))),
         }
+    }
+
+    fn set_prop(&mut self, _prop: Self::Prop) -> Result<(), rustical_dav::Error> {
+        Err(rustical_dav::Error::PropReadOnly)
     }
 }
 
@@ -115,5 +122,9 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResource<C> {
             event,
             path: self.path.to_owned(),
         })
+    }
+
+    async fn save_file(&self, _file: Self::File) -> Result<(), Self::Error> {
+        Err(Error::NotImplemented)
     }
 }

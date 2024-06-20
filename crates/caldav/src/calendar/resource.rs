@@ -3,11 +3,11 @@ use actix_web::{web::Data, HttpRequest};
 use anyhow::anyhow;
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
-use rustical_dav::resource::{Resource, ResourceService};
+use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml_snippets::{HrefElement, TextNode};
 use rustical_store::calendar::Calendar;
 use rustical_store::CalendarStore;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use strum::{EnumString, IntoStaticStr, VariantNames};
 use tokio::sync::RwLock;
@@ -19,54 +19,54 @@ pub struct CalendarResource<C: CalendarStore + ?Sized> {
     pub calendar_id: String,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct SupportedCalendarComponent {
     #[serde(rename = "@name")]
-    pub name: &'static str,
+    pub name: String,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct SupportedCalendarComponentSet {
     #[serde(rename = "C:comp")]
     pub comp: Vec<SupportedCalendarComponent>,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct CalendarData {
     #[serde(rename = "@content-type")]
-    content_type: &'static str,
+    content_type: String,
     #[serde(rename = "@version")]
-    version: &'static str,
+    version: String,
 }
 
 impl Default for CalendarData {
     fn default() -> Self {
         Self {
-            content_type: "text/calendar",
-            version: "2.0",
+            content_type: "text/calendar".to_owned(),
+            version: "2.0".to_owned(),
         }
     }
 }
 
-#[derive(Serialize, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 #[serde(rename_all = "kebab-case")]
 pub struct SupportedCalendarData {
-    #[serde(rename = "C:calendar-data")]
+    #[serde(rename = "C:calendar-data", alias = "calendar-data")]
     calendar_data: CalendarData,
 }
 
-#[derive(Serialize, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 #[serde(rename_all = "kebab-case")]
 pub struct Resourcetype {
-    #[serde(rename = "C:calendar")]
+    #[serde(rename = "C:calendar", alias = "calendar")]
     calendar: (),
     collection: (),
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum UserPrivilege {
     Read,
@@ -79,7 +79,7 @@ pub enum UserPrivilege {
     Unbind,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct UserPrivilegeWrapper {
     #[serde(rename = "$value")]
@@ -92,7 +92,7 @@ impl From<UserPrivilege> for UserPrivilegeWrapper {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct UserPrivilegeSet {
     privilege: Vec<UserPrivilegeWrapper>,
@@ -117,7 +117,7 @@ impl Default for UserPrivilegeSet {
 
 #[derive(EnumString, Debug, VariantNames, IntoStaticStr, Clone)]
 #[strum(serialize_all = "kebab-case")]
-pub enum CalendarProp {
+pub enum CalendarPropName {
     Resourcetype,
     CurrentUserPrincipal,
     Owner,
@@ -132,9 +132,9 @@ pub enum CalendarProp {
     MaxResourceSize,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum CalendarPropResponse {
+pub enum CalendarProp {
     Resourcetype(Resourcetype),
     CurrentUserPrincipal(HrefElement),
     Owner(HrefElement),
@@ -158,8 +158,17 @@ pub enum CalendarPropResponse {
     Getcontenttype(TextNode),
     MaxResourceSize(TextNode),
     CurrentUserPrivilegeSet(UserPrivilegeSet),
+    #[serde(other)]
+    Invalid,
 }
 
+impl InvalidProperty for CalendarProp {
+    fn invalid_property(&self) -> bool {
+        matches!(self, Self::Invalid)
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct CalendarFile {
     pub calendar: Calendar,
     pub principal: String,
@@ -167,58 +176,67 @@ pub struct CalendarFile {
 }
 
 impl Resource for CalendarFile {
-    type PropType = CalendarProp;
-    type PropResponse = CalendarPropResponse;
+    type PropName = CalendarPropName;
+    type Prop = CalendarProp;
     type Error = Error;
 
-    fn get_prop(
-        &self,
-        prefix: &str,
-        prop: Self::PropType,
-    ) -> Result<Self::PropResponse, Self::Error> {
+    fn get_prop(&self, prefix: &str, prop: Self::PropName) -> Result<Self::Prop, Self::Error> {
         match prop {
-            CalendarProp::Resourcetype => {
-                Ok(CalendarPropResponse::Resourcetype(Resourcetype::default()))
+            CalendarPropName::Resourcetype => {
+                Ok(CalendarProp::Resourcetype(Resourcetype::default()))
             }
-            CalendarProp::CurrentUserPrincipal => Ok(CalendarPropResponse::CurrentUserPrincipal(
+            CalendarPropName::CurrentUserPrincipal => Ok(CalendarProp::CurrentUserPrincipal(
                 HrefElement::new(format!("{}/{}/", prefix, self.principal)),
             )),
-            CalendarProp::Owner => Ok(CalendarPropResponse::Owner(HrefElement::new(format!(
+            CalendarPropName::Owner => Ok(CalendarProp::Owner(HrefElement::new(format!(
                 "{}/{}/",
                 prefix, self.principal
             )))),
-            CalendarProp::Displayname => Ok(CalendarPropResponse::Displayname(TextNode(
+            CalendarPropName::Displayname => Ok(CalendarProp::Displayname(TextNode(
                 self.calendar.name.clone(),
             ))),
-            CalendarProp::CalendarColor => Ok(CalendarPropResponse::CalendarColor(TextNode(
+            CalendarPropName::CalendarColor => Ok(CalendarProp::CalendarColor(TextNode(
                 self.calendar.color.clone(),
             ))),
-            CalendarProp::CalendarDescription => Ok(CalendarPropResponse::CalendarDescription(
+            CalendarPropName::CalendarDescription => Ok(CalendarProp::CalendarDescription(
                 TextNode(self.calendar.description.clone()),
             )),
-            CalendarProp::CalendarOrder => Ok(CalendarPropResponse::CalendarOrder(TextNode(
+            CalendarPropName::CalendarOrder => Ok(CalendarProp::CalendarOrder(TextNode(
                 format!("{}", self.calendar.order).into(),
             ))),
-            CalendarProp::SupportedCalendarComponentSet => {
-                Ok(CalendarPropResponse::SupportedCalendarComponentSet(
-                    SupportedCalendarComponentSet {
-                        comp: vec![SupportedCalendarComponent { name: "VEVENT" }],
-                    },
-                ))
-            }
-            CalendarProp::SupportedCalendarData => Ok(CalendarPropResponse::SupportedCalendarData(
+            CalendarPropName::SupportedCalendarComponentSet => Ok(
+                CalendarProp::SupportedCalendarComponentSet(SupportedCalendarComponentSet {
+                    comp: vec![SupportedCalendarComponent {
+                        name: "VEVENT".to_owned(),
+                    }],
+                }),
+            ),
+            CalendarPropName::SupportedCalendarData => Ok(CalendarProp::SupportedCalendarData(
                 SupportedCalendarData::default(),
             )),
-            CalendarProp::Getcontenttype => Ok(CalendarPropResponse::Getcontenttype(TextNode(
-                Some("text/calendar;charset=utf-8".to_owned()),
-            ))),
-            CalendarProp::MaxResourceSize => Ok(CalendarPropResponse::MaxResourceSize(TextNode(
-                Some("10000000".to_owned()),
-            ))),
-            CalendarProp::CurrentUserPrivilegeSet => Ok(
-                CalendarPropResponse::CurrentUserPrivilegeSet(UserPrivilegeSet::default()),
-            ),
+            CalendarPropName::Getcontenttype => Ok(CalendarProp::Getcontenttype(TextNode(Some(
+                "text/calendar;charset=utf-8".to_owned(),
+            )))),
+            CalendarPropName::MaxResourceSize => Ok(CalendarProp::MaxResourceSize(TextNode(Some(
+                "10000000".to_owned(),
+            )))),
+            CalendarPropName::CurrentUserPrivilegeSet => Ok(CalendarProp::CurrentUserPrivilegeSet(
+                UserPrivilegeSet::default(),
+            )),
         }
+    }
+
+    fn set_prop(&mut self, prop: Self::Prop) -> Result<(), rustical_dav::Error> {
+        match prop {
+            CalendarProp::CalendarColor(color) => {
+                self.calendar.color = color.0;
+            }
+            CalendarProp::Displayname(TextNode(name)) => {
+                self.calendar.name = name;
+            }
+            _ => return Err(rustical_dav::Error::PropReadOnly),
+        }
+        Ok(())
     }
 
     fn get_path(&self) -> &str {
@@ -273,5 +291,14 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResource<C> {
             calendar_id: path_components.1,
             cal_store,
         })
+    }
+
+    async fn save_file(&self, file: Self::File) -> Result<(), Self::Error> {
+        self.cal_store
+            .write()
+            .await
+            .update_calendar(self.calendar_id.to_owned(), file.calendar)
+            .await?;
+        Ok(())
     }
 }

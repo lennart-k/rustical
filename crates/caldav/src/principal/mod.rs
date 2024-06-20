@@ -4,12 +4,12 @@ use actix_web::HttpRequest;
 use anyhow::anyhow;
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
-use rustical_dav::resource::{Resource, ResourceService};
+use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml_snippets::HrefElement;
 use rustical_store::CalendarStore;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use strum::{EnumString, IntoStaticStr, VariantNames};
+use strum::{AsRefStr, EnumString, VariantNames};
 use tokio::sync::RwLock;
 
 use crate::calendar::resource::CalendarFile;
@@ -20,21 +20,22 @@ pub struct PrincipalResource<C: CalendarStore + ?Sized> {
     cal_store: Arc<RwLock<C>>,
 }
 
+#[derive(Clone)]
 pub struct PrincipalFile {
     principal: String,
     path: String,
 }
 
-#[derive(Serialize, Default)]
+#[derive(Deserialize, Serialize, Default, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub struct Resourcetype {
     principal: (),
     collection: (),
 }
 
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "kebab-case")]
-pub enum PrincipalPropResponse {
+pub enum PrincipalProp {
     Resourcetype(Resourcetype),
     CurrentUserPrincipal(HrefElement),
     #[serde(rename = "principal-URL")]
@@ -43,11 +44,19 @@ pub enum PrincipalPropResponse {
     CalendarHomeSet(HrefElement),
     #[serde(rename = "C:calendar-user-address-set")]
     CalendarUserAddressSet(HrefElement),
+    #[serde(other)]
+    Invalid,
 }
 
-#[derive(EnumString, Debug, VariantNames, IntoStaticStr, Clone)]
+impl InvalidProperty for PrincipalProp {
+    fn invalid_property(&self) -> bool {
+        matches!(self, Self::Invalid)
+    }
+}
+
+#[derive(EnumString, Debug, VariantNames, AsRefStr, Clone)]
 #[strum(serialize_all = "kebab-case")]
-pub enum PrincipalProp {
+pub enum PrincipalPropName {
     Resourcetype,
     CurrentUserPrincipal,
     #[strum(serialize = "principal-URL")]
@@ -58,34 +67,32 @@ pub enum PrincipalProp {
 
 #[async_trait(?Send)]
 impl Resource for PrincipalFile {
-    type PropType = PrincipalProp;
-    type PropResponse = PrincipalPropResponse;
+    type PropName = PrincipalPropName;
+    type Prop = PrincipalProp;
     type Error = Error;
 
-    fn get_prop(
-        &self,
-        prefix: &str,
-        prop: Self::PropType,
-    ) -> Result<Self::PropResponse, Self::Error> {
+    fn get_prop(&self, prefix: &str, prop: Self::PropName) -> Result<Self::Prop, Self::Error> {
         match prop {
-            PrincipalProp::Resourcetype => {
-                Ok(PrincipalPropResponse::Resourcetype(Resourcetype::default()))
+            PrincipalPropName::Resourcetype => {
+                Ok(PrincipalProp::Resourcetype(Resourcetype::default()))
             }
-            PrincipalProp::CurrentUserPrincipal => Ok(PrincipalPropResponse::CurrentUserPrincipal(
+            PrincipalPropName::CurrentUserPrincipal => Ok(PrincipalProp::CurrentUserPrincipal(
                 HrefElement::new(format!("{}/{}/", prefix, self.principal)),
             )),
-            PrincipalProp::PrincipalUrl => Ok(PrincipalPropResponse::PrincipalUrl(
+            PrincipalPropName::PrincipalUrl => Ok(PrincipalProp::PrincipalUrl(HrefElement::new(
+                format!("{}/{}/", prefix, self.principal),
+            ))),
+            PrincipalPropName::CalendarHomeSet => Ok(PrincipalProp::CalendarHomeSet(
                 HrefElement::new(format!("{}/{}/", prefix, self.principal)),
             )),
-            PrincipalProp::CalendarHomeSet => Ok(PrincipalPropResponse::CalendarHomeSet(
+            PrincipalPropName::CalendarUserAddressSet => Ok(PrincipalProp::CalendarUserAddressSet(
                 HrefElement::new(format!("{}/{}/", prefix, self.principal)),
             )),
-            PrincipalProp::CalendarUserAddressSet => {
-                Ok(PrincipalPropResponse::CalendarUserAddressSet(
-                    HrefElement::new(format!("{}/{}/", prefix, self.principal)),
-                ))
-            }
         }
+    }
+
+    fn set_prop(&mut self, _prop: Self::Prop) -> Result<(), rustical_dav::Error> {
+        Err(rustical_dav::Error::PropReadOnly)
     }
 
     fn get_path(&self) -> &str {
@@ -146,5 +153,9 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResource<C> {
                 principal: self.principal.to_owned(),
             })
             .collect())
+    }
+
+    async fn save_file(&self, _file: Self::File) -> Result<(), Self::Error> {
+        Err(Error::NotImplemented)
     }
 }

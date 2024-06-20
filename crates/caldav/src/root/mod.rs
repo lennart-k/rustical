@@ -2,9 +2,9 @@ use crate::Error;
 use actix_web::HttpRequest;
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
-use rustical_dav::resource::{Resource, ResourceService};
+use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml_snippets::HrefElement;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use strum::{EnumString, IntoStaticStr, VariantNames};
 
 pub struct RootResource {
@@ -14,45 +14,54 @@ pub struct RootResource {
 
 #[derive(EnumString, Debug, VariantNames, IntoStaticStr, Clone)]
 #[strum(serialize_all = "kebab-case")]
-pub enum RootProp {
+pub enum RootPropName {
     Resourcetype,
     CurrentUserPrincipal,
 }
 
-#[derive(Serialize, Default)]
+#[derive(Deserialize, Serialize, Default, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub struct Resourcetype {
     collection: (),
 }
 
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "kebab-case")]
-pub enum RootPropResponse {
+pub enum RootProp {
     Resourcetype(Resourcetype),
     CurrentUserPrincipal(HrefElement),
+    #[serde(other)]
+    Invalid,
 }
 
+impl InvalidProperty for RootProp {
+    fn invalid_property(&self) -> bool {
+        matches!(self, Self::Invalid)
+    }
+}
+
+#[derive(Clone)]
 pub struct RootFile {
     pub principal: String,
     pub path: String,
 }
 
 impl Resource for RootFile {
-    type PropType = RootProp;
-    type PropResponse = RootPropResponse;
+    type PropName = RootPropName;
+    type Prop = RootProp;
     type Error = Error;
 
-    fn get_prop(
-        &self,
-        prefix: &str,
-        prop: Self::PropType,
-    ) -> Result<Self::PropResponse, Self::Error> {
+    fn get_prop(&self, prefix: &str, prop: Self::PropName) -> Result<Self::Prop, Self::Error> {
         match prop {
-            RootProp::Resourcetype => Ok(RootPropResponse::Resourcetype(Resourcetype::default())),
-            RootProp::CurrentUserPrincipal => Ok(RootPropResponse::CurrentUserPrincipal(
+            RootPropName::Resourcetype => Ok(RootProp::Resourcetype(Resourcetype::default())),
+            RootPropName::CurrentUserPrincipal => Ok(RootProp::CurrentUserPrincipal(
                 HrefElement::new(format!("{}/{}/", prefix, self.principal)),
             )),
         }
+    }
+
+    fn set_prop(&mut self, _prop: Self::Prop) -> Result<(), rustical_dav::Error> {
+        Err(rustical_dav::Error::PropReadOnly)
     }
 
     fn get_path(&self) -> &str {
@@ -90,5 +99,9 @@ impl ResourceService for RootResource {
             path: self.path.to_owned(),
             principal: self.principal.to_owned(),
         })
+    }
+
+    async fn save_file(&self, _file: Self::File) -> Result<(), Self::Error> {
+        Err(Error::NotImplemented)
     }
 }
