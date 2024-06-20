@@ -134,13 +134,6 @@ async fn get_events_calendar_multiget<C: CalendarStore + ?Sized>(
 ) -> Result<Vec<Event>, Error> {
     // TODO: proper implementation
     Ok(store.read().await.get_events(cid).await?)
-    // let events = Vec::new();
-    // for href in cal_query.href {
-    //     dbg!(href);
-    //     // let uid =
-    //     // events.push(store.read().await.get_event(cid, &uid))
-    // }
-    // Ok(events)
 }
 
 pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?Sized>(
