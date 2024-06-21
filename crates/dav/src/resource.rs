@@ -55,9 +55,16 @@ pub trait ResourceService: Sized {
 }
 
 #[derive(Serialize)]
-pub struct PropWrapper<T: Serialize> {
+pub struct PropTagWrapper<T: Serialize> {
     #[serde(rename = "$value")]
     prop: T,
+}
+
+#[derive(Serialize)]
+#[serde(untagged)]
+pub enum PropWrapper<T: Serialize> {
+    Prop(PropTagWrapper<T>),
+    TagList(TagList),
 }
 
 #[derive(Serialize)]
@@ -104,11 +111,20 @@ impl<R: Resource> HandlePropfind for R {
             if props.len() != 1 {
                 // propname MUST be the only queried prop per spec
                 return Err(
-                    Error::BadRequest("allprop MUST be the only queried prop".to_owned()).into(),
+                    Error::BadRequest("propname MUST be the only queried prop".to_owned()).into(),
                 );
             }
-            // TODO: implement propname
-            props = R::list_props().into();
+            let props: Vec<String> = R::list_props()
+                .iter()
+                .map(|&prop| prop.to_string())
+                .collect();
+            return Ok(PropstatResponseElement {
+                href: self.get_path().to_owned(),
+                propstat: vec![PropstatType::Normal(PropstatElement {
+                    prop: PropWrapper::TagList(TagList::from(props)),
+                    status: format!("HTTP/1.1 {}", StatusCode::OK),
+                })],
+            });
         }
         if props.contains(&"allprop") {
             if props.len() != 1 {
@@ -120,22 +136,29 @@ impl<R: Resource> HandlePropfind for R {
             props = R::list_props().into();
         }
 
-        let mut invalid_props = Vec::new();
-        let mut prop_responses = Vec::new();
-        for prop in props {
-            if let Ok(valid_prop) = R::PropName::from_str(prop) {
-                let response = self.get_prop(prefix, valid_prop.clone())?;
-                prop_responses.push(response);
-            } else {
-                invalid_props.push(prop);
-            }
-        }
+        let (valid_props, invalid_props): (Vec<Option<R::PropName>>, Vec<Option<&str>>) = props
+            .into_iter()
+            .map(|prop| {
+                if let Ok(valid_prop) = R::PropName::from_str(prop) {
+                    (Some(valid_prop), None)
+                } else {
+                    (None, Some(prop))
+                }
+            })
+            .unzip();
+        let valid_props: Vec<R::PropName> = valid_props.into_iter().flatten().collect();
+        let invalid_props: Vec<&str> = invalid_props.into_iter().flatten().collect();
+
+        let prop_responses = valid_props
+            .into_iter()
+            .map(|prop| self.get_prop(prefix, prop))
+            .collect::<Result<Vec<R::Prop>, R::Error>>()?;
 
         let mut propstats = vec![PropstatType::Normal(PropstatElement {
             status: format!("HTTP/1.1 {}", StatusCode::OK),
-            prop: PropWrapper {
+            prop: PropWrapper::Prop(PropTagWrapper {
                 prop: prop_responses,
-            },
+            }),
         })];
         if !invalid_props.is_empty() {
             propstats.push(PropstatType::NotFound(PropstatElement {
