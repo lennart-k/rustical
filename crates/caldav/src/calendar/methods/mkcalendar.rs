@@ -75,7 +75,7 @@ pub async fn route_mkcol_calendar<A: CheckAuthentication, C: CalendarStore + ?Si
         timezone: request.calendar_timezone,
         color: request.calendar_color,
         description: request.calendar_description,
-        deleted: false,
+        deleted_at: None,
     };
 
     match context.store.read().await.get_calendar(&cid).await {

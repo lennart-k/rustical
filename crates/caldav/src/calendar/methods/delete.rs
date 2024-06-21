@@ -1,5 +1,6 @@
 use crate::CalDavContext;
 use crate::Error;
+use actix_web::HttpRequest;
 use actix_web::{
     web::{Data, Path},
     HttpResponse,
@@ -11,12 +12,25 @@ pub async fn route_delete_calendar<A: CheckAuthentication, C: CalendarStore + ?S
     context: Data<CalDavContext<C>>,
     path: Path<(String, String)>,
     auth: AuthInfoExtractor<A>,
+    req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
     let (principal, cid) = path.into_inner();
     if principal != auth.inner.user_id {
         return Err(Error::Unauthorized);
     }
-    context.store.write().await.delete_calendar(&cid).await?;
+
+    let no_trash = req
+        .headers()
+        .get("X-No-Trashbin")
+        .map(|val| matches!(val.to_str(), Ok("1")))
+        .unwrap_or(false);
+
+    context
+        .store
+        .write()
+        .await
+        .delete_calendar(&cid, !no_trash)
+        .await?;
 
     Ok(HttpResponse::Ok().body(""))
 }

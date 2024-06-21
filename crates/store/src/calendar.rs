@@ -1,3 +1,4 @@
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
@@ -9,4 +10,5 @@ pub struct Calendar {
     pub description: Option<String>,
     pub color: Option<String>,
     pub timezone: Option<String>,
+    pub deleted_at: Option<NaiveDateTime>,
 }
