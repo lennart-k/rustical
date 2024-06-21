@@ -12,9 +12,12 @@ pub async fn delete_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     auth: AuthInfoExtractor<A>,
     req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
-    let _user = auth.inner.user_id;
-    // TODO: verify whether user is authorized
     let (principal, mut cid, uid) = path.into_inner();
+
+    if auth.inner.user_id != principal {
+        return Ok(HttpResponse::Unauthorized().body(""));
+    }
+
     if cid.ends_with(".ics") {
         cid.truncate(cid.len() - 4);
     }
@@ -39,7 +42,6 @@ pub async fn get_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     path: Path<(String, String, String)>,
     auth: AuthInfoExtractor<A>,
 ) -> Result<HttpResponse, Error> {
-    // TODO: verify whether user is authorized
     let (principal, cid, mut uid) = path.into_inner();
 
     if auth.inner.user_id != principal {
