@@ -1,14 +1,14 @@
 use crate::{event::resource::EventFile, Error};
 use actix_web::{
-    http::header::ContentType,
     web::{Data, Path},
-    HttpRequest, HttpResponse,
+    HttpRequest, Responder,
 };
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use rustical_dav::{
     namespace::Namespace,
-    propfind::{MultistatusElement, PropElement, PropfindType, ServicePrefix},
+    propfind::{PropElement, PropfindType, ServicePrefix},
     resource::HandlePropfind,
+    xml::MultistatusElement,
 };
 use rustical_store::event::Event;
 use rustical_store::CalendarStore;
@@ -143,7 +143,7 @@ pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?S
     req: HttpRequest,
     cal_store: Data<RwLock<C>>,
     prefix: Data<ServicePrefix>,
-) -> Result<HttpResponse, Error> {
+) -> Result<impl Responder, Error> {
     let (principal, cid) = path.into_inner();
     if principal != auth.inner.user_id {
         return Err(Error::Unauthorized);
@@ -188,20 +188,11 @@ pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?S
         );
     }
 
-    let mut output = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".to_owned();
-    let mut ser = quick_xml::se::Serializer::new(&mut output);
-    ser.indent(' ', 4);
-    MultistatusElement {
+    Ok(MultistatusElement {
         responses,
         member_responses: Vec::<String>::new(),
         ns_dav: Namespace::Dav.as_str(),
         ns_caldav: Namespace::CalDAV.as_str(),
         ns_ical: Namespace::ICal.as_str(),
-    }
-    .serialize(ser)
-    .unwrap();
-
-    Ok(HttpResponse::MultiStatus()
-        .content_type(ContentType::xml())
-        .body(output))
+    })
 }

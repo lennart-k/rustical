@@ -5,6 +5,5 @@ pub mod propfind;
 pub mod proppatch;
 pub mod resource;
 pub mod xml;
-pub mod xml_snippets;
 
 pub use error::Error;

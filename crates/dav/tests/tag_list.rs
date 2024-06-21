@@ -1,4 +1,4 @@
-use rustical_dav::xml::tag_list::TagList;
+use rustical_dav::xml::TagList;
 use serde::{Deserialize, Serialize};
 
 const INPUT: &str = r#"<Document>

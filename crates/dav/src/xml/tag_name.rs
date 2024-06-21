@@ -3,8 +3,8 @@ use serde::{
     Deserialize,
 };
 
-#[derive(Debug, Clone)]
-pub struct TagName(String);
+#[derive(Debug, Clone, PartialEq)]
+pub struct TagName(pub String);
 
 impl From<TagName> for String {
     fn from(value: TagName) -> Self {

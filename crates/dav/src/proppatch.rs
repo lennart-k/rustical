@@ -1,15 +1,15 @@
 use crate::namespace::Namespace;
-use crate::propfind::MultistatusElement;
 use crate::resource::InvalidProperty;
 use crate::resource::Resource;
 use crate::resource::ResourceService;
 use crate::resource::{PropstatElement, PropstatResponseElement, PropstatType};
-use crate::xml::tag_list::TagList;
-use crate::xml::tag_name::TagName;
+use crate::xml::MultistatusElement;
+use crate::xml::TagList;
+use crate::xml::TagName;
 use crate::Error;
-use actix_web::http::header::ContentType;
 use actix_web::http::StatusCode;
-use actix_web::{web::Path, HttpRequest, HttpResponse};
+use actix_web::Responder;
+use actix_web::{web::Path, HttpRequest};
 use log::debug;
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use serde::{Deserialize, Serialize};
@@ -49,7 +49,7 @@ pub async fn route_proppatch<A: CheckAuthentication, R: ResourceService + ?Sized
     body: String,
     req: HttpRequest,
     auth: AuthInfoExtractor<A>,
-) -> Result<HttpResponse, R::Error> {
+) -> Result<impl Responder, R::Error> {
     let auth_info = auth.inner;
     let path_components = path.into_inner();
     let href = req.path().to_owned();
@@ -132,10 +132,7 @@ pub async fn route_proppatch<A: CheckAuthentication, R: ResourceService + ?Sized
         resource_service.save_file(resource).await?;
     }
 
-    let mut output = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".to_owned();
-    let mut ser = quick_xml::se::Serializer::new(&mut output);
-    ser.indent(' ', 4);
-    MultistatusElement {
+    Ok(MultistatusElement {
         responses: vec![PropstatResponseElement {
             href,
             propstat: vec![
@@ -158,12 +155,5 @@ pub async fn route_proppatch<A: CheckAuthentication, R: ResourceService + ?Sized
         ns_dav: Namespace::Dav.as_str(),
         ns_caldav: Namespace::CalDAV.as_str(),
         ns_ical: Namespace::ICal.as_str(),
-    }
-    .serialize(ser)
-    .unwrap();
-    debug!("{output}");
-
-    Ok(HttpResponse::MultiStatus()
-        .content_type(ContentType::xml())
-        .body(output))
+    })
 }
