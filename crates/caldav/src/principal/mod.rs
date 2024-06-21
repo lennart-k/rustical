@@ -5,11 +5,11 @@ use anyhow::anyhow;
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
-use rustical_dav::xml_snippets::HrefElement;
+use rustical_dav::xml::HrefElement;
 use rustical_store::CalendarStore;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use strum::{AsRefStr, EnumString, VariantNames};
+use strum::{EnumString, VariantNames};
 use tokio::sync::RwLock;
 
 use crate::calendar::resource::CalendarFile;
@@ -54,7 +54,7 @@ impl InvalidProperty for PrincipalProp {
     }
 }
 
-#[derive(EnumString, Debug, VariantNames, AsRefStr, Clone)]
+#[derive(EnumString, Debug, VariantNames, Clone)]
 #[strum(serialize_all = "kebab-case")]
 pub enum PrincipalPropName {
     Resourcetype,

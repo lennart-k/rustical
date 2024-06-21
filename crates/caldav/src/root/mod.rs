@@ -3,16 +3,16 @@ use actix_web::HttpRequest;
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
-use rustical_dav::xml_snippets::HrefElement;
+use rustical_dav::xml::HrefElement;
 use serde::{Deserialize, Serialize};
-use strum::{EnumString, IntoStaticStr, VariantNames};
+use strum::{EnumString, VariantNames};
 
 pub struct RootResource {
     principal: String,
     path: String,
 }
 
-#[derive(EnumString, Debug, VariantNames, IntoStaticStr, Clone)]
+#[derive(EnumString, Debug, VariantNames, Clone)]
 #[strum(serialize_all = "kebab-case")]
 pub enum RootPropName {
     Resourcetype,
