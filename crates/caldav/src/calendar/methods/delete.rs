@@ -29,7 +29,7 @@ pub async fn route_delete_calendar<A: CheckAuthentication, C: CalendarStore + ?S
         .store
         .write()
         .await
-        .delete_calendar(&cid, !no_trash)
+        .delete_calendar(&principal, &cid, !no_trash)
         .await?;
 
     Ok(HttpResponse::Ok().body(""))

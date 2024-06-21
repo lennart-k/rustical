@@ -197,7 +197,7 @@ impl Resource for CalendarFile {
                 prefix, self.principal
             )))),
             CalendarPropName::Displayname => {
-                Ok(CalendarProp::Displayname(self.calendar.name.clone()))
+                Ok(CalendarProp::Displayname(self.calendar.displayname.clone()))
             }
             CalendarPropName::CalendarColor => {
                 Ok(CalendarProp::CalendarColor(self.calendar.color.clone()))
@@ -238,8 +238,8 @@ impl Resource for CalendarFile {
             CalendarProp::Resourcetype(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::CurrentUserPrincipal(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Owner(_) => Err(rustical_dav::Error::PropReadOnly),
-            CalendarProp::Displayname(name) => {
-                self.calendar.name = name;
+            CalendarProp::Displayname(displayname) => {
+                self.calendar.displayname = displayname;
                 Ok(())
             }
             CalendarProp::CalendarColor(color) => {
@@ -289,7 +289,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResource<C> {
             .cal_store
             .read()
             .await
-            .get_calendar(&self.calendar_id)
+            .get_calendar(&self.principal, &self.calendar_id)
             .await
             .map_err(|_e| Error::NotFound)?;
         Ok(CalendarFile {
@@ -308,7 +308,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResource<C> {
             .cal_store
             .read()
             .await
-            .get_events(&self.calendar_id)
+            .get_events(&self.principal, &self.calendar_id)
             .await?
             .into_iter()
             .map(|event| EventFile {
@@ -341,7 +341,11 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResource<C> {
         self.cal_store
             .write()
             .await
-            .update_calendar(self.calendar_id.to_owned(), file.calendar)
+            .update_calendar(
+                self.principal.to_owned(),
+                self.calendar_id.to_owned(),
+                file.calendar,
+            )
             .await?;
         Ok(())
     }

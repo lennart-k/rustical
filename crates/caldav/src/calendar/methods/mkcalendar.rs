@@ -69,16 +69,22 @@ pub async fn route_mkcol_calendar<A: CheckAuthentication, C: CalendarStore + ?Si
 
     let calendar = Calendar {
         id: cid.to_owned(),
-        owner: principal,
+        principal: principal.to_owned(),
         order: request.order.unwrap_or(0),
-        name: request.displayname,
+        displayname: request.displayname,
         timezone: request.calendar_timezone,
         color: request.calendar_color,
         description: request.calendar_description,
         deleted_at: None,
     };
 
-    match context.store.read().await.get_calendar(&cid).await {
+    match context
+        .store
+        .read()
+        .await
+        .get_calendar(&principal, &cid)
+        .await
+    {
         Err(rustical_store::Error::NotFound) => {
             // No conflict, no worries
         }
@@ -92,13 +98,7 @@ pub async fn route_mkcol_calendar<A: CheckAuthentication, C: CalendarStore + ?Si
         }
     }
 
-    match context
-        .store
-        .write()
-        .await
-        .insert_calendar(cid, calendar)
-        .await
-    {
+    match context.store.write().await.insert_calendar(calendar).await {
         // The spec says we should return a mkcalendar-response but I don't know what goes into it.
         // However, it works without one but breaks on iPadOS when using an empty one :)
         Ok(()) => Ok(HttpResponse::Created()

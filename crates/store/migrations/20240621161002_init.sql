@@ -1,20 +1,22 @@
 CREATE TABLE calendars (
-  id TEXT PRIMARY KEY NOT NULL,
-  owner TEXT NOT NULL,
-  name TEXT,
+  principal TEXT NOT NULL,
+  id TEXT NOT NULL,
+  displayname TEXT,
   description TEXT,
   'order' INT DEFAULT 0 NOT NULL,
   color TEXT,
   timezone TEXT NOT NULL,
-  deleted_at DATETIME
+  deleted_at DATETIME,
+  PRIMARY KEY (principal, id)
 );
 
 CREATE TABLE events (
-  uid TEXT NOT NULL,
+  principal TEXT NOT NULL,
   cid TEXT NOT NULL,
+  uid TEXT NOT NULL,
   ics TEXT NOT NULL,
   deleted_at DATETIME,
-  PRIMARY KEY (cid, uid),
-  FOREIGN KEY (cid) REFERENCES calendars(id)
+  PRIMARY KEY (principal, cid, uid),
+  FOREIGN KEY (principal, cid) REFERENCES calendars(principal, id)
 );
 

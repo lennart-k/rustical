@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize)]
 pub struct Calendar {
+    pub principal: String,
     pub id: String,
-    pub name: Option<String>,
-    pub owner: String,
+    pub displayname: Option<String>,
     pub order: i64,
     pub description: Option<String>,
     pub color: Option<String>,

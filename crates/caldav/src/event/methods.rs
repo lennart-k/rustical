@@ -14,7 +14,7 @@ pub async fn delete_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
 ) -> Result<HttpResponse, Error> {
     let _user = auth.inner.user_id;
     // TODO: verify whether user is authorized
-    let (_principal, mut cid, uid) = path.into_inner();
+    let (principal, mut cid, uid) = path.into_inner();
     if cid.ends_with(".ics") {
         cid.truncate(cid.len() - 4);
     }
@@ -28,7 +28,7 @@ pub async fn delete_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
         .store
         .write()
         .await
-        .delete_event(&cid, &uid, !no_trash)
+        .delete_event(&principal, &cid, &uid, !no_trash)
         .await?;
 
     Ok(HttpResponse::Ok().body(""))
@@ -46,15 +46,25 @@ pub async fn get_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
         return Ok(HttpResponse::Unauthorized().body(""));
     }
 
-    let calendar = context.store.read().await.get_calendar(&cid).await?;
-    if auth.inner.user_id != calendar.owner {
+    let calendar = context
+        .store
+        .read()
+        .await
+        .get_calendar(&principal, &cid)
+        .await?;
+    if auth.inner.user_id != calendar.principal {
         return Ok(HttpResponse::Unauthorized().body(""));
     }
 
     if uid.ends_with(".ics") {
         uid.truncate(uid.len() - 4);
     }
-    let event = context.store.read().await.get_event(&cid, &uid).await?;
+    let event = context
+        .store
+        .read()
+        .await
+        .get_event(&principal, &cid, &uid)
+        .await?;
 
     Ok(HttpResponse::Ok()
         .insert_header(("ETag", event.get_etag()))
@@ -73,8 +83,13 @@ pub async fn put_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
         return Ok(HttpResponse::Unauthorized().body(""));
     }
 
-    let calendar = context.store.read().await.get_calendar(&cid).await?;
-    if auth_info.user_id != calendar.owner {
+    let calendar = context
+        .store
+        .read()
+        .await
+        .get_calendar(&principal, &cid)
+        .await?;
+    if auth_info.user_id != calendar.principal {
         return Ok(HttpResponse::Unauthorized().body(""));
     }
 
@@ -86,7 +101,7 @@ pub async fn put_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
         .store
         .write()
         .await
-        .put_event(cid, uid, body)
+        .put_event(principal, cid, uid, body)
         .await?;
 
     Ok(HttpResponse::Ok().body(""))

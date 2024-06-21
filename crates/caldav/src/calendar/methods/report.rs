@@ -120,20 +120,22 @@ pub enum ReportRequest {
 
 async fn get_events_calendar_query<C: CalendarStore + ?Sized>(
     _cal_query: CalendarQueryRequest,
+    principal: &str,
     cid: &str,
     store: &RwLock<C>,
 ) -> Result<Vec<Event>, Error> {
     // TODO: Implement filtering
-    Ok(store.read().await.get_events(cid).await?)
+    Ok(store.read().await.get_events(principal, cid).await?)
 }
 
 async fn get_events_calendar_multiget<C: CalendarStore + ?Sized>(
     _cal_query: CalendarMultigetRequest,
+    principal: &str,
     cid: &str,
     store: &RwLock<C>,
 ) -> Result<Vec<Event>, Error> {
     // TODO: proper implementation
-    Ok(store.read().await.get_events(cid).await?)
+    Ok(store.read().await.get_events(principal, cid).await?)
 }
 
 pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?Sized>(
@@ -152,10 +154,10 @@ pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?S
     let request: ReportRequest = quick_xml::de::from_str(&body)?;
     let events = match request.clone() {
         ReportRequest::CalendarQuery(cal_query) => {
-            get_events_calendar_query(cal_query, &cid, &cal_store).await?
+            get_events_calendar_query(cal_query, &principal, &cid, &cal_store).await?
         }
         ReportRequest::CalendarMultiget(cal_multiget) => {
-            get_events_calendar_multiget(cal_multiget, &cid, &cal_store).await?
+            get_events_calendar_multiget(cal_multiget, &principal, &cid, &cal_store).await?
         }
     };
 

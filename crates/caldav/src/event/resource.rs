@@ -14,6 +14,7 @@ use tokio::sync::RwLock;
 pub struct EventResource<C: CalendarStore + ?Sized> {
     pub cal_store: Arc<RwLock<C>>,
     pub path: String,
+    pub principal: String,
     pub cid: String,
     pub uid: String,
 }
@@ -94,7 +95,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResource<C> {
         _auth_info: AuthInfo,
         path_components: Self::PathComponents,
     ) -> Result<Self, Self::Error> {
-        let (_principal, cid, uid) = path_components;
+        let (principal, cid, uid) = path_components;
 
         let cal_store = req
             .app_data::<Data<RwLock<C>>>()
@@ -104,6 +105,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResource<C> {
 
         Ok(Self {
             cal_store,
+            principal,
             cid,
             uid,
             path: req.path().to_string(),
@@ -115,7 +117,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResource<C> {
             .cal_store
             .read()
             .await
-            .get_event(&self.cid, &self.uid)
+            .get_event(&self.principal, &self.cid, &self.uid)
             .await?;
         Ok(EventFile {
             event,
