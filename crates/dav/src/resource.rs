@@ -1,4 +1,4 @@
-use crate::xml::tag_list::TagList;
+use crate::xml::TagList;
 use crate::Error;
 use actix_web::{http::StatusCode, HttpRequest, ResponseError};
 use async_trait::async_trait;
@@ -15,7 +15,7 @@ pub trait Resource: Clone {
     type Prop: Serialize + for<'de> Deserialize<'de> + fmt::Debug + InvalidProperty;
     type Error: ResponseError + From<crate::Error> + From<anyhow::Error>;
 
-    fn list_dead_props() -> &'static [&'static str] {
+    fn list_props() -> &'static [&'static str] {
         Self::PropName::VARIANTS
     }
 
@@ -108,7 +108,7 @@ impl<R: Resource> HandlePropfind for R {
                 );
             }
             // TODO: implement propname
-            props = R::list_dead_props().into();
+            props = R::list_props().into();
         }
         if props.contains(&"allprop") {
             if props.len() != 1 {
@@ -117,7 +117,7 @@ impl<R: Resource> HandlePropfind for R {
                     Error::BadRequest("allprop MUST be the only queried prop".to_owned()).into(),
                 );
             }
-            props = R::list_dead_props().into();
+            props = R::list_props().into();
         }
 
         let mut invalid_props = Vec::new();
