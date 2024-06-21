@@ -8,11 +8,6 @@ pub struct HttpConfig {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct TomlCalendarStoreConfig {
-    pub db_path: String,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
 pub struct SqliteCalendarStoreConfig {
     pub db_url: String,
 }
@@ -20,7 +15,6 @@ pub struct SqliteCalendarStoreConfig {
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(tag = "backend", rename_all = "snake_case")]
 pub enum CalendarStoreConfig {
-    Toml(TomlCalendarStoreConfig),
     Sqlite(SqliteCalendarStoreConfig),
 }
 
