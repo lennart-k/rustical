@@ -5,12 +5,12 @@ use anyhow::anyhow;
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
-use rustical_dav::xml_snippets::{HrefElement, TextNode};
+use rustical_dav::xml::HrefElement;
 use rustical_store::calendar::Calendar;
 use rustical_store::CalendarStore;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use strum::{EnumString, IntoStaticStr, VariantNames};
+use strum::{EnumString, VariantNames};
 use tokio::sync::RwLock;
 
 pub struct CalendarResource<C: CalendarStore + ?Sized> {
@@ -116,7 +116,7 @@ impl Default for UserPrivilegeSet {
     }
 }
 
-#[derive(EnumString, Debug, VariantNames, IntoStaticStr, Clone)]
+#[derive(EnumString, Debug, VariantNames, Clone)]
 #[strum(serialize_all = "kebab-case")]
 pub enum CalendarPropName {
     Resourcetype,
@@ -140,15 +140,15 @@ pub enum CalendarProp {
     Resourcetype(Resourcetype),
     CurrentUserPrincipal(HrefElement),
     Owner(HrefElement),
-    Displayname(TextNode),
+    Displayname(Option<String>),
     #[serde(rename = "IC:calendar-color", alias = "calendar-color")]
-    CalendarColor(TextNode),
+    CalendarColor(Option<String>),
     #[serde(rename = "C:calendar-description", alias = "calendar-description")]
-    CalendarDescription(TextNode),
+    CalendarDescription(Option<String>),
     #[serde(rename = "C:calendar-timezone", alias = "calendar-timezone")]
-    CalendarTimezone(TextNode),
+    CalendarTimezone(Option<String>),
     #[serde(rename = "IC:calendar-order", alias = "calendar-order")]
-    CalendarOrder(TextNode),
+    CalendarOrder(Option<String>),
     #[serde(
         rename = "C:supported-calendar-component-set",
         alias = "supported-calendar-component-set"
@@ -159,8 +159,8 @@ pub enum CalendarProp {
         alias = "supported-calendar-data"
     )]
     SupportedCalendarData(SupportedCalendarData),
-    Getcontenttype(TextNode),
-    MaxResourceSize(TextNode),
+    Getcontenttype(String),
+    MaxResourceSize(String),
     CurrentUserPrivilegeSet(UserPrivilegeSet),
     #[serde(other)]
     Invalid,
@@ -196,21 +196,21 @@ impl Resource for CalendarFile {
                 "{}/{}/",
                 prefix, self.principal
             )))),
-            CalendarPropName::Displayname => Ok(CalendarProp::Displayname(TextNode(
-                self.calendar.name.clone(),
-            ))),
-            CalendarPropName::CalendarColor => Ok(CalendarProp::CalendarColor(TextNode(
-                self.calendar.color.clone(),
-            ))),
+            CalendarPropName::Displayname => {
+                Ok(CalendarProp::Displayname(self.calendar.name.clone()))
+            }
+            CalendarPropName::CalendarColor => {
+                Ok(CalendarProp::CalendarColor(self.calendar.color.clone()))
+            }
             CalendarPropName::CalendarDescription => Ok(CalendarProp::CalendarDescription(
-                TextNode(self.calendar.description.clone()),
+                self.calendar.description.clone(),
             )),
-            CalendarPropName::CalendarTimezone => Ok(CalendarProp::CalendarTimezone(TextNode(
+            CalendarPropName::CalendarTimezone => Ok(CalendarProp::CalendarTimezone(
                 self.calendar.timezone.clone(),
-            ))),
-            CalendarPropName::CalendarOrder => Ok(CalendarProp::CalendarOrder(TextNode(
+            )),
+            CalendarPropName::CalendarOrder => Ok(CalendarProp::CalendarOrder(
                 format!("{}", self.calendar.order).into(),
-            ))),
+            )),
             CalendarPropName::SupportedCalendarComponentSet => Ok(
                 CalendarProp::SupportedCalendarComponentSet(SupportedCalendarComponentSet {
                     comp: vec![SupportedCalendarComponent {
@@ -221,12 +221,12 @@ impl Resource for CalendarFile {
             CalendarPropName::SupportedCalendarData => Ok(CalendarProp::SupportedCalendarData(
                 SupportedCalendarData::default(),
             )),
-            CalendarPropName::Getcontenttype => Ok(CalendarProp::Getcontenttype(TextNode(Some(
+            CalendarPropName::Getcontenttype => Ok(CalendarProp::Getcontenttype(
                 "text/calendar;charset=utf-8".to_owned(),
-            )))),
-            CalendarPropName::MaxResourceSize => Ok(CalendarProp::MaxResourceSize(TextNode(Some(
-                "10000000".to_owned(),
-            )))),
+            )),
+            CalendarPropName::MaxResourceSize => {
+                Ok(CalendarProp::MaxResourceSize("10000000".to_owned()))
+            }
             CalendarPropName::CurrentUserPrivilegeSet => Ok(CalendarProp::CurrentUserPrivilegeSet(
                 UserPrivilegeSet::default(),
             )),
@@ -238,23 +238,23 @@ impl Resource for CalendarFile {
             CalendarProp::Resourcetype(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::CurrentUserPrincipal(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Owner(_) => Err(rustical_dav::Error::PropReadOnly),
-            CalendarProp::Displayname(TextNode(name)) => {
+            CalendarProp::Displayname(name) => {
                 self.calendar.name = name;
                 Ok(())
             }
-            CalendarProp::CalendarColor(TextNode(color)) => {
+            CalendarProp::CalendarColor(color) => {
                 self.calendar.color = color;
                 Ok(())
             }
-            CalendarProp::CalendarDescription(TextNode(description)) => {
+            CalendarProp::CalendarDescription(description) => {
                 self.calendar.description = description;
                 Ok(())
             }
-            CalendarProp::CalendarTimezone(TextNode(timezone)) => {
+            CalendarProp::CalendarTimezone(timezone) => {
                 self.calendar.timezone = timezone;
                 Ok(())
             }
-            CalendarProp::CalendarOrder(TextNode(order)) => {
+            CalendarProp::CalendarOrder(order) => {
                 self.calendar.order = match order {
                     Some(order) => order.parse().map_err(|_e| anyhow!("invalid order"))?,
                     None => 0,

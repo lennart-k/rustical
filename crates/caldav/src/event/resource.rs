@@ -4,12 +4,11 @@ use anyhow::anyhow;
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
-use rustical_dav::xml_snippets::TextNode;
 use rustical_store::event::Event;
 use rustical_store::CalendarStore;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use strum::{EnumString, IntoStaticStr, VariantNames};
+use strum::{EnumString, VariantNames};
 use tokio::sync::RwLock;
 
 pub struct EventResource<C: CalendarStore + ?Sized> {
@@ -19,7 +18,7 @@ pub struct EventResource<C: CalendarStore + ?Sized> {
     pub uid: String,
 }
 
-#[derive(EnumString, Debug, VariantNames, IntoStaticStr, Clone)]
+#[derive(EnumString, Debug, VariantNames, Clone)]
 #[strum(serialize_all = "kebab-case")]
 pub enum EventPropName {
     Getetag,
@@ -27,13 +26,13 @@ pub enum EventPropName {
     Getcontenttype,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, IntoStaticStr)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub enum EventProp {
-    Getetag(TextNode),
+    Getetag(String),
     #[serde(rename = "C:calendar-data")]
-    CalendarData(TextNode),
-    Getcontenttype(TextNode),
+    CalendarData(String),
+    Getcontenttype(String),
     #[serde(other)]
     Invalid,
 }
@@ -61,13 +60,13 @@ impl Resource for EventFile {
 
     fn get_prop(&self, _prefix: &str, prop: Self::PropName) -> Result<Self::Prop, Self::Error> {
         match prop {
-            EventPropName::Getetag => Ok(EventProp::Getetag(TextNode(Some(self.event.get_etag())))),
-            EventPropName::CalendarData => Ok(EventProp::CalendarData(TextNode(Some(
-                self.event.get_ics().to_owned(),
-            )))),
-            EventPropName::Getcontenttype => Ok(EventProp::Getcontenttype(TextNode(Some(
+            EventPropName::Getetag => Ok(EventProp::Getetag(self.event.get_etag())),
+            EventPropName::CalendarData => {
+                Ok(EventProp::CalendarData(self.event.get_ics().to_owned()))
+            }
+            EventPropName::Getcontenttype => Ok(EventProp::Getcontenttype(
                 "text/calendar;charset=utf-8".to_owned(),
-            )))),
+            )),
         }
     }
 

@@ -10,5 +10,3 @@ impl HrefElement {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct TextNode(pub Option<String>);
