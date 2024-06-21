@@ -14,6 +14,6 @@ pub trait CalendarStore: Send + Sync + 'static {
 
     async fn get_events(&self, cid: &str) -> Result<Vec<Event>, Error>;
     async fn get_event(&self, cid: &str, uid: &str) -> Result<Event, Error>;
-    async fn upsert_event(&mut self, cid: String, uid: String, ics: String) -> Result<(), Error>;
+    async fn put_event(&mut self, cid: String, uid: String, ics: String) -> Result<(), Error>;
     async fn delete_event(&mut self, cid: &str, uid: &str) -> Result<(), Error>;
 }

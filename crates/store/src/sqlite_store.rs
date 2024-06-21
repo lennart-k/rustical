@@ -113,12 +113,10 @@ impl CalendarStore for SqliteCalendarStore {
         Ok(event)
     }
 
-    async fn upsert_event(&mut self, cid: String, uid: String, ics: String) -> Result<(), Error> {
-        // TODO: This is not actually an upsert
-        // Do this extra step to ensure that the input is actually valid
+    async fn put_event(&mut self, cid: String, uid: String, ics: String) -> Result<(), Error> {
         let _ = Event::from_ics(uid.to_owned(), ics.to_owned())?;
         sqlx::query!(
-            "INSERT INTO events (cid, uid, ics) VALUES (?, ?, ?)",
+            "REPLACE INTO events (cid, uid, ics) VALUES (?, ?, ?)",
             cid,
             uid,
             ics,
