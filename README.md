@@ -9,7 +9,7 @@ a calendar server
   - [ ] Proper filtering for REPORT method
   - [ ] ICS parsing
     - [x] Datetime parsing
-  - [ ] Implement PROPPATCH
+  - [x] Implement PROPPATCH
 - [ ] Access Control
   - [ ] OIDC support
 - [ ] CardDAV
@@ -22,4 +22,3 @@ a calendar server
 - [x] Trash bin
   - [x] Hiding calendars instead of deleting them
   - [ ] Restore endpoint
-

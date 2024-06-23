@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::namespace::Namespace;
 use crate::resource::InvalidProperty;
 use crate::resource::Resource;
@@ -31,17 +33,21 @@ struct SetPropertyElement<T> {
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
 struct RemovePropertyElement {
-    #[serde(rename = "$value")]
-    prop: TagName,
+    prop: PropertyElement<TagName>,
+}
+
+#[derive(Deserialize, Clone, Debug)]
+#[serde(rename_all = "kebab-case")]
+enum Operation<T> {
+    Set(SetPropertyElement<T>),
+    Remove(RemovePropertyElement),
 }
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
 struct PropertyupdateElement<T> {
-    #[serde(default = "Vec::new")]
-    set: Vec<SetPropertyElement<T>>,
-    #[serde(default = "Vec::new")]
-    remove: Vec<RemovePropertyElement>,
+    #[serde(rename = "$value", default = "Vec::new")]
+    operations: Vec<Operation<T>>,
 }
 
 pub async fn route_proppatch<A: CheckAuthentication, R: ResourceService + ?Sized>(
@@ -57,74 +63,73 @@ pub async fn route_proppatch<A: CheckAuthentication, R: ResourceService + ?Sized
 
     debug!("{body}");
 
-    // TODO: Implement remove!
-    let PropertyupdateElement::<<R::File as Resource>::Prop> {
-        set: set_els,
-        remove: remove_els,
-    } = quick_xml::de::from_str(&body).map_err(Error::XmlDecodeError)?;
+    let PropertyupdateElement::<<R::File as Resource>::Prop> { operations } =
+        quick_xml::de::from_str(&body).map_err(Error::XmlDecodeError)?;
 
-    // Extract all property names without verification
+    // Extract all set property names without verification
     // Weird workaround because quick_xml doesn't allow untagged enums
     let propnames: Vec<String> = quick_xml::de::from_str::<PropertyupdateElement<TagName>>(&body)
         .map_err(Error::XmlDecodeError)?
-        .set
+        .operations
         .into_iter()
-        .map(|set_el| set_el.prop.prop.into())
-        .collect();
-
-    // Invalid properties
-    let props_not_found: Vec<String> = propnames
-        .iter()
-        .zip(&set_els)
-        .filter_map(
-            |(
-                name,
-                SetPropertyElement {
-                    prop: PropertyElement { prop },
-                },
-            )| {
-                if prop.invalid_property() {
-                    Some(name.to_string())
-                } else {
-                    None
-                }
-            },
-        )
-        .collect();
-
-    // Filter out invalid props
-    let set_props: Vec<<R::File as Resource>::Prop> = set_els
-        .into_iter()
-        .filter_map(
-            |SetPropertyElement {
-                 prop: PropertyElement { prop },
-             }| {
-                if prop.invalid_property() {
-                    None
-                } else {
-                    Some(prop)
-                }
-            },
-        )
+        .map(|op_el| match op_el {
+            Operation::Set(set_el) => set_el.prop.prop.into(),
+            // If we can't remove a nonexisting property then that's no big deal
+            Operation::Remove(remove_el) => remove_el.prop.prop.into(),
+        })
         .collect();
 
     let mut resource = resource_service.get_file().await?;
 
     let mut props_ok = Vec::new();
     let mut props_conflict = Vec::new();
+    let mut props_not_found = Vec::new();
 
-    for (prop, propname) in set_props.into_iter().zip(propnames) {
-        match resource.set_prop(prop) {
-            Ok(()) => {
-                props_ok.push(propname);
+    for (operation, propname) in operations.into_iter().zip(propnames) {
+        match operation {
+            Operation::Set(SetPropertyElement {
+                prop: PropertyElement { prop },
+            }) => {
+                if prop.invalid_property() {
+                    props_not_found.push(propname);
+                    continue;
+                }
+                match resource.set_prop(prop) {
+                    Ok(()) => {
+                        props_ok.push(propname);
+                    }
+                    Err(Error::PropReadOnly) => {
+                        props_conflict.push(propname);
+                    }
+                    Err(err) => {
+                        // TODO: Think about error handling?
+                        return Err(err.into());
+                    }
+                }
             }
-            Err(Error::PropReadOnly) => {
-                props_conflict.push(propname);
+            Operation::Remove(_remove_el) => {
+                match <<R::File as Resource>::PropName as FromStr>::from_str(&propname) {
+                    Ok(prop) => {
+                        match resource.remove_prop(prop) {
+                            Ok(()) => {
+                                props_ok.push(propname);
+                            }
+                            Err(Error::PropReadOnly) => {
+                                props_conflict.push(propname);
+                            }
+                            Err(err) => {
+                                // TODO: Think about error handling?
+                                return Err(err.into());
+                            }
+                        }
+                    }
+                    Err(_) => {
+                        // I guess removing a nonexisting property should be successful :)
+                        props_ok.push(propname);
+                    }
+                };
             }
-            Err(err) => {
-                return Err(err.into());
-            }
-        };
+        }
     }
 
     if props_not_found.is_empty() && props_conflict.is_empty() {

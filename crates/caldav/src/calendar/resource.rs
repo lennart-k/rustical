@@ -272,6 +272,41 @@ impl Resource for CalendarFile {
         }
     }
 
+    fn remove_prop(&mut self, prop: Self::PropName) -> Result<(), rustical_dav::Error> {
+        match prop {
+            CalendarPropName::Resourcetype => Err(rustical_dav::Error::PropReadOnly),
+            CalendarPropName::CurrentUserPrincipal => Err(rustical_dav::Error::PropReadOnly),
+            CalendarPropName::Owner => Err(rustical_dav::Error::PropReadOnly),
+            CalendarPropName::Displayname => {
+                self.calendar.displayname = None;
+                Ok(())
+            }
+            CalendarPropName::CalendarColor => {
+                self.calendar.color = None;
+                Ok(())
+            }
+            CalendarPropName::CalendarDescription => {
+                self.calendar.description = None;
+                Ok(())
+            }
+            CalendarPropName::CalendarTimezone => {
+                self.calendar.timezone = None;
+                Ok(())
+            }
+            CalendarPropName::CalendarOrder => {
+                self.calendar.order = 0;
+                Ok(())
+            }
+            CalendarPropName::SupportedCalendarComponentSet => {
+                Err(rustical_dav::Error::PropReadOnly)
+            }
+            CalendarPropName::SupportedCalendarData => Err(rustical_dav::Error::PropReadOnly),
+            CalendarPropName::Getcontenttype => Err(rustical_dav::Error::PropReadOnly),
+            CalendarPropName::MaxResourceSize => Err(rustical_dav::Error::PropReadOnly),
+            CalendarPropName::CurrentUserPrivilegeSet => Err(rustical_dav::Error::PropReadOnly),
+        }
+    }
+
     fn get_path(&self) -> &str {
         &self.path
     }

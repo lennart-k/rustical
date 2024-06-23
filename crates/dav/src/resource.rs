@@ -23,7 +23,13 @@ pub trait Resource: Clone {
 
     fn get_path(&self) -> &str;
 
-    fn set_prop(&mut self, prop: Self::Prop) -> Result<(), crate::Error>;
+    fn set_prop(&mut self, _prop: Self::Prop) -> Result<(), crate::Error> {
+        Err(crate::Error::PropReadOnly)
+    }
+
+    fn remove_prop(&mut self, _prop: Self::PropName) -> Result<(), crate::Error> {
+        Err(crate::Error::PropReadOnly)
+    }
 }
 
 pub trait InvalidProperty {

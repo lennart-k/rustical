@@ -60,10 +60,6 @@ impl Resource for RootFile {
         }
     }
 
-    fn set_prop(&mut self, _prop: Self::Prop) -> Result<(), rustical_dav::Error> {
-        Err(rustical_dav::Error::PropReadOnly)
-    }
-
     fn get_path(&self) -> &str {
         &self.path
     }

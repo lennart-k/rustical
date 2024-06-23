@@ -70,10 +70,6 @@ impl Resource for EventFile {
             )),
         }
     }
-
-    fn set_prop(&mut self, _prop: Self::Prop) -> Result<(), rustical_dav::Error> {
-        Err(rustical_dav::Error::PropReadOnly)
-    }
 }
 
 #[async_trait(?Send)]
