@@ -58,30 +58,57 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
             .route(proppatch_method().to(route_proppatch::<A, RootResource>)),
     )
     .service(
-        web::resource("/{principal}")
-            .route(propfind_method().to(route_propfind::<A, PrincipalResource<C>>))
-            .route(proppatch_method().to(route_proppatch::<A, PrincipalResource<C>>)),
-    )
-    .service(
-        web::resource("/{principal}/{calendar}")
-            .route(report_method().to(calendar::methods::report::route_report_calendar::<A, C>))
-            .route(propfind_method().to(route_propfind::<A, CalendarResource<C>>))
-            .route(proppatch_method().to(route_proppatch::<A, CalendarResource<C>>))
-            .route(
-                mkcalendar_method().to(calendar::methods::mkcalendar::route_mkcol_calendar::<A, C>),
-            )
-            .route(
-                web::method(Method::DELETE)
-                    .to(calendar::methods::delete::route_delete_calendar::<A, C>),
-            ),
-    )
-    .service(
-        web::resource("/{principal}/{calendar}/{event}")
-            .route(propfind_method().to(route_propfind::<A, EventResource<C>>))
-            .route(proppatch_method().to(route_proppatch::<A, EventResource<C>>))
-            .route(web::method(Method::DELETE).to(event::methods::delete_event::<A, C>))
-            .route(web::method(Method::GET).to(event::methods::get_event::<A, C>))
-            .route(web::method(Method::PUT).to(event::methods::put_event::<A, C>)),
+        web::scope("/user").service(
+            web::scope("/{principal}")
+                .service(
+                    web::resource("")
+                        .route(propfind_method().to(route_propfind::<A, PrincipalResource<C>>))
+                        .route(proppatch_method().to(route_proppatch::<A, PrincipalResource<C>>)),
+                )
+                .service(
+                    web::scope("/{calendar}")
+                        .service(
+                            web::resource("")
+                                .route(
+                                    report_method().to(
+                                        calendar::methods::report::route_report_calendar::<A, C>,
+                                    ),
+                                )
+                                .route(
+                                    propfind_method().to(route_propfind::<A, CalendarResource<C>>),
+                                )
+                                .route(
+                                    proppatch_method()
+                                        .to(route_proppatch::<A, CalendarResource<C>>),
+                                )
+                                .route(mkcalendar_method().to(
+                                    calendar::methods::mkcalendar::route_mkcol_calendar::<A, C>,
+                                ))
+                                .route(
+                                    web::method(Method::DELETE).to(
+                                        calendar::methods::delete::route_delete_calendar::<A, C>,
+                                    ),
+                                ),
+                        )
+                        .service(
+                            web::resource("/{event}")
+                                .route(propfind_method().to(route_propfind::<A, EventResource<C>>))
+                                .route(
+                                    proppatch_method().to(route_proppatch::<A, EventResource<C>>),
+                                )
+                                .route(
+                                    web::method(Method::DELETE)
+                                        .to(event::methods::delete_event::<A, C>),
+                                )
+                                .route(
+                                    web::method(Method::GET).to(event::methods::get_event::<A, C>),
+                                )
+                                .route(
+                                    web::method(Method::PUT).to(event::methods::put_event::<A, C>),
+                                ),
+                        ),
+                ),
+        ),
     );
 }
 

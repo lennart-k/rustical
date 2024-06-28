@@ -23,7 +23,6 @@ pub struct PrincipalResource<C: CalendarStore + ?Sized> {
 #[derive(Clone)]
 pub struct PrincipalFile {
     principal: String,
-    path: String,
 }
 
 #[derive(Deserialize, Serialize, Default, Debug)]
@@ -80,19 +79,15 @@ impl Resource for PrincipalFile {
                 HrefElement::new(format!("{}/{}/", prefix, self.principal)),
             )),
             PrincipalPropName::PrincipalUrl => Ok(PrincipalProp::PrincipalUrl(HrefElement::new(
-                format!("{}/{}/", prefix, self.principal),
+                format!("{}/user/{}/", prefix, self.principal),
             ))),
             PrincipalPropName::CalendarHomeSet => Ok(PrincipalProp::CalendarHomeSet(
-                HrefElement::new(format!("{}/{}/", prefix, self.principal)),
+                HrefElement::new(format!("{}/user/{}/", prefix, self.principal)),
             )),
             PrincipalPropName::CalendarUserAddressSet => Ok(PrincipalProp::CalendarUserAddressSet(
-                HrefElement::new(format!("{}/{}/", prefix, self.principal)),
+                HrefElement::new(format!("{}/user/{}/", prefix, self.principal)),
             )),
         }
-    }
-
-    fn get_path(&self) -> &str {
-        &self.path
     }
 }
 
@@ -104,8 +99,8 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResource<C> {
     type Error = Error;
 
     async fn new(
-        req: HttpRequest,
-        auth_info: AuthInfo,
+        req: &HttpRequest,
+        auth_info: &AuthInfo,
         (principal,): Self::PathComponents,
     ) -> Result<Self, Self::Error> {
         if auth_info.user_id != principal {
@@ -127,14 +122,13 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResource<C> {
     async fn get_file(&self) -> Result<Self::File, Self::Error> {
         Ok(PrincipalFile {
             principal: self.principal.to_owned(),
-            path: self.path.to_owned(),
         })
     }
 
     async fn get_members(
         &self,
         _auth_info: AuthInfo,
-    ) -> Result<Vec<Self::MemberType>, Self::Error> {
+    ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
         let calendars = self
             .cal_store
             .read()
@@ -143,10 +137,14 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResource<C> {
             .await?;
         Ok(calendars
             .into_iter()
-            .map(|cal| CalendarFile {
-                path: format!("{}/{}", &self.path, &cal.id),
-                calendar: cal,
-                principal: self.principal.to_owned(),
+            .map(|cal| {
+                (
+                    format!("{}/{}", &self.path, &cal.id),
+                    CalendarFile {
+                        calendar: cal,
+                        principal: self.principal.to_owned(),
+                    },
+                )
             })
             .collect())
     }

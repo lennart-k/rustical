@@ -47,17 +47,12 @@ impl InvalidProperty for EventProp {
 #[derive(Clone)]
 pub struct EventFile {
     pub event: Event,
-    pub path: String,
 }
 
 impl Resource for EventFile {
     type PropName = EventPropName;
     type Prop = EventProp;
     type Error = Error;
-
-    fn get_path(&self) -> &str {
-        &self.path
-    }
 
     fn get_prop(&self, _prefix: &str, prop: Self::PropName) -> Result<Self::Prop, Self::Error> {
         match prop {
@@ -79,16 +74,9 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResource<C> {
     type MemberType = EventFile;
     type Error = Error;
 
-    async fn get_members(
-        &self,
-        _auth_info: AuthInfo,
-    ) -> Result<Vec<Self::MemberType>, Self::Error> {
-        Ok(vec![])
-    }
-
     async fn new(
-        req: HttpRequest,
-        _auth_info: AuthInfo,
+        req: &HttpRequest,
+        _auth_info: &AuthInfo,
         path_components: Self::PathComponents,
     ) -> Result<Self, Self::Error> {
         let (principal, cid, uid) = path_components;
@@ -115,10 +103,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResource<C> {
             .await
             .get_event(&self.principal, &self.cid, &self.uid)
             .await?;
-        Ok(EventFile {
-            event,
-            path: self.path.to_owned(),
-        })
+        Ok(EventFile { event })
     }
 
     async fn save_file(&self, _file: Self::File) -> Result<(), Self::Error> {

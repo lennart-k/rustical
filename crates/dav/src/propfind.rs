@@ -38,7 +38,7 @@ struct PropfindElement {
 }
 
 pub async fn route_propfind<A: CheckAuthentication, R: ResourceService + ?Sized>(
-    path: Path<R::PathComponents>,
+    path_components: Path<R::PathComponents>,
     body: String,
     req: HttpRequest,
     prefix: Data<ServicePrefix>,
@@ -48,9 +48,10 @@ pub async fn route_propfind<A: CheckAuthentication, R: ResourceService + ?Sized>
     debug!("{body}");
     let auth_info = auth.inner;
     let prefix = prefix.0.to_owned();
-    let path_components = path.into_inner();
+    let path_components = path_components.into_inner();
+    let path = req.path().to_owned();
 
-    let resource_service = R::new(req, auth_info.clone(), path_components.clone()).await?;
+    let resource_service = R::new(&req, &auth_info, path_components.clone()).await?;
 
     // A request body is optional. If empty we MUST return all props
     let propfind: PropfindElement = if !body.is_empty() {
@@ -75,13 +76,13 @@ pub async fn route_propfind<A: CheckAuthentication, R: ResourceService + ?Sized>
 
     let mut member_responses = Vec::new();
     if depth != Depth::Zero {
-        for member in resource_service.get_members(auth_info).await? {
-            member_responses.push(member.propfind(&prefix, props.clone()).await?);
+        for (path, member) in resource_service.get_members(auth_info).await? {
+            member_responses.push(member.propfind(&prefix, path, props.clone()).await?);
         }
     }
 
     let resource = resource_service.get_file().await?;
-    let response = resource.propfind(&prefix, props).await?;
+    let response = resource.propfind(&prefix, path, props).await?;
 
     Ok(MultistatusElement {
         responses: vec![response],

@@ -59,7 +59,7 @@ pub async fn route_proppatch<A: CheckAuthentication, R: ResourceService + ?Sized
     let auth_info = auth.inner;
     let path_components = path.into_inner();
     let href = req.path().to_owned();
-    let resource_service = R::new(req, auth_info.clone(), path_components.clone()).await?;
+    let resource_service = R::new(&req, &auth_info, path_components.clone()).await?;
 
     debug!("{body}");
 

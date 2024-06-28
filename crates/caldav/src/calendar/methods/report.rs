@@ -180,13 +180,11 @@ pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?S
 
     let mut responses = Vec::new();
     for event in events {
+        let path = format!("{}/{}", req.path(), event.get_uid());
         responses.push(
-            EventFile {
-                path: format!("{}/{}", req.path(), event.get_uid()),
-                event,
-            }
-            .propfind(&prefix.0, props.clone())
-            .await?,
+            EventFile { event }
+                .propfind(&prefix.0, path, props.clone())
+                .await?,
         );
     }
 

@@ -21,8 +21,6 @@ pub trait Resource: Clone {
 
     fn get_prop(&self, prefix: &str, prop: Self::PropName) -> Result<Self::Prop, Self::Error>;
 
-    fn get_path(&self) -> &str;
-
     fn set_prop(&mut self, _prop: Self::Prop) -> Result<(), crate::Error> {
         Err(crate::Error::PropReadOnly)
     }
@@ -48,14 +46,19 @@ pub trait ResourceService: Sized {
     type Error: ResponseError + From<crate::Error> + From<anyhow::Error>;
 
     async fn new(
-        req: HttpRequest,
-        auth_info: AuthInfo,
+        req: &HttpRequest,
+        auth_info: &AuthInfo,
         path_components: Self::PathComponents,
     ) -> Result<Self, Self::Error>;
 
     async fn get_file(&self) -> Result<Self::File, Self::Error>;
 
-    async fn get_members(&self, auth_info: AuthInfo) -> Result<Vec<Self::MemberType>, Self::Error>;
+    async fn get_members(
+        &self,
+        _auth_info: AuthInfo,
+    ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
+        Ok(vec![])
+    }
 
     async fn save_file(&self, file: Self::File) -> Result<(), Self::Error>;
 }
@@ -99,8 +102,12 @@ pub enum PropstatType<T1: Serialize, T2: Serialize> {
 pub trait HandlePropfind {
     type Error: ResponseError + From<crate::Error> + From<anyhow::Error>;
 
-    async fn propfind(&self, prefix: &str, props: Vec<&str>)
-        -> Result<impl Serialize, Self::Error>;
+    async fn propfind(
+        &self,
+        prefix: &str,
+        path: String,
+        props: Vec<&str>,
+    ) -> Result<impl Serialize, Self::Error>;
 }
 
 #[async_trait(?Send)]
@@ -110,6 +117,7 @@ impl<R: Resource> HandlePropfind for R {
     async fn propfind(
         &self,
         prefix: &str,
+        path: String,
         props: Vec<&str>,
     ) -> Result<PropstatResponseElement<PropWrapper<Vec<R::Prop>>, TagList>, R::Error> {
         let mut props = props;
@@ -125,7 +133,7 @@ impl<R: Resource> HandlePropfind for R {
                 .map(|&prop| prop.to_string())
                 .collect();
             return Ok(PropstatResponseElement {
-                href: self.get_path().to_owned(),
+                href: path,
                 propstat: vec![PropstatType::Normal(PropstatElement {
                     prop: PropWrapper::TagList(TagList::from(props)),
                     status: format!("HTTP/1.1 {}", StatusCode::OK),
@@ -177,7 +185,7 @@ impl<R: Resource> HandlePropfind for R {
             }));
         }
         Ok(PropstatResponseElement {
-            href: self.get_path().to_owned(),
+            href: path,
             propstat: propstats,
         })
     }

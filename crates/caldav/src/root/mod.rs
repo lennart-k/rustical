@@ -9,13 +9,13 @@ use strum::{EnumString, VariantNames};
 
 pub struct RootResource {
     principal: String,
-    path: String,
 }
 
 #[derive(EnumString, Debug, VariantNames, Clone)]
 #[strum(serialize_all = "kebab-case")]
 pub enum RootPropName {
     Resourcetype,
+    // Defined by RFC 5397
     CurrentUserPrincipal,
 }
 
@@ -43,7 +43,6 @@ impl InvalidProperty for RootProp {
 #[derive(Clone)]
 pub struct RootFile {
     pub principal: String,
-    pub path: String,
 }
 
 impl Resource for RootFile {
@@ -55,13 +54,9 @@ impl Resource for RootFile {
         match prop {
             RootPropName::Resourcetype => Ok(RootProp::Resourcetype(Resourcetype::default())),
             RootPropName::CurrentUserPrincipal => Ok(RootProp::CurrentUserPrincipal(
-                HrefElement::new(format!("{}/{}/", prefix, self.principal)),
+                HrefElement::new(format!("{}/user/{}/", prefix, self.principal)),
             )),
         }
-    }
-
-    fn get_path(&self) -> &str {
-        &self.path
     }
 }
 
@@ -72,27 +67,18 @@ impl ResourceService for RootResource {
     type File = RootFile;
     type Error = Error;
 
-    async fn get_members(
-        &self,
-        _auth_info: AuthInfo,
-    ) -> Result<Vec<Self::MemberType>, Self::Error> {
-        Ok(vec![])
-    }
-
     async fn new(
-        req: HttpRequest,
-        auth_info: AuthInfo,
+        _req: &HttpRequest,
+        auth_info: &AuthInfo,
         _path_components: Self::PathComponents,
     ) -> Result<Self, Self::Error> {
         Ok(Self {
-            principal: auth_info.user_id,
-            path: req.path().to_string(),
+            principal: auth_info.user_id.to_owned(),
         })
     }
 
     async fn get_file(&self) -> Result<Self::File, Self::Error> {
         Ok(RootFile {
-            path: self.path.to_owned(),
             principal: self.principal.to_owned(),
         })
     }
