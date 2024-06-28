@@ -36,9 +36,8 @@ pub fn make_app<CS: CalendarStore + ?Sized, A: CheckAuthentication>(
         }))
         .service(
             web::scope("/.well-known")
-                .configure(|cfg| rustical_caldav::configure_well_known(cfg, "/caldav".to_string()))
-                .configure(|cfg| {
-                    rustical_carddav::configure_well_known(cfg, "/carddav".to_string())
-                }),
+                .configure(|cfg| rustical_caldav::configure_well_known(cfg, "/caldav".to_string())), // .configure(|cfg| {
+                                                                                                     //     rustical_carddav::configure_well_known(cfg, "/carddav".to_string())
+                                                                                                     // }),
         )
 }
