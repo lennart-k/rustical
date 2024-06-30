@@ -72,6 +72,7 @@ pub async fn get_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
 
     Ok(HttpResponse::Ok()
         .insert_header(("ETag", event.get_etag()))
+        .insert_header(("Content-Type", "text/calendar"))
         .body(event.get_ics().to_owned()))
 }
 
