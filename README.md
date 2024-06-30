@@ -33,3 +33,7 @@ a calendar server
   - [ ] Restore endpoint
 
 ## Relevant RFCs
+
+- Calendaring Extensions to WebDAV (CalDAV): [RFC 4791](https://datatracker.ietf.org/doc/html/rfc4791)
+- Scheduling Extensions to CalDAV: [RFC 6638](https://datatracker.ietf.org/doc/html/rfc6638)
+  - not sure yet whether to implement this
