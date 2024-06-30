@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE events SET deleted_at = datetime() WHERE (principal, cid, uid) = (?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "8ad1d8fd1839cf30f9cc383505ef371a4b813cdf2381396cd0aa41833f7eb9a8"
+}

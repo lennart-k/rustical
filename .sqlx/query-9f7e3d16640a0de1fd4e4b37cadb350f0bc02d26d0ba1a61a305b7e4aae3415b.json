@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "REPLACE INTO events (principal, cid, uid, ics) VALUES (?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "9f7e3d16640a0de1fd4e4b37cadb350f0bc02d26d0ba1a61a305b7e4aae3415b"
+}

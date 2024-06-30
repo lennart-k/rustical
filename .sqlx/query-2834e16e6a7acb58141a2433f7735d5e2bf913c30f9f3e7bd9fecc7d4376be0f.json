@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM calendars WHERE (principal, id) = (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "2834e16e6a7acb58141a2433f7735d5e2bf913c30f9f3e7bd9fecc7d4376be0f"
+}

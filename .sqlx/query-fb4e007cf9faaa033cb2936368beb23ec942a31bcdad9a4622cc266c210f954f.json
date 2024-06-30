@@ -1,0 +1,62 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT principal, id, \"order\", displayname, description, color, timezone, deleted_at\n                FROM calendars\n                WHERE (principal, id) = (?, ?)",
+  "describe": {
+    "columns": [
+      {
+        "name": "principal",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "id",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "order",
+        "ordinal": 2,
+        "type_info": "Int64"
+      },
+      {
+        "name": "displayname",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "description",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "color",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "timezone",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "deleted_at",
+        "ordinal": 7,
+        "type_info": "Datetime"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      true
+    ]
+  },
+  "hash": "fb4e007cf9faaa033cb2936368beb23ec942a31bcdad9a4622cc266c210f954f"
+}
