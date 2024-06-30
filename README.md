@@ -2,6 +2,8 @@
 
 a calendar server
 
+## Installation
+
 ## Todo
 
 - [ ] CalDAV
@@ -16,6 +18,10 @@ a calendar server
   - [ ] authentication rewrite? (argon2 is very slow for each request)
   - [ ] OIDC support
 - [ ] CardDAV
+- [ ] Packaging
+  - [x] Ensure cargo install works
+  - [ ] Docker image
+  - [ ] Releases
 - [ ] Locking
 - [ ] Web UI
 - [ ] Testing such that I'm confident enough to use it myself :)
