@@ -53,7 +53,7 @@ struct MkcalendarRequest {
     set: PropElement<MkcolCalendarProp>,
 }
 
-pub async fn route_mkcol_calendar<A: CheckAuthentication, C: CalendarStore + ?Sized>(
+pub async fn route_mkcalendar<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     path: Path<(String, String)>,
     body: String,
     auth: AuthInfoExtractor<A>,
