@@ -116,7 +116,7 @@ async fn options_handler() -> impl Responder {
     HttpResponse::Ok()
         .insert_header((
             "Allow",
-            "OPTIONS, GET, HEAD, POST, PUT, REPORT, PROPFIND, PROPPATCH, MKCOL",
+            "OPTIONS, GET, HEAD, POST, PUT, REPORT, PROPFIND, PROPPATCH, MKCALENDAR",
         ))
         .insert_header((
             "DAV",
