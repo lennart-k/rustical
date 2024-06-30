@@ -6,9 +6,9 @@ use event::resource::EventResource;
 use principal::PrincipalResource;
 use root::RootResource;
 use rustical_auth::CheckAuthentication;
-use rustical_dav::delete::route_delete;
-use rustical_dav::propfind::{route_propfind, ServicePrefix};
-use rustical_dav::proppatch::route_proppatch;
+use rustical_dav::methods::{
+    propfind::ServicePrefix, route_delete, route_propfind, route_proppatch,
+};
 use rustical_store::CalendarStore;
 use std::str::FromStr;
 use std::sync::Arc;

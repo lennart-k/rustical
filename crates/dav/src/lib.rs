@@ -1,9 +1,7 @@
-pub mod delete;
 pub mod depth_extractor;
 pub mod error;
+pub mod methods;
 pub mod namespace;
-pub mod propfind;
-pub mod proppatch;
 pub mod resource;
 pub mod xml;
 

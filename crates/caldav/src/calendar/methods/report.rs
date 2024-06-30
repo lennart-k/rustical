@@ -5,8 +5,8 @@ use actix_web::{
 };
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use rustical_dav::{
+    methods::propfind::{PropElement, PropfindType, ServicePrefix},
     namespace::Namespace,
-    propfind::{PropElement, PropfindType, ServicePrefix},
     resource::HandlePropfind,
     xml::MultistatusElement,
 };
