@@ -1,3 +1,4 @@
+pub mod delete;
 pub mod depth_extractor;
 pub mod error;
 pub mod namespace;

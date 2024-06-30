@@ -289,4 +289,13 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResource<C> {
             .await?;
         Ok(())
     }
+
+    async fn delete_file(&self, use_trashbin: bool) -> Result<(), Self::Error> {
+        self.cal_store
+            .write()
+            .await
+            .delete_calendar(&self.principal, &self.calendar_id, use_trashbin)
+            .await?;
+        Ok(())
+    }
 }

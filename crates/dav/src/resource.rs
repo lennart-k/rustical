@@ -51,8 +51,6 @@ pub trait ResourceService: Sized {
         path_components: Self::PathComponents,
     ) -> Result<Self, Self::Error>;
 
-    async fn get_file(&self) -> Result<Self::File, Self::Error>;
-
     async fn get_members(
         &self,
         _auth_info: AuthInfo,
@@ -60,7 +58,11 @@ pub trait ResourceService: Sized {
         Ok(vec![])
     }
 
+    async fn get_file(&self) -> Result<Self::File, Self::Error>;
     async fn save_file(&self, file: Self::File) -> Result<(), Self::Error>;
+    async fn delete_file(&self, _use_trashbin: bool) -> Result<(), Self::Error> {
+        Err(crate::Error::Unauthorized.into())
+    }
 }
 
 #[derive(Serialize)]

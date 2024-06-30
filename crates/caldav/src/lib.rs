@@ -6,6 +6,7 @@ use event::resource::EventResource;
 use principal::PrincipalResource;
 use root::RootResource;
 use rustical_auth::CheckAuthentication;
+use rustical_dav::delete::route_delete;
 use rustical_dav::propfind::{route_propfind, ServicePrefix};
 use rustical_dav::proppatch::route_proppatch;
 use rustical_store::CalendarStore;
@@ -81,14 +82,13 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
                                     proppatch_method()
                                         .to(route_proppatch::<A, CalendarResource<C>>),
                                 )
+                                .route(
+                                    web::method(Method::DELETE)
+                                        .to(route_delete::<A, CalendarResource<C>>),
+                                )
                                 .route(mkcalendar_method().to(
                                     calendar::methods::mkcalendar::route_mkcol_calendar::<A, C>,
-                                ))
-                                .route(
-                                    web::method(Method::DELETE).to(
-                                        calendar::methods::delete::route_delete_calendar::<A, C>,
-                                    ),
-                                ),
+                                )),
                         )
                         .service(
                             web::resource("/{event}")
@@ -98,7 +98,7 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
                                 )
                                 .route(
                                     web::method(Method::DELETE)
-                                        .to(event::methods::delete_event::<A, C>),
+                                        .to(route_delete::<A, EventResource<C>>),
                                 )
                                 .route(
                                     web::method(Method::GET).to(event::methods::get_event::<A, C>),

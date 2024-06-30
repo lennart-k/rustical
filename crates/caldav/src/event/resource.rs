@@ -79,7 +79,11 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResource<C> {
         _auth_info: &AuthInfo,
         path_components: Self::PathComponents,
     ) -> Result<Self, Self::Error> {
-        let (principal, cid, uid) = path_components;
+        let (principal, cid, mut uid) = path_components;
+
+        if uid.ends_with(".ics") {
+            uid.truncate(uid.len() - 4);
+        }
 
         let cal_store = req
             .app_data::<Data<RwLock<C>>>()
@@ -108,5 +112,14 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResource<C> {
 
     async fn save_file(&self, _file: Self::File) -> Result<(), Self::Error> {
         Err(Error::NotImplemented)
+    }
+
+    async fn delete_file(&self, use_trashbin: bool) -> Result<(), Self::Error> {
+        self.cal_store
+            .write()
+            .await
+            .delete_event(&self.principal, &self.cid, &self.uid, use_trashbin)
+            .await?;
+        Ok(())
     }
 }

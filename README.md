@@ -12,7 +12,7 @@ a calendar server
   - [ ] ICS parsing
     - [x] Datetime parsing
   - [x] Implement PROPPATCH
-- [ ] Auth
+- [ ] Auth (There currently is no authentication at all in place for some routes)
   - [ ] Access control
   - [ ] preparation for different principal types (groups)
   - [ ] authentication rewrite? (argon2 is very slow for each request)

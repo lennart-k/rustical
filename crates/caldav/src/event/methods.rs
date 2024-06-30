@@ -8,37 +8,6 @@ use actix_web::HttpResponse;
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use rustical_store::CalendarStore;
 
-pub async fn delete_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
-    context: Data<CalDavContext<C>>,
-    path: Path<(String, String, String)>,
-    auth: AuthInfoExtractor<A>,
-    req: HttpRequest,
-) -> Result<HttpResponse, Error> {
-    let (principal, mut cid, uid) = path.into_inner();
-
-    if auth.inner.user_id != principal {
-        return Ok(HttpResponse::Unauthorized().body(""));
-    }
-
-    if cid.ends_with(".ics") {
-        cid.truncate(cid.len() - 4);
-    }
-    let no_trash = req
-        .headers()
-        .get("X-No-Trashbin")
-        .map(|val| matches!(val.to_str(), Ok("1")))
-        .unwrap_or(false);
-
-    context
-        .store
-        .write()
-        .await
-        .delete_event(&principal, &cid, &uid, !no_trash)
-        .await?;
-
-    Ok(HttpResponse::Ok().body(""))
-}
-
 pub async fn get_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     context: Data<CalDavContext<C>>,
     path: Path<(String, String, String)>,
