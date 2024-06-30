@@ -1,5 +1,7 @@
 use crate::CalDavContext;
 use crate::Error;
+use actix_web::http::header;
+use actix_web::http::header::HeaderValue;
 use actix_web::web::{Data, Path};
 use actix_web::HttpRequest;
 use actix_web::HttpResponse;
@@ -78,6 +80,7 @@ pub async fn put_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     path: Path<(String, String, String)>,
     body: String,
     auth: AuthInfoExtractor<A>,
+    req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
     let (principal, cid, mut uid) = path.into_inner();
     let auth_info = auth.inner;
@@ -94,17 +97,34 @@ pub async fn put_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     if auth_info.user_id != calendar.principal {
         return Ok(HttpResponse::Unauthorized().body(""));
     }
-
     // Incredibly bodged method of normalising the uid but works for a prototype
     if uid.ends_with(".ics") {
         uid.truncate(uid.len() - 4);
     }
-    context
-        .store
-        .write()
-        .await
-        .put_event(principal, cid, uid, body)
-        .await?;
+
+    // TODO: implement If-Match
+
+    // Lock the store
+    let mut store = context.store.write().await;
+
+    if Some(&HeaderValue::from_static("*")) == req.headers().get(header::IF_NONE_MATCH) {
+        // Only write if not existing
+        match store.get_event(&principal, &cid, &uid).await {
+            Ok(_) => {
+                // Conflict
+                return Ok(HttpResponse::Conflict().body("Resource with this URI already existing"));
+            }
+            Err(rustical_store::Error::NotFound) => {
+                // Path unused, we can proceed
+            }
+            Err(err) => {
+                // Some unknown error :(
+                return Err(err.into());
+            }
+        }
+    }
+
+    store.put_event(principal, cid, uid, body).await?;
 
     Ok(HttpResponse::Ok().body(""))
 }
