@@ -145,7 +145,7 @@ impl CalendarStore for SqliteCalendarStore {
     async fn get_events(&self, principal: &str, cid: &str) -> Result<Vec<Event>, Error> {
         sqlx::query_as!(
             EventRow,
-            "SELECT uid, ics FROM events WHERE principal = ? AND cid = ?",
+            "SELECT uid, ics FROM events WHERE principal = ? AND cid = ? AND deleted_at IS NULL",
             principal,
             cid
         )
