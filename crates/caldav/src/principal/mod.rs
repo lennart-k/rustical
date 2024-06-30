@@ -71,22 +71,21 @@ impl Resource for PrincipalFile {
     type Error = Error;
 
     fn get_prop(&self, prefix: &str, prop: Self::PropName) -> Result<Self::Prop, Self::Error> {
+        let principal_href = HrefElement::new(format!("{}/user/{}/", prefix, self.principal));
         match prop {
             PrincipalPropName::Resourcetype => {
                 Ok(PrincipalProp::Resourcetype(Resourcetype::default()))
             }
-            PrincipalPropName::CurrentUserPrincipal => Ok(PrincipalProp::CurrentUserPrincipal(
-                HrefElement::new(format!("{}/{}/", prefix, self.principal)),
-            )),
-            PrincipalPropName::PrincipalUrl => Ok(PrincipalProp::PrincipalUrl(HrefElement::new(
-                format!("{}/user/{}/", prefix, self.principal),
-            ))),
-            PrincipalPropName::CalendarHomeSet => Ok(PrincipalProp::CalendarHomeSet(
-                HrefElement::new(format!("{}/user/{}/", prefix, self.principal)),
-            )),
-            PrincipalPropName::CalendarUserAddressSet => Ok(PrincipalProp::CalendarUserAddressSet(
-                HrefElement::new(format!("{}/user/{}/", prefix, self.principal)),
-            )),
+            PrincipalPropName::CurrentUserPrincipal => {
+                Ok(PrincipalProp::CurrentUserPrincipal(principal_href))
+            }
+            PrincipalPropName::PrincipalUrl => Ok(PrincipalProp::PrincipalUrl(principal_href)),
+            PrincipalPropName::CalendarHomeSet => {
+                Ok(PrincipalProp::CalendarHomeSet(principal_href))
+            }
+            PrincipalPropName::CalendarUserAddressSet => {
+                Ok(PrincipalProp::CalendarUserAddressSet(principal_href))
+            }
         }
     }
 }

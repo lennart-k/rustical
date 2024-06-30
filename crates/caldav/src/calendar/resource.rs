@@ -101,7 +101,7 @@ impl Resource for CalendarFile {
                 HrefElement::new(format!("{}/user/{}/", prefix, self.principal)),
             )),
             CalendarPropName::Owner => Ok(CalendarProp::Owner(HrefElement::new(format!(
-                "{}/{}/",
+                "{}/user/{}/",
                 prefix, self.principal
             )))),
             CalendarPropName::Displayname => {
