@@ -100,7 +100,7 @@ impl Event {
     }
 
     pub fn get_last_occurence(&self) -> Result<NaiveDateTime> {
-        // This is safe since we enforce the event's existance in the constructor
+        // This is safe since we enforce the event's existence in the constructor
         let event = self.cal.events.first().unwrap();
 
         if event.get_property("RRULE").is_some() {
