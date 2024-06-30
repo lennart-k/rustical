@@ -9,7 +9,7 @@ anyhow = "1.0"
 async-trait = "0.1"
 derive_more = "0.99"
 futures-util = "0.3"
-quick-xml = { version = "0.32", features = [
+quick-xml = { version = "0.35", features = [
   "serde",
   "serde-types",
   "serialize",
