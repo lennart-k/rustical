@@ -126,5 +126,5 @@ pub async fn put_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
 
     store.put_event(principal, cid, uid, body).await?;
 
-    Ok(HttpResponse::Ok().body(""))
+    Ok(HttpResponse::Created().body(""))
 }
