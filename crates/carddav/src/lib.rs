@@ -7,13 +7,13 @@ pub fn configure_well_known(cfg: &mut web::ServiceConfig, carddav_root: String) 
 }
 
 pub fn configure_dav<A: CheckAuthentication>(
-    cfg: &mut web::ServiceConfig,
-    prefix: String,
-    auth: Arc<A>,
+    _cfg: &mut web::ServiceConfig,
+    _prefix: String,
+    _auth: Arc<A>,
 ) {
 }
 
-async fn options_handler() -> impl Responder {
+pub async fn options_handler() -> impl Responder {
     HttpResponse::Ok()
         .insert_header((
             "Allow",
