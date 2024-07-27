@@ -15,7 +15,7 @@ use tokio::sync::RwLock;
 
 use super::prop::{
     Resourcetype, SupportedCalendarComponent, SupportedCalendarComponentSet, SupportedCalendarData,
-    UserPrivilegeSet,
+    SupportedReportSet, UserPrivilegeSet,
 };
 
 pub struct CalendarResource<C: CalendarStore + ?Sized> {
@@ -41,6 +41,7 @@ pub enum CalendarPropName {
     Getcontenttype,
     CurrentUserPrivilegeSet,
     MaxResourceSize,
+    SupportedReportSet,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -71,6 +72,7 @@ pub enum CalendarProp {
     Getcontenttype(String),
     MaxResourceSize(String),
     CurrentUserPrivilegeSet(UserPrivilegeSet),
+    SupportedReportSet(SupportedReportSet),
     #[serde(other)]
     Invalid,
 }
@@ -138,6 +140,9 @@ impl Resource for CalendarFile {
             CalendarPropName::CurrentUserPrivilegeSet => Ok(CalendarProp::CurrentUserPrivilegeSet(
                 UserPrivilegeSet::default(),
             )),
+            CalendarPropName::SupportedReportSet => Ok(CalendarProp::SupportedReportSet(
+                SupportedReportSet::default(),
+            )),
         }
     }
 
@@ -176,6 +181,7 @@ impl Resource for CalendarFile {
             CalendarProp::Getcontenttype(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::MaxResourceSize(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::CurrentUserPrivilegeSet(_) => Err(rustical_dav::Error::PropReadOnly),
+            CalendarProp::SupportedReportSet(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Invalid => Err(rustical_dav::Error::PropReadOnly),
         }
     }
@@ -212,6 +218,7 @@ impl Resource for CalendarFile {
             CalendarPropName::Getcontenttype => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::MaxResourceSize => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::CurrentUserPrivilegeSet => Err(rustical_dav::Error::PropReadOnly),
+            CalendarPropName::SupportedReportSet => Err(rustical_dav::Error::PropReadOnly),
         }
     }
 }
