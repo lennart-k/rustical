@@ -130,7 +130,6 @@ impl CalendarStore for SqliteCalendarStore {
         Ok(())
     }
 
-    // Does not actually delete the calendar but just disables it
     async fn restore_calendar(&mut self, principal: &str, id: &str) -> Result<(), Error> {
         sqlx::query!(
             r"UPDATE calendars SET deleted_at = NULL WHERE (principal, id) = (?, ?)",
@@ -200,7 +199,7 @@ impl CalendarStore for SqliteCalendarStore {
         match use_trashbin {
             true => {
                 sqlx::query!(
-                    "UPDATE events SET deleted_at = datetime() WHERE (principal, cid, uid) = (?, ?, ?)",
+                    "UPDATE events SET deleted_at = datetime(), updated_at = datetime() WHERE (principal, cid, uid) = (?, ?, ?)",
                     principal,
                     cid,
                     uid
@@ -219,7 +218,7 @@ impl CalendarStore for SqliteCalendarStore {
 
     async fn restore_event(&mut self, principal: &str, cid: &str, uid: &str) -> Result<(), Error> {
         sqlx::query!(
-            r#"UPDATE events SET deleted_at = NULL WHERE (principal, cid, uid) = (?, ?, ?)"#,
+            r#"UPDATE events SET deleted_at = NULL, updated_at = datetime() WHERE (principal, cid, uid) = (?, ?, ?)"#,
             principal,
             cid,
             uid

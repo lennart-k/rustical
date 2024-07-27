@@ -15,6 +15,7 @@ CREATE TABLE events (
   cid TEXT NOT NULL,
   uid TEXT NOT NULL,
   ics TEXT NOT NULL,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   deleted_at DATETIME,
   PRIMARY KEY (principal, cid, uid),
   FOREIGN KEY (principal, cid) REFERENCES calendars(principal, id)
