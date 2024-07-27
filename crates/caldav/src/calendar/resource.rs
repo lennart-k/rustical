@@ -95,55 +95,53 @@ impl Resource for CalendarFile {
     type Error = Error;
 
     fn get_prop(&self, prefix: &str, prop: Self::PropName) -> Result<Self::Prop, Self::Error> {
-        match prop {
-            CalendarPropName::Resourcetype => {
-                Ok(CalendarProp::Resourcetype(Resourcetype::default()))
-            }
-            CalendarPropName::CurrentUserPrincipal => Ok(CalendarProp::CurrentUserPrincipal(
+        Ok(match prop {
+            CalendarPropName::Resourcetype => CalendarProp::Resourcetype(Resourcetype::default()),
+            CalendarPropName::CurrentUserPrincipal => CalendarProp::CurrentUserPrincipal(
                 HrefElement::new(format!("{}/user/{}/", prefix, self.principal)),
-            )),
-            CalendarPropName::Owner => Ok(CalendarProp::Owner(HrefElement::new(format!(
+            ),
+            CalendarPropName::Owner => CalendarProp::Owner(HrefElement::new(format!(
                 "{}/user/{}/",
                 prefix, self.principal
-            )))),
+            ))),
             CalendarPropName::Displayname => {
-                Ok(CalendarProp::Displayname(self.calendar.displayname.clone()))
+                CalendarProp::Displayname(self.calendar.displayname.clone())
             }
             CalendarPropName::CalendarColor => {
-                Ok(CalendarProp::CalendarColor(self.calendar.color.clone()))
+                CalendarProp::CalendarColor(self.calendar.color.clone())
             }
-            CalendarPropName::CalendarDescription => Ok(CalendarProp::CalendarDescription(
-                self.calendar.description.clone(),
-            )),
-            CalendarPropName::CalendarTimezone => Ok(CalendarProp::CalendarTimezone(
-                self.calendar.timezone.clone(),
-            )),
-            CalendarPropName::CalendarOrder => Ok(CalendarProp::CalendarOrder(
-                format!("{}", self.calendar.order).into(),
-            )),
-            CalendarPropName::SupportedCalendarComponentSet => Ok(
+            CalendarPropName::CalendarDescription => {
+                CalendarProp::CalendarDescription(self.calendar.description.clone())
+            }
+            CalendarPropName::CalendarTimezone => {
+                CalendarProp::CalendarTimezone(self.calendar.timezone.clone())
+            }
+            CalendarPropName::CalendarOrder => {
+                CalendarProp::CalendarOrder(format!("{}", self.calendar.order).into())
+            }
+            CalendarPropName::SupportedCalendarComponentSet => {
                 CalendarProp::SupportedCalendarComponentSet(SupportedCalendarComponentSet {
                     comp: vec![SupportedCalendarComponent {
                         name: "VEVENT".to_owned(),
                     }],
-                }),
-            ),
-            CalendarPropName::SupportedCalendarData => Ok(CalendarProp::SupportedCalendarData(
-                SupportedCalendarData::default(),
-            )),
-            CalendarPropName::Getcontenttype => Ok(CalendarProp::Getcontenttype(
-                "text/calendar;charset=utf-8".to_owned(),
-            )),
-            CalendarPropName::MaxResourceSize => {
-                Ok(CalendarProp::MaxResourceSize("10000000".to_owned()))
+                })
             }
-            CalendarPropName::CurrentUserPrivilegeSet => Ok(CalendarProp::CurrentUserPrivilegeSet(
-                UserPrivilegeSet::default(),
-            )),
-            CalendarPropName::SupportedReportSet => Ok(CalendarProp::SupportedReportSet(
-                SupportedReportSet::default(),
-            )),
-        }
+            CalendarPropName::SupportedCalendarData => {
+                CalendarProp::SupportedCalendarData(SupportedCalendarData::default())
+            }
+            CalendarPropName::Getcontenttype => {
+                CalendarProp::Getcontenttype("text/calendar;charset=utf-8".to_owned())
+            }
+            CalendarPropName::MaxResourceSize => {
+                CalendarProp::MaxResourceSize("10000000".to_owned())
+            }
+            CalendarPropName::CurrentUserPrivilegeSet => {
+                CalendarProp::CurrentUserPrivilegeSet(UserPrivilegeSet::default())
+            }
+            CalendarPropName::SupportedReportSet => {
+                CalendarProp::SupportedReportSet(SupportedReportSet::default())
+            }
+        })
     }
 
     fn set_prop(&mut self, prop: Self::Prop) -> Result<(), rustical_dav::Error> {
