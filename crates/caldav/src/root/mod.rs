@@ -51,12 +51,12 @@ impl Resource for RootFile {
     type Error = Error;
 
     fn get_prop(&self, prefix: &str, prop: Self::PropName) -> Result<Self::Prop, Self::Error> {
-        match prop {
-            RootPropName::Resourcetype => Ok(RootProp::Resourcetype(Resourcetype::default())),
-            RootPropName::CurrentUserPrincipal => Ok(RootProp::CurrentUserPrincipal(
-                HrefElement::new(format!("{}/user/{}/", prefix, self.principal)),
+        Ok(match prop {
+            RootPropName::Resourcetype => RootProp::Resourcetype(Resourcetype::default()),
+            RootPropName::CurrentUserPrincipal => RootProp::CurrentUserPrincipal(HrefElement::new(
+                format!("{}/user/{}/", prefix, self.principal),
             )),
-        }
+        })
     }
 }
 

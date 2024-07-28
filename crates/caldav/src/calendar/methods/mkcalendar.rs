@@ -76,6 +76,7 @@ pub async fn route_mkcalendar<A: CheckAuthentication, C: CalendarStore + ?Sized>
         color: request.calendar_color,
         description: request.calendar_description,
         deleted_at: None,
+        synctoken: 0,
     };
 
     match context

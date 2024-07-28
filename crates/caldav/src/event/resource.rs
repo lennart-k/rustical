@@ -55,15 +55,13 @@ impl Resource for EventFile {
     type Error = Error;
 
     fn get_prop(&self, _prefix: &str, prop: Self::PropName) -> Result<Self::Prop, Self::Error> {
-        match prop {
-            EventPropName::Getetag => Ok(EventProp::Getetag(self.event.get_etag())),
-            EventPropName::CalendarData => {
-                Ok(EventProp::CalendarData(self.event.get_ics().to_owned()))
+        Ok(match prop {
+            EventPropName::Getetag => EventProp::Getetag(self.event.get_etag()),
+            EventPropName::CalendarData => EventProp::CalendarData(self.event.get_ics().to_owned()),
+            EventPropName::Getcontenttype => {
+                EventProp::Getcontenttype("text/calendar;charset=utf-8".to_owned())
             }
-            EventPropName::Getcontenttype => Ok(EventProp::Getcontenttype(
-                "text/calendar;charset=utf-8".to_owned(),
-            )),
-        }
+        })
     }
 }
 
