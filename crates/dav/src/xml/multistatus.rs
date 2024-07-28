@@ -54,6 +54,7 @@ pub struct MultistatusElement<T1: Serialize, T2: Serialize> {
     pub ns_caldav: &'static str,
     #[serde(rename = "@xmlns:IC")]
     pub ns_ical: &'static str,
+    pub sync_token: Option<String>,
 }
 
 impl<T1: Serialize, T2: Serialize> Default for MultistatusElement<T1, T2> {
@@ -64,6 +65,7 @@ impl<T1: Serialize, T2: Serialize> Default for MultistatusElement<T1, T2> {
             ns_dav: Namespace::Dav.as_str(),
             ns_caldav: Namespace::CalDAV.as_str(),
             ns_ical: Namespace::ICal.as_str(),
+            sync_token: None,
         }
     }
 }
