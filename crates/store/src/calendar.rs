@@ -11,4 +11,5 @@ pub struct Calendar {
     pub color: Option<String>,
     pub timezone: Option<String>,
     pub deleted_at: Option<NaiveDateTime>,
+    pub synctoken: i64,
 }

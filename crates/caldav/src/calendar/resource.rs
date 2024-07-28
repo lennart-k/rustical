@@ -42,6 +42,8 @@ pub enum CalendarPropName {
     CurrentUserPrivilegeSet,
     MaxResourceSize,
     SupportedReportSet,
+    SyncToken,
+    Getctag,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -73,6 +75,8 @@ pub enum CalendarProp {
     MaxResourceSize(String),
     CurrentUserPrivilegeSet(UserPrivilegeSet),
     SupportedReportSet(SupportedReportSet),
+    SyncToken(String),
+    Getctag(String),
     #[serde(other)]
     Invalid,
 }
@@ -141,6 +145,14 @@ impl Resource for CalendarFile {
             CalendarPropName::SupportedReportSet => {
                 CalendarProp::SupportedReportSet(SupportedReportSet::default())
             }
+            CalendarPropName::SyncToken => CalendarProp::SyncToken(format!(
+                "github.com/lennart-k/rustical/ns/{}",
+                self.calendar.synctoken
+            )),
+            CalendarPropName::Getctag => CalendarProp::Getctag(format!(
+                "github.com/lennart-k/rustical/ns/{}",
+                self.calendar.synctoken
+            )),
         })
     }
 
@@ -180,6 +192,8 @@ impl Resource for CalendarFile {
             CalendarProp::MaxResourceSize(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::CurrentUserPrivilegeSet(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::SupportedReportSet(_) => Err(rustical_dav::Error::PropReadOnly),
+            CalendarProp::SyncToken(_) => Err(rustical_dav::Error::PropReadOnly),
+            CalendarProp::Getctag(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Invalid => Err(rustical_dav::Error::PropReadOnly),
         }
     }
@@ -217,6 +231,8 @@ impl Resource for CalendarFile {
             CalendarPropName::MaxResourceSize => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::CurrentUserPrivilegeSet => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::SupportedReportSet => Err(rustical_dav::Error::PropReadOnly),
+            CalendarPropName::SyncToken => Err(rustical_dav::Error::PropReadOnly),
+            CalendarPropName::Getctag => Err(rustical_dav::Error::PropReadOnly),
         }
     }
 }

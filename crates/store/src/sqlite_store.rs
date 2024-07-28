@@ -1,9 +1,11 @@
+use crate::calendar::Calendar;
+use crate::event::Event;
+use crate::{CalendarStore, Error};
 use anyhow::Result;
 use async_trait::async_trait;
+use serde::Serialize;
+use sqlx::Transaction;
 use sqlx::{sqlite::SqliteConnectOptions, Pool, Sqlite, SqlitePool};
-
-use crate::event::Event;
-use crate::{calendar::Calendar, CalendarStore, Error};
 
 #[derive(Debug)]
 pub struct SqliteCalendarStore {
@@ -30,12 +32,55 @@ impl TryFrom<EventRow> for Event {
     }
 }
 
+#[derive(Serialize, sqlx::Type)]
+#[serde(rename_all = "kebab-case")]
+enum CalendarChangeOperation {
+    // There's no distinction between Add and Modify
+    Add,
+    Delete,
+}
+
+// Logs an operation to the events
+async fn log_event_operation(
+    tx: &mut Transaction<'_, Sqlite>,
+    principal: &str,
+    cid: &str,
+    uid: &str,
+    operation: CalendarChangeOperation,
+) -> Result<(), Error> {
+    sqlx::query!(
+        r#"
+        UPDATE calendars
+        SET synctoken = synctoken + 1
+        WHERE (principal, id) = (?1, ?2)"#,
+        principal,
+        cid
+    )
+    .execute(&mut **tx)
+    .await?;
+
+    sqlx::query!(
+        r#"
+        INSERT INTO eventchangelog (principal, cid, uid, operation, synctoken)
+        VALUES (?1, ?2, ?3, ?4, (
+            SELECT synctoken FROM calendars WHERE (principal, id) = (?1, ?2)
+        ))"#,
+        principal,
+        cid,
+        uid,
+        operation
+    )
+    .execute(&mut **tx)
+    .await?;
+    Ok(())
+}
+
 #[async_trait]
 impl CalendarStore for SqliteCalendarStore {
     async fn get_calendar(&self, principal: &str, id: &str) -> Result<Calendar, Error> {
         let cal = sqlx::query_as!(
             Calendar,
-            r#"SELECT principal, id, "order", displayname, description, color, timezone, deleted_at
+            r#"SELECT principal, id, synctoken, "order", displayname, description, color, timezone, deleted_at
                 FROM calendars
                 WHERE (principal, id) = (?, ?)"#,
             principal,
@@ -49,7 +94,7 @@ impl CalendarStore for SqliteCalendarStore {
     async fn get_calendars(&self, principal: &str) -> Result<Vec<Calendar>, Error> {
         let cals = sqlx::query_as!(
             Calendar,
-            r#"SELECT principal, id, displayname, "order", description, color, timezone, deleted_at
+            r#"SELECT principal, id, synctoken, displayname, "order", description, color, timezone, deleted_at
                 FROM calendars
                 WHERE principal = ? AND deleted_at IS NULL"#,
             principal
@@ -176,7 +221,10 @@ impl CalendarStore for SqliteCalendarStore {
         uid: String,
         ics: String,
     ) -> Result<(), Error> {
-        let _ = Event::from_ics(uid.to_owned(), ics.to_owned())?;
+        let mut tx = self.db.begin().await?;
+
+        // input validation
+        Event::from_ics(uid.to_owned(), ics.to_owned())?;
         sqlx::query!(
             "REPLACE INTO events (principal, cid, uid, ics) VALUES (?, ?, ?, ?)",
             principal,
@@ -184,8 +232,18 @@ impl CalendarStore for SqliteCalendarStore {
             uid,
             ics,
         )
-        .execute(&self.db)
+        .execute(&mut *tx)
         .await?;
+
+        log_event_operation(
+            &mut tx,
+            &principal,
+            &cid,
+            &uid,
+            CalendarChangeOperation::Add,
+        )
+        .await?;
+        tx.commit().await?;
         Ok(())
     }
 
@@ -196,6 +254,8 @@ impl CalendarStore for SqliteCalendarStore {
         uid: &str,
         use_trashbin: bool,
     ) -> Result<(), Error> {
+        let mut tx = self.db.begin().await?;
+
         match use_trashbin {
             true => {
                 sqlx::query!(
@@ -204,27 +264,48 @@ impl CalendarStore for SqliteCalendarStore {
                     cid,
                     uid
                 )
-                .execute(&self.db)
+                .execute(&mut *tx)
                 .await?;
             }
             false => {
                 sqlx::query!("DELETE FROM events WHERE cid = ? AND uid = ?", cid, uid)
-                    .execute(&self.db)
+                    .execute(&mut *tx)
                     .await?;
             }
         };
+        log_event_operation(
+            &mut tx,
+            principal,
+            cid,
+            uid,
+            CalendarChangeOperation::Delete,
+        )
+        .await?;
+        tx.commit().await?;
         Ok(())
     }
 
     async fn restore_event(&mut self, principal: &str, cid: &str, uid: &str) -> Result<(), Error> {
+        let mut tx = self.db.begin().await?;
+
         sqlx::query!(
             r#"UPDATE events SET deleted_at = NULL, updated_at = datetime() WHERE (principal, cid, uid) = (?, ?, ?)"#,
             principal,
             cid,
             uid
         )
-        .execute(&self.db)
+        .execute(&mut *tx)
         .await?;
+
+        log_event_operation(
+            &mut tx,
+            principal,
+            cid,
+            uid,
+            CalendarChangeOperation::Delete,
+        )
+        .await?;
+        tx.commit().await?;
         Ok(())
     }
 }
