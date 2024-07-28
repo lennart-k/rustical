@@ -1,6 +1,3 @@
-use std::str::FromStr;
-
-use crate::namespace::Namespace;
 use crate::resource::InvalidProperty;
 use crate::resource::Resource;
 use crate::resource::ResourceService;
@@ -14,6 +11,7 @@ use actix_web::{web::Path, HttpRequest};
 use log::debug;
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 // https://docs.rs/quick-xml/latest/quick_xml/de/index.html#normal-enum-variant
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -154,10 +152,6 @@ pub async fn route_proppatch<A: CheckAuthentication, R: ResourceService + ?Sized
                 }),
             ],
         }],
-        // Dummy just for typing
-        member_responses: vec![],
-        ns_dav: Namespace::Dav.as_str(),
-        ns_caldav: Namespace::CalDAV.as_str(),
-        ns_ical: Namespace::ICal.as_str(),
+        ..Default::default()
     })
 }

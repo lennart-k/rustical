@@ -1,4 +1,4 @@
-use crate::xml::TagList;
+use crate::{namespace::Namespace, xml::TagList};
 use actix_web::{
     body::BoxBody, http::header::ContentType, HttpRequest, HttpResponse, Responder, ResponseError,
 };
@@ -54,6 +54,18 @@ pub struct MultistatusElement<T1: Serialize, T2: Serialize> {
     pub ns_caldav: &'static str,
     #[serde(rename = "@xmlns:IC")]
     pub ns_ical: &'static str,
+}
+
+impl<T1: Serialize, T2: Serialize> Default for MultistatusElement<T1, T2> {
+    fn default() -> Self {
+        Self {
+            responses: vec![],
+            member_responses: vec![],
+            ns_dav: Namespace::Dav.as_str(),
+            ns_caldav: Namespace::CalDAV.as_str(),
+            ns_ical: Namespace::ICal.as_str(),
+        }
+    }
 }
 
 impl<T1: Serialize, T2: Serialize> Responder for MultistatusElement<T1, T2> {

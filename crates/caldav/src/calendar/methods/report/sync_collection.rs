@@ -1,7 +1,6 @@
 use actix_web::HttpRequest;
 use rustical_dav::{
     methods::propfind::{PropElement, PropfindType},
-    namespace::Namespace,
     resource::HandlePropfind,
     xml::{multistatus::PropstatWrapper, MultistatusElement},
 };
@@ -81,9 +80,6 @@ pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
 
     Ok(MultistatusElement {
         responses,
-        member_responses: vec![],
-        ns_dav: Namespace::Dav.as_str(),
-        ns_caldav: Namespace::CalDAV.as_str(),
-        ns_ical: Namespace::ICal.as_str(),
+        ..Default::default()
     })
 }

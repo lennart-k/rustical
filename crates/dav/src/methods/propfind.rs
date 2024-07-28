@@ -1,13 +1,13 @@
 use crate::depth_extractor::Depth;
-use crate::namespace::Namespace;
 use crate::resource::HandlePropfind;
+use crate::resource::Resource;
 use crate::resource::ResourceService;
+use crate::xml::multistatus::PropstatWrapper;
 use crate::xml::MultistatusElement;
 use crate::xml::TagList;
 use crate::Error;
 use actix_web::web::{Data, Path};
 use actix_web::HttpRequest;
-use actix_web::Responder;
 use log::debug;
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use serde::Deserialize;
@@ -44,7 +44,7 @@ pub async fn route_propfind<A: CheckAuthentication, R: ResourceService + ?Sized>
     prefix: Data<ServicePrefix>,
     auth: AuthInfoExtractor<A>,
     depth: Depth,
-) -> Result<impl Responder, R::Error> {
+) -> Result<MultistatusElement<PropstatWrapper<<R::File as Resource>::Prop>, String>, R::Error> {
     debug!("{body}");
     let auth_info = auth.inner;
     let prefix = prefix.0.to_owned();
@@ -86,9 +86,6 @@ pub async fn route_propfind<A: CheckAuthentication, R: ResourceService + ?Sized>
 
     Ok(MultistatusElement {
         responses: vec![response],
-        member_responses,
-        ns_dav: Namespace::Dav.as_str(),
-        ns_caldav: Namespace::CalDAV.as_str(),
-        ns_ical: Namespace::ICal.as_str(),
+        ..Default::default()
     })
 }
