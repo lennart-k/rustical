@@ -41,6 +41,7 @@ pub struct ResponseElement<PropstatType: Serialize> {
 
 // RFC 2518
 // <!ELEMENT multistatus (response+, responsedescription?) >
+// Extended by sync-token as specified in RFC 6578
 #[derive(Serialize)]
 #[serde(rename = "multistatus", rename_all = "kebab-case")]
 pub struct MultistatusElement<T1: Serialize, T2: Serialize> {
