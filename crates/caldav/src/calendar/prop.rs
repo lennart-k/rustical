@@ -101,25 +101,34 @@ impl Default for UserPrivilegeSet {
 pub enum ReportMethod {
     CalendarQuery,
     CalendarMultiget,
-    // SyncCollection,
+    SyncCollection,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
-pub struct SupportedReport {
+pub struct ReportWrapper {
+    #[serde(rename = "$value")]
     report: ReportMethod,
 }
 
-impl From<ReportMethod> for SupportedReport {
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub struct SupportedReportWrapper {
+    report: ReportWrapper,
+}
+
+impl From<ReportMethod> for SupportedReportWrapper {
     fn from(value: ReportMethod) -> Self {
-        Self { report: value }
+        Self {
+            report: ReportWrapper { report: value },
+        }
     }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct SupportedReportSet {
-    supported_report: Vec<SupportedReport>,
+    supported_report: Vec<SupportedReportWrapper>,
 }
 
 impl Default for SupportedReportSet {
@@ -128,7 +137,7 @@ impl Default for SupportedReportSet {
             supported_report: vec![
                 ReportMethod::CalendarQuery.into(),
                 ReportMethod::CalendarMultiget.into(),
-                // ReportMethod::SyncCollection.into(),
+                ReportMethod::SyncCollection.into(),
             ],
         }
     }

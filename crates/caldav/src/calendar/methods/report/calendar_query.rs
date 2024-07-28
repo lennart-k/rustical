@@ -1,39 +1,20 @@
-use crate::{event::resource::EventFile, Error};
-use actix_web::{
-    web::{Data, Path},
-    HttpRequest, Responder,
-};
-use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
+use actix_web::HttpRequest;
 use rustical_dav::{
-    methods::propfind::{PropElement, PropfindType, ServicePrefix},
+    methods::propfind::{PropElement, PropfindType},
     namespace::Namespace,
     resource::HandlePropfind,
-    xml::MultistatusElement,
+    xml::{multistatus::PropstatWrapper, MultistatusElement},
 };
-use rustical_store::event::Event;
-use rustical_store::CalendarStore;
-use serde::{Deserialize, Serialize};
+use rustical_store::{event::Event, CalendarStore};
+use serde::Deserialize;
 use tokio::sync::RwLock;
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
-pub enum PropQuery {
-    Allprop,
-    Prop,
-    Propname,
-}
+use crate::{
+    event::resource::{EventFile, EventProp},
+    Error,
+};
 
 // TODO: Implement all the other filters
-
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
-#[allow(dead_code)]
-// <!ELEMENT calendar-query ((DAV:allprop | DAV:propname | DAV:prop)?, href+)>
-pub struct CalendarMultigetRequest {
-    #[serde(flatten)]
-    prop: PropfindType,
-    href: Vec<String>,
-}
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
@@ -102,24 +83,16 @@ struct FilterElement {
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
 #[allow(dead_code)]
-// #[serde(rename = "calendar-query")]
 // <!ELEMENT calendar-query ((DAV:allprop | DAV:propname | DAV:prop)?, filter, timezone?)>
 pub struct CalendarQueryRequest {
     #[serde(flatten)]
-    prop: PropfindType,
+    pub prop: PropfindType,
     filter: Option<FilterElement>,
     timezone: Option<String>,
 }
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
-pub enum ReportRequest {
-    CalendarMultiget(CalendarMultigetRequest),
-    CalendarQuery(CalendarQueryRequest),
-}
-
-async fn get_events_calendar_query<C: CalendarStore + ?Sized>(
-    _cal_query: CalendarQueryRequest,
+pub async fn get_events_calendar_query<C: CalendarStore + ?Sized>(
+    _cal_query: &CalendarQueryRequest,
     principal: &str,
     cid: &str,
     store: &RwLock<C>,
@@ -128,45 +101,17 @@ async fn get_events_calendar_query<C: CalendarStore + ?Sized>(
     Ok(store.read().await.get_events(principal, cid).await?)
 }
 
-async fn get_events_calendar_multiget<C: CalendarStore + ?Sized>(
-    _cal_query: CalendarMultigetRequest,
+pub async fn handle_calendar_query<C: CalendarStore + ?Sized>(
+    cal_query: CalendarQueryRequest,
+    req: HttpRequest,
+    prefix: &str,
     principal: &str,
     cid: &str,
-    store: &RwLock<C>,
-) -> Result<Vec<Event>, Error> {
-    // TODO: proper implementation
-    Ok(store.read().await.get_events(principal, cid).await?)
-}
+    cal_store: &RwLock<C>,
+) -> Result<MultistatusElement<PropstatWrapper<EventProp>, String>, Error> {
+    let events = get_events_calendar_query(&cal_query, principal, cid, cal_store).await?;
 
-pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?Sized>(
-    path: Path<(String, String)>,
-    body: String,
-    auth: AuthInfoExtractor<A>,
-    req: HttpRequest,
-    cal_store: Data<RwLock<C>>,
-    prefix: Data<ServicePrefix>,
-) -> Result<impl Responder, Error> {
-    let (principal, cid) = path.into_inner();
-    if principal != auth.inner.user_id {
-        return Err(Error::Unauthorized);
-    }
-
-    let request: ReportRequest = quick_xml::de::from_str(&body)?;
-    let events = match request.clone() {
-        ReportRequest::CalendarQuery(cal_query) => {
-            get_events_calendar_query(cal_query, &principal, &cid, &cal_store).await?
-        }
-        ReportRequest::CalendarMultiget(cal_multiget) => {
-            get_events_calendar_multiget(cal_multiget, &principal, &cid, &cal_store).await?
-        }
-    };
-
-    // TODO: Change this
-    let proptag = match request {
-        ReportRequest::CalendarQuery(CalendarQueryRequest { prop, .. }) => prop.clone(),
-        ReportRequest::CalendarMultiget(CalendarMultigetRequest { prop, .. }) => prop.clone(),
-    };
-    let props = match proptag {
+    let props = match cal_query.prop {
         PropfindType::Allprop => {
             vec!["allprop".to_owned()]
         }
@@ -183,14 +128,14 @@ pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?S
         let path = format!("{}/{}", req.path(), event.get_uid());
         responses.push(
             EventFile { event }
-                .propfind(&prefix.0, path, props.clone())
+                .propfind(prefix, path, props.clone())
                 .await?,
         );
     }
 
     Ok(MultistatusElement {
         responses,
-        member_responses: Vec::<String>::new(),
+        member_responses: vec![],
         ns_dav: Namespace::Dav.as_str(),
         ns_caldav: Namespace::CalDAV.as_str(),
         ns_ical: Namespace::ICal.as_str(),

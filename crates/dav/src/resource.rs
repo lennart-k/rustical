@@ -1,4 +1,5 @@
-use crate::xml::TagList;
+use crate::xml::multistatus::{PropTagWrapper, PropstatElement, PropstatWrapper};
+use crate::xml::{multistatus::ResponseElement, TagList};
 use crate::Error;
 use actix_web::{http::StatusCode, HttpRequest, ResponseError};
 use async_trait::async_trait;
@@ -65,41 +66,6 @@ pub trait ResourceService: Sized {
     }
 }
 
-#[derive(Serialize)]
-pub struct PropTagWrapper<T: Serialize> {
-    #[serde(rename = "$value")]
-    prop: T,
-}
-
-#[derive(Serialize)]
-#[serde(untagged)]
-pub enum PropWrapper<T: Serialize> {
-    Prop(PropTagWrapper<T>),
-    TagList(TagList),
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct PropstatElement<T: Serialize> {
-    pub prop: T,
-    pub status: String,
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct PropstatResponseElement<T1: Serialize, T2: Serialize> {
-    pub href: String,
-    pub propstat: Vec<PropstatType<T1, T2>>,
-}
-
-#[derive(Serialize)]
-#[serde(untagged)]
-pub enum PropstatType<T1: Serialize, T2: Serialize> {
-    Normal(PropstatElement<T1>),
-    NotFound(PropstatElement<T2>),
-    Conflict(PropstatElement<T2>),
-}
-
 #[async_trait(?Send)]
 pub trait HandlePropfind {
     type Error: ResponseError + From<crate::Error> + From<anyhow::Error>;
@@ -121,7 +87,7 @@ impl<R: Resource> HandlePropfind for R {
         prefix: &str,
         path: String,
         props: Vec<&str>,
-    ) -> Result<PropstatResponseElement<PropWrapper<Vec<R::Prop>>, TagList>, R::Error> {
+    ) -> Result<ResponseElement<PropstatWrapper<R::Prop>>, R::Error> {
         let mut props = props;
         if props.contains(&"propname") {
             if props.len() != 1 {
@@ -134,10 +100,10 @@ impl<R: Resource> HandlePropfind for R {
                 .iter()
                 .map(|&prop| prop.to_string())
                 .collect();
-            return Ok(PropstatResponseElement {
+            return Ok(ResponseElement {
                 href: path,
-                propstat: vec![PropstatType::Normal(PropstatElement {
-                    prop: PropWrapper::TagList(TagList::from(props)),
+                propstat: vec![PropstatWrapper::TagList(PropstatElement {
+                    prop: TagList::from(props),
                     status: format!("HTTP/1.1 {}", StatusCode::OK),
                 })],
             });
@@ -170,14 +136,14 @@ impl<R: Resource> HandlePropfind for R {
             .map(|prop| self.get_prop(prefix, prop))
             .collect::<Result<Vec<R::Prop>, R::Error>>()?;
 
-        let mut propstats = vec![PropstatType::Normal(PropstatElement {
+        let mut propstats = vec![PropstatWrapper::Normal(PropstatElement {
             status: format!("HTTP/1.1 {}", StatusCode::OK),
-            prop: PropWrapper::Prop(PropTagWrapper {
+            prop: PropTagWrapper {
                 prop: prop_responses,
-            }),
+            },
         })];
         if !invalid_props.is_empty() {
-            propstats.push(PropstatType::NotFound(PropstatElement {
+            propstats.push(PropstatWrapper::TagList(PropstatElement {
                 status: format!("HTTP/1.1 {}", StatusCode::NOT_FOUND),
                 prop: invalid_props
                     .into_iter()
@@ -186,7 +152,7 @@ impl<R: Resource> HandlePropfind for R {
                     .into(),
             }));
         }
-        Ok(PropstatResponseElement {
+        Ok(ResponseElement {
             href: path,
             propstat: propstats,
         })
