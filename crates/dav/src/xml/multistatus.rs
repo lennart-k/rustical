@@ -13,13 +13,6 @@ pub struct PropTagWrapper<T: Serialize> {
     pub prop: Vec<T>,
 }
 
-// #[derive(Serialize)]
-// #[serde(untagged)]
-// pub enum PropWrapper<T: Serialize> {
-//     Prop(Vec<T>),
-//     TagList(TagList),
-// }
-
 // RFC 2518
 // <!ELEMENT propstat (prop, status, responsedescription?) >
 #[derive(Serialize)]
