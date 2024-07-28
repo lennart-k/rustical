@@ -26,11 +26,10 @@ actix-web = "4.4"
 anyhow = { version = "1.0", features = ["backtrace"] }
 toml = "0.8"
 clap = { version = "4.4", features = ["derive", "env"] }
-sqlx = { version = "0.7", features = [
+sqlx = { version = "0.8", features = [
   "sqlx-sqlite",
   "sqlx-postgres",
   "uuid",
-  "time",
   "chrono",
   "postgres",
   "sqlite",
