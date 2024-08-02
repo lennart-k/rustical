@@ -32,7 +32,7 @@ impl TryFrom<EventRow> for Event {
     }
 }
 
-#[derive(Serialize, sqlx::Type)]
+#[derive(Debug, Clone, Serialize, sqlx::Type)]
 #[serde(rename_all = "kebab-case")]
 enum CalendarChangeOperation {
     // There's no distinction between Add and Modify
@@ -307,6 +307,47 @@ impl CalendarStore for SqliteCalendarStore {
         .await?;
         tx.commit().await?;
         Ok(())
+    }
+
+    async fn sync_changes(
+        &self,
+        principal: &str,
+        cid: &str,
+        synctoken: i64,
+    ) -> Result<(Vec<Event>, Vec<String>, i64), Error> {
+        struct Row {
+            uid: String,
+            synctoken: i64,
+        }
+        let changes = sqlx::query_as!(
+            Row,
+            r#"
+                SELECT DISTINCT uid, max(0, synctoken) as "synctoken!: i64" from eventchangelog
+                WHERE synctoken > ?
+                ORDER BY synctoken ASC
+            "#,
+            synctoken
+        )
+        .fetch_all(&self.db)
+        .await?;
+
+        let mut events = vec![];
+        let mut deleted_events = vec![];
+
+        let new_synctoken = changes
+            .last()
+            .map(|&Row { synctoken, .. }| synctoken)
+            .unwrap_or(0);
+
+        for Row { uid, .. } in changes {
+            match self.get_event(principal, cid, &uid).await {
+                Ok(event) => events.push(event),
+                Err(Error::NotFound) => deleted_events.push(uid),
+                Err(err) => return Err(err),
+            }
+        }
+
+        Ok((events, deleted_events, new_synctoken))
     }
 }
 
