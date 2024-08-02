@@ -1,10 +1,17 @@
-use actix_web::HttpRequest;
+use actix_web::{http::StatusCode, HttpRequest};
 use rustical_dav::{
     methods::propfind::{PropElement, PropfindType},
     resource::HandlePropfind,
-    xml::{multistatus::PropstatWrapper, MultistatusElement},
+    xml::{
+        multistatus::{PropstatElement, PropstatWrapper, ResponseElement},
+        MultistatusElement,
+    },
 };
-use rustical_store::{event::Event, CalendarStore};
+use rustical_store::{
+    calendar::{format_synctoken, parse_synctoken},
+    event::Event,
+    CalendarStore,
+};
 use serde::Deserialize;
 use tokio::sync::RwLock;
 
@@ -36,16 +43,6 @@ pub struct SyncCollectionRequest {
     limit: Option<u64>,
 }
 
-pub async fn get_events_sync_collection<C: CalendarStore + ?Sized>(
-    _sync_collection: &SyncCollectionRequest,
-    principal: &str,
-    cid: &str,
-    store: &RwLock<C>,
-) -> Result<Vec<Event>, Error> {
-    // TODO: proper implementation
-    Ok(store.read().await.get_events(principal, cid).await?)
-}
-
 pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
     sync_collection: SyncCollectionRequest,
     req: HttpRequest,
@@ -54,8 +51,6 @@ pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
     cid: &str,
     cal_store: &RwLock<C>,
 ) -> Result<MultistatusElement<PropstatWrapper<EventProp>, String>, Error> {
-    let events = get_events_sync_collection(&sync_collection, principal, cid, cal_store).await?;
-
     let props = match sync_collection.prop {
         PropfindType::Allprop => {
             vec!["allprop".to_owned()]
@@ -68,8 +63,15 @@ pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
     };
     let props: Vec<&str> = props.iter().map(String::as_str).collect();
 
+    let old_synctoken = parse_synctoken(&sync_collection.sync_token).unwrap_or(0);
+    let (new_events, deleted_events, new_synctoken) = cal_store
+        .read()
+        .await
+        .sync_changes(principal, cid, old_synctoken)
+        .await?;
+
     let mut responses = Vec::new();
-    for event in events {
+    for event in new_events {
         let path = format!("{}/{}", req.path(), event.get_uid());
         responses.push(
             EventFile { event }
@@ -78,8 +80,18 @@ pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
         );
     }
 
+    for event_uid in deleted_events {
+        let path = format!("{}/{}", req.path(), event_uid);
+        responses.push(ResponseElement {
+            href: path,
+            status: Some(format!("HTTP/1.1 {}", StatusCode::NOT_FOUND)),
+            ..Default::default()
+        });
+    }
+
     Ok(MultistatusElement {
         responses,
+        sync_token: Some(format_synctoken(new_synctoken)),
         ..Default::default()
     })
 }
