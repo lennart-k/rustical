@@ -151,6 +151,7 @@ pub async fn route_proppatch<A: CheckAuthentication, R: ResourceService + ?Sized
                     status: format!("HTTP/1.1 {}", StatusCode::CONFLICT),
                 }),
             ],
+            ..Default::default()
         }],
         ..Default::default()
     })

@@ -44,7 +44,13 @@ pub async fn route_propfind<A: CheckAuthentication, R: ResourceService + ?Sized>
     prefix: Data<ServicePrefix>,
     auth: AuthInfoExtractor<A>,
     depth: Depth,
-) -> Result<MultistatusElement<PropstatWrapper<<R::File as Resource>::Prop>, String>, R::Error> {
+) -> Result<
+    MultistatusElement<
+        PropstatWrapper<<R::File as Resource>::Prop>,
+        PropstatWrapper<<R::MemberType as Resource>::Prop>,
+    >,
+    R::Error,
+> {
     debug!("{body}");
     let auth_info = auth.inner;
     let prefix = prefix.0.to_owned();
@@ -86,6 +92,7 @@ pub async fn route_propfind<A: CheckAuthentication, R: ResourceService + ?Sized>
 
     Ok(MultistatusElement {
         responses: vec![response],
+        member_responses,
         ..Default::default()
     })
 }

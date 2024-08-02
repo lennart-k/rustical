@@ -106,6 +106,7 @@ impl<R: Resource> HandlePropfind for R {
                     prop: TagList::from(props),
                     status: format!("HTTP/1.1 {}", StatusCode::OK),
                 })],
+                ..Default::default()
             });
         }
         if props.contains(&"allprop") {
@@ -155,6 +156,7 @@ impl<R: Resource> HandlePropfind for R {
         Ok(ResponseElement {
             href: path,
             propstat: propstats,
+            ..Default::default()
         })
     }
 }

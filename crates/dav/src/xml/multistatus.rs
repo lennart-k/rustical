@@ -36,7 +36,19 @@ pub enum PropstatWrapper<T: Serialize> {
 #[serde(rename_all = "kebab-case")]
 pub struct ResponseElement<PropstatType: Serialize> {
     pub href: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
     pub propstat: Vec<PropstatType>,
+}
+
+impl<PT: Serialize> Default for ResponseElement<PT> {
+    fn default() -> Self {
+        Self {
+            href: String::new(),
+            status: None,
+            propstat: vec![],
+        }
+    }
 }
 
 // RFC 2518
@@ -55,6 +67,7 @@ pub struct MultistatusElement<T1: Serialize, T2: Serialize> {
     pub ns_caldav: &'static str,
     #[serde(rename = "@xmlns:IC")]
     pub ns_ical: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub sync_token: Option<String>,
 }
 
