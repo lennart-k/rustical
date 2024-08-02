@@ -2,7 +2,10 @@ use crate::{
     event::resource::{EventFile, EventProp},
     Error,
 };
-use actix_web::HttpRequest;
+use actix_web::{
+    dev::{Path, ResourceDef},
+    HttpRequest,
+};
 use rustical_dav::{
     methods::propfind::{PropElement, PropfindType},
     resource::HandlePropfind,
@@ -23,13 +26,38 @@ pub struct CalendarMultigetRequest {
 }
 
 pub async fn get_events_calendar_multiget<C: CalendarStore + ?Sized>(
-    _cal_query: &CalendarMultigetRequest,
+    cal_query: &CalendarMultigetRequest,
+    prefix: &str,
     principal: &str,
     cid: &str,
     store: &RwLock<C>,
 ) -> Result<Vec<Event>, Error> {
-    // TODO: proper implementation
-    Ok(store.read().await.get_events(principal, cid).await?)
+    // TODO: add proper error results for single events
+    let resource_def =
+        ResourceDef::prefix(prefix).join(&ResourceDef::new("/user/{principal}/{cid}/{uid}"));
+
+    let mut result = vec![];
+
+    let store = store.read().await;
+    for href in &cal_query.href {
+        let mut path = Path::new(href.as_str());
+        if !resource_def.capture_match_info(&mut path) {
+            // TODO: Handle error
+            continue;
+        };
+        if path.get("principal").unwrap() != principal {
+            // TODO: Handle error
+            continue;
+        }
+        if path.get("cid").unwrap() != cid {
+            // TODO: Handle error
+            continue;
+        }
+        let uid = path.get("uid").unwrap();
+        result.push(store.get_event(principal, cid, uid).await?);
+    }
+
+    Ok(result)
 }
 
 pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
@@ -40,7 +68,8 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
     cid: &str,
     cal_store: &RwLock<C>,
 ) -> Result<MultistatusElement<PropstatWrapper<EventProp>, String>, Error> {
-    let events = get_events_calendar_multiget(&cal_multiget, principal, cid, cal_store).await?;
+    let events =
+        get_events_calendar_multiget(&cal_multiget, prefix, principal, cid, cal_store).await?;
 
     let props = match cal_multiget.prop {
         PropfindType::Allprop => {
