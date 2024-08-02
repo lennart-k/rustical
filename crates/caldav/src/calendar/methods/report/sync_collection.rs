@@ -3,13 +3,12 @@ use rustical_dav::{
     methods::propfind::{PropElement, PropfindType},
     resource::HandlePropfind,
     xml::{
-        multistatus::{PropstatElement, PropstatWrapper, ResponseElement},
+        multistatus::{PropstatWrapper, ResponseElement},
         MultistatusElement,
     },
 };
 use rustical_store::{
     calendar::{format_synctoken, parse_synctoken},
-    event::Event,
     CalendarStore,
 };
 use serde::Deserialize;
