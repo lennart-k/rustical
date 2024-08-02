@@ -145,14 +145,10 @@ impl Resource for CalendarFile {
             CalendarPropName::SupportedReportSet => {
                 CalendarProp::SupportedReportSet(SupportedReportSet::default())
             }
-            CalendarPropName::SyncToken => CalendarProp::SyncToken(format!(
-                "github.com/lennart-k/rustical/ns/{}",
-                self.calendar.synctoken
-            )),
-            CalendarPropName::Getctag => CalendarProp::Getctag(format!(
-                "github.com/lennart-k/rustical/ns/{}",
-                self.calendar.synctoken
-            )),
+            CalendarPropName::SyncToken => {
+                CalendarProp::SyncToken(self.calendar.format_synctoken())
+            }
+            CalendarPropName::Getctag => CalendarProp::Getctag(self.calendar.format_synctoken()),
         })
     }
 
