@@ -125,6 +125,7 @@ impl From<ReportMethod> for SupportedReportWrapper {
     }
 }
 
+// RFC 3253 section-3.1.5
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub struct SupportedReportSet {
