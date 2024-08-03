@@ -1,0 +1,11 @@
+[package]
+name = "rustical_frontend"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web = "4.8"
+askama = { version = "0.12", features = ["serde", "with-actix-web"] }
+askama_actix = "0.14"
+tokio = { version = "1.39", features = ["sync", "full"] }
+rustical_store = { path = "../store/" }

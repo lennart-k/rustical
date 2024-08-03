@@ -1,11 +1,11 @@
-use std::sync::Arc;
-
 use actix_web::body::MessageBody;
 use actix_web::dev::{ServiceFactory, ServiceRequest, ServiceResponse};
 use actix_web::middleware::{Logger, NormalizePath};
 use actix_web::{web, App};
 use rustical_auth::CheckAuthentication;
+use rustical_frontend::configure_frontend;
 use rustical_store::CalendarStore;
+use std::sync::Arc;
 use tokio::sync::RwLock;
 
 pub fn make_app<CS: CalendarStore + ?Sized, A: CheckAuthentication>(
@@ -40,4 +40,8 @@ pub fn make_app<CS: CalendarStore + ?Sized, A: CheckAuthentication>(
                                                                                                      //     rustical_carddav::configure_well_known(cfg, "/carddav".to_string())
                                                                                                      // }),
         )
+        .service(
+            web::scope("/frontend").configure(|cfg| configure_frontend(cfg, cal_store.clone())),
+        )
+        .service(web::redirect("/", "/frontend").permanent())
 }
