@@ -32,5 +32,4 @@ CREATE TABLE eventchangelog (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (principal, cid, created_at),
   FOREIGN KEY (principal, cid) REFERENCES calendars(principal, id) ON DELETE CASCADE
-)
-
+);
