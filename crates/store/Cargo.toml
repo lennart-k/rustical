@@ -20,12 +20,12 @@ sqlx = { version = "0.8", features = [
   "runtime-tokio",
   "migrate",
 ] }
-tokio = { version = "1.35", features = ["sync", "full"] }
+tokio = { version = "1.39", features = ["sync", "full"] }
 toml = "0.8"
 ical = { version = "0.11", features = ["generator", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 regex = "1.10"
-lazy_static = "1.4"
+lazy_static = "1.5"
 rstest = "0.21"
 rstest_reuse = "0.7.0"
 thiserror = "1.0.61"

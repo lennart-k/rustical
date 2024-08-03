@@ -4,20 +4,20 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-actix-web = "4.4"
+actix-web = "4.8"
 anyhow = "1.0"
 async-trait = "0.1"
 derive_more = "0.99"
 futures-util = "0.3"
-quick-xml = { version = "0.35", features = [
+quick-xml = { version = "0.36", features = [
   "serde",
   "serde-types",
   "serialize",
 ] }
 rustical_auth = { path = "../auth/" }
-serde = { version = "1.0.197", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
 strum = "0.26"
 itertools = "0.13"
 thiserror = "1.0"
 roxmltree = "0.20"
-log = "0.4.21"
+log = "0.4"
