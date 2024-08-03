@@ -1,13 +1,13 @@
 use crate::{
-    timestamps::{parse_datetime, parse_duration},
+    timestamps::{parse_duration, CalDateTime},
     Error,
 };
 use anyhow::{anyhow, Result};
-use chrono::{Duration, NaiveDateTime, Timelike};
+use chrono::Duration;
 use ical::parser::{ical::component::IcalCalendar, Component};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::io::BufReader;
+use std::{io::BufReader, str::FromStr};
 
 #[derive(Debug, Clone)]
 pub struct Event {
@@ -87,7 +87,7 @@ impl Event {
         &self.ics
     }
 
-    pub fn get_first_occurence(&self) -> Result<NaiveDateTime> {
+    pub fn get_first_occurence(&self) -> Result<CalDateTime> {
         // This is safe since we enforce the event's existance in the constructor
         let event = self.cal.events.first().unwrap();
         let dtstart = event
@@ -96,10 +96,10 @@ impl Event {
             .value
             .to_owned()
             .ok_or(anyhow!("DTSTART property has no value!"))?;
-        parse_datetime(&dtstart)
+        Ok(CalDateTime::from_str(&dtstart)?)
     }
 
-    pub fn get_last_occurence(&self) -> Result<NaiveDateTime> {
+    pub fn get_last_occurence(&self) -> Result<CalDateTime> {
         // This is safe since we enforce the event's existence in the constructor
         let event = self.cal.events.first().unwrap();
 
@@ -113,7 +113,7 @@ impl Event {
                 .value
                 .to_owned()
                 .ok_or(anyhow!("DTEND property has no value!"))?;
-            return parse_datetime(&dtend);
+            return Ok(CalDateTime::from_str(&dtend)?);
         }
 
         if let Some(dtend_prop) = event.get_property("DURATION") {
@@ -126,10 +126,9 @@ impl Event {
         }
 
         let dtstart = self.get_first_occurence()?;
-        if dtstart.num_seconds_from_midnight() == 0 {
-            // no explicit time given => whole-day event
+        if let CalDateTime::Date(_) = dtstart {
             return Ok(dtstart + Duration::days(1));
-        };
+        }
 
         Err(anyhow!("help, couldn't determine any last occurence"))
     }
