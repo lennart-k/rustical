@@ -1,8 +1,9 @@
 use actix_web::{http::StatusCode, FromRequest, HttpRequest, ResponseError};
-use derive_more::Display;
 use futures_util::future::{err, ok, Ready};
+use thiserror::Error;
 
-#[derive(Debug, Display)]
+#[derive(Error, Debug)]
+#[error("Invalid Depth header")]
 pub struct InvalidDepthHeader {}
 
 impl ResponseError for InvalidDepthHeader {

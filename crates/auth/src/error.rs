@@ -1,15 +1,15 @@
 use actix_web::{http::StatusCode, HttpResponse};
-use derive_more::Display;
 use thiserror::Error;
 
-#[derive(Debug, Display, Error, Clone)]
+#[derive(Debug, Error, Clone)]
 pub enum Error {
-    #[display("Internal server error")]
+    #[error("Internal server error")]
     InternalError,
-    #[display("Not found")]
+    #[error("Not found")]
     NotFound,
-    #[display("Bad request")]
+    #[error("Bad request")]
     BadRequest,
+    #[error("Unauthorized")]
     Unauthorized,
 }
 

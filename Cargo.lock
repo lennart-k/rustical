@@ -1952,7 +1952,6 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "actix-web-httpauth",
- "derive_more 1.0.0",
  "futures-util",
  "password-auth",
  "serde",
@@ -2010,7 +2009,6 @@ dependencies = [
  "actix-web",
  "anyhow",
  "async-trait",
- "derive_more 1.0.0",
  "futures-util",
  "itertools",
  "log",
