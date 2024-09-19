@@ -14,7 +14,7 @@ rustical_caldav = { path = "./crates/caldav/" }
 rustical_carddav = { path = "./crates/carddav/" }
 rustical_frontend = { path = "./crates/frontend/" }
 serde = { version = "1.0", features = ["derive"] }
-tokio = { version = "1.39", features = [
+tokio = { version = "1.40", features = [
   "net",
   "tracing",
   "macros",
@@ -23,7 +23,7 @@ tokio = { version = "1.39", features = [
 ] }
 tracing = "0.1"
 env_logger = "0.11"
-actix-web = "4.8"
+actix-web = "4.9"
 anyhow = { version = "1.0", features = ["backtrace"] }
 toml = "0.8"
 clap = { version = "4.5", features = ["derive", "env"] }

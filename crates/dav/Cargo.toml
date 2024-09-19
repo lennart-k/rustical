@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-actix-web = "4.8"
+actix-web = "4.9"
 anyhow = "1.0"
 async-trait = "0.1"
-derive_more = "0.99"
+derive_more = "1.0"
 futures-util = "0.3"
 quick-xml = { version = "0.36", features = [
   "serde",

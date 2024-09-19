@@ -4,8 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-actix-web = "4.8"
+actix-web = "4.9"
 askama = { version = "0.12", features = ["serde", "with-actix-web"] }
 askama_actix = "0.14"
-tokio = { version = "1.39", features = ["sync", "full"] }
+tokio = { version = "1.40", features = ["sync", "full"] }
+rustical_auth = { path = "../auth/" }
 rustical_store = { path = "../store/" }
+anyhow = "1.0"
+thiserror = "1.0"
+actix-session = { version = "0.10", features = ["cookie-session"] }
+serde = { version = "1.0", features = ["derive", "rc"] }
