@@ -8,11 +8,13 @@ use crate::xml::TagList;
 use crate::Error;
 use actix_web::web::{Data, Path};
 use actix_web::HttpRequest;
+use derive_more::derive::Deref;
 use log::debug;
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use serde::Deserialize;
 
 // This is not the final place for this struct
+#[derive(Deref)]
 pub struct ServicePrefix(pub String);
 
 #[derive(Deserialize, Clone, Debug)]
@@ -53,11 +55,10 @@ pub async fn route_propfind<A: CheckAuthentication, R: ResourceService>(
 > {
     debug!("{body}");
     let auth_info = auth.inner;
-    let prefix = prefix.0.to_owned();
-    let path_components = path_components.into_inner();
+    let prefix = prefix.into_inner();
     let path = req.path().to_owned();
 
-    let resource_service = R::new(&req, &auth_info, path_components.clone()).await?;
+    let resource_service = R::new(&req, &auth_info, path_components.into_inner()).await?;
 
     // A request body is optional. If empty we MUST return all props
     let propfind: PropfindElement = if !body.is_empty() {

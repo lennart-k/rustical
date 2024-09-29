@@ -20,3 +20,4 @@ itertools = "0.13"
 thiserror = "1.0"
 roxmltree = "0.20"
 log = "0.4"
+derive_more = { version = "1.0.0", features = ["deref"] }

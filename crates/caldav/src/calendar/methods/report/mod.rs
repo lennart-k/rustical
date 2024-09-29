@@ -40,6 +40,7 @@ pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?S
     cal_store: Data<RwLock<C>>,
     prefix: Data<ServicePrefix>,
 ) -> Result<impl Responder, Error> {
+    let prefix = prefix.into_inner();
     let (principal, cid) = path.into_inner();
     if principal != auth.inner.user_id {
         return Err(Error::Unauthorized);
@@ -51,10 +52,10 @@ pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?S
 
     Ok(match request.clone() {
         ReportRequest::CalendarQuery(cal_query) => {
-            handle_calendar_query(cal_query, req, &prefix.0, &principal, &cid, &cal_store).await?
+            handle_calendar_query(cal_query, req, &prefix, &principal, &cid, &cal_store).await?
         }
         ReportRequest::CalendarMultiget(cal_multiget) => {
-            handle_calendar_multiget(cal_multiget, req, &prefix.0, &principal, &cid, &cal_store)
+            handle_calendar_multiget(cal_multiget, req, &prefix, &principal, &cid, &cal_store)
                 .await?
         }
         ReportRequest::SyncCollection(sync_collection) => {
