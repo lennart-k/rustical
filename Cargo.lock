@@ -1967,6 +1967,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "base64 0.22.1",
+ "derive_more 1.0.0",
  "futures-util",
  "quick-xml",
  "roxmltree",
