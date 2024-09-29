@@ -1,6 +1,7 @@
 use crate::Error;
 use actix_web::{web::Data, HttpRequest};
 use async_trait::async_trait;
+use derive_more::derive::{From, Into};
 use rustical_auth::AuthInfo;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_store::event::Event;
@@ -43,10 +44,8 @@ impl InvalidProperty for EventProp {
     }
 }
 
-#[derive(Clone)]
-pub struct EventFile {
-    pub event: Event,
-}
+#[derive(Clone, From, Into)]
+pub struct EventFile(Event);
 
 impl Resource for EventFile {
     type PropName = EventPropName;
@@ -55,8 +54,8 @@ impl Resource for EventFile {
 
     fn get_prop(&self, _prefix: &str, prop: Self::PropName) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
-            EventPropName::Getetag => EventProp::Getetag(self.event.get_etag()),
-            EventPropName::CalendarData => EventProp::CalendarData(self.event.get_ics().to_owned()),
+            EventPropName::Getetag => EventProp::Getetag(self.0.get_etag()),
+            EventPropName::CalendarData => EventProp::CalendarData(self.0.get_ics().to_owned()),
             EventPropName::Getcontenttype => {
                 EventProp::Getcontenttype("text/calendar;charset=utf-8".to_owned())
             }
@@ -104,7 +103,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResource<C> {
             .await
             .get_event(&self.principal, &self.cid, &self.uid)
             .await?;
-        Ok(EventFile { event })
+        Ok(event.into())
     }
 
     async fn save_file(&self, _file: Self::File) -> Result<(), Self::Error> {

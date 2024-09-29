@@ -130,12 +130,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResource<C> {
             .await?;
         Ok(calendars
             .into_iter()
-            .map(|cal| {
-                (
-                    format!("{}/{}", &self.path, &cal.id),
-                    CalendarFile { calendar: cal },
-                )
-            })
+            .map(|cal| (format!("{}/{}", &self.path, &cal.id), cal.into()))
             .collect())
     }
 

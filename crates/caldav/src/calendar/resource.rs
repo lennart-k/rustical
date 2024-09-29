@@ -3,6 +3,7 @@ use crate::Error;
 use actix_web::{web::Data, HttpRequest};
 use anyhow::anyhow;
 use async_trait::async_trait;
+use derive_more::derive::{From, Into};
 use rustical_auth::AuthInfo;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
@@ -87,10 +88,8 @@ impl InvalidProperty for CalendarProp {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct CalendarFile {
-    pub calendar: Calendar,
-}
+#[derive(Clone, Debug, From, Into)]
+pub struct CalendarFile(Calendar);
 
 impl Resource for CalendarFile {
     type PropName = CalendarPropName;
@@ -101,26 +100,22 @@ impl Resource for CalendarFile {
         Ok(match prop {
             CalendarPropName::Resourcetype => CalendarProp::Resourcetype(Resourcetype::default()),
             CalendarPropName::CurrentUserPrincipal => CalendarProp::CurrentUserPrincipal(
-                HrefElement::new(format!("{}/user/{}/", prefix, self.calendar.principal)),
+                HrefElement::new(format!("{}/user/{}/", prefix, self.0.principal)),
             ),
             CalendarPropName::Owner => CalendarProp::Owner(HrefElement::new(format!(
                 "{}/user/{}/",
-                prefix, self.calendar.principal
+                prefix, self.0.principal
             ))),
-            CalendarPropName::Displayname => {
-                CalendarProp::Displayname(self.calendar.displayname.clone())
-            }
-            CalendarPropName::CalendarColor => {
-                CalendarProp::CalendarColor(self.calendar.color.clone())
-            }
+            CalendarPropName::Displayname => CalendarProp::Displayname(self.0.displayname.clone()),
+            CalendarPropName::CalendarColor => CalendarProp::CalendarColor(self.0.color.clone()),
             CalendarPropName::CalendarDescription => {
-                CalendarProp::CalendarDescription(self.calendar.description.clone())
+                CalendarProp::CalendarDescription(self.0.description.clone())
             }
             CalendarPropName::CalendarTimezone => {
-                CalendarProp::CalendarTimezone(self.calendar.timezone.clone())
+                CalendarProp::CalendarTimezone(self.0.timezone.clone())
             }
             CalendarPropName::CalendarOrder => {
-                CalendarProp::CalendarOrder(format!("{}", self.calendar.order).into())
+                CalendarProp::CalendarOrder(format!("{}", self.0.order).into())
             }
             CalendarPropName::SupportedCalendarComponentSet => {
                 CalendarProp::SupportedCalendarComponentSet(SupportedCalendarComponentSet {
@@ -144,10 +139,8 @@ impl Resource for CalendarFile {
             CalendarPropName::SupportedReportSet => {
                 CalendarProp::SupportedReportSet(SupportedReportSet::default())
             }
-            CalendarPropName::SyncToken => {
-                CalendarProp::SyncToken(self.calendar.format_synctoken())
-            }
-            CalendarPropName::Getctag => CalendarProp::Getctag(self.calendar.format_synctoken()),
+            CalendarPropName::SyncToken => CalendarProp::SyncToken(self.0.format_synctoken()),
+            CalendarPropName::Getctag => CalendarProp::Getctag(self.0.format_synctoken()),
         })
     }
 
@@ -157,23 +150,23 @@ impl Resource for CalendarFile {
             CalendarProp::CurrentUserPrincipal(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Owner(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Displayname(displayname) => {
-                self.calendar.displayname = displayname;
+                self.0.displayname = displayname;
                 Ok(())
             }
             CalendarProp::CalendarColor(color) => {
-                self.calendar.color = color;
+                self.0.color = color;
                 Ok(())
             }
             CalendarProp::CalendarDescription(description) => {
-                self.calendar.description = description;
+                self.0.description = description;
                 Ok(())
             }
             CalendarProp::CalendarTimezone(timezone) => {
-                self.calendar.timezone = timezone;
+                self.0.timezone = timezone;
                 Ok(())
             }
             CalendarProp::CalendarOrder(order) => {
-                self.calendar.order = match order {
+                self.0.order = match order {
                     Some(order) => order.parse().map_err(|_e| anyhow!("invalid order"))?,
                     None => 0,
                 };
@@ -199,23 +192,23 @@ impl Resource for CalendarFile {
             CalendarPropName::CurrentUserPrincipal => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::Owner => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::Displayname => {
-                self.calendar.displayname = None;
+                self.0.displayname = None;
                 Ok(())
             }
             CalendarPropName::CalendarColor => {
-                self.calendar.color = None;
+                self.0.color = None;
                 Ok(())
             }
             CalendarPropName::CalendarDescription => {
-                self.calendar.description = None;
+                self.0.description = None;
                 Ok(())
             }
             CalendarPropName::CalendarTimezone => {
-                self.calendar.timezone = None;
+                self.0.timezone = None;
                 Ok(())
             }
             CalendarPropName::CalendarOrder => {
-                self.calendar.order = 0;
+                self.0.order = 0;
                 Ok(())
             }
             CalendarPropName::SupportedCalendarComponentSet => {
@@ -247,7 +240,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResource<C> {
             .get_calendar(&self.principal, &self.calendar_id)
             .await
             .map_err(|_e| Error::NotFound)?;
-        Ok(CalendarFile { calendar })
+        Ok(calendar.into())
     }
 
     async fn get_members(
@@ -262,12 +255,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResource<C> {
             .get_events(&self.principal, &self.calendar_id)
             .await?
             .into_iter()
-            .map(|event| {
-                (
-                    format!("{}/{}", self.path, &event.get_uid()),
-                    EventFile { event },
-                )
-            })
+            .map(|event| (format!("{}/{}", self.path, &event.get_uid()), event.into()))
             .collect())
     }
 
@@ -297,7 +285,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResource<C> {
             .update_calendar(
                 self.principal.to_owned(),
                 self.calendar_id.to_owned(),
-                file.calendar,
+                file.into(),
             )
             .await?;
         Ok(())
