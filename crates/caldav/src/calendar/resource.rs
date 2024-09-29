@@ -1,4 +1,4 @@
-use crate::event::resource::EventFile;
+use crate::event::resource::EventResource;
 use crate::Error;
 use actix_web::{web::Data, HttpRequest};
 use anyhow::anyhow;
@@ -19,7 +19,7 @@ use super::prop::{
     SupportedReportSet, UserPrivilegeSet,
 };
 
-pub struct CalendarResource<C: CalendarStore + ?Sized> {
+pub struct CalendarResourceService<C: CalendarStore + ?Sized> {
     pub cal_store: Arc<RwLock<C>>,
     pub path: String,
     pub principal: String,
@@ -89,9 +89,9 @@ impl InvalidProperty for CalendarProp {
 }
 
 #[derive(Clone, Debug, From, Into)]
-pub struct CalendarFile(Calendar);
+pub struct CalendarResource(Calendar);
 
-impl Resource for CalendarFile {
+impl Resource for CalendarResource {
     type PropName = CalendarPropName;
     type Prop = CalendarProp;
     type Error = Error;
@@ -226,10 +226,10 @@ impl Resource for CalendarFile {
 }
 
 #[async_trait(?Send)]
-impl<C: CalendarStore + ?Sized> ResourceService for CalendarResource<C> {
-    type MemberType = EventFile;
+impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
+    type MemberType = EventResource;
     type PathComponents = (String, String); // principal, calendar_id
-    type File = CalendarFile;
+    type File = CalendarResource;
     type Error = Error;
 
     async fn get_file(&self) -> Result<Self::File, Error> {

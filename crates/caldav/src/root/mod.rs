@@ -7,7 +7,7 @@ use rustical_dav::xml::HrefElement;
 use serde::{Deserialize, Serialize};
 use strum::{EnumString, VariantNames};
 
-pub struct RootResource {
+pub struct RootResourceService {
     principal: String,
 }
 
@@ -41,11 +41,11 @@ impl InvalidProperty for RootProp {
 }
 
 #[derive(Clone)]
-pub struct RootFile {
+pub struct RootResource {
     pub principal: String,
 }
 
-impl Resource for RootFile {
+impl Resource for RootResource {
     type PropName = RootPropName;
     type Prop = RootProp;
     type Error = Error;
@@ -61,10 +61,10 @@ impl Resource for RootFile {
 }
 
 #[async_trait(?Send)]
-impl ResourceService for RootResource {
+impl ResourceService for RootResourceService {
     type PathComponents = ();
-    type MemberType = RootFile;
-    type File = RootFile;
+    type MemberType = RootResource;
+    type File = RootResource;
     type Error = Error;
 
     async fn new(
@@ -78,7 +78,7 @@ impl ResourceService for RootResource {
     }
 
     async fn get_file(&self) -> Result<Self::File, Self::Error> {
-        Ok(RootFile {
+        Ok(RootResource {
             principal: self.principal.to_owned(),
         })
     }

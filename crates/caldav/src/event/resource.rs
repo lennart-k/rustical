@@ -11,7 +11,7 @@ use std::sync::Arc;
 use strum::{EnumString, VariantNames};
 use tokio::sync::RwLock;
 
-pub struct EventResource<C: CalendarStore + ?Sized> {
+pub struct EventResourceService<C: CalendarStore + ?Sized> {
     pub cal_store: Arc<RwLock<C>>,
     pub path: String,
     pub principal: String,
@@ -45,9 +45,9 @@ impl InvalidProperty for EventProp {
 }
 
 #[derive(Clone, From, Into)]
-pub struct EventFile(Event);
+pub struct EventResource(Event);
 
-impl Resource for EventFile {
+impl Resource for EventResource {
     type PropName = EventPropName;
     type Prop = EventProp;
     type Error = Error;
@@ -64,10 +64,10 @@ impl Resource for EventFile {
 }
 
 #[async_trait(?Send)]
-impl<C: CalendarStore + ?Sized> ResourceService for EventResource<C> {
+impl<C: CalendarStore + ?Sized> ResourceService for EventResourceService<C> {
     type PathComponents = (String, String, String); // principal, calendar, event
-    type File = EventFile;
-    type MemberType = EventFile;
+    type File = EventResource;
+    type MemberType = EventResource;
     type Error = Error;
 
     async fn new(

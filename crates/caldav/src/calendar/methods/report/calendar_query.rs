@@ -9,7 +9,7 @@ use serde::Deserialize;
 use tokio::sync::RwLock;
 
 use crate::{
-    event::resource::{EventFile, EventProp},
+    event::resource::{EventProp, EventResource},
     Error,
 };
 
@@ -126,7 +126,7 @@ pub async fn handle_calendar_query<C: CalendarStore + ?Sized>(
     for event in events {
         let path = format!("{}/{}", req.path(), event.get_uid());
         responses.push(
-            EventFile::from(event)
+            EventResource::from(event)
                 .propfind(prefix, path, props.clone())
                 .await?,
         );

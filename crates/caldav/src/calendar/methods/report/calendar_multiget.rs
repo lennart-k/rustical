@@ -1,5 +1,5 @@
 use crate::{
-    event::resource::{EventFile, EventProp},
+    event::resource::{EventProp, EventResource},
     Error,
 };
 use actix_web::{
@@ -87,7 +87,7 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
     for event in events {
         let path = format!("{}/{}", req.path(), event.get_uid());
         responses.push(
-            EventFile::from(event)
+            EventResource::from(event)
                 .propfind(prefix, path, props.clone())
                 .await?,
         );

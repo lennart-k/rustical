@@ -11,16 +11,16 @@ use std::sync::Arc;
 use strum::{EnumString, VariantNames};
 use tokio::sync::RwLock;
 
-use crate::calendar::resource::CalendarFile;
+use crate::calendar::resource::CalendarResource;
 
-pub struct PrincipalResource<C: CalendarStore + ?Sized> {
+pub struct PrincipalResourceService<C: CalendarStore + ?Sized> {
     principal: String,
     path: String,
     cal_store: Arc<RwLock<C>>,
 }
 
 #[derive(Clone)]
-pub struct PrincipalFile {
+pub struct PrincipalResource {
     principal: String,
 }
 
@@ -63,7 +63,7 @@ pub enum PrincipalPropName {
     CalendarUserAddressSet,
 }
 
-impl Resource for PrincipalFile {
+impl Resource for PrincipalResource {
     type PropName = PrincipalPropName;
     type Prop = PrincipalProp;
     type Error = Error;
@@ -85,10 +85,10 @@ impl Resource for PrincipalFile {
 }
 
 #[async_trait(?Send)]
-impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResource<C> {
+impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResourceService<C> {
     type PathComponents = (String,);
-    type MemberType = CalendarFile;
-    type File = PrincipalFile;
+    type MemberType = CalendarResource;
+    type File = PrincipalResource;
     type Error = Error;
 
     async fn new(
@@ -113,7 +113,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResource<C> {
     }
 
     async fn get_file(&self) -> Result<Self::File, Self::Error> {
-        Ok(PrincipalFile {
+        Ok(PrincipalResource {
             principal: self.principal.to_owned(),
         })
     }

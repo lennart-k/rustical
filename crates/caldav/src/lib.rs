@@ -1,10 +1,10 @@
 use actix_web::http::Method;
 use actix_web::web::{self, Data};
 use actix_web::{guard, HttpResponse, Responder};
-use calendar::resource::CalendarResource;
-use event::resource::EventResource;
-use principal::PrincipalResource;
-use root::RootResource;
+use calendar::resource::CalendarResourceService;
+use event::resource::EventResourceService;
+use principal::PrincipalResourceService;
+use root::RootResourceService;
 use rustical_auth::CheckAuthentication;
 use rustical_dav::methods::{
     propfind::ServicePrefix, route_delete, route_propfind, route_proppatch,
@@ -55,16 +55,21 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     )
     .service(
         web::resource("")
-            .route(propfind_method().to(route_propfind::<A, RootResource>))
-            .route(proppatch_method().to(route_proppatch::<A, RootResource>)),
+            .route(propfind_method().to(route_propfind::<A, RootResourceService>))
+            .route(proppatch_method().to(route_proppatch::<A, RootResourceService>)),
     )
     .service(
         web::scope("/user").service(
             web::scope("/{principal}")
                 .service(
                     web::resource("")
-                        .route(propfind_method().to(route_propfind::<A, PrincipalResource<C>>))
-                        .route(proppatch_method().to(route_proppatch::<A, PrincipalResource<C>>)),
+                        .route(
+                            propfind_method().to(route_propfind::<A, PrincipalResourceService<C>>),
+                        )
+                        .route(
+                            proppatch_method()
+                                .to(route_proppatch::<A, PrincipalResourceService<C>>),
+                        ),
                 )
                 .service(
                     web::scope("/{calendar}")
@@ -76,15 +81,16 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
                                     ),
                                 )
                                 .route(
-                                    propfind_method().to(route_propfind::<A, CalendarResource<C>>),
+                                    propfind_method()
+                                        .to(route_propfind::<A, CalendarResourceService<C>>),
                                 )
                                 .route(
                                     proppatch_method()
-                                        .to(route_proppatch::<A, CalendarResource<C>>),
+                                        .to(route_proppatch::<A, CalendarResourceService<C>>),
                                 )
                                 .route(
                                     web::method(Method::DELETE)
-                                        .to(route_delete::<A, CalendarResource<C>>),
+                                        .to(route_delete::<A, CalendarResourceService<C>>),
                                 )
                                 .route(
                                     mkcalendar_method().to(
@@ -94,13 +100,17 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
                         )
                         .service(
                             web::resource("/{event}")
-                                .route(propfind_method().to(route_propfind::<A, EventResource<C>>))
                                 .route(
-                                    proppatch_method().to(route_proppatch::<A, EventResource<C>>),
+                                    propfind_method()
+                                        .to(route_propfind::<A, EventResourceService<C>>),
+                                )
+                                .route(
+                                    proppatch_method()
+                                        .to(route_proppatch::<A, EventResourceService<C>>),
                                 )
                                 .route(
                                     web::method(Method::DELETE)
-                                        .to(route_delete::<A, EventResource<C>>),
+                                        .to(route_delete::<A, EventResourceService<C>>),
                                 )
                                 .route(
                                     web::method(Method::GET).to(event::methods::get_event::<A, C>),
