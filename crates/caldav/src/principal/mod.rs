@@ -1,7 +1,6 @@
 use crate::Error;
 use actix_web::web::Data;
 use actix_web::HttpRequest;
-use anyhow::anyhow;
 use async_trait::async_trait;
 use rustical_auth::AuthInfo;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
@@ -102,7 +101,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResource<C> {
         }
         let cal_store = req
             .app_data::<Data<RwLock<C>>>()
-            .ok_or(anyhow!("no calendar store in app_data!"))?
+            .expect("no calendar store in app_data!")
             .clone()
             .into_inner();
 

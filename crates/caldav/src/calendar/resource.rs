@@ -278,7 +278,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResource<C> {
     ) -> Result<Self, Self::Error> {
         let cal_store = req
             .app_data::<Data<RwLock<C>>>()
-            .ok_or(anyhow!("no calendar store in app_data!"))?
+            .expect("no calendar store in app_data!")
             .clone()
             .into_inner();
 
