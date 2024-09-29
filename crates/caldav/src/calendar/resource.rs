@@ -72,7 +72,7 @@ pub enum CalendarProp {
     )]
     SupportedCalendarData(SupportedCalendarData),
     Getcontenttype(String),
-    MaxResourceSize(String),
+    MaxResourceSize(i64),
     CurrentUserPrivilegeSet(UserPrivilegeSet),
     SupportedReportSet(SupportedReportSet),
     SyncToken(String),
@@ -127,9 +127,7 @@ impl Resource for CalendarResource {
             CalendarPropName::Getcontenttype => {
                 CalendarProp::Getcontenttype("text/calendar;charset=utf-8".to_owned())
             }
-            CalendarPropName::MaxResourceSize => {
-                CalendarProp::MaxResourceSize("10000000".to_owned())
-            }
+            CalendarPropName::MaxResourceSize => CalendarProp::MaxResourceSize(10000000),
             CalendarPropName::CurrentUserPrivilegeSet => {
                 CalendarProp::CurrentUserPrivilegeSet(UserPrivilegeSet::default())
             }
