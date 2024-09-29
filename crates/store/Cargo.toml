@@ -24,6 +24,6 @@ ical = { version = "0.11", features = ["generator", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 regex = "1.10"
 lazy_static = "1.5"
-rstest = "0.22"
+rstest = "0.23"
 rstest_reuse = "0.7"
 thiserror = "1.0"
