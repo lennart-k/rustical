@@ -80,9 +80,8 @@ impl<R: Resource> HandlePropfind for R {
         &self,
         prefix: &str,
         path: String,
-        props: Vec<&str>,
+        mut props: Vec<&str>,
     ) -> Result<ResponseElement<PropstatWrapper<R::Prop>>, R::Error> {
-        let mut props = props;
         if props.contains(&"propname") {
             if props.len() != 1 {
                 // propname MUST be the only queried prop per spec

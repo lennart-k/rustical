@@ -24,8 +24,7 @@ async fn test_init<CS: CalendarStore>(_store: CS) {
 
 #[apply(cal_store)]
 #[tokio::test]
-async fn test_create_event<CS: CalendarStore>(store: CS) {
-    let mut store = store;
+async fn test_create_event<CS: CalendarStore>(mut store: CS) {
     store
         .insert_calendar(rustical_store::calendar::Calendar {
             id: "test".to_owned(),
