@@ -12,10 +12,8 @@ serde = { version = "1.0", features = ["derive", "rc"] }
 sha2 = "0.10"
 sqlx = { version = "0.8", features = [
   "sqlx-sqlite",
-  "sqlx-postgres",
   "uuid",
   "chrono",
-  "postgres",
   "sqlite",
   "runtime-tokio",
   "migrate",
