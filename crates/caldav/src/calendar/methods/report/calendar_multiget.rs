@@ -79,7 +79,7 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
             // TODO: Implement
             return Err(Error::NotImplemented);
         }
-        PropfindType::Prop(PropElement { prop: prop_tags }) => prop_tags.into(),
+        PropfindType::Prop(PropElement { prop: prop_tags }) => prop_tags.into_inner(),
     };
     let props: Vec<&str> = props.iter().map(String::as_str).collect();
 

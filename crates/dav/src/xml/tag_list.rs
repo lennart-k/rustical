@@ -51,9 +51,12 @@ impl Serialize for TagList {
     }
 }
 
-impl From<TagList> for Vec<String> {
-    fn from(value: TagList) -> Self {
-        value.0
+impl TagList {
+    pub fn inner(&self) -> &Vec<String> {
+        &self.0
+    }
+    pub fn into_inner(self) -> Vec<String> {
+        self.0
     }
 }
 

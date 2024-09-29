@@ -75,7 +75,7 @@ pub async fn route_propfind<A: CheckAuthentication, R: ResourceService>(
             // TODO: Implement
             return Err(Error::InternalError.into());
         }
-        PropfindType::Prop(PropElement { prop: prop_tags }) => prop_tags.into(),
+        PropfindType::Prop(PropElement { prop: prop_tags }) => prop_tags.into_inner(),
     };
     let props: Vec<&str> = props.iter().map(String::as_str).collect();
 
