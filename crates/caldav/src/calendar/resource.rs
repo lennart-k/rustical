@@ -3,7 +3,6 @@ use crate::Error;
 use actix_web::{web::Data, HttpRequest};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
-use rustical_auth::AuthInfo;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
 use rustical_store::calendar::Calendar;
@@ -224,7 +223,10 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
     type Resource = CalendarResource;
     type Error = Error;
 
-    async fn get_resource(&self) -> Result<Self::Resource, Error> {
+    async fn get_resource(&self, principal: String) -> Result<Self::Resource, Error> {
+        if self.principal != principal {
+            return Err(Error::Unauthorized);
+        }
         let calendar = self
             .cal_store
             .read()
@@ -235,10 +237,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
         Ok(calendar.into())
     }
 
-    async fn get_members(
-        &self,
-        _auth_info: AuthInfo,
-    ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
+    async fn get_members(&self) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
         // As of now the calendar resource has no members since events are shown with REPORT
         Ok(self
             .cal_store
@@ -253,7 +252,6 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
 
     async fn new(
         req: &HttpRequest,
-        auth_info: &AuthInfo,
         path_components: Self::PathComponents,
     ) -> Result<Self, Self::Error> {
         let cal_store = req
@@ -264,7 +262,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
 
         Ok(Self {
             path: req.path().to_owned(),
-            principal: auth_info.user_id.to_owned(),
+            principal: path_components.0,
             calendar_id: path_components.1,
             cal_store,
         })

@@ -1,15 +1,12 @@
 use crate::Error;
 use actix_web::HttpRequest;
 use async_trait::async_trait;
-use rustical_auth::AuthInfo;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
 use serde::{Deserialize, Serialize};
 use strum::{EnumString, VariantNames};
 
-pub struct RootResourceService {
-    principal: String,
-}
+pub struct RootResourceService;
 
 #[derive(EnumString, Debug, VariantNames, Clone)]
 #[strum(serialize_all = "kebab-case")]
@@ -42,7 +39,7 @@ impl InvalidProperty for RootProp {
 
 #[derive(Clone)]
 pub struct RootResource {
-    pub principal: String,
+    principal: String,
 }
 
 impl Resource for RootResource {
@@ -69,18 +66,13 @@ impl ResourceService for RootResourceService {
 
     async fn new(
         _req: &HttpRequest,
-        auth_info: &AuthInfo,
         _path_components: Self::PathComponents,
     ) -> Result<Self, Self::Error> {
-        Ok(Self {
-            principal: auth_info.user_id.to_owned(),
-        })
+        Ok(Self)
     }
 
-    async fn get_resource(&self) -> Result<Self::Resource, Self::Error> {
-        Ok(RootResource {
-            principal: self.principal.to_owned(),
-        })
+    async fn get_resource(&self, principal: String) -> Result<Self::Resource, Self::Error> {
+        Ok(RootResource { principal })
     }
 
     async fn save_resource(&self, _file: Self::Resource) -> Result<(), Self::Error> {

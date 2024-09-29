@@ -2,7 +2,6 @@ use crate::Error;
 use actix_web::web::Data;
 use actix_web::HttpRequest;
 use async_trait::async_trait;
-use rustical_auth::AuthInfo;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
 use rustical_store::CalendarStore;
@@ -93,12 +92,8 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResourceService<C> 
 
     async fn new(
         req: &HttpRequest,
-        auth_info: &AuthInfo,
         (principal,): Self::PathComponents,
     ) -> Result<Self, Self::Error> {
-        if auth_info.user_id != principal {
-            return Err(Error::Unauthorized);
-        }
         let cal_store = req
             .app_data::<Data<RwLock<C>>>()
             .expect("no calendar store in app_data!")
@@ -112,16 +107,16 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResourceService<C> 
         })
     }
 
-    async fn get_resource(&self) -> Result<Self::Resource, Self::Error> {
+    async fn get_resource(&self, principal: String) -> Result<Self::Resource, Self::Error> {
+        if self.principal != principal {
+            return Err(Error::Unauthorized);
+        }
         Ok(PrincipalResource {
             principal: self.principal.to_owned(),
         })
     }
 
-    async fn get_members(
-        &self,
-        _auth_info: AuthInfo,
-    ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
+    async fn get_members(&self) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
         let calendars = self
             .cal_store
             .read()

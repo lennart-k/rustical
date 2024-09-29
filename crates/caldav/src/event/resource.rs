@@ -2,7 +2,6 @@ use crate::Error;
 use actix_web::{web::Data, HttpRequest};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
-use rustical_auth::AuthInfo;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_store::event::Event;
 use rustical_store::CalendarStore;
@@ -72,7 +71,6 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResourceService<C> {
 
     async fn new(
         req: &HttpRequest,
-        _auth_info: &AuthInfo,
         path_components: Self::PathComponents,
     ) -> Result<Self, Self::Error> {
         let (principal, cid, mut uid) = path_components;
@@ -96,7 +94,10 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResourceService<C> {
         })
     }
 
-    async fn get_resource(&self) -> Result<Self::Resource, Self::Error> {
+    async fn get_resource(&self, principal: String) -> Result<Self::Resource, Self::Error> {
+        if self.principal != principal {
+            return Err(Error::Unauthorized);
+        }
         let event = self
             .cal_store
             .read()

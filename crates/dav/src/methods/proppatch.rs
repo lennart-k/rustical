@@ -53,10 +53,9 @@ pub async fn route_proppatch<A: CheckAuthentication, R: ResourceService>(
     req: HttpRequest,
     auth: AuthInfoExtractor<A>,
 ) -> Result<MultistatusElement<PropstatWrapper<String>, PropstatWrapper<String>>, R::Error> {
-    let auth_info = auth.inner;
     let path_components = path.into_inner();
     let href = req.path().to_owned();
-    let resource_service = R::new(&req, &auth_info, path_components.clone()).await?;
+    let resource_service = R::new(&req, path_components.clone()).await?;
 
     debug!("{body}");
 
@@ -76,7 +75,7 @@ pub async fn route_proppatch<A: CheckAuthentication, R: ResourceService>(
         })
         .collect();
 
-    let mut resource = resource_service.get_resource().await?;
+    let mut resource = resource_service.get_resource(auth.inner.user_id).await?;
 
     let mut props_ok = Vec::new();
     let mut props_conflict = Vec::new();
