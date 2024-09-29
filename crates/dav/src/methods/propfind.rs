@@ -37,7 +37,7 @@ struct PropfindElement {
     prop: PropfindType,
 }
 
-pub async fn route_propfind<A: CheckAuthentication, R: ResourceService + ?Sized>(
+pub async fn route_propfind<A: CheckAuthentication, R: ResourceService>(
     path_components: Path<R::PathComponents>,
     body: String,
     req: HttpRequest,

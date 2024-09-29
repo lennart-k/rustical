@@ -5,7 +5,7 @@ use actix_web::HttpResponse;
 use actix_web::Responder;
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 
-pub async fn route_delete<A: CheckAuthentication, R: ResourceService + ?Sized>(
+pub async fn route_delete<A: CheckAuthentication, R: ResourceService>(
     path_components: Path<R::PathComponents>,
     req: HttpRequest,
     auth: AuthInfoExtractor<A>,

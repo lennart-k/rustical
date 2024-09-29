@@ -47,7 +47,7 @@ struct PropertyupdateElement<T> {
     operations: Vec<Operation<T>>,
 }
 
-pub async fn route_proppatch<A: CheckAuthentication, R: ResourceService + ?Sized>(
+pub async fn route_proppatch<A: CheckAuthentication, R: ResourceService>(
     path: Path<R::PathComponents>,
     body: String,
     req: HttpRequest,
