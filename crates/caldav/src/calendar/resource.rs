@@ -1,7 +1,6 @@
 use crate::event::resource::EventResource;
 use crate::Error;
 use actix_web::{web::Data, HttpRequest};
-use anyhow::anyhow;
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_auth::AuthInfo;
@@ -61,7 +60,7 @@ pub enum CalendarProp {
     #[serde(rename = "C:calendar-timezone", alias = "calendar-timezone")]
     CalendarTimezone(Option<String>),
     #[serde(rename = "IC:calendar-order", alias = "calendar-order")]
-    CalendarOrder(Option<String>),
+    CalendarOrder(Option<i64>),
     #[serde(
         rename = "C:supported-calendar-component-set",
         alias = "supported-calendar-component-set"
@@ -114,9 +113,7 @@ impl Resource for CalendarResource {
             CalendarPropName::CalendarTimezone => {
                 CalendarProp::CalendarTimezone(self.0.timezone.clone())
             }
-            CalendarPropName::CalendarOrder => {
-                CalendarProp::CalendarOrder(format!("{}", self.0.order).into())
-            }
+            CalendarPropName::CalendarOrder => CalendarProp::CalendarOrder(Some(self.0.order)),
             CalendarPropName::SupportedCalendarComponentSet => {
                 CalendarProp::SupportedCalendarComponentSet(SupportedCalendarComponentSet {
                     comp: vec![SupportedCalendarComponent {
@@ -166,10 +163,7 @@ impl Resource for CalendarResource {
                 Ok(())
             }
             CalendarProp::CalendarOrder(order) => {
-                self.0.order = match order {
-                    Some(order) => order.parse().map_err(|_e| anyhow!("invalid order"))?,
-                    None => 0,
-                };
+                self.0.order = order.unwrap_or_default();
                 Ok(())
             }
             CalendarProp::SupportedCalendarComponentSet(_) => {
