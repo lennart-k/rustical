@@ -64,7 +64,6 @@ pub enum PrincipalPropName {
     CalendarUserAddressSet,
 }
 
-#[async_trait(?Send)]
 impl Resource for PrincipalFile {
     type PropName = PrincipalPropName;
     type Prop = PrincipalProp;

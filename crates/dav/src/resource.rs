@@ -10,7 +10,6 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use strum::VariantNames;
 
-#[async_trait(?Send)]
 pub trait Resource: Clone {
     type PropName: FromStr + VariantNames + Clone;
     type Prop: Serialize + for<'de> Deserialize<'de> + fmt::Debug + InvalidProperty;
