@@ -42,7 +42,7 @@ pub trait InvalidProperty {
 pub trait ResourceService: Sized {
     type MemberType: Resource<Error = Self::Error>;
     type PathComponents: Sized + Clone; // defines how the resource URI maps to parameters, i.e. /{principal}/{calendar} -> (String, String)
-    type File: Resource<Error = Self::Error>;
+    type Resource: Resource<Error = Self::Error>;
     type Error: ResponseError + From<crate::Error> + From<anyhow::Error>;
 
     async fn new(
@@ -58,9 +58,9 @@ pub trait ResourceService: Sized {
         Ok(vec![])
     }
 
-    async fn get_file(&self) -> Result<Self::File, Self::Error>;
-    async fn save_file(&self, file: Self::File) -> Result<(), Self::Error>;
-    async fn delete_file(&self, _use_trashbin: bool) -> Result<(), Self::Error> {
+    async fn get_resource(&self) -> Result<Self::Resource, Self::Error>;
+    async fn save_resource(&self, file: Self::Resource) -> Result<(), Self::Error>;
+    async fn delete_resource(&self, _use_trashbin: bool) -> Result<(), Self::Error> {
         Err(crate::Error::Unauthorized.into())
     }
 }

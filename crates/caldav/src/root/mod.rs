@@ -64,7 +64,7 @@ impl Resource for RootResource {
 impl ResourceService for RootResourceService {
     type PathComponents = ();
     type MemberType = RootResource;
-    type File = RootResource;
+    type Resource = RootResource;
     type Error = Error;
 
     async fn new(
@@ -77,13 +77,13 @@ impl ResourceService for RootResourceService {
         })
     }
 
-    async fn get_file(&self) -> Result<Self::File, Self::Error> {
+    async fn get_resource(&self) -> Result<Self::Resource, Self::Error> {
         Ok(RootResource {
             principal: self.principal.to_owned(),
         })
     }
 
-    async fn save_file(&self, _file: Self::File) -> Result<(), Self::Error> {
+    async fn save_resource(&self, _file: Self::Resource) -> Result<(), Self::Error> {
         Err(Error::NotImplemented)
     }
 }

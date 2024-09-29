@@ -60,7 +60,7 @@ pub async fn route_proppatch<A: CheckAuthentication, R: ResourceService>(
 
     debug!("{body}");
 
-    let PropertyupdateElement::<<R::File as Resource>::Prop> { operations } =
+    let PropertyupdateElement::<<R::Resource as Resource>::Prop> { operations } =
         quick_xml::de::from_str(&body).map_err(Error::XmlDecodeError)?;
 
     // Extract all set property names without verification
@@ -76,7 +76,7 @@ pub async fn route_proppatch<A: CheckAuthentication, R: ResourceService>(
         })
         .collect();
 
-    let mut resource = resource_service.get_file().await?;
+    let mut resource = resource_service.get_resource().await?;
 
     let mut props_ok = Vec::new();
     let mut props_conflict = Vec::new();
@@ -105,7 +105,7 @@ pub async fn route_proppatch<A: CheckAuthentication, R: ResourceService>(
                 }
             }
             Operation::Remove(_remove_el) => {
-                match <<R::File as Resource>::PropName as FromStr>::from_str(&propname) {
+                match <<R::Resource as Resource>::PropName as FromStr>::from_str(&propname) {
                     Ok(prop) => {
                         match resource.remove_prop(prop) {
                             Ok(()) => {
@@ -131,7 +131,7 @@ pub async fn route_proppatch<A: CheckAuthentication, R: ResourceService>(
 
     if props_not_found.is_empty() && props_conflict.is_empty() {
         // Only save if no errors occured
-        resource_service.save_file(resource).await?;
+        resource_service.save_resource(resource).await?;
     }
 
     Ok(MultistatusElement {

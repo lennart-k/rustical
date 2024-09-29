@@ -48,7 +48,7 @@ pub async fn route_propfind<A: CheckAuthentication, R: ResourceService>(
     depth: Depth,
 ) -> Result<
     MultistatusElement<
-        PropstatWrapper<<R::File as Resource>::Prop>,
+        PropstatWrapper<<R::Resource as Resource>::Prop>,
         PropstatWrapper<<R::MemberType as Resource>::Prop>,
     >,
     R::Error,
@@ -88,7 +88,7 @@ pub async fn route_propfind<A: CheckAuthentication, R: ResourceService>(
         }
     }
 
-    let resource = resource_service.get_file().await?;
+    let resource = resource_service.get_resource().await?;
     let response = resource.propfind(&prefix, path, props).await?;
 
     Ok(MultistatusElement {

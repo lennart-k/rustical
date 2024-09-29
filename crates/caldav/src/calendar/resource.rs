@@ -221,10 +221,10 @@ impl Resource for CalendarResource {
 impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
     type MemberType = EventResource;
     type PathComponents = (String, String); // principal, calendar_id
-    type File = CalendarResource;
+    type Resource = CalendarResource;
     type Error = Error;
 
-    async fn get_file(&self) -> Result<Self::File, Error> {
+    async fn get_resource(&self) -> Result<Self::Resource, Error> {
         let calendar = self
             .cal_store
             .read()
@@ -270,7 +270,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
         })
     }
 
-    async fn save_file(&self, file: Self::File) -> Result<(), Self::Error> {
+    async fn save_resource(&self, file: Self::Resource) -> Result<(), Self::Error> {
         self.cal_store
             .write()
             .await
@@ -283,7 +283,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
         Ok(())
     }
 
-    async fn delete_file(&self, use_trashbin: bool) -> Result<(), Self::Error> {
+    async fn delete_resource(&self, use_trashbin: bool) -> Result<(), Self::Error> {
         self.cal_store
             .write()
             .await

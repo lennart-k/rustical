@@ -20,7 +20,7 @@ pub async fn route_delete<A: CheckAuthentication, R: ResourceService>(
         .unwrap_or(false);
 
     let resource_service = R::new(&req, &auth_info, path_components.clone()).await?;
-    resource_service.delete_file(!no_trash).await?;
+    resource_service.delete_resource(!no_trash).await?;
 
     Ok(HttpResponse::Ok().body(""))
 }

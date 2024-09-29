@@ -66,7 +66,7 @@ impl Resource for EventResource {
 #[async_trait(?Send)]
 impl<C: CalendarStore + ?Sized> ResourceService for EventResourceService<C> {
     type PathComponents = (String, String, String); // principal, calendar, event
-    type File = EventResource;
+    type Resource = EventResource;
     type MemberType = EventResource;
     type Error = Error;
 
@@ -96,7 +96,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResourceService<C> {
         })
     }
 
-    async fn get_file(&self) -> Result<Self::File, Self::Error> {
+    async fn get_resource(&self) -> Result<Self::Resource, Self::Error> {
         let event = self
             .cal_store
             .read()
@@ -106,11 +106,11 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResourceService<C> {
         Ok(event.into())
     }
 
-    async fn save_file(&self, _file: Self::File) -> Result<(), Self::Error> {
+    async fn save_resource(&self, _file: Self::Resource) -> Result<(), Self::Error> {
         Err(Error::NotImplemented)
     }
 
-    async fn delete_file(&self, use_trashbin: bool) -> Result<(), Self::Error> {
+    async fn delete_resource(&self, use_trashbin: bool) -> Result<(), Self::Error> {
         self.cal_store
             .write()
             .await

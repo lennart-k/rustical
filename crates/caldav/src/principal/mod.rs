@@ -88,7 +88,7 @@ impl Resource for PrincipalResource {
 impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResourceService<C> {
     type PathComponents = (String,);
     type MemberType = CalendarResource;
-    type File = PrincipalResource;
+    type Resource = PrincipalResource;
     type Error = Error;
 
     async fn new(
@@ -112,7 +112,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResourceService<C> 
         })
     }
 
-    async fn get_file(&self) -> Result<Self::File, Self::Error> {
+    async fn get_resource(&self) -> Result<Self::Resource, Self::Error> {
         Ok(PrincipalResource {
             principal: self.principal.to_owned(),
         })
@@ -134,7 +134,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResourceService<C> 
             .collect())
     }
 
-    async fn save_file(&self, _file: Self::File) -> Result<(), Self::Error> {
+    async fn save_resource(&self, _file: Self::Resource) -> Result<(), Self::Error> {
         Err(Error::NotImplemented)
     }
 }
