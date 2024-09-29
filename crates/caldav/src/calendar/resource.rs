@@ -90,7 +90,6 @@ impl InvalidProperty for CalendarProp {
 #[derive(Clone, Debug)]
 pub struct CalendarFile {
     pub calendar: Calendar,
-    pub principal: String,
 }
 
 impl Resource for CalendarFile {
@@ -102,11 +101,11 @@ impl Resource for CalendarFile {
         Ok(match prop {
             CalendarPropName::Resourcetype => CalendarProp::Resourcetype(Resourcetype::default()),
             CalendarPropName::CurrentUserPrincipal => CalendarProp::CurrentUserPrincipal(
-                HrefElement::new(format!("{}/user/{}/", prefix, self.principal)),
+                HrefElement::new(format!("{}/user/{}/", prefix, self.calendar.principal)),
             ),
             CalendarPropName::Owner => CalendarProp::Owner(HrefElement::new(format!(
                 "{}/user/{}/",
-                prefix, self.principal
+                prefix, self.calendar.principal
             ))),
             CalendarPropName::Displayname => {
                 CalendarProp::Displayname(self.calendar.displayname.clone())
@@ -248,10 +247,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResource<C> {
             .get_calendar(&self.principal, &self.calendar_id)
             .await
             .map_err(|_e| Error::NotFound)?;
-        Ok(CalendarFile {
-            calendar,
-            principal: self.principal.to_owned(),
-        })
+        Ok(CalendarFile { calendar })
     }
 
     async fn get_members(
