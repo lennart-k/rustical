@@ -135,10 +135,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResource<C> {
             .map(|cal| {
                 (
                     format!("{}/{}", &self.path, &cal.id),
-                    CalendarFile {
-                        calendar: cal,
-                        principal: self.principal.to_owned(),
-                    },
+                    CalendarFile { calendar: cal },
                 )
             })
             .collect())
