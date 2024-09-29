@@ -74,7 +74,7 @@ pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
         let path = format!("{}/{}", req.path(), event.get_uid());
         responses.push(
             EventResource::from(event)
-                .propfind(prefix, path, props.clone())
+                .propfind(prefix, &path, props.clone())
                 .await?,
         );
     }

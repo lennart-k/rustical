@@ -55,7 +55,6 @@ pub async fn route_propfind<A: CheckAuthentication, R: ResourceService>(
 > {
     debug!("{body}");
     let prefix = prefix.into_inner();
-    let path = req.path().to_owned();
 
     let resource_service = R::new(&req, path_components.into_inner()).await?;
 
@@ -83,12 +82,12 @@ pub async fn route_propfind<A: CheckAuthentication, R: ResourceService>(
     let mut member_responses = Vec::new();
     if depth != Depth::Zero {
         for (path, member) in resource_service.get_members().await? {
-            member_responses.push(member.propfind(&prefix, path, props.clone()).await?);
+            member_responses.push(member.propfind(&prefix, &path, props.clone()).await?);
         }
     }
 
     let resource = resource_service.get_resource(auth.inner.user_id).await?;
-    let response = resource.propfind(&prefix, path, props).await?;
+    let response = resource.propfind(&prefix, req.path(), props).await?;
 
     Ok(MultistatusElement {
         responses: vec![response],

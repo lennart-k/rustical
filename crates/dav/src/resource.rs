@@ -67,7 +67,7 @@ pub trait HandlePropfind {
     async fn propfind(
         &self,
         prefix: &str,
-        path: String,
+        path: &str,
         props: Vec<&str>,
     ) -> Result<impl Serialize, Self::Error>;
 }
@@ -79,7 +79,7 @@ impl<R: Resource> HandlePropfind for R {
     async fn propfind(
         &self,
         prefix: &str,
-        path: String,
+        path: &str,
         mut props: Vec<&str>,
     ) -> Result<ResponseElement<PropstatWrapper<R::Prop>>, R::Error> {
         if props.contains(&"propname") {
@@ -94,7 +94,7 @@ impl<R: Resource> HandlePropfind for R {
                 .map(|&prop| prop.to_string())
                 .collect();
             return Ok(ResponseElement {
-                href: path,
+                href: path.to_owned(),
                 propstat: vec![PropstatWrapper::TagList(PropstatElement {
                     prop: TagList::from(props),
                     status: format!("HTTP/1.1 {}", StatusCode::OK),
@@ -147,7 +147,7 @@ impl<R: Resource> HandlePropfind for R {
             }));
         }
         Ok(ResponseElement {
-            href: path,
+            href: path.to_owned(),
             propstat: propstats,
             ..Default::default()
         })

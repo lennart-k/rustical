@@ -88,7 +88,7 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
         let path = format!("{}/{}", req.path(), event.get_uid());
         responses.push(
             EventResource::from(event)
-                .propfind(prefix, path, props.clone())
+                .propfind(prefix, &path, props.clone())
                 .await?,
         );
     }
