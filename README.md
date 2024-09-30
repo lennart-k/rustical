@@ -8,6 +8,7 @@ a calendar server
 
 - [ ] CalDAV
   - [ ] Support for VTODO, VJOURNAL
+    - [x] VTODO
   - [ ] Proper filtering for REPORT method
   - [ ] ICS parsing
     - [x] Datetime parsing
