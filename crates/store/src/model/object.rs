@@ -1,7 +1,6 @@
-use super::event::EventObject;
+use super::{event::EventObject, todo::TodoObject};
 use crate::Error;
 use anyhow::Result;
-use ical::parser::ical::component::IcalTodo;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::io::BufReader;
@@ -12,11 +11,6 @@ pub enum CalendarObjectType {
     Event,
     Journal,
     Todo,
-}
-
-#[derive(Debug, Clone)]
-pub struct TodoObject {
-    todo: IcalTodo,
 }
 
 #[derive(Debug, Clone)]
@@ -125,5 +119,12 @@ impl CalendarObject {
 
     pub fn get_ics(&self) -> &str {
         &self.ics
+    }
+
+    pub fn get_component_name(&self) -> &str {
+        match self.data {
+            CalendarObjectComponent::Todo(_) => "VTODO",
+            CalendarObjectComponent::Event(_) => "VEVENT",
+        }
     }
 }

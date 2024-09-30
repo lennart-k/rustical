@@ -115,9 +115,14 @@ impl Resource for CalendarResource {
             CalendarPropName::CalendarOrder => CalendarProp::CalendarOrder(Some(self.0.order)),
             CalendarPropName::SupportedCalendarComponentSet => {
                 CalendarProp::SupportedCalendarComponentSet(SupportedCalendarComponentSet {
-                    comp: vec![SupportedCalendarComponent {
-                        name: "VEVENT".to_owned(),
-                    }],
+                    comp: vec![
+                        SupportedCalendarComponent {
+                            name: "VEVENT".to_owned(),
+                        },
+                        SupportedCalendarComponent {
+                            name: "VTODO".to_owned(),
+                        },
+                    ],
                 })
             }
             CalendarPropName::SupportedCalendarData => {
