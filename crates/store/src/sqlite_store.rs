@@ -1,5 +1,5 @@
+use crate::model::object::CalendarObject;
 use crate::model::Calendar;
-use crate::model::Event;
 use crate::{CalendarStore, Error};
 use anyhow::Result;
 use async_trait::async_trait;
@@ -19,16 +19,16 @@ impl SqliteCalendarStore {
 }
 
 #[derive(Debug, Clone)]
-struct EventRow {
+struct CalendarObjectRow {
     uid: String,
     ics: String,
 }
 
-impl TryFrom<EventRow> for Event {
+impl TryFrom<CalendarObjectRow> for CalendarObject {
     type Error = Error;
 
-    fn try_from(value: EventRow) -> Result<Self, Error> {
-        Event::from_ics(value.uid, value.ics)
+    fn try_from(value: CalendarObjectRow) -> Result<Self, Error> {
+        CalendarObject::from_ics(value.uid, value.ics)
     }
 }
 
@@ -186,9 +186,9 @@ impl CalendarStore for SqliteCalendarStore {
         Ok(())
     }
 
-    async fn get_events(&self, principal: &str, cid: &str) -> Result<Vec<Event>, Error> {
+    async fn get_objects(&self, principal: &str, cid: &str) -> Result<Vec<CalendarObject>, Error> {
         sqlx::query_as!(
-            EventRow,
+            CalendarObjectRow,
             "SELECT uid, ics FROM events WHERE principal = ? AND cid = ? AND deleted_at IS NULL",
             principal,
             cid
@@ -200,9 +200,14 @@ impl CalendarStore for SqliteCalendarStore {
         .collect()
     }
 
-    async fn get_event(&self, principal: &str, cid: &str, uid: &str) -> Result<Event, Error> {
+    async fn get_object(
+        &self,
+        principal: &str,
+        cid: &str,
+        uid: &str,
+    ) -> Result<CalendarObject, Error> {
         let event = sqlx::query_as!(
-            EventRow,
+            CalendarObjectRow,
             "SELECT uid, ics FROM events WHERE (principal, cid, uid) = (?, ?, ?)",
             principal,
             cid,
@@ -214,7 +219,7 @@ impl CalendarStore for SqliteCalendarStore {
         Ok(event)
     }
 
-    async fn put_event(
+    async fn put_object(
         &mut self,
         principal: String,
         cid: String,
@@ -224,7 +229,7 @@ impl CalendarStore for SqliteCalendarStore {
         let mut tx = self.db.begin().await?;
 
         // input validation
-        Event::from_ics(uid.to_owned(), ics.to_owned())?;
+        CalendarObject::from_ics(uid.to_owned(), ics.to_owned())?;
         sqlx::query!(
             "REPLACE INTO events (principal, cid, uid, ics) VALUES (?, ?, ?, ?)",
             principal,
@@ -247,7 +252,7 @@ impl CalendarStore for SqliteCalendarStore {
         Ok(())
     }
 
-    async fn delete_event(
+    async fn delete_object(
         &mut self,
         principal: &str,
         cid: &str,
@@ -285,7 +290,7 @@ impl CalendarStore for SqliteCalendarStore {
         Ok(())
     }
 
-    async fn restore_event(&mut self, principal: &str, cid: &str, uid: &str) -> Result<(), Error> {
+    async fn restore_object(&mut self, principal: &str, cid: &str, uid: &str) -> Result<(), Error> {
         let mut tx = self.db.begin().await?;
 
         sqlx::query!(
@@ -314,7 +319,7 @@ impl CalendarStore for SqliteCalendarStore {
         principal: &str,
         cid: &str,
         synctoken: i64,
-    ) -> Result<(Vec<Event>, Vec<String>, i64), Error> {
+    ) -> Result<(Vec<CalendarObject>, Vec<String>, i64), Error> {
         struct Row {
             uid: String,
             synctoken: i64,
@@ -340,7 +345,7 @@ impl CalendarStore for SqliteCalendarStore {
             .unwrap_or(0);
 
         for Row { uid, .. } in changes {
-            match self.get_event(principal, cid, &uid).await {
+            match self.get_object(principal, cid, &uid).await {
                 Ok(event) => events.push(event),
                 Err(Error::NotFound) => deleted_events.push(uid),
                 Err(err) => return Err(err),

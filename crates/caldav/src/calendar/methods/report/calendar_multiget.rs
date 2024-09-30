@@ -1,5 +1,5 @@
 use crate::{
-    event::resource::{EventProp, EventResource},
+    calendar_object::resource::{CalendarObjectProp, CalendarObjectResource},
     Error,
 };
 use actix_web::{
@@ -11,7 +11,7 @@ use rustical_dav::{
     resource::HandlePropfind,
     xml::{multistatus::PropstatWrapper, MultistatusElement},
 };
-use rustical_store::{model::Event, CalendarStore};
+use rustical_store::{model::object::CalendarObject, CalendarStore};
 use serde::Deserialize;
 use tokio::sync::RwLock;
 
@@ -31,7 +31,7 @@ pub async fn get_events_calendar_multiget<C: CalendarStore + ?Sized>(
     principal: &str,
     cid: &str,
     store: &RwLock<C>,
-) -> Result<Vec<Event>, Error> {
+) -> Result<Vec<CalendarObject>, Error> {
     // TODO: add proper error results for single events
     let resource_def =
         ResourceDef::prefix(prefix).join(&ResourceDef::new("/user/{principal}/{cid}/{uid}"));
@@ -54,7 +54,7 @@ pub async fn get_events_calendar_multiget<C: CalendarStore + ?Sized>(
             continue;
         }
         let uid = path.get("uid").unwrap();
-        result.push(store.get_event(principal, cid, uid).await?);
+        result.push(store.get_object(principal, cid, uid).await?);
     }
 
     Ok(result)
@@ -67,7 +67,7 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
     principal: &str,
     cid: &str,
     cal_store: &RwLock<C>,
-) -> Result<MultistatusElement<PropstatWrapper<EventProp>, String>, Error> {
+) -> Result<MultistatusElement<PropstatWrapper<CalendarObjectProp>, String>, Error> {
     let events =
         get_events_calendar_multiget(&cal_multiget, prefix, principal, cid, cal_store).await?;
 
@@ -87,7 +87,7 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
     for event in events {
         let path = format!("{}/{}", req.path(), event.get_uid());
         responses.push(
-            EventResource::from(event)
+            CalendarObjectResource::from(event)
                 .propfind(prefix, &path, props.clone())
                 .await?,
         );

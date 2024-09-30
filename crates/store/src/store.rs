@@ -2,7 +2,8 @@ use anyhow::Result;
 use async_trait::async_trait;
 
 use crate::error::Error;
-use crate::model::{Calendar, Event};
+use crate::model::object::CalendarObject;
+use crate::model::Calendar;
 
 #[async_trait]
 pub trait CalendarStore: Send + Sync + 'static {
@@ -29,23 +30,28 @@ pub trait CalendarStore: Send + Sync + 'static {
         principal: &str,
         cid: &str,
         synctoken: i64,
-    ) -> Result<(Vec<Event>, Vec<String>, i64), Error>;
+    ) -> Result<(Vec<CalendarObject>, Vec<String>, i64), Error>;
 
-    async fn get_events(&self, principal: &str, cid: &str) -> Result<Vec<Event>, Error>;
-    async fn get_event(&self, principal: &str, cid: &str, uid: &str) -> Result<Event, Error>;
-    async fn put_event(
+    async fn get_objects(&self, principal: &str, cid: &str) -> Result<Vec<CalendarObject>, Error>;
+    async fn get_object(
+        &self,
+        principal: &str,
+        cid: &str,
+        uid: &str,
+    ) -> Result<CalendarObject, Error>;
+    async fn put_object(
         &mut self,
         principal: String,
         cid: String,
         uid: String,
         ics: String,
     ) -> Result<(), Error>;
-    async fn delete_event(
+    async fn delete_object(
         &mut self,
         principal: &str,
         cid: &str,
         uid: &str,
         use_trashbin: bool,
     ) -> Result<(), Error>;
-    async fn restore_event(&mut self, principal: &str, cid: &str, uid: &str) -> Result<(), Error>;
+    async fn restore_object(&mut self, principal: &str, cid: &str, uid: &str) -> Result<(), Error>;
 }

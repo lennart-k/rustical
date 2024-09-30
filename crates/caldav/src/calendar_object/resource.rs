@@ -3,14 +3,14 @@ use actix_web::{web::Data, HttpRequest};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
-use rustical_store::model::Event;
+use rustical_store::model::object::CalendarObject;
 use rustical_store::CalendarStore;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use strum::{EnumString, VariantNames};
 use tokio::sync::RwLock;
 
-pub struct EventResourceService<C: CalendarStore + ?Sized> {
+pub struct CalendarObjectResourceService<C: CalendarStore + ?Sized> {
     pub cal_store: Arc<RwLock<C>>,
     pub path: String,
     pub principal: String,
@@ -20,7 +20,7 @@ pub struct EventResourceService<C: CalendarStore + ?Sized> {
 
 #[derive(EnumString, Debug, VariantNames, Clone)]
 #[strum(serialize_all = "kebab-case")]
-pub enum EventPropName {
+pub enum CalendarObjectPropName {
     Getetag,
     CalendarData,
     Getcontenttype,
@@ -28,7 +28,7 @@ pub enum EventPropName {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "kebab-case")]
-pub enum EventProp {
+pub enum CalendarObjectProp {
     Getetag(String),
     #[serde(rename = "C:calendar-data")]
     CalendarData(String),
@@ -37,36 +37,38 @@ pub enum EventProp {
     Invalid,
 }
 
-impl InvalidProperty for EventProp {
+impl InvalidProperty for CalendarObjectProp {
     fn invalid_property(&self) -> bool {
         matches!(self, Self::Invalid)
     }
 }
 
 #[derive(Clone, From, Into)]
-pub struct EventResource(Event);
+pub struct CalendarObjectResource(CalendarObject);
 
-impl Resource for EventResource {
-    type PropName = EventPropName;
-    type Prop = EventProp;
+impl Resource for CalendarObjectResource {
+    type PropName = CalendarObjectPropName;
+    type Prop = CalendarObjectProp;
     type Error = Error;
 
     fn get_prop(&self, _prefix: &str, prop: Self::PropName) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
-            EventPropName::Getetag => EventProp::Getetag(self.0.get_etag()),
-            EventPropName::CalendarData => EventProp::CalendarData(self.0.get_ics().to_owned()),
-            EventPropName::Getcontenttype => {
-                EventProp::Getcontenttype("text/calendar;charset=utf-8".to_owned())
+            CalendarObjectPropName::Getetag => CalendarObjectProp::Getetag(self.0.get_etag()),
+            CalendarObjectPropName::CalendarData => {
+                CalendarObjectProp::CalendarData(self.0.get_ics().to_owned())
+            }
+            CalendarObjectPropName::Getcontenttype => {
+                CalendarObjectProp::Getcontenttype("text/calendar;charset=utf-8".to_owned())
             }
         })
     }
 }
 
 #[async_trait(?Send)]
-impl<C: CalendarStore + ?Sized> ResourceService for EventResourceService<C> {
+impl<C: CalendarStore + ?Sized> ResourceService for CalendarObjectResourceService<C> {
     type PathComponents = (String, String, String); // principal, calendar, event
-    type Resource = EventResource;
-    type MemberType = EventResource;
+    type Resource = CalendarObjectResource;
+    type MemberType = CalendarObjectResource;
     type Error = Error;
 
     async fn new(
@@ -102,7 +104,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResourceService<C> {
             .cal_store
             .read()
             .await
-            .get_event(&self.principal, &self.cid, &self.uid)
+            .get_object(&self.principal, &self.cid, &self.uid)
             .await?;
         Ok(event.into())
     }
@@ -115,7 +117,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for EventResourceService<C> {
         self.cal_store
             .write()
             .await
-            .delete_event(&self.principal, &self.cid, &self.uid, use_trashbin)
+            .delete_object(&self.principal, &self.cid, &self.uid, use_trashbin)
             .await?;
         Ok(())
     }

@@ -15,7 +15,7 @@ use serde::Deserialize;
 use tokio::sync::RwLock;
 
 use crate::{
-    event::resource::{EventProp, EventResource},
+    calendar_object::resource::{CalendarObjectProp, CalendarObjectResource},
     Error,
 };
 
@@ -49,7 +49,7 @@ pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
     principal: &str,
     cid: &str,
     cal_store: &RwLock<C>,
-) -> Result<MultistatusElement<PropstatWrapper<EventProp>, String>, Error> {
+) -> Result<MultistatusElement<PropstatWrapper<CalendarObjectProp>, String>, Error> {
     let props = match sync_collection.prop {
         PropfindType::Allprop => {
             vec!["allprop".to_owned()]
@@ -73,7 +73,7 @@ pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
     for event in new_events {
         let path = format!("{}/{}", req.path(), event.get_uid());
         responses.push(
-            EventResource::from(event)
+            CalendarObjectResource::from(event)
                 .propfind(prefix, &path, props.clone())
                 .await?,
         );

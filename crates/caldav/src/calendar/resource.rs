@@ -1,4 +1,4 @@
-use crate::event::resource::EventResource;
+use crate::calendar_object::resource::CalendarObjectResource;
 use crate::Error;
 use actix_web::{web::Data, HttpRequest};
 use async_trait::async_trait;
@@ -218,7 +218,7 @@ impl Resource for CalendarResource {
 
 #[async_trait(?Send)]
 impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
-    type MemberType = EventResource;
+    type MemberType = CalendarObjectResource;
     type PathComponents = (String, String); // principal, calendar_id
     type Resource = CalendarResource;
     type Error = Error;
@@ -243,7 +243,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
             .cal_store
             .read()
             .await
-            .get_events(&self.principal, &self.calendar_id)
+            .get_objects(&self.principal, &self.calendar_id)
             .await?
             .into_iter()
             .map(|event| (format!("{}/{}", self.path, &event.get_uid()), event.into()))

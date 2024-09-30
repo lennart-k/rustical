@@ -37,7 +37,7 @@ async fn test_create_event<CS: CalendarStore>(mut store: CS) {
         .unwrap();
 
     store
-        .put_event(
+        .put_object(
             "testuser".to_owned(),
             "test".to_owned(),
             "asd".to_owned(),
@@ -46,7 +46,7 @@ async fn test_create_event<CS: CalendarStore>(mut store: CS) {
         .await
         .unwrap();
 
-    let event = store.get_event("testuser", "test", "asd").await.unwrap();
+    let event = store.get_object("testuser", "test", "asd").await.unwrap();
     assert_eq!(event.get_ics(), EVENT);
     assert_eq!(event.get_uid(), "asd");
 }

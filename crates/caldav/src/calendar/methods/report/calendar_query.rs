@@ -4,12 +4,12 @@ use rustical_dav::{
     resource::HandlePropfind,
     xml::{multistatus::PropstatWrapper, MultistatusElement},
 };
-use rustical_store::{model::Event, CalendarStore};
+use rustical_store::{model::object::CalendarObject, CalendarStore};
 use serde::Deserialize;
 use tokio::sync::RwLock;
 
 use crate::{
-    event::resource::{EventProp, EventResource},
+    calendar_object::resource::{CalendarObjectProp, CalendarObjectResource},
     Error,
 };
 
@@ -95,9 +95,9 @@ pub async fn get_events_calendar_query<C: CalendarStore + ?Sized>(
     principal: &str,
     cid: &str,
     store: &RwLock<C>,
-) -> Result<Vec<Event>, Error> {
+) -> Result<Vec<CalendarObject>, Error> {
     // TODO: Implement filtering
-    Ok(store.read().await.get_events(principal, cid).await?)
+    Ok(store.read().await.get_objects(principal, cid).await?)
 }
 
 pub async fn handle_calendar_query<C: CalendarStore + ?Sized>(
@@ -107,7 +107,7 @@ pub async fn handle_calendar_query<C: CalendarStore + ?Sized>(
     principal: &str,
     cid: &str,
     cal_store: &RwLock<C>,
-) -> Result<MultistatusElement<PropstatWrapper<EventProp>, String>, Error> {
+) -> Result<MultistatusElement<PropstatWrapper<CalendarObjectProp>, String>, Error> {
     let events = get_events_calendar_query(&cal_query, principal, cid, cal_store).await?;
 
     let props = match cal_query.prop {
@@ -126,7 +126,7 @@ pub async fn handle_calendar_query<C: CalendarStore + ?Sized>(
     for event in events {
         let path = format!("{}/{}", req.path(), event.get_uid());
         responses.push(
-            EventResource::from(event)
+            CalendarObjectResource::from(event)
                 .propfind(prefix, &path, props.clone())
                 .await?,
         );

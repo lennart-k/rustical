@@ -36,7 +36,7 @@ pub async fn get_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
         .store
         .read()
         .await
-        .get_event(&principal, &cid, &uid)
+        .get_object(&principal, &cid, &uid)
         .await?;
 
     Ok(HttpResponse::Ok()
@@ -79,7 +79,7 @@ pub async fn put_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
 
     if Some(&HeaderValue::from_static("*")) == req.headers().get(header::IF_NONE_MATCH) {
         // Only write if not existing
-        match store.get_event(&principal, &cid, &uid).await {
+        match store.get_object(&principal, &cid, &uid).await {
             Ok(_) => {
                 // Conflict
                 return Ok(HttpResponse::Conflict().body("Resource with this URI already existing"));
@@ -94,7 +94,7 @@ pub async fn put_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
         }
     }
 
-    store.put_event(principal, cid, uid, body).await?;
+    store.put_object(principal, cid, uid, body).await?;
 
     Ok(HttpResponse::Created().body(""))
 }

@@ -2,7 +2,7 @@ use actix_web::http::Method;
 use actix_web::web::{self, Data};
 use actix_web::{guard, HttpResponse, Responder};
 use calendar::resource::CalendarResourceService;
-use event::resource::EventResourceService;
+use calendar_object::resource::CalendarObjectResourceService;
 use principal::PrincipalResourceService;
 use root::RootResourceService;
 use rustical_auth::CheckAuthentication;
@@ -15,8 +15,8 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 
 pub mod calendar;
+pub mod calendar_object;
 pub mod error;
-pub mod event;
 pub mod principal;
 pub mod root;
 
@@ -102,21 +102,23 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
                             web::resource("/{event}")
                                 .route(
                                     propfind_method()
-                                        .to(route_propfind::<A, EventResourceService<C>>),
+                                        .to(route_propfind::<A, CalendarObjectResourceService<C>>),
                                 )
                                 .route(
                                     proppatch_method()
-                                        .to(route_proppatch::<A, EventResourceService<C>>),
+                                        .to(route_proppatch::<A, CalendarObjectResourceService<C>>),
                                 )
                                 .route(
                                     web::method(Method::DELETE)
-                                        .to(route_delete::<A, EventResourceService<C>>),
+                                        .to(route_delete::<A, CalendarObjectResourceService<C>>),
                                 )
                                 .route(
-                                    web::method(Method::GET).to(event::methods::get_event::<A, C>),
+                                    web::method(Method::GET)
+                                        .to(calendar_object::methods::get_event::<A, C>),
                                 )
                                 .route(
-                                    web::method(Method::PUT).to(event::methods::put_event::<A, C>),
+                                    web::method(Method::PUT)
+                                        .to(calendar_object::methods::put_event::<A, C>),
                                 ),
                         ),
                 ),
