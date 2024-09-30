@@ -10,30 +10,32 @@ a calendar server
   - [ ] Support for VTODO, VJOURNAL
     - [x] VTODO
   - [ ] Proper filtering for REPORT method
+    - [x] comp-filter
+    - [ ] time-range filter
+    - [ ] prop-filter
   - [ ] ICS parsing
     - [x] Datetime parsing
   - [x] Implement PROPPATCH
+- [ ] CardDAV
 - [ ] Auth (There currently is no authentication at all in place for some routes)
   - [ ] Access control
   - [ ] preparation for different principal types (groups)
   - [ ] authentication rewrite? (argon2 is very slow for each request)
   - [ ] OIDC support
-- [ ] CardDAV
+- [ ] Web UI
+- [x] Trash bin
+  - [x] Hiding calendars instead of deleting them
+  - [ ] Restore endpoint
 - [ ] Packaging
   - [x] Ensure cargo install works
   - [ ] Docker image
   - [ ] Releases
 - [ ] Locking
-- [ ] Web UI
 - [ ] Testing such that I'm confident enough to use it myself :)
 - [x] WebDAV sync extension [RFC 6578](https://www.rfc-editor.org/rfc/rfc6578)
   - [x] implement getctag [see](https://github.com/apple/ccs-calendarserver/blob/master/doc/Extensions/caldav-ctag.txt)
   - [ ] implement WebDAV If header
 - [ ] Ensure proper routing
-- [x] Trash bin
-  - [x] Hiding calendars instead of deleting them
-  - [ ] Restore endpoint
-- [ ] Frontend
 
 ## Relevant RFCs
 
