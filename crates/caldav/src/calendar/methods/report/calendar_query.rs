@@ -60,6 +60,7 @@ struct PropFilterElement {
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
 #[allow(dead_code)]
+// https://datatracker.ietf.org/doc/html/rfc4791#section-9.7.1
 struct CompFilterElement {
     is_not_defined: Option<()>,
     time_range: Option<TimeRangeElement>,
@@ -72,11 +73,80 @@ struct CompFilterElement {
     name: String,
 }
 
+impl CompFilterElement {
+    pub fn matches_root(&self, cal_object: &CalendarObject) -> bool {
+        //   A CALDAV:comp-filter is said to match if:
+        //
+        // *  The CALDAV:comp-filter XML element is empty and the calendar
+        //    object or calendar component type specified by the "name"
+        //    attribute exists in the current scope;
+        //
+        // or:
+        //
+        // *  The CALDAV:comp-filter XML element contains a CALDAV:is-not-
+        //    defined XML element and the calendar object or calendar
+        //    component type specified by the "name" attribute does not exist
+        //    in the current scope;
+        //
+        //
+
+        // The spec seems a bit unclear. But this should be the correct behaviour I assume
+        if self.is_not_defined.is_some() {
+            return self.name != "VCALENDAR";
+        }
+        if self.name != "VCALENDAR" {
+            return false;
+        }
+        //
+        // or:
+        //
+        // *  The CALDAV:comp-filter XML element contains a CALDAV:time-range
+        //    XML element and at least one recurrence instance in the
+        //    targeted calendar component is scheduled to overlap the
+        //    specified time range, and all specified CALDAV:prop-filter and
+        //    CALDAV:comp-filter child XML elements also match the targeted
+        //    calendar component;
+        //
+        // or:
+        //
+        // *  The CALDAV:comp-filter XML element only contains CALDAV:prop-
+        //    filter and CALDAV:comp-filter child XML elements that all match
+        //    the targeted calendar component.
+        if self
+            .comp_filter
+            .iter()
+            .map(|filter| filter.matches(cal_object))
+            .all(|x| x)
+        {
+            return true;
+        }
+
+        false
+    }
+
+    pub fn matches(&self, cal_object: &CalendarObject) -> bool {
+        // TODO: evaulate prop-filter, time-range
+        let component_name = cal_object.get_component_name();
+
+        if self.is_not_defined.is_some() {
+            return self.name != component_name;
+        }
+        self.name == component_name
+    }
+}
+
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
 #[allow(dead_code)]
+// https://datatracker.ietf.org/doc/html/rfc4791#section-9.7
 struct FilterElement {
     comp_filter: CompFilterElement,
+}
+
+impl FilterElement {
+    pub fn matches(&self, cal_object: &CalendarObject) -> bool {
+        self.comp_filter.matches_root(cal_object)
+    }
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -91,13 +161,16 @@ pub struct CalendarQueryRequest {
 }
 
 pub async fn get_events_calendar_query<C: CalendarStore + ?Sized>(
-    _cal_query: &CalendarQueryRequest,
+    cal_query: &CalendarQueryRequest,
     principal: &str,
     cid: &str,
     store: &RwLock<C>,
 ) -> Result<Vec<CalendarObject>, Error> {
-    // TODO: Implement filtering
-    Ok(store.read().await.get_objects(principal, cid).await?)
+    let mut objects = store.read().await.get_objects(principal, cid).await?;
+    if let Some(filter) = &cal_query.filter {
+        objects.retain(|object| filter.matches(object));
+    }
+    Ok(objects)
 }
 
 pub async fn handle_calendar_query<C: CalendarStore + ?Sized>(
