@@ -11,7 +11,7 @@ use rustical_dav::{
     resource::HandlePropfind,
     xml::{multistatus::PropstatWrapper, MultistatusElement},
 };
-use rustical_store::{event::Event, CalendarStore};
+use rustical_store::{model::Event, CalendarStore};
 use serde::Deserialize;
 use tokio::sync::RwLock;
 

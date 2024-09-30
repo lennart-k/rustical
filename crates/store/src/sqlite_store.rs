@@ -1,5 +1,5 @@
-use crate::calendar::Calendar;
-use crate::event::Event;
+use crate::model::Calendar;
+use crate::model::Event;
 use crate::{CalendarStore, Error};
 use anyhow::Result;
 use async_trait::async_trait;

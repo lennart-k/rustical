@@ -1,5 +1,5 @@
 use crate::{
-    timestamps::{parse_duration, CalDateTime},
+    timestamp::{parse_duration, CalDateTime},
     Error,
 };
 use anyhow::{anyhow, Result};

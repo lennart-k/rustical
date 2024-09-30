@@ -3,7 +3,7 @@ use actix_web::{web::Data, HttpRequest};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
-use rustical_store::event::Event;
+use rustical_store::model::Event;
 use rustical_store::CalendarStore;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;

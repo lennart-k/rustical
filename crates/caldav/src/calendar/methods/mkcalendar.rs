@@ -3,7 +3,7 @@ use crate::Error;
 use actix_web::web::{Data, Path};
 use actix_web::HttpResponse;
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
-use rustical_store::calendar::Calendar;
+use rustical_store::model::Calendar;
 use rustical_store::CalendarStore;
 use serde::{Deserialize, Serialize};
 

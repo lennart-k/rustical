@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
-use rustical_store::calendar::Calendar;
+use rustical_store::model::Calendar;
 use rustical_store::CalendarStore;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;

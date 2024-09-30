@@ -26,7 +26,7 @@ async fn test_init<CS: CalendarStore>(_store: CS) {
 #[tokio::test]
 async fn test_create_event<CS: CalendarStore>(mut store: CS) {
     store
-        .insert_calendar(rustical_store::calendar::Calendar {
+        .insert_calendar(rustical_store::model::Calendar {
             id: "test".to_owned(),
             displayname: Some("Test Calendar".to_owned()),
             principal: "testuser".to_owned(),

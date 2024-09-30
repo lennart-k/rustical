@@ -8,7 +8,7 @@ use rustical_dav::{
     },
 };
 use rustical_store::{
-    calendar::{format_synctoken, parse_synctoken},
+    model::calendar::{format_synctoken, parse_synctoken},
     CalendarStore,
 };
 use serde::Deserialize;
