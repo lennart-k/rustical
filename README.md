@@ -25,8 +25,8 @@ a calendar server
 - [ ] Locking
 - [ ] Web UI
 - [ ] Testing such that I'm confident enough to use it myself :)
-- [ ] WebDAV sync extension [RFC 6578](https://www.rfc-editor.org/rfc/rfc6578)
-  - [ ] implement getctag [see](https://github.com/apple/ccs-calendarserver/blob/master/doc/Extensions/caldav-ctag.txt)
+- [x] WebDAV sync extension [RFC 6578](https://www.rfc-editor.org/rfc/rfc6578)
+  - [x] implement getctag [see](https://github.com/apple/ccs-calendarserver/blob/master/doc/Extensions/caldav-ctag.txt)
   - [ ] implement WebDAV If header
 - [ ] Ensure proper routing
 - [x] Trash bin
