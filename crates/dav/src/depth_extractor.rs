@@ -4,7 +4,7 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 #[error("Invalid Depth header")]
-pub struct InvalidDepthHeader {}
+pub struct InvalidDepthHeader;
 
 impl ResponseError for InvalidDepthHeader {
     fn status_code(&self) -> actix_web::http::StatusCode {
@@ -27,7 +27,7 @@ impl TryFrom<&[u8]> for Depth {
             b"0" => Ok(Depth::Zero),
             b"1" => Ok(Depth::One),
             b"Infinity" | b"infinity" => Ok(Depth::Infinity),
-            _ => Err(InvalidDepthHeader {}),
+            _ => Err(InvalidDepthHeader),
         }
     }
 }
