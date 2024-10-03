@@ -43,8 +43,7 @@ pub trait CalendarStore: Send + Sync + 'static {
         &mut self,
         principal: String,
         cid: String,
-        uid: String,
-        ics: String,
+        object: CalendarObject,
     ) -> Result<(), Error>;
     async fn delete_object(
         &mut self,

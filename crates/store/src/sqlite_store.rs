@@ -222,31 +222,24 @@ impl CalendarStore for SqliteCalendarStore {
         &mut self,
         principal: String,
         cid: String,
-        uid: String,
-        ics: String,
+        object: CalendarObject,
     ) -> Result<(), Error> {
         let mut tx = self.db.begin().await?;
 
-        // input validation
-        CalendarObject::from_ics(uid.to_owned(), ics.to_owned())?;
+        let (uid, ics) = (object.get_uid(), object.get_ics());
+
         sqlx::query!(
             "REPLACE INTO calendarobjects (principal, cid, uid, ics) VALUES (?, ?, ?, ?)",
             principal,
             cid,
             uid,
-            ics,
+            ics
         )
         .execute(&mut *tx)
         .await?;
 
-        log_object_operation(
-            &mut tx,
-            &principal,
-            &cid,
-            &uid,
-            CalendarChangeOperation::Add,
-        )
-        .await?;
+        log_object_operation(&mut tx, &principal, &cid, uid, CalendarChangeOperation::Add).await?;
+
         tx.commit().await?;
         Ok(())
     }

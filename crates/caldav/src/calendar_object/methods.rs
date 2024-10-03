@@ -6,6 +6,7 @@ use actix_web::web::{Data, Path};
 use actix_web::HttpRequest;
 use actix_web::HttpResponse;
 use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
+use rustical_store::model::CalendarObject;
 use rustical_store::CalendarStore;
 
 pub async fn get_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
@@ -94,7 +95,8 @@ pub async fn put_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
         }
     }
 
-    store.put_object(principal, cid, uid, body).await?;
+    let object = CalendarObject::from_ics(uid, body)?;
+    store.put_object(principal, cid, object).await?;
 
     Ok(HttpResponse::Created().body(""))
 }
