@@ -5,9 +5,8 @@ use calendar::resource::CalendarResourceService;
 use calendar_object::resource::CalendarObjectResourceService;
 use principal::PrincipalResourceService;
 use root::RootResourceService;
-use rustical_dav::methods::{
-    propfind::ServicePrefix, route_delete, route_propfind, route_proppatch,
-};
+use rustical_dav::methods::{propfind::ServicePrefix, route_delete};
+use rustical_dav::resource::ResourceService;
 use rustical_store::auth::{AuthenticationMiddleware, AuthenticationProvider};
 use rustical_store::CalendarStore;
 use std::str::FromStr;
@@ -36,8 +35,6 @@ pub fn configure_dav<AP: AuthenticationProvider, C: CalendarStore + ?Sized>(
     auth_provider: Arc<AP>,
     store: Arc<RwLock<C>>,
 ) {
-    let propfind_method = || web::method(Method::from_str("PROPFIND").unwrap());
-    let proppatch_method = || web::method(Method::from_str("PROPPATCH").unwrap());
     let report_method = || web::method(Method::from_str("REPORT").unwrap());
     let mkcalendar_method = || web::method(Method::from_str("MKCALENDAR").unwrap());
 
@@ -55,40 +52,18 @@ pub fn configure_dav<AP: AuthenticationProvider, C: CalendarStore + ?Sized>(
                     .guard(guard::Method(Method::OPTIONS))
                     .to(options_handler),
             )
-            .service(
-                web::resource("")
-                    .route(propfind_method().to(route_propfind::<RootResourceService>))
-                    .route(proppatch_method().to(route_proppatch::<RootResourceService>)),
-            )
+            .service(RootResourceService::actix_resource())
             .service(
                 web::scope("/user").service(
                     web::scope("/{principal}")
-                        .service(
-                            web::resource("")
-                                .route(
-                                    propfind_method()
-                                        .to(route_propfind::<PrincipalResourceService<C>>),
-                                )
-                                .route(
-                                    proppatch_method()
-                                        .to(route_proppatch::<PrincipalResourceService<C>>),
-                                ),
-                        )
+                        .service(PrincipalResourceService::<C>::actix_resource())
                         .service(
                             web::scope("/{calendar}")
                                 .service(
-                                    web::resource("")
+                                    CalendarResourceService::<C>::actix_resource()
                                         .route(report_method().to(
                                             calendar::methods::report::route_report_calendar::<C>,
                                         ))
-                                        .route(
-                                            propfind_method()
-                                                .to(route_propfind::<CalendarResourceService<C>>),
-                                        )
-                                        .route(
-                                            proppatch_method()
-                                                .to(route_proppatch::<CalendarResourceService<C>>),
-                                        )
                                         .route(
                                             web::method(Method::DELETE)
                                                 .to(route_delete::<CalendarResourceService<C>>),
@@ -98,28 +73,20 @@ pub fn configure_dav<AP: AuthenticationProvider, C: CalendarStore + ?Sized>(
                                         )),
                                 )
                                 .service(
-                                    web::resource("/{event}")
-                                        .route(
-                                            propfind_method().to(route_propfind::<
+                                    web::scope("/{object}").service(
+                                        CalendarObjectResourceService::<C>::actix_resource()
+                                            .route(web::method(Method::DELETE).to(route_delete::<
                                                 CalendarObjectResourceService<C>,
-                                            >),
-                                        )
-                                        .route(proppatch_method().to(route_proppatch::<
-                                            CalendarObjectResourceService<C>,
-                                        >))
-                                        .route(
-                                            web::method(Method::DELETE).to(route_delete::<
-                                                CalendarObjectResourceService<C>,
-                                            >),
-                                        )
-                                        .route(
-                                            web::method(Method::GET)
-                                                .to(calendar_object::methods::get_event::<C>),
-                                        )
-                                        .route(
-                                            web::method(Method::PUT)
-                                                .to(calendar_object::methods::put_event::<C>),
-                                        ),
+                                            >))
+                                            .route(
+                                                web::method(Method::GET)
+                                                    .to(calendar_object::methods::get_event::<C>),
+                                            )
+                                            .route(
+                                                web::method(Method::PUT)
+                                                    .to(calendar_object::methods::put_event::<C>),
+                                            ),
+                                    ),
                                 ),
                         ),
                 ),

@@ -42,7 +42,8 @@ pub fn make_app<CS: CalendarStore + ?Sized>(
                                                                                                      // }),
         )
         .service(
-            web::scope("/frontend").configure(|cfg| configure_frontend(cfg, cal_store.clone())),
+            web::scope("/frontend")
+                .configure(|cfg| configure_frontend(cfg, auth_provider.clone(), cal_store.clone())),
         )
         .service(web::redirect("/", "/frontend").permanent())
 }

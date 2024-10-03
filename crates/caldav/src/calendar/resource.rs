@@ -1,5 +1,11 @@
+use super::prop::{
+    Resourcetype, SupportedCalendarComponent, SupportedCalendarComponentSet, SupportedCalendarData,
+    SupportedReportSet, UserPrivilegeSet,
+};
 use crate::calendar_object::resource::CalendarObjectResource;
+use crate::principal::PrincipalResource;
 use crate::Error;
+use actix_web::dev::ResourceMap;
 use actix_web::{web::Data, HttpRequest};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
@@ -11,11 +17,6 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use strum::{EnumString, VariantNames};
 use tokio::sync::RwLock;
-
-use super::prop::{
-    Resourcetype, SupportedCalendarComponent, SupportedCalendarComponentSet, SupportedCalendarData,
-    SupportedReportSet, UserPrivilegeSet,
-};
 
 pub struct CalendarResourceService<C: CalendarStore + ?Sized> {
     pub cal_store: Arc<RwLock<C>>,
@@ -94,16 +95,21 @@ impl Resource for CalendarResource {
     type Prop = CalendarProp;
     type Error = Error;
 
-    fn get_prop(&self, prefix: &str, prop: Self::PropName) -> Result<Self::Prop, Self::Error> {
+    fn get_prop(
+        &self,
+        rmap: &ResourceMap,
+        prop: Self::PropName,
+    ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
             CalendarPropName::Resourcetype => CalendarProp::Resourcetype(Resourcetype::default()),
-            CalendarPropName::CurrentUserPrincipal => CalendarProp::CurrentUserPrincipal(
-                HrefElement::new(format!("{}/user/{}/", prefix, self.0.principal)),
-            ),
-            CalendarPropName::Owner => CalendarProp::Owner(HrefElement::new(format!(
-                "{}/user/{}/",
-                prefix, self.0.principal
-            ))),
+            CalendarPropName::CurrentUserPrincipal => {
+                CalendarProp::CurrentUserPrincipal(HrefElement::new(
+                    PrincipalResource::get_url(rmap, vec![&self.0.principal]).unwrap(),
+                ))
+            }
+            CalendarPropName::Owner => CalendarProp::Owner(HrefElement::new(
+                PrincipalResource::get_url(rmap, vec![&self.0.principal]).unwrap(),
+            )),
             CalendarPropName::Displayname => CalendarProp::Displayname(self.0.displayname.clone()),
             CalendarPropName::CalendarColor => CalendarProp::CalendarColor(self.0.color.clone()),
             CalendarPropName::CalendarDescription => {
@@ -219,6 +225,11 @@ impl Resource for CalendarResource {
             CalendarPropName::Getctag => Err(rustical_dav::Error::PropReadOnly),
         }
     }
+
+    #[inline]
+    fn resource_name() -> &'static str {
+        "caldav_calendar"
+    }
 }
 
 #[async_trait(?Send)]
@@ -242,8 +253,10 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
         Ok(calendar.into())
     }
 
-    async fn get_members(&self) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
-        // As of now the calendar resource has no members since events are shown with REPORT
+    async fn get_members(
+        &self,
+        rmap: &ResourceMap,
+    ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
         Ok(self
             .cal_store
             .read()
@@ -251,7 +264,16 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
             .get_objects(&self.principal, &self.calendar_id)
             .await?
             .into_iter()
-            .map(|event| (format!("{}/{}", self.path, &event.get_uid()), event.into()))
+            .map(|object| {
+                (
+                    CalendarObjectResource::get_url(
+                        rmap,
+                        vec![&self.principal, &self.calendar_id, object.get_uid()],
+                    )
+                    .unwrap(),
+                    object.into(),
+                )
+            })
             .collect())
     }
 

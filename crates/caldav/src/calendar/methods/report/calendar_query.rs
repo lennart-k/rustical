@@ -1,7 +1,7 @@
 use actix_web::HttpRequest;
 use rustical_dav::{
     methods::propfind::{PropElement, PropfindType},
-    resource::HandlePropfind,
+    resource::Resource,
     xml::{multistatus::PropstatWrapper, MultistatusElement},
 };
 use rustical_store::{model::object::CalendarObject, CalendarStore};
@@ -176,7 +176,6 @@ pub async fn get_objects_calendar_query<C: CalendarStore + ?Sized>(
 pub async fn handle_calendar_query<C: CalendarStore + ?Sized>(
     cal_query: CalendarQueryRequest,
     req: HttpRequest,
-    prefix: &str,
     principal: &str,
     cid: &str,
     cal_store: &RwLock<C>,
@@ -197,10 +196,14 @@ pub async fn handle_calendar_query<C: CalendarStore + ?Sized>(
 
     let mut responses = Vec::new();
     for object in objects {
-        let path = format!("{}/{}", req.path(), object.get_uid());
+        let path = CalendarObjectResource::get_url(
+            req.resource_map(),
+            vec![principal, cid, object.get_uid()],
+        )
+        .unwrap();
         responses.push(
             CalendarObjectResource::from(object)
-                .propfind(prefix, &path, props.clone())
+                .propfind(&path, props.clone(), req.resource_map())
                 .await?,
         );
     }

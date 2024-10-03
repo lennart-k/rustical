@@ -1,5 +1,5 @@
 use crate::Error;
-use actix_web::{web::Data, HttpRequest};
+use actix_web::{dev::ResourceMap, web::Data, HttpRequest};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
@@ -51,7 +51,11 @@ impl Resource for CalendarObjectResource {
     type Prop = CalendarObjectProp;
     type Error = Error;
 
-    fn get_prop(&self, _prefix: &str, prop: Self::PropName) -> Result<Self::Prop, Self::Error> {
+    fn get_prop(
+        &self,
+        _rmap: &ResourceMap,
+        prop: Self::PropName,
+    ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
             CalendarObjectPropName::Getetag => CalendarObjectProp::Getetag(self.0.get_etag()),
             CalendarObjectPropName::CalendarData => {
@@ -61,6 +65,11 @@ impl Resource for CalendarObjectResource {
                 CalendarObjectProp::Getcontenttype("text/calendar;charset=utf-8".to_owned())
             }
         })
+    }
+
+    #[inline]
+    fn resource_name() -> &'static str {
+        "caldav_calendar_object"
     }
 }
 

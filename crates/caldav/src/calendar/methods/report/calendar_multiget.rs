@@ -8,7 +8,7 @@ use actix_web::{
 };
 use rustical_dav::{
     methods::propfind::{PropElement, PropfindType},
-    resource::HandlePropfind,
+    resource::Resource,
     xml::{multistatus::PropstatWrapper, MultistatusElement},
 };
 use rustical_store::{model::object::CalendarObject, CalendarStore};
@@ -88,7 +88,7 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
         let path = format!("{}/{}", req.path(), object.get_uid());
         responses.push(
             CalendarObjectResource::from(object)
-                .propfind(prefix, &path, props.clone())
+                .propfind(&path, props.clone(), req.resource_map())
                 .await?,
         );
     }

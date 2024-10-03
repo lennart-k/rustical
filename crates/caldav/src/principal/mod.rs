@@ -1,4 +1,5 @@
 use crate::Error;
+use actix_web::dev::ResourceMap;
 use actix_web::web::Data;
 use actix_web::HttpRequest;
 use async_trait::async_trait;
@@ -14,7 +15,6 @@ use crate::calendar::resource::CalendarResource;
 
 pub struct PrincipalResourceService<C: CalendarStore + ?Sized> {
     principal: String,
-    path: String,
     cal_store: Arc<RwLock<C>>,
 }
 
@@ -67,8 +67,13 @@ impl Resource for PrincipalResource {
     type Prop = PrincipalProp;
     type Error = Error;
 
-    fn get_prop(&self, prefix: &str, prop: Self::PropName) -> Result<Self::Prop, Self::Error> {
-        let principal_href = HrefElement::new(format!("{}/user/{}/", prefix, self.principal));
+    fn get_prop(
+        &self,
+        rmap: &ResourceMap,
+        prop: Self::PropName,
+    ) -> Result<Self::Prop, Self::Error> {
+        let principal_href = HrefElement::new(Self::get_url(rmap, vec![&self.principal]).unwrap());
+
         Ok(match prop {
             PrincipalPropName::Resourcetype => PrincipalProp::Resourcetype(Resourcetype::default()),
             PrincipalPropName::CurrentUserPrincipal => {
@@ -80,6 +85,11 @@ impl Resource for PrincipalResource {
                 PrincipalProp::CalendarUserAddressSet(principal_href)
             }
         })
+    }
+
+    #[inline]
+    fn resource_name() -> &'static str {
+        "caldav_principal"
     }
 }
 
@@ -102,7 +112,6 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResourceService<C> 
 
         Ok(Self {
             cal_store,
-            path: req.path().to_owned(),
             principal,
         })
     }
@@ -116,7 +125,10 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResourceService<C> 
         })
     }
 
-    async fn get_members(&self) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
+    async fn get_members(
+        &self,
+        rmap: &ResourceMap,
+    ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
         let calendars = self
             .cal_store
             .read()
@@ -125,7 +137,12 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResourceService<C> 
             .await?;
         Ok(calendars
             .into_iter()
-            .map(|cal| (format!("{}/{}", &self.path, &cal.id), cal.into()))
+            .map(|cal| {
+                (
+                    CalendarResource::get_url(rmap, vec![&self.principal, &cal.id]).unwrap(),
+                    cal.into(),
+                )
+            })
             .collect())
     }
 

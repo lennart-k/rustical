@@ -51,22 +51,14 @@ pub async fn route_report_calendar<C: CalendarStore + ?Sized>(
 
     Ok(match request.clone() {
         ReportRequest::CalendarQuery(cal_query) => {
-            handle_calendar_query(cal_query, req, &prefix, &principal, &cid, &cal_store).await?
+            handle_calendar_query(cal_query, req, &principal, &cid, &cal_store).await?
         }
         ReportRequest::CalendarMultiget(cal_multiget) => {
             handle_calendar_multiget(cal_multiget, req, &prefix, &principal, &cid, &cal_store)
                 .await?
         }
         ReportRequest::SyncCollection(sync_collection) => {
-            handle_sync_collection(
-                sync_collection,
-                req,
-                &prefix.0,
-                &principal,
-                &cid,
-                &cal_store,
-            )
-            .await?
+            handle_sync_collection(sync_collection, req, &principal, &cid, &cal_store).await?
         }
     })
 }

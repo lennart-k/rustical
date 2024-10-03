@@ -1,4 +1,6 @@
+use crate::principal::PrincipalResource;
 use crate::Error;
+use actix_web::dev::ResourceMap;
 use actix_web::HttpRequest;
 use async_trait::async_trait;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
@@ -47,13 +49,22 @@ impl Resource for RootResource {
     type Prop = RootProp;
     type Error = Error;
 
-    fn get_prop(&self, prefix: &str, prop: Self::PropName) -> Result<Self::Prop, Self::Error> {
+    fn get_prop(
+        &self,
+        rmap: &ResourceMap,
+        prop: Self::PropName,
+    ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
             RootPropName::Resourcetype => RootProp::Resourcetype(Resourcetype::default()),
             RootPropName::CurrentUserPrincipal => RootProp::CurrentUserPrincipal(HrefElement::new(
-                format!("{}/user/{}/", prefix, self.principal),
+                PrincipalResource::get_url(rmap, vec![&self.principal]).unwrap(),
             )),
         })
+    }
+
+    #[inline]
+    fn resource_name() -> &'static str {
+        "caldav_root"
     }
 }
 

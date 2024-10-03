@@ -24,3 +24,4 @@ async-trait = "0.1"
 thiserror = "1.0"
 strum = { version = "0.26", features = ["strum_macros", "derive"] }
 derive_more = { version = "1.0", features = ["from", "into"] }
+url = "2.5.2"

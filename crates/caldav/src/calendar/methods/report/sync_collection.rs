@@ -1,7 +1,7 @@
 use actix_web::{http::StatusCode, HttpRequest};
 use rustical_dav::{
     methods::propfind::{PropElement, PropfindType},
-    resource::HandlePropfind,
+    resource::Resource,
     xml::{
         multistatus::{PropstatWrapper, ResponseElement},
         MultistatusElement,
@@ -45,7 +45,6 @@ pub struct SyncCollectionRequest {
 pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
     sync_collection: SyncCollectionRequest,
     req: HttpRequest,
-    prefix: &str,
     principal: &str,
     cid: &str,
     cal_store: &RwLock<C>,
@@ -71,16 +70,22 @@ pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
 
     let mut responses = Vec::new();
     for object in new_objects {
-        let path = format!("{}/{}", req.path(), object.get_uid());
+        let path = CalendarObjectResource::get_url(
+            req.resource_map(),
+            vec![principal, cid, &object.get_uid()],
+        )
+        .unwrap();
         responses.push(
             CalendarObjectResource::from(object)
-                .propfind(prefix, &path, props.clone())
+                .propfind(&path, props.clone(), req.resource_map())
                 .await?,
         );
     }
 
     for object_uid in deleted_objects {
-        let path = format!("{}/{}", req.path(), object_uid);
+        let path =
+            CalendarObjectResource::get_url(req.resource_map(), vec![principal, cid, &object_uid])
+                .unwrap();
         responses.push(ResponseElement {
             href: path,
             status: Some(format!("HTTP/1.1 {}", StatusCode::NOT_FOUND)),

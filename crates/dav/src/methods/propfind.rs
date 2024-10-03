@@ -1,12 +1,11 @@
 use crate::depth_extractor::Depth;
-use crate::resource::HandlePropfind;
 use crate::resource::Resource;
 use crate::resource::ResourceService;
 use crate::xml::multistatus::PropstatWrapper;
 use crate::xml::MultistatusElement;
 use crate::xml::TagList;
 use crate::Error;
-use actix_web::web::{Data, Path};
+use actix_web::web::Path;
 use actix_web::HttpRequest;
 use derive_more::derive::Deref;
 use log::debug;
@@ -43,7 +42,6 @@ pub async fn route_propfind<R: ResourceService>(
     path_components: Path<R::PathComponents>,
     body: String,
     req: HttpRequest,
-    prefix: Data<ServicePrefix>,
     user: User,
     depth: Depth,
 ) -> Result<
@@ -54,7 +52,6 @@ pub async fn route_propfind<R: ResourceService>(
     R::Error,
 > {
     debug!("{body}");
-    let prefix = prefix.into_inner();
 
     let resource_service = R::new(&req, path_components.into_inner()).await?;
 
@@ -81,13 +78,19 @@ pub async fn route_propfind<R: ResourceService>(
 
     let mut member_responses = Vec::new();
     if depth != Depth::Zero {
-        for (path, member) in resource_service.get_members().await? {
-            member_responses.push(member.propfind(&prefix, &path, props.clone()).await?);
+        for (path, member) in resource_service.get_members(req.resource_map()).await? {
+            member_responses.push(
+                member
+                    .propfind(&path, props.clone(), req.resource_map())
+                    .await?,
+            );
         }
     }
 
     let resource = resource_service.get_resource(user.id).await?;
-    let response = resource.propfind(&prefix, req.path(), props).await?;
+    let response = resource
+        .propfind(req.path(), props, req.resource_map())
+        .await?;
 
     Ok(MultistatusElement {
         responses: vec![response],
