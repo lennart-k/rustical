@@ -1934,7 +1934,6 @@ dependencies = [
  "async-trait",
  "clap",
  "env_logger",
- "rustical_auth",
  "rustical_caldav",
  "rustical_carddav",
  "rustical_frontend",
@@ -1944,18 +1943,6 @@ dependencies = [
  "tokio",
  "toml",
  "tracing",
-]
-
-[[package]]
-name = "rustical_auth"
-version = "0.1.0"
-dependencies = [
- "actix-web",
- "actix-web-httpauth",
- "futures-util",
- "password-auth",
- "serde",
- "thiserror",
 ]
 
 [[package]]
@@ -1971,7 +1958,6 @@ dependencies = [
  "futures-util",
  "quick-xml",
  "roxmltree",
- "rustical_auth",
  "rustical_dav",
  "rustical_store",
  "serde",
@@ -1993,7 +1979,6 @@ dependencies = [
  "futures-util",
  "quick-xml",
  "roxmltree",
- "rustical_auth",
  "rustical_dav",
  "rustical_store",
  "serde",
@@ -2016,7 +2001,7 @@ dependencies = [
  "log",
  "quick-xml",
  "roxmltree",
- "rustical_auth",
+ "rustical_store",
  "serde",
  "strum",
  "thiserror",
@@ -2031,7 +2016,6 @@ dependencies = [
  "anyhow",
  "askama",
  "askama_actix",
- "rustical_auth",
  "rustical_store",
  "serde",
  "thiserror",
@@ -2042,11 +2026,14 @@ dependencies = [
 name = "rustical_store"
 version = "0.1.0"
 dependencies = [
+ "actix-web",
+ "actix-web-httpauth",
  "anyhow",
  "async-trait",
  "chrono",
  "ical",
  "lazy_static",
+ "password-auth",
  "regex",
  "rstest",
  "rstest_reuse",

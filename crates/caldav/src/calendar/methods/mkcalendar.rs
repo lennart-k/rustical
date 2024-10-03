@@ -2,7 +2,7 @@ use crate::CalDavContext;
 use crate::Error;
 use actix_web::web::{Data, Path};
 use actix_web::HttpResponse;
-use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
+use rustical_store::auth::User;
 use rustical_store::model::Calendar;
 use rustical_store::CalendarStore;
 use serde::{Deserialize, Serialize};
@@ -53,14 +53,14 @@ struct MkcalendarRequest {
     set: PropElement<MkcolCalendarProp>,
 }
 
-pub async fn route_mkcalendar<A: CheckAuthentication, C: CalendarStore + ?Sized>(
+pub async fn route_mkcalendar<C: CalendarStore + ?Sized>(
     path: Path<(String, String)>,
     body: String,
-    auth: AuthInfoExtractor<A>,
+    user: User,
     context: Data<CalDavContext<C>>,
 ) -> Result<HttpResponse, Error> {
     let (principal, cid) = path.into_inner();
-    if principal != auth.inner.user_id {
+    if principal != user.id {
         return Err(Error::Unauthorized);
     }
 

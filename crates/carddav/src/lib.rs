@@ -1,17 +1,10 @@
 use actix_web::{web, HttpResponse, Responder};
-use rustical_auth::CheckAuthentication;
-use std::sync::Arc;
 
 pub fn configure_well_known(cfg: &mut web::ServiceConfig, carddav_root: String) {
     cfg.service(web::redirect("/carddav", carddav_root).permanent());
 }
 
-pub fn configure_dav<A: CheckAuthentication>(
-    _cfg: &mut web::ServiceConfig,
-    _prefix: String,
-    _auth: Arc<A>,
-) {
-}
+pub fn configure_dav(_cfg: &mut web::ServiceConfig, _prefix: String) {}
 
 pub async fn options_handler() -> impl Responder {
     HttpResponse::Ok()

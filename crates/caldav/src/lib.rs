@@ -5,7 +5,6 @@ use calendar::resource::CalendarResourceService;
 use calendar_object::resource::CalendarObjectResourceService;
 use principal::PrincipalResourceService;
 use root::RootResourceService;
-use rustical_auth::CheckAuthentication;
 use rustical_dav::methods::{
     propfind::ServicePrefix, route_delete, route_propfind, route_proppatch,
 };
@@ -30,10 +29,9 @@ pub fn configure_well_known(cfg: &mut web::ServiceConfig, caldav_root: String) {
     cfg.service(web::redirect("/caldav", caldav_root).permanent());
 }
 
-pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
+pub fn configure_dav<C: CalendarStore + ?Sized>(
     cfg: &mut web::ServiceConfig,
     prefix: String,
-    auth: Arc<A>,
     store: Arc<RwLock<C>>,
 ) {
     let propfind_method = || web::method(Method::from_str("PROPFIND").unwrap());
@@ -46,7 +44,6 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     }))
     .app_data(Data::new(ServicePrefix(prefix)))
     .app_data(Data::from(store.clone()))
-    .app_data(Data::from(auth))
     .service(
         web::resource("{path:.*}")
             // Without the guard this service would handle all requests
@@ -55,20 +52,17 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
     )
     .service(
         web::resource("")
-            .route(propfind_method().to(route_propfind::<A, RootResourceService>))
-            .route(proppatch_method().to(route_proppatch::<A, RootResourceService>)),
+            .route(propfind_method().to(route_propfind::<RootResourceService>))
+            .route(proppatch_method().to(route_proppatch::<RootResourceService>)),
     )
     .service(
         web::scope("/user").service(
             web::scope("/{principal}")
                 .service(
                     web::resource("")
+                        .route(propfind_method().to(route_propfind::<PrincipalResourceService<C>>))
                         .route(
-                            propfind_method().to(route_propfind::<A, PrincipalResourceService<C>>),
-                        )
-                        .route(
-                            proppatch_method()
-                                .to(route_proppatch::<A, PrincipalResourceService<C>>),
+                            proppatch_method().to(route_proppatch::<PrincipalResourceService<C>>),
                         ),
                 )
                 .service(
@@ -76,49 +70,47 @@ pub fn configure_dav<A: CheckAuthentication, C: CalendarStore + ?Sized>(
                         .service(
                             web::resource("")
                                 .route(
-                                    report_method().to(
-                                        calendar::methods::report::route_report_calendar::<A, C>,
-                                    ),
+                                    report_method()
+                                        .to(calendar::methods::report::route_report_calendar::<C>),
                                 )
                                 .route(
                                     propfind_method()
-                                        .to(route_propfind::<A, CalendarResourceService<C>>),
+                                        .to(route_propfind::<CalendarResourceService<C>>),
                                 )
                                 .route(
                                     proppatch_method()
-                                        .to(route_proppatch::<A, CalendarResourceService<C>>),
+                                        .to(route_proppatch::<CalendarResourceService<C>>),
                                 )
                                 .route(
                                     web::method(Method::DELETE)
-                                        .to(route_delete::<A, CalendarResourceService<C>>),
+                                        .to(route_delete::<CalendarResourceService<C>>),
                                 )
                                 .route(
-                                    mkcalendar_method().to(
-                                        calendar::methods::mkcalendar::route_mkcalendar::<A, C>,
-                                    ),
+                                    mkcalendar_method()
+                                        .to(calendar::methods::mkcalendar::route_mkcalendar::<C>),
                                 ),
                         )
                         .service(
                             web::resource("/{event}")
                                 .route(
                                     propfind_method()
-                                        .to(route_propfind::<A, CalendarObjectResourceService<C>>),
+                                        .to(route_propfind::<CalendarObjectResourceService<C>>),
                                 )
                                 .route(
                                     proppatch_method()
-                                        .to(route_proppatch::<A, CalendarObjectResourceService<C>>),
+                                        .to(route_proppatch::<CalendarObjectResourceService<C>>),
                                 )
                                 .route(
                                     web::method(Method::DELETE)
-                                        .to(route_delete::<A, CalendarObjectResourceService<C>>),
+                                        .to(route_delete::<CalendarObjectResourceService<C>>),
                                 )
                                 .route(
                                     web::method(Method::GET)
-                                        .to(calendar_object::methods::get_event::<A, C>),
+                                        .to(calendar_object::methods::get_event::<C>),
                                 )
                                 .route(
                                     web::method(Method::PUT)
-                                        .to(calendar_object::methods::put_event::<A, C>),
+                                        .to(calendar_object::methods::put_event::<C>),
                                 ),
                         ),
                 ),

@@ -5,4 +5,4 @@ pub mod sqlite_store;
 pub mod timestamp;
 pub use calendar_store::CalendarStore;
 pub use error::Error;
-
+pub mod auth;

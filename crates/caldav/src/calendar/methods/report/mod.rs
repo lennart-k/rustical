@@ -5,9 +5,8 @@ use actix_web::{
 };
 use calendar_multiget::{handle_calendar_multiget, CalendarMultigetRequest};
 use calendar_query::{handle_calendar_query, CalendarQueryRequest};
-use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
 use rustical_dav::methods::propfind::ServicePrefix;
-use rustical_store::CalendarStore;
+use rustical_store::{auth::User, CalendarStore};
 use serde::{Deserialize, Serialize};
 use sync_collection::{handle_sync_collection, SyncCollectionRequest};
 use tokio::sync::RwLock;
@@ -32,17 +31,17 @@ pub enum ReportRequest {
     SyncCollection(SyncCollectionRequest),
 }
 
-pub async fn route_report_calendar<A: CheckAuthentication, C: CalendarStore + ?Sized>(
+pub async fn route_report_calendar<C: CalendarStore + ?Sized>(
     path: Path<(String, String)>,
     body: String,
-    auth: AuthInfoExtractor<A>,
+    user: User,
     req: HttpRequest,
     cal_store: Data<RwLock<C>>,
     prefix: Data<ServicePrefix>,
 ) -> Result<impl Responder, Error> {
     let prefix = prefix.into_inner();
     let (principal, cid) = path.into_inner();
-    if principal != auth.inner.user_id {
+    if principal != user.id {
         return Err(Error::Unauthorized);
     }
 

@@ -5,18 +5,18 @@ use actix_web::http::header::HeaderValue;
 use actix_web::web::{Data, Path};
 use actix_web::HttpRequest;
 use actix_web::HttpResponse;
-use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
+use rustical_store::auth::User;
 use rustical_store::model::CalendarObject;
 use rustical_store::CalendarStore;
 
-pub async fn get_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
+pub async fn get_event<C: CalendarStore + ?Sized>(
     context: Data<CalDavContext<C>>,
     path: Path<(String, String, String)>,
-    auth: AuthInfoExtractor<A>,
+    user: User,
 ) -> Result<HttpResponse, Error> {
     let (principal, cid, mut uid) = path.into_inner();
 
-    if auth.inner.user_id != principal {
+    if user.id != principal {
         return Ok(HttpResponse::Unauthorized().body(""));
     }
 
@@ -26,7 +26,7 @@ pub async fn get_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
         .await
         .get_calendar(&principal, &cid)
         .await?;
-    if auth.inner.user_id != calendar.principal {
+    if user.id != calendar.principal {
         return Ok(HttpResponse::Unauthorized().body(""));
     }
 
@@ -46,16 +46,15 @@ pub async fn get_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
         .body(event.get_ics().to_owned()))
 }
 
-pub async fn put_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
+pub async fn put_event<C: CalendarStore + ?Sized>(
     context: Data<CalDavContext<C>>,
     path: Path<(String, String, String)>,
     body: String,
-    auth: AuthInfoExtractor<A>,
+    user: User,
     req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
     let (principal, cid, mut uid) = path.into_inner();
-    let auth_info = auth.inner;
-    if auth_info.user_id != principal {
+    if user.id != principal {
         return Ok(HttpResponse::Unauthorized().body(""));
     }
 
@@ -65,7 +64,7 @@ pub async fn put_event<A: CheckAuthentication, C: CalendarStore + ?Sized>(
         .await
         .get_calendar(&principal, &cid)
         .await?;
-    if auth_info.user_id != calendar.principal {
+    if user.id != calendar.principal {
         return Ok(HttpResponse::Unauthorized().body(""));
     }
     // Incredibly bodged method of normalising the uid but works for a prototype

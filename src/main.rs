@@ -4,7 +4,7 @@ use anyhow::Result;
 use app::make_app;
 use clap::Parser;
 use config::{CalendarStoreConfig, SqliteCalendarStoreConfig};
-use rustical_auth::AuthProvider;
+use rustical_store::auth::StaticUserStore;
 use rustical_store::sqlite_store::{create_db_pool, SqliteCalendarStore};
 use rustical_store::CalendarStore;
 use std::fs;
@@ -45,9 +45,11 @@ async fn main() -> Result<()> {
 
     let cal_store = get_cal_store(args.migrate, &config.calendar_store).await?;
 
-    let auth: Arc<AuthProvider> = Arc::new(config.auth.into());
+    let user_store = Arc::new(match config.auth {
+        config::AuthConfig::Static(config) => StaticUserStore::new(config),
+    });
 
-    HttpServer::new(move || make_app(cal_store.clone(), auth.clone()))
+    HttpServer::new(move || make_app(cal_store.clone(), user_store.clone()))
         .bind((config.http.host, config.http.port))?
         .run()
         .await?;

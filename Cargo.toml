@@ -9,7 +9,6 @@ members = ["crates/*"]
 
 [dependencies]
 rustical_store = { path = "./crates/store/" }
-rustical_auth = { path = "./crates/auth/" }
 rustical_caldav = { path = "./crates/caldav/" }
 rustical_carddav = { path = "./crates/carddav/" }
 rustical_frontend = { path = "./crates/frontend/" }

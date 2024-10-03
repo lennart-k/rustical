@@ -10,7 +10,7 @@ use actix_web::web::{Data, Path};
 use actix_web::HttpRequest;
 use derive_more::derive::Deref;
 use log::debug;
-use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
+use rustical_store::auth::User;
 use serde::Deserialize;
 
 // This is not the final place for this struct
@@ -39,12 +39,12 @@ struct PropfindElement {
     prop: PropfindType,
 }
 
-pub async fn route_propfind<A: CheckAuthentication, R: ResourceService>(
+pub async fn route_propfind<R: ResourceService>(
     path_components: Path<R::PathComponents>,
     body: String,
     req: HttpRequest,
     prefix: Data<ServicePrefix>,
-    auth: AuthInfoExtractor<A>,
+    user: User,
     depth: Depth,
 ) -> Result<
     MultistatusElement<
@@ -86,7 +86,7 @@ pub async fn route_propfind<A: CheckAuthentication, R: ResourceService>(
         }
     }
 
-    let resource = resource_service.get_resource(auth.inner.user_id).await?;
+    let resource = resource_service.get_resource(user.id).await?;
     let response = resource.propfind(&prefix, req.path(), props).await?;
 
     Ok(MultistatusElement {

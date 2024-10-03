@@ -17,7 +17,6 @@ quick-xml = { version = "0.36", features = [
 roxmltree = "0.20"
 rustical_store = { path = "../store/" }
 rustical_dav = { path = "../dav/" }
-rustical_auth = { path = "../auth/" }
 serde = { version = "1.0", features = ["serde_derive", "derive"] }
 serde_json = "1.0"
 tokio = { version = "1.40", features = ["sync", "full"] }

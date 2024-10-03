@@ -9,7 +9,7 @@ use crate::Error;
 use actix_web::http::StatusCode;
 use actix_web::{web::Path, HttpRequest};
 use log::debug;
-use rustical_auth::{AuthInfoExtractor, CheckAuthentication};
+use rustical_store::auth::User;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
@@ -47,11 +47,11 @@ struct PropertyupdateElement<T> {
     operations: Vec<Operation<T>>,
 }
 
-pub async fn route_proppatch<A: CheckAuthentication, R: ResourceService>(
+pub async fn route_proppatch<R: ResourceService>(
     path: Path<R::PathComponents>,
     body: String,
     req: HttpRequest,
-    auth: AuthInfoExtractor<A>,
+    user: User,
 ) -> Result<MultistatusElement<PropstatWrapper<String>, PropstatWrapper<String>>, R::Error> {
     let path_components = path.into_inner();
     let href = req.path().to_owned();
@@ -75,7 +75,7 @@ pub async fn route_proppatch<A: CheckAuthentication, R: ResourceService>(
         })
         .collect();
 
-    let mut resource = resource_service.get_resource(auth.inner.user_id).await?;
+    let mut resource = resource_service.get_resource(user.id).await?;
 
     let mut props_ok = Vec::new();
     let mut props_conflict = Vec::new();
