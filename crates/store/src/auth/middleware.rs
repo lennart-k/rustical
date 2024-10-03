@@ -57,7 +57,6 @@ where
 {
     type Response = ServiceResponse<B>;
     type Error = actix_web::Error;
-    // type Future = Pin<Box<dyn Future<Output>>>;
     type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>>>>;
 
     forward_ready!(service);
