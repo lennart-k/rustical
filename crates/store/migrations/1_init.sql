@@ -11,7 +11,7 @@ CREATE TABLE calendars (
   PRIMARY KEY (principal, id)
 );
 
-CREATE TABLE events (
+CREATE TABLE calendarobjects (
   principal TEXT NOT NULL,
   cid TEXT NOT NULL,
   uid TEXT NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE events (
   FOREIGN KEY (principal, cid) REFERENCES calendars(principal, id)
 );
 
-CREATE TABLE eventchangelog (
+CREATE TABLE calendarobjectchangelog (
   -- The actual sync token is the SQLite field 'ROWID'
   principal TEXT NOT NULL,
   cid TEXT NOT NULL,

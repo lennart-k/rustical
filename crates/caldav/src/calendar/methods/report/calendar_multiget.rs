@@ -25,7 +25,7 @@ pub struct CalendarMultigetRequest {
     href: Vec<String>,
 }
 
-pub async fn get_events_calendar_multiget<C: CalendarStore + ?Sized>(
+pub async fn get_objects_calendar_multiget<C: CalendarStore + ?Sized>(
     cal_query: &CalendarMultigetRequest,
     prefix: &str,
     principal: &str,
@@ -68,8 +68,8 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
     cid: &str,
     cal_store: &RwLock<C>,
 ) -> Result<MultistatusElement<PropstatWrapper<CalendarObjectProp>, String>, Error> {
-    let events =
-        get_events_calendar_multiget(&cal_multiget, prefix, principal, cid, cal_store).await?;
+    let objects =
+        get_objects_calendar_multiget(&cal_multiget, prefix, principal, cid, cal_store).await?;
 
     let props = match cal_multiget.prop {
         PropfindType::Allprop => {
@@ -84,10 +84,10 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
     let props: Vec<&str> = props.iter().map(String::as_str).collect();
 
     let mut responses = Vec::new();
-    for event in events {
-        let path = format!("{}/{}", req.path(), event.get_uid());
+    for object in objects {
+        let path = format!("{}/{}", req.path(), object.get_uid());
         responses.push(
-            CalendarObjectResource::from(event)
+            CalendarObjectResource::from(object)
                 .propfind(prefix, &path, props.clone())
                 .await?,
         );

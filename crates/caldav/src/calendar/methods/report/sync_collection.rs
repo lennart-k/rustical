@@ -63,24 +63,24 @@ pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
     let props: Vec<&str> = props.iter().map(String::as_str).collect();
 
     let old_synctoken = parse_synctoken(&sync_collection.sync_token).unwrap_or(0);
-    let (new_events, deleted_events, new_synctoken) = cal_store
+    let (new_objects, deleted_objects, new_synctoken) = cal_store
         .read()
         .await
         .sync_changes(principal, cid, old_synctoken)
         .await?;
 
     let mut responses = Vec::new();
-    for event in new_events {
-        let path = format!("{}/{}", req.path(), event.get_uid());
+    for object in new_objects {
+        let path = format!("{}/{}", req.path(), object.get_uid());
         responses.push(
-            CalendarObjectResource::from(event)
+            CalendarObjectResource::from(object)
                 .propfind(prefix, &path, props.clone())
                 .await?,
         );
     }
 
-    for event_uid in deleted_events {
-        let path = format!("{}/{}", req.path(), event_uid);
+    for object_uid in deleted_objects {
+        let path = format!("{}/{}", req.path(), object_uid);
         responses.push(ResponseElement {
             href: path,
             status: Some(format!("HTTP/1.1 {}", StatusCode::NOT_FOUND)),

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        INSERT INTO calendarobjectchangelog (principal, cid, uid, operation, synctoken)\n        VALUES (?1, ?2, ?3, ?4, (\n            SELECT synctoken FROM calendars WHERE (principal, id) = (?1, ?2)\n        ))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "f13006549869125c63731055d242bc29f66761eb52adcb16cde56d56ab5c1ecf"
+}

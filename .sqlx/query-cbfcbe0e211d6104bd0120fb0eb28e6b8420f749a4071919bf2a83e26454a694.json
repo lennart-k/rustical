@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT uid, ics FROM calendarobjects WHERE principal = ? AND cid = ? AND deleted_at IS NULL",
+  "describe": {
+    "columns": [
+      {
+        "name": "uid",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "ics",
+        "ordinal": 1,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "cbfcbe0e211d6104bd0120fb0eb28e6b8420f749a4071919bf2a83e26454a694"
+}
