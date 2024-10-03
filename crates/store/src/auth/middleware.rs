@@ -1,3 +1,4 @@
+use super::AuthenticationProvider;
 use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
     error::ErrorUnauthorized,
@@ -10,8 +11,6 @@ use std::{
     pin::Pin,
     sync::Arc,
 };
-
-use super::AuthenticationProvider;
 
 pub struct AuthenticationMiddleware<AP: AuthenticationProvider> {
     auth_provider: Arc<AP>,
@@ -68,22 +67,15 @@ where
         Box::pin(async move {
             if let Ok(auth) = Authorization::<Basic>::parse(req.request()) {
                 let user_id = auth.as_ref().user_id();
-                let password = auth
-                    .as_ref()
-                    .password()
-                    .ok_or(ErrorUnauthorized("no password"))?;
-
-                let user = auth_provider
-                    .validate_user_token(user_id, password)
-                    .await
-                    .map_err(|_| ErrorUnauthorized(""))?
-                    .ok_or(ErrorUnauthorized(""))?;
-
-                req.extensions_mut().insert(user);
-                service.call(req).await
-            } else {
-                Err(ErrorUnauthorized(""))
+                if let Some(password) = auth.as_ref().password() {
+                    if let Ok(Some(user)) =
+                        auth_provider.validate_user_token(user_id, password).await
+                    {
+                        req.extensions_mut().insert(user);
+                    }
+                }
             }
+            service.call(req).await
         })
     }
 }
