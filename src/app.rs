@@ -3,14 +3,14 @@ use actix_web::dev::{ServiceFactory, ServiceRequest, ServiceResponse};
 use actix_web::middleware::{Logger, NormalizePath};
 use actix_web::{web, App};
 use rustical_frontend::configure_frontend;
-use rustical_store::auth::{AuthenticationMiddleware, AuthenticationProvider};
+use rustical_store::auth::AuthenticationProvider;
 use rustical_store::CalendarStore;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-pub fn make_app<CS: CalendarStore + ?Sized, AP: AuthenticationProvider + 'static>(
+pub fn make_app<CS: CalendarStore + ?Sized>(
     cal_store: Arc<RwLock<CS>>,
-    auth_provider: Arc<AP>,
+    auth_provider: Arc<impl AuthenticationProvider>,
 ) -> App<
     impl ServiceFactory<
         ServiceRequest,
@@ -23,9 +23,13 @@ pub fn make_app<CS: CalendarStore + ?Sized, AP: AuthenticationProvider + 'static
     App::new()
         .wrap(Logger::new("[%s] %r"))
         .wrap(NormalizePath::trim())
-        .wrap(AuthenticationMiddleware::new(auth_provider))
         .service(web::scope("/caldav").configure(|cfg| {
-            rustical_caldav::configure_dav(cfg, "/caldav".to_string(), cal_store.clone())
+            rustical_caldav::configure_dav(
+                cfg,
+                "/caldav".to_string(),
+                auth_provider.clone(),
+                cal_store.clone(),
+            )
         }))
         .service(
             web::scope("/carddav")

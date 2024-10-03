@@ -53,7 +53,7 @@ impl<S, B, AP> Service<ServiceRequest> for InnerAuthenticationMiddleware<S, AP>
 where
     S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = actix_web::Error> + 'static,
     S::Future: 'static,
-    AP: AuthenticationProvider + 'static,
+    AP: AuthenticationProvider,
 {
     type Response = ServiceResponse<B>;
     type Error = actix_web::Error;
