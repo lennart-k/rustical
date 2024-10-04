@@ -19,9 +19,9 @@ impl FromRequest for User {
     ) -> Self::Future {
         ready(
             req.extensions()
-                .get::<User>()
+                .get::<Self>()
                 .cloned()
-                .ok_or(ErrorUnauthorized("")),
+                .ok_or(ErrorUnauthorized("Not authenticated")),
         )
     }
 }
