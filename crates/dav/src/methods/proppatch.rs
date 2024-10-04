@@ -12,6 +12,8 @@ use log::debug;
 use rustical_store::auth::User;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
+use tracing::instrument;
+use tracing_actix_web::RootSpan;
 
 // https://docs.rs/quick-xml/latest/quick_xml/de/index.html#normal-enum-variant
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -47,11 +49,13 @@ struct PropertyupdateElement<T> {
     operations: Vec<Operation<T>>,
 }
 
+#[instrument(parent = root_span.id(), skip(path, req, root_span))]
 pub async fn route_proppatch<R: ResourceService>(
     path: Path<R::PathComponents>,
     body: String,
     req: HttpRequest,
     user: User,
+    root_span: RootSpan,
 ) -> Result<MultistatusElement<PropstatWrapper<String>, PropstatWrapper<String>>, R::Error> {
     let path_components = path.into_inner();
     let href = req.path().to_owned();

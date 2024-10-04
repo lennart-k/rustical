@@ -1,4 +1,4 @@
-use crate::depth_extractor::Depth;
+use crate::depth_header::Depth;
 use crate::resource::Resource;
 use crate::resource::ResourceService;
 use crate::xml::multistatus::PropstatWrapper;
@@ -35,6 +35,7 @@ struct PropfindElement {
 }
 
 #[instrument(parent = root_span.id(), skip(path_components, req, root_span))]
+#[allow(clippy::type_complexity)]
 pub async fn route_propfind<R: ResourceService>(
     path_components: Path<R::PathComponents>,
     body: String,

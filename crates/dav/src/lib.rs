@@ -1,4 +1,4 @@
-pub mod depth_extractor;
+pub mod depth_header;
 pub mod error;
 pub mod methods;
 pub mod namespace;

@@ -8,8 +8,6 @@ use rustical_dav::xml::HrefElement;
 use serde::{Deserialize, Serialize};
 use strum::{EnumString, VariantNames};
 
-pub struct RootResourceService;
-
 #[derive(EnumString, Debug, VariantNames, Clone)]
 #[strum(serialize_all = "kebab-case")]
 pub enum RootPropName {
@@ -67,6 +65,8 @@ impl Resource for RootResource {
         "caldav_root"
     }
 }
+
+pub struct RootResourceService;
 
 #[async_trait(?Send)]
 impl ResourceService for RootResourceService {

@@ -2,7 +2,6 @@ use crate::{namespace::Namespace, xml::TagList};
 use actix_web::{
     body::BoxBody, http::header::ContentType, HttpRequest, HttpResponse, Responder, ResponseError,
 };
-use log::debug;
 use serde::Serialize;
 
 // Intermediate struct because of a serde limitation, see following article:
@@ -94,7 +93,6 @@ impl<T1: Serialize, T2: Serialize> Responder for MultistatusElement<T1, T2> {
         if let Err(err) = self.serialize(ser) {
             return crate::Error::from(err).error_response();
         }
-        // debug!("Return multistatus:\n{output}");
 
         HttpResponse::MultiStatus()
             .content_type(ContentType::xml())
