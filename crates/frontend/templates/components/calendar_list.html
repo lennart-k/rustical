@@ -1,0 +1,12 @@
+<h2>Welcome {{ owner }}!</h2>
+<ul>
+  {% for calendar in calendars %}
+  <li>
+    {% if let Some(name) = calendar.displayname %}
+    {{ name }}
+    {% else %}
+    {{ calendar.id }}
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
