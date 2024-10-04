@@ -31,7 +31,6 @@ pub fn configure_well_known(cfg: &mut web::ServiceConfig, caldav_root: String) {
 
 pub fn configure_dav<AP: AuthenticationProvider, C: CalendarStore + ?Sized>(
     cfg: &mut web::ServiceConfig,
-    prefix: String,
     auth_provider: Arc<AP>,
     store: Arc<RwLock<C>>,
 ) {

@@ -45,12 +45,7 @@ pub fn make_app<CS: CalendarStore + ?Sized>(
         // .wrap(Logger::new("[%s] %r"))
         .wrap(NormalizePath::trim())
         .service(web::scope("/caldav").configure(|cfg| {
-            rustical_caldav::configure_dav(
-                cfg,
-                "/caldav".to_string(),
-                auth_provider.clone(),
-                cal_store.clone(),
-            )
+            rustical_caldav::configure_dav(cfg, auth_provider.clone(), cal_store.clone())
         }))
         .service(
             web::scope("/carddav")
