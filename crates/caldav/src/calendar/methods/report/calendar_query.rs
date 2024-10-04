@@ -4,7 +4,7 @@ use rustical_dav::{
     resource::Resource,
     xml::{multistatus::PropstatWrapper, MultistatusElement},
 };
-use rustical_store::{model::object::CalendarObject, CalendarStore};
+use rustical_store::{model::object::CalendarObject, timestamp::CalDateTime, CalendarStore};
 use serde::Deserialize;
 use tokio::sync::RwLock;
 
@@ -20,9 +20,9 @@ use crate::{
 #[allow(dead_code)]
 struct TimeRangeElement {
     #[serde(rename = "@start")]
-    start: Option<String>,
+    start: Option<CalDateTime>,
     #[serde(rename = "@end")]
-    end: Option<String>,
+    end: Option<CalDateTime>,
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -74,6 +74,7 @@ struct CompFilterElement {
 }
 
 impl CompFilterElement {
+    // match the VCALENDAR part
     pub fn matches_root(&self, cal_object: &CalendarObject) -> bool {
         //   A CALDAV:comp-filter is said to match if:
         //
@@ -124,6 +125,7 @@ impl CompFilterElement {
         false
     }
 
+    // match the VEVENT/VTODO part
     pub fn matches(&self, cal_object: &CalendarObject) -> bool {
         // TODO: evaulate prop-filter, time-range
         let component_name = cal_object.get_component_name();
@@ -131,6 +133,18 @@ impl CompFilterElement {
         if self.is_not_defined.is_some() {
             return self.name != component_name;
         }
+
+        if let Some(time_range) = &self.time_range {
+            if let Some(start) = &time_range.start {
+                if let CalDateTime::Utc(utctime) = &start {
+                } else {
+                    // RFC 4791: 'Both attributes MUST be specified as "date with UTC time" value.'
+                    return false;
+                }
+            }
+            if let Some(end) = &time_range.end {}
+        }
+
         self.name == component_name
     }
 }
