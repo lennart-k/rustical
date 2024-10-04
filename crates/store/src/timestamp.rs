@@ -4,6 +4,7 @@ use crate::Error;
 use anyhow::{anyhow, Result};
 use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use lazy_static::lazy_static;
+use serde::Deserialize;
 
 lazy_static! {
     static ref RE_DURATION: regex::Regex = regex::Regex::new(r"^(?<sign>[+-])?P((?P<W>\d+)W)?((?P<D>\d+)D)?(T((?P<H>\d+)H)?((?P<M>\d+)M)?((?P<S>\d+)S)?)?$").unwrap();
@@ -13,6 +14,7 @@ const LOCAL_DATE_TIME: &str = "%Y%m%dT%H%M%S";
 const UTC_DATE_TIME: &str = "%Y%m%dT%H%M%SZ";
 const LOCAL_DATE: &str = "%Y%m%d";
 
+#[derive(Debug, Clone)]
 pub enum CalDateTime {
     // Form 1, example: 19980118T230000
     Local(NaiveDateTime),
@@ -22,6 +24,16 @@ pub enum CalDateTime {
     // TODO: implement timezone parsing
     ExplicitTZ((String, NaiveDateTime)),
     Date(NaiveDate),
+}
+
+impl<'de> Deserialize<'de> for CalDateTime {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let input = String::deserialize(deserializer)?;
+        Self::from_str(&input).map_err(|_| serde::de::Error::custom("Invalid datetime format"))
+    }
 }
 
 impl Add<Duration> for CalDateTime {
