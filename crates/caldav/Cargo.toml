@@ -2,6 +2,9 @@
 name = "rustical_caldav"
 version.workspace = true
 edition.workspace = true
+description.workspace = true
+repository.workspace = true
+publish = false
 
 [dependencies]
 anyhow = { workspace = true }

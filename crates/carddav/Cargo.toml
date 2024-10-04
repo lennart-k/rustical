@@ -2,6 +2,9 @@
 name = "rustical_carddav"
 version.workspace = true
 edition.workspace = true
+description.workspace = true
+repository.workspace = true
+publish = false
 
 [dependencies]
 actix-web = "4.9"

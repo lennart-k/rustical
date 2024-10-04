@@ -2,6 +2,9 @@
 name = "rustical_dav"
 version.workspace = true
 edition.workspace = true
+description.workspace = true
+repository.workspace = true
+publish = false
 
 [dependencies]
 actix-web = { workspace = true }

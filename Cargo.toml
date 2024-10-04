@@ -4,12 +4,17 @@ members = ["crates/*"]
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
+description = "A CalDAV server"
+repository = "https://github.com/lennart-k/rustical"
 
 [package]
 name = "rustical"
 version.workspace = true
 edition.workspace = true
+description.workspace = true
+repository.workspace = true
 resolver = "2"
+publish = false
 
 [workspace.dependencies]
 async-trait = "0.1"
