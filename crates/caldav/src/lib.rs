@@ -1,8 +1,10 @@
-use actix_web::http::Method;
+use actix_web::dev::Service;
+use actix_web::http::header::{HeaderName, HeaderValue};
+use actix_web::http::{Method, StatusCode};
 use actix_web::web::{self, Data};
-use actix_web::{guard, HttpResponse, Responder};
 use calendar::resource::CalendarResourceService;
 use calendar_object::resource::CalendarObjectResourceService;
+use futures_util::FutureExt;
 use principal::PrincipalResourceService;
 use root::RootResourceService;
 use rustical_dav::resource::ResourceService;
@@ -35,16 +37,32 @@ pub fn configure_dav<AP: AuthenticationProvider, C: CalendarStore + ?Sized>(
     cfg.service(
         web::scope("")
             .wrap(AuthenticationMiddleware::new(auth_provider))
+            .wrap_fn(|req, srv| {
+                // Middleware to set the DAV header
+                // Could be more elegant if actix_web::guard::RegisteredMethods was public :(
+                let method = req.method().clone();
+                srv.call(req).map(move |res| {
+                    if method == Method::OPTIONS {
+                        return res.map(|mut response| {
+                            if response.status() == StatusCode::METHOD_NOT_ALLOWED {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("dav"),
+                                    HeaderValue::from_static(
+                                        "1, 2, 3, calendar-access, extended-mkcol",
+                                    ),
+                                );
+                                *response.response_mut().status_mut() = StatusCode::OK;
+                            }
+                            response
+                        });
+                    }
+                    res
+                })
+            })
             .app_data(Data::new(CalDavContext {
                 store: store.clone(),
             }))
             .app_data(Data::from(store.clone()))
-            .service(
-                web::resource("{path:.*}")
-                    // Without the guard this service would handle all requests
-                    .guard(guard::Method(Method::OPTIONS))
-                    .to(options_handler),
-            )
             .service(RootResourceService::actix_resource())
             .service(
                 web::scope("/user").service(
@@ -62,18 +80,4 @@ pub fn configure_dav<AP: AuthenticationProvider, C: CalendarStore + ?Sized>(
                 ),
             ),
     );
-}
-
-async fn options_handler() -> impl Responder {
-    HttpResponse::Ok()
-        .insert_header((
-            "Allow",
-            "OPTIONS, GET, HEAD, POST, PUT, REPORT, PROPFIND, PROPPATCH, MKCALENDAR",
-        ))
-        .insert_header((
-            "DAV",
-            "1, 2, 3, calendar-access, extended-mkcol",
-            // "1, 2, 3, calendar-access, addressbook, extended-mkcol",
-        ))
-        .body("options")
 }
