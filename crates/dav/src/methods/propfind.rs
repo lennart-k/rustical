@@ -7,15 +7,10 @@ use crate::xml::TagList;
 use crate::Error;
 use actix_web::web::Path;
 use actix_web::HttpRequest;
-use derive_more::derive::Deref;
 use rustical_store::auth::User;
 use serde::Deserialize;
 use tracing::instrument;
 use tracing_actix_web::RootSpan;
-
-// This is not the final place for this struct
-#[derive(Deref)]
-pub struct ServicePrefix(pub String);
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]

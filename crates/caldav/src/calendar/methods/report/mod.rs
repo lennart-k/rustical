@@ -5,7 +5,6 @@ use actix_web::{
 };
 use calendar_multiget::{handle_calendar_multiget, CalendarMultigetRequest};
 use calendar_query::{handle_calendar_query, CalendarQueryRequest};
-use rustical_dav::methods::propfind::ServicePrefix;
 use rustical_store::{auth::User, CalendarStore};
 use serde::{Deserialize, Serialize};
 use sync_collection::{handle_sync_collection, SyncCollectionRequest};
@@ -37,9 +36,7 @@ pub async fn route_report_calendar<C: CalendarStore + ?Sized>(
     user: User,
     req: HttpRequest,
     cal_store: Data<RwLock<C>>,
-    prefix: Data<ServicePrefix>,
 ) -> Result<impl Responder, Error> {
-    let prefix = prefix.into_inner();
     let (principal, cid) = path.into_inner();
     if principal != user.id {
         return Err(Error::Unauthorized);
@@ -54,8 +51,7 @@ pub async fn route_report_calendar<C: CalendarStore + ?Sized>(
             handle_calendar_query(cal_query, req, &principal, &cid, &cal_store).await?
         }
         ReportRequest::CalendarMultiget(cal_multiget) => {
-            handle_calendar_multiget(cal_multiget, req, &prefix, &principal, &cid, &cal_store)
-                .await?
+            handle_calendar_multiget(cal_multiget, req, &principal, &cid, &cal_store).await?
         }
         ReportRequest::SyncCollection(sync_collection) => {
             handle_sync_collection(sync_collection, req, &principal, &cid, &cal_store).await?

@@ -5,7 +5,7 @@ use calendar::resource::CalendarResourceService;
 use calendar_object::resource::CalendarObjectResourceService;
 use principal::PrincipalResourceService;
 use root::RootResourceService;
-use rustical_dav::methods::{propfind::ServicePrefix, route_delete};
+use rustical_dav::methods::route_delete;
 use rustical_dav::resource::ResourceService;
 use rustical_store::auth::{AuthenticationMiddleware, AuthenticationProvider};
 use rustical_store::CalendarStore;
@@ -44,7 +44,6 @@ pub fn configure_dav<AP: AuthenticationProvider, C: CalendarStore + ?Sized>(
             .app_data(Data::new(CalDavContext {
                 store: store.clone(),
             }))
-            .app_data(Data::new(ServicePrefix(prefix)))
             .app_data(Data::from(store.clone()))
             .service(
                 web::resource("{path:.*}")
