@@ -171,14 +171,15 @@ pub trait ResourceService: Sized + 'static {
 
     #[inline]
     fn actix_resource() -> actix_web::Resource {
-        let propfind_method = || web::method(Method::from_str("PROPFIND").unwrap());
-        let proppatch_method = || web::method(Method::from_str("PROPPATCH").unwrap());
-
         Self::actix_additional_routes(
             web::resource("")
                 .name(Self::resource_name())
-                .route(propfind_method().to(route_propfind::<Self>))
-                .route(proppatch_method().to(route_proppatch::<Self>))
+                .route(
+                    web::method(Method::from_str("PROPFIND").unwrap()).to(route_propfind::<Self>),
+                )
+                .route(
+                    web::method(Method::from_str("PROPPATCH").unwrap()).to(route_proppatch::<Self>),
+                )
                 .delete(route_delete::<Self>),
         )
     }
