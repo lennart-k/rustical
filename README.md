@@ -13,13 +13,14 @@ a calendar server
     - [x] comp-filter
     - [ ] time-range filter
     - [ ] prop-filter
-  - [ ] ICS parsing
+  - [x] ICS parsing
     - [x] Datetime parsing
   - [x] Implement PROPPATCH
 - [ ] CardDAV
-- [ ] Auth (There currently is no authentication at all in place for some routes)
+- [x] Auth (There currently is no authentication at all in place for some routes)
+  - [x] static authentication
   - [ ] Access control
-  - [ ] preparation for different principal types (groups)
+  - [x] preparation for different principal types (groups)
   - [ ] authentication rewrite? (argon2 is very slow for each request)
   - [ ] OIDC support
 - [ ] Web UI
@@ -35,14 +36,12 @@ a calendar server
 - [x] WebDAV sync extension [RFC 6578](https://www.rfc-editor.org/rfc/rfc6578)
   - [x] implement getctag [see](https://github.com/apple/ccs-calendarserver/blob/master/doc/Extensions/caldav-ctag.txt)
   - [ ] implement WebDAV If header
-- [ ] Ensure proper routing
+- [x] Ensure proper routing
 
 ## Relevant RFCs
 
 - Versioning Extensions to WebDAV: [RFC 3253](https://datatracker.ietf.org/doc/html/rfc3253)
-
   - provides the REPORT method
-
 - Calendaring Extensions to WebDAV (CalDAV): [RFC 4791](https://datatracker.ietf.org/doc/html/rfc4791)
 - Scheduling Extensions to CalDAV: [RFC 6638](https://datatracker.ietf.org/doc/html/rfc6638)
   - not sure yet whether to implement this
