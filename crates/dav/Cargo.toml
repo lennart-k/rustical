@@ -1,23 +1,21 @@
 [package]
 name = "rustical_dav"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
-actix-web = "4.9"
-anyhow = "1.0"
-async-trait = "0.1"
-futures-util = "0.3"
-quick-xml = { version = "0.36", features = [
-  "serde",
-  "serde-types",
-  "serialize",
-] }
-rustical_store = { path = "../store/" }
-serde = { version = "1.0", features = ["derive"] }
-strum = "0.26"
-itertools = "0.13"
-thiserror = "1.0"
-roxmltree = "0.20"
-log = "0.4"
-derive_more = { version = "1.0.0", features = ["deref"] }
+actix-web = { workspace = true }
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+futures-util = { workspace = true }
+quick-xml = { workspace = true }
+rustical_store = { workspace = true }
+serde = { workspace = true }
+strum = { workspace = true }
+thiserror = { workspace = true }
+roxmltree = { workspace = true }
+itertools = { workspace = true }
+log = { workspace = true }
+derive_more = { workspace = true }
+tracing = { workspace = true }
+tracing-actix-web = { workspace = true }

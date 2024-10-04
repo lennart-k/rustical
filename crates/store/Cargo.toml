@@ -1,30 +1,24 @@
 [package]
 name = "rustical_store"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
-anyhow = { version = "1.0", features = ["backtrace"] }
-async-trait = "0.1"
-serde = { version = "1.0", features = ["derive", "rc"] }
-sha2 = "0.10"
-sqlx = { version = "0.8", features = [
-  "sqlx-sqlite",
-  "uuid",
-  "chrono",
-  "sqlite",
-  "runtime-tokio",
-  "migrate",
-] }
-tokio = { version = "1.40", features = ["sync", "full"] }
-toml = "0.8"
-ical = { version = "0.11", features = ["generator", "serde"] }
-chrono = { version = "0.4", features = ["serde"] }
-regex = "1.10"
-lazy_static = "1.5"
-rstest = "0.23"
-rstest_reuse = "0.7"
-thiserror = "1.0"
-password-auth = "1.0"
-actix-web = "4.9"
-actix-web-httpauth = "0.8"
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+serde = { workspace = true }
+sha2 = { workspace = true }
+sqlx = { workspace = true }
+tokio = { workspace = true }
+toml = { workspace = true }
+ical = { workspace = true }
+chrono = { workspace = true }
+regex = { workspace = true }
+lazy_static = { workspace = true }
+rstest = { workspace = true }
+rstest_reuse = { workspace = true }
+thiserror = { workspace = true }
+password-auth = { workspace = true }
+actix-web = { workspace = true }
+actix-web-httpauth = { workspace = true }
+tracing = { workspace = true }

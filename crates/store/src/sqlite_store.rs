@@ -6,6 +6,7 @@ use async_trait::async_trait;
 use serde::Serialize;
 use sqlx::Transaction;
 use sqlx::{sqlite::SqliteConnectOptions, Pool, Sqlite, SqlitePool};
+use tracing::instrument;
 
 #[derive(Debug)]
 pub struct SqliteCalendarStore {
@@ -77,6 +78,7 @@ async fn log_object_operation(
 
 #[async_trait]
 impl CalendarStore for SqliteCalendarStore {
+    #[instrument]
     async fn get_calendar(&self, principal: &str, id: &str) -> Result<Calendar, Error> {
         let cal = sqlx::query_as!(
             Calendar,
@@ -91,6 +93,7 @@ impl CalendarStore for SqliteCalendarStore {
         Ok(cal)
     }
 
+    #[instrument]
     async fn get_calendars(&self, principal: &str) -> Result<Vec<Calendar>, Error> {
         let cals = sqlx::query_as!(
             Calendar,
@@ -104,6 +107,7 @@ impl CalendarStore for SqliteCalendarStore {
         Ok(cals)
     }
 
+    #[instrument]
     async fn insert_calendar(&mut self, calendar: Calendar) -> Result<(), Error> {
         sqlx::query!(
             r#"INSERT INTO calendars (principal, id, displayname, description, "order", color, timezone)
@@ -121,6 +125,7 @@ impl CalendarStore for SqliteCalendarStore {
         Ok(())
     }
 
+    #[instrument]
     async fn update_calendar(
         &mut self,
         principal: String,
@@ -147,6 +152,7 @@ impl CalendarStore for SqliteCalendarStore {
     }
 
     // Does not actually delete the calendar but just disables it
+    #[instrument]
     async fn delete_calendar(
         &mut self,
         principal: &str,
@@ -175,6 +181,7 @@ impl CalendarStore for SqliteCalendarStore {
         Ok(())
     }
 
+    #[instrument]
     async fn restore_calendar(&mut self, principal: &str, id: &str) -> Result<(), Error> {
         sqlx::query!(
             r"UPDATE calendars SET deleted_at = NULL WHERE (principal, id) = (?, ?)",
@@ -186,6 +193,7 @@ impl CalendarStore for SqliteCalendarStore {
         Ok(())
     }
 
+    #[instrument]
     async fn get_objects(&self, principal: &str, cid: &str) -> Result<Vec<CalendarObject>, Error> {
         sqlx::query_as!(
             CalendarObjectRow,
@@ -200,6 +208,7 @@ impl CalendarStore for SqliteCalendarStore {
         .collect()
     }
 
+    #[instrument]
     async fn get_object(
         &self,
         principal: &str,
@@ -218,6 +227,7 @@ impl CalendarStore for SqliteCalendarStore {
         .try_into()?)
     }
 
+    #[instrument]
     async fn put_object(
         &mut self,
         principal: String,
@@ -244,6 +254,7 @@ impl CalendarStore for SqliteCalendarStore {
         Ok(())
     }
 
+    #[instrument]
     async fn delete_object(
         &mut self,
         principal: &str,
@@ -286,6 +297,7 @@ impl CalendarStore for SqliteCalendarStore {
         Ok(())
     }
 
+    #[instrument]
     async fn restore_object(&mut self, principal: &str, cid: &str, uid: &str) -> Result<(), Error> {
         let mut tx = self.db.begin().await?;
 
@@ -310,6 +322,7 @@ impl CalendarStore for SqliteCalendarStore {
         Ok(())
     }
 
+    #[instrument]
     async fn sync_changes(
         &self,
         principal: &str,

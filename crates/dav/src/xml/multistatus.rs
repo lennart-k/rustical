@@ -94,7 +94,7 @@ impl<T1: Serialize, T2: Serialize> Responder for MultistatusElement<T1, T2> {
         if let Err(err) = self.serialize(ser) {
             return crate::Error::from(err).error_response();
         }
-        debug!("Return multistatus:\n{output}");
+        // debug!("Return multistatus:\n{output}");
 
         HttpResponse::MultiStatus()
             .content_type(ContentType::xml())

@@ -26,9 +26,15 @@ pub enum AuthConfig {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+pub struct TracingConfig {
+    pub opentelemetry: bool,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
     pub calendar_store: CalendarStoreConfig,
     pub auth: AuthConfig,
     pub http: HttpConfig,
     pub frontend: FrontendConfig,
+    pub tracing: TracingConfig,
 }

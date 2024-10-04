@@ -1,12 +1,32 @@
 use actix_web::body::MessageBody;
 use actix_web::dev::{ServiceFactory, ServiceRequest, ServiceResponse};
-use actix_web::middleware::{Logger, NormalizePath};
+use actix_web::middleware::NormalizePath;
 use actix_web::{web, App};
 use rustical_frontend::configure_frontend;
 use rustical_store::auth::AuthenticationProvider;
 use rustical_store::CalendarStore;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use tracing_actix_web::{DefaultRootSpanBuilder, RootSpanBuilder, TracingLogger};
+
+struct DomainRootSpanBuilder;
+
+impl RootSpanBuilder for DomainRootSpanBuilder {
+    fn on_request_start(request: &ServiceRequest) -> tracing::Span {
+        tracing_actix_web::root_span!(
+            request,
+            request_body = tracing::field::Empty,
+            user = tracing::field::Empty,
+            reponse_body = tracing::field::Empty
+        )
+    }
+    fn on_request_end<B: MessageBody>(
+        span: tracing::Span,
+        outcome: &Result<ServiceResponse<B>, actix_web::Error>,
+    ) {
+        DefaultRootSpanBuilder::on_request_end(span, outcome);
+    }
+}
 
 pub fn make_app<CS: CalendarStore + ?Sized>(
     cal_store: Arc<RwLock<CS>>,
@@ -21,7 +41,8 @@ pub fn make_app<CS: CalendarStore + ?Sized>(
     >,
 > {
     App::new()
-        .wrap(Logger::new("[%s] %r"))
+        .wrap(TracingLogger::<DomainRootSpanBuilder>::new())
+        // .wrap(Logger::new("[%s] %r"))
         .wrap(NormalizePath::trim())
         .service(web::scope("/caldav").configure(|cfg| {
             rustical_caldav::configure_dav(

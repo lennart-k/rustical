@@ -8,9 +8,10 @@ use crate::Error;
 use actix_web::web::Path;
 use actix_web::HttpRequest;
 use derive_more::derive::Deref;
-use log::debug;
 use rustical_store::auth::User;
 use serde::Deserialize;
+use tracing::instrument;
+use tracing_actix_web::RootSpan;
 
 // This is not the final place for this struct
 #[derive(Deref)]
@@ -38,12 +39,14 @@ struct PropfindElement {
     prop: PropfindType,
 }
 
+#[instrument(parent = root_span.id(), skip(path_components, req, root_span))]
 pub async fn route_propfind<R: ResourceService>(
     path_components: Path<R::PathComponents>,
     body: String,
     req: HttpRequest,
     user: User,
     depth: Depth,
+    root_span: RootSpan,
 ) -> Result<
     MultistatusElement<
         PropstatWrapper<<R::Resource as Resource>::Prop>,
@@ -51,8 +54,6 @@ pub async fn route_propfind<R: ResourceService>(
     >,
     R::Error,
 > {
-    debug!("{body}");
-
     let resource_service = R::new(&req, path_components.into_inner()).await?;
 
     // A request body is optional. If empty we MUST return all props

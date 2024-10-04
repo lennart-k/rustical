@@ -1,39 +1,97 @@
-[package]
-name = "rustical"
-version = "0.1.0"
-edition = "2021"
-resolver = "2"
-
 [workspace]
 members = ["crates/*"]
 
-[dependencies]
-rustical_store = { path = "./crates/store/" }
-rustical_caldav = { path = "./crates/caldav/" }
-rustical_carddav = { path = "./crates/carddav/" }
-rustical_frontend = { path = "./crates/frontend/" }
-serde = { version = "1.0", features = ["derive"] }
-tokio = { version = "1.40", features = [
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+
+[package]
+name = "rustical"
+version.workspace = true
+edition.workspace = true
+resolver = "2"
+
+[workspace.dependencies]
+async-trait = "0.1"
+actix-web = "4.9"
+tracing = { version = "0.1", features = ["async-await"] }
+tracing-actix-web = "0.7"
+actix-session = { version = "0.10", features = ["cookie-session"] }
+actix-web-httpauth = "0.8"
+anyhow = { version = "1.0", features = ["backtrace"] }
+serde = { version = "1.0", features = ["serde_derive", "derive", "rc"] }
+futures-util = "0.3"
+password-auth = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+regex = "1.10"
+lazy_static = "1.5"
+rstest = "0.23"
+rstest_reuse = "0.7"
+sha2 = "0.10"
+tokio = { version = "1", features = [
   "net",
   "tracing",
   "macros",
   "rt-multi-thread",
   "full",
 ] }
-tracing = "0.1"
-env_logger = "0.11"
-actix-web = "4.9"
-anyhow = { version = "1.0", features = ["backtrace"] }
-toml = "0.8"
-clap = { version = "4.5", features = ["derive", "env"] }
+url = "2.5"
+roxmltree = "0.20"
+base64 = "0.22"
+thiserror = "1.0"
+quick-xml = { version = "0.36", features = [
+  "serde",
+  "serde-types",
+  "serialize",
+] }
+itertools = "0.13"
+log = "0.4"
+strum = { version = "0.26", features = ["strum_macros", "derive"] }
+derive_more = { version = "1.0", features = ["from", "into", "deref"] }
+askama = { version = "0.12", features = ["serde", "with-actix-web"] }
+askama_actix = "0.14"
 sqlx = { version = "0.8", features = [
   "sqlx-sqlite",
-  "sqlx-postgres",
   "uuid",
   "chrono",
-  "postgres",
   "sqlite",
   "runtime-tokio",
   "migrate",
 ] }
-async-trait = "0.1"
+ical = { version = "0.11", features = ["generator", "serde"] }
+toml = "0.8"
+rustical_dav = { path = "./crates/dav/" }
+rustical_store = { path = "./crates/store/" }
+rustical_caldav = { path = "./crates/caldav/" }
+rustical_carddav = { path = "./crates/carddav/" }
+rustical_frontend = { path = "./crates/frontend/" }
+
+[dependencies]
+rustical_store = { workspace = true }
+rustical_caldav = { workspace = true }
+rustical_carddav = { workspace = true }
+rustical_frontend = { workspace = true }
+actix-web = { workspace = true }
+toml = { workspace = true }
+serde = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+env_logger = "0.11"
+anyhow = { workspace = true }
+clap = { version = "4.5", features = ["derive", "env"] }
+sqlx = { workspace = true }
+async-trait = { workspace = true }
+tracing-actix-web = { workspace = true }
+
+# 0.25 is the latest version supported by tracing-opentelemetry
+opentelemetry = "0.25.0"
+opentelemetry-otlp = "0.25.0"
+opentelemetry_sdk = { version = "0.25.0", features = ["rt-tokio"] }
+
+opentelemetry-semantic-conventions = "0.26"
+tracing-opentelemetry = "0.26.0"
+tracing-subscriber = { version = "0.3.18", features = [
+  "env-filter",
+  "fmt",
+  "registry",
+] }
