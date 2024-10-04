@@ -135,10 +135,6 @@ pub trait InvalidProperty {
     fn invalid_property(&self) -> bool;
 }
 
-// A resource is identified by a URI and has properties
-// A resource can also be a collection
-// A resource cannot be none, only Methods like PROPFIND, GET, REPORT, etc. can be exposed
-// A resource exists
 #[async_trait(?Send)]
 pub trait ResourceService: Sized + 'static {
     type MemberType: Resource<Error = Self::Error>;
@@ -184,6 +180,7 @@ pub trait ResourceService: Sized + 'static {
         )
     }
 
+    /// Hook for other resources to insert their additional methods (i.e. REPORT, MKCALENDAR)
     #[inline]
     fn actix_additional_routes(res: actix_web::Resource) -> actix_web::Resource {
         res
