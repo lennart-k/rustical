@@ -10,6 +10,8 @@ use std::sync::Arc;
 use strum::{EnumString, VariantNames};
 use tokio::sync::RwLock;
 
+use super::methods::{get_event, put_event};
+
 pub struct CalendarObjectResourceService<C: CalendarStore + ?Sized> {
     pub cal_store: Arc<RwLock<C>>,
     pub path: String,
@@ -129,5 +131,10 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarObjectResourceServic
             .delete_object(&self.principal, &self.cid, &self.uid, use_trashbin)
             .await?;
         Ok(())
+    }
+
+    #[inline]
+    fn actix_additional_routes(res: actix_web::Resource) -> actix_web::Resource {
+        res.get(get_event::<C>).put(put_event::<C>)
     }
 }

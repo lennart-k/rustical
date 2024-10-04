@@ -8,11 +8,15 @@ use actix_web::HttpResponse;
 use rustical_store::auth::User;
 use rustical_store::model::CalendarObject;
 use rustical_store::CalendarStore;
+use tracing::instrument;
+use tracing_actix_web::RootSpan;
 
+#[instrument(parent = root_span.id(), skip(context, path, root_span))]
 pub async fn get_event<C: CalendarStore + ?Sized>(
     context: Data<CalDavContext<C>>,
     path: Path<(String, String, String)>,
     user: User,
+    root_span: RootSpan,
 ) -> Result<HttpResponse, Error> {
     let (principal, cid, mut uid) = path.into_inner();
 
@@ -46,12 +50,14 @@ pub async fn get_event<C: CalendarStore + ?Sized>(
         .body(event.get_ics().to_owned()))
 }
 
+#[instrument(parent = root_span.id(), skip(context, path, req, root_span))]
 pub async fn put_event<C: CalendarStore + ?Sized>(
     context: Data<CalDavContext<C>>,
     path: Path<(String, String, String)>,
     body: String,
     user: User,
     req: HttpRequest,
+    root_span: RootSpan,
 ) -> Result<HttpResponse, Error> {
     let (principal, cid, mut uid) = path.into_inner();
     if user.id != principal {

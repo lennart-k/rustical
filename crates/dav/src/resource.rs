@@ -1,4 +1,4 @@
-use crate::methods::{route_propfind, route_proppatch};
+use crate::methods::{route_delete, route_propfind, route_proppatch};
 use crate::xml::multistatus::{PropTagWrapper, PropstatElement, PropstatWrapper};
 use crate::xml::{multistatus::ResponseElement, TagList};
 use crate::Error;
@@ -164,17 +164,27 @@ pub trait ResourceService: Sized + 'static {
         Err(crate::Error::Unauthorized.into())
     }
 
+    #[inline]
     fn resource_name() -> &'static str {
         Self::Resource::resource_name()
     }
 
+    #[inline]
     fn actix_resource() -> actix_web::Resource {
         let propfind_method = || web::method(Method::from_str("PROPFIND").unwrap());
         let proppatch_method = || web::method(Method::from_str("PROPPATCH").unwrap());
 
-        web::resource("")
-            .name(Self::resource_name())
-            .route(propfind_method().to(route_propfind::<Self>))
-            .route(proppatch_method().to(route_proppatch::<Self>))
+        Self::actix_additional_routes(
+            web::resource("")
+                .name(Self::resource_name())
+                .route(propfind_method().to(route_propfind::<Self>))
+                .route(proppatch_method().to(route_proppatch::<Self>))
+                .delete(route_delete::<Self>),
+        )
+    }
+
+    #[inline]
+    fn actix_additional_routes(res: actix_web::Resource) -> actix_web::Resource {
+        res
     }
 }

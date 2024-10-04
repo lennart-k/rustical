@@ -1,3 +1,5 @@
+use super::methods::mkcalendar::route_mkcalendar;
+use super::methods::report::route_report_calendar;
 use super::prop::{
     Resourcetype, SupportedCalendarComponent, SupportedCalendarComponentSet, SupportedCalendarData,
     SupportedReportSet, UserPrivilegeSet,
@@ -6,6 +8,8 @@ use crate::calendar_object::resource::CalendarObjectResource;
 use crate::principal::PrincipalResource;
 use crate::Error;
 use actix_web::dev::ResourceMap;
+use actix_web::http::Method;
+use actix_web::web;
 use actix_web::{web::Data, HttpRequest};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
@@ -14,6 +18,7 @@ use rustical_dav::xml::HrefElement;
 use rustical_store::model::Calendar;
 use rustical_store::CalendarStore;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 use std::sync::Arc;
 use strum::{EnumString, VariantNames};
 use tokio::sync::RwLock;
@@ -315,5 +320,14 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
             .delete_calendar(&self.principal, &self.calendar_id, use_trashbin)
             .await?;
         Ok(())
+    }
+
+    #[inline]
+    fn actix_additional_routes(res: actix_web::Resource) -> actix_web::Resource {
+        let report_method = || web::method(Method::from_str("REPORT").unwrap());
+        let mkcalendar_method = || web::method(Method::from_str("MKCALENDAR").unwrap());
+
+        res.route(report_method().to(route_report_calendar::<C>))
+            .route(mkcalendar_method().to(route_mkcalendar::<C>))
     }
 }

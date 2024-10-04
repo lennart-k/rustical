@@ -5,11 +5,9 @@ use calendar::resource::CalendarResourceService;
 use calendar_object::resource::CalendarObjectResourceService;
 use principal::PrincipalResourceService;
 use root::RootResourceService;
-use rustical_dav::methods::route_delete;
 use rustical_dav::resource::ResourceService;
 use rustical_store::auth::{AuthenticationMiddleware, AuthenticationProvider};
 use rustical_store::CalendarStore;
-use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -34,9 +32,6 @@ pub fn configure_dav<AP: AuthenticationProvider, C: CalendarStore + ?Sized>(
     auth_provider: Arc<AP>,
     store: Arc<RwLock<C>>,
 ) {
-    let report_method = || web::method(Method::from_str("REPORT").unwrap());
-    let mkcalendar_method = || web::method(Method::from_str("MKCALENDAR").unwrap());
-
     cfg.service(
         web::scope("")
             .wrap(AuthenticationMiddleware::new(auth_provider))
@@ -57,33 +52,10 @@ pub fn configure_dav<AP: AuthenticationProvider, C: CalendarStore + ?Sized>(
                         .service(PrincipalResourceService::<C>::actix_resource())
                         .service(
                             web::scope("/{calendar}")
-                                .service(
-                                    CalendarResourceService::<C>::actix_resource()
-                                        .route(report_method().to(
-                                            calendar::methods::report::route_report_calendar::<C>,
-                                        ))
-                                        .route(
-                                            web::method(Method::DELETE)
-                                                .to(route_delete::<CalendarResourceService<C>>),
-                                        )
-                                        .route(mkcalendar_method().to(
-                                            calendar::methods::mkcalendar::route_mkcalendar::<C>,
-                                        )),
-                                )
+                                .service(CalendarResourceService::<C>::actix_resource())
                                 .service(
                                     web::scope("/{object}").service(
-                                        CalendarObjectResourceService::<C>::actix_resource()
-                                            .route(web::method(Method::DELETE).to(route_delete::<
-                                                CalendarObjectResourceService<C>,
-                                            >))
-                                            .route(
-                                                web::method(Method::GET)
-                                                    .to(calendar_object::methods::get_event::<C>),
-                                            )
-                                            .route(
-                                                web::method(Method::PUT)
-                                                    .to(calendar_object::methods::put_event::<C>),
-                                            ),
+                                        CalendarObjectResourceService::<C>::actix_resource(),
                                     ),
                                 ),
                         ),
