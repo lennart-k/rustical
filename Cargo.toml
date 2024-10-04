@@ -16,6 +16,9 @@ repository.workspace = true
 resolver = "2"
 publish = false
 
+[profile.dev]
+debug = 0
+
 [workspace.dependencies]
 async-trait = "0.1"
 actix-web = "4.9"
