@@ -7,26 +7,7 @@ use rustical_store::auth::AuthenticationProvider;
 use rustical_store::CalendarStore;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing_actix_web::{DefaultRootSpanBuilder, RootSpanBuilder, TracingLogger};
-
-struct DomainRootSpanBuilder;
-
-impl RootSpanBuilder for DomainRootSpanBuilder {
-    fn on_request_start(request: &ServiceRequest) -> tracing::Span {
-        tracing_actix_web::root_span!(
-            request,
-            request_body = tracing::field::Empty,
-            user = tracing::field::Empty,
-            reponse_body = tracing::field::Empty
-        )
-    }
-    fn on_request_end<B: MessageBody>(
-        span: tracing::Span,
-        outcome: &Result<ServiceResponse<B>, actix_web::Error>,
-    ) {
-        DefaultRootSpanBuilder::on_request_end(span, outcome);
-    }
-}
+use tracing_actix_web::TracingLogger;
 
 pub fn make_app<CS: CalendarStore + ?Sized>(
     cal_store: Arc<RwLock<CS>>,
@@ -41,8 +22,8 @@ pub fn make_app<CS: CalendarStore + ?Sized>(
     >,
 > {
     App::new()
-        .wrap(TracingLogger::<DomainRootSpanBuilder>::new())
         // .wrap(Logger::new("[%s] %r"))
+        .wrap(TracingLogger::default())
         .wrap(NormalizePath::trim())
         .service(web::scope("/caldav").configure(|cfg| {
             rustical_caldav::configure_dav(cfg, auth_provider.clone(), cal_store.clone())
@@ -61,5 +42,4 @@ pub fn make_app<CS: CalendarStore + ?Sized>(
             web::scope("/frontend")
                 .configure(|cfg| configure_frontend(cfg, auth_provider.clone(), cal_store.clone())),
         )
-        .service(web::redirect("/", "/frontend").permanent())
 }
