@@ -1,0 +1,2 @@
+[general]
+dirs = ["frontend/dist/src/templates"]

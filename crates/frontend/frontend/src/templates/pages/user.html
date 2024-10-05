@@ -1,0 +1,33 @@
+{% extends "layouts/default.html" %}
+
+{% block imports %}
+<style>
+li {
+  list-style: none;
+  display: block;
+  margin: 12px;
+  height: 80px;
+  background: #EEE;
+  padding: 8px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<h2>Welcome {{ owner }}!</h2>
+<ul>
+  {% for calendar in calendars %}
+  <li>
+    {% if let Some(name) = calendar.displayname %}
+    {{ name }}
+    {% else %}
+    {{ calendar.id }}
+    {% endif %}
+    <p>
+    {% if let Some(description) = calendar.description %}{{ description }}{% endif %}
+    </p>
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}
+

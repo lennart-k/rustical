@@ -1,3 +1,7 @@
+{% extends "layouts/default.html" %}
+
+{% block content %}
+<h1>Login</h1>
 <form action="login" method="post">
   <label for="username">Username</label>
   <input type="text" name="username" placeholder="username">
@@ -5,3 +9,4 @@
   <input type="password" name="password" placeholder="password">
   <button type="submit">Login</button>
 </form>
+{% endblock %}

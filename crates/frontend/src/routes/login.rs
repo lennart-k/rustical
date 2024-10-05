@@ -8,14 +8,12 @@ use askama::Template;
 use rustical_store::auth::AuthenticationProvider;
 use serde::Deserialize;
 
-use crate::DefaultTemplate;
-
 #[derive(Template)]
-#[template(path = "components/login.html")]
-struct LoginForm;
+#[template(path = "pages/login.html")]
+struct LoginPage;
 
 pub async fn route_get_login() -> impl Responder {
-    DefaultTemplate { body: LoginForm }
+    LoginPage
 }
 
 #[derive(Deserialize)]

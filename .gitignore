@@ -11,3 +11,6 @@ schema.sql
 /.idea
 
 .env
+
+**/node_modules
+**/dist
