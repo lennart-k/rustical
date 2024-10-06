@@ -25,3 +25,5 @@ password-auth = { workspace = true }
 actix-web = { workspace = true }
 actix-web-httpauth = { workspace = true }
 tracing = { workspace = true }
+pbkdf2 = { workspace = true }
+rand_core = { workspace = true }
