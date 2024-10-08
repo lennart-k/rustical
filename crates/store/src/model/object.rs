@@ -110,7 +110,6 @@ impl CalendarObject {
         &self.uid
     }
     pub fn get_etag(&self) -> String {
-        // TODO: Probably save it in the database so we don't have to recompute every time?
         let mut hasher = Sha256::new();
         hasher.update(&self.uid);
         hasher.update(self.get_ics());
