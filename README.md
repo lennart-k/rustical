@@ -7,11 +7,11 @@ a calendar server
 ## Todo
 
 - [ ] CalDAV
-  - [ ] Support for VTODO, VJOURNAL
-    - [x] VTODO
+  - [x] Support for VEVENT, VTODO
   - [ ] Proper filtering for REPORT method
     - [x] comp-filter
-    - [ ] time-range filter
+    - [x] time-range filter
+    - [x] good enough to use
     - [ ] prop-filter
   - [x] ICS parsing
     - [x] Datetime parsing
@@ -21,7 +21,8 @@ a calendar server
   - [x] static authentication
   - [ ] Access control
   - [x] preparation for different principal types (groups)
-  - [ ] authentication rewrite? (argon2 is very slow for each request)
+  - [x] authentication rewrite? (argon2 is very slow for each request)
+    - [x] solved through app tokens
   - [ ] OIDC support
 - [ ] Web UI
 - [x] Trash bin
@@ -47,7 +48,8 @@ a calendar server
   - not sure yet whether to implement this
 - Collection Synchronization WebDAV [RFC 6578](https://datatracker.ietf.org/doc/html/rfc6578)
   - We need to implement sync-token, etc.
-- This is important for more efficient synchronisation
+  - This is important for more efficient synchronisation
+- iCalendar [RFC 2445](https://datatracker.ietf.org/doc/html/rfc2445#section-3.10)
 
 ## Sync-token
 
