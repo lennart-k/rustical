@@ -88,7 +88,7 @@ pub async fn put_event<C: CalendarStore + ?Sized>(
         match store.get_object(&principal, &cid, &uid).await {
             Ok(_) => {
                 // Conflict
-                return Ok(HttpResponse::Conflict().body("Resource with this URI already existing"));
+                return Ok(HttpResponse::Conflict().body("Resource with this URI already exists"));
             }
             Err(rustical_store::Error::NotFound) => {
                 // Path unused, we can proceed
