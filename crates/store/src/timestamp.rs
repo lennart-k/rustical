@@ -36,14 +36,12 @@ where
 {
     type Inner = Option<String>;
     Ok(if let Some(input) = Inner::deserialize(deserializer)? {
-        dbg!(&input);
         Some(
             NaiveDateTime::parse_from_str(&input, UTC_DATE_TIME)
                 .map_err(|err| serde::de::Error::custom(err.to_string()))?
                 .and_utc(),
         )
     } else {
-        dbg!("NONE");
         None
     })
 }
