@@ -80,8 +80,7 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
             vec!["allprop".to_owned()]
         }
         PropfindType::Propname => {
-            // TODO: Implement
-            return Err(Error::NotImplemented);
+            vec!["propname".to_owned()]
         }
         PropfindType::Prop(PropElement { prop: prop_tags }) => prop_tags.into_inner(),
     };
