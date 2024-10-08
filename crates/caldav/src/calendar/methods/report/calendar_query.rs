@@ -88,16 +88,15 @@ impl CompFilterElement {
         //    defined XML element and the calendar object or calendar
         //    component type specified by the "name" attribute does not exist
         //    in the current scope;
-        //
-        //
 
-        // The spec seems a bit unclear. But this should be the correct behaviour I assume
-        if self.is_not_defined.is_some() {
-            return self.name != "VCALENDAR";
-        }
-        if self.name != "VCALENDAR" {
+        let is_defined = self.name == "VCALENDAR";
+        if self.is_not_defined.is_some() && is_defined {
             return false;
         }
+        if !is_defined {
+            return false;
+        }
+
         //
         // or:
         //
@@ -127,22 +126,44 @@ impl CompFilterElement {
 
     // match the VEVENT/VTODO part
     pub fn matches(&self, cal_object: &CalendarObject) -> bool {
-        // TODO: evaulate prop-filter, time-range
+        // TODO: evaulate prop-filter
         let component_name = cal_object.get_component_name();
-
-        if self.is_not_defined.is_some() {
-            return self.name != component_name;
+        let is_defined = self.name == component_name;
+        if self.is_not_defined.is_some() && is_defined {
+            return false;
+        }
+        if !is_defined {
+            return false;
         }
 
         if let Some(time_range) = &self.time_range {
             if let Some(start) = &time_range.start {
-                if let CalDateTime::Utc(utctime) = &start {
+                if let CalDateTime::Utc(range_start) = &start {
+                    if let Some(first_occurence) = cal_object.get_first_occurence().unwrap_or(None)
+                    {
+                        if range_start > &first_occurence.utc() {
+                            return false;
+                        }
+                    };
                 } else {
                     // RFC 4791: 'Both attributes MUST be specified as "date with UTC time" value.'
+                    // TODO: Return Bad Request instead?
                     return false;
                 }
             }
-            if let Some(end) = &time_range.end {}
+            if let Some(end) = &time_range.end {
+                if let CalDateTime::Utc(range_end) = &end {
+                    if let Some(last_occurence) = cal_object.get_last_occurence().unwrap_or(None) {
+                        if range_end < &last_occurence.utc() {
+                            return false;
+                        }
+                    };
+                } else {
+                    // RFC 4791: 'Both attributes MUST be specified as "date with UTC time" value.'
+                    // TODO: Return Bad Request instead?
+                    return false;
+                }
+            }
         }
 
         self.name == component_name
