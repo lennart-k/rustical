@@ -27,3 +27,4 @@ actix-web-httpauth = { workspace = true }
 tracing = { workspace = true }
 pbkdf2 = { workspace = true }
 rand_core = { workspace = true }
+chrono-tz = { workspace = true }

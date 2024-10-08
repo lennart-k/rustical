@@ -75,6 +75,7 @@ rustical_store = { path = "./crates/store/" }
 rustical_caldav = { path = "./crates/caldav/" }
 rustical_carddav = { path = "./crates/carddav/" }
 rustical_frontend = { path = "./crates/frontend/" }
+chrono-tz = "0.10.0"
 
 [dependencies]
 rustical_store = { workspace = true }

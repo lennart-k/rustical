@@ -1,10 +1,11 @@
 use actix_web::HttpRequest;
+use chrono::{DateTime, Utc};
 use rustical_dav::{
     methods::propfind::{PropElement, PropfindType},
     resource::Resource,
     xml::{multistatus::PropstatWrapper, MultistatusElement},
 };
-use rustical_store::{model::object::CalendarObject, timestamp::CalDateTime, CalendarStore};
+use rustical_store::{model::object::CalendarObject, CalendarStore};
 use serde::Deserialize;
 use tokio::sync::RwLock;
 
@@ -19,10 +20,18 @@ use crate::{
 #[serde(rename_all = "kebab-case")]
 #[allow(dead_code)]
 struct TimeRangeElement {
-    #[serde(rename = "@start")]
-    start: Option<CalDateTime>,
-    #[serde(rename = "@end")]
-    end: Option<CalDateTime>,
+    #[serde(
+        rename = "@start",
+        deserialize_with = "rustical_store::timestamp::deserialize_utc_datetime",
+        default
+    )]
+    start: Option<DateTime<Utc>>,
+    #[serde(
+        rename = "@end",
+        deserialize_with = "rustical_store::timestamp::deserialize_utc_datetime",
+        default
+    )]
+    end: Option<DateTime<Utc>>,
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -138,31 +147,18 @@ impl CompFilterElement {
 
         if let Some(time_range) = &self.time_range {
             if let Some(start) = &time_range.start {
-                if let CalDateTime::Utc(range_start) = &start {
-                    if let Some(first_occurence) = cal_object.get_first_occurence().unwrap_or(None)
-                    {
-                        if range_start > &first_occurence.utc() {
-                            return false;
-                        }
-                    };
-                } else {
-                    // RFC 4791: 'Both attributes MUST be specified as "date with UTC time" value.'
-                    // TODO: Return Bad Request instead?
-                    return false;
-                }
+                if let Some(first_occurence) = cal_object.get_first_occurence().unwrap_or(None) {
+                    if start > &first_occurence.utc() {
+                        return false;
+                    }
+                };
             }
             if let Some(end) = &time_range.end {
-                if let CalDateTime::Utc(range_end) = &end {
-                    if let Some(last_occurence) = cal_object.get_last_occurence().unwrap_or(None) {
-                        if range_end < &last_occurence.utc() {
-                            return false;
-                        }
-                    };
-                } else {
-                    // RFC 4791: 'Both attributes MUST be specified as "date with UTC time" value.'
-                    // TODO: Return Bad Request instead?
-                    return false;
-                }
+                if let Some(last_occurence) = cal_object.get_last_occurence().unwrap_or(None) {
+                    if end < &last_occurence.utc() {
+                        return false;
+                    }
+                };
             }
         }
 

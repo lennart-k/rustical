@@ -1,9 +1,10 @@
 use super::{event::EventObject, todo::TodoObject};
 use crate::{timestamp::CalDateTime, Error};
 use anyhow::Result;
+use ical::parser::{ical::component::IcalTimeZone, Component};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::io::BufReader;
+use std::{collections::HashMap, io::BufReader};
 
 #[derive(Debug, Clone)]
 // specified in https://datatracker.ietf.org/doc/html/rfc5545#section-3.6
@@ -84,12 +85,24 @@ impl CalendarObject {
             ));
         }
 
+        let timezones: HashMap<String, IcalTimeZone> = cal
+            .timezones
+            .clone()
+            .into_iter()
+            .filter_map(|timezone| {
+                let timezone_prop = timezone.get_property("TZID")?.to_owned();
+                let tzid = timezone_prop.value?;
+                Some((tzid, timezone))
+            })
+            .collect();
+
         if let Some(event) = cal.events.first() {
             return Ok(CalendarObject {
                 uid,
                 ics,
                 data: CalendarObjectComponent::Event(EventObject {
                     event: event.clone(),
+                    timezones,
                 }),
             });
         }
