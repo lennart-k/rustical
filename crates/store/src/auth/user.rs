@@ -1,4 +1,8 @@
-use actix_web::{error::ErrorUnauthorized, FromRequest, HttpMessage};
+use actix_web::{
+    http::{header, StatusCode},
+    FromRequest, HttpMessage, HttpResponse, ResponseError,
+};
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
 use std::future::{ready, Ready};
 
@@ -9,8 +13,30 @@ pub struct User {
     pub password: Option<String>,
 }
 
+#[derive(Clone, Debug, Display)]
+pub struct UnauthorizedError;
+
+impl ResponseError for UnauthorizedError {
+    fn status_code(&self) -> actix_web::http::StatusCode {
+        StatusCode::UNAUTHORIZED
+    }
+    fn error_response(&self) -> actix_web::HttpResponse<actix_web::body::BoxBody> {
+        HttpResponse::build(StatusCode::UNAUTHORIZED)
+            .insert_header((
+                header::WWW_AUTHENTICATE,
+                r#"Basic realm="RustiCal", charset="UTF-8""#,
+            ))
+            // The force_close is a workaround for a bug where something freezes when the
+            // connection is reused after a 401.
+            // possibly related to https://github.com/actix/actix-web/issues/1805
+            .force_close()
+            .finish()
+    }
+}
+
 impl FromRequest for User {
-    type Error = actix_web::Error;
+    // type Error = actix_web::Error;
+    type Error = UnauthorizedError;
     type Future = Ready<Result<Self, Self::Error>>;
 
     fn from_request(
@@ -21,7 +47,8 @@ impl FromRequest for User {
             req.extensions()
                 .get::<Self>()
                 .cloned()
-                .ok_or(ErrorUnauthorized("Not authenticated")),
+                // .ok_or(ErrorUnauthorized("Not authenticated")),
+                .ok_or(UnauthorizedError),
         )
     }
 }

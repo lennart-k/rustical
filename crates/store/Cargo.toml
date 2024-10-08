@@ -28,3 +28,4 @@ tracing = { workspace = true }
 pbkdf2 = { workspace = true }
 rand_core = { workspace = true }
 chrono-tz = { workspace = true }
+derive_more = { workspace = true }
