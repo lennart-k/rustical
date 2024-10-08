@@ -10,6 +10,7 @@ use std::{
     pin::Pin,
     sync::Arc,
 };
+use tracing::{info_span, Instrument};
 
 pub struct AuthenticationMiddleware<AP: AuthenticationProvider> {
     auth_provider: Arc<AP>,
@@ -67,8 +68,10 @@ where
             if let Ok(auth) = Authorization::<Basic>::parse(req.request()) {
                 let user_id = auth.as_ref().user_id();
                 if let Some(password) = auth.as_ref().password() {
-                    if let Ok(Some(user)) =
-                        auth_provider.validate_user_token(user_id, password).await
+                    if let Ok(Some(user)) = auth_provider
+                        .validate_user_token(user_id, password)
+                        .instrument(info_span!("validate_user_token"))
+                        .await
                     {
                         req.extensions_mut().insert(user);
                     }
