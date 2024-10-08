@@ -66,6 +66,24 @@ impl FromStr for CalDateTime {
     }
 }
 
+impl CalDateTime {
+    pub fn utc(&self) -> DateTime<Utc> {
+        match &self {
+            CalDateTime::Local(local_datetime) => local_datetime.and_utc(),
+            CalDateTime::Utc(utc_datetime) => utc_datetime.to_owned(),
+            // TODO: respect timezone!
+            CalDateTime::ExplicitTZ((_tzid, datetime)) => datetime.and_utc(),
+            CalDateTime::Date(date) => date.and_time(NaiveTime::default()).and_utc(),
+        }
+    }
+}
+
+impl From<CalDateTime> for DateTime<Utc> {
+    fn from(value: CalDateTime) -> Self {
+        value.utc()
+    }
+}
+
 #[test]
 fn test_parse_cal_datetime() {
     CalDateTime::from_str("19980118T230000").unwrap();
