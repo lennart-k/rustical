@@ -90,11 +90,11 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
     let mut responses = Vec::new();
     for object in objects {
         let path = format!("{}/{}", req.path(), object.get_uid());
-        responses.push(
-            CalendarObjectResource::from(object)
-                .propfind(&path, props.clone(), req.resource_map())
-                .await?,
-        );
+        responses.push(CalendarObjectResource::from(object).propfind(
+            &path,
+            props.clone(),
+            req.resource_map(),
+        )?);
     }
 
     let not_found_responses = not_found

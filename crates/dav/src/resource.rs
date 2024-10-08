@@ -52,8 +52,7 @@ pub trait Resource: Clone {
             .to_owned())
     }
 
-    #[allow(async_fn_in_trait)]
-    async fn propfind(
+    fn propfind(
         &self,
         path: &str,
         mut props: Vec<&str>,

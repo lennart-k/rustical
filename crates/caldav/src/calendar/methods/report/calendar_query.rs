@@ -236,11 +236,11 @@ pub async fn handle_calendar_query<C: CalendarStore + ?Sized>(
             vec![principal, cid, object.get_uid()],
         )
         .unwrap();
-        responses.push(
-            CalendarObjectResource::from(object)
-                .propfind(&path, props.clone(), req.resource_map())
-                .await?,
-        );
+        responses.push(CalendarObjectResource::from(object).propfind(
+            &path,
+            props.clone(),
+            req.resource_map(),
+        )?);
     }
 
     Ok(MultistatusElement {

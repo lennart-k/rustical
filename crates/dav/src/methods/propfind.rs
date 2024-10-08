@@ -76,18 +76,12 @@ pub async fn route_propfind<R: ResourceService>(
     let mut member_responses = Vec::new();
     if depth != Depth::Zero {
         for (path, member) in resource_service.get_members(req.resource_map()).await? {
-            member_responses.push(
-                member
-                    .propfind(&path, props.clone(), req.resource_map())
-                    .await?,
-            );
+            member_responses.push(member.propfind(&path, props.clone(), req.resource_map())?);
         }
     }
 
     let resource = resource_service.get_resource(user.id).await?;
-    let response = resource
-        .propfind(req.path(), props, req.resource_map())
-        .await?;
+    let response = resource.propfind(req.path(), props, req.resource_map())?;
 
     Ok(MultistatusElement {
         responses: vec![response],
