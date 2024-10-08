@@ -1,5 +1,5 @@
 use super::{event::EventObject, todo::TodoObject};
-use crate::Error;
+use crate::{timestamp::CalDateTime, Error};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -124,6 +124,20 @@ impl CalendarObject {
         match self.data {
             CalendarObjectComponent::Todo(_) => "VTODO",
             CalendarObjectComponent::Event(_) => "VEVENT",
+        }
+    }
+
+    pub fn get_first_occurence(&self) -> Result<Option<CalDateTime>, Error> {
+        match &self.data {
+            CalendarObjectComponent::Event(event) => event.get_first_occurence(),
+            _ => Ok(None),
+        }
+    }
+
+    pub fn get_last_occurence(&self) -> Result<Option<CalDateTime>, Error> {
+        match &self.data {
+            CalendarObjectComponent::Event(event) => event.get_last_occurence(),
+            _ => Ok(None),
         }
     }
 }

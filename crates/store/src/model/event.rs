@@ -25,7 +25,7 @@ impl EventObject {
         } else {
             return Ok(None);
         };
-        Ok(Some(CalDateTime::from_str(&dtstart)?))
+        Ok(Some(CalDateTime::from_str(dtstart)?))
     }
 
     pub fn get_last_occurence(&self) -> Result<Option<CalDateTime>, Error> {
@@ -39,7 +39,7 @@ impl EventObject {
             value: Some(dtend), ..
         }) = self.event.get_property("DTEND")
         {
-            return Ok(Some(CalDateTime::from_str(&dtend)?));
+            return Ok(Some(CalDateTime::from_str(dtend)?));
         };
 
         let duration = if let Some(Property {
@@ -47,12 +47,12 @@ impl EventObject {
             ..
         }) = self.event.get_property("DURATION")
         {
-            parse_duration(&duration)?
+            parse_duration(duration)?
         } else {
             Duration::days(1)
         };
 
         let first_occurence = self.get_first_occurence()?;
-        return Ok(first_occurence.map(|first_occurence| first_occurence + duration));
+        Ok(first_occurence.map(|first_occurence| first_occurence + duration))
     }
 }
