@@ -9,6 +9,7 @@ use rustical_store::{auth::User, CalendarStore};
 use serde::{Deserialize, Serialize};
 use sync_collection::{handle_sync_collection, SyncCollectionRequest};
 use tokio::sync::RwLock;
+use tracing::instrument;
 
 mod calendar_multiget;
 mod calendar_query;
@@ -30,6 +31,7 @@ pub enum ReportRequest {
     SyncCollection(SyncCollectionRequest),
 }
 
+#[instrument(skip(req, cal_store))]
 pub async fn route_report_calendar<C: CalendarStore + ?Sized>(
     path: Path<(String, String)>,
     body: String,
@@ -42,8 +44,6 @@ pub async fn route_report_calendar<C: CalendarStore + ?Sized>(
         return Err(Error::Unauthorized);
     }
 
-    dbg!("REPORT request:", &body);
-    dbg!(req.headers().get("If"));
     let request: ReportRequest = quick_xml::de::from_str(&body)?;
 
     Ok(match request.clone() {
