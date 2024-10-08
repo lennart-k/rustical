@@ -75,9 +75,34 @@ impl Resource for CalendarObjectResource {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct CalendarObjectPathComponents {
+    pub principal: String,
+    pub cid: String,
+    pub uid: String,
+}
+
+impl<'de> Deserialize<'de> for CalendarObjectPathComponents {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        type Inner = (String, String, String);
+        let (principal, calendar, mut object) = Inner::deserialize(deserializer)?;
+        if object.ends_with(".ics") {
+            object.truncate(object.len() - 4);
+        }
+        Ok(Self {
+            principal,
+            cid: calendar,
+            uid: object,
+        })
+    }
+}
+
 #[async_trait(?Send)]
 impl<C: CalendarStore + ?Sized> ResourceService for CalendarObjectResourceService<C> {
-    type PathComponents = (String, String, String); // principal, calendar, event
+    type PathComponents = CalendarObjectPathComponents;
     type Resource = CalendarObjectResource;
     type MemberType = CalendarObjectResource;
     type Error = Error;
@@ -86,11 +111,11 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarObjectResourceServic
         req: &HttpRequest,
         path_components: Self::PathComponents,
     ) -> Result<Self, Self::Error> {
-        let (principal, cid, mut uid) = path_components;
-
-        if uid.ends_with(".ics") {
-            uid.truncate(uid.len() - 4);
-        }
+        let CalendarObjectPathComponents {
+            principal,
+            cid,
+            uid,
+        } = path_components;
 
         let cal_store = req
             .app_data::<Data<RwLock<C>>>()

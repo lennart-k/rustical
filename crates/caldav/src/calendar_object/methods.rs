@@ -11,14 +11,20 @@ use rustical_store::CalendarStore;
 use tracing::instrument;
 use tracing_actix_web::RootSpan;
 
-#[instrument(parent = root_span.id(), skip(context, path, root_span))]
+use super::resource::CalendarObjectPathComponents;
+
+#[instrument(parent = root_span.id(), skip(context, root_span))]
 pub async fn get_event<C: CalendarStore + ?Sized>(
     context: Data<CalDavContext<C>>,
-    path: Path<(String, String, String)>,
+    path: Path<CalendarObjectPathComponents>,
     user: User,
     root_span: RootSpan,
 ) -> Result<HttpResponse, Error> {
-    let (principal, cid, mut uid) = path.into_inner();
+    let CalendarObjectPathComponents {
+        principal,
+        cid,
+        uid,
+    } = path.into_inner();
 
     if user.id != principal {
         return Ok(HttpResponse::Unauthorized().body(""));
@@ -34,9 +40,6 @@ pub async fn get_event<C: CalendarStore + ?Sized>(
         return Ok(HttpResponse::Unauthorized().body(""));
     }
 
-    if uid.ends_with(".ics") {
-        uid.truncate(uid.len() - 4);
-    }
     let event = context
         .store
         .read()
@@ -50,16 +53,21 @@ pub async fn get_event<C: CalendarStore + ?Sized>(
         .body(event.get_ics().to_owned()))
 }
 
-#[instrument(parent = root_span.id(), skip(context, path, req, root_span))]
+#[instrument(parent = root_span.id(), skip(context, req, root_span))]
 pub async fn put_event<C: CalendarStore + ?Sized>(
     context: Data<CalDavContext<C>>,
-    path: Path<(String, String, String)>,
+    path: Path<CalendarObjectPathComponents>,
     body: String,
     user: User,
     req: HttpRequest,
     root_span: RootSpan,
 ) -> Result<HttpResponse, Error> {
-    let (principal, cid, mut uid) = path.into_inner();
+    let CalendarObjectPathComponents {
+        principal,
+        cid,
+        uid,
+    } = path.into_inner();
+
     if user.id != principal {
         return Ok(HttpResponse::Unauthorized().body(""));
     }
@@ -72,10 +80,6 @@ pub async fn put_event<C: CalendarStore + ?Sized>(
         .await?;
     if user.id != calendar.principal {
         return Ok(HttpResponse::Unauthorized().body(""));
-    }
-    // Incredibly bodged method of normalising the uid but works for a prototype
-    if uid.ends_with(".ics") {
-        uid.truncate(uid.len() - 4);
     }
 
     // TODO: implement If-Match
