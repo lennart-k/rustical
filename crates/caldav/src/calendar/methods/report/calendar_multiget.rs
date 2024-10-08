@@ -5,12 +5,16 @@ use crate::{
 };
 use actix_web::{
     dev::{Path, ResourceDef},
+    http::StatusCode,
     HttpRequest,
 };
 use rustical_dav::{
     methods::propfind::{PropElement, PropfindType},
     resource::Resource,
-    xml::{multistatus::PropstatWrapper, MultistatusElement},
+    xml::{
+        multistatus::{PropstatWrapper, ResponseElement},
+        MultistatusElement,
+    },
 };
 use rustical_store::{model::object::CalendarObject, CalendarStore};
 use serde::Deserialize;
@@ -32,28 +36,31 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore + ?Sized>(
     principal: &str,
     cid: &str,
     store: &RwLock<C>,
-) -> Result<Vec<CalendarObject>, Error> {
-    // TODO: add proper error results for single events
+) -> Result<(Vec<CalendarObject>, Vec<String>), Error> {
     let resource_def = ResourceDef::prefix(principal_url).join(&ResourceDef::new("/{cid}/{uid}"));
 
     let mut result = vec![];
+    let mut not_found = vec![];
 
     let store = store.read().await;
     for href in &cal_query.href {
         let mut path = Path::new(href.as_str());
         if !resource_def.capture_match_info(&mut path) {
-            // TODO: Handle error
-            continue;
+            not_found.push(href.to_owned());
         };
         if path.get("cid").unwrap() != cid {
-            // TODO: Handle error
-            continue;
+            not_found.push(href.to_owned());
         }
         let uid = path.get("uid").unwrap();
-        result.push(store.get_object(principal, cid, uid).await?);
+        match store.get_object(principal, cid, uid).await {
+            Ok(object) => result.push(object),
+            Err(rustical_store::Error::NotFound) => not_found.push(href.to_owned()),
+            // TODO: Maybe add event handling on a per-event basis
+            Err(err) => return Err(err.into()),
+        };
     }
 
-    Ok(result)
+    Ok((result, not_found))
 }
 
 pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
@@ -64,7 +71,7 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
     cal_store: &RwLock<C>,
 ) -> Result<MultistatusElement<PropstatWrapper<CalendarObjectProp>, String>, Error> {
     let principal_url = PrincipalResource::get_url(req.resource_map(), vec![principal]).unwrap();
-    let objects =
+    let (objects, not_found) =
         get_objects_calendar_multiget(&cal_multiget, &principal_url, principal, cid, cal_store)
             .await?;
 
@@ -90,8 +97,18 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
         );
     }
 
+    let not_found_responses = not_found
+        .into_iter()
+        .map(|path| ResponseElement {
+            href: path,
+            status: Some(format!("HTTP/1.1 {}", StatusCode::NOT_FOUND)),
+            ..Default::default()
+        })
+        .collect();
+
     Ok(MultistatusElement {
         responses,
+        member_responses: not_found_responses,
         ..Default::default()
     })
 }
