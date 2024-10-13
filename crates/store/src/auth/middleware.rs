@@ -81,7 +81,6 @@ where
 
             // Extract user from session cookie
             if let Ok(session) = Session::extract(req.request()).await {
-                println!("There's a session!");
                 match session.get::<User>("user") {
                     Ok(Some(user)) => {
                         req.extensions_mut().insert(user);
