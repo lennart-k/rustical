@@ -1,8 +1,9 @@
-use super::AuthenticationProvider;
+use super::{AuthenticationProvider, User};
+use actix_session::Session;
 use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
     http::header::Header,
-    HttpMessage,
+    FromRequest, HttpMessage,
 };
 use actix_web_httpauth::headers::authorization::{Authorization, Basic};
 use std::{
@@ -76,6 +77,20 @@ where
                         req.extensions_mut().insert(user);
                     }
                 }
+            }
+
+            // Extract user from session cookie
+            if let Ok(session) = Session::extract(req.request()).await {
+                println!("There's a session!");
+                match session.get::<User>("user") {
+                    Ok(Some(user)) => {
+                        req.extensions_mut().insert(user);
+                    }
+                    Ok(None) => {}
+                    Err(err) => {
+                        dbg!(err);
+                    }
+                };
             }
             service.call(req).await
         })

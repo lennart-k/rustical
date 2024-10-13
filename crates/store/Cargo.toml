@@ -23,6 +23,7 @@ rstest_reuse = { workspace = true }
 thiserror = { workspace = true }
 password-auth = { workspace = true }
 actix-web = { workspace = true }
+actix-session = { workspace = true }
 actix-web-httpauth = { workspace = true }
 tracing = { workspace = true }
 pbkdf2 = { workspace = true }

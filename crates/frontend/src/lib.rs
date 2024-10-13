@@ -8,7 +8,7 @@ use actix_web::{
 use askama::Template;
 use routes::login::{route_get_login, route_post_login};
 use rustical_store::{
-    auth::{AuthenticationMiddleware, AuthenticationProvider},
+    auth::{AuthenticationMiddleware, AuthenticationProvider, User},
     model::Calendar,
     CalendarStore,
 };
@@ -23,19 +23,39 @@ pub use config::FrontendConfig;
 #[derive(Template)]
 #[template(path = "pages/user.html")]
 struct UserPage {
-    pub owner: String,
+    pub user_id: String,
     pub calendars: Vec<Calendar>,
 }
 
 async fn route_user<C: CalendarStore + ?Sized>(
     path: Path<String>,
     store: Data<RwLock<C>>,
+    user: User,
 ) -> impl Responder {
     let store = store.read().await;
-    let owner = path.into_inner();
+    let user_id = path.into_inner();
     UserPage {
+        calendars: store.get_calendars(&user.id).await.unwrap(),
+        user_id: user.id,
+    }
+}
+
+#[derive(Template)]
+#[template(path = "pages/calendar.html")]
+struct CalendarPage {
+    owner: String,
+    calendar: Calendar,
+}
+
+async fn route_calendar<C: CalendarStore + ?Sized>(
+    path: Path<(String, String)>,
+    store: Data<RwLock<C>>,
+) -> impl Responder {
+    let store = store.read().await;
+    let (owner, cid) = path.into_inner();
+    CalendarPage {
         owner: owner.to_owned(),
-        calendars: store.get_calendars(&owner).await.unwrap(),
+        calendar: store.get_calendar(&owner, &cid).await.unwrap(),
     }
 }
 
@@ -62,6 +82,10 @@ pub fn configure_frontend<AP: AuthenticationProvider, C: CalendarStore + ?Sized>
             )
             .service(
                 web::resource("/user/{user}").route(web::method(Method::GET).to(route_user::<C>)),
+            )
+            .service(
+                web::resource("/user/{user}/{calendar}")
+                    .route(web::method(Method::GET).to(route_calendar::<C>)),
             )
             .service(
                 web::resource("/login")
