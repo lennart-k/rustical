@@ -273,7 +273,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
                 (
                     CalendarObjectResource::get_url(
                         rmap,
-                        vec![&self.principal, &self.calendar_id, object.get_uid()],
+                        vec![&self.principal, &self.calendar_id, object.get_id()],
                     )
                     .unwrap(),
                     object.into(),

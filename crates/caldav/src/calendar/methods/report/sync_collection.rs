@@ -46,7 +46,7 @@ pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
     sync_collection: SyncCollectionRequest,
     req: HttpRequest,
     principal: &str,
-    cid: &str,
+    cal_id: &str,
     cal_store: &RwLock<C>,
 ) -> Result<MultistatusElement<PropstatWrapper<CalendarObjectProp>, String>, Error> {
     let props = match sync_collection.prop {
@@ -64,14 +64,14 @@ pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
     let (new_objects, deleted_objects, new_synctoken) = cal_store
         .read()
         .await
-        .sync_changes(principal, cid, old_synctoken)
+        .sync_changes(principal, cal_id, old_synctoken)
         .await?;
 
     let mut responses = Vec::new();
     for object in new_objects {
         let path = CalendarObjectResource::get_url(
             req.resource_map(),
-            vec![principal, cid, &object.get_uid()],
+            vec![principal, cal_id, &object.get_id()],
         )
         .unwrap();
         responses.push(CalendarObjectResource::from(object).propfind(
@@ -81,10 +81,12 @@ pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
         )?);
     }
 
-    for object_uid in deleted_objects {
-        let path =
-            CalendarObjectResource::get_url(req.resource_map(), vec![principal, cid, &object_uid])
-                .unwrap();
+    for object_id in deleted_objects {
+        let path = CalendarObjectResource::get_url(
+            req.resource_map(),
+            vec![principal, cal_id, &object_id],
+        )
+        .unwrap();
         responses.push(ResponseElement {
             href: path,
             status: Some(format!("HTTP/1.1 {}", StatusCode::NOT_FOUND)),

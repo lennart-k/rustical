@@ -59,7 +59,7 @@ pub async fn route_mkcalendar<C: CalendarStore + ?Sized>(
     user: User,
     context: Data<CalDavContext<C>>,
 ) -> Result<HttpResponse, Error> {
-    let (principal, cid) = path.into_inner();
+    let (principal, cal_id) = path.into_inner();
     if principal != user.id {
         return Err(Error::Unauthorized);
     }
@@ -68,7 +68,7 @@ pub async fn route_mkcalendar<C: CalendarStore + ?Sized>(
     let request = request.set.prop;
 
     let calendar = Calendar {
-        id: cid.to_owned(),
+        id: cal_id.to_owned(),
         principal: principal.to_owned(),
         order: request.order.unwrap_or(0),
         displayname: request.displayname,
@@ -83,7 +83,7 @@ pub async fn route_mkcalendar<C: CalendarStore + ?Sized>(
         .store
         .read()
         .await
-        .get_calendar(&principal, &cid)
+        .get_calendar(&principal, &cal_id)
         .await
     {
         Err(rustical_store::Error::NotFound) => {

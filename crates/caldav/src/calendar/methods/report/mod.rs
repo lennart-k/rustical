@@ -39,7 +39,7 @@ pub async fn route_report_calendar<C: CalendarStore + ?Sized>(
     req: HttpRequest,
     cal_store: Data<RwLock<C>>,
 ) -> Result<impl Responder, Error> {
-    let (principal, cid) = path.into_inner();
+    let (principal, cal_id) = path.into_inner();
     if principal != user.id {
         return Err(Error::Unauthorized);
     }
@@ -48,13 +48,13 @@ pub async fn route_report_calendar<C: CalendarStore + ?Sized>(
 
     Ok(match request.clone() {
         ReportRequest::CalendarQuery(cal_query) => {
-            handle_calendar_query(cal_query, req, &principal, &cid, &cal_store).await?
+            handle_calendar_query(cal_query, req, &principal, &cal_id, &cal_store).await?
         }
         ReportRequest::CalendarMultiget(cal_multiget) => {
-            handle_calendar_multiget(cal_multiget, req, &principal, &cid, &cal_store).await?
+            handle_calendar_multiget(cal_multiget, req, &principal, &cal_id, &cal_store).await?
         }
         ReportRequest::SyncCollection(sync_collection) => {
-            handle_sync_collection(sync_collection, req, &principal, &cid, &cal_store).await?
+            handle_sync_collection(sync_collection, req, &principal, &cal_id, &cal_store).await?
         }
     })
 }

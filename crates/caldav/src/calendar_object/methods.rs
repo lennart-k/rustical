@@ -22,8 +22,8 @@ pub async fn get_event<C: CalendarStore + ?Sized>(
 ) -> Result<HttpResponse, Error> {
     let CalendarObjectPathComponents {
         principal,
-        cid,
-        uid,
+        cal_id,
+        object_id,
     } = path.into_inner();
 
     if user.id != principal {
@@ -34,7 +34,7 @@ pub async fn get_event<C: CalendarStore + ?Sized>(
         .store
         .read()
         .await
-        .get_calendar(&principal, &cid)
+        .get_calendar(&principal, &cal_id)
         .await?;
     if user.id != calendar.principal {
         return Ok(HttpResponse::Unauthorized().body(""));
@@ -44,7 +44,7 @@ pub async fn get_event<C: CalendarStore + ?Sized>(
         .store
         .read()
         .await
-        .get_object(&principal, &cid, &uid)
+        .get_object(&principal, &cal_id, &object_id)
         .await?;
 
     Ok(HttpResponse::Ok()
@@ -64,8 +64,8 @@ pub async fn put_event<C: CalendarStore + ?Sized>(
 ) -> Result<HttpResponse, Error> {
     let CalendarObjectPathComponents {
         principal,
-        cid,
-        uid,
+        cal_id,
+        object_id,
     } = path.into_inner();
 
     if user.id != principal {
@@ -76,7 +76,7 @@ pub async fn put_event<C: CalendarStore + ?Sized>(
         .store
         .read()
         .await
-        .get_calendar(&principal, &cid)
+        .get_calendar(&principal, &cal_id)
         .await?;
     if user.id != calendar.principal {
         return Ok(HttpResponse::Unauthorized().body(""));
@@ -89,7 +89,7 @@ pub async fn put_event<C: CalendarStore + ?Sized>(
 
     if Some(&HeaderValue::from_static("*")) == req.headers().get(header::IF_NONE_MATCH) {
         // Only write if not existing
-        match store.get_object(&principal, &cid, &uid).await {
+        match store.get_object(&principal, &cal_id, &object_id).await {
             Ok(_) => {
                 // Conflict
                 return Ok(HttpResponse::Conflict().body("Resource with this URI already exists"));
@@ -104,8 +104,8 @@ pub async fn put_event<C: CalendarStore + ?Sized>(
         }
     }
 
-    let object = CalendarObject::from_ics(uid, body)?;
-    store.put_object(principal, cid, object).await?;
+    let object = CalendarObject::from_ics(object_id, body)?;
+    store.put_object(principal, cal_id, object).await?;
 
     Ok(HttpResponse::Created().body(""))
 }

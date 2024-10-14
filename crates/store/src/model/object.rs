@@ -22,7 +22,7 @@ pub enum CalendarObjectComponent {
 
 #[derive(Debug, Clone)]
 pub struct CalendarObject {
-    uid: String,
+    id: String,
     ics: String,
     data: CalendarObjectComponent,
 }
@@ -35,11 +35,11 @@ impl<'de> Deserialize<'de> for CalendarObject {
     {
         #[derive(Deserialize)]
         struct Inner {
-            uid: String,
+            id: String,
             ics: String,
         }
-        let Inner { uid, ics } = Inner::deserialize(deserializer)?;
-        Self::from_ics(uid, ics).map_err(serde::de::Error::custom)
+        let Inner { id, ics } = Inner::deserialize(deserializer)?;
+        Self::from_ics(id, ics).map_err(serde::de::Error::custom)
     }
 }
 
@@ -50,12 +50,12 @@ impl Serialize for CalendarObject {
     {
         #[derive(Serialize)]
         struct Inner {
-            uid: String,
+            id: String,
             ics: String,
         }
         Inner::serialize(
             &Inner {
-                uid: self.get_uid().to_string(),
+                id: self.get_id().to_string(),
                 ics: self.get_ics().to_string(),
             },
             serializer,
@@ -64,7 +64,7 @@ impl Serialize for CalendarObject {
 }
 
 impl CalendarObject {
-    pub fn from_ics(uid: String, ics: String) -> Result<Self, Error> {
+    pub fn from_ics(object_id: String, ics: String) -> Result<Self, Error> {
         let mut parser = ical::IcalParser::new(BufReader::new(ics.as_bytes()));
         let cal = parser.next().ok_or(Error::NotFound)??;
         if parser.next().is_some() {
@@ -98,7 +98,7 @@ impl CalendarObject {
 
         if let Some(event) = cal.events.first() {
             return Ok(CalendarObject {
-                uid,
+                id: object_id,
                 ics,
                 data: CalendarObjectComponent::Event(EventObject {
                     event: event.clone(),
@@ -108,7 +108,7 @@ impl CalendarObject {
         }
         if let Some(todo) = cal.todos.first() {
             return Ok(CalendarObject {
-                uid,
+                id: object_id,
                 ics,
                 data: CalendarObjectComponent::Todo(TodoObject { todo: todo.clone() }),
             });
@@ -119,12 +119,12 @@ impl CalendarObject {
         ))
     }
 
-    pub fn get_uid(&self) -> &str {
-        &self.uid
+    pub fn get_id(&self) -> &str {
+        &self.id
     }
     pub fn get_etag(&self) -> String {
         let mut hasher = Sha256::new();
-        hasher.update(&self.uid);
+        hasher.update(&self.id);
         hasher.update(self.get_ics());
         format!("{:x}", hasher.finalize())
     }

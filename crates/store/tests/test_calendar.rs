@@ -44,5 +44,5 @@ async fn test_create_event<CS: CalendarStore>(mut store: CS) {
 
     let event = store.get_object("testuser", "test", "asd").await.unwrap();
     assert_eq!(event.get_ics(), EVENT);
-    assert_eq!(event.get_uid(), "asd");
+    assert_eq!(event.get_id(), "asd");
 }

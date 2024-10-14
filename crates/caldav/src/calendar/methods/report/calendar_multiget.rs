@@ -34,10 +34,11 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore + ?Sized>(
     cal_query: &CalendarMultigetRequest,
     principal_url: &str,
     principal: &str,
-    cid: &str,
+    cal_id: &str,
     store: &RwLock<C>,
 ) -> Result<(Vec<CalendarObject>, Vec<String>), Error> {
-    let resource_def = ResourceDef::prefix(principal_url).join(&ResourceDef::new("/{cid}/{uid}"));
+    let resource_def =
+        ResourceDef::prefix(principal_url).join(&ResourceDef::new("/{cal_id}/{object_id}"));
 
     let mut result = vec![];
     let mut not_found = vec![];
@@ -48,11 +49,11 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore + ?Sized>(
         if !resource_def.capture_match_info(&mut path) {
             not_found.push(href.to_owned());
         };
-        if path.get("cid").unwrap() != cid {
+        if path.get("cal_id").unwrap() != cal_id {
             not_found.push(href.to_owned());
         }
-        let uid = path.get("uid").unwrap();
-        match store.get_object(principal, cid, uid).await {
+        let object_id = path.get("object_id").unwrap();
+        match store.get_object(principal, cal_id, object_id).await {
             Ok(object) => result.push(object),
             Err(rustical_store::Error::NotFound) => not_found.push(href.to_owned()),
             // TODO: Maybe add error handling on a per-object basis
@@ -67,12 +68,12 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
     cal_multiget: CalendarMultigetRequest,
     req: HttpRequest,
     principal: &str,
-    cid: &str,
+    cal_id: &str,
     cal_store: &RwLock<C>,
 ) -> Result<MultistatusElement<PropstatWrapper<CalendarObjectProp>, String>, Error> {
     let principal_url = PrincipalResource::get_url(req.resource_map(), vec![principal]).unwrap();
     let (objects, not_found) =
-        get_objects_calendar_multiget(&cal_multiget, &principal_url, principal, cid, cal_store)
+        get_objects_calendar_multiget(&cal_multiget, &principal_url, principal, cal_id, cal_store)
             .await?;
 
     let props = match cal_multiget.prop {
@@ -88,7 +89,7 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
 
     let mut responses = Vec::new();
     for object in objects {
-        let path = format!("{}/{}", req.path(), object.get_uid());
+        let path = format!("{}/{}", req.path(), object.get_id());
         responses.push(CalendarObjectResource::from(object).propfind(
             &path,
             props.clone(),

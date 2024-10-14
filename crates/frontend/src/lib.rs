@@ -52,10 +52,10 @@ async fn route_calendar<C: CalendarStore + ?Sized>(
     store: Data<RwLock<C>>,
 ) -> impl Responder {
     let store = store.read().await;
-    let (owner, cid) = path.into_inner();
+    let (owner, cal_id) = path.into_inner();
     CalendarPage {
         owner: owner.to_owned(),
-        calendar: store.get_calendar(&owner, &cid).await.unwrap(),
+        calendar: store.get_calendar(&owner, &cal_id).await.unwrap(),
     }
 }
 

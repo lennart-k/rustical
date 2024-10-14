@@ -28,29 +28,38 @@ pub trait CalendarStore: Send + Sync + 'static {
     async fn sync_changes(
         &self,
         principal: &str,
-        cid: &str,
+        cal_id: &str,
         synctoken: i64,
     ) -> Result<(Vec<CalendarObject>, Vec<String>, i64), Error>;
 
-    async fn get_objects(&self, principal: &str, cid: &str) -> Result<Vec<CalendarObject>, Error>;
+    async fn get_objects(
+        &self,
+        principal: &str,
+        cal_id: &str,
+    ) -> Result<Vec<CalendarObject>, Error>;
     async fn get_object(
         &self,
         principal: &str,
-        cid: &str,
-        uid: &str,
+        cal_id: &str,
+        object_id: &str,
     ) -> Result<CalendarObject, Error>;
     async fn put_object(
         &mut self,
         principal: String,
-        cid: String,
+        cal_id: String,
         object: CalendarObject,
     ) -> Result<(), Error>;
     async fn delete_object(
         &mut self,
         principal: &str,
-        cid: &str,
-        uid: &str,
+        cal_id: &str,
+        object_id: &str,
         use_trashbin: bool,
     ) -> Result<(), Error>;
-    async fn restore_object(&mut self, principal: &str, cid: &str, uid: &str) -> Result<(), Error>;
+    async fn restore_object(
+        &mut self,
+        principal: &str,
+        cal_id: &str,
+        object_id: &str,
+    ) -> Result<(), Error>;
 }

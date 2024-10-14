@@ -16,8 +16,8 @@ pub struct CalendarObjectResourceService<C: CalendarStore + ?Sized> {
     pub cal_store: Arc<RwLock<C>>,
     pub path: String,
     pub principal: String,
-    pub cid: String,
-    pub uid: String,
+    pub cal_id: String,
+    pub object_id: String,
 }
 
 #[derive(EnumString, Debug, VariantNames, Clone)]
@@ -78,8 +78,8 @@ impl Resource for CalendarObjectResource {
 #[derive(Debug, Clone)]
 pub struct CalendarObjectPathComponents {
     pub principal: String,
-    pub cid: String,
-    pub uid: String,
+    pub cal_id: String,
+    pub object_id: String,
 }
 
 impl<'de> Deserialize<'de> for CalendarObjectPathComponents {
@@ -94,8 +94,8 @@ impl<'de> Deserialize<'de> for CalendarObjectPathComponents {
         }
         Ok(Self {
             principal,
-            cid: calendar,
-            uid: object,
+            cal_id: calendar,
+            object_id: object,
         })
     }
 }
@@ -113,8 +113,8 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarObjectResourceServic
     ) -> Result<Self, Self::Error> {
         let CalendarObjectPathComponents {
             principal,
-            cid,
-            uid,
+            cal_id,
+            object_id,
         } = path_components;
 
         let cal_store = req
@@ -126,8 +126,8 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarObjectResourceServic
         Ok(Self {
             cal_store,
             principal,
-            cid,
-            uid,
+            cal_id,
+            object_id,
             path: req.path().to_string(),
         })
     }
@@ -140,7 +140,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarObjectResourceServic
             .cal_store
             .read()
             .await
-            .get_object(&self.principal, &self.cid, &self.uid)
+            .get_object(&self.principal, &self.cal_id, &self.object_id)
             .await?;
         Ok(event.into())
     }
@@ -153,7 +153,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarObjectResourceServic
         self.cal_store
             .write()
             .await
-            .delete_object(&self.principal, &self.cid, &self.uid, use_trashbin)
+            .delete_object(&self.principal, &self.cal_id, &self.object_id, use_trashbin)
             .await?;
         Ok(())
     }

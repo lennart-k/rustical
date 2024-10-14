@@ -194,10 +194,10 @@ pub struct CalendarQueryRequest {
 pub async fn get_objects_calendar_query<C: CalendarStore + ?Sized>(
     cal_query: &CalendarQueryRequest,
     principal: &str,
-    cid: &str,
+    cal_id: &str,
     store: &RwLock<C>,
 ) -> Result<Vec<CalendarObject>, Error> {
-    let mut objects = store.read().await.get_objects(principal, cid).await?;
+    let mut objects = store.read().await.get_objects(principal, cal_id).await?;
     if let Some(filter) = &cal_query.filter {
         objects.retain(|object| filter.matches(object));
     }
@@ -208,10 +208,10 @@ pub async fn handle_calendar_query<C: CalendarStore + ?Sized>(
     cal_query: CalendarQueryRequest,
     req: HttpRequest,
     principal: &str,
-    cid: &str,
+    cal_id: &str,
     cal_store: &RwLock<C>,
 ) -> Result<MultistatusElement<PropstatWrapper<CalendarObjectProp>, String>, Error> {
-    let objects = get_objects_calendar_query(&cal_query, principal, cid, cal_store).await?;
+    let objects = get_objects_calendar_query(&cal_query, principal, cal_id, cal_store).await?;
 
     let props = match cal_query.prop {
         PropfindType::Allprop => {
@@ -228,7 +228,7 @@ pub async fn handle_calendar_query<C: CalendarStore + ?Sized>(
     for object in objects {
         let path = CalendarObjectResource::get_url(
             req.resource_map(),
-            vec![principal, cid, object.get_uid()],
+            vec![principal, cal_id, object.get_id()],
         )
         .unwrap();
         responses.push(CalendarObjectResource::from(object).propfind(

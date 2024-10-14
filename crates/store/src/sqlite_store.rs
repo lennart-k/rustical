@@ -21,7 +21,7 @@ impl SqliteCalendarStore {
 
 #[derive(Debug, Clone)]
 struct CalendarObjectRow {
-    uid: String,
+    id: String,
     ics: String,
 }
 
@@ -29,7 +29,7 @@ impl TryFrom<CalendarObjectRow> for CalendarObject {
     type Error = Error;
 
     fn try_from(value: CalendarObjectRow) -> Result<Self, Error> {
-        CalendarObject::from_ics(value.uid, value.ics)
+        CalendarObject::from_ics(value.id, value.ics)
     }
 }
 
@@ -45,8 +45,8 @@ enum CalendarChangeOperation {
 async fn log_object_operation(
     tx: &mut Transaction<'_, Sqlite>,
     principal: &str,
-    cid: &str,
-    uid: &str,
+    cal_id: &str,
+    object_id: &str,
     operation: CalendarChangeOperation,
 ) -> Result<(), Error> {
     sqlx::query!(
@@ -55,20 +55,20 @@ async fn log_object_operation(
         SET synctoken = synctoken + 1
         WHERE (principal, id) = (?1, ?2)"#,
         principal,
-        cid
+        cal_id
     )
     .execute(&mut **tx)
     .await?;
 
     sqlx::query!(
         r#"
-        INSERT INTO calendarobjectchangelog (principal, cid, uid, operation, synctoken)
+        INSERT INTO calendarobjectchangelog (principal, cal_id, object_id, operation, synctoken)
         VALUES (?1, ?2, ?3, ?4, (
             SELECT synctoken FROM calendars WHERE (principal, id) = (?1, ?2)
         ))"#,
         principal,
-        cid,
-        uid,
+        cal_id,
+        object_id,
         operation
     )
     .execute(&mut **tx)
@@ -194,12 +194,16 @@ impl CalendarStore for SqliteCalendarStore {
     }
 
     #[instrument]
-    async fn get_objects(&self, principal: &str, cid: &str) -> Result<Vec<CalendarObject>, Error> {
+    async fn get_objects(
+        &self,
+        principal: &str,
+        cal_id: &str,
+    ) -> Result<Vec<CalendarObject>, Error> {
         sqlx::query_as!(
             CalendarObjectRow,
-            "SELECT uid, ics FROM calendarobjects WHERE principal = ? AND cid = ? AND deleted_at IS NULL",
+            "SELECT id, ics FROM calendarobjects WHERE principal = ? AND cal_id = ? AND deleted_at IS NULL",
             principal,
-            cid
+            cal_id
         )
         .fetch_all(&self.db)
         .await?
@@ -212,15 +216,15 @@ impl CalendarStore for SqliteCalendarStore {
     async fn get_object(
         &self,
         principal: &str,
-        cid: &str,
-        uid: &str,
+        cal_id: &str,
+        object_id: &str,
     ) -> Result<CalendarObject, Error> {
         Ok(sqlx::query_as!(
             CalendarObjectRow,
-            "SELECT uid, ics FROM calendarobjects WHERE (principal, cid, uid) = (?, ?, ?)",
+            "SELECT id, ics FROM calendarobjects WHERE (principal, cal_id, id) = (?, ?, ?)",
             principal,
-            cid,
-            uid
+            cal_id,
+            object_id
         )
         .fetch_one(&self.db)
         .await?
@@ -231,24 +235,31 @@ impl CalendarStore for SqliteCalendarStore {
     async fn put_object(
         &mut self,
         principal: String,
-        cid: String,
+        cal_id: String,
         object: CalendarObject,
     ) -> Result<(), Error> {
         let mut tx = self.db.begin().await?;
 
-        let (uid, ics) = (object.get_uid(), object.get_ics());
+        let (object_id, ics) = (object.get_id(), object.get_ics());
 
         sqlx::query!(
-            "REPLACE INTO calendarobjects (principal, cid, uid, ics) VALUES (?, ?, ?, ?)",
+            "REPLACE INTO calendarobjects (principal, cal_id, id, ics) VALUES (?, ?, ?, ?)",
             principal,
-            cid,
-            uid,
+            cal_id,
+            object_id,
             ics
         )
         .execute(&mut *tx)
         .await?;
 
-        log_object_operation(&mut tx, &principal, &cid, uid, CalendarChangeOperation::Add).await?;
+        log_object_operation(
+            &mut tx,
+            &principal,
+            &cal_id,
+            object_id,
+            CalendarChangeOperation::Add,
+        )
+        .await?;
 
         tx.commit().await?;
         Ok(())
@@ -258,8 +269,8 @@ impl CalendarStore for SqliteCalendarStore {
     async fn delete_object(
         &mut self,
         principal: &str,
-        cid: &str,
-        uid: &str,
+        cal_id: &str,
+        id: &str,
         use_trashbin: bool,
     ) -> Result<(), Error> {
         let mut tx = self.db.begin().await?;
@@ -267,19 +278,19 @@ impl CalendarStore for SqliteCalendarStore {
         match use_trashbin {
             true => {
                 sqlx::query!(
-                    "UPDATE calendarobjects SET deleted_at = datetime(), updated_at = datetime() WHERE (principal, cid, uid) = (?, ?, ?)",
+                    "UPDATE calendarobjects SET deleted_at = datetime(), updated_at = datetime() WHERE (principal, cal_id, id) = (?, ?, ?)",
                     principal,
-                    cid,
-                    uid
+                    cal_id,
+                    id
                 )
                 .execute(&mut *tx)
                 .await?;
             }
             false => {
                 sqlx::query!(
-                    "DELETE FROM calendarobjects WHERE cid = ? AND uid = ?",
-                    cid,
-                    uid
+                    "DELETE FROM calendarobjects WHERE cal_id = ? AND id = ?",
+                    cal_id,
+                    id
                 )
                 .execute(&mut *tx)
                 .await?;
@@ -288,8 +299,8 @@ impl CalendarStore for SqliteCalendarStore {
         log_object_operation(
             &mut tx,
             principal,
-            cid,
-            uid,
+            cal_id,
+            id,
             CalendarChangeOperation::Delete,
         )
         .await?;
@@ -298,14 +309,19 @@ impl CalendarStore for SqliteCalendarStore {
     }
 
     #[instrument]
-    async fn restore_object(&mut self, principal: &str, cid: &str, uid: &str) -> Result<(), Error> {
+    async fn restore_object(
+        &mut self,
+        principal: &str,
+        cal_id: &str,
+        object_id: &str,
+    ) -> Result<(), Error> {
         let mut tx = self.db.begin().await?;
 
         sqlx::query!(
-            r#"UPDATE calendarobjects SET deleted_at = NULL, updated_at = datetime() WHERE (principal, cid, uid) = (?, ?, ?)"#,
+            r#"UPDATE calendarobjects SET deleted_at = NULL, updated_at = datetime() WHERE (principal, cal_id, id) = (?, ?, ?)"#,
             principal,
-            cid,
-            uid
+            cal_id,
+            object_id
         )
         .execute(&mut *tx)
         .await?;
@@ -313,8 +329,8 @@ impl CalendarStore for SqliteCalendarStore {
         log_object_operation(
             &mut tx,
             principal,
-            cid,
-            uid,
+            cal_id,
+            object_id,
             CalendarChangeOperation::Delete,
         )
         .await?;
@@ -326,17 +342,17 @@ impl CalendarStore for SqliteCalendarStore {
     async fn sync_changes(
         &self,
         principal: &str,
-        cid: &str,
+        cal_id: &str,
         synctoken: i64,
     ) -> Result<(Vec<CalendarObject>, Vec<String>, i64), Error> {
         struct Row {
-            uid: String,
+            object_id: String,
             synctoken: i64,
         }
         let changes = sqlx::query_as!(
             Row,
             r#"
-                SELECT DISTINCT uid, max(0, synctoken) as "synctoken!: i64" from calendarobjectchangelog
+                SELECT DISTINCT object_id, max(0, synctoken) as "synctoken!: i64" from calendarobjectchangelog
                 WHERE synctoken > ?
                 ORDER BY synctoken ASC
             "#,
@@ -353,10 +369,10 @@ impl CalendarStore for SqliteCalendarStore {
             .map(|&Row { synctoken, .. }| synctoken)
             .unwrap_or(0);
 
-        for Row { uid, .. } in changes {
-            match self.get_object(principal, cid, &uid).await {
+        for Row { object_id, .. } in changes {
+            match self.get_object(principal, cal_id, &object_id).await {
                 Ok(object) => objects.push(object),
-                Err(Error::NotFound) => deleted_objects.push(uid),
+                Err(Error::NotFound) => deleted_objects.push(object_id),
                 Err(err) => return Err(err),
             }
         }
