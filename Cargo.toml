@@ -106,3 +106,4 @@ tracing-subscriber = { version = "0.3.18", features = [
   "fmt",
   "registry",
 ] }
+console-subscriber = "0.4.0"
