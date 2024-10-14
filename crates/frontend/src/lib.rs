@@ -50,6 +50,7 @@ struct CalendarPage {
 async fn route_calendar<C: CalendarStore + ?Sized>(
     path: Path<(String, String)>,
     store: Data<RwLock<C>>,
+    user: User,
 ) -> impl Responder {
     let store = store.read().await;
     let (owner, cal_id) = path.into_inner();
