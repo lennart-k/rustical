@@ -2,7 +2,6 @@ use crate::{
     timestamp::{parse_duration, CalDateTime},
     Error,
 };
-use anyhow::{anyhow, Result};
 use chrono::Duration;
 use ical::{
     generator::IcalEvent,
@@ -31,7 +30,7 @@ impl EventObject {
         // This is safe since we enforce the event's existence in the constructor
         if self.event.get_property("RRULE").is_some() {
             // TODO: understand recurrence rules
-            return Err(anyhow!("event is recurring, we cannot handle that yet").into());
+            return Ok(None);
         }
 
         if let Some(dtend) = self.event.get_property("DTEND") {
