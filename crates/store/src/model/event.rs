@@ -28,7 +28,7 @@ impl EventObject {
 
     pub fn get_last_occurence(&self) -> Result<Option<CalDateTime>, Error> {
         // This is safe since we enforce the event's existence in the constructor
-        if self.event.get_property("RRULE").is_some() {
+        if let Some(_rrule) = self.event.get_property("RRULE") {
             // TODO: understand recurrence rules
             return Ok(None);
         }
