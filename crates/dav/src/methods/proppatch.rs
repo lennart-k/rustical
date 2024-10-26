@@ -61,8 +61,6 @@ pub async fn route_proppatch<R: ResourceService>(
     let href = req.path().to_owned();
     let resource_service = R::new(&req, path_components.clone()).await?;
 
-    debug!("{body}");
-
     let PropertyupdateElement::<<R::Resource as Resource>::Prop> { operations } =
         quick_xml::de::from_str(&body).map_err(Error::XmlDecodeError)?;
 
@@ -102,27 +100,23 @@ pub async fn route_proppatch<R: ResourceService>(
                         props_conflict.push(propname);
                     }
                     Err(err) => {
-                        // TODO: Think about error handling?
                         return Err(err.into());
                     }
                 }
             }
             Operation::Remove(_remove_el) => {
                 match <<R::Resource as Resource>::PropName as FromStr>::from_str(&propname) {
-                    Ok(prop) => {
-                        match resource.remove_prop(prop) {
-                            Ok(()) => {
-                                props_ok.push(propname);
-                            }
-                            Err(Error::PropReadOnly) => {
-                                props_conflict.push(propname);
-                            }
-                            Err(err) => {
-                                // TODO: Think about error handling?
-                                return Err(err.into());
-                            }
+                    Ok(prop) => match resource.remove_prop(prop) {
+                        Ok(()) => {
+                            props_ok.push(propname);
                         }
-                    }
+                        Err(Error::PropReadOnly) => {
+                            props_conflict.push(propname);
+                        }
+                        Err(err) => {
+                            return Err(err.into());
+                        }
+                    },
                     Err(_) => {
                         // I guess removing a nonexisting property should be successful :)
                         props_ok.push(propname);
