@@ -21,10 +21,6 @@ pub mod root;
 
 pub use error::Error;
 
-pub struct CalDavContext<C: CalendarStore + ?Sized> {
-    pub store: Arc<RwLock<C>>,
-}
-
 pub fn configure_well_known(cfg: &mut web::ServiceConfig, caldav_root: String) {
     cfg.service(web::redirect("/caldav", caldav_root).permanent());
 }
@@ -59,9 +55,6 @@ pub fn configure_dav<AP: AuthenticationProvider, C: CalendarStore + ?Sized>(
                     res
                 })
             })
-            .app_data(Data::new(CalDavContext {
-                store: store.clone(),
-            }))
             .app_data(Data::from(store.clone()))
             .service(RootResourceService::actix_resource())
             .service(
