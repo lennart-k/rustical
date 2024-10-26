@@ -60,12 +60,13 @@ strum = { version = "0.26", features = ["strum_macros", "derive"] }
 derive_more = { version = "1.0", features = ["from", "into", "deref"] }
 askama = { version = "0.12", features = ["serde", "with-actix-web"] }
 askama_actix = "0.14"
-sqlx = { version = "0.8", features = [
+sqlx = { version = "0.8", default-features = false, features = [
   "sqlx-sqlite",
   "uuid",
   "chrono",
   "sqlite",
   "runtime-tokio",
+  "macros",
   "migrate",
 ] }
 ical = { version = "0.11", features = ["generator", "serde"] }
