@@ -96,12 +96,12 @@ async-trait = { workspace = true }
 tracing-actix-web = { workspace = true }
 
 # 0.25 is the latest version supported by tracing-opentelemetry
-opentelemetry = "0.25.0"
-opentelemetry-otlp = "0.25.0"
-opentelemetry_sdk = { version = "0.25.0", features = ["rt-tokio"] }
+opentelemetry = "0.26.0"
+opentelemetry-otlp = "0.26.0"
+opentelemetry_sdk = { version = "0.26.0", features = ["rt-tokio"] }
 
 opentelemetry-semantic-conventions = "0.26"
-tracing-opentelemetry = "0.26.0"
+tracing-opentelemetry = "0.27.0"
 tracing-subscriber = { version = "0.3.18", features = [
   "env-filter",
   "fmt",
