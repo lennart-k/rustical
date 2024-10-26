@@ -70,6 +70,7 @@ impl CalDateTime {
             return Ok(None);
         };
 
+        // Use the TZID parameter from the property
         let timezone = if let Some(tzid) = &prop
             .params
             .clone()
@@ -91,20 +92,30 @@ impl CalDateTime {
                     if let Ok(tz) = olson_name.parse::<Tz>() {
                         Some(tz)
                     } else {
-                        // TODO: handle invalid timezone name
-                        None
+                        return Err(Error::InvalidIcs(format!(
+                            "Timezone has X-LIC-LOCATION property to specify a timezone from the Olson database, however it's value {olson_name} is invalid"
+                        )));
                     }
                 } else {
-                    // No name, we would have to parse it ourselves :(
-                    // TODO: implement
-                    None
+                    // If the TZID matches a name from the Olson database (e.g. Europe/Berlin) we
+                    // guess that we can just use it
+                    if let Ok(tz) = tzid.parse::<Tz>() {
+                        Some(tz)
+                    } else {
+                        // TODO: Too bad, we need to manually parse it
+                        // For now it's just treated as localtime
+                        None
+                    }
                 }
             } else {
-                // ERROR: invalid timezone specified
-                // For now just assume naive datetime?
-                None
+                // TZID refers to timezone that does not exist
+                return Err(Error::InvalidIcs(format!(
+                    "No timezone specified with TZID={tzid}"
+                )));
             }
         } else {
+            // No explicit timezone specified.
+            // This is valid and will be localtime or UTC depending on the value
             None
         };
 
