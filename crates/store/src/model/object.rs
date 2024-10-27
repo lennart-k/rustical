@@ -1,4 +1,4 @@
-use super::{event::EventObject, todo::TodoObject};
+use super::{event::EventObject, journal::JournalObject, todo::TodoObject};
 use crate::{timestamp::CalDateTime, Error};
 use anyhow::Result;
 use ical::parser::{ical::component::IcalTimeZone, Component};
@@ -18,6 +18,7 @@ pub enum CalendarObjectType {
 pub enum CalendarObjectComponent {
     Event(EventObject),
     Todo(TodoObject),
+    Journal(JournalObject),
 }
 
 #[derive(Debug, Clone)]
@@ -113,6 +114,15 @@ impl CalendarObject {
                 data: CalendarObjectComponent::Todo(TodoObject { todo: todo.clone() }),
             });
         }
+        if let Some(journal) = cal.journals.first() {
+            return Ok(CalendarObject {
+                id: object_id,
+                ics,
+                data: CalendarObjectComponent::Journal(JournalObject {
+                    journal: journal.clone(),
+                }),
+            });
+        }
 
         Err(Error::InvalidData(
             "iCalendar component type not supported :(".to_owned(),
@@ -137,6 +147,7 @@ impl CalendarObject {
         match self.data {
             CalendarObjectComponent::Todo(_) => "VTODO",
             CalendarObjectComponent::Event(_) => "VEVENT",
+            CalendarObjectComponent::Journal(_) => "VJOURNAL",
         }
     }
 

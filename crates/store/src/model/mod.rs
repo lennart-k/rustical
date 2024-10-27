@@ -1,5 +1,6 @@
 pub mod calendar;
 pub mod event;
+pub mod journal;
 pub mod object;
 pub mod todo;
 

@@ -143,6 +143,9 @@ impl Resource for CalendarResource {
                         SupportedCalendarComponent {
                             name: "VTODO".to_owned(),
                         },
+                        SupportedCalendarComponent {
+                            name: "VJOURNAL".to_owned(),
+                        },
                     ],
                 })
             }

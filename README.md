@@ -7,7 +7,7 @@ a calendar server
 ## Todo
 
 - [ ] CalDAV
-  - [x] Support for VEVENT, VTODO
+  - [x] Support for VEVENT, VTODO, VJOURNAL
   - [ ] Proper filtering for REPORT method
     - [x] comp-filter
     - [x] time-range filter
