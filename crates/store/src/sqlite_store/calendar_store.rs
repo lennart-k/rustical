@@ -1,10 +1,9 @@
-use super::SqliteStore;
+use super::{ChangeOperation, SqliteStore};
 use crate::model::object::CalendarObject;
 use crate::model::Calendar;
 use crate::{CalendarStore, Error};
 use anyhow::Result;
 use async_trait::async_trait;
-use serde::Serialize;
 use sqlx::Sqlite;
 use sqlx::Transaction;
 use tracing::instrument;
@@ -23,21 +22,13 @@ impl TryFrom<CalendarObjectRow> for CalendarObject {
     }
 }
 
-#[derive(Debug, Clone, Serialize, sqlx::Type)]
-#[serde(rename_all = "kebab-case")]
-enum CalendarChangeOperation {
-    // There's no distinction between Add and Modify
-    Add,
-    Delete,
-}
-
 // Logs an operation to the events
 async fn log_object_operation(
     tx: &mut Transaction<'_, Sqlite>,
     principal: &str,
     cal_id: &str,
     object_id: &str,
-    operation: CalendarChangeOperation,
+    operation: ChangeOperation,
 ) -> Result<(), Error> {
     sqlx::query!(
         r#"
@@ -249,7 +240,7 @@ impl CalendarStore for SqliteStore {
             &principal,
             &cal_id,
             object_id,
-            CalendarChangeOperation::Add,
+            ChangeOperation::Add,
         )
         .await?;
 
@@ -288,14 +279,7 @@ impl CalendarStore for SqliteStore {
                 .await?;
             }
         };
-        log_object_operation(
-            &mut tx,
-            principal,
-            cal_id,
-            id,
-            CalendarChangeOperation::Delete,
-        )
-        .await?;
+        log_object_operation(&mut tx, principal, cal_id, id, ChangeOperation::Delete).await?;
         tx.commit().await?;
         Ok(())
     }
@@ -318,14 +302,7 @@ impl CalendarStore for SqliteStore {
         .execute(&mut *tx)
         .await?;
 
-        log_object_operation(
-            &mut tx,
-            principal,
-            cal_id,
-            object_id,
-            CalendarChangeOperation::Delete,
-        )
-        .await?;
+        log_object_operation(&mut tx, principal, cal_id, object_id, ChangeOperation::Add).await?;
         tx.commit().await?;
         Ok(())
     }

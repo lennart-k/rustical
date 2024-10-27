@@ -1,11 +1,10 @@
-use super::SqliteStore;
+use super::{ChangeOperation, SqliteStore};
 use crate::Error;
 use crate::{
     model::{AddressObject, Addressbook},
     AddressbookStore,
 };
 use async_trait::async_trait;
-use serde::Serialize;
 use sqlx::{Sqlite, Transaction};
 use tracing::instrument;
 
@@ -23,21 +22,13 @@ impl TryFrom<AddressObjectRow> for AddressObject {
     }
 }
 
-#[derive(Debug, Clone, Serialize, sqlx::Type)]
-#[serde(rename_all = "kebab-case")]
-enum AddressbookChangeOperation {
-    // There's no distinction between Add and Modify
-    Add,
-    Delete,
-}
-
 // Logs an operation to the events
 async fn log_object_operation(
     tx: &mut Transaction<'_, Sqlite>,
     principal: &str,
     addressbook_id: &str,
     object_id: &str,
-    operation: AddressbookChangeOperation,
+    operation: ChangeOperation,
 ) -> Result<(), Error> {
     sqlx::query!(
         r#"
@@ -290,7 +281,7 @@ impl AddressbookStore for SqliteStore {
             &principal,
             &addressbook_id,
             object_id,
-            AddressbookChangeOperation::Add,
+            ChangeOperation::Add,
         )
         .await?;
 
@@ -334,7 +325,7 @@ impl AddressbookStore for SqliteStore {
             principal,
             addressbook_id,
             object_id,
-            AddressbookChangeOperation::Delete,
+            ChangeOperation::Delete,
         )
         .await?;
         tx.commit().await?;
@@ -364,7 +355,7 @@ impl AddressbookStore for SqliteStore {
             principal,
             addressbook_id,
             object_id,
-            AddressbookChangeOperation::Delete,
+            ChangeOperation::Add,
         )
         .await?;
         tx.commit().await?;

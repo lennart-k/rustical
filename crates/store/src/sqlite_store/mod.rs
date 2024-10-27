@@ -1,7 +1,16 @@
+use serde::Serialize;
 use sqlx::{sqlite::SqliteConnectOptions, Pool, Sqlite, SqlitePool};
 
 pub mod addressbook_store;
 pub mod calendar_store;
+
+#[derive(Debug, Clone, Serialize, sqlx::Type)]
+#[serde(rename_all = "kebab-case")]
+pub(crate) enum ChangeOperation {
+    // There's no distinction between Add and Modify
+    Add,
+    Delete,
+}
 
 #[derive(Debug)]
 pub struct SqliteStore {
