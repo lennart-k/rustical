@@ -16,7 +16,7 @@ a calendar server
   - [x] ICS parsing
     - [x] Datetime parsing
   - [x] Implement PROPPATCH
-- [ ] CardDAV
+- [x] CardDAV
 - [x] Auth (There currently is no authentication at all in place for some routes)
   - [x] static authentication
   - [ ] Access control
