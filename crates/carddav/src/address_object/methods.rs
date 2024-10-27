@@ -46,7 +46,7 @@ pub async fn get_object<AS: AddressbookStore + ?Sized>(
 
     Ok(HttpResponse::Ok()
         .insert_header(("ETag", object.get_etag()))
-        .insert_header(("Content-Type", "text/calendar"))
+        .insert_header(("Content-Type", "text/vcard"))
         .body(object.get_vcf().to_owned()))
 }
 

@@ -66,7 +66,7 @@ impl Resource for AddressObjectResource {
                 AddressObjectProp::AddressData(self.0.get_vcf().to_owned())
             }
             AddressObjectPropName::Getcontenttype => {
-                AddressObjectProp::Getcontenttype("text/calendar;charset=utf-8".to_owned())
+                AddressObjectProp::Getcontenttype("text/vcard;charset=utf-8".to_owned())
             }
         })
     }
@@ -91,7 +91,7 @@ impl<'de> Deserialize<'de> for AddressObjectPathComponents {
     {
         type Inner = (String, String, String);
         let (principal, calendar, mut object) = Inner::deserialize(deserializer)?;
-        if object.ends_with(".ics") {
+        if object.ends_with(".vcf") {
             object.truncate(object.len() - 4);
         }
         Ok(Self {
