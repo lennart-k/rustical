@@ -9,14 +9,14 @@ pub struct HttpConfig {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct SqliteCalendarStoreConfig {
+pub struct SqliteDataStoreConfig {
     pub db_url: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(tag = "backend", rename_all = "snake_case")]
-pub enum CalendarStoreConfig {
-    Sqlite(SqliteCalendarStoreConfig),
+pub enum DataStoreConfig {
+    Sqlite(SqliteDataStoreConfig),
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -32,7 +32,7 @@ pub struct TracingConfig {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
-    pub calendar_store: CalendarStoreConfig,
+    pub data_store: DataStoreConfig,
     pub auth: AuthConfig,
     pub http: HttpConfig,
     pub frontend: FrontendConfig,

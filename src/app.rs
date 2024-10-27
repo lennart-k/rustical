@@ -4,12 +4,13 @@ use actix_web::middleware::NormalizePath;
 use actix_web::{web, App};
 use rustical_frontend::configure_frontend;
 use rustical_store::auth::AuthenticationProvider;
-use rustical_store::CalendarStore;
+use rustical_store::{AddressbookStore, CalendarStore};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tracing_actix_web::TracingLogger;
 
-pub fn make_app<CS: CalendarStore + ?Sized>(
+pub fn make_app<AS: AddressbookStore + ?Sized, CS: CalendarStore + ?Sized>(
+    addr_store: Arc<RwLock<AS>>,
     cal_store: Arc<RwLock<CS>>,
     auth_provider: Arc<impl AuthenticationProvider>,
 ) -> App<
@@ -28,15 +29,15 @@ pub fn make_app<CS: CalendarStore + ?Sized>(
         .service(web::scope("/caldav").configure(|cfg| {
             rustical_caldav::configure_dav(cfg, auth_provider.clone(), cal_store.clone())
         }))
-        .service(
-            web::scope("/carddav")
-                .configure(|cfg| rustical_carddav::configure_dav(cfg, "/carddav".to_string())),
-        )
+        .service(web::scope("/carddav").configure(|cfg| {
+            rustical_carddav::configure_dav(cfg, auth_provider.clone(), addr_store.clone())
+        }))
         .service(
             web::scope("/.well-known")
-                .configure(|cfg| rustical_caldav::configure_well_known(cfg, "/caldav".to_string())), // .configure(|cfg| {
-                                                                                                     //     rustical_carddav::configure_well_known(cfg, "/carddav".to_string())
-                                                                                                     // }),
+                .configure(|cfg| rustical_caldav::configure_well_known(cfg, "/caldav".to_string()))
+                .configure(|cfg| {
+                    rustical_carddav::configure_well_known(cfg, "/carddav".to_string())
+                }),
         )
         .service(
             web::scope("/frontend")

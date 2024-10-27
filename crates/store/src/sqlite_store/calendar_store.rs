@@ -1,23 +1,13 @@
+use super::SqliteStore;
 use crate::model::object::CalendarObject;
 use crate::model::Calendar;
 use crate::{CalendarStore, Error};
 use anyhow::Result;
 use async_trait::async_trait;
 use serde::Serialize;
+use sqlx::Sqlite;
 use sqlx::Transaction;
-use sqlx::{sqlite::SqliteConnectOptions, Pool, Sqlite, SqlitePool};
 use tracing::instrument;
-
-#[derive(Debug)]
-pub struct SqliteCalendarStore {
-    db: SqlitePool,
-}
-
-impl SqliteCalendarStore {
-    pub fn new(db: SqlitePool) -> Self {
-        Self { db }
-    }
-}
 
 #[derive(Debug, Clone)]
 struct CalendarObjectRow {
@@ -77,7 +67,7 @@ async fn log_object_operation(
 }
 
 #[async_trait]
-impl CalendarStore for SqliteCalendarStore {
+impl CalendarStore for SqliteStore {
     #[instrument]
     async fn get_calendar(&self, principal: &str, id: &str) -> Result<Calendar, Error> {
         let cal = sqlx::query_as!(
@@ -379,24 +369,4 @@ impl CalendarStore for SqliteCalendarStore {
 
         Ok((objects, deleted_objects, new_synctoken))
     }
-}
-
-pub async fn create_db_pool(db_url: &str, migrate: bool) -> anyhow::Result<Pool<Sqlite>> {
-    let db = SqlitePool::connect_with(
-        SqliteConnectOptions::new()
-            .filename(db_url)
-            .create_if_missing(true),
-    )
-    .await?;
-    if migrate {
-        println!("Running database migrations");
-        sqlx::migrate!("./migrations").run(&db).await?;
-    }
-    Ok(db)
-}
-
-pub async fn create_test_store() -> anyhow::Result<SqliteCalendarStore> {
-    let db = SqlitePool::connect("sqlite::memory:").await?;
-    sqlx::migrate!("./migrations").run(&db).await?;
-    Ok(SqliteCalendarStore::new(db))
 }

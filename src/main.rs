@@ -3,7 +3,7 @@ use actix_web::HttpServer;
 use anyhow::Result;
 use app::make_app;
 use clap::Parser;
-use config::{CalendarStoreConfig, SqliteCalendarStoreConfig, TracingConfig};
+use config::{DataStoreConfig, SqliteDataStoreConfig, TracingConfig};
 use opentelemetry::global;
 use opentelemetry::trace::TracerProvider;
 use opentelemetry::KeyValue;
@@ -14,8 +14,8 @@ use opentelemetry_sdk::{runtime, Resource};
 use opentelemetry_semantic_conventions::resource::{SERVICE_NAME, SERVICE_VERSION};
 use opentelemetry_semantic_conventions::SCHEMA_URL;
 use rustical_store::auth::StaticUserStore;
-use rustical_store::sqlite_store::{create_db_pool, SqliteCalendarStore};
-use rustical_store::CalendarStore;
+use rustical_store::sqlite_store::{create_db_pool, SqliteStore};
+use rustical_store::{AddressbookStore, CalendarStore};
 use std::fs;
 use std::sync::Arc;
 use std::time::Duration;
@@ -38,17 +38,20 @@ struct Args {
     migrate: bool,
 }
 
-async fn get_cal_store(
+async fn get_data_stores(
     migrate: bool,
-    config: &CalendarStoreConfig,
-) -> Result<Arc<RwLock<dyn CalendarStore>>> {
-    let cal_store: Arc<RwLock<dyn CalendarStore>> = match &config {
-        CalendarStoreConfig::Sqlite(SqliteCalendarStoreConfig { db_url }) => {
+    config: &DataStoreConfig,
+) -> Result<(
+    Arc<RwLock<dyn AddressbookStore>>,
+    Arc<RwLock<dyn CalendarStore>>,
+)> {
+    Ok(match &config {
+        DataStoreConfig::Sqlite(SqliteDataStoreConfig { db_url }) => {
             let db = create_db_pool(db_url, migrate).await?;
-            Arc::new(RwLock::new(SqliteCalendarStore::new(db)))
+            let sqlite_store = Arc::new(RwLock::new(SqliteStore::new(db)));
+            (sqlite_store.clone(), sqlite_store.clone())
         }
-    };
-    Ok(cal_store)
+    })
 }
 
 pub fn init_tracer() -> Tracer {
@@ -104,13 +107,13 @@ async fn main() -> Result<()> {
 
     setup_tracing(&config.tracing);
 
-    let cal_store = get_cal_store(args.migrate, &config.calendar_store).await?;
+    let (addr_store, cal_store) = get_data_stores(args.migrate, &config.data_store).await?;
 
     let user_store = Arc::new(match config.auth {
         config::AuthConfig::Static(config) => StaticUserStore::new(config),
     });
 
-    HttpServer::new(move || make_app(cal_store.clone(), user_store.clone()))
+    HttpServer::new(move || make_app(addr_store.clone(), cal_store.clone(), user_store.clone()))
         .bind((config.http.host, config.http.port))?
         .run()
         .await?;

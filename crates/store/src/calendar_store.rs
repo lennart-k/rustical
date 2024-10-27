@@ -1,9 +1,7 @@
-use anyhow::Result;
-use async_trait::async_trait;
-
 use crate::error::Error;
 use crate::model::object::CalendarObject;
 use crate::model::Calendar;
+use async_trait::async_trait;
 
 #[async_trait]
 pub trait CalendarStore: Send + Sync + 'static {

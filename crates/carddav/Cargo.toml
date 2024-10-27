@@ -7,22 +7,22 @@ repository.workspace = true
 publish = false
 
 [dependencies]
-actix-web = "4.9"
-actix-web-httpauth = "0.8"
-anyhow = { version = "1.0", features = ["backtrace"] }
-base64 = "0.22"
-futures-util = "0.3"
-quick-xml = { version = "0.36", features = [
-  "serde",
-  "serde-types",
-  "serialize",
-] }
-roxmltree = "0.20"
-rustical_store = { path = "../store/" }
-rustical_dav = { path = "../dav/" }
-serde = { version = "1.0", features = ["serde_derive", "derive"] }
-serde_json = "1.0"
-tokio = { version = "1", features = ["sync", "full"] }
-async-trait = "0.1"
-thiserror = "1.0"
-strum = { version = "0.26", features = ["strum_macros", "derive"] }
+anyhow = { workspace = true }
+actix-web = { workspace = true }
+async-trait = { workspace = true }
+thiserror = { workspace = true }
+quick-xml = { workspace = true }
+strum = { workspace = true }
+tracing = { workspace = true }
+tracing-actix-web = { workspace = true }
+futures-util = { workspace = true }
+derive_more = { workspace = true }
+actix-web-httpauth = { workspace = true }
+base64 = { workspace = true }
+serde = { workspace = true }
+tokio = { workspace = true }
+roxmltree = { workspace = true }
+url = { workspace = true }
+rustical_dav = { workspace = true }
+rustical_store = { workspace = true }
+chrono = { workspace = true }

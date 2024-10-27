@@ -2563,16 +2563,20 @@ dependencies = [
  "anyhow",
  "async-trait",
  "base64 0.22.1",
+ "chrono",
+ "derive_more 1.0.0",
  "futures-util",
  "quick-xml",
  "roxmltree",
  "rustical_dav",
  "rustical_store",
  "serde",
- "serde_json",
  "strum",
  "thiserror",
  "tokio",
+ "tracing",
+ "tracing-actix-web",
+ "url",
 ]
 
 [[package]]
