@@ -25,7 +25,10 @@ pub struct Resourcetype {
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub enum RootProp {
+    // WebDAV (RFC 2518)
     Resourcetype(Resourcetype),
+
+    // WebDAV Current Principal Extension (RFC 5397)
     CurrentUserPrincipal(HrefElement),
     #[serde(other)]
     Invalid,

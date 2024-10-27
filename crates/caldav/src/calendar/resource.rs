@@ -54,10 +54,19 @@ pub enum CalendarPropName {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum CalendarProp {
+    // WebDAV (RFC 2518)
     Resourcetype(Resourcetype),
-    CurrentUserPrincipal(HrefElement),
-    Owner(HrefElement),
     Displayname(Option<String>),
+    Getcontenttype(String),
+
+    // WebDAV Current Principal Extension (RFC 5397)
+    CurrentUserPrincipal(HrefElement),
+
+    // WebDAV Access Control (RFC 3744)
+    Owner(HrefElement),
+    CurrentUserPrivilegeSet(UserPrivilegeSet),
+
+    // CalDAV (RFC 4791)
     #[serde(rename = "IC:calendar-color", alias = "calendar-color")]
     CalendarColor(Option<String>),
     #[serde(rename = "C:calendar-description", alias = "calendar-description")]
@@ -76,11 +85,13 @@ pub enum CalendarProp {
         alias = "supported-calendar-data"
     )]
     SupportedCalendarData(SupportedCalendarData),
-    Getcontenttype(String),
     MaxResourceSize(i64),
-    CurrentUserPrivilegeSet(UserPrivilegeSet),
     SupportedReportSet(SupportedReportSet),
+
+    // Collection Synchronization (RFC 6578)
     SyncToken(String),
+
+    // Didn't find the spec
     Getctag(String),
     #[serde(other)]
     Invalid,

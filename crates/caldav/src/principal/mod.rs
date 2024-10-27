@@ -33,14 +33,22 @@ pub struct Resourcetype {
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub enum PrincipalProp {
+    // WebDAV (RFC 2518)
     Resourcetype(Resourcetype),
-    CurrentUserPrincipal(HrefElement),
+
+    // WebDAV Access Control (RFC 3744)
     #[serde(rename = "principal-URL")]
     PrincipalUrl(HrefElement),
+
+    // WebDAV Current Principal Extension (RFC 5397)
+    CurrentUserPrincipal(HrefElement),
+
+    // CalDAV (RFC 4791)
     #[serde(rename = "C:calendar-home-set")]
     CalendarHomeSet(HrefElement),
     #[serde(rename = "C:calendar-user-address-set")]
     CalendarUserAddressSet(HrefElement),
+
     #[serde(other)]
     Invalid,
 }

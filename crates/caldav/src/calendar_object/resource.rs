@@ -31,10 +31,13 @@ pub enum CalendarObjectPropName {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "kebab-case")]
 pub enum CalendarObjectProp {
+    // WebDAV (RFC 2518)
     Getetag(String),
+    Getcontenttype(String),
+
+    // CalDAV (RFC 4791)
     #[serde(rename = "C:calendar-data")]
     CalendarData(String),
-    Getcontenttype(String),
     #[serde(other)]
     Invalid,
 }
