@@ -13,7 +13,6 @@ use rustical_store::{
     CalendarStore,
 };
 use std::sync::Arc;
-use tokio::sync::RwLock;
 
 mod config;
 mod routes;
@@ -29,10 +28,9 @@ struct UserPage {
 
 async fn route_user<C: CalendarStore + ?Sized>(
     path: Path<String>,
-    store: Data<RwLock<C>>,
+    store: Data<C>,
     user: User,
 ) -> impl Responder {
-    let store = store.read().await;
     let user_id = path.into_inner();
     UserPage {
         calendars: store.get_calendars(&user.id).await.unwrap(),
@@ -49,10 +47,9 @@ struct CalendarPage {
 
 async fn route_calendar<C: CalendarStore + ?Sized>(
     path: Path<(String, String)>,
-    store: Data<RwLock<C>>,
+    store: Data<C>,
     user: User,
 ) -> impl Responder {
-    let store = store.read().await;
     let (owner, cal_id) = path.into_inner();
     CalendarPage {
         owner: owner.to_owned(),
@@ -63,7 +60,7 @@ async fn route_calendar<C: CalendarStore + ?Sized>(
 pub fn configure_frontend<AP: AuthenticationProvider, C: CalendarStore + ?Sized>(
     cfg: &mut web::ServiceConfig,
     auth_provider: Arc<AP>,
-    store: Arc<RwLock<C>>,
+    store: Arc<C>,
 ) {
     cfg.service(
         web::scope("")

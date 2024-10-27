@@ -1,3 +1,4 @@
+use crate::calendar::resource::CalendarResource;
 use crate::Error;
 use actix_web::dev::ResourceMap;
 use actix_web::web::Data;
@@ -9,13 +10,10 @@ use rustical_store::CalendarStore;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use strum::{EnumString, VariantNames};
-use tokio::sync::RwLock;
-
-use crate::calendar::resource::CalendarResource;
 
 pub struct PrincipalResourceService<C: CalendarStore + ?Sized> {
     principal: String,
-    cal_store: Arc<RwLock<C>>,
+    cal_store: Arc<C>,
 }
 
 #[derive(Clone)]
@@ -113,7 +111,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResourceService<C> 
         (principal,): Self::PathComponents,
     ) -> Result<Self, Self::Error> {
         let cal_store = req
-            .app_data::<Data<RwLock<C>>>()
+            .app_data::<Data<C>>()
             .expect("no calendar store in app_data!")
             .clone()
             .into_inner();
@@ -137,12 +135,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResourceService<C> 
         &self,
         rmap: &ResourceMap,
     ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
-        let calendars = self
-            .cal_store
-            .read()
-            .await
-            .get_calendars(&self.principal)
-            .await?;
+        let calendars = self.cal_store.get_calendars(&self.principal).await?;
         Ok(calendars
             .into_iter()
             .map(|cal| {

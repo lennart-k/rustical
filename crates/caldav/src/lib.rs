@@ -11,7 +11,6 @@ use rustical_dav::resource::ResourceService;
 use rustical_store::auth::{AuthenticationMiddleware, AuthenticationProvider};
 use rustical_store::CalendarStore;
 use std::sync::Arc;
-use tokio::sync::RwLock;
 
 pub mod calendar;
 pub mod calendar_object;
@@ -28,7 +27,7 @@ pub fn configure_well_known(cfg: &mut web::ServiceConfig, caldav_root: String) {
 pub fn configure_dav<AP: AuthenticationProvider, C: CalendarStore + ?Sized>(
     cfg: &mut web::ServiceConfig,
     auth_provider: Arc<AP>,
-    store: Arc<RwLock<C>>,
+    store: Arc<C>,
 ) {
     cfg.service(
         web::scope("")

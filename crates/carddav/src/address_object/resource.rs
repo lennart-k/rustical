@@ -7,12 +7,11 @@ use rustical_store::{model::AddressObject, AddressbookStore};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use strum::{EnumString, VariantNames};
-use tokio::sync::RwLock;
 
 use super::methods::{get_object, put_object};
 
 pub struct AddressObjectResourceService<AS: AddressbookStore + ?Sized> {
-    pub addr_store: Arc<RwLock<AS>>,
+    pub addr_store: Arc<AS>,
     pub path: String,
     pub principal: String,
     pub cal_id: String,
@@ -120,7 +119,7 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressObjectResourceSer
         } = path_components;
 
         let addr_store = req
-            .app_data::<Data<RwLock<AS>>>()
+            .app_data::<Data<AS>>()
             .expect("no addressbook store in app_data!")
             .clone()
             .into_inner();
@@ -140,8 +139,6 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressObjectResourceSer
         }
         let event = self
             .addr_store
-            .read()
-            .await
             .get_object(&self.principal, &self.cal_id, &self.object_id)
             .await?;
         Ok(event.into())
@@ -153,8 +150,6 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressObjectResourceSer
 
     async fn delete_resource(&self, use_trashbin: bool) -> Result<(), Self::Error> {
         self.addr_store
-            .write()
-            .await
             .delete_object(&self.principal, &self.cal_id, &self.object_id, use_trashbin)
             .await?;
         Ok(())

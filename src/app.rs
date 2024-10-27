@@ -6,12 +6,11 @@ use rustical_frontend::configure_frontend;
 use rustical_store::auth::AuthenticationProvider;
 use rustical_store::{AddressbookStore, CalendarStore};
 use std::sync::Arc;
-use tokio::sync::RwLock;
 use tracing_actix_web::TracingLogger;
 
 pub fn make_app<AS: AddressbookStore + ?Sized, CS: CalendarStore + ?Sized>(
-    addr_store: Arc<RwLock<AS>>,
-    cal_store: Arc<RwLock<CS>>,
+    addr_store: Arc<AS>,
+    cal_store: Arc<CS>,
     auth_provider: Arc<impl AuthenticationProvider>,
 ) -> App<
     impl ServiceFactory<

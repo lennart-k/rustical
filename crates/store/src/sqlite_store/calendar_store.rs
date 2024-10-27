@@ -98,7 +98,7 @@ impl CalendarStore for SqliteStore {
     }
 
     #[instrument]
-    async fn insert_calendar(&mut self, calendar: Calendar) -> Result<(), Error> {
+    async fn insert_calendar(&self, calendar: Calendar) -> Result<(), Error> {
         sqlx::query!(
             r#"INSERT INTO calendars (principal, id, displayname, description, "order", color, timezone)
                 VALUES (?, ?, ?, ?, ?, ?, ?)"#,
@@ -117,7 +117,7 @@ impl CalendarStore for SqliteStore {
 
     #[instrument]
     async fn update_calendar(
-        &mut self,
+        &self,
         principal: String,
         id: String,
         calendar: Calendar,
@@ -144,7 +144,7 @@ impl CalendarStore for SqliteStore {
     // Does not actually delete the calendar but just disables it
     #[instrument]
     async fn delete_calendar(
-        &mut self,
+        &self,
         principal: &str,
         id: &str,
         use_trashbin: bool,
@@ -172,7 +172,7 @@ impl CalendarStore for SqliteStore {
     }
 
     #[instrument]
-    async fn restore_calendar(&mut self, principal: &str, id: &str) -> Result<(), Error> {
+    async fn restore_calendar(&self, principal: &str, id: &str) -> Result<(), Error> {
         sqlx::query!(
             r"UPDATE calendars SET deleted_at = NULL WHERE (principal, id) = (?, ?)",
             principal,
@@ -223,10 +223,12 @@ impl CalendarStore for SqliteStore {
 
     #[instrument]
     async fn put_object(
-        &mut self,
+        &self,
         principal: String,
         cal_id: String,
         object: CalendarObject,
+        // TODO: implement
+        overwrite: bool,
     ) -> Result<(), Error> {
         let mut tx = self.db.begin().await?;
 
@@ -257,7 +259,7 @@ impl CalendarStore for SqliteStore {
 
     #[instrument]
     async fn delete_object(
-        &mut self,
+        &self,
         principal: &str,
         cal_id: &str,
         id: &str,
@@ -300,7 +302,7 @@ impl CalendarStore for SqliteStore {
 
     #[instrument]
     async fn restore_object(
-        &mut self,
+        &self,
         principal: &str,
         cal_id: &str,
         object_id: &str,

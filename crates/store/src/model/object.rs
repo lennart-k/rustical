@@ -68,7 +68,7 @@ impl CalendarObject {
         let mut parser = ical::IcalParser::new(BufReader::new(ics.as_bytes()));
         let cal = parser.next().ok_or(Error::NotFound)??;
         if parser.next().is_some() {
-            return Err(Error::InvalidIcs(
+            return Err(Error::InvalidData(
                 "multiple calendars, only one allowed".to_owned(),
             ));
         }
@@ -80,7 +80,7 @@ impl CalendarObject {
             != 1
         {
             // https://datatracker.ietf.org/doc/html/rfc4791#section-4.1
-            return Err(Error::InvalidIcs(
+            return Err(Error::InvalidData(
                 "iCalendar object is only allowed to have exactly one component".to_owned(),
             ));
         }
@@ -114,7 +114,7 @@ impl CalendarObject {
             });
         }
 
-        Err(Error::InvalidIcs(
+        Err(Error::InvalidData(
             "iCalendar component type not supported :(".to_owned(),
         ))
     }

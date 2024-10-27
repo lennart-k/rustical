@@ -7,7 +7,6 @@ use addressbook_multiget::{handle_addressbook_multiget, AddressbookMultigetReque
 use rustical_store::{auth::User, AddressbookStore};
 use serde::{Deserialize, Serialize};
 use sync_collection::{handle_sync_collection, SyncCollectionRequest};
-use tokio::sync::RwLock;
 use tracing::instrument;
 
 mod addressbook_multiget;
@@ -34,7 +33,7 @@ pub async fn route_report_addressbook<AS: AddressbookStore + ?Sized>(
     body: String,
     user: User,
     req: HttpRequest,
-    addr_store: Data<RwLock<AS>>,
+    addr_store: Data<AS>,
 ) -> Result<impl Responder, Error> {
     let (principal, addressbook_id) = path.into_inner();
     if principal != user.id {
@@ -50,7 +49,7 @@ pub async fn route_report_addressbook<AS: AddressbookStore + ?Sized>(
                 req,
                 &principal,
                 &addressbook_id,
-                &addr_store,
+                addr_store.as_ref(),
             )
             .await?
         }
@@ -60,7 +59,7 @@ pub async fn route_report_addressbook<AS: AddressbookStore + ?Sized>(
                 req,
                 &principal,
                 &addressbook_id,
-                &addr_store,
+                addr_store.as_ref(),
             )
             .await?
         }

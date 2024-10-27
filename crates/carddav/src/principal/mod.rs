@@ -10,11 +10,10 @@ use rustical_store::AddressbookStore;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use strum::{EnumString, VariantNames};
-use tokio::sync::RwLock;
 
 pub struct PrincipalResourceService<A: AddressbookStore + ?Sized> {
     principal: String,
-    addr_store: Arc<RwLock<A>>,
+    addr_store: Arc<A>,
 }
 
 #[derive(Clone)]
@@ -111,7 +110,7 @@ impl<A: AddressbookStore + ?Sized> ResourceService for PrincipalResourceService<
         (principal,): Self::PathComponents,
     ) -> Result<Self, Self::Error> {
         let addr_store = req
-            .app_data::<Data<RwLock<A>>>()
+            .app_data::<Data<A>>()
             .expect("no addressbook store in app_data!")
             .clone()
             .into_inner();
@@ -135,12 +134,7 @@ impl<A: AddressbookStore + ?Sized> ResourceService for PrincipalResourceService<
         &self,
         rmap: &ResourceMap,
     ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
-        let addressbooks = self
-            .addr_store
-            .read()
-            .await
-            .get_addressbooks(&self.principal)
-            .await?;
+        let addressbooks = self.addr_store.get_addressbooks(&self.principal).await?;
         Ok(addressbooks
             .into_iter()
             .map(|addressbook| {

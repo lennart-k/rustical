@@ -21,10 +21,9 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::sync::Arc;
 use strum::{EnumString, VariantNames};
-use tokio::sync::RwLock;
 
 pub struct CalendarResourceService<C: CalendarStore + ?Sized> {
-    pub cal_store: Arc<RwLock<C>>,
+    pub cal_store: Arc<C>,
     pub path: String,
     pub principal: String,
     pub calendar_id: String,
@@ -261,8 +260,6 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
         }
         let calendar = self
             .cal_store
-            .read()
-            .await
             .get_calendar(&self.principal, &self.calendar_id)
             .await
             .map_err(|_e| Error::NotFound)?;
@@ -275,8 +272,6 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
     ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
         Ok(self
             .cal_store
-            .read()
-            .await
             .get_objects(&self.principal, &self.calendar_id)
             .await?
             .into_iter()
@@ -298,7 +293,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
         path_components: Self::PathComponents,
     ) -> Result<Self, Self::Error> {
         let cal_store = req
-            .app_data::<Data<RwLock<C>>>()
+            .app_data::<Data<C>>()
             .expect("no calendar store in app_data!")
             .clone()
             .into_inner();
@@ -313,8 +308,6 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
 
     async fn save_resource(&self, file: Self::Resource) -> Result<(), Self::Error> {
         self.cal_store
-            .write()
-            .await
             .update_calendar(
                 self.principal.to_owned(),
                 self.calendar_id.to_owned(),
@@ -326,8 +319,6 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
 
     async fn delete_resource(&self, use_trashbin: bool) -> Result<(), Self::Error> {
         self.cal_store
-            .write()
-            .await
             .delete_calendar(&self.principal, &self.calendar_id, use_trashbin)
             .await?;
         Ok(())

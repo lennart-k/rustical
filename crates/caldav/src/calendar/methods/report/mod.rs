@@ -8,7 +8,6 @@ use calendar_query::{handle_calendar_query, CalendarQueryRequest};
 use rustical_store::{auth::User, CalendarStore};
 use serde::{Deserialize, Serialize};
 use sync_collection::{handle_sync_collection, SyncCollectionRequest};
-use tokio::sync::RwLock;
 use tracing::instrument;
 
 mod calendar_multiget;
@@ -37,7 +36,7 @@ pub async fn route_report_calendar<C: CalendarStore + ?Sized>(
     body: String,
     user: User,
     req: HttpRequest,
-    cal_store: Data<RwLock<C>>,
+    cal_store: Data<C>,
 ) -> Result<impl Responder, Error> {
     let (principal, cal_id) = path.into_inner();
     if principal != user.id {
@@ -48,13 +47,21 @@ pub async fn route_report_calendar<C: CalendarStore + ?Sized>(
 
     Ok(match request.clone() {
         ReportRequest::CalendarQuery(cal_query) => {
-            handle_calendar_query(cal_query, req, &principal, &cal_id, &cal_store).await?
+            handle_calendar_query(cal_query, req, &principal, &cal_id, cal_store.as_ref()).await?
         }
         ReportRequest::CalendarMultiget(cal_multiget) => {
-            handle_calendar_multiget(cal_multiget, req, &principal, &cal_id, &cal_store).await?
+            handle_calendar_multiget(cal_multiget, req, &principal, &cal_id, cal_store.as_ref())
+                .await?
         }
         ReportRequest::SyncCollection(sync_collection) => {
-            handle_sync_collection(sync_collection, req, &principal, &cal_id, &cal_store).await?
+            handle_sync_collection(
+                sync_collection,
+                req,
+                &principal,
+                &cal_id,
+                cal_store.as_ref(),
+            )
+            .await?
         }
     })
 }

@@ -18,10 +18,9 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::sync::Arc;
 use strum::{EnumString, VariantNames};
-use tokio::sync::RwLock;
 
 pub struct AddressbookResourceService<AS: AddressbookStore + ?Sized> {
-    pub addr_store: Arc<RwLock<AS>>,
+    pub addr_store: Arc<AS>,
     pub path: String,
     pub principal: String,
     pub addressbook_id: String,
@@ -204,8 +203,6 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressbookResourceServi
         }
         let addressbook = self
             .addr_store
-            .read()
-            .await
             .get_addressbook(&self.principal, &self.addressbook_id)
             .await
             .map_err(|_e| Error::NotFound)?;
@@ -218,8 +215,6 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressbookResourceServi
     ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
         Ok(self
             .addr_store
-            .read()
-            .await
             .get_objects(&self.principal, &self.addressbook_id)
             .await?
             .into_iter()
@@ -241,7 +236,7 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressbookResourceServi
         path_components: Self::PathComponents,
     ) -> Result<Self, Self::Error> {
         let addr_store = req
-            .app_data::<Data<RwLock<AS>>>()
+            .app_data::<Data<AS>>()
             .expect("no addressbook store in app_data!")
             .clone()
             .into_inner();
@@ -256,8 +251,6 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressbookResourceServi
 
     async fn save_resource(&self, file: Self::Resource) -> Result<(), Self::Error> {
         self.addr_store
-            .write()
-            .await
             .update_addressbook(
                 self.principal.to_owned(),
                 self.addressbook_id.to_owned(),
@@ -269,8 +262,6 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressbookResourceServi
 
     async fn delete_resource(&self, use_trashbin: bool) -> Result<(), Self::Error> {
         self.addr_store
-            .write()
-            .await
             .delete_addressbook(&self.principal, &self.addressbook_id, use_trashbin)
             .await?;
         Ok(())

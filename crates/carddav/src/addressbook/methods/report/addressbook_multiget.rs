@@ -18,7 +18,6 @@ use rustical_dav::{
 };
 use rustical_store::{model::AddressObject, AddressbookStore};
 use serde::Deserialize;
-use tokio::sync::RwLock;
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
@@ -34,7 +33,7 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore + ?Sized>(
     principal_url: &str,
     principal: &str,
     addressbook_id: &str,
-    store: &RwLock<AS>,
+    store: &AS,
 ) -> Result<(Vec<AddressObject>, Vec<String>), Error> {
     let resource_def =
         ResourceDef::prefix(principal_url).join(&ResourceDef::new("/{addressbook_id}/{object_id}"));
@@ -42,7 +41,6 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore + ?Sized>(
     let mut result = vec![];
     let mut not_found = vec![];
 
-    let store = store.read().await;
     for href in &addressbook_multiget.href {
         let mut path = Path::new(href.as_str());
         if !resource_def.capture_match_info(&mut path) {
@@ -68,7 +66,7 @@ pub async fn handle_addressbook_multiget<AS: AddressbookStore + ?Sized>(
     req: HttpRequest,
     principal: &str,
     cal_id: &str,
-    addr_store: &RwLock<AS>,
+    addr_store: &AS,
 ) -> Result<MultistatusElement<PropstatWrapper<AddressObjectProp>, String>, Error> {
     let principal_url = PrincipalResource::get_url(req.resource_map(), vec![principal]).unwrap();
     let (objects, not_found) = get_objects_addressbook_multiget(

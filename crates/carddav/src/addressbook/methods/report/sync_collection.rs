@@ -16,7 +16,6 @@ use rustical_store::{
     AddressbookStore,
 };
 use serde::Deserialize;
-use tokio::sync::RwLock;
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
@@ -45,7 +44,7 @@ pub async fn handle_sync_collection<AS: AddressbookStore + ?Sized>(
     req: HttpRequest,
     principal: &str,
     addressbook_id: &str,
-    addr_store: &RwLock<AS>,
+    addr_store: &AS,
 ) -> Result<MultistatusElement<PropstatWrapper<AddressObjectProp>, String>, Error> {
     let props = match sync_collection.prop {
         PropfindType::Allprop => {
@@ -60,8 +59,6 @@ pub async fn handle_sync_collection<AS: AddressbookStore + ?Sized>(
 
     let old_synctoken = parse_synctoken(&sync_collection.sync_token).unwrap_or(0);
     let (new_objects, deleted_objects, new_synctoken) = addr_store
-        .read()
-        .await
         .sync_changes(principal, addressbook_id, old_synctoken)
         .await?;
 

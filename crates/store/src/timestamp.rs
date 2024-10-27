@@ -92,7 +92,7 @@ impl CalDateTime {
                     if let Ok(tz) = olson_name.parse::<Tz>() {
                         Some(tz)
                     } else {
-                        return Err(Error::InvalidIcs(format!(
+                        return Err(Error::InvalidData(format!(
                             "Timezone has X-LIC-LOCATION property to specify a timezone from the Olson database, however it's value {olson_name} is invalid"
                         )));
                     }
@@ -109,7 +109,7 @@ impl CalDateTime {
                 }
             } else {
                 // TZID refers to timezone that does not exist
-                return Err(Error::InvalidIcs(format!(
+                return Err(Error::InvalidData(format!(
                     "No timezone specified with TZID={tzid}"
                 )));
             }
@@ -167,7 +167,7 @@ impl From<CalDateTime> for DateTime<Utc> {
 pub fn parse_duration(string: &str) -> Result<Duration, Error> {
     let captures = RE_DURATION
         .captures(string)
-        .ok_or(Error::InvalidIcs("Invalid duration format".to_owned()))?;
+        .ok_or(Error::InvalidData("Invalid duration format".to_owned()))?;
 
     let mut duration = Duration::zero();
     if let Some(weeks) = captures.name("W") {

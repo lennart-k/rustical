@@ -5,7 +5,6 @@ use rustical_store::auth::User;
 use rustical_store::model::Calendar;
 use rustical_store::CalendarStore;
 use serde::{Deserialize, Serialize};
-use tokio::sync::RwLock;
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
@@ -57,7 +56,7 @@ pub async fn route_mkcalendar<C: CalendarStore + ?Sized>(
     path: Path<(String, String)>,
     body: String,
     user: User,
-    store: Data<RwLock<C>>,
+    store: Data<C>,
 ) -> Result<HttpResponse, Error> {
     let (principal, cal_id) = path.into_inner();
     if principal != user.id {
@@ -79,7 +78,7 @@ pub async fn route_mkcalendar<C: CalendarStore + ?Sized>(
         synctoken: 0,
     };
 
-    match store.read().await.get_calendar(&principal, &cal_id).await {
+    match store.get_calendar(&principal, &cal_id).await {
         Err(rustical_store::Error::NotFound) => {
             // No conflict, no worries
         }
@@ -93,7 +92,7 @@ pub async fn route_mkcalendar<C: CalendarStore + ?Sized>(
         }
     }
 
-    match store.write().await.insert_calendar(calendar).await {
+    match store.insert_calendar(calendar).await {
         // The spec says we should return a mkcalendar-response but I don't know what goes into it.
         // However, it works without one but breaks on iPadOS when using an empty one :)
         Ok(()) => Ok(HttpResponse::Created()

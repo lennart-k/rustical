@@ -12,7 +12,6 @@ use rustical_store::{
     CalendarStore,
 };
 use serde::Deserialize;
-use tokio::sync::RwLock;
 
 use crate::{
     calendar_object::resource::{CalendarObjectProp, CalendarObjectResource},
@@ -47,7 +46,7 @@ pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
     req: HttpRequest,
     principal: &str,
     cal_id: &str,
-    cal_store: &RwLock<C>,
+    cal_store: &C,
 ) -> Result<MultistatusElement<PropstatWrapper<CalendarObjectProp>, String>, Error> {
     let props = match sync_collection.prop {
         PropfindType::Allprop => {
@@ -62,8 +61,6 @@ pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
 
     let old_synctoken = parse_synctoken(&sync_collection.sync_token).unwrap_or(0);
     let (new_objects, deleted_objects, new_synctoken) = cal_store
-        .read()
-        .await
         .sync_changes(principal, cal_id, old_synctoken)
         .await?;
 

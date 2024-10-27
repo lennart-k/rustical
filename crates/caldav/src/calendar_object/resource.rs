@@ -1,3 +1,4 @@
+use super::methods::{get_event, put_event};
 use crate::Error;
 use actix_web::{dev::ResourceMap, web::Data, HttpRequest};
 use async_trait::async_trait;
@@ -8,12 +9,9 @@ use rustical_store::CalendarStore;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use strum::{EnumString, VariantNames};
-use tokio::sync::RwLock;
-
-use super::methods::{get_event, put_event};
 
 pub struct CalendarObjectResourceService<C: CalendarStore + ?Sized> {
-    pub cal_store: Arc<RwLock<C>>,
+    pub cal_store: Arc<C>,
     pub path: String,
     pub principal: String,
     pub cal_id: String,
@@ -121,7 +119,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarObjectResourceServic
         } = path_components;
 
         let cal_store = req
-            .app_data::<Data<RwLock<C>>>()
+            .app_data::<Data<C>>()
             .expect("no calendar store in app_data!")
             .clone()
             .into_inner();
@@ -141,8 +139,6 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarObjectResourceServic
         }
         let event = self
             .cal_store
-            .read()
-            .await
             .get_object(&self.principal, &self.cal_id, &self.object_id)
             .await?;
         Ok(event.into())
@@ -154,8 +150,6 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarObjectResourceServic
 
     async fn delete_resource(&self, use_trashbin: bool) -> Result<(), Self::Error> {
         self.cal_store
-            .write()
-            .await
             .delete_object(&self.principal, &self.cal_id, &self.object_id, use_trashbin)
             .await?;
         Ok(())

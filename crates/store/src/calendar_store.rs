@@ -9,19 +9,19 @@ pub trait CalendarStore: Send + Sync + 'static {
     async fn get_calendars(&self, principal: &str) -> Result<Vec<Calendar>, Error>;
 
     async fn update_calendar(
-        &mut self,
+        &self,
         principal: String,
         id: String,
         calendar: Calendar,
     ) -> Result<(), Error>;
-    async fn insert_calendar(&mut self, calendar: Calendar) -> Result<(), Error>;
+    async fn insert_calendar(&self, calendar: Calendar) -> Result<(), Error>;
     async fn delete_calendar(
-        &mut self,
+        &self,
         principal: &str,
         name: &str,
         use_trashbin: bool,
     ) -> Result<(), Error>;
-    async fn restore_calendar(&mut self, principal: &str, name: &str) -> Result<(), Error>;
+    async fn restore_calendar(&self, principal: &str, name: &str) -> Result<(), Error>;
 
     async fn sync_changes(
         &self,
@@ -42,20 +42,21 @@ pub trait CalendarStore: Send + Sync + 'static {
         object_id: &str,
     ) -> Result<CalendarObject, Error>;
     async fn put_object(
-        &mut self,
+        &self,
         principal: String,
         cal_id: String,
         object: CalendarObject,
+        overwrite: bool,
     ) -> Result<(), Error>;
     async fn delete_object(
-        &mut self,
+        &self,
         principal: &str,
         cal_id: &str,
         object_id: &str,
         use_trashbin: bool,
     ) -> Result<(), Error>;
     async fn restore_object(
-        &mut self,
+        &self,
         principal: &str,
         cal_id: &str,
         object_id: &str,

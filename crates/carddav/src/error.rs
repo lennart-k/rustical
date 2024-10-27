@@ -29,7 +29,7 @@ impl actix_web::ResponseError for Error {
         match self {
             Error::StoreError(err) => match err {
                 rustical_store::Error::NotFound => StatusCode::NOT_FOUND,
-                rustical_store::Error::InvalidIcs(_) => StatusCode::BAD_REQUEST,
+                rustical_store::Error::InvalidData(_) => StatusCode::BAD_REQUEST,
                 _ => StatusCode::INTERNAL_SERVER_ERROR,
             },
             Error::DavError(err) => err.status_code(),

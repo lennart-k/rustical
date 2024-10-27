@@ -18,7 +18,6 @@ use rustical_dav::{
 };
 use rustical_store::{model::object::CalendarObject, CalendarStore};
 use serde::Deserialize;
-use tokio::sync::RwLock;
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
@@ -35,7 +34,7 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore + ?Sized>(
     principal_url: &str,
     principal: &str,
     cal_id: &str,
-    store: &RwLock<C>,
+    store: &C,
 ) -> Result<(Vec<CalendarObject>, Vec<String>), Error> {
     let resource_def =
         ResourceDef::prefix(principal_url).join(&ResourceDef::new("/{cal_id}/{object_id}"));
@@ -43,7 +42,6 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore + ?Sized>(
     let mut result = vec![];
     let mut not_found = vec![];
 
-    let store = store.read().await;
     for href in &cal_query.href {
         let mut path = Path::new(href.as_str());
         if !resource_def.capture_match_info(&mut path) {
@@ -69,7 +67,7 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
     req: HttpRequest,
     principal: &str,
     cal_id: &str,
-    cal_store: &RwLock<C>,
+    cal_store: &C,
 ) -> Result<MultistatusElement<PropstatWrapper<CalendarObjectProp>, String>, Error> {
     let principal_url = PrincipalResource::get_url(req.resource_map(), vec![principal]).unwrap();
     let (objects, not_found) =

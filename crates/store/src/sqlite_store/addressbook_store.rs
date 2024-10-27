@@ -99,7 +99,7 @@ impl AddressbookStore for SqliteStore {
 
     #[instrument]
     async fn update_addressbook(
-        &mut self,
+        &self,
         principal: String,
         id: String,
         addressbook: Addressbook,
@@ -123,7 +123,7 @@ impl AddressbookStore for SqliteStore {
     }
 
     #[instrument]
-    async fn insert_addressbook(&mut self, addressbook: Addressbook) -> Result<(), Error> {
+    async fn insert_addressbook(&self, addressbook: Addressbook) -> Result<(), Error> {
         sqlx::query!(
             r#"INSERT INTO addressbooks (principal, id, displayname, description)
                 VALUES (?, ?, ?, ?)"#,
@@ -139,7 +139,7 @@ impl AddressbookStore for SqliteStore {
 
     #[instrument]
     async fn delete_addressbook(
-        &mut self,
+        &self,
         principal: &str,
         addressbook_id: &str,
         use_trashbin: bool,
@@ -168,7 +168,7 @@ impl AddressbookStore for SqliteStore {
 
     #[instrument]
     async fn restore_addressbook(
-        &mut self,
+        &self,
         principal: &str,
         addressbook_id: &str,
     ) -> Result<(), Error> {
@@ -264,10 +264,12 @@ impl AddressbookStore for SqliteStore {
 
     #[instrument]
     async fn put_object(
-        &mut self,
+        &self,
         principal: String,
         addressbook_id: String,
         object: AddressObject,
+        // TODO: implement
+        overwrite: bool,
     ) -> Result<(), Error> {
         let mut tx = self.db.begin().await?;
 
@@ -298,7 +300,7 @@ impl AddressbookStore for SqliteStore {
 
     #[instrument]
     async fn delete_object(
-        &mut self,
+        &self,
         principal: &str,
         addressbook_id: &str,
         object_id: &str,
@@ -341,7 +343,7 @@ impl AddressbookStore for SqliteStore {
 
     #[instrument]
     async fn restore_object(
-        &mut self,
+        &self,
         principal: &str,
         addressbook_id: &str,
         object_id: &str,

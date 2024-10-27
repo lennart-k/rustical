@@ -19,7 +19,6 @@ use rustical_store::{AddressbookStore, CalendarStore};
 use std::fs;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::RwLock;
 use tracing::level_filters::LevelFilter;
 use tracing_opentelemetry::OpenTelemetryLayer;
 use tracing_subscriber::layer::SubscriberExt;
@@ -41,14 +40,11 @@ struct Args {
 async fn get_data_stores(
     migrate: bool,
     config: &DataStoreConfig,
-) -> Result<(
-    Arc<RwLock<dyn AddressbookStore>>,
-    Arc<RwLock<dyn CalendarStore>>,
-)> {
+) -> Result<(Arc<dyn AddressbookStore>, Arc<dyn CalendarStore>)> {
     Ok(match &config {
         DataStoreConfig::Sqlite(SqliteDataStoreConfig { db_url }) => {
             let db = create_db_pool(db_url, migrate).await?;
-            let sqlite_store = Arc::new(RwLock::new(SqliteStore::new(db)));
+            let sqlite_store = Arc::new(SqliteStore::new(db));
             (sqlite_store.clone(), sqlite_store.clone())
         }
     })

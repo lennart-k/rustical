@@ -18,7 +18,6 @@ use rustical_store::{
     AddressbookStore,
 };
 use std::sync::Arc;
-use tokio::sync::RwLock;
 
 pub mod address_object;
 pub mod addressbook;
@@ -33,7 +32,7 @@ pub fn configure_well_known(cfg: &mut web::ServiceConfig, carddav_root: String) 
 pub fn configure_dav<AP: AuthenticationProvider, A: AddressbookStore + ?Sized>(
     cfg: &mut web::ServiceConfig,
     auth_provider: Arc<AP>,
-    store: Arc<RwLock<A>>,
+    store: Arc<A>,
 ) {
     cfg.service(
         web::scope("")

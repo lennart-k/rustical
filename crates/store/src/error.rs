@@ -3,8 +3,11 @@ pub enum Error {
     #[error("Not found")]
     NotFound,
 
-    #[error("Invalid ics input: {0}")]
-    InvalidIcs(String),
+    #[error("Resource already exists and overwrite=false")]
+    AlreadyExists,
+
+    #[error("Invalid ics/vcf input: {0}")]
+    InvalidData(String),
 
     #[error(transparent)]
     SqlxError(sqlx::Error),

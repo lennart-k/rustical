@@ -7,7 +7,6 @@ use rustical_dav::{
 };
 use rustical_store::{model::object::CalendarObject, CalendarStore};
 use serde::Deserialize;
-use tokio::sync::RwLock;
 
 use crate::{
     calendar_object::resource::{CalendarObjectProp, CalendarObjectResource},
@@ -195,9 +194,9 @@ pub async fn get_objects_calendar_query<C: CalendarStore + ?Sized>(
     cal_query: &CalendarQueryRequest,
     principal: &str,
     cal_id: &str,
-    store: &RwLock<C>,
+    store: &C,
 ) -> Result<Vec<CalendarObject>, Error> {
-    let mut objects = store.read().await.get_objects(principal, cal_id).await?;
+    let mut objects = store.get_objects(principal, cal_id).await?;
     if let Some(filter) = &cal_query.filter {
         objects.retain(|object| filter.matches(object));
     }
@@ -209,7 +208,7 @@ pub async fn handle_calendar_query<C: CalendarStore + ?Sized>(
     req: HttpRequest,
     principal: &str,
     cal_id: &str,
-    cal_store: &RwLock<C>,
+    cal_store: &C,
 ) -> Result<MultistatusElement<PropstatWrapper<CalendarObjectProp>, String>, Error> {
     let objects = get_objects_calendar_query(&cal_query, principal, cal_id, cal_store).await?;
 
