@@ -238,6 +238,7 @@ impl CalendarStore for SqliteStore {
                 ics
             )
         } else {
+            // If the object already exists a database error is thrown and handled in error.rs
             sqlx::query!(
                 "INSERT INTO calendarobjects (principal, cal_id, id, ics) VALUES (?, ?, ?, ?)",
                 principal,
