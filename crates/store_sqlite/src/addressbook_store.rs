@@ -1,9 +1,6 @@
 use super::{ChangeOperation, SqliteStore};
 use async_trait::async_trait;
-use rustical_store::{
-    model::{AddressObject, Addressbook},
-    AddressbookStore,
-};
+use rustical_store::{AddressObject, Addressbook, AddressbookStore};
 use sqlx::{Sqlite, Transaction};
 use tracing::instrument;
 

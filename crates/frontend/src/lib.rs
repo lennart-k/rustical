@@ -9,8 +9,7 @@ use askama::Template;
 use routes::login::{route_get_login, route_post_login};
 use rustical_store::{
     auth::{AuthenticationMiddleware, AuthenticationProvider, User},
-    model::Calendar,
-    CalendarStore,
+    Calendar, CalendarStore,
 };
 use std::sync::Arc;
 

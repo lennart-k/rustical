@@ -6,8 +6,7 @@ use actix_web::web::{Data, Path};
 use actix_web::HttpRequest;
 use actix_web::HttpResponse;
 use rustical_store::auth::User;
-use rustical_store::model::AddressObject;
-use rustical_store::AddressbookStore;
+use rustical_store::{AddressObject, AddressbookStore};
 use tracing::instrument;
 use tracing_actix_web::RootSpan;
 

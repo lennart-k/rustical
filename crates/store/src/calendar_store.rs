@@ -1,6 +1,5 @@
+use crate::calendar::{Calendar, CalendarObject};
 use crate::error::Error;
-use crate::model::object::CalendarObject;
-use crate::model::Calendar;
 use async_trait::async_trait;
 
 #[async_trait]

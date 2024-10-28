@@ -16,7 +16,7 @@ use rustical_dav::{
         MultistatusElement,
     },
 };
-use rustical_store::{model::object::CalendarObject, CalendarStore};
+use rustical_store::{CalendarObject, CalendarStore};
 use serde::Deserialize;
 
 #[derive(Deserialize, Clone, Debug)]

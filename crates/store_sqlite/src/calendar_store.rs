@@ -1,9 +1,6 @@
 use super::{ChangeOperation, SqliteStore};
 use async_trait::async_trait;
-use rustical_store::model::object::CalendarObject;
-use rustical_store::model::Calendar;
-use rustical_store::CalendarStore;
-use rustical_store::Error;
+use rustical_store::{Calendar, CalendarObject, CalendarStore, Error};
 use sqlx::Sqlite;
 use sqlx::Transaction;
 use tracing::instrument;

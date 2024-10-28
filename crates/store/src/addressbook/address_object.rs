@@ -1,6 +1,5 @@
-use sha2::{Digest, Sha256};
-
 use crate::Error;
+use sha2::{Digest, Sha256};
 
 #[derive(Debug, Clone)]
 pub struct AddressObject {

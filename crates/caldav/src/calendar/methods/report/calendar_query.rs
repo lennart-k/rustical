@@ -5,7 +5,7 @@ use rustical_dav::{
     resource::Resource,
     xml::{multistatus::PropstatWrapper, MultistatusElement},
 };
-use rustical_store::{model::object::CalendarObject, CalendarStore};
+use rustical_store::{CalendarObject, CalendarStore};
 use serde::Deserialize;
 
 use crate::{

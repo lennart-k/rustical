@@ -2,8 +2,7 @@ use crate::Error;
 use actix_web::web::{Data, Path};
 use actix_web::HttpResponse;
 use rustical_store::auth::User;
-use rustical_store::model::Calendar;
-use rustical_store::CalendarStore;
+use rustical_store::{Calendar, CalendarStore};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Clone, Debug)]

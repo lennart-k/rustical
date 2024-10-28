@@ -1,8 +1,7 @@
 use crate::Error;
 use actix_web::web::Path;
 use actix_web::{web::Data, HttpResponse};
-use rustical_store::model::Addressbook;
-use rustical_store::{auth::User, AddressbookStore};
+use rustical_store::{auth::User, Addressbook, AddressbookStore};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Clone, Debug)]

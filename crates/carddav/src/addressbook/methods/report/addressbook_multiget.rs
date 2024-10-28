@@ -16,7 +16,7 @@ use rustical_dav::{
         MultistatusElement,
     },
 };
-use rustical_store::{model::AddressObject, AddressbookStore};
+use rustical_store::{AddressObject, AddressbookStore};
 use serde::Deserialize;
 
 #[derive(Deserialize, Clone, Debug)]

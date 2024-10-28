@@ -1,5 +1,5 @@
 use crate::{
-    model::{AddressObject, Addressbook},
+    addressbook::{AddressObject, Addressbook},
     Error,
 };
 use async_trait::async_trait;
