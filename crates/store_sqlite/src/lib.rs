@@ -26,7 +26,7 @@ impl SqliteStore {
     }
 }
 
-pub async fn create_db_pool(db_url: &str, migrate: bool) -> anyhow::Result<Pool<Sqlite>> {
+pub async fn create_db_pool(db_url: &str, migrate: bool) -> Result<Pool<Sqlite>, sqlx::Error> {
     let db = SqlitePool::connect_with(
         SqliteConnectOptions::new()
             .filename(db_url)
@@ -40,7 +40,7 @@ pub async fn create_db_pool(db_url: &str, migrate: bool) -> anyhow::Result<Pool<
     Ok(db)
 }
 
-pub async fn create_test_store() -> anyhow::Result<SqliteStore> {
+pub async fn create_test_store() -> Result<SqliteStore, sqlx::Error> {
     let db = SqlitePool::connect("sqlite::memory:").await?;
     sqlx::migrate!("./migrations").run(&db).await?;
     Ok(SqliteStore::new(db))

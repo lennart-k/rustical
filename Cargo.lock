@@ -2646,7 +2646,6 @@ dependencies = [
 name = "rustical_store_sqlite"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "async-trait",
  "rustical_store",
  "serde",

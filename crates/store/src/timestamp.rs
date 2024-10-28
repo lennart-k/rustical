@@ -130,9 +130,9 @@ impl CalDateTime {
                     return Ok(CalDateTime::OlsonTZ(datetime));
                 } else {
                     // This time does not exist because there's a gap in local time
-                    return Err(Error::Other(anyhow!(
-                        "Timestamp doesn't exist because of gap in local time"
-                    )));
+                    return Err(Error::InvalidData(
+                        "Timestamp doesn't exist because of gap in local time".to_owned(),
+                    ));
                 }
             }
             return Ok(CalDateTime::Local(datetime));
@@ -145,7 +145,7 @@ impl CalDateTime {
             return Ok(CalDateTime::Date(date));
         }
 
-        Err(Error::Other(anyhow!("Invalid datetime format")))
+        Err(Error::InvalidData("Invalid datetime format".to_owned()))
     }
 
     pub fn utc(&self) -> DateTime<Utc> {

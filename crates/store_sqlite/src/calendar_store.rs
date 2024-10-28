@@ -1,10 +1,9 @@
 use super::{ChangeOperation, SqliteStore};
-use crate::Error;
-use anyhow::Result;
 use async_trait::async_trait;
 use rustical_store::model::object::CalendarObject;
 use rustical_store::model::Calendar;
 use rustical_store::CalendarStore;
+use rustical_store::Error;
 use sqlx::Sqlite;
 use sqlx::Transaction;
 use tracing::instrument;
@@ -30,7 +29,7 @@ async fn log_object_operation(
     cal_id: &str,
     object_id: &str,
     operation: ChangeOperation,
-) -> Result<(), rustical_store::Error> {
+) -> Result<(), Error> {
     sqlx::query!(
         r#"
         UPDATE calendars
@@ -41,7 +40,7 @@ async fn log_object_operation(
     )
     .execute(&mut **tx)
     .await
-    .map_err(Error::SqlxError)?;
+    .map_err(crate::Error::from)?;
 
     sqlx::query!(
         r#"
@@ -56,18 +55,14 @@ async fn log_object_operation(
     )
     .execute(&mut **tx)
     .await
-    .map_err(Error::SqlxError)?;
+    .map_err(crate::Error::from)?;
     Ok(())
 }
 
 #[async_trait]
 impl CalendarStore for SqliteStore {
     #[instrument]
-    async fn get_calendar(
-        &self,
-        principal: &str,
-        id: &str,
-    ) -> Result<Calendar, rustical_store::Error> {
+    async fn get_calendar(&self, principal: &str, id: &str) -> Result<Calendar, Error> {
         let cal = sqlx::query_as!(
             Calendar,
             r#"SELECT principal, id, synctoken, "order", displayname, description, color, timezone, deleted_at
@@ -77,12 +72,12 @@ impl CalendarStore for SqliteStore {
             id
         )
         .fetch_one(&self.db)
-        .await.map_err(Error::SqlxError)?;
+        .await.map_err(crate::Error::from)?;
         Ok(cal)
     }
 
     #[instrument]
-    async fn get_calendars(&self, principal: &str) -> Result<Vec<Calendar>, rustical_store::Error> {
+    async fn get_calendars(&self, principal: &str) -> Result<Vec<Calendar>, Error> {
         let cals = sqlx::query_as!(
             Calendar,
             r#"SELECT principal, id, synctoken, displayname, "order", description, color, timezone, deleted_at
@@ -91,12 +86,12 @@ impl CalendarStore for SqliteStore {
             principal
         )
         .fetch_all(&self.db)
-        .await.map_err(Error::SqlxError)?;
+        .await.map_err(crate::Error::from)?;
         Ok(cals)
     }
 
     #[instrument]
-    async fn insert_calendar(&self, calendar: Calendar) -> Result<(), rustical_store::Error> {
+    async fn insert_calendar(&self, calendar: Calendar) -> Result<(), Error> {
         sqlx::query!(
             r#"INSERT INTO calendars (principal, id, displayname, description, "order", color, timezone)
                 VALUES (?, ?, ?, ?, ?, ?, ?)"#,
@@ -109,7 +104,7 @@ impl CalendarStore for SqliteStore {
             calendar.timezone
         )
         .execute(&self.db)
-        .await.map_err(Error::SqlxError)?;
+        .await.map_err(crate::Error::from)?;
         Ok(())
     }
 
@@ -119,7 +114,7 @@ impl CalendarStore for SqliteStore {
         principal: String,
         id: String,
         calendar: Calendar,
-    ) -> Result<(), rustical_store::Error> {
+    ) -> Result<(), Error> {
         let result = sqlx::query!(
             r#"UPDATE calendars SET principal = ?, id = ?, displayname = ?, description = ?, "order" = ?, color = ?, timezone = ?
                 WHERE (principal, id) = (?, ?)"#,
@@ -132,7 +127,7 @@ impl CalendarStore for SqliteStore {
             calendar.timezone,
             principal,
             id
-        ).execute(&self.db).await.map_err(Error::SqlxError)?;
+        ).execute(&self.db).await.map_err(crate::Error::from)?;
         if result.rows_affected() == 0 {
             return Err(rustical_store::Error::NotFound);
         }
@@ -146,7 +141,7 @@ impl CalendarStore for SqliteStore {
         principal: &str,
         id: &str,
         use_trashbin: bool,
-    ) -> Result<(), rustical_store::Error> {
+    ) -> Result<(), Error> {
         match use_trashbin {
             true => {
                 sqlx::query!(
@@ -154,7 +149,7 @@ impl CalendarStore for SqliteStore {
                     principal, id
                 )
                 .execute(&self.db)
-                .await.map_err(Error::SqlxError)?;
+                .await.map_err(crate::Error::from)?;
             }
             false => {
                 sqlx::query!(
@@ -164,18 +159,14 @@ impl CalendarStore for SqliteStore {
                 )
                 .execute(&self.db)
                 .await
-                .map_err(Error::SqlxError)?;
+                .map_err(crate::Error::from)?;
             }
         };
         Ok(())
     }
 
     #[instrument]
-    async fn restore_calendar(
-        &self,
-        principal: &str,
-        id: &str,
-    ) -> Result<(), rustical_store::Error> {
+    async fn restore_calendar(&self, principal: &str, id: &str) -> Result<(), Error> {
         sqlx::query!(
             r"UPDATE calendars SET deleted_at = NULL WHERE (principal, id) = (?, ?)",
             principal,
@@ -183,7 +174,7 @@ impl CalendarStore for SqliteStore {
         )
         .execute(&self.db)
         .await
-        .map_err(Error::SqlxError)?;
+        .map_err(crate::Error::from)?;
         Ok(())
     }
 
@@ -192,7 +183,7 @@ impl CalendarStore for SqliteStore {
         &self,
         principal: &str,
         cal_id: &str,
-    ) -> Result<Vec<CalendarObject>, rustical_store::Error> {
+    ) -> Result<Vec<CalendarObject>, Error> {
         sqlx::query_as!(
             CalendarObjectRow,
             "SELECT id, ics FROM calendarobjects WHERE principal = ? AND cal_id = ? AND deleted_at IS NULL",
@@ -200,7 +191,7 @@ impl CalendarStore for SqliteStore {
             cal_id
         )
         .fetch_all(&self.db)
-        .await.map_err(Error::SqlxError)?
+        .await.map_err(crate::Error::from)?
         .into_iter()
         .map(|row| row.try_into().map_err(rustical_store::Error::from))
         .collect()
@@ -212,7 +203,7 @@ impl CalendarStore for SqliteStore {
         principal: &str,
         cal_id: &str,
         object_id: &str,
-    ) -> Result<CalendarObject, rustical_store::Error> {
+    ) -> Result<CalendarObject, Error> {
         Ok(sqlx::query_as!(
             CalendarObjectRow,
             "SELECT id, ics FROM calendarobjects WHERE (principal, cal_id, id) = (?, ?, ?)",
@@ -222,7 +213,7 @@ impl CalendarStore for SqliteStore {
         )
         .fetch_one(&self.db)
         .await
-        .map_err(Error::SqlxError)?
+        .map_err(crate::Error::from)?
         .try_into()?)
     }
 
@@ -234,8 +225,8 @@ impl CalendarStore for SqliteStore {
         object: CalendarObject,
         // TODO: implement
         overwrite: bool,
-    ) -> Result<(), rustical_store::Error> {
-        let mut tx = self.db.begin().await.map_err(Error::SqlxError)?;
+    ) -> Result<(), Error> {
+        let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
 
         let (object_id, ics) = (object.get_id(), object.get_ics());
 
@@ -248,7 +239,7 @@ impl CalendarStore for SqliteStore {
         )
         .execute(&mut *tx)
         .await
-        .map_err(Error::SqlxError)?;
+        .map_err(crate::Error::from)?;
 
         log_object_operation(
             &mut tx,
@@ -259,7 +250,7 @@ impl CalendarStore for SqliteStore {
         )
         .await?;
 
-        tx.commit().await.map_err(Error::SqlxError)?;
+        tx.commit().await.map_err(crate::Error::from)?;
         Ok(())
     }
 
@@ -270,8 +261,8 @@ impl CalendarStore for SqliteStore {
         cal_id: &str,
         id: &str,
         use_trashbin: bool,
-    ) -> Result<(), rustical_store::Error> {
-        let mut tx = self.db.begin().await.map_err(Error::SqlxError)?;
+    ) -> Result<(), Error> {
+        let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
 
         match use_trashbin {
             true => {
@@ -282,7 +273,7 @@ impl CalendarStore for SqliteStore {
                     id
                 )
                 .execute(&mut *tx)
-                .await.map_err(Error::SqlxError)?;
+                .await.map_err(crate::Error::from)?;
             }
             false => {
                 sqlx::query!(
@@ -292,11 +283,11 @@ impl CalendarStore for SqliteStore {
                 )
                 .execute(&mut *tx)
                 .await
-                .map_err(Error::SqlxError)?;
+                .map_err(crate::Error::from)?;
             }
         };
         log_object_operation(&mut tx, principal, cal_id, id, ChangeOperation::Delete).await?;
-        tx.commit().await.map_err(Error::SqlxError)?;
+        tx.commit().await.map_err(crate::Error::from)?;
         Ok(())
     }
 
@@ -306,8 +297,8 @@ impl CalendarStore for SqliteStore {
         principal: &str,
         cal_id: &str,
         object_id: &str,
-    ) -> Result<(), rustical_store::Error> {
-        let mut tx = self.db.begin().await.map_err(Error::SqlxError)?;
+    ) -> Result<(), Error> {
+        let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
 
         sqlx::query!(
             r#"UPDATE calendarobjects SET deleted_at = NULL, updated_at = datetime() WHERE (principal, cal_id, id) = (?, ?, ?)"#,
@@ -316,10 +307,10 @@ impl CalendarStore for SqliteStore {
             object_id
         )
         .execute(&mut *tx)
-        .await.map_err(Error::SqlxError)?;
+        .await.map_err(crate::Error::from)?;
 
         log_object_operation(&mut tx, principal, cal_id, object_id, ChangeOperation::Add).await?;
-        tx.commit().await.map_err(Error::SqlxError)?;
+        tx.commit().await.map_err(crate::Error::from)?;
         Ok(())
     }
 
@@ -329,7 +320,7 @@ impl CalendarStore for SqliteStore {
         principal: &str,
         cal_id: &str,
         synctoken: i64,
-    ) -> Result<(Vec<CalendarObject>, Vec<String>, i64), rustical_store::Error> {
+    ) -> Result<(Vec<CalendarObject>, Vec<String>, i64), Error> {
         struct Row {
             object_id: String,
             synctoken: i64,
@@ -344,7 +335,7 @@ impl CalendarStore for SqliteStore {
             synctoken
         )
         .fetch_all(&self.db)
-        .await.map_err(Error::SqlxError)?;
+        .await.map_err(crate::Error::from)?;
 
         let mut objects = vec![];
         let mut deleted_objects = vec![];

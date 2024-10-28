@@ -11,8 +11,8 @@ pub enum Error {
     InvalidData(String),
 
     #[error(transparent)]
-    Other(#[from] anyhow::Error),
+    ParserError(#[from] ical::parser::ParserError),
 
     #[error(transparent)]
-    ParserError(#[from] ical::parser::ParserError),
+    Other(#[from] anyhow::Error),
 }

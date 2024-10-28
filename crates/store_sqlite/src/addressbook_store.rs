@@ -1,5 +1,4 @@
 use super::{ChangeOperation, SqliteStore};
-use crate::Error;
 use async_trait::async_trait;
 use rustical_store::{
     model::{AddressObject, Addressbook},
@@ -15,9 +14,9 @@ struct AddressObjectRow {
 }
 
 impl TryFrom<AddressObjectRow> for AddressObject {
-    type Error = Error;
+    type Error = crate::Error;
 
-    fn try_from(value: AddressObjectRow) -> Result<Self, Error> {
+    fn try_from(value: AddressObjectRow) -> Result<Self, Self::Error> {
         Ok(Self::from_vcf(value.id, value.vcf)?)
     }
 }
@@ -29,7 +28,7 @@ async fn log_object_operation(
     addressbook_id: &str,
     object_id: &str,
     operation: ChangeOperation,
-) -> Result<(), Error> {
+) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
         UPDATE addressbooks
@@ -75,7 +74,7 @@ impl AddressbookStore for SqliteStore {
         )
         .fetch_one(&self.db)
         .await
-        .map_err(Error::SqlxError)?;
+        .map_err(crate::Error::from)?;
         Ok(addressbook)
     }
 
@@ -93,7 +92,7 @@ impl AddressbookStore for SqliteStore {
         )
         .fetch_all(&self.db)
         .await
-        .map_err(Error::SqlxError)?;
+        .map_err(crate::Error::from)?;
         Ok(addressbooks)
     }
 
@@ -116,7 +115,7 @@ impl AddressbookStore for SqliteStore {
         )
         .execute(&self.db)
         .await
-        .map_err(Error::SqlxError)?;
+        .map_err(crate::Error::from)?;
         if result.rows_affected() == 0 {
             return Err(rustical_store::Error::NotFound);
         }
@@ -138,7 +137,7 @@ impl AddressbookStore for SqliteStore {
         )
         .execute(&self.db)
         .await
-        .map_err(Error::SqlxError)?;
+        .map_err(crate::Error::from)?;
         Ok(())
     }
 
@@ -156,7 +155,7 @@ impl AddressbookStore for SqliteStore {
                     principal, addressbook_id
                 )
                 .execute(&self.db)
-                .await.map_err(Error::SqlxError)?;
+                .await.map_err(crate::Error::from)?;
             }
             false => {
                 sqlx::query!(
@@ -166,7 +165,7 @@ impl AddressbookStore for SqliteStore {
                 )
                 .execute(&self.db)
                 .await
-                .map_err(Error::SqlxError)?;
+                .map_err(crate::Error::from)?;
             }
         };
         Ok(())
@@ -185,7 +184,7 @@ impl AddressbookStore for SqliteStore {
         )
         .execute(&self.db)
         .await
-        .map_err(Error::SqlxError)?;
+        .map_err(crate::Error::from)?;
         Ok(())
     }
 
@@ -210,7 +209,7 @@ impl AddressbookStore for SqliteStore {
             synctoken
         )
         .fetch_all(&self.db)
-        .await.map_err(Error::SqlxError)?;
+        .await.map_err(crate::Error::from)?;
 
         let mut objects = vec![];
         let mut deleted_objects = vec![];
@@ -244,7 +243,7 @@ impl AddressbookStore for SqliteStore {
             addressbook_id
         )
         .fetch_all(&self.db)
-        .await.map_err(Error::SqlxError)?
+        .await.map_err(crate::Error::from)?
         .into_iter()
         .map(|row| row.try_into().map_err(rustical_store::Error::from))
         .collect()
@@ -266,7 +265,7 @@ impl AddressbookStore for SqliteStore {
         )
         .fetch_one(&self.db)
         .await
-        .map_err(Error::SqlxError)?
+        .map_err(crate::Error::from)?
         .try_into()?)
     }
 
@@ -279,7 +278,7 @@ impl AddressbookStore for SqliteStore {
         // TODO: implement
         overwrite: bool,
     ) -> Result<(), rustical_store::Error> {
-        let mut tx = self.db.begin().await.map_err(Error::SqlxError)?;
+        let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
 
         let (object_id, vcf) = (object.get_id(), object.get_vcf());
 
@@ -292,7 +291,7 @@ impl AddressbookStore for SqliteStore {
         )
         .execute(&mut *tx)
         .await
-        .map_err(Error::SqlxError)?;
+        .map_err(crate::Error::from)?;
 
         log_object_operation(
             &mut tx,
@@ -302,9 +301,9 @@ impl AddressbookStore for SqliteStore {
             ChangeOperation::Add,
         )
         .await
-        .map_err(rustical_store::Error::from)?;
+        .map_err(crate::Error::from)?;
 
-        tx.commit().await.map_err(Error::SqlxError)?;
+        tx.commit().await.map_err(crate::Error::from)?;
         Ok(())
     }
 
@@ -316,7 +315,7 @@ impl AddressbookStore for SqliteStore {
         object_id: &str,
         use_trashbin: bool,
     ) -> Result<(), rustical_store::Error> {
-        let mut tx = self.db.begin().await.map_err(Error::SqlxError)?;
+        let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
 
         match use_trashbin {
             true => {
@@ -327,7 +326,7 @@ impl AddressbookStore for SqliteStore {
                     object_id
                 )
                 .execute(&mut *tx)
-                .await.map_err(Error::SqlxError)?;
+                .await.map_err(crate::Error::from)?;
             }
             false => {
                 sqlx::query!(
@@ -337,7 +336,7 @@ impl AddressbookStore for SqliteStore {
                 )
                 .execute(&mut *tx)
                 .await
-                .map_err(Error::SqlxError)?;
+                .map_err(crate::Error::from)?;
             }
         };
         log_object_operation(
@@ -348,8 +347,8 @@ impl AddressbookStore for SqliteStore {
             ChangeOperation::Delete,
         )
         .await
-        .map_err(rustical_store::Error::from)?;
-        tx.commit().await.map_err(Error::SqlxError)?;
+        .map_err(crate::Error::from)?;
+        tx.commit().await.map_err(crate::Error::from)?;
         Ok(())
     }
 
@@ -360,7 +359,7 @@ impl AddressbookStore for SqliteStore {
         addressbook_id: &str,
         object_id: &str,
     ) -> Result<(), rustical_store::Error> {
-        let mut tx = self.db.begin().await.map_err(Error::SqlxError)?;
+        let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
 
         sqlx::query!(
             r#"UPDATE addressobjects SET deleted_at = NULL, updated_at = datetime() WHERE (principal, addressbook_id, id) = (?, ?, ?)"#,
@@ -369,7 +368,7 @@ impl AddressbookStore for SqliteStore {
             object_id
         )
         .execute(&mut *tx)
-        .await.map_err(Error::SqlxError)?;
+        .await.map_err(crate::Error::from)?;
 
         log_object_operation(
             &mut tx,
@@ -379,8 +378,8 @@ impl AddressbookStore for SqliteStore {
             ChangeOperation::Add,
         )
         .await
-        .map_err(rustical_store::Error::from)?;
-        tx.commit().await.map_err(Error::SqlxError)?;
+        .map_err(crate::Error::from)?;
+        tx.commit().await.map_err(crate::Error::from)?;
         Ok(())
     }
 }

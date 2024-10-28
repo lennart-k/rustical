@@ -1,6 +1,6 @@
 use crate::{
-    error::Error,
     model::{AddressObject, Addressbook},
+    Error,
 };
 use async_trait::async_trait;
 
