@@ -132,7 +132,7 @@ impl CompFilterElement {
         false
     }
 
-    // match the VEVENT/VTODO part
+    // match the VEVENT/VTODO/VJOURNAL part
     pub fn matches(&self, cal_object: &CalendarObject) -> bool {
         // TODO: evaulate prop-filter
         let component_name = cal_object.get_component_name();
