@@ -1,5 +1,4 @@
 use crate::Error;
-use anyhow::{anyhow, Result};
 use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use chrono_tz::Tz;
 use ical::{

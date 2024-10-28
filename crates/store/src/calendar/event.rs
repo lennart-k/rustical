@@ -1,7 +1,5 @@
-use crate::{
-    timestamp::{parse_duration, CalDateTime},
-    Error,
-};
+use super::{parse_duration, CalDateTime};
+use crate::Error;
 use chrono::Duration;
 use ical::{
     generator::IcalEvent,

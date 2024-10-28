@@ -21,13 +21,13 @@ use crate::{
 struct TimeRangeElement {
     #[serde(
         rename = "@start",
-        deserialize_with = "rustical_store::timestamp::deserialize_utc_datetime",
+        deserialize_with = "rustical_store::calendar::deserialize_utc_datetime",
         default
     )]
     start: Option<DateTime<Utc>>,
     #[serde(
         rename = "@end",
-        deserialize_with = "rustical_store::timestamp::deserialize_utc_datetime",
+        deserialize_with = "rustical_store::calendar::deserialize_utc_datetime",
         default
     )]
     end: Option<DateTime<Utc>>,

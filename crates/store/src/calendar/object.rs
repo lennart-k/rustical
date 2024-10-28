@@ -1,5 +1,5 @@
-use super::{event::EventObject, journal::JournalObject, todo::TodoObject};
-use crate::{timestamp::CalDateTime, Error};
+use super::{CalDateTime, EventObject, JournalObject, TodoObject};
+use crate::Error;
 use anyhow::Result;
 use ical::parser::{ical::component::IcalTimeZone, Component};
 use serde::{Deserialize, Serialize};
