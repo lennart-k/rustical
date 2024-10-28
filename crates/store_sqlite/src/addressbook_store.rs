@@ -275,20 +275,30 @@ impl AddressbookStore for SqliteStore {
         principal: String,
         addressbook_id: String,
         object: AddressObject,
-        // TODO: implement
         overwrite: bool,
     ) -> Result<(), rustical_store::Error> {
         let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
 
         let (object_id, vcf) = (object.get_id(), object.get_vcf());
 
-        sqlx::query!(
+        (if overwrite {
+            sqlx::query!(
             "REPLACE INTO addressobjects (principal, addressbook_id, id, vcf) VALUES (?, ?, ?, ?)",
             principal,
             addressbook_id,
             object_id,
             vcf
         )
+        } else {
+            // If the object already exists a database error is thrown and handled in error.rs
+            sqlx::query!(
+            "INSERT INTO addressobjects (principal, addressbook_id, id, vcf) VALUES (?, ?, ?, ?)",
+            principal,
+            addressbook_id,
+            object_id,
+            vcf
+        )
+        })
         .execute(&mut *tx)
         .await
         .map_err(crate::Error::from)?;

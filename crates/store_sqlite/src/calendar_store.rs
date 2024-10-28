@@ -223,20 +223,29 @@ impl CalendarStore for SqliteStore {
         principal: String,
         cal_id: String,
         object: CalendarObject,
-        // TODO: implement
         overwrite: bool,
     ) -> Result<(), Error> {
         let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
 
         let (object_id, ics) = (object.get_id(), object.get_ics());
 
-        sqlx::query!(
-            "REPLACE INTO calendarobjects (principal, cal_id, id, ics) VALUES (?, ?, ?, ?)",
-            principal,
-            cal_id,
-            object_id,
-            ics
-        )
+        (if overwrite {
+            sqlx::query!(
+                "REPLACE INTO calendarobjects (principal, cal_id, id, ics) VALUES (?, ?, ?, ?)",
+                principal,
+                cal_id,
+                object_id,
+                ics
+            )
+        } else {
+            sqlx::query!(
+                "INSERT INTO calendarobjects (principal, cal_id, id, ics) VALUES (?, ?, ?, ?)",
+                principal,
+                cal_id,
+                object_id,
+                ics
+            )
+        })
         .execute(&mut *tx)
         .await
         .map_err(crate::Error::from)?;
