@@ -1,10 +1,10 @@
 use super::{ChangeOperation, SqliteStore};
 use crate::Error;
-use crate::{
+use async_trait::async_trait;
+use rustical_store::{
     model::{AddressObject, Addressbook},
     AddressbookStore,
 };
-use async_trait::async_trait;
 use sqlx::{Sqlite, Transaction};
 use tracing::instrument;
 
@@ -18,7 +18,7 @@ impl TryFrom<AddressObjectRow> for AddressObject {
     type Error = Error;
 
     fn try_from(value: AddressObjectRow) -> Result<Self, Error> {
-        Self::from_vcf(value.id, value.vcf)
+        Ok(Self::from_vcf(value.id, value.vcf)?)
     }
 }
 
@@ -60,7 +60,11 @@ async fn log_object_operation(
 #[async_trait]
 impl AddressbookStore for SqliteStore {
     #[instrument]
-    async fn get_addressbook(&self, principal: &str, id: &str) -> Result<Addressbook, Error> {
+    async fn get_addressbook(
+        &self,
+        principal: &str,
+        id: &str,
+    ) -> Result<Addressbook, rustical_store::Error> {
         let addressbook = sqlx::query_as!(
             Addressbook,
             r#"SELECT principal, id, synctoken, displayname, description, deleted_at
@@ -70,12 +74,16 @@ impl AddressbookStore for SqliteStore {
             id
         )
         .fetch_one(&self.db)
-        .await?;
+        .await
+        .map_err(Error::SqlxError)?;
         Ok(addressbook)
     }
 
     #[instrument]
-    async fn get_addressbooks(&self, principal: &str) -> Result<Vec<Addressbook>, Error> {
+    async fn get_addressbooks(
+        &self,
+        principal: &str,
+    ) -> Result<Vec<Addressbook>, rustical_store::Error> {
         let addressbooks = sqlx::query_as!(
             Addressbook,
             r#"SELECT principal, id, synctoken, displayname, description, deleted_at
@@ -84,7 +92,8 @@ impl AddressbookStore for SqliteStore {
             principal
         )
         .fetch_all(&self.db)
-        .await?;
+        .await
+        .map_err(Error::SqlxError)?;
         Ok(addressbooks)
     }
 
@@ -94,7 +103,7 @@ impl AddressbookStore for SqliteStore {
         principal: String,
         id: String,
         addressbook: Addressbook,
-    ) -> Result<(), Error> {
+    ) -> Result<(), rustical_store::Error> {
         let result = sqlx::query!(
             r#"UPDATE addressbooks SET principal = ?, id = ?, displayname = ?, description = ?
                 WHERE (principal, id) = (?, ?)"#,
@@ -106,15 +115,19 @@ impl AddressbookStore for SqliteStore {
             id
         )
         .execute(&self.db)
-        .await?;
+        .await
+        .map_err(Error::SqlxError)?;
         if result.rows_affected() == 0 {
-            return Err(Error::NotFound);
+            return Err(rustical_store::Error::NotFound);
         }
         Ok(())
     }
 
     #[instrument]
-    async fn insert_addressbook(&self, addressbook: Addressbook) -> Result<(), Error> {
+    async fn insert_addressbook(
+        &self,
+        addressbook: Addressbook,
+    ) -> Result<(), rustical_store::Error> {
         sqlx::query!(
             r#"INSERT INTO addressbooks (principal, id, displayname, description)
                 VALUES (?, ?, ?, ?)"#,
@@ -124,7 +137,8 @@ impl AddressbookStore for SqliteStore {
             addressbook.description,
         )
         .execute(&self.db)
-        .await?;
+        .await
+        .map_err(Error::SqlxError)?;
         Ok(())
     }
 
@@ -134,7 +148,7 @@ impl AddressbookStore for SqliteStore {
         principal: &str,
         addressbook_id: &str,
         use_trashbin: bool,
-    ) -> Result<(), Error> {
+    ) -> Result<(), rustical_store::Error> {
         match use_trashbin {
             true => {
                 sqlx::query!(
@@ -142,7 +156,7 @@ impl AddressbookStore for SqliteStore {
                     principal, addressbook_id
                 )
                 .execute(&self.db)
-                .await?;
+                .await.map_err(Error::SqlxError)?;
             }
             false => {
                 sqlx::query!(
@@ -151,7 +165,8 @@ impl AddressbookStore for SqliteStore {
                     addressbook_id
                 )
                 .execute(&self.db)
-                .await?;
+                .await
+                .map_err(Error::SqlxError)?;
             }
         };
         Ok(())
@@ -162,14 +177,15 @@ impl AddressbookStore for SqliteStore {
         &self,
         principal: &str,
         addressbook_id: &str,
-    ) -> Result<(), Error> {
+    ) -> Result<(), rustical_store::Error> {
         sqlx::query!(
             r"UPDATE addressbooks SET deleted_at = NULL WHERE (principal, id) = (?, ?)",
             principal,
             addressbook_id
         )
         .execute(&self.db)
-        .await?;
+        .await
+        .map_err(Error::SqlxError)?;
         Ok(())
     }
 
@@ -179,7 +195,7 @@ impl AddressbookStore for SqliteStore {
         principal: &str,
         addressbook_id: &str,
         synctoken: i64,
-    ) -> Result<(Vec<AddressObject>, Vec<String>, i64), Error> {
+    ) -> Result<(Vec<AddressObject>, Vec<String>, i64), rustical_store::Error> {
         struct Row {
             object_id: String,
             synctoken: i64,
@@ -194,7 +210,7 @@ impl AddressbookStore for SqliteStore {
             synctoken
         )
         .fetch_all(&self.db)
-        .await?;
+        .await.map_err(Error::SqlxError)?;
 
         let mut objects = vec![];
         let mut deleted_objects = vec![];
@@ -207,7 +223,7 @@ impl AddressbookStore for SqliteStore {
         for Row { object_id, .. } in changes {
             match self.get_object(principal, addressbook_id, &object_id).await {
                 Ok(object) => objects.push(object),
-                Err(Error::NotFound) => deleted_objects.push(object_id),
+                Err(rustical_store::Error::NotFound) => deleted_objects.push(object_id),
                 Err(err) => return Err(err),
             }
         }
@@ -220,7 +236,7 @@ impl AddressbookStore for SqliteStore {
         &self,
         principal: &str,
         addressbook_id: &str,
-    ) -> Result<Vec<AddressObject>, Error> {
+    ) -> Result<Vec<AddressObject>, rustical_store::Error> {
         sqlx::query_as!(
             AddressObjectRow,
             "SELECT id, vcf FROM addressobjects WHERE principal = ? AND addressbook_id = ? AND deleted_at IS NULL",
@@ -228,9 +244,9 @@ impl AddressbookStore for SqliteStore {
             addressbook_id
         )
         .fetch_all(&self.db)
-        .await?
+        .await.map_err(Error::SqlxError)?
         .into_iter()
-        .map(|row| row.try_into())
+        .map(|row| row.try_into().map_err(rustical_store::Error::from))
         .collect()
     }
 
@@ -240,7 +256,7 @@ impl AddressbookStore for SqliteStore {
         principal: &str,
         addressbook_id: &str,
         object_id: &str,
-    ) -> Result<AddressObject, Error> {
+    ) -> Result<AddressObject, rustical_store::Error> {
         Ok(sqlx::query_as!(
             AddressObjectRow,
             "SELECT id, vcf FROM addressobjects WHERE (principal, addressbook_id, id) = (?, ?, ?)",
@@ -249,7 +265,8 @@ impl AddressbookStore for SqliteStore {
             object_id
         )
         .fetch_one(&self.db)
-        .await?
+        .await
+        .map_err(Error::SqlxError)?
         .try_into()?)
     }
 
@@ -261,8 +278,8 @@ impl AddressbookStore for SqliteStore {
         object: AddressObject,
         // TODO: implement
         overwrite: bool,
-    ) -> Result<(), Error> {
-        let mut tx = self.db.begin().await?;
+    ) -> Result<(), rustical_store::Error> {
+        let mut tx = self.db.begin().await.map_err(Error::SqlxError)?;
 
         let (object_id, vcf) = (object.get_id(), object.get_vcf());
 
@@ -274,7 +291,8 @@ impl AddressbookStore for SqliteStore {
             vcf
         )
         .execute(&mut *tx)
-        .await?;
+        .await
+        .map_err(Error::SqlxError)?;
 
         log_object_operation(
             &mut tx,
@@ -283,9 +301,10 @@ impl AddressbookStore for SqliteStore {
             object_id,
             ChangeOperation::Add,
         )
-        .await?;
+        .await
+        .map_err(rustical_store::Error::from)?;
 
-        tx.commit().await?;
+        tx.commit().await.map_err(Error::SqlxError)?;
         Ok(())
     }
 
@@ -296,8 +315,8 @@ impl AddressbookStore for SqliteStore {
         addressbook_id: &str,
         object_id: &str,
         use_trashbin: bool,
-    ) -> Result<(), Error> {
-        let mut tx = self.db.begin().await?;
+    ) -> Result<(), rustical_store::Error> {
+        let mut tx = self.db.begin().await.map_err(Error::SqlxError)?;
 
         match use_trashbin {
             true => {
@@ -308,7 +327,7 @@ impl AddressbookStore for SqliteStore {
                     object_id
                 )
                 .execute(&mut *tx)
-                .await?;
+                .await.map_err(Error::SqlxError)?;
             }
             false => {
                 sqlx::query!(
@@ -317,7 +336,8 @@ impl AddressbookStore for SqliteStore {
                     object_id
                 )
                 .execute(&mut *tx)
-                .await?;
+                .await
+                .map_err(Error::SqlxError)?;
             }
         };
         log_object_operation(
@@ -327,8 +347,9 @@ impl AddressbookStore for SqliteStore {
             object_id,
             ChangeOperation::Delete,
         )
-        .await?;
-        tx.commit().await?;
+        .await
+        .map_err(rustical_store::Error::from)?;
+        tx.commit().await.map_err(Error::SqlxError)?;
         Ok(())
     }
 
@@ -338,8 +359,8 @@ impl AddressbookStore for SqliteStore {
         principal: &str,
         addressbook_id: &str,
         object_id: &str,
-    ) -> Result<(), Error> {
-        let mut tx = self.db.begin().await?;
+    ) -> Result<(), rustical_store::Error> {
+        let mut tx = self.db.begin().await.map_err(Error::SqlxError)?;
 
         sqlx::query!(
             r#"UPDATE addressobjects SET deleted_at = NULL, updated_at = datetime() WHERE (principal, addressbook_id, id) = (?, ?, ?)"#,
@@ -348,7 +369,7 @@ impl AddressbookStore for SqliteStore {
             object_id
         )
         .execute(&mut *tx)
-        .await?;
+        .await.map_err(Error::SqlxError)?;
 
         log_object_operation(
             &mut tx,
@@ -357,8 +378,9 @@ impl AddressbookStore for SqliteStore {
             object_id,
             ChangeOperation::Add,
         )
-        .await?;
-        tx.commit().await?;
+        .await
+        .map_err(rustical_store::Error::from)?;
+        tx.commit().await.map_err(Error::SqlxError)?;
         Ok(())
     }
 }

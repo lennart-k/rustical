@@ -2519,6 +2519,7 @@ dependencies = [
  "rustical_carddav",
  "rustical_frontend",
  "rustical_store",
+ "rustical_store_sqlite",
  "serde",
  "sqlx",
  "tokio",
@@ -2632,16 +2633,25 @@ dependencies = [
  "lazy_static",
  "password-auth",
  "pbkdf2",
- "rand_core",
  "regex",
  "rstest",
  "rstest_reuse",
  "serde",
  "sha2",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
+name = "rustical_store_sqlite"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "rustical_store",
+ "serde",
  "sqlx",
  "thiserror",
- "tokio",
- "toml",
  "tracing",
 ]
 

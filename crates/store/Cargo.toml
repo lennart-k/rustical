@@ -11,15 +11,10 @@ anyhow = { workspace = true }
 async-trait = { workspace = true }
 serde = { workspace = true }
 sha2 = { workspace = true }
-sqlx = { workspace = true }
-tokio = { workspace = true }
-toml = { workspace = true }
 ical = { workspace = true }
 chrono = { workspace = true }
 regex = { workspace = true }
 lazy_static = { workspace = true }
-rstest = { workspace = true }
-rstest_reuse = { workspace = true }
 thiserror = { workspace = true }
 password-auth = { workspace = true }
 actix-web = { workspace = true }
@@ -27,6 +22,9 @@ actix-session = { workspace = true }
 actix-web-httpauth = { workspace = true }
 tracing = { workspace = true }
 pbkdf2 = { workspace = true }
-rand_core = { workspace = true }
 chrono-tz = { workspace = true }
 derive_more = { workspace = true }
+
+[dev-dependencies]
+rstest = { workspace = true }
+rstest_reuse = { workspace = true }

@@ -3,6 +3,9 @@ use sqlx::{sqlite::SqliteConnectOptions, Pool, Sqlite, SqlitePool};
 
 pub mod addressbook_store;
 pub mod calendar_store;
+pub mod error;
+
+pub use error::Error;
 
 #[derive(Debug, Clone, Serialize, sqlx::Type)]
 #[serde(rename_all = "kebab-case")]

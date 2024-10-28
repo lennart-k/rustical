@@ -1,0 +1,16 @@
+[package]
+name = "rustical_store_sqlite"
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+rustical_store = { workspace = true }
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+serde = { workspace = true }
+sqlx = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }

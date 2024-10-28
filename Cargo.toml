@@ -73,6 +73,7 @@ ical = { version = "0.11", features = ["generator", "serde"] }
 toml = "0.8"
 rustical_dav = { path = "./crates/dav/" }
 rustical_store = { path = "./crates/store/" }
+rustical_store_sqlite = { path = "./crates/store_sqlite/" }
 rustical_caldav = { path = "./crates/caldav/" }
 rustical_carddav = { path = "./crates/carddav/" }
 rustical_frontend = { path = "./crates/frontend/" }
@@ -80,6 +81,7 @@ chrono-tz = "0.10.0"
 
 [dependencies]
 rustical_store = { workspace = true }
+rustical_store_sqlite = { workspace = true }
 rustical_caldav = { workspace = true }
 rustical_carddav = { workspace = true }
 rustical_frontend = { workspace = true }
