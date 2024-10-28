@@ -12,7 +12,7 @@ use rustical_dav::{
     },
 };
 use rustical_store::{
-    addressbook::{format_synctoken, parse_synctoken},
+    synctoken::{format_synctoken, parse_synctoken},
     AddressbookStore,
 };
 use serde::Deserialize;
