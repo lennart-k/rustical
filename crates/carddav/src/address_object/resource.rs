@@ -72,7 +72,7 @@ impl Resource for AddressObjectResource {
 
     #[inline]
     fn resource_name() -> &'static str {
-        "caldav_calendar_object"
+        "carddav_address_object"
     }
 }
 
