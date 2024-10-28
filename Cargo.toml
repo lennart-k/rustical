@@ -49,7 +49,7 @@ url = "2.5"
 roxmltree = "0.20"
 base64 = "0.22"
 thiserror = "1.0"
-quick-xml = { version = "0.36", features = [
+quick-xml = { version = "0.37", features = [
   "serde",
   "serde-types",
   "serialize",

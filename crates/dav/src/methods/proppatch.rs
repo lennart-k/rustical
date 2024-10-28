@@ -8,7 +8,6 @@ use crate::xml::TagName;
 use crate::Error;
 use actix_web::http::StatusCode;
 use actix_web::{web::Path, HttpRequest};
-use log::debug;
 use rustical_store::auth::User;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
@@ -62,12 +61,12 @@ pub async fn route_proppatch<R: ResourceService>(
     let resource_service = R::new(&req, path_components.clone()).await?;
 
     let PropertyupdateElement::<<R::Resource as Resource>::Prop> { operations } =
-        quick_xml::de::from_str(&body).map_err(Error::XmlDecodeError)?;
+        quick_xml::de::from_str(&body).map_err(Error::XmlDeserializationError)?;
 
     // Extract all set property names without verification
     // Weird workaround because quick_xml doesn't allow untagged enums
     let propnames: Vec<String> = quick_xml::de::from_str::<PropertyupdateElement<TagName>>(&body)
-        .map_err(Error::XmlDecodeError)?
+        .map_err(Error::XmlDeserializationError)?
         .operations
         .into_iter()
         .map(|op_el| match op_el {

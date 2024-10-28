@@ -21,7 +21,10 @@ pub enum Error {
     PropReadOnly,
 
     #[error(transparent)]
-    XmlDecodeError(#[from] quick_xml::DeError),
+    XmlDeserializationError(#[from] quick_xml::DeError),
+
+    #[error(transparent)]
+    XmlSerializationError(#[from] quick_xml::SeError),
 
     #[error("Internal server error")]
     Other(#[from] anyhow::Error),
@@ -35,7 +38,8 @@ impl actix_web::error::ResponseError for Error {
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::BadRequest(_) => StatusCode::BAD_REQUEST,
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
-            Self::XmlDecodeError(_) => StatusCode::BAD_REQUEST,
+            Self::XmlDeserializationError(_) => StatusCode::BAD_REQUEST,
+            Self::XmlSerializationError(_) => StatusCode::BAD_REQUEST,
             Error::PropReadOnly => StatusCode::CONFLICT,
         }
     }
