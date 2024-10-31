@@ -25,16 +25,12 @@ pub enum Error {
 
     #[error(transparent)]
     XmlSerializationError(#[from] quick_xml::SeError),
-
-    #[error("Internal server error")]
-    Other(#[from] anyhow::Error),
 }
 
 impl actix_web::error::ResponseError for Error {
     fn status_code(&self) -> StatusCode {
         match self {
             Self::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::Other(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::BadRequest(_) => StatusCode::BAD_REQUEST,
             Self::Unauthorized => StatusCode::UNAUTHORIZED,

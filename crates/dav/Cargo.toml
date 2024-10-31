@@ -8,7 +8,6 @@ publish = false
 
 [dependencies]
 actix-web = { workspace = true }
-anyhow = { workspace = true }
 async-trait = { workspace = true }
 futures-util = { workspace = true }
 quick-xml = { workspace = true }

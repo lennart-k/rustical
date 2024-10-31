@@ -2590,7 +2590,6 @@ name = "rustical_dav"
 version = "0.1.0"
 dependencies = [
  "actix-web",
- "anyhow",
  "async-trait",
  "derive_more 1.0.0",
  "futures-util",

@@ -18,7 +18,7 @@ use strum::VariantNames;
 pub trait Resource: Clone {
     type PropName: FromStr + VariantNames + Clone;
     type Prop: Serialize + for<'de> Deserialize<'de> + fmt::Debug + InvalidProperty;
-    type Error: ResponseError + From<crate::Error> + From<anyhow::Error>;
+    type Error: ResponseError + From<crate::Error>;
 
     fn list_props() -> &'static [&'static str] {
         Self::PropName::VARIANTS
@@ -139,7 +139,7 @@ pub trait ResourceService: Sized + 'static {
     type MemberType: Resource<Error = Self::Error>;
     type PathComponents: for<'de> Deserialize<'de> + Sized + Clone + 'static; // defines how the resource URI maps to parameters, i.e. /{principal}/{calendar} -> (String, String)
     type Resource: Resource<Error = Self::Error>;
-    type Error: ResponseError + From<crate::Error> + From<anyhow::Error>;
+    type Error: ResponseError + From<crate::Error>;
 
     async fn new(
         req: &HttpRequest,
