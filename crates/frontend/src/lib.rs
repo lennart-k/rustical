@@ -6,6 +6,7 @@ use actix_web::{
     Responder,
 };
 use askama::Template;
+use assets::{Assets, EmbedService};
 use routes::login::{route_get_login, route_post_login};
 use rustical_store::{
     auth::{AuthenticationMiddleware, AuthenticationProvider, User},
@@ -13,6 +14,7 @@ use rustical_store::{
 };
 use std::sync::Arc;
 
+mod assets;
 mod config;
 mod routes;
 
@@ -72,11 +74,7 @@ pub fn configure_frontend<AP: AuthenticationProvider, C: CalendarStore + ?Sized>
             )
             .app_data(Data::from(auth_provider))
             .app_data(Data::from(store.clone()))
-            .service(
-                // TODO: Bundle assets in a neat way
-                actix_files::Files::new("/assets", "crates/frontend/frontend/dist/assets")
-                    .prefer_utf8(true),
-            )
+            .service(EmbedService::<Assets>::new("/assets".to_owned()))
             .service(
                 web::resource("/user/{user}").route(web::method(Method::GET).to(route_user::<C>)),
             )

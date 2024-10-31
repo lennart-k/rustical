@@ -16,4 +16,7 @@ thiserror = { workspace = true }
 tokio = { workspace = true }
 actix-web = { workspace = true }
 rustical_store = { workspace = true }
-actix-files = "0.6"
+rust-embed.workspace = true
+futures-core.workspace = true
+hex.workspace = true
+mime_guess.workspace = true

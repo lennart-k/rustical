@@ -54,6 +54,10 @@ quick-xml = { version = "0.37", features = [
   "serde-types",
   "serialize",
 ] }
+rust-embed = "8.5"
+futures-core = "0.3.31"
+hex = "0.4.3"
+mime_guess = "2.0.5"
 itertools = "0.13"
 log = "0.4"
 strum = { version = "0.26", features = ["strum_macros", "derive"] }
