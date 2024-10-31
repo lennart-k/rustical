@@ -328,10 +328,10 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
 
     #[inline]
     fn actix_additional_routes(res: actix_web::Resource) -> actix_web::Resource {
-        let report_method = || web::method(Method::from_str("REPORT").unwrap());
-        let mkcalendar_method = || web::method(Method::from_str("MKCALENDAR").unwrap());
+        let report_method = web::method(Method::from_str("REPORT").unwrap());
+        let mkcalendar_method = web::method(Method::from_str("MKCALENDAR").unwrap());
 
-        res.route(report_method().to(route_report_calendar::<C>))
-            .route(mkcalendar_method().to(route_mkcalendar::<C>))
+        res.route(report_method.to(route_report_calendar::<C>))
+            .route(mkcalendar_method.to(route_mkcalendar::<C>))
     }
 }
