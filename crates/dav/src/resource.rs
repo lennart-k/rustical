@@ -11,6 +11,7 @@ use actix_web::{http::StatusCode, HttpRequest, ResponseError};
 use async_trait::async_trait;
 use core::fmt;
 use itertools::Itertools;
+use rustical_store::auth::User;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use strum::VariantNames;
@@ -153,7 +154,7 @@ pub trait ResourceService: Sized + 'static {
         Ok(vec![])
     }
 
-    async fn get_resource(&self, principal: String) -> Result<Self::Resource, Self::Error>;
+    async fn get_resource(&self, user: User) -> Result<Self::Resource, Self::Error>;
     async fn save_resource(&self, file: Self::Resource) -> Result<(), Self::Error>;
     async fn delete_resource(&self, _use_trashbin: bool) -> Result<(), Self::Error> {
         Err(crate::Error::Unauthorized.into())

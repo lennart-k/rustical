@@ -5,6 +5,7 @@ use actix_web::HttpRequest;
 use async_trait::async_trait;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
+use rustical_store::auth::User;
 use serde::{Deserialize, Serialize};
 use strum::{EnumString, VariantNames};
 
@@ -85,8 +86,8 @@ impl ResourceService for RootResourceService {
         Ok(Self)
     }
 
-    async fn get_resource(&self, principal: String) -> Result<Self::Resource, Self::Error> {
-        Ok(RootResource { principal })
+    async fn get_resource(&self, user: User) -> Result<Self::Resource, Self::Error> {
+        Ok(RootResource { principal: user.id })
     }
 
     async fn save_resource(&self, _file: Self::Resource) -> Result<(), Self::Error> {

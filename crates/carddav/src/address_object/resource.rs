@@ -3,7 +3,7 @@ use actix_web::{dev::ResourceMap, web::Data, HttpRequest};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
-use rustical_store::{AddressObject, AddressbookStore};
+use rustical_store::{auth::User, AddressObject, AddressbookStore};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use strum::{EnumString, VariantNames};
@@ -133,8 +133,8 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressObjectResourceSer
         })
     }
 
-    async fn get_resource(&self, principal: String) -> Result<Self::Resource, Self::Error> {
-        if self.principal != principal {
+    async fn get_resource(&self, user: User) -> Result<Self::Resource, Self::Error> {
+        if self.principal != user.id {
             return Err(Error::Unauthorized);
         }
         let event = self

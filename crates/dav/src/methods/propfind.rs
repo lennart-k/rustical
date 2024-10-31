@@ -79,7 +79,7 @@ pub async fn route_propfind<R: ResourceService>(
         }
     }
 
-    let resource = resource_service.get_resource(user.id).await?;
+    let resource = resource_service.get_resource(user).await?;
     let response = resource.propfind(req.path(), props, req.resource_map())?;
 
     Ok(MultistatusElement {

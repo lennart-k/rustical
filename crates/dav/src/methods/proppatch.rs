@@ -76,7 +76,7 @@ pub async fn route_proppatch<R: ResourceService>(
         })
         .collect();
 
-    let mut resource = resource_service.get_resource(user.id).await?;
+    let mut resource = resource_service.get_resource(user).await?;
 
     let mut props_ok = Vec::new();
     let mut props_conflict = Vec::new();

@@ -6,6 +6,7 @@ use actix_web::HttpRequest;
 use async_trait::async_trait;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
+use rustical_store::auth::User;
 use rustical_store::CalendarStore;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -122,8 +123,8 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResourceService<C> 
         })
     }
 
-    async fn get_resource(&self, principal: String) -> Result<Self::Resource, Self::Error> {
-        if self.principal != principal {
+    async fn get_resource(&self, user: User) -> Result<Self::Resource, Self::Error> {
+        if self.principal != user.id {
             return Err(Error::Unauthorized);
         }
         Ok(PrincipalResource {
