@@ -25,7 +25,7 @@ pub enum AuthConfig {
     Static(StaticUserStoreConfig),
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Default)]
 pub struct TracingConfig {
     pub opentelemetry: bool,
 }
@@ -36,5 +36,6 @@ pub struct Config {
     pub auth: AuthConfig,
     pub http: HttpConfig,
     pub frontend: FrontendConfig,
+    #[serde(default)]
     pub tracing: TracingConfig,
 }
