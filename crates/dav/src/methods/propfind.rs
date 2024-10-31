@@ -1,4 +1,5 @@
 use crate::depth_header::Depth;
+use crate::privileges::UserPrivilege;
 use crate::resource::Resource;
 use crate::resource::ResourceService;
 use crate::xml::multistatus::PropstatWrapper;
@@ -52,6 +53,12 @@ pub async fn route_propfind<R: ResourceService>(
 > {
     let resource_service = R::new(&req, path_components.into_inner()).await?;
 
+    let resource = resource_service.get_resource().await?;
+    let privileges = resource.get_user_privileges(&user)?;
+    if !privileges.has(&UserPrivilege::Read) {
+        return Err(Error::Unauthorized.into());
+    }
+
     // A request body is optional. If empty we MUST return all props
     let propfind: PropfindElement = if !body.is_empty() {
         quick_xml::de::from_str(&body).map_err(Error::XmlDeserializationError)?
@@ -75,12 +82,16 @@ pub async fn route_propfind<R: ResourceService>(
     let mut member_responses = Vec::new();
     if depth != Depth::Zero {
         for (path, member) in resource_service.get_members(req.resource_map()).await? {
-            member_responses.push(member.propfind(&path, props.clone(), req.resource_map())?);
+            member_responses.push(member.propfind(
+                &path,
+                props.clone(),
+                &user,
+                req.resource_map(),
+            )?);
         }
     }
 
-    let resource = resource_service.get_resource(user).await?;
-    let response = resource.propfind(req.path(), props, req.resource_map())?;
+    let response = resource.propfind(req.path(), props, &user, req.resource_map())?;
 
     Ok(MultistatusElement {
         responses: vec![response],

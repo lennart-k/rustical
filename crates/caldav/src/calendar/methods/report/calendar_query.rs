@@ -5,7 +5,7 @@ use rustical_dav::{
     resource::Resource,
     xml::{multistatus::PropstatWrapper, MultistatusElement},
 };
-use rustical_store::{CalendarObject, CalendarStore};
+use rustical_store::{auth::User, CalendarObject, CalendarStore};
 use serde::Deserialize;
 
 use crate::{
@@ -206,6 +206,7 @@ pub async fn get_objects_calendar_query<C: CalendarStore + ?Sized>(
 pub async fn handle_calendar_query<C: CalendarStore + ?Sized>(
     cal_query: CalendarQueryRequest,
     req: HttpRequest,
+    user: &User,
     principal: &str,
     cal_id: &str,
     cal_store: &C,
@@ -230,11 +231,13 @@ pub async fn handle_calendar_query<C: CalendarStore + ?Sized>(
             vec![principal, cal_id, object.get_id()],
         )
         .unwrap();
-        responses.push(CalendarObjectResource::from(object).propfind(
-            &path,
-            props.clone(),
-            req.resource_map(),
-        )?);
+        responses.push(
+            CalendarObjectResource {
+                object,
+                principal: principal.to_owned(),
+            }
+            .propfind(&path, props.clone(), user, req.resource_map())?,
+        );
     }
 
     Ok(MultistatusElement {

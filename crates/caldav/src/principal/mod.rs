@@ -4,6 +4,7 @@ use actix_web::dev::ResourceMap;
 use actix_web::web::Data;
 use actix_web::HttpRequest;
 use async_trait::async_trait;
+use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
 use rustical_store::auth::User;
@@ -42,6 +43,10 @@ pub enum PrincipalProp {
     // WebDAV Current Principal Extension (RFC 5397)
     CurrentUserPrincipal(HrefElement),
 
+    // WebDAV Access Control (RFC 3744)
+    Owner(HrefElement),
+    CurrentUserPrivilegeSet(UserPrivilegeSet),
+
     // CalDAV (RFC 4791)
     #[serde(rename = "C:calendar-home-set")]
     CalendarHomeSet(HrefElement),
@@ -63,10 +68,18 @@ impl InvalidProperty for PrincipalProp {
 pub enum PrincipalPropName {
     Resourcetype,
     CurrentUserPrincipal,
+    Owner,
+    CurrentUserPrivilegeSet,
     #[strum(serialize = "principal-URL")]
     PrincipalUrl,
     CalendarHomeSet,
     CalendarUserAddressSet,
+}
+
+impl PrincipalResource {
+    pub fn get_principal_url(rmap: &ResourceMap, principal: &str) -> String {
+        Self::get_url(rmap, vec![principal]).unwrap()
+    }
 }
 
 impl Resource for PrincipalResource {
@@ -77,6 +90,7 @@ impl Resource for PrincipalResource {
     fn get_prop(
         &self,
         rmap: &ResourceMap,
+        user: &User,
         prop: Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         let principal_href = HrefElement::new(Self::get_url(rmap, vec![&self.principal]).unwrap());
@@ -85,6 +99,12 @@ impl Resource for PrincipalResource {
             PrincipalPropName::Resourcetype => PrincipalProp::Resourcetype(Resourcetype::default()),
             PrincipalPropName::CurrentUserPrincipal => {
                 PrincipalProp::CurrentUserPrincipal(principal_href)
+            }
+            PrincipalPropName::Owner => PrincipalProp::Owner(HrefElement::new(
+                PrincipalResource::get_url(rmap, vec![&self.principal]).unwrap(),
+            )),
+            PrincipalPropName::CurrentUserPrivilegeSet => {
+                PrincipalProp::CurrentUserPrivilegeSet(self.get_user_privileges(user)?)
             }
             PrincipalPropName::PrincipalUrl => PrincipalProp::PrincipalUrl(principal_href),
             PrincipalPropName::CalendarHomeSet => PrincipalProp::CalendarHomeSet(principal_href),
@@ -97,6 +117,10 @@ impl Resource for PrincipalResource {
     #[inline]
     fn resource_name() -> &'static str {
         "caldav_principal"
+    }
+
+    fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
+        Ok(UserPrivilegeSet::owner_only(self.principal == user.id))
     }
 }
 
@@ -123,10 +147,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResourceService<C> 
         })
     }
 
-    async fn get_resource(&self, user: User) -> Result<Self::Resource, Self::Error> {
-        if self.principal != user.id {
-            return Err(Error::Unauthorized);
-        }
+    async fn get_resource(&self) -> Result<Self::Resource, Self::Error> {
         Ok(PrincipalResource {
             principal: self.principal.to_owned(),
         })

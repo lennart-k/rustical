@@ -12,6 +12,7 @@ use rustical_dav::{
     },
 };
 use rustical_store::{
+    auth::User,
     synctoken::{format_synctoken, parse_synctoken},
     AddressbookStore,
 };
@@ -42,6 +43,7 @@ pub struct SyncCollectionRequest {
 pub async fn handle_sync_collection<AS: AddressbookStore + ?Sized>(
     sync_collection: SyncCollectionRequest,
     req: HttpRequest,
+    user: &User,
     principal: &str,
     addressbook_id: &str,
     addr_store: &AS,
@@ -69,11 +71,13 @@ pub async fn handle_sync_collection<AS: AddressbookStore + ?Sized>(
             vec![principal, addressbook_id, &object.get_id()],
         )
         .unwrap();
-        responses.push(AddressObjectResource::from(object).propfind(
-            &path,
-            props.clone(),
-            req.resource_map(),
-        )?);
+        responses.push(
+            AddressObjectResource {
+                object,
+                principal: principal.to_owned(),
+            }
+            .propfind(&path, props.clone(), user, req.resource_map())?,
+        );
     }
 
     for object_id in deleted_objects {

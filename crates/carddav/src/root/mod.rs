@@ -3,6 +3,7 @@ use crate::Error;
 use actix_web::dev::ResourceMap;
 use actix_web::HttpRequest;
 use async_trait::async_trait;
+use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
 use rustical_store::auth::User;
@@ -13,8 +14,8 @@ use strum::{EnumString, VariantNames};
 #[strum(serialize_all = "kebab-case")]
 pub enum RootPropName {
     Resourcetype,
-    // Defined by RFC 5397
     CurrentUserPrincipal,
+    CurrentUserPrivilegeSet,
 }
 
 #[derive(Deserialize, Serialize, Default, Debug)]
@@ -31,7 +32,11 @@ pub enum RootProp {
 
     // WebDAV Current Principal Extension (RFC 5397)
     CurrentUserPrincipal(HrefElement),
-    #[serde(other)]
+
+    // WebDAV Access Control Protocol (RFC 3477)
+    CurrentUserPrivilegeSet(UserPrivilegeSet),
+
+    #[serde(untagged)]
     Invalid,
 }
 
@@ -42,9 +47,7 @@ impl InvalidProperty for RootProp {
 }
 
 #[derive(Clone)]
-pub struct RootResource {
-    principal: String,
-}
+pub struct RootResource;
 
 impl Resource for RootResource {
     type PropName = RootPropName;
@@ -54,19 +57,27 @@ impl Resource for RootResource {
     fn get_prop(
         &self,
         rmap: &ResourceMap,
+        user: &User,
         prop: Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
             RootPropName::Resourcetype => RootProp::Resourcetype(Resourcetype::default()),
-            RootPropName::CurrentUserPrincipal => RootProp::CurrentUserPrincipal(HrefElement::new(
-                PrincipalResource::get_url(rmap, vec![&self.principal]).unwrap(),
-            )),
+            RootPropName::CurrentUserPrincipal => RootProp::CurrentUserPrincipal(
+                PrincipalResource::get_principal_url(rmap, &user.id).into(),
+            ),
+            RootPropName::CurrentUserPrivilegeSet => {
+                RootProp::CurrentUserPrivilegeSet(self.get_user_privileges(user)?)
+            }
         })
     }
 
     #[inline]
     fn resource_name() -> &'static str {
         "carddav_root"
+    }
+
+    fn get_user_privileges(&self, _user: &User) -> Result<UserPrivilegeSet, Self::Error> {
+        Ok(UserPrivilegeSet::all())
     }
 }
 
@@ -86,8 +97,8 @@ impl ResourceService for RootResourceService {
         Ok(Self)
     }
 
-    async fn get_resource(&self, user: User) -> Result<Self::Resource, Self::Error> {
-        Ok(RootResource { principal: user.id })
+    async fn get_resource(&self) -> Result<Self::Resource, Self::Error> {
+        Ok(RootResource)
     }
 
     async fn save_resource(&self, _file: Self::Resource) -> Result<(), Self::Error> {

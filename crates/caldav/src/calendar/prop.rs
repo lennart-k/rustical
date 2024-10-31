@@ -49,55 +49,6 @@ pub struct Resourcetype {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum UserPrivilege {
-    Read,
-    ReadAcl,
-    Write,
-    WriteAcl,
-    WriteContent,
-    ReadCurrentUserPrivilegeSet,
-    Bind,
-    Unbind,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct UserPrivilegeWrapper {
-    #[serde(rename = "$value")]
-    privilege: UserPrivilege,
-}
-
-impl From<UserPrivilege> for UserPrivilegeWrapper {
-    fn from(value: UserPrivilege) -> Self {
-        Self { privilege: value }
-    }
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct UserPrivilegeSet {
-    privilege: Vec<UserPrivilegeWrapper>,
-}
-
-impl Default for UserPrivilegeSet {
-    fn default() -> Self {
-        Self {
-            privilege: vec![
-                UserPrivilege::Read.into(),
-                UserPrivilege::ReadAcl.into(),
-                UserPrivilege::Write.into(),
-                UserPrivilege::WriteAcl.into(),
-                UserPrivilege::WriteContent.into(),
-                UserPrivilege::ReadCurrentUserPrivilegeSet.into(),
-                UserPrivilege::Bind.into(),
-                UserPrivilege::Unbind.into(),
-            ],
-        }
-    }
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(rename_all = "kebab-case")]
 pub enum ReportMethod {
     CalendarQuery,
     CalendarMultiget,

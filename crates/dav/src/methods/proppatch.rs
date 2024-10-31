@@ -1,3 +1,4 @@
+use crate::privileges::UserPrivilege;
 use crate::resource::InvalidProperty;
 use crate::resource::Resource;
 use crate::resource::ResourceService;
@@ -76,7 +77,11 @@ pub async fn route_proppatch<R: ResourceService>(
         })
         .collect();
 
-    let mut resource = resource_service.get_resource(user).await?;
+    let mut resource = resource_service.get_resource().await?;
+    let privileges = resource.get_user_privileges(&user)?;
+    if !privileges.has(&UserPrivilege::Write) {
+        return Err(Error::Unauthorized.into());
+    }
 
     let mut props_ok = Vec::new();
     let mut props_conflict = Vec::new();

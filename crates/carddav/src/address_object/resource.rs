@@ -1,8 +1,12 @@
-use crate::Error;
+use crate::{principal::PrincipalResource, Error};
 use actix_web::{dev::ResourceMap, web::Data, HttpRequest};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
-use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
+use rustical_dav::{
+    privileges::UserPrivilegeSet,
+    resource::{InvalidProperty, Resource, ResourceService},
+    xml::HrefElement,
+};
 use rustical_store::{auth::User, AddressObject, AddressbookStore};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -24,6 +28,9 @@ pub enum AddressObjectPropName {
     Getetag,
     AddressData,
     Getcontenttype,
+    CurrentUserPrincipal,
+    Owner,
+    CurrentUserPrivilegeSet,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -32,6 +39,13 @@ pub enum AddressObjectProp {
     // WebDAV (RFC 2518)
     Getetag(String),
     Getcontenttype(String),
+
+    // WebDAV Current Principal Extension (RFC 5397)
+    CurrentUserPrincipal(HrefElement),
+
+    // WebDAV Access Control (RFC 3744)
+    Owner(HrefElement),
+    CurrentUserPrivilegeSet(UserPrivilegeSet),
 
     // CalDAV (RFC 4791)
     #[serde(rename = "CARD:address-data")]
@@ -47,7 +61,10 @@ impl InvalidProperty for AddressObjectProp {
 }
 
 #[derive(Clone, From, Into)]
-pub struct AddressObjectResource(AddressObject);
+pub struct AddressObjectResource {
+    pub object: AddressObject,
+    pub principal: String,
+}
 
 impl Resource for AddressObjectResource {
     type PropName = AddressObjectPropName;
@@ -56,16 +73,26 @@ impl Resource for AddressObjectResource {
 
     fn get_prop(
         &self,
-        _rmap: &ResourceMap,
+        rmap: &ResourceMap,
+        user: &User,
         prop: Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
-            AddressObjectPropName::Getetag => AddressObjectProp::Getetag(self.0.get_etag()),
+            AddressObjectPropName::Getetag => AddressObjectProp::Getetag(self.object.get_etag()),
             AddressObjectPropName::AddressData => {
-                AddressObjectProp::AddressData(self.0.get_vcf().to_owned())
+                AddressObjectProp::AddressData(self.object.get_vcf().to_owned())
             }
             AddressObjectPropName::Getcontenttype => {
                 AddressObjectProp::Getcontenttype("text/vcard;charset=utf-8".to_owned())
+            }
+            AddressObjectPropName::CurrentUserPrincipal => AddressObjectProp::CurrentUserPrincipal(
+                HrefElement::new(PrincipalResource::get_principal_url(rmap, &user.id)),
+            ),
+            AddressObjectPropName::Owner => AddressObjectProp::Owner(
+                PrincipalResource::get_principal_url(rmap, &self.principal).into(),
+            ),
+            AddressObjectPropName::CurrentUserPrivilegeSet => {
+                AddressObjectProp::CurrentUserPrivilegeSet(UserPrivilegeSet::all())
             }
         })
     }
@@ -73,6 +100,10 @@ impl Resource for AddressObjectResource {
     #[inline]
     fn resource_name() -> &'static str {
         "carddav_address_object"
+    }
+
+    fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
+        Ok(UserPrivilegeSet::owner_only(self.principal == user.id))
     }
 }
 
@@ -133,15 +164,15 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressObjectResourceSer
         })
     }
 
-    async fn get_resource(&self, user: User) -> Result<Self::Resource, Self::Error> {
-        if self.principal != user.id {
-            return Err(Error::Unauthorized);
-        }
-        let event = self
+    async fn get_resource(&self) -> Result<Self::Resource, Self::Error> {
+        let object = self
             .addr_store
             .get_object(&self.principal, &self.cal_id, &self.object_id)
             .await?;
-        Ok(event.into())
+        Ok(AddressObjectResource {
+            object,
+            principal: self.principal.to_owned(),
+        })
     }
 
     async fn save_resource(&self, _file: Self::Resource) -> Result<(), Self::Error> {

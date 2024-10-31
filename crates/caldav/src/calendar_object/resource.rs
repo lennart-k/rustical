@@ -1,9 +1,13 @@
 use super::methods::{get_event, put_event};
-use crate::Error;
+use crate::{principal::PrincipalResource, Error};
 use actix_web::{dev::ResourceMap, web::Data, HttpRequest};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
-use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
+use rustical_dav::{
+    privileges::UserPrivilegeSet,
+    resource::{InvalidProperty, Resource, ResourceService},
+    xml::HrefElement,
+};
 use rustical_store::{auth::User, CalendarObject, CalendarStore};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -23,6 +27,9 @@ pub enum CalendarObjectPropName {
     Getetag,
     CalendarData,
     Getcontenttype,
+    CurrentUserPrincipal,
+    Owner,
+    CurrentUserPrivilegeSet,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -35,6 +42,13 @@ pub enum CalendarObjectProp {
     // CalDAV (RFC 4791)
     #[serde(rename = "C:calendar-data")]
     CalendarData(String),
+
+    // WebDAV Current Principal Extension (RFC 5397)
+    CurrentUserPrincipal(HrefElement),
+
+    // WebDAV Access Control (RFC 3744)
+    Owner(HrefElement),
+    CurrentUserPrivilegeSet(UserPrivilegeSet),
     #[serde(other)]
     Invalid,
 }
@@ -46,7 +60,10 @@ impl InvalidProperty for CalendarObjectProp {
 }
 
 #[derive(Clone, From, Into)]
-pub struct CalendarObjectResource(CalendarObject);
+pub struct CalendarObjectResource {
+    pub object: CalendarObject,
+    pub principal: String,
+}
 
 impl Resource for CalendarObjectResource {
     type PropName = CalendarObjectPropName;
@@ -55,16 +72,28 @@ impl Resource for CalendarObjectResource {
 
     fn get_prop(
         &self,
-        _rmap: &ResourceMap,
+        rmap: &ResourceMap,
+        user: &User,
         prop: Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
-            CalendarObjectPropName::Getetag => CalendarObjectProp::Getetag(self.0.get_etag()),
+            CalendarObjectPropName::Getetag => CalendarObjectProp::Getetag(self.object.get_etag()),
             CalendarObjectPropName::CalendarData => {
-                CalendarObjectProp::CalendarData(self.0.get_ics().to_owned())
+                CalendarObjectProp::CalendarData(self.object.get_ics().to_owned())
             }
             CalendarObjectPropName::Getcontenttype => {
                 CalendarObjectProp::Getcontenttype("text/calendar;charset=utf-8".to_owned())
+            }
+            CalendarObjectPropName::CurrentUserPrincipal => {
+                CalendarObjectProp::CurrentUserPrincipal(HrefElement::new(
+                    PrincipalResource::get_principal_url(rmap, &user.id),
+                ))
+            }
+            CalendarObjectPropName::Owner => CalendarObjectProp::Owner(
+                PrincipalResource::get_principal_url(rmap, &self.principal).into(),
+            ),
+            CalendarObjectPropName::CurrentUserPrivilegeSet => {
+                CalendarObjectProp::CurrentUserPrivilegeSet(self.get_user_privileges(&user)?)
             }
         })
     }
@@ -72,6 +101,10 @@ impl Resource for CalendarObjectResource {
     #[inline]
     fn resource_name() -> &'static str {
         "caldav_calendar_object"
+    }
+
+    fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
+        Ok(UserPrivilegeSet::owner_only(self.principal == user.id))
     }
 }
 
@@ -132,15 +165,15 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarObjectResourceServic
         })
     }
 
-    async fn get_resource(&self, user: User) -> Result<Self::Resource, Self::Error> {
-        if self.principal != user.id {
-            return Err(Error::Unauthorized);
-        }
-        let event = self
+    async fn get_resource(&self) -> Result<Self::Resource, Self::Error> {
+        let object = self
             .cal_store
             .get_object(&self.principal, &self.cal_id, &self.object_id)
             .await?;
-        Ok(event.into())
+        Ok(CalendarObjectResource {
+            object,
+            principal: self.principal.to_owned(),
+        })
     }
 
     async fn save_resource(&self, _file: Self::Resource) -> Result<(), Self::Error> {

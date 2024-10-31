@@ -4,6 +4,7 @@ use actix_web::dev::ResourceMap;
 use actix_web::web::Data;
 use actix_web::HttpRequest;
 use async_trait::async_trait;
+use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
 use rustical_store::auth::User;
@@ -68,6 +69,12 @@ pub enum PrincipalPropName {
     PrincipalAddress,
 }
 
+impl PrincipalResource {
+    pub fn get_principal_url(rmap: &ResourceMap, principal: &str) -> String {
+        Self::get_url(rmap, vec![principal]).unwrap()
+    }
+}
+
 impl Resource for PrincipalResource {
     type PropName = PrincipalPropName;
     type Prop = PrincipalProp;
@@ -76,9 +83,10 @@ impl Resource for PrincipalResource {
     fn get_prop(
         &self,
         rmap: &ResourceMap,
+        user: &User,
         prop: Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
-        let principal_href = HrefElement::new(Self::get_url(rmap, vec![&self.principal]).unwrap());
+        let principal_href = HrefElement::new(Self::get_principal_url(rmap, &self.principal));
 
         Ok(match prop {
             PrincipalPropName::Resourcetype => PrincipalProp::Resourcetype(Resourcetype::default()),
@@ -96,6 +104,10 @@ impl Resource for PrincipalResource {
     #[inline]
     fn resource_name() -> &'static str {
         "carddav_principal"
+    }
+
+    fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
+        Ok(UserPrivilegeSet::owner_only(self.principal == user.id))
     }
 }
 
@@ -122,10 +134,7 @@ impl<A: AddressbookStore + ?Sized> ResourceService for PrincipalResourceService<
         })
     }
 
-    async fn get_resource(&self, user: User) -> Result<Self::Resource, Self::Error> {
-        if self.principal != user.id {
-            return Err(Error::Unauthorized);
-        }
+    async fn get_resource(&self) -> Result<Self::Resource, Self::Error> {
         Ok(PrincipalResource {
             principal: self.principal.to_owned(),
         })

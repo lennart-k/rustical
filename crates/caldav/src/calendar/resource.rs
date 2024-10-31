@@ -2,7 +2,7 @@ use super::methods::mkcalendar::route_mkcalendar;
 use super::methods::report::route_report_calendar;
 use super::prop::{
     Resourcetype, SupportedCalendarComponent, SupportedCalendarComponentSet, SupportedCalendarData,
-    SupportedReportSet, UserPrivilegeSet,
+    SupportedReportSet,
 };
 use crate::calendar_object::resource::CalendarObjectResource;
 use crate::principal::PrincipalResource;
@@ -13,6 +13,7 @@ use actix_web::web;
 use actix_web::{web::Data, HttpRequest};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
+use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
 use rustical_store::auth::User;
@@ -43,7 +44,7 @@ pub enum CalendarPropName {
     SupportedCalendarComponentSet,
     SupportedCalendarData,
     Getcontenttype,
-    CurrentUserPrivilegeSet,
+    // CurrentUserPrivilegeSet,
     MaxResourceSize,
     SupportedReportSet,
     SyncToken,
@@ -63,7 +64,7 @@ pub enum CalendarProp {
 
     // WebDAV Access Control (RFC 3744)
     Owner(HrefElement),
-    CurrentUserPrivilegeSet(UserPrivilegeSet),
+    // CurrentUserPrivilegeSet(UserPrivilegeSet),
 
     // CalDAV (RFC 4791)
     #[serde(rename = "IC:calendar-color", alias = "calendar-color")]
@@ -113,6 +114,7 @@ impl Resource for CalendarResource {
     fn get_prop(
         &self,
         rmap: &ResourceMap,
+        user: &User,
         prop: Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
@@ -156,9 +158,9 @@ impl Resource for CalendarResource {
                 CalendarProp::Getcontenttype("text/calendar;charset=utf-8".to_owned())
             }
             CalendarPropName::MaxResourceSize => CalendarProp::MaxResourceSize(10000000),
-            CalendarPropName::CurrentUserPrivilegeSet => {
-                CalendarProp::CurrentUserPrivilegeSet(UserPrivilegeSet::default())
-            }
+            // CalendarPropName::CurrentUserPrivilegeSet => {
+            //     CalendarProp::CurrentUserPrivilegeSet(user_privileges.to_owned())
+            // }
             CalendarPropName::SupportedReportSet => {
                 CalendarProp::SupportedReportSet(SupportedReportSet::default())
             }
@@ -198,7 +200,7 @@ impl Resource for CalendarResource {
             CalendarProp::SupportedCalendarData(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Getcontenttype(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::MaxResourceSize(_) => Err(rustical_dav::Error::PropReadOnly),
-            CalendarProp::CurrentUserPrivilegeSet(_) => Err(rustical_dav::Error::PropReadOnly),
+            // CalendarProp::CurrentUserPrivilegeSet(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::SupportedReportSet(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::SyncToken(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Getctag(_) => Err(rustical_dav::Error::PropReadOnly),
@@ -237,7 +239,7 @@ impl Resource for CalendarResource {
             CalendarPropName::SupportedCalendarData => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::Getcontenttype => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::MaxResourceSize => Err(rustical_dav::Error::PropReadOnly),
-            CalendarPropName::CurrentUserPrivilegeSet => Err(rustical_dav::Error::PropReadOnly),
+            // CalendarPropName::CurrentUserPrivilegeSet => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::SupportedReportSet => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::SyncToken => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::Getctag => Err(rustical_dav::Error::PropReadOnly),
@@ -248,6 +250,10 @@ impl Resource for CalendarResource {
     fn resource_name() -> &'static str {
         "caldav_calendar"
     }
+
+    fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
+        Ok(UserPrivilegeSet::owner_only(self.0.principal == user.id))
+    }
 }
 
 #[async_trait(?Send)]
@@ -257,10 +263,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
     type Resource = CalendarResource;
     type Error = Error;
 
-    async fn get_resource(&self, user: User) -> Result<Self::Resource, Error> {
-        if self.principal != user.id {
-            return Err(Error::Unauthorized);
-        }
+    async fn get_resource(&self) -> Result<Self::Resource, Error> {
         let calendar = self
             .cal_store
             .get_calendar(&self.principal, &self.calendar_id)
@@ -285,7 +288,10 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
                         vec![&self.principal, &self.calendar_id, object.get_id()],
                     )
                     .unwrap(),
-                    object.into(),
+                    CalendarObjectResource {
+                        object,
+                        principal: self.principal.to_owned(),
+                    },
                 )
             })
             .collect())

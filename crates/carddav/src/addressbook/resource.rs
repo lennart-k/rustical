@@ -1,6 +1,6 @@
 use super::methods::mkcol::route_mkcol;
 use super::methods::report::route_report_addressbook;
-use super::prop::{Resourcetype, SupportedAddressData, SupportedReportSet, UserPrivilegeSet};
+use super::prop::{Resourcetype, SupportedAddressData, SupportedReportSet};
 use crate::address_object::resource::AddressObjectResource;
 use crate::principal::PrincipalResource;
 use crate::Error;
@@ -10,6 +10,7 @@ use actix_web::web;
 use actix_web::{web::Data, HttpRequest};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
+use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
 use rustical_store::auth::User;
@@ -99,6 +100,7 @@ impl Resource for AddressbookResource {
     fn get_prop(
         &self,
         rmap: &ResourceMap,
+        user: &User,
         prop: Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
@@ -107,12 +109,15 @@ impl Resource for AddressbookResource {
             }
             AddressbookPropName::CurrentUserPrincipal => {
                 AddressbookProp::CurrentUserPrincipal(HrefElement::new(
-                    PrincipalResource::get_url(rmap, vec![&self.0.principal]).unwrap(),
+                    PrincipalResource::get_principal_url(rmap, &self.0.principal),
                 ))
             }
-            AddressbookPropName::Owner => AddressbookProp::Owner(HrefElement::new(
-                PrincipalResource::get_url(rmap, vec![&self.0.principal]).unwrap(),
-            )),
+            AddressbookPropName::Owner => AddressbookProp::Owner(
+                PrincipalResource::get_principal_url(rmap, &self.0.principal).into(),
+            ),
+            AddressbookPropName::CurrentUserPrivilegeSet => {
+                AddressbookProp::CurrentUserPrivilegeSet(UserPrivilegeSet::all())
+            }
             AddressbookPropName::Displayname => {
                 AddressbookProp::Displayname(self.0.displayname.clone())
             }
@@ -120,9 +125,6 @@ impl Resource for AddressbookResource {
                 AddressbookProp::Getcontenttype("text/vcard;charset=utf-8".to_owned())
             }
             AddressbookPropName::MaxResourceSize => AddressbookProp::MaxResourceSize(10000000),
-            AddressbookPropName::CurrentUserPrivilegeSet => {
-                AddressbookProp::CurrentUserPrivilegeSet(UserPrivilegeSet::default())
-            }
             AddressbookPropName::SupportedReportSet => {
                 AddressbookProp::SupportedReportSet(SupportedReportSet::default())
             }
@@ -188,6 +190,10 @@ impl Resource for AddressbookResource {
     fn resource_name() -> &'static str {
         "carddav_addressbook"
     }
+
+    fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
+        Ok(UserPrivilegeSet::owner_only(self.0.principal == user.id))
+    }
 }
 
 #[async_trait(?Send)]
@@ -197,10 +203,7 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressbookResourceServi
     type Resource = AddressbookResource;
     type Error = Error;
 
-    async fn get_resource(&self, user: User) -> Result<Self::Resource, Error> {
-        if self.principal != user.id {
-            return Err(Error::Unauthorized);
-        }
+    async fn get_resource(&self) -> Result<Self::Resource, Error> {
         let addressbook = self
             .addr_store
             .get_addressbook(&self.principal, &self.addressbook_id)
@@ -225,7 +228,10 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressbookResourceServi
                         vec![&self.principal, &self.addressbook_id, object.get_id()],
                     )
                     .unwrap(),
-                    object.into(),
+                    AddressObjectResource {
+                        object,
+                        principal: self.principal.to_owned(),
+                    },
                 )
             })
             .collect())

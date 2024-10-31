@@ -8,6 +8,7 @@ use rustical_dav::{
     },
 };
 use rustical_store::{
+    auth::User,
     synctoken::{format_synctoken, parse_synctoken},
     CalendarStore,
 };
@@ -44,6 +45,7 @@ pub struct SyncCollectionRequest {
 pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
     sync_collection: SyncCollectionRequest,
     req: HttpRequest,
+    user: &User,
     principal: &str,
     cal_id: &str,
     cal_store: &C,
@@ -71,11 +73,13 @@ pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
             vec![principal, cal_id, &object.get_id()],
         )
         .unwrap();
-        responses.push(CalendarObjectResource::from(object).propfind(
-            &path,
-            props.clone(),
-            req.resource_map(),
-        )?);
+        responses.push(
+            CalendarObjectResource {
+                object,
+                principal: principal.to_owned(),
+            }
+            .propfind(&path, props.clone(), user, req.resource_map())?,
+        );
     }
 
     for object_id in deleted_objects {

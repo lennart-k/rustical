@@ -16,7 +16,7 @@ use rustical_dav::{
         MultistatusElement,
     },
 };
-use rustical_store::{CalendarObject, CalendarStore};
+use rustical_store::{auth::User, CalendarObject, CalendarStore};
 use serde::Deserialize;
 
 #[derive(Deserialize, Clone, Debug)]
@@ -65,6 +65,7 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore + ?Sized>(
 pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
     cal_multiget: CalendarMultigetRequest,
     req: HttpRequest,
+    user: &User,
     principal: &str,
     cal_id: &str,
     cal_store: &C,
@@ -88,11 +89,13 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
     let mut responses = Vec::new();
     for object in objects {
         let path = format!("{}/{}", req.path(), object.get_id());
-        responses.push(CalendarObjectResource::from(object).propfind(
-            &path,
-            props.clone(),
-            req.resource_map(),
-        )?);
+        responses.push(
+            CalendarObjectResource {
+                object,
+                principal: principal.to_owned(),
+            }
+            .propfind(&path, props.clone(), user, req.resource_map())?,
+        );
     }
 
     let not_found_responses = not_found

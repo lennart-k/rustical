@@ -1,4 +1,5 @@
 use crate::methods::{route_delete, route_propfind, route_proppatch};
+use crate::privileges::UserPrivilegeSet;
 use crate::xml::multistatus::{PropTagWrapper, PropstatElement, PropstatWrapper};
 use crate::xml::{multistatus::ResponseElement, TagList};
 use crate::Error;
@@ -25,8 +26,12 @@ pub trait Resource: Clone {
         Self::PropName::VARIANTS
     }
 
-    fn get_prop(&self, rmap: &ResourceMap, prop: Self::PropName)
-        -> Result<Self::Prop, Self::Error>;
+    fn get_prop(
+        &self,
+        rmap: &ResourceMap,
+        user: &User,
+        prop: Self::PropName,
+    ) -> Result<Self::Prop, Self::Error>;
 
     fn set_prop(&mut self, _prop: Self::Prop) -> Result<(), crate::Error> {
         Err(crate::Error::PropReadOnly)
@@ -53,10 +58,13 @@ pub trait Resource: Clone {
             .to_owned())
     }
 
+    fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error>;
+
     fn propfind(
         &self,
         path: &str,
         mut props: Vec<&str>,
+        user: &User,
         rmap: &ResourceMap,
     ) -> Result<ResponseElement<PropstatWrapper<Self::Prop>>, Self::Error> {
         if props.contains(&"propname") {
@@ -104,7 +112,7 @@ pub trait Resource: Clone {
 
         let prop_responses = valid_props
             .into_iter()
-            .map(|prop| self.get_prop(rmap, prop))
+            .map(|prop| self.get_prop(rmap, user, prop))
             .collect::<Result<Vec<Self::Prop>, Self::Error>>()?;
 
         let mut propstats = vec![PropstatWrapper::Normal(PropstatElement {
@@ -154,7 +162,7 @@ pub trait ResourceService: Sized + 'static {
         Ok(vec![])
     }
 
-    async fn get_resource(&self, user: User) -> Result<Self::Resource, Self::Error>;
+    async fn get_resource(&self) -> Result<Self::Resource, Self::Error>;
     async fn save_resource(&self, file: Self::Resource) -> Result<(), Self::Error>;
     async fn delete_resource(&self, _use_trashbin: bool) -> Result<(), Self::Error> {
         Err(crate::Error::Unauthorized.into())

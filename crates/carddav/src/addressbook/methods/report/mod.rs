@@ -47,6 +47,7 @@ pub async fn route_report_addressbook<AS: AddressbookStore + ?Sized>(
             handle_addressbook_multiget(
                 addr_multiget,
                 req,
+                &user,
                 &principal,
                 &addressbook_id,
                 addr_store.as_ref(),
@@ -57,6 +58,7 @@ pub async fn route_report_addressbook<AS: AddressbookStore + ?Sized>(
             handle_sync_collection(
                 sync_collection,
                 req,
+                &user,
                 &principal,
                 &addressbook_id,
                 addr_store.as_ref(),
