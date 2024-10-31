@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT DISTINCT object_id, max(0, synctoken) as \"synctoken!: i64\" from calendarobjectchangelog\n                WHERE synctoken > ?\n                ORDER BY synctoken ASC\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "object_id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "synctoken!: i64",
+        "ordinal": 1,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "cbe4be47b2ca1eba485de258f522dec14540a6a9bf383fcde294e8fe14160f22"
+}

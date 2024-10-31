@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT principal, id, synctoken, displayname, description, deleted_at\n                FROM addressbooks\n                WHERE principal = ? AND deleted_at IS NULL",
+  "describe": {
+    "columns": [
+      {
+        "name": "principal",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "id",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "synctoken",
+        "ordinal": 2,
+        "type_info": "Integer"
+      },
+      {
+        "name": "displayname",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "description",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "deleted_at",
+        "ordinal": 5,
+        "type_info": "Datetime"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "65c6f1c6c3e7d587f3f9a126260a0e12c5d372c754ddaf0d2a1d7b65e0119799"
+}
