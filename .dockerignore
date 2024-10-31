@@ -1,0 +1,16 @@
+target
+crates/*/target
+# For libraries ignore Cargo.lock
+crates/*/Cargo.lock
+
+db.toml
+db.sqlite3*
+config.toml
+schema.sql
+
+/.idea
+
+.env
+
+**/node_modules
+**/dist

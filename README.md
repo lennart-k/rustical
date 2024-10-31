@@ -30,7 +30,7 @@ a calendar server
   - [ ] Restore endpoint
 - [ ] Packaging
   - [x] Ensure cargo install works
-  - [ ] Docker image
+  - [x] Docker image
   - [ ] Releases
 - [ ] Locking
 - [ ] Testing such that I'm confident enough to use it myself :)
