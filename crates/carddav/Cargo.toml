@@ -21,7 +21,6 @@ actix-web-httpauth = { workspace = true }
 base64 = { workspace = true }
 serde = { workspace = true }
 tokio = { workspace = true }
-roxmltree = { workspace = true }
 url = { workspace = true }
 rustical_dav = { workspace = true }
 rustical_store = { workspace = true }

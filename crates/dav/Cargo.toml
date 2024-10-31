@@ -15,7 +15,6 @@ rustical_store = { workspace = true }
 serde = { workspace = true }
 strum = { workspace = true }
 thiserror = { workspace = true }
-roxmltree = { workspace = true }
 itertools = { workspace = true }
 log = { workspace = true }
 derive_more = { workspace = true }
