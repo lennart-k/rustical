@@ -17,13 +17,13 @@ a calendar server
     - [x] Datetime parsing
   - [x] Implement PROPPATCH
 - [x] CardDAV
-- [x] Auth (There currently is no authentication at all in place for some routes)
+- [x] Auth
+  - current state: RustiCal should be safe against unauthenticated request, however many routes are not checked for authorization yet
   - [x] static authentication
   - [ ] Access control
   - [x] preparation for different principal types (groups)
   - [x] authentication rewrite? (argon2 is very slow for each request)
     - [x] solved through app tokens
-  - [ ] OIDC support
 - [ ] Web UI
 - [x] Trash bin
   - [x] Hiding calendars instead of deleting them
@@ -32,7 +32,6 @@ a calendar server
   - [x] Ensure cargo install works
   - [x] Docker image
   - [ ] Releases
-- [ ] Locking
 - [ ] Testing such that I'm confident enough to use it myself :)
 - [x] WebDAV sync extension [RFC 6578](https://www.rfc-editor.org/rfc/rfc6578)
   - [x] implement getctag [see](https://github.com/apple/ccs-calendarserver/blob/master/doc/Extensions/caldav-ctag.txt)
