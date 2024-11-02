@@ -4,6 +4,8 @@ use actix_web::HttpResponse;
 use rustical_store::auth::User;
 use rustical_store::{Calendar, CalendarStore};
 use serde::{Deserialize, Serialize};
+use tracing::instrument;
+use tracing_actix_web::RootSpan;
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
@@ -51,11 +53,13 @@ struct MkcalendarRequest {
     set: PropElement<MkcolCalendarProp>,
 }
 
+#[instrument(parent = root_span.id(), skip(store, root_span))]
 pub async fn route_mkcalendar<C: CalendarStore + ?Sized>(
     path: Path<(String, String)>,
     body: String,
     user: User,
     store: Data<C>,
+    root_span: RootSpan,
 ) -> Result<HttpResponse, Error> {
     let (principal, cal_id) = path.into_inner();
     if principal != user.id {
