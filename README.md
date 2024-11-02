@@ -37,6 +37,10 @@ a calendar server
   - [x] implement getctag [see](https://github.com/apple/ccs-calendarserver/blob/master/doc/Extensions/caldav-ctag.txt)
   - [ ] implement WebDAV If header
 - [x] Ensure proper routing
+- [ ] Onboarding
+  - [ ] config generation
+  - [ ] usable documentation
+  - [ ] usable frontend
 
 ## Relevant RFCs
 
