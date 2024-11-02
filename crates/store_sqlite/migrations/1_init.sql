@@ -6,7 +6,7 @@ CREATE TABLE calendars (
     description TEXT,
     "order" INT DEFAULT 0 NOT NULL,
     color TEXT,
-    timezone TEXT NOT NULL,
+    timezone TEXT,
     deleted_at DATETIME,
     PRIMARY KEY (principal, id)
 );
