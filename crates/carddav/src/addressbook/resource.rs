@@ -101,7 +101,7 @@ impl Resource for AddressbookResource {
         &self,
         rmap: &ResourceMap,
         user: &User,
-        prop: Self::PropName,
+        prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
             AddressbookPropName::Resourcetype => {
@@ -163,7 +163,7 @@ impl Resource for AddressbookResource {
         }
     }
 
-    fn remove_prop(&mut self, prop: Self::PropName) -> Result<(), rustical_dav::Error> {
+    fn remove_prop(&mut self, prop: &Self::PropName) -> Result<(), rustical_dav::Error> {
         match prop {
             AddressbookPropName::Resourcetype => Err(rustical_dav::Error::PropReadOnly),
             AddressbookPropName::CurrentUserPrincipal => Err(rustical_dav::Error::PropReadOnly),

@@ -84,7 +84,7 @@ impl Resource for PrincipalResource {
         &self,
         rmap: &ResourceMap,
         user: &User,
-        prop: Self::PropName,
+        prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         let principal_href = HrefElement::new(Self::get_principal_url(rmap, &self.principal));
 

@@ -115,7 +115,7 @@ impl Resource for CalendarResource {
         &self,
         rmap: &ResourceMap,
         user: &User,
-        prop: Self::PropName,
+        prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
             CalendarPropName::Resourcetype => CalendarProp::Resourcetype(Resourcetype::default()),
@@ -208,7 +208,7 @@ impl Resource for CalendarResource {
         }
     }
 
-    fn remove_prop(&mut self, prop: Self::PropName) -> Result<(), rustical_dav::Error> {
+    fn remove_prop(&mut self, prop: &Self::PropName) -> Result<(), rustical_dav::Error> {
         match prop {
             CalendarPropName::Resourcetype => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::CurrentUserPrincipal => Err(rustical_dav::Error::PropReadOnly),

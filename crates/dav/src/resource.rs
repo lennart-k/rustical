@@ -18,7 +18,7 @@ use std::str::FromStr;
 use strum::VariantNames;
 
 pub trait Resource: Clone {
-    type PropName: FromStr + VariantNames + Clone;
+    type PropName: FromStr + VariantNames;
     type Prop: Serialize + for<'de> Deserialize<'de> + fmt::Debug + InvalidProperty;
     type Error: ResponseError + From<crate::Error>;
 
@@ -30,14 +30,14 @@ pub trait Resource: Clone {
         &self,
         rmap: &ResourceMap,
         user: &User,
-        prop: Self::PropName,
+        prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error>;
 
     fn set_prop(&mut self, _prop: Self::Prop) -> Result<(), crate::Error> {
         Err(crate::Error::PropReadOnly)
     }
 
-    fn remove_prop(&mut self, _prop: Self::PropName) -> Result<(), crate::Error> {
+    fn remove_prop(&mut self, _prop: &Self::PropName) -> Result<(), crate::Error> {
         Err(crate::Error::PropReadOnly)
     }
 
@@ -112,7 +112,7 @@ pub trait Resource: Clone {
 
         let prop_responses = valid_props
             .into_iter()
-            .map(|prop| self.get_prop(rmap, user, prop))
+            .map(|prop| self.get_prop(rmap, user, &prop))
             .collect::<Result<Vec<Self::Prop>, Self::Error>>()?;
 
         let mut propstats = vec![PropstatWrapper::Normal(PropstatElement {

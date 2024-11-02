@@ -75,7 +75,7 @@ impl Resource for AddressObjectResource {
         &self,
         rmap: &ResourceMap,
         user: &User,
-        prop: Self::PropName,
+        prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
             AddressObjectPropName::Getetag => AddressObjectProp::Getetag(self.object.get_etag()),

@@ -110,7 +110,7 @@ pub async fn route_proppatch<R: ResourceService>(
             }
             Operation::Remove(_remove_el) => {
                 match <<R::Resource as Resource>::PropName as FromStr>::from_str(&propname) {
-                    Ok(prop) => match resource.remove_prop(prop) {
+                    Ok(prop) => match resource.remove_prop(&prop) {
                         Ok(()) => {
                             props_ok.push(propname);
                         }

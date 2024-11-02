@@ -58,7 +58,7 @@ impl Resource for RootResource {
         &self,
         rmap: &ResourceMap,
         user: &User,
-        prop: Self::PropName,
+        prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
             RootPropName::Resourcetype => RootProp::Resourcetype(Resourcetype::default()),

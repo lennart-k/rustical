@@ -74,7 +74,7 @@ impl Resource for CalendarObjectResource {
         &self,
         rmap: &ResourceMap,
         user: &User,
-        prop: Self::PropName,
+        prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
             CalendarObjectPropName::Getetag => CalendarObjectProp::Getetag(self.object.get_etag()),
