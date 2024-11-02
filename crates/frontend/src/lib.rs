@@ -62,15 +62,19 @@ pub fn configure_frontend<AP: AuthenticationProvider, C: CalendarStore + ?Sized>
     cfg: &mut web::ServiceConfig,
     auth_provider: Arc<AP>,
     store: Arc<C>,
+    frontend_config: FrontendConfig,
 ) {
     cfg.service(
         web::scope("")
             .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
             .wrap(
-                SessionMiddleware::builder(CookieSessionStore::default(), Key::from(&[0; 64]))
-                    .cookie_secure(true)
-                    .cookie_content_security(actix_session::config::CookieContentSecurity::Private)
-                    .build(),
+                SessionMiddleware::builder(
+                    CookieSessionStore::default(),
+                    Key::from(&frontend_config.secret_key),
+                )
+                .cookie_secure(true)
+                .cookie_content_security(actix_session::config::CookieContentSecurity::Private)
+                .build(),
             )
             .app_data(Data::from(auth_provider))
             .app_data(Data::from(store.clone()))

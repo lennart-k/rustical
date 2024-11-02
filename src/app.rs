@@ -2,7 +2,7 @@ use actix_web::body::MessageBody;
 use actix_web::dev::{ServiceFactory, ServiceRequest, ServiceResponse};
 use actix_web::middleware::NormalizePath;
 use actix_web::{web, App};
-use rustical_frontend::configure_frontend;
+use rustical_frontend::{configure_frontend, FrontendConfig};
 use rustical_store::auth::AuthenticationProvider;
 use rustical_store::{AddressbookStore, CalendarStore};
 use std::sync::Arc;
@@ -12,6 +12,7 @@ pub fn make_app<AS: AddressbookStore + ?Sized, CS: CalendarStore + ?Sized>(
     addr_store: Arc<AS>,
     cal_store: Arc<CS>,
     auth_provider: Arc<impl AuthenticationProvider>,
+    frontend_config: FrontendConfig,
 ) -> App<
     impl ServiceFactory<
         ServiceRequest,
@@ -38,9 +39,13 @@ pub fn make_app<AS: AddressbookStore + ?Sized, CS: CalendarStore + ?Sized>(
                     rustical_carddav::configure_well_known(cfg, "/carddav".to_string())
                 }),
         )
-        .service(
-            web::scope("/frontend")
-                .configure(|cfg| configure_frontend(cfg, auth_provider.clone(), cal_store.clone())),
-        )
+        .service(web::scope("/frontend").configure(|cfg| {
+            configure_frontend(
+                cfg,
+                auth_provider.clone(),
+                cal_store.clone(),
+                frontend_config,
+            )
+        }))
         .service(web::redirect("/", "/frontend").see_other())
 }

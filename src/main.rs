@@ -50,10 +50,17 @@ async fn main() -> Result<()> {
         config::AuthConfig::Static(config) => StaticUserStore::new(config),
     });
 
-    HttpServer::new(move || make_app(addr_store.clone(), cal_store.clone(), user_store.clone()))
-        .bind((config.http.host, config.http.port))?
-        .run()
-        .await?;
+    HttpServer::new(move || {
+        make_app(
+            addr_store.clone(),
+            cal_store.clone(),
+            user_store.clone(),
+            config.frontend.clone(),
+        )
+    })
+    .bind((config.http.host, config.http.port))?
+    .run()
+    .await?;
 
     Ok(())
 }
