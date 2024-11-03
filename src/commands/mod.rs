@@ -29,9 +29,14 @@ pub fn cmd_gen_config(_args: GenConfigArgs) -> anyhow::Result<()> {
                 user: User {
                     id: "default".to_owned(),
                     displayname: Some("Default user".to_owned()),
-                    password: Some("generate a password hash with rustical pwhash".to_owned()),
+                    password: Some(
+                        "generate a password hash with rustical pwhash --algorithm argon2"
+                            .to_owned(),
+                    ),
                 },
-                app_tokens: vec![],
+                app_tokens: vec![
+                    "generate an app token hash with rustical pwhash --algorithm pbkdf2".to_owned(),
+                ],
             }],
         }),
         data_store: DataStoreConfig::Sqlite(SqliteDataStoreConfig {
