@@ -1,2 +1,2 @@
 [general]
-dirs = ["frontend/dist/templates"]
+dirs = ["public/templates"]

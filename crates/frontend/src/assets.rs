@@ -12,7 +12,7 @@ use futures_core::future::LocalBoxFuture;
 use rust_embed::RustEmbed;
 
 #[derive(RustEmbed)]
-#[folder = "frontend/dist/assets"]
+#[folder = "public/assets"]
 pub struct Assets;
 
 pub struct EmbedService<E>
