@@ -6,7 +6,7 @@ use actix_web::{
     dev::ServiceResponse,
     http::{Method, StatusCode},
     middleware::{ErrorHandlerResponse, ErrorHandlers},
-    web::{self, Data, Path, Redirect},
+    web::{self, Data, Path},
     HttpResponse, Responder,
 };
 use askama::Template;
@@ -53,7 +53,7 @@ struct CalendarPage {
 async fn route_calendar<C: CalendarStore + ?Sized>(
     path: Path<(String, String)>,
     store: Data<C>,
-    user: User,
+    _user: User,
 ) -> impl Responder {
     let (owner, cal_id) = path.into_inner();
     CalendarPage {

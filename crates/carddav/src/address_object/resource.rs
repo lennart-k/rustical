@@ -88,8 +88,8 @@ impl Resource for AddressObjectResource {
 
     fn get_prop(
         &self,
-        rmap: &ResourceMap,
-        user: &User,
+        _rmap: &ResourceMap,
+        _user: &User,
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {

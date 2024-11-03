@@ -3,7 +3,7 @@ use actix_web::{
     http::{header, StatusCode},
     FromRequest, HttpMessage, HttpResponse, ResponseError,
 };
-use derive_more::{derive::Deref, Display};
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
 use std::future::{ready, Ready};
 
