@@ -1,8 +1,45 @@
-# Rustical (WIP)
+# RustiCal
 
-a calendar server
+a CalDAV/CardDAV server
+
+## Warning: State of the project
+
+This software is not stable yet and things are subject to change.
 
 ## Installation
+
+### Manual
+
+```sh
+cargo install --git https://github.com/lennart-k/rustical
+```
+
+### Docker
+
+```sh
+docker run -p 4000:4000 -v YOUR_CONFIG_TOML:/etc/rustical/config.toml -v YOUR_DATA_DIRECTORY:YOUR_DATA_DIRECTORY ghcr.io/lennart-k/rustical
+```
+
+## Configuration
+
+You can generate a default `config.toml` with
+```sh
+rustical gen-config
+```
+There, you can customize your username, password, and app tokens.
+Password hashes can be generated with
+```sh
+rustical pwhash
+```
+
+### Password vs app tokens
+
+The password is meant as a password you use to log in to the frontend.
+Since it's sensitive information, the secure but slow hash algorithm `argon2` is chosen.
+
+I recommend to generate random app tokens for each CalDAV/CardDAV client.
+These can use the faster `pbkdf2` algorithm.
+
 
 ## Todo
 
