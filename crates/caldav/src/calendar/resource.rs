@@ -12,7 +12,11 @@ use actix_web::http::Method;
 use actix_web::web;
 use actix_web::{web::Data, HttpRequest};
 use async_trait::async_trait;
-use derive_more::derive::{From, Into};
+use derive_more::derive::{From, Into, TryInto};
+use rustical_dav::extension::BoxedExtension;
+use rustical_dav::extensions::{
+    CommonPropertiesExtension, CommonPropertiesProp, CommonPropertiesPropName,
+};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
@@ -30,11 +34,10 @@ pub struct CalendarResourceService<C: CalendarStore + ?Sized> {
     pub calendar_id: String,
 }
 
-#[derive(EnumString, Debug, VariantNames, Clone)]
+#[derive(EnumString, Debug, VariantNames, Clone, From, TryInto)]
 #[strum(serialize_all = "kebab-case")]
 pub enum CalendarPropName {
     Resourcetype,
-    CurrentUserPrincipal,
     Owner,
     Displayname,
     CalendarColor,
@@ -44,14 +47,17 @@ pub enum CalendarPropName {
     SupportedCalendarComponentSet,
     SupportedCalendarData,
     Getcontenttype,
-    // CurrentUserPrivilegeSet,
     MaxResourceSize,
     SupportedReportSet,
     SyncToken,
     Getctag,
+    #[from]
+    #[try_into]
+    #[strum(disabled)]
+    ExtCommonProperties(CommonPropertiesPropName),
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, From, TryInto)]
 #[serde(rename_all = "kebab-case")]
 pub enum CalendarProp {
     // WebDAV (RFC 2518)
@@ -59,12 +65,8 @@ pub enum CalendarProp {
     Displayname(Option<String>),
     Getcontenttype(String),
 
-    // WebDAV Current Principal Extension (RFC 5397)
-    CurrentUserPrincipal(HrefElement),
-
     // WebDAV Access Control (RFC 3744)
     Owner(HrefElement),
-    // CurrentUserPrivilegeSet(UserPrivilegeSet),
 
     // CalDAV (RFC 4791)
     #[serde(rename = "IC:calendar-color", alias = "calendar-color")]
@@ -93,7 +95,13 @@ pub enum CalendarProp {
 
     // Didn't find the spec
     Getctag(String),
-    #[serde(other)]
+
+    #[serde(skip_deserializing, untagged)]
+    #[from]
+    #[try_into]
+    ExtCommonProperties(CommonPropertiesProp),
+
+    #[serde(untagged)]
     Invalid,
 }
 
@@ -111,6 +119,12 @@ impl Resource for CalendarResource {
     type Prop = CalendarProp;
     type Error = Error;
 
+    fn list_extensions() -> Vec<BoxedExtension<Self>> {
+        vec![BoxedExtension::from_ext(CommonPropertiesExtension::<
+            PrincipalResource,
+        >::default())]
+    }
+
     fn get_prop(
         &self,
         rmap: &ResourceMap,
@@ -119,11 +133,6 @@ impl Resource for CalendarResource {
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
             CalendarPropName::Resourcetype => CalendarProp::Resourcetype(Resourcetype::default()),
-            CalendarPropName::CurrentUserPrincipal => {
-                CalendarProp::CurrentUserPrincipal(HrefElement::new(
-                    PrincipalResource::get_url(rmap, vec![&self.0.principal]).unwrap(),
-                ))
-            }
             CalendarPropName::Owner => CalendarProp::Owner(HrefElement::new(
                 PrincipalResource::get_url(rmap, vec![&self.0.principal]).unwrap(),
             )),
@@ -166,13 +175,13 @@ impl Resource for CalendarResource {
             }
             CalendarPropName::SyncToken => CalendarProp::SyncToken(self.0.format_synctoken()),
             CalendarPropName::Getctag => CalendarProp::Getctag(self.0.format_synctoken()),
+            _ => panic!("we shouldn't end up here"),
         })
     }
 
     fn set_prop(&mut self, prop: Self::Prop) -> Result<(), rustical_dav::Error> {
         match prop {
             CalendarProp::Resourcetype(_) => Err(rustical_dav::Error::PropReadOnly),
-            CalendarProp::CurrentUserPrincipal(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Owner(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Displayname(displayname) => {
                 self.0.displayname = displayname;
@@ -205,13 +214,13 @@ impl Resource for CalendarResource {
             CalendarProp::SyncToken(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Getctag(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Invalid => Err(rustical_dav::Error::PropReadOnly),
+            _ => panic!("we shouldn't end up here"),
         }
     }
 
     fn remove_prop(&mut self, prop: &Self::PropName) -> Result<(), rustical_dav::Error> {
         match prop {
             CalendarPropName::Resourcetype => Err(rustical_dav::Error::PropReadOnly),
-            CalendarPropName::CurrentUserPrincipal => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::Owner => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::Displayname => {
                 self.0.displayname = None;
@@ -243,6 +252,7 @@ impl Resource for CalendarResource {
             CalendarPropName::SupportedReportSet => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::SyncToken => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::Getctag => Err(rustical_dav::Error::PropReadOnly),
+            _ => panic!("we shouldn't end up here"),
         }
     }
 

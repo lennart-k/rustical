@@ -3,19 +3,25 @@ use crate::Error;
 use actix_web::dev::ResourceMap;
 use actix_web::HttpRequest;
 use async_trait::async_trait;
+use derive_more::derive::{From, TryInto};
+use rustical_dav::extension::BoxedExtension;
+use rustical_dav::extensions::{
+    CommonPropertiesExtension, CommonPropertiesProp, CommonPropertiesPropName,
+};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
-use rustical_dav::xml::HrefElement;
 use rustical_store::auth::User;
 use serde::{Deserialize, Serialize};
 use strum::{EnumString, VariantNames};
 
-#[derive(EnumString, Debug, VariantNames, Clone)]
+#[derive(EnumString, Debug, VariantNames, Clone, From, TryInto)]
 #[strum(serialize_all = "kebab-case")]
 pub enum RootPropName {
     Resourcetype,
-    CurrentUserPrincipal,
-    CurrentUserPrivilegeSet,
+    #[from]
+    #[try_into]
+    #[strum(disabled)]
+    ExtCommonProperties(CommonPropertiesPropName),
 }
 
 #[derive(Deserialize, Serialize, Default, Debug)]
@@ -24,19 +30,18 @@ pub struct Resourcetype {
     collection: (),
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, From, TryInto)]
 #[serde(rename_all = "kebab-case")]
 pub enum RootProp {
     // WebDAV (RFC 2518)
     Resourcetype(Resourcetype),
 
-    // WebDAV Current Principal Extension (RFC 5397)
-    CurrentUserPrincipal(HrefElement),
+    #[serde(skip_deserializing, untagged)]
+    #[from]
+    #[try_into]
+    ExtCommonProperties(CommonPropertiesProp),
 
-    // WebDAV Access Control Protocol (RFC 3477)
-    CurrentUserPrivilegeSet(UserPrivilegeSet),
-
-    #[serde(other)]
+    #[serde(untagged)]
     Invalid,
 }
 
@@ -54,6 +59,12 @@ impl Resource for RootResource {
     type Prop = RootProp;
     type Error = Error;
 
+    fn list_extensions() -> Vec<BoxedExtension<Self>> {
+        vec![BoxedExtension::from_ext(CommonPropertiesExtension::<
+            PrincipalResource,
+        >::default())]
+    }
+
     fn get_prop(
         &self,
         rmap: &ResourceMap,
@@ -62,12 +73,7 @@ impl Resource for RootResource {
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
             RootPropName::Resourcetype => RootProp::Resourcetype(Resourcetype::default()),
-            RootPropName::CurrentUserPrincipal => RootProp::CurrentUserPrincipal(HrefElement::new(
-                PrincipalResource::get_url(rmap, vec![&user.id]).unwrap(),
-            )),
-            RootPropName::CurrentUserPrivilegeSet => {
-                RootProp::CurrentUserPrivilegeSet(self.get_user_privileges(user)?)
-            }
+            _ => panic!("we shouldn't end up here"),
         })
     }
 

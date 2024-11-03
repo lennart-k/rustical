@@ -2,8 +2,10 @@ use super::methods::{get_event, put_event};
 use crate::{principal::PrincipalResource, Error};
 use actix_web::{dev::ResourceMap, web::Data, HttpRequest};
 use async_trait::async_trait;
-use derive_more::derive::{From, Into};
+use derive_more::derive::{From, Into, TryInto};
 use rustical_dav::{
+    extension::BoxedExtension,
+    extensions::{CommonPropertiesExtension, CommonPropertiesProp, CommonPropertiesPropName},
     privileges::UserPrivilegeSet,
     resource::{InvalidProperty, Resource, ResourceService},
     xml::HrefElement,
@@ -21,18 +23,20 @@ pub struct CalendarObjectResourceService<C: CalendarStore + ?Sized> {
     pub object_id: String,
 }
 
-#[derive(EnumString, Debug, VariantNames, Clone)]
+#[derive(EnumString, Debug, VariantNames, Clone, From, TryInto)]
 #[strum(serialize_all = "kebab-case")]
 pub enum CalendarObjectPropName {
     Getetag,
     CalendarData,
     Getcontenttype,
-    CurrentUserPrincipal,
     Owner,
-    CurrentUserPrivilegeSet,
+    #[from]
+    #[try_into]
+    #[strum(disabled)]
+    ExtCommonProperties(CommonPropertiesPropName),
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, From, TryInto)]
 #[serde(rename_all = "kebab-case")]
 pub enum CalendarObjectProp {
     // WebDAV (RFC 2518)
@@ -43,13 +47,15 @@ pub enum CalendarObjectProp {
     #[serde(rename = "C:calendar-data")]
     CalendarData(String),
 
-    // WebDAV Current Principal Extension (RFC 5397)
-    CurrentUserPrincipal(HrefElement),
-
     // WebDAV Access Control (RFC 3744)
     Owner(HrefElement),
-    CurrentUserPrivilegeSet(UserPrivilegeSet),
-    #[serde(other)]
+
+    #[serde(skip_deserializing, untagged)]
+    #[from]
+    #[try_into]
+    ExtCommonProperties(CommonPropertiesProp),
+
+    #[serde(untagged)]
     Invalid,
 }
 
@@ -70,6 +76,12 @@ impl Resource for CalendarObjectResource {
     type Prop = CalendarObjectProp;
     type Error = Error;
 
+    fn list_extensions() -> Vec<BoxedExtension<Self>> {
+        vec![BoxedExtension::from_ext(CommonPropertiesExtension::<
+            PrincipalResource,
+        >::default())]
+    }
+
     fn get_prop(
         &self,
         rmap: &ResourceMap,
@@ -84,17 +96,10 @@ impl Resource for CalendarObjectResource {
             CalendarObjectPropName::Getcontenttype => {
                 CalendarObjectProp::Getcontenttype("text/calendar;charset=utf-8".to_owned())
             }
-            CalendarObjectPropName::CurrentUserPrincipal => {
-                CalendarObjectProp::CurrentUserPrincipal(HrefElement::new(
-                    PrincipalResource::get_principal_url(rmap, &user.id),
-                ))
-            }
             CalendarObjectPropName::Owner => CalendarObjectProp::Owner(
                 PrincipalResource::get_principal_url(rmap, &self.principal).into(),
             ),
-            CalendarObjectPropName::CurrentUserPrivilegeSet => {
-                CalendarObjectProp::CurrentUserPrivilegeSet(self.get_user_privileges(&user)?)
-            }
+            _ => panic!("we shouldn't end up here"),
         })
     }
 

@@ -9,7 +9,11 @@ use actix_web::http::Method;
 use actix_web::web;
 use actix_web::{web::Data, HttpRequest};
 use async_trait::async_trait;
-use derive_more::derive::{From, Into};
+use derive_more::derive::{From, Into, TryInto};
+use rustical_dav::extension::BoxedExtension;
+use rustical_dav::extensions::{
+    CommonPropertiesExtension, CommonPropertiesProp, CommonPropertiesPropName,
+};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
@@ -27,24 +31,25 @@ pub struct AddressbookResourceService<AS: AddressbookStore + ?Sized> {
     pub addressbook_id: String,
 }
 
-#[derive(EnumString, Debug, VariantNames, Clone)]
+#[derive(EnumString, Debug, VariantNames, Clone, From, TryInto)]
 #[strum(serialize_all = "kebab-case")]
 pub enum AddressbookPropName {
     Resourcetype,
     Displayname,
     Getcontenttype,
-    CurrentUserPrincipal,
     Owner,
-    CurrentUserPrivilegeSet,
     AddressbookDescription,
     SupportedAddressData,
     SupportedReportSet,
     MaxResourceSize,
     SyncToken,
     Getctag,
+    #[try_into]
+    #[strum(disabled)]
+    ExtCommonProperties(CommonPropertiesPropName),
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, From, TryInto)]
 #[serde(rename_all = "kebab-case")]
 pub enum AddressbookProp {
     // WebDAV (RFC 2518)
@@ -52,12 +57,8 @@ pub enum AddressbookProp {
     Displayname(Option<String>),
     Getcontenttype(String),
 
-    // WebDAV Current Principal Extension (RFC 5397)
-    CurrentUserPrincipal(HrefElement),
-
     // WebDAV Access Control (RFC 3744)
     Owner(HrefElement),
-    CurrentUserPrivilegeSet(UserPrivilegeSet),
 
     // CardDAV (RFC 6352)
     #[serde(
@@ -79,7 +80,12 @@ pub enum AddressbookProp {
     // Didn't find the spec
     Getctag(String),
 
-    #[serde(other)]
+    #[serde(skip_deserializing, untagged)]
+    #[from]
+    #[try_into]
+    ExtCommonProperties(CommonPropertiesProp),
+
+    #[serde(untagged)]
     Invalid,
 }
 
@@ -97,6 +103,12 @@ impl Resource for AddressbookResource {
     type Prop = AddressbookProp;
     type Error = Error;
 
+    fn list_extensions() -> Vec<BoxedExtension<Self>> {
+        vec![BoxedExtension::from_ext(CommonPropertiesExtension::<
+            PrincipalResource,
+        >::default())]
+    }
+
     fn get_prop(
         &self,
         rmap: &ResourceMap,
@@ -107,17 +119,9 @@ impl Resource for AddressbookResource {
             AddressbookPropName::Resourcetype => {
                 AddressbookProp::Resourcetype(Resourcetype::default())
             }
-            AddressbookPropName::CurrentUserPrincipal => {
-                AddressbookProp::CurrentUserPrincipal(HrefElement::new(
-                    PrincipalResource::get_principal_url(rmap, &self.0.principal),
-                ))
-            }
             AddressbookPropName::Owner => AddressbookProp::Owner(
                 PrincipalResource::get_principal_url(rmap, &self.0.principal).into(),
             ),
-            AddressbookPropName::CurrentUserPrivilegeSet => {
-                AddressbookProp::CurrentUserPrivilegeSet(UserPrivilegeSet::all())
-            }
             AddressbookPropName::Displayname => {
                 AddressbookProp::Displayname(self.0.displayname.clone())
             }
@@ -136,13 +140,13 @@ impl Resource for AddressbookResource {
             }
             AddressbookPropName::SyncToken => AddressbookProp::SyncToken(self.0.format_synctoken()),
             AddressbookPropName::Getctag => AddressbookProp::Getctag(self.0.format_synctoken()),
+            _ => panic!("we shouldn't end up here"),
         })
     }
 
     fn set_prop(&mut self, prop: Self::Prop) -> Result<(), rustical_dav::Error> {
         match prop {
             AddressbookProp::Resourcetype(_) => Err(rustical_dav::Error::PropReadOnly),
-            AddressbookProp::CurrentUserPrincipal(_) => Err(rustical_dav::Error::PropReadOnly),
             AddressbookProp::Owner(_) => Err(rustical_dav::Error::PropReadOnly),
             AddressbookProp::Displayname(displayname) => {
                 self.0.displayname = displayname;
@@ -154,19 +158,18 @@ impl Resource for AddressbookResource {
             }
             AddressbookProp::Getcontenttype(_) => Err(rustical_dav::Error::PropReadOnly),
             AddressbookProp::MaxResourceSize(_) => Err(rustical_dav::Error::PropReadOnly),
-            AddressbookProp::CurrentUserPrivilegeSet(_) => Err(rustical_dav::Error::PropReadOnly),
             AddressbookProp::SupportedReportSet(_) => Err(rustical_dav::Error::PropReadOnly),
             AddressbookProp::SupportedAddressData(_) => Err(rustical_dav::Error::PropReadOnly),
             AddressbookProp::SyncToken(_) => Err(rustical_dav::Error::PropReadOnly),
             AddressbookProp::Getctag(_) => Err(rustical_dav::Error::PropReadOnly),
             AddressbookProp::Invalid => Err(rustical_dav::Error::PropReadOnly),
+            _ => panic!("we shouldn't end up here"),
         }
     }
 
     fn remove_prop(&mut self, prop: &Self::PropName) -> Result<(), rustical_dav::Error> {
         match prop {
             AddressbookPropName::Resourcetype => Err(rustical_dav::Error::PropReadOnly),
-            AddressbookPropName::CurrentUserPrincipal => Err(rustical_dav::Error::PropReadOnly),
             AddressbookPropName::Owner => Err(rustical_dav::Error::PropReadOnly),
             AddressbookPropName::Displayname => {
                 self.0.displayname = None;
@@ -178,11 +181,11 @@ impl Resource for AddressbookResource {
             }
             AddressbookPropName::Getcontenttype => Err(rustical_dav::Error::PropReadOnly),
             AddressbookPropName::MaxResourceSize => Err(rustical_dav::Error::PropReadOnly),
-            AddressbookPropName::CurrentUserPrivilegeSet => Err(rustical_dav::Error::PropReadOnly),
             AddressbookPropName::SupportedReportSet => Err(rustical_dav::Error::PropReadOnly),
             AddressbookPropName::SupportedAddressData => Err(rustical_dav::Error::PropReadOnly),
             AddressbookPropName::SyncToken => Err(rustical_dav::Error::PropReadOnly),
             AddressbookPropName::Getctag => Err(rustical_dav::Error::PropReadOnly),
+            _ => panic!("we shouldn't end up here"),
         }
     }
 

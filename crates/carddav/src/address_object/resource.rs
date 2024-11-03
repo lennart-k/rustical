@@ -1,8 +1,10 @@
 use crate::{principal::PrincipalResource, Error};
 use actix_web::{dev::ResourceMap, web::Data, HttpRequest};
 use async_trait::async_trait;
-use derive_more::derive::{From, Into};
+use derive_more::derive::{From, Into, TryInto};
 use rustical_dav::{
+    extension::BoxedExtension,
+    extensions::{CommonPropertiesExtension, CommonPropertiesProp, CommonPropertiesPropName},
     privileges::UserPrivilegeSet,
     resource::{InvalidProperty, Resource, ResourceService},
     xml::HrefElement,
@@ -22,18 +24,20 @@ pub struct AddressObjectResourceService<AS: AddressbookStore + ?Sized> {
     pub object_id: String,
 }
 
-#[derive(EnumString, Debug, VariantNames, Clone)]
+#[derive(EnumString, Debug, VariantNames, Clone, From, TryInto)]
 #[strum(serialize_all = "kebab-case")]
 pub enum AddressObjectPropName {
     Getetag,
     AddressData,
     Getcontenttype,
-    CurrentUserPrincipal,
     Owner,
-    CurrentUserPrivilegeSet,
+    #[from]
+    #[try_into]
+    #[strum(disabled)]
+    ExtCommonProperties(CommonPropertiesPropName),
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, From, TryInto)]
 #[serde(rename_all = "kebab-case")]
 pub enum AddressObjectProp {
     // WebDAV (RFC 2518)
@@ -50,7 +54,13 @@ pub enum AddressObjectProp {
     // CalDAV (RFC 4791)
     #[serde(rename = "CARD:address-data")]
     AddressData(String),
-    #[serde(other)]
+
+    #[serde(skip_deserializing, untagged)]
+    #[from]
+    #[try_into]
+    ExtCommonProperties(CommonPropertiesProp),
+
+    #[serde(untagged)]
     Invalid,
 }
 
@@ -71,6 +81,12 @@ impl Resource for AddressObjectResource {
     type Prop = AddressObjectProp;
     type Error = Error;
 
+    fn list_extensions() -> Vec<BoxedExtension<Self>> {
+        vec![BoxedExtension::from_ext(CommonPropertiesExtension::<
+            PrincipalResource,
+        >::default())]
+    }
+
     fn get_prop(
         &self,
         rmap: &ResourceMap,
@@ -85,15 +101,10 @@ impl Resource for AddressObjectResource {
             AddressObjectPropName::Getcontenttype => {
                 AddressObjectProp::Getcontenttype("text/vcard;charset=utf-8".to_owned())
             }
-            AddressObjectPropName::CurrentUserPrincipal => AddressObjectProp::CurrentUserPrincipal(
-                HrefElement::new(PrincipalResource::get_principal_url(rmap, &user.id)),
-            ),
             AddressObjectPropName::Owner => AddressObjectProp::Owner(
                 PrincipalResource::get_principal_url(rmap, &self.principal).into(),
             ),
-            AddressObjectPropName::CurrentUserPrivilegeSet => {
-                AddressObjectProp::CurrentUserPrivilegeSet(UserPrivilegeSet::all())
-            }
+            _ => panic!("we shouldn't end up here"),
         })
     }
 

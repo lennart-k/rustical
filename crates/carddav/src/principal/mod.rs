@@ -4,6 +4,11 @@ use actix_web::dev::ResourceMap;
 use actix_web::web::Data;
 use actix_web::HttpRequest;
 use async_trait::async_trait;
+use derive_more::derive::{From, TryInto};
+use rustical_dav::extension::BoxedExtension;
+use rustical_dav::extensions::{
+    CommonPropertiesExtension, CommonPropertiesProp, CommonPropertiesPropName,
+};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
@@ -18,7 +23,7 @@ pub struct PrincipalResourceService<A: AddressbookStore + ?Sized> {
     addr_store: Arc<A>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct PrincipalResource {
     principal: String,
 }
@@ -30,7 +35,7 @@ pub struct Resourcetype {
     collection: (),
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, From, TryInto)]
 #[serde(rename_all = "kebab-case")]
 pub enum PrincipalProp {
     // WebDAV (RFC 2518)
@@ -40,15 +45,18 @@ pub enum PrincipalProp {
     #[serde(rename = "principal-URL")]
     PrincipalUrl(HrefElement),
 
-    // WebDAV Current Principal Extension (RFC 5397)
-    CurrentUserPrincipal(HrefElement),
-
     // CardDAV (RFC 6352)
     #[serde(rename = "CARD:addressbook-home-set")]
     AddressbookHomeSet(HrefElement),
     #[serde(rename = "CARD:principal-address")]
     PrincipalAddress(Option<HrefElement>),
-    #[serde(other)]
+
+    #[serde(skip_deserializing, untagged)]
+    #[from]
+    #[try_into]
+    ExtRFC5397RFC3477(CommonPropertiesProp),
+
+    #[serde(untagged)]
     Invalid,
 }
 
@@ -58,15 +66,18 @@ impl InvalidProperty for PrincipalProp {
     }
 }
 
-#[derive(EnumString, Debug, VariantNames, Clone)]
+#[derive(EnumString, Debug, VariantNames, Clone, From, TryInto)]
 #[strum(serialize_all = "kebab-case")]
 pub enum PrincipalPropName {
     Resourcetype,
-    CurrentUserPrincipal,
     #[strum(serialize = "principal-URL")]
     PrincipalUrl,
     AddressbookHomeSet,
     PrincipalAddress,
+    #[from]
+    #[try_into]
+    #[strum(disabled)]
+    ExtRFC5397(CommonPropertiesPropName),
 }
 
 impl PrincipalResource {
@@ -80,6 +91,12 @@ impl Resource for PrincipalResource {
     type Prop = PrincipalProp;
     type Error = Error;
 
+    fn list_extensions() -> Vec<BoxedExtension<Self>> {
+        vec![BoxedExtension::from_ext(CommonPropertiesExtension::<
+            PrincipalResource,
+        >::default())]
+    }
+
     fn get_prop(
         &self,
         rmap: &ResourceMap,
@@ -90,14 +107,12 @@ impl Resource for PrincipalResource {
 
         Ok(match prop {
             PrincipalPropName::Resourcetype => PrincipalProp::Resourcetype(Resourcetype::default()),
-            PrincipalPropName::CurrentUserPrincipal => {
-                PrincipalProp::CurrentUserPrincipal(principal_href)
-            }
             PrincipalPropName::PrincipalUrl => PrincipalProp::PrincipalUrl(principal_href),
             PrincipalPropName::AddressbookHomeSet => {
                 PrincipalProp::AddressbookHomeSet(principal_href)
             }
             PrincipalPropName::PrincipalAddress => PrincipalProp::PrincipalAddress(None),
+            _ => panic!("we shouldn't end up here"),
         })
     }
 

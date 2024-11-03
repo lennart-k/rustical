@@ -4,6 +4,11 @@ use actix_web::dev::ResourceMap;
 use actix_web::web::Data;
 use actix_web::HttpRequest;
 use async_trait::async_trait;
+use derive_more::derive::{From, TryInto};
+use rustical_dav::extension::BoxedExtension;
+use rustical_dav::extensions::{
+    CommonPropertiesExtension, CommonPropertiesProp, CommonPropertiesPropName,
+};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
@@ -30,7 +35,7 @@ pub struct Resourcetype {
     collection: (),
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, From, TryInto)]
 #[serde(rename_all = "kebab-case")]
 pub enum PrincipalProp {
     // WebDAV (RFC 2518)
@@ -40,12 +45,8 @@ pub enum PrincipalProp {
     #[serde(rename = "principal-URL")]
     PrincipalUrl(HrefElement),
 
-    // WebDAV Current Principal Extension (RFC 5397)
-    CurrentUserPrincipal(HrefElement),
-
     // WebDAV Access Control (RFC 3744)
     Owner(HrefElement),
-    CurrentUserPrivilegeSet(UserPrivilegeSet),
 
     // CalDAV (RFC 4791)
     #[serde(rename = "C:calendar-home-set")]
@@ -53,7 +54,12 @@ pub enum PrincipalProp {
     #[serde(rename = "C:calendar-user-address-set")]
     CalendarUserAddressSet(HrefElement),
 
-    #[serde(other)]
+    #[serde(skip_deserializing, untagged)]
+    #[from]
+    #[try_into]
+    ExtCommonProperties(CommonPropertiesProp),
+
+    #[serde(untagged)]
     Invalid,
 }
 
@@ -63,17 +69,19 @@ impl InvalidProperty for PrincipalProp {
     }
 }
 
-#[derive(EnumString, Debug, VariantNames, Clone)]
+#[derive(EnumString, Debug, VariantNames, Clone, From, TryInto)]
 #[strum(serialize_all = "kebab-case")]
 pub enum PrincipalPropName {
     Resourcetype,
-    CurrentUserPrincipal,
     Owner,
-    CurrentUserPrivilegeSet,
     #[strum(serialize = "principal-URL")]
     PrincipalUrl,
     CalendarHomeSet,
     CalendarUserAddressSet,
+    #[from]
+    #[try_into]
+    #[strum(disabled)]
+    ExtCommonProperties(CommonPropertiesPropName),
 }
 
 impl PrincipalResource {
@@ -87,6 +95,12 @@ impl Resource for PrincipalResource {
     type Prop = PrincipalProp;
     type Error = Error;
 
+    fn list_extensions() -> Vec<BoxedExtension<Self>> {
+        vec![BoxedExtension::from_ext(CommonPropertiesExtension::<
+            PrincipalResource,
+        >::default())]
+    }
+
     fn get_prop(
         &self,
         rmap: &ResourceMap,
@@ -97,20 +111,15 @@ impl Resource for PrincipalResource {
 
         Ok(match prop {
             PrincipalPropName::Resourcetype => PrincipalProp::Resourcetype(Resourcetype::default()),
-            PrincipalPropName::CurrentUserPrincipal => {
-                PrincipalProp::CurrentUserPrincipal(principal_href)
-            }
             PrincipalPropName::Owner => PrincipalProp::Owner(HrefElement::new(
                 PrincipalResource::get_url(rmap, vec![&self.principal]).unwrap(),
             )),
-            PrincipalPropName::CurrentUserPrivilegeSet => {
-                PrincipalProp::CurrentUserPrivilegeSet(self.get_user_privileges(user)?)
-            }
             PrincipalPropName::PrincipalUrl => PrincipalProp::PrincipalUrl(principal_href),
             PrincipalPropName::CalendarHomeSet => PrincipalProp::CalendarHomeSet(principal_href),
             PrincipalPropName::CalendarUserAddressSet => {
                 PrincipalProp::CalendarUserAddressSet(principal_href)
             }
+            _ => panic!("we shouldn't end up here"),
         })
     }
 

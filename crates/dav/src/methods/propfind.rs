@@ -1,5 +1,6 @@
 use crate::depth_header::Depth;
 use crate::privileges::UserPrivilege;
+use crate::resource::InvalidProperty;
 use crate::resource::Resource;
 use crate::resource::ResourceService;
 use crate::xml::multistatus::PropstatWrapper;

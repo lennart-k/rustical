@@ -1,3 +1,4 @@
+use crate::extension::BoxedExtension;
 use crate::methods::{route_delete, route_propfind, route_proppatch};
 use crate::privileges::UserPrivilegeSet;
 use crate::xml::multistatus::{PropTagWrapper, PropstatElement, PropstatWrapper};
@@ -17,13 +18,31 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use strum::VariantNames;
 
+pub trait ResourceReadProp: Serialize + fmt::Debug + InvalidProperty {}
+impl<T: Serialize + fmt::Debug + InvalidProperty> ResourceReadProp for T {}
+
+pub trait ResourceProp: ResourceReadProp + for<'de> Deserialize<'de> {}
+impl<T: ResourceReadProp + for<'de> Deserialize<'de>> ResourceProp for T {}
+
+pub trait ResourcePropName: FromStr + VariantNames {}
+impl<T: FromStr + VariantNames> ResourcePropName for T {}
+
 pub trait Resource: Clone {
-    type PropName: FromStr + VariantNames;
-    type Prop: Serialize + for<'de> Deserialize<'de> + fmt::Debug + InvalidProperty;
+    type PropName: ResourcePropName;
+    type Prop: ResourceProp;
     type Error: ResponseError + From<crate::Error>;
 
-    fn list_props() -> &'static [&'static str] {
+    fn list_extensions() -> Vec<BoxedExtension<Self>> {
+        vec![]
+    }
+
+    fn list_props() -> Vec<&'static str> {
         Self::PropName::VARIANTS
+            .iter()
+            .map(|&prop| prop)
+            // Bodge, since VariantNames somehow includes Ext... props despite the strum(disabled) flag
+            .filter(|prop| !prop.starts_with("ext-"))
+            .collect()
     }
 
     fn get_prop(
@@ -74,10 +93,18 @@ pub trait Resource: Clone {
                     Error::BadRequest("propname MUST be the only queried prop".to_owned()).into(),
                 );
             }
-            let props: Vec<String> = Self::list_props()
+            let mut props: Vec<String> = Self::list_props()
                 .iter()
                 .map(|&prop| prop.to_string())
                 .collect();
+            for extension in Self::list_extensions() {
+                let ext_props: Vec<String> = extension
+                    .list_props()
+                    .iter()
+                    .map(|&prop| prop.to_string())
+                    .collect();
+                props.extend(ext_props);
+            }
             return Ok(ResponseElement {
                 href: path.to_owned(),
                 propstat: vec![PropstatWrapper::TagList(PropstatElement {
@@ -95,6 +122,10 @@ pub trait Resource: Clone {
                 );
             }
             props = Self::list_props().into();
+            for extension in Self::list_extensions() {
+                let ext_props: Vec<&str> = extension.list_props().into();
+                props.extend(ext_props);
+            }
         }
 
         let (valid_props, invalid_props): (Vec<Option<Self::PropName>>, Vec<Option<&str>>) = props
@@ -108,12 +139,19 @@ pub trait Resource: Clone {
             })
             .unzip();
         let valid_props: Vec<Self::PropName> = valid_props.into_iter().flatten().collect();
-        let invalid_props: Vec<&str> = invalid_props.into_iter().flatten().collect();
+        let mut invalid_props: Vec<&str> = invalid_props.into_iter().flatten().collect();
 
-        let prop_responses = valid_props
+        let mut prop_responses = valid_props
             .into_iter()
             .map(|prop| self.get_prop(rmap, user, &prop))
             .collect::<Result<Vec<Self::Prop>, Self::Error>>()?;
+
+        for extension in Self::list_extensions() {
+            let (ext_invalid_props, ext_responses) =
+                extension.propfind(self, invalid_props, user, rmap)?;
+            invalid_props = ext_invalid_props;
+            prop_responses.extend(ext_responses);
+        }
 
         let mut propstats = vec![PropstatWrapper::Normal(PropstatElement {
             status: format!("HTTP/1.1 {}", StatusCode::OK),
