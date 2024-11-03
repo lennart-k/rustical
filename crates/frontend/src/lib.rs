@@ -3,9 +3,11 @@ use actix_session::{
 };
 use actix_web::{
     cookie::{Key, SameSite},
-    http::Method,
-    web::{self, Data, Path},
-    Responder,
+    dev::ServiceResponse,
+    http::{Method, StatusCode},
+    middleware::{ErrorHandlerResponse, ErrorHandlers},
+    web::{self, Data, Path, Redirect},
+    HttpResponse, Responder,
 };
 use askama::Template;
 use assets::{Assets, EmbedService};
@@ -60,6 +62,31 @@ async fn route_calendar<C: CalendarStore + ?Sized>(
     }
 }
 
+fn unauthorized_handler<B>(res: ServiceResponse<B>) -> actix_web::Result<ErrorHandlerResponse<B>> {
+    let (req, _) = res.into_parts();
+    let login_url = req.url_for_static("frontend_login").unwrap().to_string();
+
+    // let response = Redirect::to(login_url).respond_to(&req);
+    let response = HttpResponse::Unauthorized().body(format!(
+        r#"<!Doctype html>
+        <html>
+            <head>
+                <meta http-equiv="refresh" content="2; url={login_url}" />
+            </head>
+            <body>
+                Unauthorized, redirecting to <a href="{login_url}">login page</a>
+            </body>
+        <html>
+    "#
+    ));
+
+    let res = ServiceResponse::new(req, response)
+        .map_into_boxed_body()
+        .map_into_right_body();
+
+    Ok(ErrorHandlerResponse::Response(res))
+}
+
 pub fn configure_frontend<AP: AuthenticationProvider, C: CalendarStore + ?Sized>(
     cfg: &mut web::ServiceConfig,
     auth_provider: Arc<AP>,
@@ -68,6 +95,7 @@ pub fn configure_frontend<AP: AuthenticationProvider, C: CalendarStore + ?Sized>
 ) {
     cfg.service(
         web::scope("")
+            .wrap(ErrorHandlers::new().handler(StatusCode::UNAUTHORIZED, unauthorized_handler))
             .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
             .wrap(
                 SessionMiddleware::builder(
@@ -91,6 +119,7 @@ pub fn configure_frontend<AP: AuthenticationProvider, C: CalendarStore + ?Sized>
             )
             .service(
                 web::resource("/login")
+                    .name("frontend_login")
                     .route(web::method(Method::GET).to(route_get_login))
                     .route(web::method(Method::POST).to(route_post_login::<AP>)),
             ),

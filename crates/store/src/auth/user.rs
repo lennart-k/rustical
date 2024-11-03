@@ -1,8 +1,9 @@
 use actix_web::{
+    body::BoxBody,
     http::{header, StatusCode},
     FromRequest, HttpMessage, HttpResponse, ResponseError,
 };
-use derive_more::Display;
+use derive_more::{derive::Deref, Display};
 use serde::{Deserialize, Serialize};
 use std::future::{ready, Ready};
 
@@ -20,7 +21,7 @@ impl ResponseError for UnauthorizedError {
     fn status_code(&self) -> actix_web::http::StatusCode {
         StatusCode::UNAUTHORIZED
     }
-    fn error_response(&self) -> actix_web::HttpResponse<actix_web::body::BoxBody> {
+    fn error_response(&self) -> HttpResponse<BoxBody> {
         HttpResponse::build(StatusCode::UNAUTHORIZED)
             .insert_header((
                 header::WWW_AUTHENTICATE,
@@ -35,7 +36,6 @@ impl ResponseError for UnauthorizedError {
 }
 
 impl FromRequest for User {
-    // type Error = actix_web::Error;
     type Error = UnauthorizedError;
     type Future = Ready<Result<Self, Self::Error>>;
 
@@ -47,7 +47,6 @@ impl FromRequest for User {
             req.extensions()
                 .get::<Self>()
                 .cloned()
-                // .ok_or(ErrorUnauthorized("Not authenticated")),
                 .ok_or(UnauthorizedError),
         )
     }
