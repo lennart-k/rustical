@@ -24,7 +24,7 @@ pub struct AddressObjectResourceService<AS: AddressbookStore + ?Sized> {
     pub object_id: String,
 }
 
-#[derive(EnumString, Debug, VariantNames, Clone, From, TryInto)]
+#[derive(EnumString, VariantNames, Clone, From, TryInto)]
 #[strum(serialize_all = "kebab-case")]
 pub enum AddressObjectPropName {
     Getetag,
@@ -37,7 +37,7 @@ pub enum AddressObjectPropName {
     ExtCommonProperties(CommonPropertiesPropName),
 }
 
-#[derive(Deserialize, Serialize, Debug, From, TryInto)]
+#[derive(Deserialize, Serialize, From, TryInto)]
 #[serde(rename_all = "kebab-case")]
 pub enum AddressObjectProp {
     // WebDAV (RFC 2518)
@@ -58,7 +58,7 @@ pub enum AddressObjectProp {
     #[serde(skip_deserializing, untagged)]
     #[from]
     #[try_into]
-    ExtCommonProperties(CommonPropertiesProp),
+    ExtCommonProperties(CommonPropertiesProp<AddressObjectResource>),
 
     #[serde(untagged)]
     Invalid,
@@ -76,10 +76,18 @@ pub struct AddressObjectResource {
     pub principal: String,
 }
 
+// TODO: set correct resourcetype
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
+#[serde(rename_all = "kebab-case")]
+pub struct Resourcetype {
+    collection: (),
+}
+
 impl Resource for AddressObjectResource {
     type PropName = AddressObjectPropName;
     type Prop = AddressObjectProp;
     type Error = Error;
+    type ResourceType = Resourcetype;
 
     fn list_extensions() -> Vec<BoxedExtension<Self>> {
         vec![BoxedExtension::from_ext(CommonPropertiesExtension::<

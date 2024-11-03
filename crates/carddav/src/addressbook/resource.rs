@@ -31,10 +31,9 @@ pub struct AddressbookResourceService<AS: AddressbookStore + ?Sized> {
     pub addressbook_id: String,
 }
 
-#[derive(EnumString, Debug, VariantNames, Clone, From, TryInto)]
+#[derive(EnumString, VariantNames, Clone, From, TryInto)]
 #[strum(serialize_all = "kebab-case")]
 pub enum AddressbookPropName {
-    Resourcetype,
     Displayname,
     Getcontenttype,
     Owner,
@@ -49,11 +48,10 @@ pub enum AddressbookPropName {
     ExtCommonProperties(CommonPropertiesPropName),
 }
 
-#[derive(Debug, Deserialize, Serialize, From, TryInto)]
+#[derive(Deserialize, Serialize, From, TryInto)]
 #[serde(rename_all = "kebab-case")]
 pub enum AddressbookProp {
     // WebDAV (RFC 2518)
-    Resourcetype(Resourcetype),
     Displayname(Option<String>),
     Getcontenttype(String),
 
@@ -83,7 +81,7 @@ pub enum AddressbookProp {
     #[serde(skip_deserializing, untagged)]
     #[from]
     #[try_into]
-    ExtCommonProperties(CommonPropertiesProp),
+    ExtCommonProperties(CommonPropertiesProp<AddressbookResource>),
 
     #[serde(untagged)]
     Invalid,
@@ -102,6 +100,7 @@ impl Resource for AddressbookResource {
     type PropName = AddressbookPropName;
     type Prop = AddressbookProp;
     type Error = Error;
+    type ResourceType = Resourcetype;
 
     fn list_extensions() -> Vec<BoxedExtension<Self>> {
         vec![BoxedExtension::from_ext(CommonPropertiesExtension::<
@@ -116,9 +115,6 @@ impl Resource for AddressbookResource {
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
-            AddressbookPropName::Resourcetype => {
-                AddressbookProp::Resourcetype(Resourcetype::default())
-            }
             AddressbookPropName::Owner => AddressbookProp::Owner(
                 PrincipalResource::get_principal_url(rmap, &self.0.principal).into(),
             ),
@@ -146,7 +142,6 @@ impl Resource for AddressbookResource {
 
     fn set_prop(&mut self, prop: Self::Prop) -> Result<(), rustical_dav::Error> {
         match prop {
-            AddressbookProp::Resourcetype(_) => Err(rustical_dav::Error::PropReadOnly),
             AddressbookProp::Owner(_) => Err(rustical_dav::Error::PropReadOnly),
             AddressbookProp::Displayname(displayname) => {
                 self.0.displayname = displayname;
@@ -169,7 +164,6 @@ impl Resource for AddressbookResource {
 
     fn remove_prop(&mut self, prop: &Self::PropName) -> Result<(), rustical_dav::Error> {
         match prop {
-            AddressbookPropName::Resourcetype => Err(rustical_dav::Error::PropReadOnly),
             AddressbookPropName::Owner => Err(rustical_dav::Error::PropReadOnly),
             AddressbookPropName::Displayname => {
                 self.0.displayname = None;

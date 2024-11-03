@@ -14,10 +14,9 @@ use rustical_store::auth::User;
 use serde::{Deserialize, Serialize};
 use strum::{EnumString, VariantNames};
 
-#[derive(EnumString, Debug, VariantNames, Clone, From, TryInto)]
+#[derive(EnumString, VariantNames, Clone, From, TryInto)]
 #[strum(serialize_all = "kebab-case")]
 pub enum RootPropName {
-    Resourcetype,
     #[from]
     #[try_into]
     #[strum(disabled)]
@@ -30,16 +29,13 @@ pub struct Resourcetype {
     collection: (),
 }
 
-#[derive(Deserialize, Serialize, Debug, From, TryInto)]
+#[derive(Deserialize, Serialize, From, TryInto)]
 #[serde(rename_all = "kebab-case")]
 pub enum RootProp {
-    // WebDAV (RFC 2518)
-    Resourcetype(Resourcetype),
-
     #[serde(skip_deserializing, untagged)]
     #[from]
     #[try_into]
-    ExtCommonProperties(CommonPropertiesProp),
+    ExtCommonProperties(CommonPropertiesProp<RootResource>),
 
     #[serde(untagged)]
     Invalid,
@@ -58,6 +54,7 @@ impl Resource for RootResource {
     type PropName = RootPropName;
     type Prop = RootProp;
     type Error = Error;
+    type ResourceType = Resourcetype;
 
     fn list_extensions() -> Vec<BoxedExtension<Self>> {
         vec![BoxedExtension::from_ext(CommonPropertiesExtension::<
@@ -67,14 +64,11 @@ impl Resource for RootResource {
 
     fn get_prop(
         &self,
-        rmap: &ResourceMap,
-        user: &User,
-        prop: &Self::PropName,
+        _rmap: &ResourceMap,
+        _user: &User,
+        _prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
-        Ok(match prop {
-            RootPropName::Resourcetype => RootProp::Resourcetype(Resourcetype::default()),
-            _ => panic!("we shouldn't end up here"),
-        })
+        panic!("we shouldn't end up here")
     }
 
     #[inline]

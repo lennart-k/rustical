@@ -23,7 +23,7 @@ pub struct CalendarObjectResourceService<C: CalendarStore + ?Sized> {
     pub object_id: String,
 }
 
-#[derive(EnumString, Debug, VariantNames, Clone, From, TryInto)]
+#[derive(EnumString, VariantNames, Clone, From, TryInto)]
 #[strum(serialize_all = "kebab-case")]
 pub enum CalendarObjectPropName {
     Getetag,
@@ -36,7 +36,7 @@ pub enum CalendarObjectPropName {
     ExtCommonProperties(CommonPropertiesPropName),
 }
 
-#[derive(Deserialize, Serialize, Debug, From, TryInto)]
+#[derive(Deserialize, Serialize, From, TryInto)]
 #[serde(rename_all = "kebab-case")]
 pub enum CalendarObjectProp {
     // WebDAV (RFC 2518)
@@ -53,7 +53,7 @@ pub enum CalendarObjectProp {
     #[serde(skip_deserializing, untagged)]
     #[from]
     #[try_into]
-    ExtCommonProperties(CommonPropertiesProp),
+    ExtCommonProperties(CommonPropertiesProp<CalendarObjectResource>),
 
     #[serde(untagged)]
     Invalid,
@@ -71,10 +71,18 @@ pub struct CalendarObjectResource {
     pub principal: String,
 }
 
+// TODO: set correct resourcetype
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
+#[serde(rename_all = "kebab-case")]
+pub struct Resourcetype {
+    collection: (),
+}
+
 impl Resource for CalendarObjectResource {
     type PropName = CalendarObjectPropName;
     type Prop = CalendarObjectProp;
     type Error = Error;
+    type ResourceType = Resourcetype;
 
     fn list_extensions() -> Vec<BoxedExtension<Self>> {
         vec![BoxedExtension::from_ext(CommonPropertiesExtension::<
@@ -85,7 +93,7 @@ impl Resource for CalendarObjectResource {
     fn get_prop(
         &self,
         rmap: &ResourceMap,
-        user: &User,
+        _user: &User,
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {

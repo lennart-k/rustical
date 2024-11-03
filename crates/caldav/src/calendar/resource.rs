@@ -34,10 +34,9 @@ pub struct CalendarResourceService<C: CalendarStore + ?Sized> {
     pub calendar_id: String,
 }
 
-#[derive(EnumString, Debug, VariantNames, Clone, From, TryInto)]
+#[derive(EnumString, VariantNames, Clone, From, TryInto)]
 #[strum(serialize_all = "kebab-case")]
 pub enum CalendarPropName {
-    Resourcetype,
     Owner,
     Displayname,
     CalendarColor,
@@ -57,11 +56,10 @@ pub enum CalendarPropName {
     ExtCommonProperties(CommonPropertiesPropName),
 }
 
-#[derive(Debug, Deserialize, Serialize, From, TryInto)]
+#[derive(Deserialize, Serialize, From, TryInto)]
 #[serde(rename_all = "kebab-case")]
 pub enum CalendarProp {
     // WebDAV (RFC 2518)
-    Resourcetype(Resourcetype),
     Displayname(Option<String>),
     Getcontenttype(String),
 
@@ -99,7 +97,7 @@ pub enum CalendarProp {
     #[serde(skip_deserializing, untagged)]
     #[from]
     #[try_into]
-    ExtCommonProperties(CommonPropertiesProp),
+    ExtCommonProperties(CommonPropertiesProp<CalendarResource>),
 
     #[serde(untagged)]
     Invalid,
@@ -118,6 +116,7 @@ impl Resource for CalendarResource {
     type PropName = CalendarPropName;
     type Prop = CalendarProp;
     type Error = Error;
+    type ResourceType = Resourcetype;
 
     fn list_extensions() -> Vec<BoxedExtension<Self>> {
         vec![BoxedExtension::from_ext(CommonPropertiesExtension::<
@@ -132,7 +131,6 @@ impl Resource for CalendarResource {
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
-            CalendarPropName::Resourcetype => CalendarProp::Resourcetype(Resourcetype::default()),
             CalendarPropName::Owner => CalendarProp::Owner(HrefElement::new(
                 PrincipalResource::get_url(rmap, vec![&self.0.principal]).unwrap(),
             )),
@@ -181,7 +179,6 @@ impl Resource for CalendarResource {
 
     fn set_prop(&mut self, prop: Self::Prop) -> Result<(), rustical_dav::Error> {
         match prop {
-            CalendarProp::Resourcetype(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Owner(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Displayname(displayname) => {
                 self.0.displayname = displayname;
@@ -220,7 +217,6 @@ impl Resource for CalendarResource {
 
     fn remove_prop(&mut self, prop: &Self::PropName) -> Result<(), rustical_dav::Error> {
         match prop {
-            CalendarPropName::Resourcetype => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::Owner => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::Displayname => {
                 self.0.displayname = None;

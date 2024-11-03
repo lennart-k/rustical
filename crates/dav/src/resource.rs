@@ -11,15 +11,14 @@ use actix_web::test::TestRequest;
 use actix_web::web;
 use actix_web::{http::StatusCode, HttpRequest, ResponseError};
 use async_trait::async_trait;
-use core::fmt;
 use itertools::Itertools;
 use rustical_store::auth::User;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use strum::VariantNames;
 
-pub trait ResourceReadProp: Serialize + fmt::Debug + InvalidProperty {}
-impl<T: Serialize + fmt::Debug + InvalidProperty> ResourceReadProp for T {}
+pub trait ResourceReadProp: Serialize + InvalidProperty {}
+impl<T: Serialize + InvalidProperty> ResourceReadProp for T {}
 
 pub trait ResourceProp: ResourceReadProp + for<'de> Deserialize<'de> {}
 impl<T: ResourceReadProp + for<'de> Deserialize<'de>> ResourceProp for T {}
@@ -31,6 +30,7 @@ pub trait Resource: Clone {
     type PropName: ResourcePropName;
     type Prop: ResourceProp;
     type Error: ResponseError + From<crate::Error>;
+    type ResourceType: Default + Serialize + for<'de> Deserialize<'de>;
 
     fn list_extensions() -> Vec<BoxedExtension<Self>> {
         vec![]

@@ -35,7 +35,7 @@ pub struct Resourcetype {
     collection: (),
 }
 
-#[derive(Deserialize, Serialize, Debug, From, TryInto)]
+#[derive(Deserialize, Serialize, From, TryInto)]
 #[serde(rename_all = "kebab-case")]
 pub enum PrincipalProp {
     // WebDAV (RFC 2518)
@@ -57,7 +57,7 @@ pub enum PrincipalProp {
     #[serde(skip_deserializing, untagged)]
     #[from]
     #[try_into]
-    ExtCommonProperties(CommonPropertiesProp),
+    ExtCommonProperties(CommonPropertiesProp<PrincipalResource>),
 
     #[serde(untagged)]
     Invalid,
@@ -69,7 +69,7 @@ impl InvalidProperty for PrincipalProp {
     }
 }
 
-#[derive(EnumString, Debug, VariantNames, Clone, From, TryInto)]
+#[derive(EnumString, VariantNames, Clone, From, TryInto)]
 #[strum(serialize_all = "kebab-case")]
 pub enum PrincipalPropName {
     Resourcetype,
@@ -94,6 +94,7 @@ impl Resource for PrincipalResource {
     type PropName = PrincipalPropName;
     type Prop = PrincipalProp;
     type Error = Error;
+    type ResourceType = Resourcetype;
 
     fn list_extensions() -> Vec<BoxedExtension<Self>> {
         vec![BoxedExtension::from_ext(CommonPropertiesExtension::<

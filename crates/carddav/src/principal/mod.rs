@@ -35,12 +35,9 @@ pub struct Resourcetype {
     collection: (),
 }
 
-#[derive(Deserialize, Serialize, Debug, From, TryInto)]
+#[derive(Deserialize, Serialize, From, TryInto)]
 #[serde(rename_all = "kebab-case")]
 pub enum PrincipalProp {
-    // WebDAV (RFC 2518)
-    Resourcetype(Resourcetype),
-
     // WebDAV Access Control (RFC 3744)
     #[serde(rename = "principal-URL")]
     PrincipalUrl(HrefElement),
@@ -54,7 +51,7 @@ pub enum PrincipalProp {
     #[serde(skip_deserializing, untagged)]
     #[from]
     #[try_into]
-    ExtRFC5397RFC3477(CommonPropertiesProp),
+    ExtRFC5397RFC3477(CommonPropertiesProp<PrincipalResource>),
 
     #[serde(untagged)]
     Invalid,
@@ -66,10 +63,9 @@ impl InvalidProperty for PrincipalProp {
     }
 }
 
-#[derive(EnumString, Debug, VariantNames, Clone, From, TryInto)]
+#[derive(EnumString, VariantNames, Clone, From, TryInto)]
 #[strum(serialize_all = "kebab-case")]
 pub enum PrincipalPropName {
-    Resourcetype,
     #[strum(serialize = "principal-URL")]
     PrincipalUrl,
     AddressbookHomeSet,
@@ -90,6 +86,7 @@ impl Resource for PrincipalResource {
     type PropName = PrincipalPropName;
     type Prop = PrincipalProp;
     type Error = Error;
+    type ResourceType = Resourcetype;
 
     fn list_extensions() -> Vec<BoxedExtension<Self>> {
         vec![BoxedExtension::from_ext(CommonPropertiesExtension::<
@@ -106,7 +103,6 @@ impl Resource for PrincipalResource {
         let principal_href = HrefElement::new(Self::get_principal_url(rmap, &self.principal));
 
         Ok(match prop {
-            PrincipalPropName::Resourcetype => PrincipalProp::Resourcetype(Resourcetype::default()),
             PrincipalPropName::PrincipalUrl => PrincipalProp::PrincipalUrl(principal_href),
             PrincipalPropName::AddressbookHomeSet => {
                 PrincipalProp::AddressbookHomeSet(principal_href)

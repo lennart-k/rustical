@@ -1,18 +1,16 @@
-use std::marker::PhantomData;
-
-use actix_web::dev::ResourceMap;
-use rustical_store::auth::User;
-use serde::{Deserialize, Serialize};
-use strum::{EnumString, VariantNames};
-
 use crate::{
     extension::ResourceExtension,
     privileges::UserPrivilegeSet,
     resource::{InvalidProperty, Resource},
     xml::HrefElement,
 };
+use actix_web::dev::ResourceMap;
+use rustical_store::auth::User;
+use serde::{Deserialize, Serialize};
+use std::marker::PhantomData;
+use strum::{EnumString, VariantNames};
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct CommonPropertiesExtension<PR: Resource>(PhantomData<PR>);
 
 impl<PR: Resource> Default for CommonPropertiesExtension<PR> {
@@ -21,9 +19,12 @@ impl<PR: Resource> Default for CommonPropertiesExtension<PR> {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum CommonPropertiesProp {
+pub enum CommonPropertiesProp<R: Resource> {
+    // WebDAV (RFC 2518)
+    Resourcetype(R::ResourceType),
+
     // WebDAV Current Principal Extension (RFC 5397)
     CurrentUserPrincipal(HrefElement),
 
@@ -34,15 +35,16 @@ pub enum CommonPropertiesProp {
     Invalid,
 }
 
-impl InvalidProperty for CommonPropertiesProp {
+impl<R: Resource> InvalidProperty for CommonPropertiesProp<R> {
     fn invalid_property(&self) -> bool {
         matches!(self, Self::Invalid)
     }
 }
 
-#[derive(EnumString, Debug, VariantNames, Clone)]
+#[derive(EnumString, VariantNames, Clone)]
 #[strum(serialize_all = "kebab-case")]
 pub enum CommonPropertiesPropName {
+    Resourcetype,
     CurrentUserPrincipal,
     CurrentUserPrivilegeSet,
 }
@@ -50,9 +52,9 @@ pub enum CommonPropertiesPropName {
 impl<R: Resource, PR: Resource> ResourceExtension<R> for CommonPropertiesExtension<PR>
 where
     R::PropName: TryInto<CommonPropertiesPropName>,
-    R::Prop: From<CommonPropertiesProp>,
+    R::Prop: From<CommonPropertiesProp<R>>,
 {
-    type Prop = CommonPropertiesProp;
+    type Prop = CommonPropertiesProp<R>;
     type PropName = CommonPropertiesPropName;
     type Error = R::Error;
 
@@ -64,6 +66,9 @@ where
         prop: Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
+            CommonPropertiesPropName::Resourcetype => {
+                CommonPropertiesProp::Resourcetype(R::ResourceType::default())
+            }
             CommonPropertiesPropName::CurrentUserPrincipal => {
                 CommonPropertiesProp::CurrentUserPrincipal(
                     PR::get_url(rmap, &[&user.id]).unwrap().into(),
