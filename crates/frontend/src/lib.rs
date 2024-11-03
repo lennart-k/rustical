@@ -1,6 +1,8 @@
-use actix_session::{storage::CookieSessionStore, SessionMiddleware};
+use actix_session::{
+    config::CookieContentSecurity, storage::CookieSessionStore, SessionMiddleware,
+};
 use actix_web::{
-    cookie::Key,
+    cookie::{Key, SameSite},
     http::Method,
     web::{self, Data, Path},
     Responder,
@@ -73,7 +75,8 @@ pub fn configure_frontend<AP: AuthenticationProvider, C: CalendarStore + ?Sized>
                     Key::from(&frontend_config.secret_key),
                 )
                 .cookie_secure(true)
-                .cookie_content_security(actix_session::config::CookieContentSecurity::Private)
+                .cookie_same_site(SameSite::Strict)
+                .cookie_content_security(CookieContentSecurity::Private)
                 .build(),
             )
             .app_data(Data::from(auth_provider))
