@@ -5,9 +5,9 @@ use std::collections::HashMap;
 
 use super::AuthenticationProvider;
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct StaticUserStoreConfig {
-    users: Vec<UserEntry>,
+    pub users: Vec<UserEntry>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

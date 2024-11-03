@@ -5,5 +5,5 @@ use serde::{Deserialize, Serialize};
 pub struct FrontendConfig {
     #[serde(serialize_with = "hex::serde::serialize")]
     #[serde(deserialize_with = "hex::serde::deserialize")]
-    pub secret_key: Vec<u8>,
+    pub secret_key: [u8; 64],
 }

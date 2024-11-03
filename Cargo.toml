@@ -81,6 +81,10 @@ rustical_caldav = { path = "./crates/caldav/" }
 rustical_carddav = { path = "./crates/carddav/" }
 rustical_frontend = { path = "./crates/frontend/" }
 chrono-tz = "0.10.0"
+rand = "0.8"
+argon2 = "0.5"
+rpassword = "7.3"
+password-hash = { version = "0.5" }
 
 [dependencies]
 rustical_store = { workspace = true }
@@ -100,16 +104,21 @@ sqlx = { workspace = true }
 async-trait = { workspace = true }
 tracing-actix-web = { workspace = true }
 
-# 0.25 is the latest version supported by tracing-opentelemetry
-opentelemetry = "0.26.0"
-opentelemetry-otlp = "0.26.0"
-opentelemetry_sdk = { version = "0.26.0", features = ["rt-tokio"] }
+opentelemetry = "0.26"
+opentelemetry-otlp = "0.26"
+opentelemetry_sdk = { version = "0.26", features = ["rt-tokio"] }
 
 opentelemetry-semantic-conventions = "0.26"
-tracing-opentelemetry = "0.27.0"
-tracing-subscriber = { version = "0.3.18", features = [
+tracing-opentelemetry = "0.27"
+tracing-subscriber = { version = "0.3", features = [
   "env-filter",
   "fmt",
   "registry",
 ] }
-console-subscriber = "0.4.0"
+console-subscriber = "0.4"
+
+rand.workspace = true
+rpassword.workspace = true
+argon2.workspace = true
+pbkdf2.workspace = true
+password-hash.workspace = true
