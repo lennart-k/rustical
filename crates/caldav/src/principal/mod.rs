@@ -38,15 +38,9 @@ pub struct Resourcetype {
 #[derive(Deserialize, Serialize, From, TryInto)]
 #[serde(rename_all = "kebab-case")]
 pub enum PrincipalProp {
-    // WebDAV (RFC 2518)
-    Resourcetype(Resourcetype),
-
     // WebDAV Access Control (RFC 3744)
     #[serde(rename = "principal-URL")]
     PrincipalUrl(HrefElement),
-
-    // WebDAV Access Control (RFC 3744)
-    Owner(HrefElement),
 
     // CalDAV (RFC 4791)
     #[serde(rename = "C:calendar-home-set")]
@@ -72,8 +66,6 @@ impl InvalidProperty for PrincipalProp {
 #[derive(EnumString, VariantNames, Clone, From, TryInto)]
 #[strum(serialize_all = "kebab-case")]
 pub enum PrincipalPropName {
-    Resourcetype,
-    Owner,
     #[strum(serialize = "principal-URL")]
     PrincipalUrl,
     CalendarHomeSet,
@@ -105,16 +97,12 @@ impl Resource for PrincipalResource {
     fn get_prop(
         &self,
         rmap: &ResourceMap,
-        user: &User,
+        _user: &User,
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         let principal_href = HrefElement::new(Self::get_url(rmap, vec![&self.principal]).unwrap());
 
         Ok(match prop {
-            PrincipalPropName::Resourcetype => PrincipalProp::Resourcetype(Resourcetype::default()),
-            PrincipalPropName::Owner => PrincipalProp::Owner(HrefElement::new(
-                PrincipalResource::get_url(rmap, vec![&self.principal]).unwrap(),
-            )),
             PrincipalPropName::PrincipalUrl => PrincipalProp::PrincipalUrl(principal_href),
             PrincipalPropName::CalendarHomeSet => PrincipalProp::CalendarHomeSet(principal_href),
             PrincipalPropName::CalendarUserAddressSet => {
@@ -127,6 +115,10 @@ impl Resource for PrincipalResource {
     #[inline]
     fn resource_name() -> &'static str {
         "caldav_principal"
+    }
+
+    fn get_owner(&self) -> Option<&str> {
+        Some(&self.principal)
     }
 
     fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {

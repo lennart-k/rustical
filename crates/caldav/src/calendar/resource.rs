@@ -19,7 +19,6 @@ use rustical_dav::extensions::{
 };
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
-use rustical_dav::xml::HrefElement;
 use rustical_store::auth::User;
 use rustical_store::{Calendar, CalendarStore};
 use serde::{Deserialize, Serialize};
@@ -37,7 +36,6 @@ pub struct CalendarResourceService<C: CalendarStore + ?Sized> {
 #[derive(EnumString, VariantNames, Clone, From, TryInto)]
 #[strum(serialize_all = "kebab-case")]
 pub enum CalendarPropName {
-    Owner,
     Displayname,
     CalendarColor,
     CalendarDescription,
@@ -62,9 +60,6 @@ pub enum CalendarProp {
     // WebDAV (RFC 2518)
     Displayname(Option<String>),
     Getcontenttype(String),
-
-    // WebDAV Access Control (RFC 3744)
-    Owner(HrefElement),
 
     // CalDAV (RFC 4791)
     #[serde(rename = "IC:calendar-color", alias = "calendar-color")]
@@ -126,14 +121,11 @@ impl Resource for CalendarResource {
 
     fn get_prop(
         &self,
-        rmap: &ResourceMap,
-        user: &User,
+        _rmap: &ResourceMap,
+        _user: &User,
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
-            CalendarPropName::Owner => CalendarProp::Owner(HrefElement::new(
-                PrincipalResource::get_url(rmap, vec![&self.0.principal]).unwrap(),
-            )),
             CalendarPropName::Displayname => CalendarProp::Displayname(self.0.displayname.clone()),
             CalendarPropName::CalendarColor => CalendarProp::CalendarColor(self.0.color.clone()),
             CalendarPropName::CalendarDescription => {
@@ -179,7 +171,6 @@ impl Resource for CalendarResource {
 
     fn set_prop(&mut self, prop: Self::Prop) -> Result<(), rustical_dav::Error> {
         match prop {
-            CalendarProp::Owner(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Displayname(displayname) => {
                 self.0.displayname = displayname;
                 Ok(())
@@ -217,7 +208,6 @@ impl Resource for CalendarResource {
 
     fn remove_prop(&mut self, prop: &Self::PropName) -> Result<(), rustical_dav::Error> {
         match prop {
-            CalendarPropName::Owner => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::Displayname => {
                 self.0.displayname = None;
                 Ok(())
@@ -255,6 +245,10 @@ impl Resource for CalendarResource {
     #[inline]
     fn resource_name() -> &'static str {
         "caldav_calendar"
+    }
+
+    fn get_owner(&self) -> Option<&str> {
+        Some(&self.0.principal)
     }
 
     fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {

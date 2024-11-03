@@ -8,7 +8,6 @@ use rustical_dav::{
     extensions::{CommonPropertiesExtension, CommonPropertiesProp, CommonPropertiesPropName},
     privileges::UserPrivilegeSet,
     resource::{InvalidProperty, Resource, ResourceService},
-    xml::HrefElement,
 };
 use rustical_store::{auth::User, CalendarObject, CalendarStore};
 use serde::{Deserialize, Serialize};
@@ -29,7 +28,6 @@ pub enum CalendarObjectPropName {
     Getetag,
     CalendarData,
     Getcontenttype,
-    Owner,
     #[from]
     #[try_into]
     #[strum(disabled)]
@@ -46,9 +44,6 @@ pub enum CalendarObjectProp {
     // CalDAV (RFC 4791)
     #[serde(rename = "C:calendar-data")]
     CalendarData(String),
-
-    // WebDAV Access Control (RFC 3744)
-    Owner(HrefElement),
 
     #[serde(skip_deserializing, untagged)]
     #[from]
@@ -92,7 +87,7 @@ impl Resource for CalendarObjectResource {
 
     fn get_prop(
         &self,
-        rmap: &ResourceMap,
+        _rmap: &ResourceMap,
         _user: &User,
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
@@ -104,9 +99,6 @@ impl Resource for CalendarObjectResource {
             CalendarObjectPropName::Getcontenttype => {
                 CalendarObjectProp::Getcontenttype("text/calendar;charset=utf-8".to_owned())
             }
-            CalendarObjectPropName::Owner => CalendarObjectProp::Owner(
-                PrincipalResource::get_principal_url(rmap, &self.principal).into(),
-            ),
             _ => panic!("we shouldn't end up here"),
         })
     }
@@ -114,6 +106,10 @@ impl Resource for CalendarObjectResource {
     #[inline]
     fn resource_name() -> &'static str {
         "caldav_calendar_object"
+    }
+
+    fn get_owner(&self) -> Option<&str> {
+        Some(&self.principal)
     }
 
     fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {

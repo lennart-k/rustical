@@ -51,7 +51,7 @@ pub enum PrincipalProp {
     #[serde(skip_deserializing, untagged)]
     #[from]
     #[try_into]
-    ExtRFC5397RFC3477(CommonPropertiesProp<PrincipalResource>),
+    ExtCommonProperties(CommonPropertiesProp<PrincipalResource>),
 
     #[serde(untagged)]
     Invalid,
@@ -73,7 +73,7 @@ pub enum PrincipalPropName {
     #[from]
     #[try_into]
     #[strum(disabled)]
-    ExtRFC5397(CommonPropertiesPropName),
+    ExtCommonProperties(CommonPropertiesPropName),
 }
 
 impl PrincipalResource {
@@ -97,7 +97,7 @@ impl Resource for PrincipalResource {
     fn get_prop(
         &self,
         rmap: &ResourceMap,
-        user: &User,
+        _user: &User,
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         let principal_href = HrefElement::new(Self::get_principal_url(rmap, &self.principal));
@@ -115,6 +115,10 @@ impl Resource for PrincipalResource {
     #[inline]
     fn resource_name() -> &'static str {
         "carddav_principal"
+    }
+
+    fn get_owner(&self) -> Option<&str> {
+        Some(&self.principal)
     }
 
     fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {

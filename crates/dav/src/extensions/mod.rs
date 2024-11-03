@@ -30,6 +30,7 @@ pub enum CommonPropertiesProp<R: Resource> {
 
     // WebDAV Access Control Protocol (RFC 3477)
     CurrentUserPrivilegeSet(UserPrivilegeSet),
+    Owner(Option<HrefElement>),
 
     #[serde(untagged)]
     Invalid,
@@ -47,6 +48,7 @@ pub enum CommonPropertiesPropName {
     Resourcetype,
     CurrentUserPrincipal,
     CurrentUserPrivilegeSet,
+    Owner,
 }
 
 impl<R: Resource, PR: Resource> ResourceExtension<R> for CommonPropertiesExtension<PR>
@@ -77,6 +79,11 @@ where
             CommonPropertiesPropName::CurrentUserPrivilegeSet => {
                 CommonPropertiesProp::CurrentUserPrivilegeSet(resource.get_user_privileges(user)?)
             }
+            CommonPropertiesPropName::Owner => CommonPropertiesProp::Owner(
+                resource
+                    .get_owner()
+                    .map(|owner| PR::get_url(rmap, &[owner]).unwrap().into()),
+            ),
         })
     }
 }

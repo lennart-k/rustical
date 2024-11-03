@@ -16,7 +16,6 @@ use rustical_dav::extensions::{
 };
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
-use rustical_dav::xml::HrefElement;
 use rustical_store::auth::User;
 use rustical_store::{Addressbook, AddressbookStore};
 use serde::{Deserialize, Serialize};
@@ -36,7 +35,6 @@ pub struct AddressbookResourceService<AS: AddressbookStore + ?Sized> {
 pub enum AddressbookPropName {
     Displayname,
     Getcontenttype,
-    Owner,
     AddressbookDescription,
     SupportedAddressData,
     SupportedReportSet,
@@ -54,9 +52,6 @@ pub enum AddressbookProp {
     // WebDAV (RFC 2518)
     Displayname(Option<String>),
     Getcontenttype(String),
-
-    // WebDAV Access Control (RFC 3744)
-    Owner(HrefElement),
 
     // CardDAV (RFC 6352)
     #[serde(
@@ -110,14 +105,11 @@ impl Resource for AddressbookResource {
 
     fn get_prop(
         &self,
-        rmap: &ResourceMap,
-        user: &User,
+        _rmap: &ResourceMap,
+        _user: &User,
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
-            AddressbookPropName::Owner => AddressbookProp::Owner(
-                PrincipalResource::get_principal_url(rmap, &self.0.principal).into(),
-            ),
             AddressbookPropName::Displayname => {
                 AddressbookProp::Displayname(self.0.displayname.clone())
             }
@@ -142,7 +134,6 @@ impl Resource for AddressbookResource {
 
     fn set_prop(&mut self, prop: Self::Prop) -> Result<(), rustical_dav::Error> {
         match prop {
-            AddressbookProp::Owner(_) => Err(rustical_dav::Error::PropReadOnly),
             AddressbookProp::Displayname(displayname) => {
                 self.0.displayname = displayname;
                 Ok(())
@@ -164,7 +155,6 @@ impl Resource for AddressbookResource {
 
     fn remove_prop(&mut self, prop: &Self::PropName) -> Result<(), rustical_dav::Error> {
         match prop {
-            AddressbookPropName::Owner => Err(rustical_dav::Error::PropReadOnly),
             AddressbookPropName::Displayname => {
                 self.0.displayname = None;
                 Ok(())
@@ -186,6 +176,10 @@ impl Resource for AddressbookResource {
     #[inline]
     fn resource_name() -> &'static str {
         "carddav_addressbook"
+    }
+
+    fn get_owner(&self) -> Option<&str> {
+        Some(&self.0.principal)
     }
 
     fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {

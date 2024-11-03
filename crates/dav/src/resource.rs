@@ -62,6 +62,10 @@ pub trait Resource: Clone {
 
     fn resource_name() -> &'static str;
 
+    fn get_owner(&self) -> Option<&str> {
+        None
+    }
+
     fn get_url<U, I>(rmap: &ResourceMap, elements: U) -> Result<String, UrlGenerationError>
     where
         U: IntoIterator<Item = I>,

@@ -7,7 +7,6 @@ use rustical_dav::{
     extensions::{CommonPropertiesExtension, CommonPropertiesProp, CommonPropertiesPropName},
     privileges::UserPrivilegeSet,
     resource::{InvalidProperty, Resource, ResourceService},
-    xml::HrefElement,
 };
 use rustical_store::{auth::User, AddressObject, AddressbookStore};
 use serde::{Deserialize, Serialize};
@@ -30,7 +29,6 @@ pub enum AddressObjectPropName {
     Getetag,
     AddressData,
     Getcontenttype,
-    Owner,
     #[from]
     #[try_into]
     #[strum(disabled)]
@@ -43,13 +41,6 @@ pub enum AddressObjectProp {
     // WebDAV (RFC 2518)
     Getetag(String),
     Getcontenttype(String),
-
-    // WebDAV Current Principal Extension (RFC 5397)
-    CurrentUserPrincipal(HrefElement),
-
-    // WebDAV Access Control (RFC 3744)
-    Owner(HrefElement),
-    CurrentUserPrivilegeSet(UserPrivilegeSet),
 
     // CalDAV (RFC 4791)
     #[serde(rename = "CARD:address-data")]
@@ -109,9 +100,6 @@ impl Resource for AddressObjectResource {
             AddressObjectPropName::Getcontenttype => {
                 AddressObjectProp::Getcontenttype("text/vcard;charset=utf-8".to_owned())
             }
-            AddressObjectPropName::Owner => AddressObjectProp::Owner(
-                PrincipalResource::get_principal_url(rmap, &self.principal).into(),
-            ),
             _ => panic!("we shouldn't end up here"),
         })
     }
@@ -119,6 +107,10 @@ impl Resource for AddressObjectResource {
     #[inline]
     fn resource_name() -> &'static str {
         "carddav_address_object"
+    }
+
+    fn get_owner(&self) -> Option<&str> {
+        Some(&self.principal)
     }
 
     fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
