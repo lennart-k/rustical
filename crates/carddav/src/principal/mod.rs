@@ -171,8 +171,4 @@ impl<A: AddressbookStore + ?Sized> ResourceService for PrincipalResourceService<
             })
             .collect())
     }
-
-    async fn save_resource(&self, _file: Self::Resource) -> Result<(), Self::Error> {
-        Err(Error::NotImplemented)
-    }
 }

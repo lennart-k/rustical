@@ -205,7 +205,9 @@ pub trait ResourceService: Sized + 'static {
     }
 
     async fn get_resource(&self) -> Result<Self::Resource, Self::Error>;
-    async fn save_resource(&self, file: Self::Resource) -> Result<(), Self::Error>;
+    async fn save_resource(&self, _file: Self::Resource) -> Result<(), Self::Error> {
+        Err(crate::Error::Unauthorized.into())
+    }
     async fn delete_resource(&self, _use_trashbin: bool) -> Result<(), Self::Error> {
         Err(crate::Error::Unauthorized.into())
     }

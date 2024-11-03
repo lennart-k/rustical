@@ -100,8 +100,4 @@ impl ResourceService for RootResourceService {
     async fn get_resource(&self) -> Result<Self::Resource, Self::Error> {
         Ok(RootResource)
     }
-
-    async fn save_resource(&self, _file: Self::Resource) -> Result<(), Self::Error> {
-        Err(Error::NotImplemented)
-    }
 }

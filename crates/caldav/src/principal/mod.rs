@@ -170,8 +170,4 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResourceService<C> 
             })
             .collect())
     }
-
-    async fn save_resource(&self, _file: Self::Resource) -> Result<(), Self::Error> {
-        Err(Error::NotImplemented)
-    }
 }

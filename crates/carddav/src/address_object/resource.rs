@@ -186,10 +186,6 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressObjectResourceSer
         })
     }
 
-    async fn save_resource(&self, _file: Self::Resource) -> Result<(), Self::Error> {
-        Err(Error::NotImplemented)
-    }
-
     async fn delete_resource(&self, use_trashbin: bool) -> Result<(), Self::Error> {
         self.addr_store
             .delete_object(&self.principal, &self.cal_id, &self.object_id, use_trashbin)
