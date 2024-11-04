@@ -73,7 +73,7 @@ where
             }
             CommonPropertiesPropName::CurrentUserPrincipal => {
                 CommonPropertiesProp::CurrentUserPrincipal(
-                    R::PrincipalResource::get_url(rmap, &[&user.id])
+                    R::PrincipalResource::get_url(rmap, [&user.id])
                         .unwrap()
                         .into(),
                 )
@@ -81,13 +81,11 @@ where
             CommonPropertiesPropName::CurrentUserPrivilegeSet => {
                 CommonPropertiesProp::CurrentUserPrivilegeSet(resource.get_user_privileges(user)?)
             }
-            CommonPropertiesPropName::Owner => {
-                CommonPropertiesProp::Owner(resource.get_owner().map(|owner| {
-                    R::PrincipalResource::get_url(rmap, &[owner])
-                        .unwrap()
-                        .into()
-                }))
-            }
+            CommonPropertiesPropName::Owner => CommonPropertiesProp::Owner(
+                resource
+                    .get_owner()
+                    .map(|owner| R::PrincipalResource::get_url(rmap, [owner]).unwrap().into()),
+            ),
         })
     }
 }

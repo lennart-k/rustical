@@ -18,11 +18,8 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use strum::VariantNames;
 
-pub trait ResourceReadProp: Serialize + InvalidProperty {}
-impl<T: Serialize + InvalidProperty> ResourceReadProp for T {}
-
-pub trait ResourceProp: ResourceReadProp + for<'de> Deserialize<'de> {}
-impl<T: ResourceReadProp + for<'de> Deserialize<'de>> ResourceProp for T {}
+pub trait ResourceProp: InvalidProperty + Serialize + for<'de> Deserialize<'de> {}
+impl<T: InvalidProperty + Serialize + for<'de> Deserialize<'de>> ResourceProp for T {}
 
 pub trait ResourcePropName: FromStr + VariantNames {}
 impl<T: FromStr + VariantNames> ResourcePropName for T {}
@@ -41,8 +38,8 @@ pub trait Resource: Clone + 'static {
         vec![CommonPropertiesExtension::default()]
     }
 
-    fn list_props() -> Vec<&'static str> {
-        Self::PropName::VARIANTS.iter().map(|&prop| prop).collect()
+    fn list_props() -> &'static [&'static str] {
+        Self::PropName::VARIANTS
     }
 
     fn get_prop(
@@ -125,7 +122,7 @@ pub trait Resource: Clone + 'static {
                     Error::BadRequest("allprop MUST be the only queried prop".to_owned()).into(),
                 );
             }
-            props = Self::list_props().into();
+            props = Self::list_props();
             for extension in Self::list_extensions() {
                 let ext_props: Vec<&str> = extension.list_props().into();
                 props.extend(ext_props);
