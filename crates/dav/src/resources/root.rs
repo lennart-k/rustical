@@ -1,10 +1,4 @@
-use std::any::type_name;
-use std::marker::PhantomData;
-
-use crate::extension::BoxedExtension;
-use crate::extensions::{
-    CommonPropertiesExtension, CommonPropertiesProp, CommonPropertiesPropName,
-};
+use crate::extensions::CommonPropertiesProp;
 use crate::privileges::UserPrivilegeSet;
 use crate::resource::{Resource, ResourceService};
 use actix_web::dev::ResourceMap;
@@ -12,6 +6,9 @@ use actix_web::HttpRequest;
 use async_trait::async_trait;
 use rustical_store::auth::User;
 use serde::{Deserialize, Serialize};
+use std::any::type_name;
+use std::marker::PhantomData;
+use strum::{EnumString, VariantNames};
 
 #[derive(Deserialize, Serialize, Default, Debug)]
 #[serde(rename_all = "kebab-case")]
@@ -28,18 +25,16 @@ impl<PR: Resource> Default for RootResource<PR> {
     }
 }
 
+#[derive(EnumString, VariantNames, Clone)]
+#[strum(serialize_all = "kebab-case")]
+pub enum RootResourcePropName {}
+
 impl<PR: Resource> Resource for RootResource<PR> {
-    type PropName = CommonPropertiesPropName;
+    type PropName = RootResourcePropName;
     type Prop = CommonPropertiesProp<Self::ResourceType>;
     type Error = PR::Error;
     type ResourceType = Resourcetype;
     type PrincipalResource = PR;
-
-    fn list_extensions() -> Vec<BoxedExtension<Self>> {
-        vec![BoxedExtension::from_ext(
-            CommonPropertiesExtension::<Self>::default(),
-        )]
-    }
 
     fn get_prop(
         &self,

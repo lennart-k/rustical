@@ -1,4 +1,4 @@
-use crate::extension::{BoxableExtension, BoxedExtension};
+use crate::extension::ResourceExtension;
 use crate::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use crate::methods::{route_delete, route_propfind, route_proppatch};
 use crate::privileges::UserPrivilegeSet;
@@ -37,19 +37,12 @@ pub trait Resource: Clone + 'static {
     type PrincipalResource: Resource;
     type ResourceType: Default + Serialize + for<'de> Deserialize<'de>;
 
-    fn list_extensions() -> Vec<BoxedExtension<Self>> {
-        vec![BoxedExtension::from_ext(
-            CommonPropertiesExtension::<Self>::default(),
-        )]
+    fn list_extensions() -> Vec<impl ResourceExtension<Self>> {
+        vec![CommonPropertiesExtension::default()]
     }
 
     fn list_props() -> Vec<&'static str> {
-        Self::PropName::VARIANTS
-            .iter()
-            .map(|&prop| prop)
-            // Bodge, since VariantNames somehow includes Ext... props despite the strum(disabled) flag
-            .filter(|prop| !prop.starts_with("ext-"))
-            .collect()
+        Self::PropName::VARIANTS.iter().map(|&prop| prop).collect()
     }
 
     fn get_prop(
