@@ -15,11 +15,10 @@ use strum::{EnumString, VariantNames};
 use super::methods::{get_object, put_object};
 
 pub struct AddressObjectResourceService<AS: AddressbookStore + ?Sized> {
-    pub addr_store: Arc<AS>,
-    pub path: String,
-    pub principal: String,
-    pub cal_id: String,
-    pub object_id: String,
+    addr_store: Arc<AS>,
+    principal: String,
+    cal_id: String,
+    object_id: String,
 }
 
 #[derive(EnumString, VariantNames, Clone)]
@@ -154,7 +153,6 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressObjectResourceSer
             principal,
             cal_id,
             object_id,
-            path: req.path().to_string(),
         })
     }
 

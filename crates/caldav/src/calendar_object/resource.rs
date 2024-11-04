@@ -14,11 +14,10 @@ use std::sync::Arc;
 use strum::{EnumString, VariantNames};
 
 pub struct CalendarObjectResourceService<C: CalendarStore + ?Sized> {
-    pub cal_store: Arc<C>,
-    pub path: String,
-    pub principal: String,
-    pub cal_id: String,
-    pub object_id: String,
+    cal_store: Arc<C>,
+    principal: String,
+    cal_id: String,
+    object_id: String,
 }
 
 #[derive(EnumString, VariantNames, Clone)]
@@ -153,7 +152,6 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarObjectResourceServic
             principal,
             cal_id,
             object_id,
-            path: req.path().to_string(),
         })
     }
 

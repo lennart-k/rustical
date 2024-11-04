@@ -21,10 +21,9 @@ use std::sync::Arc;
 use strum::{EnumString, VariantNames};
 
 pub struct AddressbookResourceService<AS: AddressbookStore + ?Sized> {
-    pub addr_store: Arc<AS>,
-    pub path: String,
-    pub principal: String,
-    pub addressbook_id: String,
+    addr_store: Arc<AS>,
+    principal: String,
+    addressbook_id: String,
 }
 
 #[derive(EnumString, VariantNames, Clone)]
@@ -220,7 +219,6 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressbookResourceServi
             .into_inner();
 
         Ok(Self {
-            path: req.path().to_owned(),
             principal: path_components.0,
             addressbook_id: path_components.1,
             addr_store,
