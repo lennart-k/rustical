@@ -5,9 +5,9 @@ use actix_web::web::{self, Data};
 use calendar::resource::CalendarResourceService;
 use calendar_object::resource::CalendarObjectResourceService;
 use futures_util::FutureExt;
-use principal::PrincipalResourceService;
-use root::RootResourceService;
+use principal::{PrincipalResource, PrincipalResourceService};
 use rustical_dav::resource::ResourceService;
+use rustical_dav::resources::RootResourceService;
 use rustical_store::auth::{AuthenticationMiddleware, AuthenticationProvider};
 use rustical_store::CalendarStore;
 use std::sync::Arc;
@@ -16,7 +16,6 @@ pub mod calendar;
 pub mod calendar_object;
 pub mod error;
 pub mod principal;
-pub mod root;
 
 pub use error::Error;
 
@@ -55,7 +54,7 @@ pub fn configure_dav<AP: AuthenticationProvider, C: CalendarStore + ?Sized>(
                 })
             })
             .app_data(Data::from(store.clone()))
-            .service(RootResourceService::actix_resource())
+            .service(RootResourceService::<PrincipalResource>::actix_resource())
             .service(
                 web::scope("/user").service(
                     web::scope("/{principal}")

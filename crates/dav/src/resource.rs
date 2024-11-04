@@ -26,7 +26,7 @@ impl<T: ResourceReadProp + for<'de> Deserialize<'de>> ResourceProp for T {}
 pub trait ResourcePropName: FromStr + VariantNames {}
 impl<T: FromStr + VariantNames> ResourcePropName for T {}
 
-pub trait Resource: Clone {
+pub trait Resource: Clone + 'static {
     type PropName: ResourcePropName;
     type Prop: ResourceProp;
     type Error: ResponseError + From<crate::Error>;
@@ -132,6 +132,14 @@ pub trait Resource: Clone {
             }
         }
 
+        let mut prop_responses = Vec::new();
+
+        for extension in Self::list_extensions() {
+            let (ext_invalid_props, ext_responses) = extension.propfind(self, props, user, rmap)?;
+            props = ext_invalid_props;
+            prop_responses.extend(ext_responses);
+        }
+
         let (valid_props, invalid_props): (Vec<Option<Self::PropName>>, Vec<Option<&str>>) = props
             .into_iter()
             .map(|prop| {
@@ -143,19 +151,14 @@ pub trait Resource: Clone {
             })
             .unzip();
         let valid_props: Vec<Self::PropName> = valid_props.into_iter().flatten().collect();
-        let mut invalid_props: Vec<&str> = invalid_props.into_iter().flatten().collect();
+        let invalid_props: Vec<&str> = invalid_props.into_iter().flatten().collect();
 
-        let mut prop_responses = valid_props
-            .into_iter()
-            .map(|prop| self.get_prop(rmap, user, &prop))
-            .collect::<Result<Vec<Self::Prop>, Self::Error>>()?;
-
-        for extension in Self::list_extensions() {
-            let (ext_invalid_props, ext_responses) =
-                extension.propfind(self, invalid_props, user, rmap)?;
-            invalid_props = ext_invalid_props;
-            prop_responses.extend(ext_responses);
-        }
+        prop_responses.extend(
+            valid_props
+                .into_iter()
+                .map(|prop| self.get_prop(rmap, user, &prop))
+                .collect::<Result<Vec<Self::Prop>, Self::Error>>()?,
+        );
 
         let mut propstats = vec![PropstatWrapper::Normal(PropstatElement {
             status: format!("HTTP/1.1 {}", StatusCode::OK),

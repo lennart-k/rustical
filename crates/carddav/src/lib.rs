@@ -10,9 +10,9 @@ use address_object::resource::AddressObjectResourceService;
 use addressbook::resource::AddressbookResourceService;
 pub use error::Error;
 use futures_util::FutureExt;
-use principal::PrincipalResourceService;
-use root::RootResourceService;
+use principal::{PrincipalResource, PrincipalResourceService};
 use rustical_dav::resource::ResourceService;
+use rustical_dav::resources::RootResourceService;
 use rustical_store::{
     auth::{AuthenticationMiddleware, AuthenticationProvider},
     AddressbookStore,
@@ -23,7 +23,6 @@ pub mod address_object;
 pub mod addressbook;
 pub mod error;
 pub mod principal;
-pub mod root;
 
 pub fn configure_well_known(cfg: &mut web::ServiceConfig, carddav_root: String) {
     cfg.service(web::redirect("/carddav", carddav_root).permanent());
@@ -60,7 +59,7 @@ pub fn configure_dav<AP: AuthenticationProvider, A: AddressbookStore + ?Sized>(
                 })
             })
             .app_data(Data::from(store.clone()))
-            .service(RootResourceService::actix_resource())
+            .service(RootResourceService::<PrincipalResource>::actix_resource())
             .service(
                 web::scope("/user").service(
                     web::scope("/{principal}")
