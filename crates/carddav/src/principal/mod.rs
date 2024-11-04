@@ -6,9 +6,7 @@ use actix_web::HttpRequest;
 use async_trait::async_trait;
 use derive_more::derive::{From, TryInto};
 use rustical_dav::extension::BoxedExtension;
-use rustical_dav::extensions::{
-    CommonPropertiesExtension, CommonPropertiesProp, CommonPropertiesPropName,
-};
+use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
@@ -70,10 +68,6 @@ pub enum PrincipalPropName {
     PrincipalUrl,
     AddressbookHomeSet,
     PrincipalAddress,
-    #[from]
-    #[try_into]
-    #[strum(disabled)]
-    ExtCommonProperties(CommonPropertiesPropName),
 }
 
 impl PrincipalResource {
@@ -108,7 +102,6 @@ impl Resource for PrincipalResource {
                 PrincipalProp::AddressbookHomeSet(principal_href)
             }
             PrincipalPropName::PrincipalAddress => PrincipalProp::PrincipalAddress(None),
-            _ => panic!("we shouldn't end up here"),
         })
     }
 

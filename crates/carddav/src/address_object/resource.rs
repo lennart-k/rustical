@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use derive_more::derive::{From, Into, TryInto};
 use rustical_dav::{
     extension::BoxedExtension,
-    extensions::{CommonPropertiesExtension, CommonPropertiesProp, CommonPropertiesPropName},
+    extensions::{CommonPropertiesExtension, CommonPropertiesProp},
     privileges::UserPrivilegeSet,
     resource::{InvalidProperty, Resource, ResourceService},
 };
@@ -23,16 +23,12 @@ pub struct AddressObjectResourceService<AS: AddressbookStore + ?Sized> {
     pub object_id: String,
 }
 
-#[derive(EnumString, VariantNames, Clone, From, TryInto)]
+#[derive(EnumString, VariantNames, Clone)]
 #[strum(serialize_all = "kebab-case")]
 pub enum AddressObjectPropName {
     Getetag,
     AddressData,
     Getcontenttype,
-    #[from]
-    #[try_into]
-    #[strum(disabled)]
-    ExtCommonProperties(CommonPropertiesPropName),
 }
 
 #[derive(Deserialize, Serialize, From, TryInto)]
@@ -100,7 +96,6 @@ impl Resource for AddressObjectResource {
             AddressObjectPropName::Getcontenttype => {
                 AddressObjectProp::Getcontenttype("text/vcard;charset=utf-8".to_owned())
             }
-            _ => panic!("we shouldn't end up here"),
         })
     }
 

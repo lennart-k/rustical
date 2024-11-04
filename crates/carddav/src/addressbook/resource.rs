@@ -11,9 +11,7 @@ use actix_web::{web::Data, HttpRequest};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into, TryInto};
 use rustical_dav::extension::BoxedExtension;
-use rustical_dav::extensions::{
-    CommonPropertiesExtension, CommonPropertiesProp, CommonPropertiesPropName,
-};
+use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_store::auth::User;
@@ -30,7 +28,7 @@ pub struct AddressbookResourceService<AS: AddressbookStore + ?Sized> {
     pub addressbook_id: String,
 }
 
-#[derive(EnumString, VariantNames, Clone, From, TryInto)]
+#[derive(EnumString, VariantNames, Clone)]
 #[strum(serialize_all = "kebab-case")]
 pub enum AddressbookPropName {
     Displayname,
@@ -41,9 +39,6 @@ pub enum AddressbookPropName {
     MaxResourceSize,
     SyncToken,
     Getctag,
-    #[try_into]
-    #[strum(disabled)]
-    ExtCommonProperties(CommonPropertiesPropName),
 }
 
 #[derive(Deserialize, Serialize, From, TryInto)]
@@ -128,7 +123,6 @@ impl Resource for AddressbookResource {
             }
             AddressbookPropName::SyncToken => AddressbookProp::SyncToken(self.0.format_synctoken()),
             AddressbookPropName::Getctag => AddressbookProp::Getctag(self.0.format_synctoken()),
-            _ => panic!("we shouldn't end up here"),
         })
     }
 
@@ -169,7 +163,6 @@ impl Resource for AddressbookResource {
             AddressbookPropName::SupportedAddressData => Err(rustical_dav::Error::PropReadOnly),
             AddressbookPropName::SyncToken => Err(rustical_dav::Error::PropReadOnly),
             AddressbookPropName::Getctag => Err(rustical_dav::Error::PropReadOnly),
-            _ => panic!("we shouldn't end up here"),
         }
     }
 

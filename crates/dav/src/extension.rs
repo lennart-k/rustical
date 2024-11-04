@@ -35,7 +35,7 @@ pub trait BoxableExtension<R: Resource> {
         resource: &R,
         rmap: &ResourceMap,
         user: &User,
-        prop: R::PropName,
+        prop: &str,
     ) -> Result<Option<R::Prop>, R::Error>;
 
     fn propfind<'a>(
@@ -51,12 +51,7 @@ pub trait BoxableExtension<R: Resource> {
 
 impl<
         R: Resource,
-        RE: ResourceExtension<
-            R,
-            PropName: Into<R::PropName> + TryFrom<R::PropName>,
-            Prop: Into<R::Prop> + TryFrom<R::Prop>,
-            Error: Into<R::Error>,
-        >,
+        RE: ResourceExtension<R, Prop: Into<R::Prop> + TryFrom<R::Prop>, Error: Into<R::Error>>,
     > BoxableExtension<R> for RE
 {
     fn get_prop(
@@ -64,9 +59,10 @@ impl<
         resource: &R,
         rmap: &ResourceMap,
         user: &User,
-        prop: <R as Resource>::PropName,
+        prop: &str,
+        // prop: <R as Resource>::PropName,
     ) -> Result<Option<R::Prop>, R::Error> {
-        let prop: RE::PropName = if let Ok(prop) = prop.try_into() {
+        let prop: RE::PropName = if let Ok(prop) = prop.parse() {
             prop
         } else {
             return Ok(None);
@@ -118,13 +114,7 @@ impl<
 pub struct BoxedExtension<R>(Box<dyn BoxableExtension<R>>);
 
 impl<R: Resource> BoxedExtension<R> {
-    pub fn from_ext<
-        RE: ResourceExtension<
-                R,
-                PropName: Into<R::PropName> + TryFrom<R::PropName>,
-                Prop: Into<R::Prop> + TryFrom<R::Prop>,
-            > + 'static,
-    >(
+    pub fn from_ext<RE: ResourceExtension<R, Prop: Into<R::Prop> + TryFrom<R::Prop>> + 'static>(
         ext: RE,
     ) -> Self {
         let boxed_ext: Box<dyn BoxableExtension<R>> = Box::new(ext);

@@ -53,7 +53,6 @@ pub enum CommonPropertiesPropName {
 
 impl<R: Resource, PR: Resource> ResourceExtension<R> for CommonPropertiesExtension<PR>
 where
-    R::PropName: TryInto<CommonPropertiesPropName>,
     R::Prop: From<CommonPropertiesProp<R>>,
 {
     type Prop = CommonPropertiesProp<R>;

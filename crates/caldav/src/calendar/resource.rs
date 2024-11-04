@@ -14,9 +14,7 @@ use actix_web::{web::Data, HttpRequest};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into, TryInto};
 use rustical_dav::extension::BoxedExtension;
-use rustical_dav::extensions::{
-    CommonPropertiesExtension, CommonPropertiesProp, CommonPropertiesPropName,
-};
+use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_store::auth::User;
@@ -33,7 +31,7 @@ pub struct CalendarResourceService<C: CalendarStore + ?Sized> {
     pub calendar_id: String,
 }
 
-#[derive(EnumString, VariantNames, Clone, From, TryInto)]
+#[derive(EnumString, VariantNames, Clone)]
 #[strum(serialize_all = "kebab-case")]
 pub enum CalendarPropName {
     Displayname,
@@ -48,10 +46,6 @@ pub enum CalendarPropName {
     SupportedReportSet,
     SyncToken,
     Getctag,
-    #[from]
-    #[try_into]
-    #[strum(disabled)]
-    ExtCommonProperties(CommonPropertiesPropName),
 }
 
 #[derive(Deserialize, Serialize, From, TryInto)]
@@ -157,15 +151,11 @@ impl Resource for CalendarResource {
                 CalendarProp::Getcontenttype("text/calendar;charset=utf-8".to_owned())
             }
             CalendarPropName::MaxResourceSize => CalendarProp::MaxResourceSize(10000000),
-            // CalendarPropName::CurrentUserPrivilegeSet => {
-            //     CalendarProp::CurrentUserPrivilegeSet(user_privileges.to_owned())
-            // }
             CalendarPropName::SupportedReportSet => {
                 CalendarProp::SupportedReportSet(SupportedReportSet::default())
             }
             CalendarPropName::SyncToken => CalendarProp::SyncToken(self.0.format_synctoken()),
             CalendarPropName::Getctag => CalendarProp::Getctag(self.0.format_synctoken()),
-            _ => panic!("we shouldn't end up here"),
         })
     }
 
@@ -197,7 +187,6 @@ impl Resource for CalendarResource {
             CalendarProp::SupportedCalendarData(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Getcontenttype(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::MaxResourceSize(_) => Err(rustical_dav::Error::PropReadOnly),
-            // CalendarProp::CurrentUserPrivilegeSet(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::SupportedReportSet(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::SyncToken(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Getctag(_) => Err(rustical_dav::Error::PropReadOnly),
@@ -234,11 +223,9 @@ impl Resource for CalendarResource {
             CalendarPropName::SupportedCalendarData => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::Getcontenttype => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::MaxResourceSize => Err(rustical_dav::Error::PropReadOnly),
-            // CalendarPropName::CurrentUserPrivilegeSet => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::SupportedReportSet => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::SyncToken => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::Getctag => Err(rustical_dav::Error::PropReadOnly),
-            _ => panic!("we shouldn't end up here"),
         }
     }
 
