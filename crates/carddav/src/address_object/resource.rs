@@ -40,11 +40,11 @@ pub enum AddressObjectProp {
     #[serde(rename = "CARD:address-data")]
     AddressData(String),
 
-    #[serde(skip_deserializing, untagged)]
+    #[serde(skip_deserializing, rename = "$value")]
     #[from]
     ExtCommonProperties(CommonPropertiesProp),
 
-    #[serde(untagged)]
+    #[serde(other)]
     #[default]
     Invalid,
 }

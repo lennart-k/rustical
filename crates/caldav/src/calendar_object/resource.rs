@@ -39,11 +39,11 @@ pub enum CalendarObjectProp {
     #[serde(rename = "C:calendar-data")]
     CalendarData(String),
 
-    #[serde(skip_deserializing, untagged)]
+    #[serde(skip_deserializing, rename = "$value")]
     #[from]
     ExtCommonProperties(CommonPropertiesProp),
 
-    #[serde(untagged)]
+    #[serde(other)]
     #[default]
     Invalid,
 }

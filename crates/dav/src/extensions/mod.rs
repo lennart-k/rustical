@@ -33,7 +33,7 @@ pub enum CommonPropertiesProp {
     CurrentUserPrivilegeSet(UserPrivilegeSet),
     Owner(Option<HrefElement>),
 
-    #[serde(untagged)]
+    #[serde(other)]
     Invalid,
 }
 
