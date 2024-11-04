@@ -71,8 +71,10 @@ pub enum CalendarProp {
         rename = "C:supported-calendar-data",
         alias = "supported-calendar-data"
     )]
+    #[serde(skip_deserializing)]
     SupportedCalendarData(SupportedCalendarData),
     MaxResourceSize(i64),
+    #[serde(skip_deserializing)]
     SupportedReportSet(SupportedReportSet),
 
     // Collection Synchronization (RFC 6578)

@@ -56,7 +56,9 @@ pub enum AddressbookProp {
         rename = "CARD:supported-address-data",
         alias = "supported-address-data"
     )]
+    #[serde(skip_deserializing)]
     SupportedAddressData(SupportedAddressData),
+    #[serde(skip_deserializing)]
     SupportedReportSet(SupportedReportSet),
     MaxResourceSize(i64),
 

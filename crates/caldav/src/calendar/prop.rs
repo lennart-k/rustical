@@ -32,14 +32,14 @@ impl Default for CalendarData {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq)]
+#[derive(Debug, Clone, Serialize, Default, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct SupportedCalendarData {
     #[serde(rename = "C:calendar-data", alias = "calendar-data")]
     calendar_data: CalendarData,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum ReportMethod {
     CalendarQuery,
@@ -47,14 +47,14 @@ pub enum ReportMethod {
     SyncCollection,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct ReportWrapper {
     #[serde(rename = "$value")]
     report: ReportMethod,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct SupportedReportWrapper {
     report: ReportWrapper,
@@ -69,7 +69,7 @@ impl From<ReportMethod> for SupportedReportWrapper {
 }
 
 // RFC 3253 section-3.1.5
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct SupportedReportSet {
     supported_report: Vec<SupportedReportWrapper>,

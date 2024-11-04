@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct AddressDataType {
     #[serde(rename = "@content-type")]
@@ -9,7 +9,7 @@ pub struct AddressDataType {
     pub version: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct SupportedAddressData {
     #[serde(rename = "CARD:address-data-type", alias = "address-data-type")]
@@ -33,21 +33,21 @@ impl Default for SupportedAddressData {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum ReportMethod {
     AddressbookMultiget,
     SyncCollection,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct ReportWrapper {
     #[serde(rename = "$value")]
     report: ReportMethod,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct SupportedReportWrapper {
     report: ReportWrapper,
@@ -62,7 +62,7 @@ impl From<ReportMethod> for SupportedReportWrapper {
 }
 
 // RFC 3253 section-3.1.5
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct SupportedReportSet {
     supported_report: Vec<SupportedReportWrapper>,
