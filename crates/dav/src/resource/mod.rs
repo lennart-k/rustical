@@ -32,7 +32,7 @@ impl<T: Serialize + for<'de> Deserialize<'de>> ResourceType for T {}
 
 pub trait Resource: Clone + 'static {
     type PropName: ResourcePropName;
-    type Prop: ResourceProp + From<CommonPropertiesProp<Self::ResourceType>>;
+    type Prop: ResourceProp + From<CommonPropertiesProp<Self::ResourceType>> + PartialEq;
     type Error: ResponseError + From<crate::Error>;
     type PrincipalResource: Resource;
     type ResourceType: Default + Serialize + for<'de> Deserialize<'de>;
@@ -186,6 +186,12 @@ pub trait Resource: Clone + 'static {
 
 pub trait InvalidProperty {
     fn invalid_property(&self) -> bool;
+}
+
+impl<T: Default + PartialEq> InvalidProperty for T {
+    fn invalid_property(&self) -> bool {
+        self == &T::default()
+    }
 }
 
 #[async_trait(?Send)]

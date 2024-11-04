@@ -43,7 +43,7 @@ impl Serialize for UserPrivilegeSet {
 }
 
 // TODO: implement Deserialize once we need it
-#[derive(Debug, Clone, Deserialize, Default)]
+#[derive(Debug, Clone, Deserialize, Default, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct UserPrivilegeSet {
     privileges: HashSet<UserPrivilege>,

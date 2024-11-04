@@ -4,10 +4,10 @@ use actix_web::dev::ResourceMap;
 use actix_web::web::Data;
 use actix_web::HttpRequest;
 use async_trait::async_trait;
-use derive_more::derive::{From, TryInto};
+use derive_more::derive::From;
 use rustical_dav::extensions::CommonPropertiesProp;
 use rustical_dav::privileges::UserPrivilegeSet;
-use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
+use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
 use rustical_store::auth::User;
 use rustical_store::AddressbookStore;
@@ -25,14 +25,14 @@ pub struct PrincipalResource {
     principal: String,
 }
 
-#[derive(Deserialize, Serialize, Default, Debug)]
+#[derive(Deserialize, Serialize, Default, Debug, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct Resourcetype {
     principal: (),
     collection: (),
 }
 
-#[derive(Deserialize, Serialize, From, TryInto)]
+#[derive(Default, Deserialize, Serialize, From, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum PrincipalProp {
     // WebDAV Access Control (RFC 3744)
@@ -47,20 +47,14 @@ pub enum PrincipalProp {
 
     #[serde(skip_deserializing, untagged)]
     #[from]
-    #[try_into]
     ExtCommonProperties(CommonPropertiesProp<Resourcetype>),
 
     #[serde(untagged)]
+    #[default]
     Invalid,
 }
 
-impl InvalidProperty for PrincipalProp {
-    fn invalid_property(&self) -> bool {
-        matches!(self, Self::Invalid)
-    }
-}
-
-#[derive(EnumString, VariantNames, Clone, From, TryInto)]
+#[derive(EnumString, VariantNames, Clone)]
 #[strum(serialize_all = "kebab-case")]
 pub enum PrincipalPropName {
     #[strum(serialize = "principal-URL")]

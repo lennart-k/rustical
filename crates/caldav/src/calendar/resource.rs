@@ -12,10 +12,10 @@ use actix_web::http::Method;
 use actix_web::web;
 use actix_web::{web::Data, HttpRequest};
 use async_trait::async_trait;
-use derive_more::derive::{From, Into, TryInto};
+use derive_more::derive::{From, Into};
 use rustical_dav::extensions::CommonPropertiesProp;
 use rustical_dav::privileges::UserPrivilegeSet;
-use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
+use rustical_dav::resource::{Resource, ResourceService};
 use rustical_store::auth::User;
 use rustical_store::{Calendar, CalendarStore};
 use serde::{Deserialize, Serialize};
@@ -47,7 +47,7 @@ pub enum CalendarPropName {
     Getctag,
 }
 
-#[derive(Deserialize, Serialize, From, TryInto)]
+#[derive(Default, Deserialize, Serialize, From, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum CalendarProp {
     // WebDAV (RFC 2518)
@@ -84,17 +84,11 @@ pub enum CalendarProp {
 
     #[serde(skip_deserializing, untagged)]
     #[from]
-    #[try_into]
     ExtCommonProperties(CommonPropertiesProp<Resourcetype>),
 
     #[serde(untagged)]
+    #[default]
     Invalid,
-}
-
-impl InvalidProperty for CalendarProp {
-    fn invalid_property(&self) -> bool {
-        matches!(self, Self::Invalid)
-    }
 }
 
 #[derive(Clone, Debug, From, Into)]

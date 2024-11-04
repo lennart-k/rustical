@@ -10,7 +10,7 @@ use std::any::type_name;
 use std::marker::PhantomData;
 use strum::{EnumString, VariantNames};
 
-#[derive(Deserialize, Serialize, Default, Debug)]
+#[derive(Deserialize, Serialize, Default, Debug, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct Resourcetype {
     collection: (),

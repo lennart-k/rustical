@@ -9,7 +9,7 @@ pub use tag_name::TagName;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Deserialize, Serialize, From)]
+#[derive(Debug, Clone, Deserialize, Serialize, From, PartialEq)]
 pub struct HrefElement {
     pub href: String,
 }

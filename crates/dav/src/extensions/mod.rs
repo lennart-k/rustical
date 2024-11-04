@@ -19,7 +19,7 @@ impl<R: Resource> Default for CommonPropertiesExtension<R> {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum CommonPropertiesProp<RT: ResourceType> {
     // WebDAV (RFC 2518)

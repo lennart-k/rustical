@@ -2,11 +2,11 @@ use super::methods::{get_event, put_event};
 use crate::{principal::PrincipalResource, Error};
 use actix_web::{dev::ResourceMap, web::Data, HttpRequest};
 use async_trait::async_trait;
-use derive_more::derive::{From, Into, TryInto};
+use derive_more::derive::{From, Into};
 use rustical_dav::{
     extensions::CommonPropertiesProp,
     privileges::UserPrivilegeSet,
-    resource::{InvalidProperty, Resource, ResourceService},
+    resource::{Resource, ResourceService},
 };
 use rustical_store::{auth::User, CalendarObject, CalendarStore};
 use serde::{Deserialize, Serialize};
@@ -29,7 +29,7 @@ pub enum CalendarObjectPropName {
     Getcontenttype,
 }
 
-#[derive(Deserialize, Serialize, From, TryInto)]
+#[derive(Default, Deserialize, Serialize, From, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum CalendarObjectProp {
     // WebDAV (RFC 2518)
@@ -42,17 +42,11 @@ pub enum CalendarObjectProp {
 
     #[serde(skip_deserializing, untagged)]
     #[from]
-    #[try_into]
     ExtCommonProperties(CommonPropertiesProp<Resourcetype>),
 
     #[serde(untagged)]
+    #[default]
     Invalid,
-}
-
-impl InvalidProperty for CalendarObjectProp {
-    fn invalid_property(&self) -> bool {
-        matches!(self, Self::Invalid)
-    }
 }
 
 #[derive(Clone, From, Into)]
@@ -62,7 +56,7 @@ pub struct CalendarObjectResource {
 }
 
 // TODO: set correct resourcetype
-#[derive(Debug, Clone, Deserialize, Serialize, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct Resourcetype {
     collection: (),

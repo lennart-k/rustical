@@ -1,20 +1,20 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct SupportedCalendarComponent {
     #[serde(rename = "@name")]
     pub name: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct SupportedCalendarComponentSet {
     #[serde(rename = "C:comp")]
     pub comp: Vec<SupportedCalendarComponent>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct CalendarData {
     #[serde(rename = "@content-type")]
@@ -32,14 +32,14 @@ impl Default for CalendarData {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct SupportedCalendarData {
     #[serde(rename = "C:calendar-data", alias = "calendar-data")]
     calendar_data: CalendarData,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct Resourcetype {
     #[serde(rename = "C:calendar", alias = "calendar")]
@@ -47,7 +47,7 @@ pub struct Resourcetype {
     collection: (),
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum ReportMethod {
     CalendarQuery,
@@ -55,14 +55,14 @@ pub enum ReportMethod {
     SyncCollection,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct ReportWrapper {
     #[serde(rename = "$value")]
     report: ReportMethod,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct SupportedReportWrapper {
     report: ReportWrapper,
@@ -77,7 +77,7 @@ impl From<ReportMethod> for SupportedReportWrapper {
 }
 
 // RFC 3253 section-3.1.5
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct SupportedReportSet {
     supported_report: Vec<SupportedReportWrapper>,
