@@ -33,14 +33,6 @@ impl Default for SupportedAddressData {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq)]
-#[serde(rename_all = "kebab-case")]
-pub struct Resourcetype {
-    #[serde(rename = "CARD:addressbook", alias = "addressbook")]
-    addressbook: (),
-    collection: (),
-}
-
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum ReportMethod {

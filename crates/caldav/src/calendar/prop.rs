@@ -39,14 +39,6 @@ pub struct SupportedCalendarData {
     calendar_data: CalendarData,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq)]
-#[serde(rename_all = "kebab-case")]
-pub struct Resourcetype {
-    #[serde(rename = "C:calendar", alias = "calendar")]
-    calendar: (),
-    collection: (),
-}
-
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum ReportMethod {

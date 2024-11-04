@@ -29,10 +29,11 @@ impl<T: Serialize + for<'de> Deserialize<'de>> ResourceType for T {}
 
 pub trait Resource: Clone + 'static {
     type PropName: ResourcePropName;
-    type Prop: ResourceProp + From<CommonPropertiesProp<Self::ResourceType>> + PartialEq;
+    type Prop: ResourceProp + From<CommonPropertiesProp> + PartialEq;
     type Error: ResponseError + From<crate::Error>;
     type PrincipalResource: Resource;
-    type ResourceType: Default + Serialize + for<'de> Deserialize<'de>;
+
+    fn get_resourcetype() -> &'static [&'static str];
 
     fn list_extensions() -> Vec<impl ResourceExtension<Self>> {
         vec![CommonPropertiesExtension::default()]
@@ -122,7 +123,7 @@ pub trait Resource: Clone + 'static {
                     Error::BadRequest("allprop MUST be the only queried prop".to_owned()).into(),
                 );
             }
-            props = Self::list_props();
+            props = Self::list_props().to_vec();
             for extension in Self::list_extensions() {
                 let ext_props: Vec<&str> = extension.list_props().into();
                 props.extend(ext_props);

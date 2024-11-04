@@ -1,8 +1,8 @@
 use crate::{
     extension::ResourceExtension,
     privileges::UserPrivilegeSet,
-    resource::{InvalidProperty, Resource, ResourceType},
-    xml::HrefElement,
+    resource::{InvalidProperty, Resource},
+    xml::{HrefElement, Resourcetype},
 };
 use actix_web::dev::ResourceMap;
 use rustical_store::auth::User;
@@ -21,10 +21,10 @@ impl<R: Resource> Default for CommonPropertiesExtension<R> {
 
 #[derive(Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
-pub enum CommonPropertiesProp<RT: ResourceType> {
+pub enum CommonPropertiesProp {
     // WebDAV (RFC 2518)
     #[serde(skip_deserializing)]
-    Resourcetype(RT),
+    Resourcetype(Resourcetype),
 
     // WebDAV Current Principal Extension (RFC 5397)
     CurrentUserPrincipal(HrefElement),
@@ -37,7 +37,7 @@ pub enum CommonPropertiesProp<RT: ResourceType> {
     Invalid,
 }
 
-impl<RT: ResourceType> InvalidProperty for CommonPropertiesProp<RT> {
+impl InvalidProperty for CommonPropertiesProp {
     fn invalid_property(&self) -> bool {
         matches!(self, Self::Invalid)
     }
@@ -54,9 +54,9 @@ pub enum CommonPropertiesPropName {
 
 impl<R: Resource> ResourceExtension<R> for CommonPropertiesExtension<R>
 where
-    R::Prop: From<CommonPropertiesProp<R::ResourceType>>,
+    R::Prop: From<CommonPropertiesProp>,
 {
-    type Prop = CommonPropertiesProp<R::ResourceType>;
+    type Prop = CommonPropertiesProp;
     type PropName = CommonPropertiesPropName;
     type Error = R::Error;
 
@@ -69,7 +69,7 @@ where
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
             CommonPropertiesPropName::Resourcetype => {
-                CommonPropertiesProp::Resourcetype(R::ResourceType::default())
+                CommonPropertiesProp::Resourcetype(Resourcetype(R::get_resourcetype()))
             }
             CommonPropertiesPropName::CurrentUserPrincipal => {
                 CommonPropertiesProp::CurrentUserPrincipal(

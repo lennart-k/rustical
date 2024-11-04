@@ -1,6 +1,6 @@
 use super::methods::mkcol::route_mkcol;
 use super::methods::report::route_report_addressbook;
-use super::prop::{Resourcetype, SupportedAddressData, SupportedReportSet};
+use super::prop::{SupportedAddressData, SupportedReportSet};
 use crate::address_object::resource::AddressObjectResource;
 use crate::principal::PrincipalResource;
 use crate::Error;
@@ -68,7 +68,7 @@ pub enum AddressbookProp {
 
     #[serde(skip_deserializing, untagged)]
     #[from]
-    ExtCommonProperties(CommonPropertiesProp<Resourcetype>),
+    ExtCommonProperties(CommonPropertiesProp),
 
     #[serde(untagged)]
     #[default]
@@ -82,8 +82,11 @@ impl Resource for AddressbookResource {
     type PropName = AddressbookPropName;
     type Prop = AddressbookProp;
     type Error = Error;
-    type ResourceType = Resourcetype;
     type PrincipalResource = PrincipalResource;
+
+    fn get_resourcetype() -> &'static [&'static str] {
+        &["collection", "CARD:addressbook"]
+    }
 
     fn get_prop(
         &self,

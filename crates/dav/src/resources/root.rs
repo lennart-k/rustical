@@ -5,16 +5,9 @@ use actix_web::dev::ResourceMap;
 use actix_web::HttpRequest;
 use async_trait::async_trait;
 use rustical_store::auth::User;
-use serde::{Deserialize, Serialize};
 use std::any::type_name;
 use std::marker::PhantomData;
 use strum::{EnumString, VariantNames};
-
-#[derive(Deserialize, Serialize, Default, Debug, PartialEq)]
-#[serde(rename_all = "kebab-case")]
-pub struct Resourcetype {
-    collection: (),
-}
 
 #[derive(Clone)]
 pub struct RootResource<PR: Resource>(PhantomData<PR>);
@@ -31,10 +24,13 @@ pub enum RootResourcePropName {}
 
 impl<PR: Resource> Resource for RootResource<PR> {
     type PropName = RootResourcePropName;
-    type Prop = CommonPropertiesProp<Self::ResourceType>;
+    type Prop = CommonPropertiesProp;
     type Error = PR::Error;
-    type ResourceType = Resourcetype;
     type PrincipalResource = PR;
+
+    fn get_resourcetype() -> &'static [&'static str] {
+        &["collection"]
+    }
 
     fn get_prop(
         &self,

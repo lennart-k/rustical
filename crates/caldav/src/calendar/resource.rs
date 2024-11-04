@@ -1,7 +1,7 @@
 use super::methods::mkcalendar::route_mkcalendar;
 use super::methods::report::route_report_calendar;
 use super::prop::{
-    Resourcetype, SupportedCalendarComponent, SupportedCalendarComponentSet, SupportedCalendarData,
+    SupportedCalendarComponent, SupportedCalendarComponentSet, SupportedCalendarData,
     SupportedReportSet,
 };
 use crate::calendar_object::resource::CalendarObjectResource;
@@ -83,7 +83,7 @@ pub enum CalendarProp {
 
     #[serde(skip_deserializing, untagged)]
     #[from]
-    ExtCommonProperties(CommonPropertiesProp<Resourcetype>),
+    ExtCommonProperties(CommonPropertiesProp),
 
     #[serde(untagged)]
     #[default]
@@ -97,8 +97,11 @@ impl Resource for CalendarResource {
     type PropName = CalendarPropName;
     type Prop = CalendarProp;
     type Error = Error;
-    type ResourceType = Resourcetype;
     type PrincipalResource = PrincipalResource;
+
+    fn get_resourcetype() -> &'static [&'static str] {
+        &["collection", "C:calendar"]
+    }
 
     fn get_prop(
         &self,

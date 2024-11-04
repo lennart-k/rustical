@@ -25,13 +25,6 @@ pub struct PrincipalResource {
     principal: String,
 }
 
-#[derive(Deserialize, Serialize, Default, Debug, PartialEq)]
-#[serde(rename_all = "kebab-case")]
-pub struct Resourcetype {
-    principal: (),
-    collection: (),
-}
-
 #[derive(Default, Deserialize, Serialize, From, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum PrincipalProp {
@@ -47,7 +40,7 @@ pub enum PrincipalProp {
 
     #[serde(skip_deserializing, untagged)]
     #[from]
-    ExtCommonProperties(CommonPropertiesProp<Resourcetype>),
+    ExtCommonProperties(CommonPropertiesProp),
 
     #[serde(untagged)]
     #[default]
@@ -73,8 +66,11 @@ impl Resource for PrincipalResource {
     type PropName = PrincipalPropName;
     type Prop = PrincipalProp;
     type Error = Error;
-    type ResourceType = Resourcetype;
     type PrincipalResource = PrincipalResource;
+
+    fn get_resourcetype() -> &'static [&'static str] {
+        &["collection", "principal"]
+    }
 
     fn get_prop(
         &self,

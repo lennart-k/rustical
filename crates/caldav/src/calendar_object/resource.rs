@@ -41,7 +41,7 @@ pub enum CalendarObjectProp {
 
     #[serde(skip_deserializing, untagged)]
     #[from]
-    ExtCommonProperties(CommonPropertiesProp<Resourcetype>),
+    ExtCommonProperties(CommonPropertiesProp),
 
     #[serde(untagged)]
     #[default]
@@ -54,16 +54,15 @@ pub struct CalendarObjectResource {
     pub principal: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq)]
-#[serde(rename_all = "kebab-case")]
-pub struct Resourcetype {}
-
 impl Resource for CalendarObjectResource {
     type PropName = CalendarObjectPropName;
     type Prop = CalendarObjectProp;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
-    type ResourceType = Resourcetype;
+
+    fn get_resourcetype() -> &'static [&'static str] {
+        &[]
+    }
 
     fn get_prop(
         &self,

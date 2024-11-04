@@ -42,7 +42,7 @@ pub enum AddressObjectProp {
 
     #[serde(skip_deserializing, untagged)]
     #[from]
-    ExtCommonProperties(CommonPropertiesProp<Resourcetype>),
+    ExtCommonProperties(CommonPropertiesProp),
 
     #[serde(untagged)]
     #[default]
@@ -55,16 +55,15 @@ pub struct AddressObjectResource {
     pub principal: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq)]
-#[serde(rename_all = "kebab-case")]
-pub struct Resourcetype {}
-
 impl Resource for AddressObjectResource {
     type PropName = AddressObjectPropName;
     type Prop = AddressObjectProp;
     type Error = Error;
-    type ResourceType = Resourcetype;
     type PrincipalResource = PrincipalResource;
+
+    fn get_resourcetype() -> &'static [&'static str] {
+        &[]
+    }
 
     fn get_prop(
         &self,
