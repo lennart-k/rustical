@@ -55,12 +55,9 @@ pub struct AddressObjectResource {
     pub principal: String,
 }
 
-// TODO: set correct resourcetype
 #[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq)]
 #[serde(rename_all = "kebab-case")]
-pub struct Resourcetype {
-    collection: (),
-}
+pub struct Resourcetype {}
 
 impl Resource for AddressObjectResource {
     type PropName = AddressObjectPropName;

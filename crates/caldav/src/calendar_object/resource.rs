@@ -54,12 +54,9 @@ pub struct CalendarObjectResource {
     pub principal: String,
 }
 
-// TODO: set correct resourcetype
 #[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq)]
 #[serde(rename_all = "kebab-case")]
-pub struct Resourcetype {
-    collection: (),
-}
+pub struct Resourcetype {}
 
 impl Resource for CalendarObjectResource {
     type PropName = CalendarObjectPropName;
