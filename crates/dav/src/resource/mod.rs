@@ -43,6 +43,17 @@ pub trait Resource: Clone + 'static {
         Self::PropName::VARIANTS
     }
 
+    fn list_all_props() -> Vec<&'static str> {
+        let mut props = Self::list_props().to_vec();
+        props.extend(
+            Self::list_extensions()
+                .into_iter()
+                .map(|ext| ext.list_props().to_vec())
+                .concat(),
+        );
+        props
+    }
+
     fn get_prop(
         &self,
         rmap: &ResourceMap,

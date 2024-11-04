@@ -93,7 +93,14 @@ pub async fn route_proppatch<R: ResourceService>(
                 prop: PropertyElement { prop },
             }) => {
                 if prop.invalid_property() {
-                    props_not_found.push(propname);
+                    if <R::Resource as Resource>::list_all_props().contains(&propname.as_str()) {
+                        // This happens in following cases:
+                        // - read-only properties with #[serde(skip_deserializing)]
+                        // - for read-only properties from extensions
+                        props_conflict.push(propname)
+                    } else {
+                        props_not_found.push(propname);
+                    }
                     continue;
                 }
                 match resource.set_prop(prop) {
