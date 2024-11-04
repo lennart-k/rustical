@@ -5,8 +5,7 @@ use actix_web::web::Data;
 use actix_web::HttpRequest;
 use async_trait::async_trait;
 use derive_more::derive::{From, TryInto};
-use rustical_dav::extension::BoxedExtension;
-use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
+use rustical_dav::extensions::CommonPropertiesProp;
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
@@ -49,7 +48,7 @@ pub enum PrincipalProp {
     #[serde(skip_deserializing, untagged)]
     #[from]
     #[try_into]
-    ExtCommonProperties(CommonPropertiesProp<PrincipalResource>),
+    ExtCommonProperties(CommonPropertiesProp<Resourcetype>),
 
     #[serde(untagged)]
     Invalid,
@@ -81,12 +80,7 @@ impl Resource for PrincipalResource {
     type Prop = PrincipalProp;
     type Error = Error;
     type ResourceType = Resourcetype;
-
-    fn list_extensions() -> Vec<BoxedExtension<Self>> {
-        vec![BoxedExtension::from_ext(CommonPropertiesExtension::<
-            PrincipalResource,
-        >::default())]
-    }
+    type PrincipalResource = PrincipalResource;
 
     fn get_prop(
         &self,

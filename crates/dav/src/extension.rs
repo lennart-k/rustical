@@ -49,10 +49,8 @@ pub trait BoxableExtension<R: Resource> {
     fn list_props(&self) -> &'static [&'static str];
 }
 
-impl<
-        R: Resource,
-        RE: ResourceExtension<R, Prop: Into<R::Prop> + TryFrom<R::Prop>, Error: Into<R::Error>>,
-    > BoxableExtension<R> for RE
+impl<R: Resource, RE: ResourceExtension<R, Prop: Into<R::Prop>, Error: Into<R::Error>>>
+    BoxableExtension<R> for RE
 {
     fn get_prop(
         &self,
@@ -114,9 +112,7 @@ impl<
 pub struct BoxedExtension<R>(Box<dyn BoxableExtension<R>>);
 
 impl<R: Resource> BoxedExtension<R> {
-    pub fn from_ext<RE: ResourceExtension<R, Prop: Into<R::Prop> + TryFrom<R::Prop>> + 'static>(
-        ext: RE,
-    ) -> Self {
+    pub fn from_ext<RE: ResourceExtension<R, Prop: Into<R::Prop>> + 'static>(ext: RE) -> Self {
         let boxed_ext: Box<dyn BoxableExtension<R>> = Box::new(ext);
         BoxedExtension(boxed_ext)
     }

@@ -30,13 +30,14 @@ impl<PR: Resource> Default for RootResource<PR> {
 
 impl<PR: Resource> Resource for RootResource<PR> {
     type PropName = CommonPropertiesPropName;
-    type Prop = CommonPropertiesProp<RootResource<PR>>;
+    type Prop = CommonPropertiesProp<Self::ResourceType>;
     type Error = PR::Error;
     type ResourceType = Resourcetype;
+    type PrincipalResource = PR;
 
     fn list_extensions() -> Vec<BoxedExtension<Self>> {
         vec![BoxedExtension::from_ext(
-            CommonPropertiesExtension::<PR>::default(),
+            CommonPropertiesExtension::<Self>::default(),
         )]
     }
 

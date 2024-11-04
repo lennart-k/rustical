@@ -4,8 +4,7 @@ use actix_web::{dev::ResourceMap, web::Data, HttpRequest};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into, TryInto};
 use rustical_dav::{
-    extension::BoxedExtension,
-    extensions::{CommonPropertiesExtension, CommonPropertiesProp},
+    extensions::CommonPropertiesProp,
     privileges::UserPrivilegeSet,
     resource::{InvalidProperty, Resource, ResourceService},
 };
@@ -44,7 +43,7 @@ pub enum CalendarObjectProp {
     #[serde(skip_deserializing, untagged)]
     #[from]
     #[try_into]
-    ExtCommonProperties(CommonPropertiesProp<CalendarObjectResource>),
+    ExtCommonProperties(CommonPropertiesProp<Resourcetype>),
 
     #[serde(untagged)]
     Invalid,
@@ -73,13 +72,8 @@ impl Resource for CalendarObjectResource {
     type PropName = CalendarObjectPropName;
     type Prop = CalendarObjectProp;
     type Error = Error;
+    type PrincipalResource = PrincipalResource;
     type ResourceType = Resourcetype;
-
-    fn list_extensions() -> Vec<BoxedExtension<Self>> {
-        vec![BoxedExtension::from_ext(CommonPropertiesExtension::<
-            PrincipalResource,
-        >::default())]
-    }
 
     fn get_prop(
         &self,

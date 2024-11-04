@@ -3,8 +3,7 @@ use actix_web::{dev::ResourceMap, web::Data, HttpRequest};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into, TryInto};
 use rustical_dav::{
-    extension::BoxedExtension,
-    extensions::{CommonPropertiesExtension, CommonPropertiesProp},
+    extensions::CommonPropertiesProp,
     privileges::UserPrivilegeSet,
     resource::{InvalidProperty, Resource, ResourceService},
 };
@@ -45,7 +44,7 @@ pub enum AddressObjectProp {
     #[serde(skip_deserializing, untagged)]
     #[from]
     #[try_into]
-    ExtCommonProperties(CommonPropertiesProp<AddressObjectResource>),
+    ExtCommonProperties(CommonPropertiesProp<Resourcetype>),
 
     #[serde(untagged)]
     Invalid,
@@ -75,12 +74,7 @@ impl Resource for AddressObjectResource {
     type Prop = AddressObjectProp;
     type Error = Error;
     type ResourceType = Resourcetype;
-
-    fn list_extensions() -> Vec<BoxedExtension<Self>> {
-        vec![BoxedExtension::from_ext(CommonPropertiesExtension::<
-            PrincipalResource,
-        >::default())]
-    }
+    type PrincipalResource = PrincipalResource;
 
     fn get_prop(
         &self,

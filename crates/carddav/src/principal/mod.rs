@@ -49,7 +49,7 @@ pub enum PrincipalProp {
     #[serde(skip_deserializing, untagged)]
     #[from]
     #[try_into]
-    ExtCommonProperties(CommonPropertiesProp<PrincipalResource>),
+    ExtCommonProperties(CommonPropertiesProp<Resourcetype>),
 
     #[serde(untagged)]
     Invalid,
@@ -81,12 +81,7 @@ impl Resource for PrincipalResource {
     type Prop = PrincipalProp;
     type Error = Error;
     type ResourceType = Resourcetype;
-
-    fn list_extensions() -> Vec<BoxedExtension<Self>> {
-        vec![BoxedExtension::from_ext(CommonPropertiesExtension::<
-            PrincipalResource,
-        >::default())]
-    }
+    type PrincipalResource = PrincipalResource;
 
     fn get_prop(
         &self,

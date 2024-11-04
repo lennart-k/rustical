@@ -1,4 +1,5 @@
-use crate::extension::BoxedExtension;
+use crate::extension::{BoxableExtension, BoxedExtension};
+use crate::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use crate::methods::{route_delete, route_propfind, route_proppatch};
 use crate::privileges::UserPrivilegeSet;
 use crate::xml::multistatus::{PropTagWrapper, PropstatElement, PropstatWrapper};
@@ -26,14 +27,20 @@ impl<T: ResourceReadProp + for<'de> Deserialize<'de>> ResourceProp for T {}
 pub trait ResourcePropName: FromStr + VariantNames {}
 impl<T: FromStr + VariantNames> ResourcePropName for T {}
 
+pub trait ResourceType: Serialize + for<'de> Deserialize<'de> {}
+impl<T: Serialize + for<'de> Deserialize<'de>> ResourceType for T {}
+
 pub trait Resource: Clone + 'static {
     type PropName: ResourcePropName;
-    type Prop: ResourceProp;
+    type Prop: ResourceProp + From<CommonPropertiesProp<Self::ResourceType>>;
     type Error: ResponseError + From<crate::Error>;
+    type PrincipalResource: Resource;
     type ResourceType: Default + Serialize + for<'de> Deserialize<'de>;
 
     fn list_extensions() -> Vec<BoxedExtension<Self>> {
-        vec![]
+        vec![BoxedExtension::from_ext(
+            CommonPropertiesExtension::<Self>::default(),
+        )]
     }
 
     fn list_props() -> Vec<&'static str> {

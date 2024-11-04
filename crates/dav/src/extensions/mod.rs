@@ -1,7 +1,7 @@
 use crate::{
     extension::ResourceExtension,
     privileges::UserPrivilegeSet,
-    resource::{InvalidProperty, Resource},
+    resource::{InvalidProperty, Resource, ResourceType},
     xml::HrefElement,
 };
 use actix_web::dev::ResourceMap;
@@ -11,9 +11,9 @@ use std::marker::PhantomData;
 use strum::{EnumString, VariantNames};
 
 #[derive(Clone)]
-pub struct CommonPropertiesExtension<PR: Resource>(PhantomData<PR>);
+pub struct CommonPropertiesExtension<R: Resource>(PhantomData<R>);
 
-impl<PR: Resource> Default for CommonPropertiesExtension<PR> {
+impl<R: Resource> Default for CommonPropertiesExtension<R> {
     fn default() -> Self {
         Self(PhantomData)
     }
@@ -21,9 +21,10 @@ impl<PR: Resource> Default for CommonPropertiesExtension<PR> {
 
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
-pub enum CommonPropertiesProp<R: Resource> {
+pub enum CommonPropertiesProp<RT: ResourceType> {
     // WebDAV (RFC 2518)
-    Resourcetype(R::ResourceType),
+    #[serde(skip_deserializing)]
+    Resourcetype(RT),
 
     // WebDAV Current Principal Extension (RFC 5397)
     CurrentUserPrincipal(HrefElement),
@@ -36,7 +37,7 @@ pub enum CommonPropertiesProp<R: Resource> {
     Invalid,
 }
 
-impl<R: Resource> InvalidProperty for CommonPropertiesProp<R> {
+impl<RT: ResourceType> InvalidProperty for CommonPropertiesProp<RT> {
     fn invalid_property(&self) -> bool {
         matches!(self, Self::Invalid)
     }
@@ -51,11 +52,11 @@ pub enum CommonPropertiesPropName {
     Owner,
 }
 
-impl<R: Resource, PR: Resource> ResourceExtension<R> for CommonPropertiesExtension<PR>
+impl<R: Resource> ResourceExtension<R> for CommonPropertiesExtension<R>
 where
-    R::Prop: From<CommonPropertiesProp<R>>,
+    R::Prop: From<CommonPropertiesProp<R::ResourceType>>,
 {
-    type Prop = CommonPropertiesProp<R>;
+    type Prop = CommonPropertiesProp<R::ResourceType>;
     type PropName = CommonPropertiesPropName;
     type Error = R::Error;
 
@@ -72,17 +73,21 @@ where
             }
             CommonPropertiesPropName::CurrentUserPrincipal => {
                 CommonPropertiesProp::CurrentUserPrincipal(
-                    PR::get_url(rmap, &[&user.id]).unwrap().into(),
+                    R::PrincipalResource::get_url(rmap, &[&user.id])
+                        .unwrap()
+                        .into(),
                 )
             }
             CommonPropertiesPropName::CurrentUserPrivilegeSet => {
                 CommonPropertiesProp::CurrentUserPrivilegeSet(resource.get_user_privileges(user)?)
             }
-            CommonPropertiesPropName::Owner => CommonPropertiesProp::Owner(
-                resource
-                    .get_owner()
-                    .map(|owner| PR::get_url(rmap, &[owner]).unwrap().into()),
-            ),
+            CommonPropertiesPropName::Owner => {
+                CommonPropertiesProp::Owner(resource.get_owner().map(|owner| {
+                    R::PrincipalResource::get_url(rmap, &[owner])
+                        .unwrap()
+                        .into()
+                }))
+            }
         })
     }
 }

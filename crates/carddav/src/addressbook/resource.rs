@@ -10,8 +10,7 @@ use actix_web::web;
 use actix_web::{web::Data, HttpRequest};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into, TryInto};
-use rustical_dav::extension::BoxedExtension;
-use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
+use rustical_dav::extensions::CommonPropertiesProp;
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{InvalidProperty, Resource, ResourceService};
 use rustical_store::auth::User;
@@ -71,7 +70,7 @@ pub enum AddressbookProp {
     #[serde(skip_deserializing, untagged)]
     #[from]
     #[try_into]
-    ExtCommonProperties(CommonPropertiesProp<AddressbookResource>),
+    ExtCommonProperties(CommonPropertiesProp<Resourcetype>),
 
     #[serde(untagged)]
     Invalid,
@@ -91,12 +90,7 @@ impl Resource for AddressbookResource {
     type Prop = AddressbookProp;
     type Error = Error;
     type ResourceType = Resourcetype;
-
-    fn list_extensions() -> Vec<BoxedExtension<Self>> {
-        vec![BoxedExtension::from_ext(CommonPropertiesExtension::<
-            PrincipalResource,
-        >::default())]
-    }
+    type PrincipalResource = PrincipalResource;
 
     fn get_prop(
         &self,
