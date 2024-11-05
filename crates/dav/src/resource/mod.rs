@@ -26,7 +26,7 @@ impl<T: FromStr + VariantNames> ResourcePropName for T {}
 pub trait ResourceType: Serialize + for<'de> Deserialize<'de> {}
 impl<T: Serialize + for<'de> Deserialize<'de>> ResourceType for T {}
 
-#[derive(Deserialize, Serialize, PartialEq)]
+#[derive(Deserialize, Serialize, PartialEq, Default)]
 #[serde(rename_all = "kebab-case")]
 pub enum CommonPropertiesProp {
     // WebDAV (RFC 2518)
@@ -41,6 +41,7 @@ pub enum CommonPropertiesProp {
     Owner(Option<HrefElement>),
 
     #[serde(other)]
+    #[default]
     Invalid,
 }
 
@@ -50,12 +51,6 @@ pub enum EitherProp<Left: ResourceProp, Right: ResourceProp> {
     Left(Left),
     #[serde(untagged)]
     Right(Right),
-}
-
-impl InvalidProperty for CommonPropertiesProp {
-    fn invalid_property(&self) -> bool {
-        matches!(self, Self::Invalid)
-    }
 }
 
 #[derive(EnumString, VariantNames, Clone)]
