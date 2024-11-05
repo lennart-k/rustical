@@ -10,7 +10,7 @@ use actix_web::{
 };
 use rustical_dav::{
     methods::propfind::{PropElement, PropfindType},
-    resource::Resource,
+    resource::{CommonPropertiesProp, EitherProp, Resource},
     xml::{
         multistatus::{PropstatWrapper, ResponseElement},
         MultistatusElement,
@@ -68,7 +68,13 @@ pub async fn handle_addressbook_multiget<AS: AddressbookStore + ?Sized>(
     principal: &str,
     cal_id: &str,
     addr_store: &AS,
-) -> Result<MultistatusElement<PropstatWrapper<AddressObjectProp>, String>, Error> {
+) -> Result<
+    MultistatusElement<
+        PropstatWrapper<EitherProp<AddressObjectProp, CommonPropertiesProp>>,
+        String,
+    >,
+    Error,
+> {
     let principal_url = PrincipalResource::get_url(req.resource_map(), vec![principal]).unwrap();
     let (objects, not_found) = get_objects_addressbook_multiget(
         &addr_multiget,

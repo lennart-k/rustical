@@ -13,7 +13,6 @@ use actix_web::web;
 use actix_web::{web::Data, HttpRequest};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
-use rustical_dav::extensions::CommonPropertiesProp;
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{Resource, ResourceService};
 use rustical_store::auth::User;
@@ -46,7 +45,7 @@ pub enum CalendarPropName {
     Getctag,
 }
 
-#[derive(Default, Deserialize, Serialize, From, PartialEq)]
+#[derive(Default, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum CalendarProp {
     // WebDAV (RFC 2518)
@@ -82,10 +81,6 @@ pub enum CalendarProp {
 
     // Didn't find the spec
     Getctag(String),
-
-    #[serde(skip_deserializing, rename = "$value")]
-    #[from]
-    ExtCommonProperties(CommonPropertiesProp),
 
     #[serde(other)]
     #[default]
@@ -183,7 +178,6 @@ impl Resource for CalendarResource {
             CalendarProp::SyncToken(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Getctag(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Invalid => Err(rustical_dav::Error::PropReadOnly),
-            _ => panic!("we shouldn't end up here"),
         }
     }
 

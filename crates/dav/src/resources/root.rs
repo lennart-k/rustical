@@ -1,10 +1,10 @@
-use crate::extensions::CommonPropertiesProp;
 use crate::privileges::UserPrivilegeSet;
 use crate::resource::{Resource, ResourceService};
 use actix_web::dev::ResourceMap;
 use actix_web::HttpRequest;
 use async_trait::async_trait;
 use rustical_store::auth::User;
+use serde::{Deserialize, Serialize};
 use std::any::type_name;
 use std::marker::PhantomData;
 use strum::{EnumString, VariantNames};
@@ -22,9 +22,16 @@ impl<PR: Resource> Default for RootResource<PR> {
 #[strum(serialize_all = "kebab-case")]
 pub enum RootResourcePropName {}
 
+#[derive(Deserialize, Serialize, Default, Clone, PartialEq)]
+pub enum RootResourceProp {
+    #[serde(other)]
+    #[default]
+    Invalid,
+}
+
 impl<PR: Resource> Resource for RootResource<PR> {
     type PropName = RootResourcePropName;
-    type Prop = CommonPropertiesProp;
+    type Prop = RootResourceProp;
     type Error = PR::Error;
     type PrincipalResource = PR;
 

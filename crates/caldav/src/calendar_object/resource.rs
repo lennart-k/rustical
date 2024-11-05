@@ -4,7 +4,6 @@ use actix_web::{dev::ResourceMap, web::Data, HttpRequest};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::{
-    extensions::CommonPropertiesProp,
     privileges::UserPrivilegeSet,
     resource::{Resource, ResourceService},
 };
@@ -28,7 +27,7 @@ pub enum CalendarObjectPropName {
     Getcontenttype,
 }
 
-#[derive(Default, Deserialize, Serialize, From, PartialEq)]
+#[derive(Default, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum CalendarObjectProp {
     // WebDAV (RFC 2518)
@@ -38,10 +37,6 @@ pub enum CalendarObjectProp {
     // CalDAV (RFC 4791)
     #[serde(rename = "C:calendar-data")]
     CalendarData(String),
-
-    #[serde(skip_deserializing, rename = "$value")]
-    #[from]
-    ExtCommonProperties(CommonPropertiesProp),
 
     #[serde(other)]
     #[default]

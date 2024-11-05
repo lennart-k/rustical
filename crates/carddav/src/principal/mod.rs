@@ -4,8 +4,6 @@ use actix_web::dev::ResourceMap;
 use actix_web::web::Data;
 use actix_web::HttpRequest;
 use async_trait::async_trait;
-use derive_more::derive::From;
-use rustical_dav::extensions::CommonPropertiesProp;
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
@@ -25,7 +23,7 @@ pub struct PrincipalResource {
     principal: String,
 }
 
-#[derive(Default, Deserialize, Serialize, From, PartialEq)]
+#[derive(Default, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum PrincipalProp {
     // WebDAV Access Control (RFC 3744)
@@ -37,10 +35,6 @@ pub enum PrincipalProp {
     AddressbookHomeSet(HrefElement),
     #[serde(rename = "CARD:principal-address")]
     PrincipalAddress(Option<HrefElement>),
-
-    #[serde(skip_deserializing, rename = "$value")]
-    #[from]
-    ExtCommonProperties(CommonPropertiesProp),
 
     #[serde(other)]
     #[default]

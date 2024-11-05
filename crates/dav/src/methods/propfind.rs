@@ -1,5 +1,7 @@
 use crate::depth_header::Depth;
 use crate::privileges::UserPrivilege;
+use crate::resource::CommonPropertiesProp;
+use crate::resource::EitherProp;
 use crate::resource::Resource;
 use crate::resource::ResourceService;
 use crate::xml::multistatus::PropstatWrapper;
@@ -46,8 +48,8 @@ pub async fn route_propfind<R: ResourceService>(
     root_span: RootSpan,
 ) -> Result<
     MultistatusElement<
-        PropstatWrapper<<R::Resource as Resource>::Prop>,
-        PropstatWrapper<<R::MemberType as Resource>::Prop>,
+        PropstatWrapper<EitherProp<<R::Resource as Resource>::Prop, CommonPropertiesProp>>,
+        PropstatWrapper<EitherProp<<R::MemberType as Resource>::Prop, CommonPropertiesProp>>,
     >,
     R::Error,
 > {

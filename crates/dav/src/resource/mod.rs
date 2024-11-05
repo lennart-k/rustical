@@ -1,9 +1,8 @@
-use crate::extension::ResourceExtension;
-use crate::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use crate::methods::{route_delete, route_propfind, route_proppatch};
 use crate::privileges::UserPrivilegeSet;
 use crate::xml::multistatus::{PropTagWrapper, PropstatElement, PropstatWrapper};
 use crate::xml::{multistatus::ResponseElement, TagList};
+use crate::xml::{HrefElement, Resourcetype};
 use crate::Error;
 use actix_web::dev::ResourceMap;
 use actix_web::error::UrlGenerationError;
@@ -16,7 +15,7 @@ use itertools::Itertools;
 use rustical_store::auth::User;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use strum::VariantNames;
+use strum::{EnumString, VariantNames};
 
 pub trait ResourceProp: InvalidProperty + Serialize + for<'de> Deserialize<'de> {}
 impl<T: InvalidProperty + Serialize + for<'de> Deserialize<'de>> ResourceProp for T {}
@@ -27,31 +26,91 @@ impl<T: FromStr + VariantNames> ResourcePropName for T {}
 pub trait ResourceType: Serialize + for<'de> Deserialize<'de> {}
 impl<T: Serialize + for<'de> Deserialize<'de>> ResourceType for T {}
 
+#[derive(Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum CommonPropertiesProp {
+    // WebDAV (RFC 2518)
+    #[serde(skip_deserializing)]
+    Resourcetype(Resourcetype),
+
+    // WebDAV Current Principal Extension (RFC 5397)
+    CurrentUserPrincipal(HrefElement),
+
+    // WebDAV Access Control Protocol (RFC 3477)
+    CurrentUserPrivilegeSet(UserPrivilegeSet),
+    Owner(Option<HrefElement>),
+
+    #[serde(other)]
+    Invalid,
+}
+
+#[derive(Serialize)]
+pub enum EitherProp<Left: ResourceProp, Right: ResourceProp> {
+    #[serde(untagged)]
+    Left(Left),
+    #[serde(untagged)]
+    Right(Right),
+}
+
+impl InvalidProperty for CommonPropertiesProp {
+    fn invalid_property(&self) -> bool {
+        matches!(self, Self::Invalid)
+    }
+}
+
+#[derive(EnumString, VariantNames, Clone)]
+#[strum(serialize_all = "kebab-case")]
+pub enum CommonPropertiesPropName {
+    Resourcetype,
+    CurrentUserPrincipal,
+    CurrentUserPrivilegeSet,
+    Owner,
+}
+
 pub trait Resource: Clone + 'static {
     type PropName: ResourcePropName;
-    type Prop: ResourceProp + From<CommonPropertiesProp> + PartialEq;
+    type Prop: ResourceProp + PartialEq;
     type Error: ResponseError + From<crate::Error>;
     type PrincipalResource: Resource;
 
     fn get_resourcetype() -> &'static [&'static str];
 
-    fn list_extensions() -> Vec<impl ResourceExtension<Self>> {
-        vec![CommonPropertiesExtension::default()]
+    fn list_props() -> Vec<&'static str> {
+        [
+            &Self::PropName::VARIANTS[..],
+            &CommonPropertiesPropName::VARIANTS[..],
+        ]
+        .concat()
     }
 
-    fn list_props() -> &'static [&'static str] {
-        Self::PropName::VARIANTS
-    }
-
-    fn list_all_props() -> Vec<&'static str> {
-        let mut props = Self::list_props().to_vec();
-        props.extend(
-            Self::list_extensions()
-                .into_iter()
-                .map(|ext| ext.list_props().to_vec())
-                .concat(),
-        );
-        props
+    fn get_internal_prop(
+        &self,
+        rmap: &ResourceMap,
+        user: &User,
+        prop: &CommonPropertiesPropName,
+    ) -> Result<CommonPropertiesProp, Self::Error> {
+        Ok(match prop {
+            CommonPropertiesPropName::Resourcetype => {
+                CommonPropertiesProp::Resourcetype(Resourcetype(Self::get_resourcetype()))
+            }
+            CommonPropertiesPropName::CurrentUserPrincipal => {
+                CommonPropertiesProp::CurrentUserPrincipal(
+                    Self::PrincipalResource::get_url(rmap, [&user.id])
+                        .unwrap()
+                        .into(),
+                )
+            }
+            CommonPropertiesPropName::CurrentUserPrivilegeSet => {
+                CommonPropertiesProp::CurrentUserPrivilegeSet(self.get_user_privileges(user)?)
+            }
+            CommonPropertiesPropName::Owner => {
+                CommonPropertiesProp::Owner(self.get_owner().map(|owner| {
+                    Self::PrincipalResource::get_url(rmap, [owner])
+                        .unwrap()
+                        .into()
+                }))
+            }
+        })
     }
 
     fn get_prop(
@@ -98,7 +157,10 @@ pub trait Resource: Clone + 'static {
         mut props: Vec<&str>,
         user: &User,
         rmap: &ResourceMap,
-    ) -> Result<ResponseElement<PropstatWrapper<Self::Prop>>, Self::Error> {
+    ) -> Result<
+        ResponseElement<PropstatWrapper<EitherProp<Self::Prop, CommonPropertiesProp>>>,
+        Self::Error,
+    > {
         if props.contains(&"propname") {
             if props.len() != 1 {
                 // propname MUST be the only queried prop per spec
@@ -106,18 +168,11 @@ pub trait Resource: Clone + 'static {
                     Error::BadRequest("propname MUST be the only queried prop".to_owned()).into(),
                 );
             }
-            let mut props: Vec<String> = Self::list_props()
+            let props: Vec<String> = Self::list_props()
                 .iter()
                 .map(|&prop| prop.to_string())
                 .collect();
-            for extension in Self::list_extensions() {
-                let ext_props: Vec<String> = extension
-                    .list_props()
-                    .iter()
-                    .map(|&prop| prop.to_string())
-                    .collect();
-                props.extend(ext_props);
-            }
+
             return Ok(ResponseElement {
                 href: path.to_owned(),
                 propstat: vec![PropstatWrapper::TagList(PropstatElement {
@@ -134,40 +189,36 @@ pub trait Resource: Clone + 'static {
                     Error::BadRequest("allprop MUST be the only queried prop".to_owned()).into(),
                 );
             }
-            props = Self::list_props().to_vec();
-            for extension in Self::list_extensions() {
-                let ext_props: Vec<&str> = extension.list_props().into();
-                props.extend(ext_props);
+            props = Self::list_props();
+        }
+
+        let mut valid_props = vec![];
+        let mut internal_props = vec![];
+        let mut invalid_props = vec![];
+        for prop in props {
+            if let Ok(valid_prop) = Self::PropName::from_str(prop) {
+                valid_props.push(valid_prop);
+            } else if let Ok(internal_prop) = CommonPropertiesPropName::from_str(prop) {
+                internal_props.push(internal_prop);
+            } else {
+                invalid_props.push(prop)
             }
         }
 
-        let mut prop_responses = Vec::new();
-
-        for extension in Self::list_extensions() {
-            let (ext_invalid_props, ext_responses) = extension.propfind(self, props, user, rmap)?;
-            props = ext_invalid_props;
-            prop_responses.extend(ext_responses);
-        }
-
-        let (valid_props, invalid_props): (Vec<Option<Self::PropName>>, Vec<Option<&str>>) = props
+        let internal_prop_responses: Vec<_> = internal_props
             .into_iter()
-            .map(|prop| {
-                if let Ok(valid_prop) = Self::PropName::from_str(prop) {
-                    (Some(valid_prop), None)
-                } else {
-                    (None, Some(prop))
-                }
-            })
-            .unzip();
-        let valid_props: Vec<Self::PropName> = valid_props.into_iter().flatten().collect();
-        let invalid_props: Vec<&str> = invalid_props.into_iter().flatten().collect();
+            .map(|prop| self.get_internal_prop(rmap, user, &prop))
+            .collect::<Result<Vec<CommonPropertiesProp>, Self::Error>>()?
+            .into_iter()
+            .map(EitherProp::Right)
+            .collect();
 
-        prop_responses.extend(
-            valid_props
-                .into_iter()
-                .map(|prop| self.get_prop(rmap, user, &prop))
-                .collect::<Result<Vec<Self::Prop>, Self::Error>>()?,
-        );
+        let mut prop_responses = valid_props
+            .into_iter()
+            .map(|prop| self.get_prop(rmap, user, &prop))
+            .map_ok(EitherProp::Left)
+            .collect::<Result<Vec<_>, Self::Error>>()?;
+        prop_responses.extend(internal_prop_responses);
 
         let mut propstats = vec![PropstatWrapper::Normal(PropstatElement {
             status: format!("HTTP/1.1 {}", StatusCode::OK),

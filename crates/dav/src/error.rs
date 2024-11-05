@@ -1,7 +1,6 @@
 use actix_web::{http::StatusCode, HttpResponse};
 use thiserror::Error;
-
-// use crate::routes::propfind;
+use tracing::error;
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -41,6 +40,7 @@ impl actix_web::error::ResponseError for Error {
     }
 
     fn error_response(&self) -> HttpResponse {
+        error!("Error: {self}");
         match self {
             Error::Unauthorized => HttpResponse::build(self.status_code())
                 .append_header(("WWW-Authenticate", "Basic"))

@@ -2,7 +2,7 @@ use actix_web::HttpRequest;
 use chrono::{DateTime, Utc};
 use rustical_dav::{
     methods::propfind::{PropElement, PropfindType},
-    resource::Resource,
+    resource::{CommonPropertiesProp, EitherProp, Resource},
     xml::{multistatus::PropstatWrapper, MultistatusElement},
 };
 use rustical_store::{auth::User, CalendarObject, CalendarStore};
@@ -210,7 +210,13 @@ pub async fn handle_calendar_query<C: CalendarStore + ?Sized>(
     principal: &str,
     cal_id: &str,
     cal_store: &C,
-) -> Result<MultistatusElement<PropstatWrapper<CalendarObjectProp>, String>, Error> {
+) -> Result<
+    MultistatusElement<
+        PropstatWrapper<EitherProp<CalendarObjectProp, CommonPropertiesProp>>,
+        String,
+    >,
+    Error,
+> {
     let objects = get_objects_calendar_query(&cal_query, principal, cal_id, cal_store).await?;
 
     let props = match cal_query.prop {

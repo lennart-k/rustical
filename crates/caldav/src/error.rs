@@ -1,4 +1,5 @@
 use actix_web::{http::StatusCode, HttpResponse};
+use tracing::error;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -41,6 +42,7 @@ impl actix_web::ResponseError for Error {
         }
     }
     fn error_response(&self) -> actix_web::HttpResponse<actix_web::body::BoxBody> {
+        error!("Error: {self}");
         match self {
             Error::DavError(err) => err.error_response(),
             _ => HttpResponse::build(self.status_code()).body(self.to_string()),

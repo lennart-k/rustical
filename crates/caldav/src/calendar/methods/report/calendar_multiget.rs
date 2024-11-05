@@ -10,7 +10,7 @@ use actix_web::{
 };
 use rustical_dav::{
     methods::propfind::{PropElement, PropfindType},
-    resource::Resource,
+    resource::{CommonPropertiesProp, EitherProp, Resource},
     xml::{
         multistatus::{PropstatWrapper, ResponseElement},
         MultistatusElement,
@@ -69,7 +69,13 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
     principal: &str,
     cal_id: &str,
     cal_store: &C,
-) -> Result<MultistatusElement<PropstatWrapper<CalendarObjectProp>, String>, Error> {
+) -> Result<
+    MultistatusElement<
+        PropstatWrapper<EitherProp<CalendarObjectProp, CommonPropertiesProp>>,
+        String,
+    >,
+    Error,
+> {
     let principal_url = PrincipalResource::get_url(req.resource_map(), vec![principal]).unwrap();
     let (objects, not_found) =
         get_objects_calendar_multiget(&cal_multiget, &principal_url, principal, cal_id, cal_store)
