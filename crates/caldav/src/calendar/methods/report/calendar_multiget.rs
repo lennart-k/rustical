@@ -50,7 +50,6 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore + ?Sized>(
         match store.get_object(principal, cal_id, object_id).await {
             Ok(object) => result.push(object),
             Err(rustical_store::Error::NotFound) => not_found.push(href.to_owned()),
-            // TODO: Maybe add error handling on a per-object basis
             Err(err) => return Err(err.into()),
         };
     }

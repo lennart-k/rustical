@@ -1,10 +1,11 @@
-use actix_web::dev::Service;
+use actix_web::dev::ServiceResponse;
 use actix_web::http::header::{HeaderName, HeaderValue};
 use actix_web::http::{Method, StatusCode};
+use actix_web::middleware::{ErrorHandlerResponse, ErrorHandlers};
 use actix_web::web::{self, Data};
+use actix_web::HttpResponse;
 use calendar::resource::CalendarResourceService;
 use calendar_object::resource::CalendarObjectResourceService;
-use futures_util::FutureExt;
 use principal::{PrincipalResource, PrincipalResourceService};
 use rustical_dav::resource::ResourceService;
 use rustical_dav::resources::RootResourceService;
@@ -31,28 +32,25 @@ pub fn configure_dav<AP: AuthenticationProvider, C: CalendarStore + ?Sized>(
     cfg.service(
         web::scope("")
             .wrap(AuthenticationMiddleware::new(auth_provider))
-            .wrap_fn(|req, srv| {
-                // Middleware to set the DAV header
-                // Could be more elegant if actix_web::guard::RegisteredMethods was public :(
-                let method = req.method().clone();
-                srv.call(req).map(move |res| {
-                    if method == Method::OPTIONS {
-                        return res.map(|mut response| {
-                            if response.status() == StatusCode::METHOD_NOT_ALLOWED {
-                                response.headers_mut().insert(
+            .wrap(
+                ErrorHandlers::new().handler(StatusCode::METHOD_NOT_ALLOWED, |res| {
+                    Ok(ErrorHandlerResponse::Response(
+                        if res.request().method() == Method::OPTIONS {
+                            let response = HttpResponse::Ok()
+                                .insert_header((
                                     HeaderName::from_static("dav"),
                                     HeaderValue::from_static(
-                                        "1, 2, 3, calendar-access, extended-mkcol",
+                                        "1, 2, 3, access-control, calendar-access, extended-mkcol",
                                     ),
-                                );
-                                *response.response_mut().status_mut() = StatusCode::OK;
-                            }
-                            response
-                        });
-                    }
-                    res
-                })
-            })
+                                ))
+                                .finish();
+                            ServiceResponse::new(res.into_parts().0, response).map_into_right_body()
+                        } else {
+                            res.map_into_left_body()
+                        },
+                    ))
+                }),
+            )
             .app_data(Data::from(store.clone()))
             .service(RootResourceService::<PrincipalResource>::actix_resource())
             .service(
