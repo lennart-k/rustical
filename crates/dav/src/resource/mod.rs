@@ -158,20 +158,21 @@ pub trait Resource: Clone + 'static {
                     Error::BadRequest("propname MUST be the only queried prop".to_owned()).into(),
                 );
             }
-            let props: Vec<String> = Self::list_props()
-                .iter()
-                .map(|&prop| prop.to_string())
-                .collect();
+            let props = Self::list_props()
+                .into_iter()
+                .map(str::to_owned)
+                .collect_vec();
 
             return Ok(ResponseElement {
                 href: path.to_owned(),
                 propstat: vec![PropstatWrapper::TagList(PropstatElement {
                     prop: TagList::from(props),
-                    status: format!("HTTP/1.1 {}", StatusCode::OK),
+                    status: StatusCode::OK,
                 })],
                 ..Default::default()
             });
         }
+
         if props.contains(&"allprop") {
             if props.len() != 1 {
                 // allprop MUST be the only queried prop per spec
@@ -198,10 +199,8 @@ pub trait Resource: Clone + 'static {
         let internal_prop_responses: Vec<_> = internal_props
             .into_iter()
             .map(|prop| self.get_internal_prop(rmap, user, &prop))
-            .collect::<Result<Vec<CommonPropertiesProp>, Self::Error>>()?
-            .into_iter()
-            .map(EitherProp::Right)
-            .collect();
+            .map_ok(EitherProp::Right)
+            .collect::<Result<_, Self::Error>>()?;
 
         let mut prop_responses = valid_props
             .into_iter()
@@ -211,14 +210,14 @@ pub trait Resource: Clone + 'static {
         prop_responses.extend(internal_prop_responses);
 
         let mut propstats = vec![PropstatWrapper::Normal(PropstatElement {
-            status: format!("HTTP/1.1 {}", StatusCode::OK),
+            status: StatusCode::OK,
             prop: PropTagWrapper {
                 prop: prop_responses,
             },
         })];
         if !invalid_props.is_empty() {
             propstats.push(PropstatWrapper::TagList(PropstatElement {
-                status: format!("HTTP/1.1 {}", StatusCode::NOT_FOUND),
+                status: StatusCode::NOT_FOUND,
                 prop: invalid_props
                     .into_iter()
                     .map(|s| s.to_owned())

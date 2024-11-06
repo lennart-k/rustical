@@ -135,15 +135,15 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
             propstat: vec![
                 PropstatWrapper::TagList(PropstatElement {
                     prop: TagList::from(props_ok),
-                    status: format!("HTTP/1.1 {}", StatusCode::OK),
+                    status: StatusCode::OK,
                 }),
                 PropstatWrapper::TagList(PropstatElement {
                     prop: TagList::from(props_not_found),
-                    status: format!("HTTP/1.1 {}", StatusCode::NOT_FOUND),
+                    status: StatusCode::NOT_FOUND,
                 }),
                 PropstatWrapper::TagList(PropstatElement {
                     prop: TagList::from(props_conflict),
-                    status: format!("HTTP/1.1 {}", StatusCode::CONFLICT),
+                    status: StatusCode::CONFLICT,
                 }),
             ],
             ..Default::default()

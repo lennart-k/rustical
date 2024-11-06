@@ -99,7 +99,7 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
         .into_iter()
         .map(|path| ResponseElement {
             href: path,
-            status: Some(format!("HTTP/1.1 {}", StatusCode::NOT_FOUND)),
+            status: Some(StatusCode::NOT_FOUND),
             ..Default::default()
         })
         .collect();

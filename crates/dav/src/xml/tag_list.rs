@@ -1,3 +1,4 @@
+use derive_more::derive::From;
 use serde::ser::SerializeMap;
 
 use serde::{
@@ -5,7 +6,7 @@ use serde::{
     Deserialize, Serialize,
 };
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, From)]
 pub struct TagList(Vec<String>);
 
 struct TagListVisitor;
@@ -57,11 +58,5 @@ impl TagList {
     }
     pub fn into_inner(self) -> Vec<String> {
         self.0
-    }
-}
-
-impl From<Vec<String>> for TagList {
-    fn from(value: Vec<String>) -> Self {
-        Self(value)
     }
 }

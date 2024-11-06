@@ -88,7 +88,7 @@ pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
         .unwrap();
         responses.push(ResponseElement {
             href: path,
-            status: Some(format!("HTTP/1.1 {}", StatusCode::NOT_FOUND)),
+            status: Some(StatusCode::NOT_FOUND),
             ..Default::default()
         });
     }

@@ -1,8 +1,10 @@
 use crate::{namespace::Namespace, xml::TagList};
 use actix_web::{
-    body::BoxBody, http::header::ContentType, HttpRequest, HttpResponse, Responder, ResponseError,
+    body::BoxBody,
+    http::{header::ContentType, StatusCode},
+    HttpRequest, HttpResponse, Responder, ResponseError,
 };
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 
 // Intermediate struct because of a serde limitation, see following article:
 // https://stackoverflow.com/questions/78444158/unsupportedcannot-serialize-enum-newtype-variant-exampledata
@@ -18,7 +20,12 @@ pub struct PropTagWrapper<T: Serialize> {
 #[serde(rename_all = "kebab-case")]
 pub struct PropstatElement<PropType: Serialize> {
     pub prop: PropType,
-    pub status: String,
+    #[serde(serialize_with = "serialize_status")]
+    pub status: StatusCode,
+}
+
+fn serialize_status<S: Serializer>(status: &StatusCode, serializer: S) -> Result<S::Ok, S::Error> {
+    format!("HTTP/1.1 {}", status).serialize(serializer)
 }
 
 #[derive(Serialize)]
@@ -36,8 +43,18 @@ pub enum PropstatWrapper<T: Serialize> {
 pub struct ResponseElement<PropstatType: Serialize> {
     pub href: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub status: Option<String>,
+    #[serde(serialize_with = "serialize_optional_status")]
+    pub status: Option<StatusCode>,
     pub propstat: Vec<PropstatWrapper<PropstatType>>,
+}
+
+fn serialize_optional_status<S: Serializer>(
+    status_option: &Option<StatusCode>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    status_option
+        .map(|status| format!("HTTP/1.1 {}", status))
+        .serialize(serializer)
 }
 
 impl<PT: Serialize> Default for ResponseElement<PT> {
