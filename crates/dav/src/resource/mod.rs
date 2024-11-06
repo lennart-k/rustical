@@ -71,11 +71,7 @@ pub trait Resource: Clone + 'static {
     fn get_resourcetype() -> &'static [&'static str];
 
     fn list_props() -> Vec<&'static str> {
-        [
-            &Self::PropName::VARIANTS[..],
-            &CommonPropertiesPropName::VARIANTS[..],
-        ]
-        .concat()
+        [Self::PropName::VARIANTS, CommonPropertiesPropName::VARIANTS].concat()
     }
 
     fn get_internal_prop(
