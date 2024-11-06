@@ -37,7 +37,7 @@ pub struct ResponseElement<PropstatType: Serialize> {
     pub href: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<String>,
-    pub propstat: Vec<PropstatType>,
+    pub propstat: Vec<PropstatWrapper<PropstatType>>,
 }
 
 impl<PT: Serialize> Default for ResponseElement<PT> {
@@ -55,11 +55,11 @@ impl<PT: Serialize> Default for ResponseElement<PT> {
 // Extended by sync-token as specified in RFC 6578
 #[derive(Serialize)]
 #[serde(rename = "multistatus", rename_all = "kebab-case")]
-pub struct MultistatusElement<T1: Serialize, T2: Serialize> {
+pub struct MultistatusElement<PropType: Serialize, MemberPropType: Serialize> {
     #[serde(rename = "response")]
-    pub responses: Vec<ResponseElement<T1>>,
+    pub responses: Vec<ResponseElement<PropType>>,
     #[serde(rename = "response")]
-    pub member_responses: Vec<ResponseElement<T2>>,
+    pub member_responses: Vec<ResponseElement<MemberPropType>>,
     #[serde(rename = "@xmlns")]
     pub ns_dav: &'static str,
     #[serde(rename = "@xmlns:C")]

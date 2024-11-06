@@ -4,9 +4,9 @@ use crate::resource::CommonPropertiesProp;
 use crate::resource::EitherProp;
 use crate::resource::Resource;
 use crate::resource::ResourceService;
-use crate::xml::multistatus::PropstatWrapper;
 use crate::xml::MultistatusElement;
-use crate::xml::TagList;
+use crate::xml::PropElement;
+use crate::xml::PropfindType;
 use crate::Error;
 use actix_web::web::Path;
 use actix_web::HttpRequest;
@@ -17,21 +17,7 @@ use tracing_actix_web::RootSpan;
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
-pub struct PropElement {
-    #[serde(flatten)]
-    pub prop: TagList,
-}
-
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
-pub enum PropfindType {
-    Propname,
-    Allprop,
-    Prop(PropElement),
-}
-
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
+#[serde(deny_unknown_fields)]
 struct PropfindElement {
     #[serde(rename = "$value")]
     prop: PropfindType,
@@ -39,7 +25,7 @@ struct PropfindElement {
 
 #[instrument(parent = root_span.id(), skip(path_components, req, root_span))]
 #[allow(clippy::type_complexity)]
-pub async fn route_propfind<R: ResourceService>(
+pub(crate) async fn route_propfind<R: ResourceService>(
     path_components: Path<R::PathComponents>,
     body: String,
     req: HttpRequest,
@@ -48,8 +34,8 @@ pub async fn route_propfind<R: ResourceService>(
     root_span: RootSpan,
 ) -> Result<
     MultistatusElement<
-        PropstatWrapper<EitherProp<<R::Resource as Resource>::Prop, CommonPropertiesProp>>,
-        PropstatWrapper<EitherProp<<R::MemberType as Resource>::Prop, CommonPropertiesProp>>,
+        EitherProp<<R::Resource as Resource>::Prop, CommonPropertiesProp>,
+        EitherProp<<R::MemberType as Resource>::Prop, CommonPropertiesProp>,
     >,
     R::Error,
 > {
@@ -71,12 +57,8 @@ pub async fn route_propfind<R: ResourceService>(
     };
 
     let props = match propfind.prop {
-        PropfindType::Allprop => {
-            vec!["allprop".to_owned()]
-        }
-        PropfindType::Propname => {
-            vec!["propname".to_owned()]
-        }
+        PropfindType::Allprop => vec!["allprop".to_owned()],
+        PropfindType::Propname => vec!["propname".to_owned()],
         PropfindType::Prop(PropElement { prop: prop_tags }) => prop_tags.into_inner(),
     };
     let props: Vec<&str> = props.iter().map(String::as_str).collect();

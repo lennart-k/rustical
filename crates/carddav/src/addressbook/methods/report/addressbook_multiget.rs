@@ -9,12 +9,9 @@ use actix_web::{
     HttpRequest,
 };
 use rustical_dav::{
-    methods::propfind::{PropElement, PropfindType},
     resource::{CommonPropertiesProp, EitherProp, Resource},
-    xml::{
-        multistatus::{PropstatWrapper, ResponseElement},
-        MultistatusElement,
-    },
+    xml::{multistatus::ResponseElement, MultistatusElement},
+    xml::{PropElement, PropfindType},
 };
 use rustical_store::{auth::User, AddressObject, AddressbookStore};
 use serde::Deserialize;
@@ -68,13 +65,8 @@ pub async fn handle_addressbook_multiget<AS: AddressbookStore + ?Sized>(
     principal: &str,
     cal_id: &str,
     addr_store: &AS,
-) -> Result<
-    MultistatusElement<
-        PropstatWrapper<EitherProp<AddressObjectProp, CommonPropertiesProp>>,
-        String,
-    >,
-    Error,
-> {
+) -> Result<MultistatusElement<EitherProp<AddressObjectProp, CommonPropertiesProp>, String>, Error>
+{
     let principal_url = PrincipalResource::get_url(req.resource_map(), vec![principal]).unwrap();
     let (objects, not_found) = get_objects_addressbook_multiget(
         &addr_multiget,

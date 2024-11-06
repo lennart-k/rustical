@@ -37,8 +37,8 @@ struct RemovePropertyElement {
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
-enum Operation<T> {
-    Set(SetPropertyElement<T>),
+enum Operation<PropType> {
+    Set(SetPropertyElement<PropType>),
     Remove(RemovePropertyElement),
 }
 
@@ -50,17 +50,18 @@ struct PropertyupdateElement<T> {
 }
 
 #[instrument(parent = root_span.id(), skip(path, req, root_span))]
-pub async fn route_proppatch<R: ResourceService>(
+pub(crate) async fn route_proppatch<R: ResourceService>(
     path: Path<R::PathComponents>,
     body: String,
     req: HttpRequest,
     user: User,
     root_span: RootSpan,
-) -> Result<MultistatusElement<PropstatWrapper<String>, PropstatWrapper<String>>, R::Error> {
+) -> Result<MultistatusElement<String, String>, R::Error> {
     let path_components = path.into_inner();
     let href = req.path().to_owned();
     let resource_service = R::new(&req, path_components.clone()).await?;
 
+    // Extract operations
     let PropertyupdateElement::<<R::Resource as Resource>::Prop> { operations } =
         quick_xml::de::from_str(&body).map_err(Error::XmlDeserializationError)?;
 
@@ -104,34 +105,20 @@ pub async fn route_proppatch<R: ResourceService>(
                     continue;
                 }
                 match resource.set_prop(prop) {
-                    Ok(()) => {
-                        props_ok.push(propname);
-                    }
-                    Err(Error::PropReadOnly) => {
-                        props_conflict.push(propname);
-                    }
-                    Err(err) => {
-                        return Err(err.into());
-                    }
-                }
+                    Ok(()) => props_ok.push(propname),
+                    Err(Error::PropReadOnly) => props_conflict.push(propname),
+                    Err(err) => return Err(err.into()),
+                };
             }
             Operation::Remove(_remove_el) => {
                 match <<R::Resource as Resource>::PropName as FromStr>::from_str(&propname) {
                     Ok(prop) => match resource.remove_prop(&prop) {
-                        Ok(()) => {
-                            props_ok.push(propname);
-                        }
-                        Err(Error::PropReadOnly) => {
-                            props_conflict.push(propname);
-                        }
-                        Err(err) => {
-                            return Err(err.into());
-                        }
+                        Ok(()) => props_ok.push(propname),
+                        Err(Error::PropReadOnly) => props_conflict.push(propname),
+                        Err(err) => return Err(err.into()),
                     },
-                    Err(_) => {
-                        // I guess removing a nonexisting property should be successful :)
-                        props_ok.push(propname);
-                    }
+                    // I guess removing a nonexisting property should be successful :)
+                    Err(_) => props_ok.push(propname),
                 };
             }
         }

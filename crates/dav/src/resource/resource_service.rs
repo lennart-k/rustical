@@ -4,8 +4,7 @@ use actix_web::{dev::ResourceMap, http::Method, web, HttpRequest, ResponseError}
 use async_trait::async_trait;
 use serde::Deserialize;
 
-use crate::methods::{route_delete, route_propfind, route_proppatch};
-
+use super::methods::{route_delete, route_propfind, route_proppatch};
 use super::Resource;
 
 #[async_trait(?Send)]

@@ -4,12 +4,9 @@ use crate::{
 };
 use actix_web::{http::StatusCode, HttpRequest};
 use rustical_dav::{
-    methods::propfind::{PropElement, PropfindType},
     resource::{CommonPropertiesProp, EitherProp, Resource},
-    xml::{
-        multistatus::{PropstatWrapper, ResponseElement},
-        MultistatusElement,
-    },
+    xml::{multistatus::ResponseElement, MultistatusElement},
+    xml::{PropElement, PropfindType},
 };
 use rustical_store::{
     auth::User,
@@ -47,13 +44,8 @@ pub async fn handle_sync_collection<AS: AddressbookStore + ?Sized>(
     principal: &str,
     addressbook_id: &str,
     addr_store: &AS,
-) -> Result<
-    MultistatusElement<
-        PropstatWrapper<EitherProp<AddressObjectProp, CommonPropertiesProp>>,
-        String,
-    >,
-    Error,
-> {
+) -> Result<MultistatusElement<EitherProp<AddressObjectProp, CommonPropertiesProp>, String>, Error>
+{
     let props = match sync_collection.prop {
         PropfindType::Allprop => {
             vec!["allprop".to_owned()]

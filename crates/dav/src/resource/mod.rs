@@ -16,6 +16,7 @@ use std::str::FromStr;
 use strum::{EnumString, VariantNames};
 
 mod invalid_property;
+mod methods;
 mod resource_service;
 
 pub trait ResourceProp: InvalidProperty + Serialize + for<'de> Deserialize<'de> {}
@@ -149,10 +150,7 @@ pub trait Resource: Clone + 'static {
         mut props: Vec<&str>,
         user: &User,
         rmap: &ResourceMap,
-    ) -> Result<
-        ResponseElement<PropstatWrapper<EitherProp<Self::Prop, CommonPropertiesProp>>>,
-        Self::Error,
-    > {
+    ) -> Result<ResponseElement<EitherProp<Self::Prop, CommonPropertiesProp>>, Self::Error> {
         if props.contains(&"propname") {
             if props.len() != 1 {
                 // propname MUST be the only queried prop per spec

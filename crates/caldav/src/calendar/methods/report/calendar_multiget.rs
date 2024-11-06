@@ -9,12 +9,8 @@ use actix_web::{
     HttpRequest,
 };
 use rustical_dav::{
-    methods::propfind::{PropElement, PropfindType},
     resource::{CommonPropertiesProp, EitherProp, Resource},
-    xml::{
-        multistatus::{PropstatWrapper, ResponseElement},
-        MultistatusElement,
-    },
+    xml::{multistatus::ResponseElement, MultistatusElement, PropElement, PropfindType},
 };
 use rustical_store::{auth::User, CalendarObject, CalendarStore};
 use serde::Deserialize;
@@ -69,13 +65,8 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
     principal: &str,
     cal_id: &str,
     cal_store: &C,
-) -> Result<
-    MultistatusElement<
-        PropstatWrapper<EitherProp<CalendarObjectProp, CommonPropertiesProp>>,
-        String,
-    >,
-    Error,
-> {
+) -> Result<MultistatusElement<EitherProp<CalendarObjectProp, CommonPropertiesProp>, String>, Error>
+{
     let principal_url = PrincipalResource::get_url(req.resource_map(), vec![principal]).unwrap();
     let (objects, not_found) =
         get_objects_calendar_multiget(&cal_multiget, &principal_url, principal, cal_id, cal_store)
