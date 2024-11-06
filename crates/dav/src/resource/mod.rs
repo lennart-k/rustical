@@ -1,4 +1,3 @@
-use crate::methods::{route_delete, route_propfind, route_proppatch};
 use crate::privileges::UserPrivilegeSet;
 use crate::xml::multistatus::{PropTagWrapper, PropstatElement, PropstatWrapper};
 use crate::xml::{multistatus::ResponseElement, TagList};
@@ -6,16 +5,18 @@ use crate::xml::{HrefElement, Resourcetype};
 use crate::Error;
 use actix_web::dev::ResourceMap;
 use actix_web::error::UrlGenerationError;
-use actix_web::http::Method;
 use actix_web::test::TestRequest;
-use actix_web::web;
-use actix_web::{http::StatusCode, HttpRequest, ResponseError};
-use async_trait::async_trait;
+use actix_web::{http::StatusCode, ResponseError};
+pub use invalid_property::InvalidProperty;
 use itertools::Itertools;
+pub use resource_service::ResourceService;
 use rustical_store::auth::User;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use strum::{EnumString, VariantNames};
+
+mod invalid_property;
+mod resource_service;
 
 pub trait ResourceProp: InvalidProperty + Serialize + for<'de> Deserialize<'de> {}
 impl<T: InvalidProperty + Serialize + for<'de> Deserialize<'de>> ResourceProp for T {}
@@ -232,69 +233,5 @@ pub trait Resource: Clone + 'static {
             propstat: propstats,
             ..Default::default()
         })
-    }
-}
-
-pub trait InvalidProperty {
-    fn invalid_property(&self) -> bool;
-}
-
-impl<T: Default + PartialEq> InvalidProperty for T {
-    fn invalid_property(&self) -> bool {
-        self == &T::default()
-    }
-}
-
-#[async_trait(?Send)]
-pub trait ResourceService: Sized + 'static {
-    type MemberType: Resource<Error = Self::Error>;
-    type PathComponents: for<'de> Deserialize<'de> + Sized + Clone + 'static; // defines how the resource URI maps to parameters, i.e. /{principal}/{calendar} -> (String, String)
-    type Resource: Resource<Error = Self::Error>;
-    type Error: ResponseError + From<crate::Error>;
-
-    async fn new(
-        req: &HttpRequest,
-        path_components: Self::PathComponents,
-    ) -> Result<Self, Self::Error>;
-
-    async fn get_members(
-        &self,
-        _rmap: &ResourceMap,
-    ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
-        Ok(vec![])
-    }
-
-    async fn get_resource(&self) -> Result<Self::Resource, Self::Error>;
-    async fn save_resource(&self, _file: Self::Resource) -> Result<(), Self::Error> {
-        Err(crate::Error::Unauthorized.into())
-    }
-    async fn delete_resource(&self, _use_trashbin: bool) -> Result<(), Self::Error> {
-        Err(crate::Error::Unauthorized.into())
-    }
-
-    #[inline]
-    fn resource_name() -> &'static str {
-        Self::Resource::resource_name()
-    }
-
-    #[inline]
-    fn actix_resource() -> actix_web::Resource {
-        Self::actix_additional_routes(
-            web::resource("")
-                .name(Self::resource_name())
-                .route(
-                    web::method(Method::from_str("PROPFIND").unwrap()).to(route_propfind::<Self>),
-                )
-                .route(
-                    web::method(Method::from_str("PROPPATCH").unwrap()).to(route_proppatch::<Self>),
-                )
-                .delete(route_delete::<Self>),
-        )
-    }
-
-    /// Hook for other resources to insert their additional methods (i.e. REPORT, MKCALENDAR)
-    #[inline]
-    fn actix_additional_routes(res: actix_web::Resource) -> actix_web::Resource {
-        res
     }
 }
