@@ -17,7 +17,6 @@ use tracing_actix_web::RootSpan;
 
 #[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
-#[serde(deny_unknown_fields)]
 struct PropfindElement {
     #[serde(rename = "$value")]
     prop: PropfindType,
