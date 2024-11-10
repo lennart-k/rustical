@@ -4,6 +4,11 @@
 {% endblock %}
 
 {% block content %}
-<h1>Test</h1>
+{% let name = calendar.displayname.to_owned().unwrap_or(calendar.id.to_owned()) %}
+<h1>{{ name }}</h1>
+{% if let Some(description) = calendar.description %}<p>{{ description }}</p>{% endif%}
+
+<pre>{{ calendar|yaml }}</pre>
+
 <a href="/frontend/user/{{ calendar.principal }}">Back</a>
 {% endblock %}

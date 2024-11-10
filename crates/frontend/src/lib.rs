@@ -30,7 +30,9 @@ pub use config::FrontendConfig;
 struct UserPage {
     pub user_id: String,
     pub calendars: Vec<Calendar>,
+    pub deleted_calendars: Vec<Calendar>,
     pub addressbooks: Vec<Addressbook>,
+    pub deleted_addressbooks: Vec<Addressbook>,
 }
 
 async fn route_user<CS: CalendarStore + ?Sized, AS: AddressbookStore + ?Sized>(
@@ -47,7 +49,9 @@ async fn route_user<CS: CalendarStore + ?Sized, AS: AddressbookStore + ?Sized>(
 
     UserPage {
         calendars: cal_store.get_calendars(&user.id).await.unwrap(),
+        deleted_calendars: cal_store.get_deleted_calendars(&user.id).await.unwrap(),
         addressbooks: addr_store.get_addressbooks(&user.id).await.unwrap(),
+        deleted_addressbooks: addr_store.get_deleted_addressbooks(&user.id).await.unwrap(),
         user_id: user.id,
     }
     .to_response()
