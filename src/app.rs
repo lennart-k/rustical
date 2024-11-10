@@ -44,6 +44,7 @@ pub fn make_app<AS: AddressbookStore + ?Sized, CS: CalendarStore + ?Sized>(
                 cfg,
                 auth_provider.clone(),
                 cal_store.clone(),
+                addr_store.clone(),
                 frontend_config,
             )
         }))

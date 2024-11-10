@@ -10,11 +10,12 @@ use actix_web::{
     HttpRequest, HttpResponse, Responder,
 };
 use askama::Template;
+use askama_actix::TemplateToResponse;
 use assets::{Assets, EmbedService};
 use routes::login::{route_get_login, route_post_login};
 use rustical_store::{
     auth::{AuthenticationMiddleware, AuthenticationProvider, User},
-    Calendar, CalendarStore,
+    Addressbook, AddressbookStore, Calendar, CalendarStore,
 };
 use std::sync::Arc;
 
@@ -29,18 +30,27 @@ pub use config::FrontendConfig;
 struct UserPage {
     pub user_id: String,
     pub calendars: Vec<Calendar>,
+    pub addressbooks: Vec<Addressbook>,
 }
 
-async fn route_user<C: CalendarStore + ?Sized>(
+async fn route_user<CS: CalendarStore + ?Sized, AS: AddressbookStore + ?Sized>(
     path: Path<String>,
-    store: Data<C>,
+    cal_store: Data<CS>,
+    addr_store: Data<AS>,
     user: User,
 ) -> impl Responder {
+    // TODO: Check for authorization
     let user_id = path.into_inner();
+    if user_id != user.id {
+        return actix_web::HttpResponse::Unauthorized().body("Unauthorized");
+    }
+
     UserPage {
-        calendars: store.get_calendars(&user.id).await.unwrap(),
+        calendars: cal_store.get_calendars(&user.id).await.unwrap(),
+        addressbooks: addr_store.get_addressbooks(&user.id).await.unwrap(),
         user_id: user.id,
     }
+    .to_response()
 }
 
 #[derive(Template)]
@@ -59,6 +69,25 @@ async fn route_calendar<C: CalendarStore + ?Sized>(
     CalendarPage {
         owner: owner.to_owned(),
         calendar: store.get_calendar(&owner, &cal_id).await.unwrap(),
+    }
+}
+
+#[derive(Template)]
+#[template(path = "pages/addressbook.html")]
+struct AddressbookPage {
+    owner: String,
+    addressbook: Addressbook,
+}
+
+async fn route_addressbook<AS: AddressbookStore + ?Sized>(
+    path: Path<(String, String)>,
+    store: Data<AS>,
+    _user: User,
+) -> impl Responder {
+    let (owner, addrbook_id) = path.into_inner();
+    AddressbookPage {
+        owner: owner.to_owned(),
+        addressbook: store.get_addressbook(&owner, &addrbook_id).await.unwrap(),
     }
 }
 
@@ -101,10 +130,15 @@ fn unauthorized_handler<B>(res: ServiceResponse<B>) -> actix_web::Result<ErrorHa
     Ok(ErrorHandlerResponse::Response(res))
 }
 
-pub fn configure_frontend<AP: AuthenticationProvider, C: CalendarStore + ?Sized>(
+pub fn configure_frontend<
+    AP: AuthenticationProvider,
+    CS: CalendarStore + ?Sized,
+    AS: AddressbookStore + ?Sized,
+>(
     cfg: &mut web::ServiceConfig,
     auth_provider: Arc<AP>,
-    store: Arc<C>,
+    cal_store: Arc<CS>,
+    addr_store: Arc<AS>,
     frontend_config: FrontendConfig,
 ) {
     cfg.service(
@@ -122,17 +156,22 @@ pub fn configure_frontend<AP: AuthenticationProvider, C: CalendarStore + ?Sized>
                 .build(),
             )
             .app_data(Data::from(auth_provider))
-            .app_data(Data::from(store.clone()))
+            .app_data(Data::from(cal_store.clone()))
+            .app_data(Data::from(addr_store.clone()))
             .service(EmbedService::<Assets>::new("/assets".to_owned()))
             .service(web::resource("").route(web::method(Method::GET).to(route_root)))
             .service(
                 web::resource("/user/{user}")
-                    .route(web::method(Method::GET).to(route_user::<C>))
+                    .route(web::method(Method::GET).to(route_user::<CS, AS>))
                     .name("frontend_user"),
             )
             .service(
-                web::resource("/user/{user}/{calendar}")
-                    .route(web::method(Method::GET).to(route_calendar::<C>)),
+                web::resource("/user/{user}/calendar/{calendar}")
+                    .route(web::method(Method::GET).to(route_calendar::<CS>)),
+            )
+            .service(
+                web::resource("/user/{user}/addressbook/{calendar}")
+                    .route(web::method(Method::GET).to(route_addressbook::<AS>)),
             )
             .service(
                 web::resource("/login")
