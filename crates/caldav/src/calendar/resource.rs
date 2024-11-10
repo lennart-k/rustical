@@ -79,7 +79,8 @@ pub enum CalendarProp {
     // Collection Synchronization (RFC 6578)
     SyncToken(String),
 
-    // Didn't find the spec
+    // CalendarServer
+    #[serde(rename = "CS:getctag", alias = "getctag")]
     Getctag(String),
 
     #[serde(other)]
