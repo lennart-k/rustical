@@ -1,3 +1,5 @@
+use actix_web::{http::StatusCode, ResponseError};
+
 #[derive(Debug, thiserror::Error)]
 
 pub enum Error {
@@ -15,4 +17,15 @@ pub enum Error {
 
     #[error(transparent)]
     Other(#[from] anyhow::Error),
+}
+
+impl ResponseError for Error {
+    fn status_code(&self) -> actix_web::http::StatusCode {
+        match self {
+            Self::NotFound => StatusCode::NOT_FOUND,
+            Self::AlreadyExists => StatusCode::CONFLICT,
+            Self::InvalidData(_) => StatusCode::BAD_REQUEST,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
 }
