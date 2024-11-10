@@ -7,7 +7,7 @@ use actix_web::{
     http::{Method, StatusCode},
     middleware::{ErrorHandlerResponse, ErrorHandlers},
     web::{self, Data, Path},
-    HttpResponse, Responder,
+    HttpRequest, HttpResponse, Responder,
 };
 use askama::Template;
 use assets::{Assets, EmbedService};
@@ -62,6 +62,20 @@ async fn route_calendar<C: CalendarStore + ?Sized>(
     }
 }
 
+async fn route_root(user: Option<User>, req: HttpRequest) -> impl Responder {
+    let redirect_url = match user {
+        Some(user) => req
+            .resource_map()
+            .url_for(&req, "frontend_user", &[user.id])
+            .unwrap(),
+        None => req
+            .resource_map()
+            .url_for::<[_; 0], String>(&req, "frontend_login", [])
+            .unwrap(),
+    };
+    web::Redirect::to(redirect_url.to_string()).permanent()
+}
+
 fn unauthorized_handler<B>(res: ServiceResponse<B>) -> actix_web::Result<ErrorHandlerResponse<B>> {
     let (req, _) = res.into_parts();
     let login_url = req.url_for_static("frontend_login").unwrap().to_string();
@@ -110,8 +124,11 @@ pub fn configure_frontend<AP: AuthenticationProvider, C: CalendarStore + ?Sized>
             .app_data(Data::from(auth_provider))
             .app_data(Data::from(store.clone()))
             .service(EmbedService::<Assets>::new("/assets".to_owned()))
+            .service(web::resource("").route(web::method(Method::GET).to(route_root)))
             .service(
-                web::resource("/user/{user}").route(web::method(Method::GET).to(route_user::<C>)),
+                web::resource("/user/{user}")
+                    .route(web::method(Method::GET).to(route_user::<C>))
+                    .name("frontend_user"),
             )
             .service(
                 web::resource("/user/{user}/{calendar}")
