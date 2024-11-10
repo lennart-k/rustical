@@ -8,6 +8,7 @@ use async_trait::async_trait;
 pub trait AddressbookStore: Send + Sync + 'static {
     async fn get_addressbook(&self, principal: &str, id: &str) -> Result<Addressbook, Error>;
     async fn get_addressbooks(&self, principal: &str) -> Result<Vec<Addressbook>, Error>;
+    async fn get_deleted_addressbooks(&self, principal: &str) -> Result<Vec<Addressbook>, Error>;
 
     async fn update_addressbook(
         &self,

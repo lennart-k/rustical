@@ -88,6 +88,20 @@ impl CalendarStore for SqliteStore {
     }
 
     #[instrument]
+    async fn get_deleted_calendars(&self, principal: &str) -> Result<Vec<Calendar>, Error> {
+        let cals = sqlx::query_as!(
+            Calendar,
+            r#"SELECT principal, id, synctoken, displayname, "order", description, color, timezone, deleted_at
+                FROM calendars
+                WHERE principal = ? AND deleted_at IS NOT NULL"#,
+            principal
+        )
+        .fetch_all(&self.db)
+        .await.map_err(crate::Error::from)?;
+        Ok(cals)
+    }
+
+    #[instrument]
     async fn insert_calendar(&self, calendar: Calendar) -> Result<(), Error> {
         sqlx::query!(
             r#"INSERT INTO calendars (principal, id, displayname, description, "order", color, timezone)

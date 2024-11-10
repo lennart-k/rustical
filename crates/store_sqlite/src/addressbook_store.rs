@@ -94,6 +94,24 @@ impl AddressbookStore for SqliteStore {
     }
 
     #[instrument]
+    async fn get_deleted_addressbooks(
+        &self,
+        principal: &str,
+    ) -> Result<Vec<Addressbook>, rustical_store::Error> {
+        let addressbooks = sqlx::query_as!(
+            Addressbook,
+            r#"SELECT principal, id, synctoken, displayname, description, deleted_at
+                FROM addressbooks
+                WHERE principal = ? AND deleted_at IS NOT NULL"#,
+            principal
+        )
+        .fetch_all(&self.db)
+        .await
+        .map_err(crate::Error::from)?;
+        Ok(addressbooks)
+    }
+
+    #[instrument]
     async fn update_addressbook(
         &self,
         principal: String,

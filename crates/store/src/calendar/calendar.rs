@@ -1,8 +1,8 @@
 use crate::synctoken::format_synctoken;
 use chrono::NaiveDateTime;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
-#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+#[derive(Debug, Default, Clone, Serialize)]
 pub struct Calendar {
     pub principal: String,
     pub id: String,
