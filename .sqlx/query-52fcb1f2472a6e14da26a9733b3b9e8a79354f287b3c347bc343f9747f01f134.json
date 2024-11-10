@@ -1,0 +1,68 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT principal, id, synctoken, displayname, \"order\", description, color, timezone, deleted_at\n                FROM calendars\n                WHERE principal = ? AND deleted_at IS NOT NULL",
+  "describe": {
+    "columns": [
+      {
+        "name": "principal",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "id",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "synctoken",
+        "ordinal": 2,
+        "type_info": "Integer"
+      },
+      {
+        "name": "displayname",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "order",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "description",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "color",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "timezone",
+        "ordinal": 7,
+        "type_info": "Text"
+      },
+      {
+        "name": "deleted_at",
+        "ordinal": 8,
+        "type_info": "Datetime"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      false,
+      true
+    ]
+  },
+  "hash": "52fcb1f2472a6e14da26a9733b3b9e8a79354f287b3c347bc343f9747f01f134"
+}
