@@ -68,12 +68,12 @@ async fn route_calendar<C: CalendarStore + ?Sized>(
     path: Path<(String, String)>,
     store: Data<C>,
     _user: User,
-) -> impl Responder {
+) -> Result<impl Responder, rustical_store::Error> {
     let (owner, cal_id) = path.into_inner();
-    CalendarPage {
+    Ok(CalendarPage {
         owner: owner.to_owned(),
-        calendar: store.get_calendar(&owner, &cal_id).await.unwrap(),
-    }
+        calendar: store.get_calendar(&owner, &cal_id).await?,
+    })
 }
 
 #[derive(Template)]
@@ -87,12 +87,12 @@ async fn route_addressbook<AS: AddressbookStore + ?Sized>(
     path: Path<(String, String)>,
     store: Data<AS>,
     _user: User,
-) -> impl Responder {
+) -> Result<impl Responder, rustical_store::Error> {
     let (owner, addrbook_id) = path.into_inner();
-    AddressbookPage {
+    Ok(AddressbookPage {
         owner: owner.to_owned(),
-        addressbook: store.get_addressbook(&owner, &addrbook_id).await.unwrap(),
-    }
+        addressbook: store.get_addressbook(&owner, &addrbook_id).await?,
+    })
 }
 
 async fn route_root(user: Option<User>, req: HttpRequest) -> impl Responder {
@@ -113,7 +113,6 @@ fn unauthorized_handler<B>(res: ServiceResponse<B>) -> actix_web::Result<ErrorHa
     let (req, _) = res.into_parts();
     let login_url = req.url_for_static("frontend_login").unwrap().to_string();
 
-    // let response = Redirect::to(login_url).respond_to(&req);
     let response = HttpResponse::Unauthorized().body(format!(
         r#"<!Doctype html>
         <html>
