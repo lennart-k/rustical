@@ -16,8 +16,9 @@ li.collection-list-item {
       ". color-chip"
       "title color-chip"
       "description color-chip"
+      "restore color-chip"
       ". color-chip";
-    grid-template-rows: 12px auto auto 12px;
+    grid-template-rows: 12px auto auto auto 12px;
     grid-template-columns: auto 50px;
     color: inherit;
     text-decoration: none;
@@ -35,6 +36,10 @@ li.collection-list-item {
       background: var(--color);
       grid-area: color-chip;
       border-radius: 0 12px 12px 0;
+    }
+
+    .restore-form {
+      grid-area: restore;
     }
 
     &:hover {
@@ -71,6 +76,9 @@ li.collection-list-item {
       <span class="description">
       {% if let Some(description) = calendar.description %}{{ description }}{% endif %}
       </span>
+      <form action="/frontend/user/{{ user_id }}/calendar/{{ calendar.id}}/restore" method="POST" class="restore-form">
+        <button type="submit">Restore</button>
+      </form>
       <div class="color-chip"></div>
     </a>
   </li>
@@ -101,6 +109,9 @@ li.collection-list-item {
       <span class="description">
       {% if let Some(description) = addressbook.description %}{{ description }}{% endif %}
       </span>
+      <form action="/frontend/user/{{ user_id }}/addressbook/{{ addressbook.id}}/restore" method="POST" class="restore-form">
+        <button type="submit">Restore</button>
+      </form>
     </a>
   </li>
   {% endfor %}

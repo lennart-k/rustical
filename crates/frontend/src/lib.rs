@@ -12,7 +12,11 @@ use actix_web::{
 use askama::Template;
 use askama_actix::TemplateToResponse;
 use assets::{Assets, EmbedService};
-use routes::login::{route_get_login, route_post_login};
+use routes::{
+    addressbook::{route_addressbook, route_addressbook_restore},
+    calendar::{route_calendar, route_calendar_restore},
+    login::{route_get_login, route_post_login},
+};
 use rustical_store::{
     auth::{AuthenticationMiddleware, AuthenticationProvider, User},
     Addressbook, AddressbookStore, Calendar, CalendarStore,
@@ -55,44 +59,6 @@ async fn route_user<CS: CalendarStore + ?Sized, AS: AddressbookStore + ?Sized>(
         user_id: user.id,
     }
     .to_response()
-}
-
-#[derive(Template)]
-#[template(path = "pages/calendar.html")]
-struct CalendarPage {
-    owner: String,
-    calendar: Calendar,
-}
-
-async fn route_calendar<C: CalendarStore + ?Sized>(
-    path: Path<(String, String)>,
-    store: Data<C>,
-    _user: User,
-) -> Result<impl Responder, rustical_store::Error> {
-    let (owner, cal_id) = path.into_inner();
-    Ok(CalendarPage {
-        owner: owner.to_owned(),
-        calendar: store.get_calendar(&owner, &cal_id).await?,
-    })
-}
-
-#[derive(Template)]
-#[template(path = "pages/addressbook.html")]
-struct AddressbookPage {
-    owner: String,
-    addressbook: Addressbook,
-}
-
-async fn route_addressbook<AS: AddressbookStore + ?Sized>(
-    path: Path<(String, String)>,
-    store: Data<AS>,
-    _user: User,
-) -> Result<impl Responder, rustical_store::Error> {
-    let (owner, addrbook_id) = path.into_inner();
-    Ok(AddressbookPage {
-        owner: owner.to_owned(),
-        addressbook: store.get_addressbook(&owner, &addrbook_id).await?,
-    })
 }
 
 async fn route_root(user: Option<User>, req: HttpRequest) -> impl Responder {
@@ -173,8 +139,16 @@ pub fn configure_frontend<
                     .route(web::method(Method::GET).to(route_calendar::<CS>)),
             )
             .service(
-                web::resource("/user/{user}/addressbook/{calendar}")
+                web::resource("/user/{user}/calendar/{calendar}/restore")
+                    .route(web::method(Method::POST).to(route_calendar_restore::<CS>)),
+            )
+            .service(
+                web::resource("/user/{user}/addressbook/{addressbook}")
                     .route(web::method(Method::GET).to(route_addressbook::<AS>)),
+            )
+            .service(
+                web::resource("/user/{user}/addressbook/{addressbook}/restore")
+                    .route(web::method(Method::POST).to(route_addressbook_restore::<AS>)),
             )
             .service(
                 web::resource("/login")

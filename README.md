@@ -23,11 +23,14 @@ docker run -p 4000:4000 -v YOUR_CONFIG_TOML:/etc/rustical/config.toml -v YOUR_DA
 ## Configuration
 
 You can generate a default `config.toml` with
+
 ```sh
 rustical gen-config
 ```
+
 There, you can customize your username, password, and app tokens.
 Password hashes can be generated with
+
 ```sh
 rustical pwhash
 ```
@@ -39,7 +42,6 @@ Since it's sensitive information, the secure but slow hash algorithm `argon2` is
 
 I recommend to generate random app tokens for each CalDAV/CardDAV client.
 These can use the faster `pbkdf2` algorithm.
-
 
 ## Todo
 
@@ -64,7 +66,7 @@ These can use the faster `pbkdf2` algorithm.
 - [ ] Web UI
 - [x] Trash bin
   - [x] Hiding calendars instead of deleting them
-  - [ ] Restore endpoint
+  - [x] Restore endpoint
 - [ ] Packaging
   - [x] Ensure cargo install works
   - [x] Docker image
