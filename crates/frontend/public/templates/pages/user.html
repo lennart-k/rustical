@@ -16,6 +16,7 @@ li.collection-list-item {
       ". color-chip"
       "title color-chip"
       "description color-chip"
+      "subscription-url color-chip"
       "restore color-chip"
       ". color-chip";
     grid-template-rows: 12px auto auto auto 12px;
@@ -30,6 +31,10 @@ li.collection-list-item {
 
     .description {
       grid-area: description;
+    }
+
+    .subscription-url {
+      grid-area: subscription-url;
     }
 
     .color-chip {
@@ -60,6 +65,9 @@ li.collection-list-item {
       <span class="description">
       {% if let Some(description) = calendar.description %}{{ description }}{% endif %}
       </span>
+      {% if let Some(subscription_url) = calendar.subscription_url %}
+      <span class="subscription-url">{{ subscription_url }}</span>
+      {% endif %}
       <div class="color-chip"></div>
     </a>
   </li>
