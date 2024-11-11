@@ -1,8 +1,9 @@
 use super::methods::mkcalendar::route_mkcalendar;
+use super::methods::post::route_post;
 use super::methods::report::route_report_calendar;
 use super::prop::{
     SupportedCalendarComponent, SupportedCalendarComponentSet, SupportedCalendarData,
-    SupportedReportSet,
+    SupportedReportSet, Transports,
 };
 use crate::calendar_object::resource::CalendarObjectResource;
 use crate::principal::PrincipalResource;
@@ -12,6 +13,8 @@ use actix_web::http::Method;
 use actix_web::web;
 use actix_web::{web::Data, HttpRequest};
 use async_trait::async_trait;
+use base64::prelude::{BASE64_STANDARD, BASE64_URL_SAFE};
+use base64::Engine;
 use derive_more::derive::{From, Into};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{Resource, ResourceService};
@@ -19,6 +22,7 @@ use rustical_dav::xml::HrefElement;
 use rustical_store::auth::User;
 use rustical_store::{Calendar, CalendarStore};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::str::FromStr;
 use std::sync::Arc;
 use strum::{EnumString, VariantNames};
@@ -33,13 +37,15 @@ pub struct CalendarResourceService<C: CalendarStore + ?Sized> {
 #[strum(serialize_all = "kebab-case")]
 pub enum CalendarPropName {
     Displayname,
+    Getcontenttype,
+    Transports,
+    Topic,
     CalendarColor,
     CalendarDescription,
     CalendarTimezone,
     CalendarOrder,
     SupportedCalendarComponentSet,
     SupportedCalendarData,
-    Getcontenttype,
     MaxResourceSize,
     SupportedReportSet,
     SyncToken,
@@ -53,6 +59,15 @@ pub enum CalendarProp {
     // WebDAV (RFC 2518)
     Displayname(Option<String>),
     Getcontenttype(String),
+
+    // WebDav Push
+    // NOTE: Here we implement an older version of the spec since the new property name is not reflected
+    // in DAVx5 yet
+    // https://github.com/bitfireAT/webdav-push/commit/461259a2f2174454b2b00033419b11fac52b79e3
+    #[serde(skip_deserializing)]
+    #[serde(rename = "P:push-transports", alias = "push-transports")]
+    Transports(Transports),
+    Topic(String),
 
     // CalDAV (RFC 4791)
     #[serde(rename = "IC:calendar-color", alias = "calendar-color")]
@@ -111,7 +126,7 @@ impl Resource for CalendarResource {
 
     fn get_prop(
         &self,
-        _rmap: &ResourceMap,
+        rmap: &ResourceMap,
         _user: &User,
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
@@ -145,6 +160,14 @@ impl Resource for CalendarResource {
             }
             CalendarPropName::Getcontenttype => {
                 CalendarProp::Getcontenttype("text/calendar;charset=utf-8".to_owned())
+            }
+            CalendarPropName::Transports => CalendarProp::Transports(Default::default()),
+            CalendarPropName::Topic => {
+                let url = CalendarResource::get_url(rmap, [&self.0.principal, &self.0.id]).unwrap();
+                let mut hasher = Sha256::new();
+                hasher.update(url);
+                let topic = format!("{:x}", hasher.finalize());
+                CalendarProp::Topic(topic)
             }
             CalendarPropName::MaxResourceSize => CalendarProp::MaxResourceSize(10000000),
             CalendarPropName::SupportedReportSet => {
@@ -185,6 +208,8 @@ impl Resource for CalendarResource {
             }
             CalendarProp::SupportedCalendarData(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Getcontenttype(_) => Err(rustical_dav::Error::PropReadOnly),
+            CalendarProp::Transports(_) => Err(rustical_dav::Error::PropReadOnly),
+            CalendarProp::Topic(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::MaxResourceSize(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::SupportedReportSet(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::SyncToken(_) => Err(rustical_dav::Error::PropReadOnly),
@@ -222,6 +247,8 @@ impl Resource for CalendarResource {
             }
             CalendarPropName::SupportedCalendarData => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::Getcontenttype => Err(rustical_dav::Error::PropReadOnly),
+            CalendarPropName::Transports => Err(rustical_dav::Error::PropReadOnly),
+            CalendarPropName::Topic => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::MaxResourceSize => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::SupportedReportSet => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::SyncToken => Err(rustical_dav::Error::PropReadOnly),
@@ -329,5 +356,6 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
 
         res.route(report_method.to(route_report_calendar::<C>))
             .route(mkcalendar_method.to(route_mkcalendar::<C>))
+            .post(route_post::<C>)
     }
 }

@@ -86,3 +86,37 @@ impl Default for SupportedReportSet {
         }
     }
 }
+
+#[derive(Debug, Clone, Serialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum Transport {
+    #[serde(rename = "P:web-push")]
+    WebPush,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub struct TransportWrapper {
+    #[serde(rename = "$value")]
+    transport: Transport,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub struct Transports {
+    // NOTE: Here we implement an older version of the spec since the new property name is not reflected
+    // in DAVx5 yet
+    // https://github.com/bitfireAT/webdav-push/commit/461259a2f2174454b2b00033419b11fac52b79e3
+    #[serde(rename = "P:transport")]
+    transports: Vec<TransportWrapper>,
+}
+
+impl Default for Transports {
+    fn default() -> Self {
+        Self {
+            transports: vec![TransportWrapper {
+                transport: Transport::WebPush,
+            }],
+        }
+    }
+}

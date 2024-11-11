@@ -5,6 +5,7 @@ use quick_xml::events::attributes::Attribute;
 // Can also generate appropriate attributes for quick_xml
 pub enum Namespace {
     Dav,
+    DavPush,
     CalDAV,
     CardDAV,
     ICal,
@@ -16,6 +17,7 @@ impl Namespace {
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Dav => "DAV:",
+            Self::DavPush => "DAV:Push",
             Self::CalDAV => "urn:ietf:params:xml:ns:caldav",
             Self::CardDAV => "urn:ietf:params:xml:ns:carddav",
             Self::ICal => "http://apple.com/ns/ical/",
@@ -28,6 +30,7 @@ impl Namespace {
     pub fn xml_attr(&self) -> &'static str {
         match self {
             Self::Dav => "xmlns",
+            Self::DavPush => "xmlns:P",
             Self::CalDAV => "xmlns:C",
             Self::CardDAV => "xmlns:CARD",
             Self::ICal => "xmlns:IC",

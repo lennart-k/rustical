@@ -2469,6 +2469,7 @@ dependencies = [
  "rustical_dav",
  "rustical_store",
  "serde",
+ "sha2",
  "strum",
  "thiserror",
  "tokio",

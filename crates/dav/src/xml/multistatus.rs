@@ -79,6 +79,8 @@ pub struct MultistatusElement<PropType: Serialize, MemberPropType: Serialize> {
     pub member_responses: Vec<ResponseElement<MemberPropType>>,
     #[serde(rename = "@xmlns")]
     pub ns_dav: &'static str,
+    #[serde(rename = "@xmlns:P")]
+    pub ns_davpush: &'static str,
     #[serde(rename = "@xmlns:C")]
     pub ns_caldav: &'static str,
     #[serde(rename = "@xmlns:IC")]
@@ -97,6 +99,7 @@ impl<T1: Serialize, T2: Serialize> Default for MultistatusElement<T1, T2> {
             responses: vec![],
             member_responses: vec![],
             ns_dav: Namespace::Dav.as_str(),
+            ns_davpush: Namespace::DavPush.as_str(),
             ns_caldav: Namespace::CalDAV.as_str(),
             ns_ical: Namespace::ICal.as_str(),
             ns_calendarserver: Namespace::CServer.as_str(),
