@@ -79,6 +79,7 @@ pub async fn route_mkcalendar<C: CalendarStore + ?Sized>(
         description: request.calendar_description,
         deleted_at: None,
         synctoken: 0,
+        subscription_url: None,
     };
 
     match store.get_calendar(&principal, &cal_id).await {

@@ -55,7 +55,7 @@ impl Resource for CalendarObjectResource {
     type Error = Error;
     type PrincipalResource = PrincipalResource;
 
-    fn get_resourcetype() -> &'static [&'static str] {
+    fn get_resourcetype(&self) -> &'static [&'static str] {
         &[]
     }
 

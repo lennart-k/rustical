@@ -13,6 +13,7 @@ pub struct Calendar {
     pub timezone: Option<String>,
     pub deleted_at: Option<NaiveDateTime>,
     pub synctoken: i64,
+    pub subscription_url: Option<String>,
 }
 
 impl Calendar {

@@ -62,7 +62,7 @@ impl CalendarStore for SqliteStore {
     async fn get_calendar(&self, principal: &str, id: &str) -> Result<Calendar, Error> {
         let cal = sqlx::query_as!(
             Calendar,
-            r#"SELECT principal, id, synctoken, "order", displayname, description, color, timezone, deleted_at
+            r#"SELECT principal, id, synctoken, "order", displayname, description, color, timezone, deleted_at, subscription_url
                 FROM calendars
                 WHERE (principal, id) = (?, ?)"#,
             principal,
@@ -77,7 +77,7 @@ impl CalendarStore for SqliteStore {
     async fn get_calendars(&self, principal: &str) -> Result<Vec<Calendar>, Error> {
         let cals = sqlx::query_as!(
             Calendar,
-            r#"SELECT principal, id, synctoken, displayname, "order", description, color, timezone, deleted_at
+            r#"SELECT principal, id, synctoken, displayname, "order", description, color, timezone, deleted_at, subscription_url
                 FROM calendars
                 WHERE principal = ? AND deleted_at IS NULL"#,
             principal
@@ -91,7 +91,7 @@ impl CalendarStore for SqliteStore {
     async fn get_deleted_calendars(&self, principal: &str) -> Result<Vec<Calendar>, Error> {
         let cals = sqlx::query_as!(
             Calendar,
-            r#"SELECT principal, id, synctoken, displayname, "order", description, color, timezone, deleted_at
+            r#"SELECT principal, id, synctoken, displayname, "order", description, color, timezone, deleted_at, subscription_url
                 FROM calendars
                 WHERE principal = ? AND deleted_at IS NOT NULL"#,
             principal
@@ -236,6 +236,7 @@ impl CalendarStore for SqliteStore {
         object: CalendarObject,
         overwrite: bool,
     ) -> Result<(), Error> {
+        // TODO: Prevent objects from being commited to a subscription calendar
         let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
 
         let (object_id, ics) = (object.get_id(), object.get_ics());
@@ -255,7 +256,7 @@ impl CalendarStore for SqliteStore {
                 principal,
                 cal_id,
                 object_id,
-                ics
+                ics,
             )
         })
         .execute(&mut *tx)

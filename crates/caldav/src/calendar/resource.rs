@@ -15,6 +15,7 @@ use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{Resource, ResourceService};
+use rustical_dav::xml::HrefElement;
 use rustical_store::auth::User;
 use rustical_store::{Calendar, CalendarStore};
 use serde::{Deserialize, Serialize};
@@ -43,6 +44,7 @@ pub enum CalendarPropName {
     SupportedReportSet,
     SyncToken,
     Getctag,
+    Source,
 }
 
 #[derive(Default, Deserialize, Serialize, PartialEq)]
@@ -82,6 +84,8 @@ pub enum CalendarProp {
     // CalendarServer
     #[serde(rename = "CS:getctag", alias = "getctag")]
     Getctag(String),
+    #[serde(rename = "CS:source", alias = "source")]
+    Source(Option<HrefElement>),
 
     #[serde(other)]
     #[default]
@@ -97,8 +101,12 @@ impl Resource for CalendarResource {
     type Error = Error;
     type PrincipalResource = PrincipalResource;
 
-    fn get_resourcetype() -> &'static [&'static str] {
-        &["collection", "C:calendar"]
+    fn get_resourcetype(&self) -> &'static [&'static str] {
+        if self.0.subscription_url.is_none() {
+            &["collection", "C:calendar"]
+        } else {
+            &["collection", "CS:subscribed"]
+        }
     }
 
     fn get_prop(
@@ -144,6 +152,9 @@ impl Resource for CalendarResource {
             }
             CalendarPropName::SyncToken => CalendarProp::SyncToken(self.0.format_synctoken()),
             CalendarPropName::Getctag => CalendarProp::Getctag(self.0.format_synctoken()),
+            CalendarPropName::Source => {
+                CalendarProp::Source(self.0.subscription_url.to_owned().map(HrefElement::from))
+            }
         })
     }
 
@@ -178,6 +189,8 @@ impl Resource for CalendarResource {
             CalendarProp::SupportedReportSet(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::SyncToken(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Getctag(_) => Err(rustical_dav::Error::PropReadOnly),
+            // Converting between a calendar subscription calendar and a normal one would be weird
+            CalendarProp::Source(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Invalid => Err(rustical_dav::Error::PropReadOnly),
         }
     }
@@ -213,6 +226,8 @@ impl Resource for CalendarResource {
             CalendarPropName::SupportedReportSet => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::SyncToken => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::Getctag => Err(rustical_dav::Error::PropReadOnly),
+            // Converting a calendar subscription calendar into a normal one would be weird
+            CalendarPropName::Source => Err(rustical_dav::Error::PropReadOnly),
         }
     }
 
@@ -226,6 +241,7 @@ impl Resource for CalendarResource {
     }
 
     fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
+        // TODO: read-only for subscription
         Ok(UserPrivilegeSet::owner_only(self.0.principal == user.id))
     }
 }

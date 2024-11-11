@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT principal, id, synctoken, displayname, \"order\", description, color, timezone, deleted_at\n                FROM calendars\n                WHERE principal = ? AND deleted_at IS NULL",
+  "query": "SELECT principal, id, synctoken, displayname, \"order\", description, color, timezone, deleted_at, subscription_url\n                FROM calendars\n                WHERE principal = ? AND deleted_at IS NULL",
   "describe": {
     "columns": [
       {
@@ -47,6 +47,11 @@
         "name": "deleted_at",
         "ordinal": 8,
         "type_info": "Datetime"
+      },
+      {
+        "name": "subscription_url",
+        "ordinal": 9,
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -60,9 +65,10 @@
       false,
       true,
       true,
-      false,
+      true,
+      true,
       true
     ]
   },
-  "hash": "f387e6ef026d8314e78c0672652fb3d6876598ecde4db98d7a303c9e4c676376"
+  "hash": "7d27bdb54fbc8e65e5482fa9bc974e57c1fc7abcc5c7ca6bbb4944554381285c"
 }

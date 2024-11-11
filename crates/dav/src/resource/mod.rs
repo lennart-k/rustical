@@ -70,7 +70,7 @@ pub trait Resource: Clone + 'static {
     type Error: ResponseError + From<crate::Error>;
     type PrincipalResource: Resource;
 
-    fn get_resourcetype() -> &'static [&'static str];
+    fn get_resourcetype(&self) -> &'static [&'static str];
 
     fn list_props() -> Vec<&'static str> {
         [Self::PropName::VARIANTS, CommonPropertiesPropName::VARIANTS].concat()
@@ -84,7 +84,7 @@ pub trait Resource: Clone + 'static {
     ) -> Result<CommonPropertiesProp, Self::Error> {
         Ok(match prop {
             CommonPropertiesPropName::Resourcetype => {
-                CommonPropertiesProp::Resourcetype(Resourcetype(Self::get_resourcetype()))
+                CommonPropertiesProp::Resourcetype(Resourcetype(self.get_resourcetype()))
             }
             CommonPropertiesPropName::CurrentUserPrincipal => {
                 CommonPropertiesProp::CurrentUserPrincipal(

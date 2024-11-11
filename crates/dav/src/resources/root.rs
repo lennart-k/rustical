@@ -35,7 +35,7 @@ impl<PR: Resource> Resource for RootResource<PR> {
     type Error = PR::Error;
     type PrincipalResource = PR;
 
-    fn get_resourcetype() -> &'static [&'static str] {
+    fn get_resourcetype(&self) -> &'static [&'static str] {
         &["collection"]
     }
 

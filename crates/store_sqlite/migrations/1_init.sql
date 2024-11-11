@@ -8,6 +8,7 @@ CREATE TABLE calendars (
     color TEXT,
     timezone TEXT,
     deleted_at DATETIME,
+    subscription_url TEXT,
     PRIMARY KEY (principal, id)
 );
 

@@ -83,6 +83,8 @@ pub struct MultistatusElement<PropType: Serialize, MemberPropType: Serialize> {
     pub ns_caldav: &'static str,
     #[serde(rename = "@xmlns:IC")]
     pub ns_ical: &'static str,
+    #[serde(rename = "@xmlns:CS")]
+    pub ns_calendarserver: &'static str,
     #[serde(rename = "@xmlns:CARD")]
     pub ns_carddav: &'static str,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -97,6 +99,7 @@ impl<T1: Serialize, T2: Serialize> Default for MultistatusElement<T1, T2> {
             ns_dav: Namespace::Dav.as_str(),
             ns_caldav: Namespace::CalDAV.as_str(),
             ns_ical: Namespace::ICal.as_str(),
+            ns_calendarserver: Namespace::CServer.as_str(),
             ns_carddav: Namespace::CardDAV.as_str(),
             sync_token: None,
         }
