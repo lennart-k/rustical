@@ -9,7 +9,7 @@ use rustical_dav::{
 use rustical_store::{auth::User, AddressObject, AddressbookStore};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use strum::{EnumString, VariantNames};
+use strum::{EnumDiscriminants, EnumString, VariantNames};
 
 use super::methods::{get_object, put_object};
 
@@ -20,15 +20,12 @@ pub struct AddressObjectResourceService<AS: AddressbookStore + ?Sized> {
     object_id: String,
 }
 
-#[derive(EnumString, VariantNames, Clone)]
-#[strum(serialize_all = "kebab-case")]
-pub enum AddressObjectPropName {
-    Getetag,
-    AddressData,
-    Getcontenttype,
-}
-
-#[derive(Default, Deserialize, Serialize, PartialEq)]
+#[derive(Default, Deserialize, Serialize, PartialEq, EnumDiscriminants)]
+#[strum_discriminants(
+    name(AddressObjectPropName),
+    derive(EnumString, VariantNames),
+    strum(serialize_all = "kebab-case")
+)]
 #[serde(rename_all = "kebab-case")]
 pub enum AddressObjectProp {
     // WebDAV (RFC 2518)
@@ -73,6 +70,9 @@ impl Resource for AddressObjectResource {
             }
             AddressObjectPropName::Getcontenttype => {
                 AddressObjectProp::Getcontenttype("text/vcard;charset=utf-8".to_owned())
+            }
+            AddressObjectPropName::Invalid => {
+                return Err(rustical_dav::Error::BadRequest("invalid prop name".to_owned()).into())
             }
         })
     }

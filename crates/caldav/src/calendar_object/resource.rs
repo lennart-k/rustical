@@ -10,7 +10,7 @@ use rustical_dav::{
 use rustical_store::{auth::User, CalendarObject, CalendarStore};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use strum::{EnumString, VariantNames};
+use strum::{EnumDiscriminants, EnumString, VariantNames};
 
 pub struct CalendarObjectResourceService<C: CalendarStore + ?Sized> {
     cal_store: Arc<C>,
@@ -19,15 +19,12 @@ pub struct CalendarObjectResourceService<C: CalendarStore + ?Sized> {
     object_id: String,
 }
 
-#[derive(EnumString, VariantNames, Clone)]
-#[strum(serialize_all = "kebab-case")]
-pub enum CalendarObjectPropName {
-    Getetag,
-    CalendarData,
-    Getcontenttype,
-}
-
-#[derive(Default, Deserialize, Serialize, PartialEq)]
+#[derive(Default, Deserialize, Serialize, PartialEq, EnumDiscriminants)]
+#[strum_discriminants(
+    name(CalendarObjectPropName),
+    derive(EnumString, VariantNames),
+    strum(serialize_all = "kebab-case")
+)]
 #[serde(rename_all = "kebab-case")]
 pub enum CalendarObjectProp {
     // WebDAV (RFC 2518)
@@ -72,6 +69,9 @@ impl Resource for CalendarObjectResource {
             }
             CalendarObjectPropName::Getcontenttype => {
                 CalendarObjectProp::Getcontenttype("text/calendar;charset=utf-8".to_owned())
+            }
+            CalendarObjectPropName::Invalid => {
+                return Err(rustical_dav::Error::BadRequest("invalid prop name".to_owned()).into())
             }
         })
     }

@@ -11,7 +11,7 @@ use rustical_store::auth::User;
 use rustical_store::CalendarStore;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use strum::{EnumString, VariantNames};
+use strum::{EnumDiscriminants, EnumString, VariantNames};
 
 pub struct PrincipalResourceService<C: CalendarStore + ?Sized> {
     principal: String,
@@ -23,11 +23,17 @@ pub struct PrincipalResource {
     principal: String,
 }
 
-#[derive(Default, Deserialize, Serialize, PartialEq)]
+#[derive(Default, Deserialize, Serialize, PartialEq, EnumDiscriminants)]
+#[strum_discriminants(
+    name(PrincipalPropName),
+    derive(EnumString, VariantNames),
+    strum(serialize_all = "kebab-case")
+)]
 #[serde(rename_all = "kebab-case")]
 pub enum PrincipalProp {
     // WebDAV Access Control (RFC 3744)
     #[serde(rename = "principal-URL")]
+    #[strum_discriminants(strum(serialize = "principal-URL"))]
     PrincipalUrl(HrefElement),
 
     // CalDAV (RFC 4791)
@@ -39,15 +45,6 @@ pub enum PrincipalProp {
     #[serde(other)]
     #[default]
     Invalid,
-}
-
-#[derive(EnumString, VariantNames, Clone)]
-#[strum(serialize_all = "kebab-case")]
-pub enum PrincipalPropName {
-    #[strum(serialize = "principal-URL")]
-    PrincipalUrl,
-    CalendarHomeSet,
-    CalendarUserAddressSet,
 }
 
 impl PrincipalResource {
@@ -79,6 +76,9 @@ impl Resource for PrincipalResource {
             PrincipalPropName::CalendarHomeSet => PrincipalProp::CalendarHomeSet(principal_href),
             PrincipalPropName::CalendarUserAddressSet => {
                 PrincipalProp::CalendarUserAddressSet(principal_href)
+            }
+            PrincipalPropName::Invalid => {
+                return Err(rustical_dav::Error::BadRequest("invalid prop name".to_owned()).into())
             }
         })
     }

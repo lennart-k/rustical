@@ -45,7 +45,7 @@ impl<PR: Resource> Resource for RootResource<PR> {
         _user: &User,
         _prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
-        panic!("we shouldn't end up here")
+        unreachable!("we shouldn't end up here")
     }
 
     #[inline]

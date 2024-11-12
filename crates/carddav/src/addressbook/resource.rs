@@ -17,7 +17,7 @@ use rustical_store::{Addressbook, AddressbookStore};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::sync::Arc;
-use strum::{EnumString, VariantNames};
+use strum::{EnumDiscriminants, EnumString, VariantNames};
 
 pub struct AddressbookResourceService<AS: AddressbookStore + ?Sized> {
     addr_store: Arc<AS>,
@@ -25,21 +25,13 @@ pub struct AddressbookResourceService<AS: AddressbookStore + ?Sized> {
     addressbook_id: String,
 }
 
-#[derive(EnumString, VariantNames, Clone)]
-#[strum(serialize_all = "kebab-case")]
-pub enum AddressbookPropName {
-    Displayname,
-    Getcontenttype,
-    AddressbookDescription,
-    SupportedAddressData,
-    SupportedReportSet,
-    MaxResourceSize,
-    SyncToken,
-    Getctag,
-}
-
-#[derive(Default, Deserialize, Serialize, PartialEq)]
+#[derive(Default, Deserialize, Serialize, PartialEq, EnumDiscriminants)]
 #[serde(rename_all = "kebab-case")]
+#[strum_discriminants(
+    name(AddressbookPropName),
+    derive(EnumString, VariantNames),
+    strum(serialize_all = "kebab-case")
+)]
 pub enum AddressbookProp {
     // WebDAV (RFC 2518)
     Displayname(Option<String>),
@@ -110,6 +102,9 @@ impl Resource for AddressbookResource {
             }
             AddressbookPropName::SyncToken => AddressbookProp::SyncToken(self.0.format_synctoken()),
             AddressbookPropName::Getctag => AddressbookProp::Getctag(self.0.format_synctoken()),
+            AddressbookPropName::Invalid => {
+                return Err(rustical_dav::Error::BadRequest("invalid prop name".to_owned()).into())
+            }
         })
     }
 
@@ -149,6 +144,7 @@ impl Resource for AddressbookResource {
             AddressbookPropName::SupportedAddressData => Err(rustical_dav::Error::PropReadOnly),
             AddressbookPropName::SyncToken => Err(rustical_dav::Error::PropReadOnly),
             AddressbookPropName::Getctag => Err(rustical_dav::Error::PropReadOnly),
+            AddressbookPropName::Invalid => Err(rustical_dav::Error::PropReadOnly),
         }
     }
 
