@@ -2514,6 +2514,7 @@ dependencies = [
  "log",
  "quick-xml",
  "rustical_store",
+ "rustical_xml",
  "serde",
  "strum",
  "thiserror",
@@ -2575,6 +2576,16 @@ dependencies = [
  "sqlx",
  "thiserror",
  "tracing",
+]
+
+[[package]]
+name = "rustical_xml"
+version = "0.1.0"
+dependencies = [
+ "heck",
+ "quick-xml",
+ "thiserror",
+ "xml_derive",
 ]
 
 [[package]]
@@ -3843,6 +3854,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "36c1fec1a2bb5866f07c25f68c26e565c4c200aebb96d7e55710c19d3e8ac49b"
 dependencies = [
  "memchr",
+]
+
+[[package]]
+name = "xml_derive"
+version = "0.1.0"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "strum",
+ "syn",
 ]
 
 [[package]]

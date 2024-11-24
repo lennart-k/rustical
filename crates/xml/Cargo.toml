@@ -1,0 +1,12 @@
+[package]
+name = "rustical_xml"
+version.workspace = true
+edition.workspace = true
+description.workspace = true
+repository.workspace = true
+
+[dependencies]
+heck = "0.5.0"
+quick-xml.workspace = true
+thiserror.workspace = true
+xml_derive = { path = "./derive" }
