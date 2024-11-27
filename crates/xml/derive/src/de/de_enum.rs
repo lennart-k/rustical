@@ -1,7 +1,9 @@
-use crate::de::attrs::parse_variant_attrs;
-use proc_macro2::Span;
+use darling::FromVariant;
+use heck::ToKebabCase;
 use quote::quote;
 use syn::{DataEnum, DeriveInput, Fields, FieldsUnnamed, Variant};
+
+use crate::de::attrs::VariantAttrs;
 
 pub fn enum_variant_branch(variant: &Variant) -> proc_macro2::TokenStream {
     let ident = &variant.ident;
@@ -35,12 +37,13 @@ pub fn impl_de_enum(input: &DeriveInput, data: &DataEnum) -> proc_macro2::TokenS
     let name = &input.ident;
 
     let variants = data.variants.iter().map(|variant| {
-        let attrs = parse_variant_attrs(&variant.attrs);
-
-        let variant_name = attrs.rename.unwrap_or(variant.ident.to_string());
-        let variant_name = syn::LitByteStr::new(variant_name.as_bytes(), Span::call_site());
+        let attrs = VariantAttrs::from_variant(variant).unwrap();
+        let variant_name = attrs.common.rename.unwrap_or(syn::LitByteStr::new(
+            variant.ident.to_string().to_kebab_case().as_bytes(),
+            variant.ident.span(),
+        ));
         let branch = enum_variant_branch(variant);
-        // dbg!(variant.fields.to_token_stream());
+        dbg!(&variant_name);
 
         quote! {
             #variant_name => {
@@ -55,17 +58,16 @@ pub fn impl_de_enum(input: &DeriveInput, data: &DataEnum) -> proc_macro2::TokenS
                 reader: &mut quick_xml::NsReader<R>,
                 start: &quick_xml::events::BytesStart,
                 empty: bool
-            ) -> Result<Self, rustical_xml::XmlError> {
+            ) -> Result<Self, rustical_xml::XmlDeError> {
                 use quick_xml::events::Event;
 
                 let (_ns, name) = reader.resolve_element(start.name());
-
 
                 match name.as_ref() {
                     #(#variants)*
                     name => {
                         // Handle invalid variant name
-                        Err(rustical_xml::XmlError::InvalidVariant(String::from_utf8_lossy(name).to_string()))
+                        Err(rustical_xml::XmlDeError::InvalidVariant(String::from_utf8_lossy(name).to_string()))
                     }
                 }
             }

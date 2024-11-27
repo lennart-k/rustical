@@ -12,3 +12,4 @@ quote = "1.0"
 proc-macro2 = "1.0"
 heck = "0.5.0"
 strum.workspace = true
+darling = "0.20"

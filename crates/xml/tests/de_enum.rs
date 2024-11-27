@@ -4,6 +4,7 @@ use xml_derive::XmlDeserialize;
 #[test]
 fn test_struct_untagged_enum() {
     #[derive(Debug, XmlDeserialize, PartialEq)]
+    #[xml(root = b"propfind")]
     struct Propfind {
         prop: Prop,
     }
@@ -18,12 +19,6 @@ fn test_struct_untagged_enum() {
     enum PropEnum {
         A,
         B,
-    }
-
-    impl XmlRoot for Propfind {
-        fn root_tag() -> &'static [u8] {
-            b"propfind"
-        }
     }
 
     let doc = Propfind::parse_str(

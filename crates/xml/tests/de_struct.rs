@@ -62,8 +62,9 @@ fn test_struct_document() {
 #[test]
 fn test_struct_rename_field() {
     #[derive(Debug, XmlDeserialize, PartialEq)]
+    #[xml(root = b"document")]
     struct Document {
-        #[xml(rename = "ok-wow")]
+        #[xml(rename = b"ok-wow")]
         child: Child,
     }
 
@@ -71,12 +72,6 @@ fn test_struct_rename_field() {
     struct Child {
         #[xml(text)]
         text: String,
-    }
-
-    impl XmlRoot for Document {
-        fn root_tag() -> &'static [u8] {
-            b"document"
-        }
     }
 
     let doc = Document::parse_str(r#"<document><ok-wow>Hello!</ok-wow></document>"#).unwrap();
@@ -93,15 +88,10 @@ fn test_struct_rename_field() {
 #[test]
 fn test_struct_optional_field() {
     #[derive(Debug, XmlDeserialize, PartialEq)]
+    #[xml(root = b"document")]
     struct Document {
         #[xml(default = "Default::default")]
         child: Option<Child>,
-    }
-
-    impl XmlRoot for Document {
-        fn root_tag() -> &'static [u8] {
-            b"document"
-        }
     }
 
     #[derive(Debug, XmlDeserialize, PartialEq, Default)]
@@ -119,7 +109,7 @@ fn test_struct_vec() {
     #[derive(Debug, XmlDeserialize, PartialEq)]
     #[xml(root = b"document")]
     struct Document {
-        #[xml(rename = "child", flatten)]
+        #[xml(rename = b"child", flatten)]
         children: Vec<Child>,
     }
 
@@ -147,7 +137,7 @@ fn test_struct_set() {
     #[derive(Debug, XmlDeserialize, PartialEq)]
     #[xml(root = b"document")]
     struct Document {
-        #[xml(rename = "child", flatten)]
+        #[xml(rename = b"child", flatten)]
         children: HashSet<Child>,
     }
 

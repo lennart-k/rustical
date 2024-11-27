@@ -1,9 +1,11 @@
-use super::attrs::{parse_field_attrs, parse_struct_attrs, FieldAttrs};
+use crate::de::attrs::StructAttrs;
+
+use super::attrs::FieldAttrs;
 use core::panic;
+use darling::{FromDeriveInput, FromField};
 use heck::ToKebabCase;
-use proc_macro2::Span;
 use quote::quote;
-use syn::{AngleBracketedGenericArguments, DataStruct, DeriveInput, TypePath};
+use syn::{AngleBracketedGenericArguments, DataStruct, DeriveInput, LitByteStr, TypePath};
 
 fn get_generic_type(ty: &syn::Type) -> Option<&syn::Type> {
     if let syn::Type::Path(TypePath { path, .. }) = ty {
@@ -29,15 +31,19 @@ pub struct Field {
 impl Field {
     fn from_syn_field(field: syn::Field) -> Self {
         Self {
-            attrs: parse_field_attrs(&field.attrs),
+            attrs: FieldAttrs::from_field(&field).unwrap(),
             field,
         }
     }
-    fn de_name(&self) -> String {
+    fn de_name(&self) -> LitByteStr {
         self.attrs
+            .common
             .rename
             .to_owned()
-            .unwrap_or(self.field_ident().to_string().to_kebab_case())
+            .unwrap_or(LitByteStr::new(
+                self.field_ident().to_string().to_kebab_case().as_bytes(),
+                self.field_ident().span(),
+            ))
     }
 
     fn field_ident(&self) -> &syn::Ident {
@@ -58,7 +64,7 @@ impl Field {
             quote! {
                 #field_ident: #ty,
             }
-        } else if self.attrs.flatten {
+        } else if self.attrs.flatten.is_present() {
             let generic_type = get_generic_type(ty).expect("flatten attribute only implemented for explicit generics (rustical_xml will assume the first generic as the inner type)");
             quote! {
                 #field_ident: Vec<#generic_type>,
@@ -76,7 +82,7 @@ impl Field {
             quote! {
                 #field_ident: #default(),
             }
-        } else if self.attrs.flatten {
+        } else if self.attrs.flatten.is_present() {
             quote! {
                 #field_ident: vec![],
             }
@@ -89,7 +95,7 @@ impl Field {
 
     fn builder_field_build(&self) -> proc_macro2::TokenStream {
         let field_ident = self.field_ident();
-        if self.attrs.flatten {
+        if self.attrs.flatten.is_present() {
             quote! {
                 #field_ident: FromIterator::from_iter(builder.#field_ident.into_iter())
             }
@@ -105,13 +111,13 @@ impl Field {
     }
 
     fn named_branch(&self) -> Option<proc_macro2::TokenStream> {
-        if self.attrs.text {
+        if self.attrs.text.is_present() {
             return None;
         }
-        if self.attrs.untagged {
+        if self.attrs.untagged.is_present() {
             return None;
         }
-        let field_name = syn::LitByteStr::new(self.de_name().as_bytes(), Span::call_site());
+        let field_name = self.de_name();
         let field_ident = self.field_ident();
         let deserializer = self.ty();
         Some(if self.attrs.default.is_some() {
@@ -120,7 +126,7 @@ impl Field {
                      builder.#field_ident = <#deserializer as rustical_xml::XmlDeserialize>::deserialize(reader, &start, empty)?;
                 },
             }
-        } else if self.attrs.flatten {
+        } else if self.attrs.flatten.is_present() {
             let deserializer = get_generic_type(self.ty()).expect("flatten attribute only implemented for explicit generics (rustical_xml will assume the first generic as the inner type)");
             quote! {
                 #field_name => {
@@ -137,20 +143,29 @@ impl Field {
     }
 
     fn untagged_branch(&self) -> Option<proc_macro2::TokenStream> {
-        if !self.attrs.untagged {
+        if !self.attrs.untagged.is_present() {
             return None;
         }
         let field_ident = self.field_ident();
         let deserializer = self.ty();
-        Some(quote! {
-            _ => {
-                 builder.#field_ident = Some(<#deserializer as rustical_xml::XmlDeserialize>::deserialize(reader, &start, empty)?);
-            },
+        Some(if self.attrs.flatten.is_present() {
+            let deserializer = get_generic_type(self.ty()).expect("flatten attribute only implemented for explicit generics (rustical_xml will assume the first generic as the inner type)");
+            quote! {
+                _ => {
+                     builder.#field_ident.push(<#deserializer as rustical_xml::XmlDeserialize>::deserialize(reader, &start, empty)?);
+                },
+            }
+        } else {
+            quote! {
+                _ => {
+                     builder.#field_ident = Some(<#deserializer as rustical_xml::XmlDeserialize>::deserialize(reader, &start, empty)?);
+                },
+            }
         })
     }
 
     fn text_branch(&self) -> Option<proc_macro2::TokenStream> {
-        if !self.attrs.text {
+        if !self.attrs.text.is_present() {
             return None;
         }
         let field_ident = self.field_ident();
@@ -164,7 +179,7 @@ pub fn impl_de_struct(input: &DeriveInput, data: &DataStruct) -> proc_macro2::To
     let (impl_generics, type_generics, where_clause) = input.generics.split_for_impl();
     let name = &input.ident;
 
-    let struct_attrs = parse_struct_attrs(&input.attrs);
+    let struct_attrs = StructAttrs::from_derive_input(input).unwrap();
 
     let fields: Vec<_> = data
         .fields
@@ -203,9 +218,9 @@ pub fn impl_de_struct(input: &DeriveInput, data: &DataStruct) -> proc_macro2::To
                 reader: &mut quick_xml::NsReader<R>,
                 start: &quick_xml::events::BytesStart,
                 empty: bool
-            ) -> Result<Self, rustical_xml::XmlError> {
+            ) -> Result<Self, rustical_xml::XmlDeError> {
                 use quick_xml::events::Event;
-                use rustical_xml::XmlError;
+                use rustical_xml::XmlDeError;
 
                  let mut buf = Vec::new();
 
@@ -225,7 +240,7 @@ pub fn impl_de_struct(input: &DeriveInput, data: &DataStruct) -> proc_macro2::To
                             Event::End(e) if e.name() == start.name() => {
                                 break;
                             }
-                            Event::Eof => return Err(XmlError::Eof),
+                            Event::Eof => return Err(XmlDeError::Eof),
                             // start of a child element
                             Event::Start(start) | Event::Empty(start) => {
                                 let empty = matches!(event, Event::Empty(_));
@@ -235,7 +250,7 @@ pub fn impl_de_struct(input: &DeriveInput, data: &DataStruct) -> proc_macro2::To
                                     #(#untagged_field_branches)*
                                     _ => {
                                         // invalid field name
-                                        return Err(XmlError::UnknownError)
+                                        return Err(XmlDeError::InvalidFieldName)
                                     }
                                 }
                             }
@@ -244,26 +259,26 @@ pub fn impl_de_struct(input: &DeriveInput, data: &DataStruct) -> proc_macro2::To
                                 #(#text_field_branches)*
                             }
                             Event::CData(cdata) => {
-                                return Err(XmlError::UnsupportedEvent("CDATA"));
+                                return Err(XmlDeError::UnsupportedEvent("CDATA"));
                             }
                             Event::Comment(_) => {
                                 // ignore
                             }
                             Event::Decl(_) => {
                                 // Error: not supported
-                                return Err(XmlError::UnsupportedEvent("Declaration"));
+                                return Err(XmlDeError::UnsupportedEvent("Declaration"));
                             }
                             Event::PI(_) => {
                                 // Error: not supported
-                                return Err(XmlError::UnsupportedEvent("Processing instruction"));
+                                return Err(XmlDeError::UnsupportedEvent("Processing instruction"));
                             }
                             Event::DocType(doctype) => {
                                 // Error: start of new document
-                                return Err(XmlError::UnsupportedEvent("Doctype in the middle of the document"));
+                                return Err(XmlDeError::UnsupportedEvent("Doctype in the middle of the document"));
                             }
                             Event::End(end) => {
                                 // Error: premature end
-                                return Err(XmlError::Other("Unexpected closing tag for wrong element".to_owned()));
+                                return Err(XmlDeError::Other("Unexpected closing tag for wrong element".to_owned()));
                             }
                         }
                     }
