@@ -4,8 +4,8 @@ use opentelemetry::trace::TracerProvider;
 use opentelemetry::KeyValue;
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::propagation::TraceContextPropagator;
-use opentelemetry_sdk::trace::{self, BatchConfig, Tracer};
-use opentelemetry_sdk::{runtime, Resource};
+use opentelemetry_sdk::trace::Tracer;
+use opentelemetry_sdk::Resource;
 use opentelemetry_semantic_conventions::resource::{SERVICE_NAME, SERVICE_VERSION};
 use opentelemetry_semantic_conventions::SCHEMA_URL;
 use std::time::Duration;
@@ -16,25 +16,22 @@ use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::EnvFilter;
 
 pub fn init_tracer() -> Tracer {
-    let otel_exporter = opentelemetry_otlp::new_exporter()
-        .tonic()
-        .with_timeout(Duration::from_secs(1));
+    let otel_exporter = opentelemetry_otlp::SpanExporter::builder()
+        .with_tonic()
+        .with_timeout(Duration::from_secs(1))
+        .build()
+        .unwrap();
 
-    let tracer_provider = opentelemetry_otlp::new_pipeline()
-        .tracing()
-        .with_exporter(otel_exporter)
-        .with_trace_config(
-            trace::Config::default().with_resource(Resource::from_schema_url(
-                [
-                    KeyValue::new(SERVICE_NAME, env!("CARGO_PKG_NAME")),
-                    KeyValue::new(SERVICE_VERSION, env!("CARGO_PKG_VERSION")),
-                ],
-                SCHEMA_URL,
-            )),
-        )
-        .with_batch_config(BatchConfig::default())
-        .install_batch(runtime::Tokio)
-        .expect("Failed to install tracer");
+    let tracer_provider = opentelemetry_sdk::trace::TracerProvider::builder()
+        .with_batch_exporter(otel_exporter, opentelemetry_sdk::runtime::Tokio)
+        .with_resource(Resource::from_schema_url(
+            [
+                KeyValue::new(SERVICE_NAME, env!("CARGO_PKG_NAME")),
+                KeyValue::new(SERVICE_VERSION, env!("CARGO_PKG_VERSION")),
+            ],
+            SCHEMA_URL,
+        ))
+        .build();
 
     global::set_tracer_provider(tracer_provider.clone());
     tracer_provider.tracer("rustical")

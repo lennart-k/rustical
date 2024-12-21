@@ -47,7 +47,7 @@ tokio = { version = "1", features = [
 ] }
 url = "2.5"
 base64 = "0.22"
-thiserror = "1.0"
+thiserror = "2.0"
 quick-xml = { version = "0.37", features = [
   "serde",
   "serde-types",
@@ -114,12 +114,12 @@ sqlx = { workspace = true }
 async-trait = { workspace = true }
 tracing-actix-web = { workspace = true }
 
-opentelemetry = "0.26"
-opentelemetry-otlp = "0.26"
-opentelemetry_sdk = { version = "0.26", features = ["rt-tokio"] }
+opentelemetry = "0.27"
+opentelemetry-otlp = "0.27"
+opentelemetry_sdk = { version = "0.27", features = ["rt-tokio"] }
 
-opentelemetry-semantic-conventions = "0.26"
-tracing-opentelemetry = "0.27"
+opentelemetry-semantic-conventions = "0.27"
+tracing-opentelemetry = "0.28"
 tracing-subscriber = { version = "0.3", features = [
   "env-filter",
   "fmt",
