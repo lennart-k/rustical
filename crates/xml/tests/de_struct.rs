@@ -1,22 +1,17 @@
+use rustical_xml::de::XmlRootParseStr;
+use rustical_xml::{Unit, Unparsed, XmlDeserialize};
 use std::collections::HashSet;
-
-use rustical_xml::XmlRoot;
-use xml_derive::XmlDeserialize;
+use std::io::BufRead;
 
 #[test]
 fn test_struct_text_field() {
     #[derive(Debug, XmlDeserialize, PartialEq)]
+    #[xml(root = b"document")]
     struct Document {
-        #[xml(text)]
+        #[xml(ty = "text")]
         text: String,
-        #[xml(text)]
+        #[xml(ty = "text")]
         text2: String,
-    }
-
-    impl XmlRoot for Document {
-        fn root_tag() -> &'static [u8] {
-            b"document"
-        }
     }
 
     let doc = Document::parse_str(r#"<document>Hello!</document>"#).unwrap();
@@ -32,20 +27,15 @@ fn test_struct_text_field() {
 #[test]
 fn test_struct_document() {
     #[derive(Debug, XmlDeserialize, PartialEq)]
+    #[xml(root = b"document")]
     struct Document {
         child: Child,
     }
 
     #[derive(Debug, XmlDeserialize, PartialEq, Default)]
     struct Child {
-        #[xml(text)]
+        #[xml(ty = "text")]
         text: String,
-    }
-
-    impl XmlRoot for Document {
-        fn root_tag() -> &'static [u8] {
-            b"document"
-        }
     }
 
     let doc = Document::parse_str(r#"<document><child>Hello!</child></document>"#).unwrap();
@@ -70,7 +60,7 @@ fn test_struct_rename_field() {
 
     #[derive(Debug, XmlDeserialize, PartialEq, Default)]
     struct Child {
-        #[xml(text)]
+        #[xml(ty = "text")]
         text: String,
     }
 
@@ -158,4 +148,84 @@ fn test_struct_set() {
             children: HashSet::from_iter(vec![Child].into_iter())
         }
     );
+}
+
+#[test]
+fn test_struct_ns() {
+    #[derive(Debug, XmlDeserialize, PartialEq)]
+    #[xml(root = b"document", ns_strict)]
+    struct Document {
+        #[xml(ns = b"hello")]
+        child: Unit,
+    }
+
+    let doc = Document::parse_str(r#"<document><child xmlns="hello" /></document>"#).unwrap();
+    assert_eq!(doc, Document { child: Unit });
+}
+
+#[test]
+fn test_struct_attr() {
+    #[derive(Debug, XmlDeserialize, PartialEq)]
+    #[xml(root = b"document", ns_strict)]
+    struct Document {
+        #[xml(ns = b"hello")]
+        child: Unit,
+        #[xml(ty = "attr", default = "Default::default")]
+        test: String,
+        #[xml(ty = "attr")]
+        number: usize,
+    }
+
+    let doc = Document::parse_str(
+        r#"<document test="hello!" number="2"><child xmlns="hello" /></document>"#,
+    )
+    .unwrap();
+    assert_eq!(
+        doc,
+        Document {
+            child: Unit,
+            test: "hello!".to_owned(),
+            number: 2
+        }
+    );
+}
+
+#[test]
+fn test_struct_generics() {
+    #[derive(XmlDeserialize)]
+    #[xml(root = b"document", ns_strict)]
+    struct Document<T: XmlDeserialize> {
+        child: T,
+    }
+
+    let doc = Document::<Unparsed>::parse_str(
+        r#"
+         <document>
+             <child>
+                 Hello! <h1>Nice</h1>
+             </child>
+         </document>
+     "#,
+    )
+    .unwrap();
+}
+
+#[test]
+fn test_struct_unparsed() {
+    #[derive(XmlDeserialize)]
+    #[xml(root = b"document", ns_strict)]
+    struct Document {
+        child: Unparsed,
+    }
+
+    let doc = Document::parse_str(
+        r#"
+         <document>
+             <child>
+                 Hello! <h1>Nice</h1>
+             </child>
+         </document>
+     "#,
+    )
+    .unwrap();
 }

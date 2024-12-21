@@ -1,15 +1,14 @@
+use crate::de::attrs::VariantAttrs;
 use darling::FromVariant;
 use heck::ToKebabCase;
 use quote::quote;
 use syn::{DataEnum, DeriveInput, Fields, FieldsUnnamed, Variant};
 
-use crate::de::attrs::VariantAttrs;
-
 pub fn enum_variant_branch(variant: &Variant) -> proc_macro2::TokenStream {
     let ident = &variant.ident;
 
     match &variant.fields {
-        Fields::Named(named) => {
+        Fields::Named(_) => {
             panic!("struct variants are not supported, please use a tuple variant with a struct")
         }
         Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {

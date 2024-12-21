@@ -2,10 +2,12 @@ use quick_xml::events::{BytesStart, Event};
 use std::io::BufRead;
 
 pub mod de;
+mod value;
 
 pub use de::XmlDeError;
 pub use de::XmlDeserialize;
 pub use de::XmlRoot;
+pub use value::Value;
 
 impl<T: XmlDeserialize> XmlDeserialize for Option<T> {
     fn deserialize<R: BufRead>(
@@ -17,6 +19,7 @@ impl<T: XmlDeserialize> XmlDeserialize for Option<T> {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct Unit;
 
 impl XmlDeserialize for Unit {
@@ -63,5 +66,21 @@ impl XmlDeserialize for String {
             };
         }
         Ok(content)
+    }
+}
+
+// TODO: actually implement
+pub struct Unparsed(BytesStart<'static>);
+
+impl XmlDeserialize for Unparsed {
+    fn deserialize<R: BufRead>(
+        reader: &mut quick_xml::NsReader<R>,
+        start: &BytesStart,
+        _empty: bool,
+    ) -> Result<Self, XmlDeError> {
+        // let reader_cloned = NsReader::from_reader(reader.get_ref().to_owned());
+        let mut buf = vec![];
+        reader.read_to_end_into(start.name(), &mut buf)?;
+        Ok(Self(start.to_owned()))
     }
 }

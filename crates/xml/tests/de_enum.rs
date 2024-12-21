@@ -1,4 +1,5 @@
 use rustical_xml::XmlRoot;
+use std::io::BufRead;
 use xml_derive::XmlDeserialize;
 
 #[test]
@@ -11,7 +12,7 @@ fn test_struct_untagged_enum() {
 
     #[derive(Debug, XmlDeserialize, PartialEq)]
     struct Prop {
-        #[xml(untagged)]
+        #[xml(ty = "untagged")]
         prop: PropEnum,
     }
 

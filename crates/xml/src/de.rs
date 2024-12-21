@@ -10,6 +10,8 @@ pub enum XmlDeError {
     QuickXmlDeError(#[from] quick_xml::de::DeError),
     #[error(transparent)]
     QuickXmlError(#[from] quick_xml::Error),
+    #[error(transparent)]
+    QuickXmlAttrError(#[from] quick_xml::events::attributes::AttrError),
     #[error("Unknown error")]
     UnknownError,
     #[error("Invalid tag {0}. Expected {1}")]
@@ -26,6 +28,8 @@ pub enum XmlDeError {
     InvalidVariant(String),
     #[error("Invalid field name: ")]
     InvalidFieldName,
+    #[error(transparent)]
+    InvalidValue(#[from] crate::value::ParseValueError),
 }
 
 pub trait XmlDeserialize: Sized {
@@ -36,12 +40,16 @@ pub trait XmlDeserialize: Sized {
     ) -> Result<Self, XmlDeError>;
 }
 
-pub trait XmlRoot: XmlDeserialize {
-    fn parse<R: BufRead>(mut reader: quick_xml::NsReader<R>) -> Result<Self, XmlDeError> {
+pub trait XmlRoot {
+    fn parse<R: BufRead>(mut reader: quick_xml::NsReader<R>) -> Result<Self, XmlDeError>
+    where
+        Self: XmlDeserialize,
+    {
         let mut buf = Vec::new();
         let event = reader.read_event_into(&mut buf)?;
+        let empty = event.is_empty();
         match event {
-            Event::Start(start) => {
+            Event::Start(start) | Event::Empty(start) => {
                 let (_ns, name) = reader.resolve_element(start.name());
                 if name.as_ref() != Self::root_tag() {
                     return Err(XmlDeError::InvalidTag(
@@ -49,32 +57,33 @@ pub trait XmlRoot: XmlDeserialize {
                         String::from_utf8_lossy(Self::root_tag()).to_string(),
                     ));
                 };
+
                 // TODO: check namespace
 
-                return Self::deserialize(&mut reader, &start, false);
-            }
-            Event::Empty(start) => {
-                let (_ns, name) = reader.resolve_element(start.name());
-                if name.as_ref() != Self::root_tag() {
-                    return Err(XmlDeError::InvalidTag(
-                        String::from_utf8_lossy(name.as_ref()).to_string(),
-                        String::from_utf8_lossy(Self::root_tag()).to_string(),
-                    ));
-                };
-                // TODO: check namespace
-
-                return Self::deserialize(&mut reader, &start, true);
+                return Self::deserialize(&mut reader, &start, empty);
             }
             _ => {}
         };
         Err(XmlDeError::UnknownError)
     }
 
-    fn parse_str(input: &str) -> Result<Self, XmlDeError> {
-        let mut reader = quick_xml::NsReader::from_str(input);
+    fn parse_reader<R: BufRead>(input: R) -> Result<Self, XmlDeError>
+    where
+        Self: XmlDeserialize,
+    {
+        let mut reader = quick_xml::NsReader::from_reader(input);
         reader.config_mut().trim_text(true);
         Self::parse(reader)
     }
 
     fn root_tag() -> &'static [u8];
 }
+
+pub trait XmlRootParseStr<'i>: XmlRoot + XmlDeserialize {
+    #[inline]
+    fn parse_str(s: &'i str) -> Result<Self, XmlDeError> {
+        Self::parse_reader(s.as_bytes())
+    }
+}
+
+impl<'i, T: XmlRoot + XmlDeserialize> XmlRootParseStr<'i> for T {}
