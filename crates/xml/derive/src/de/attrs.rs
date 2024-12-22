@@ -13,11 +13,12 @@ pub struct TagAttrs {
     pub ns: Option<LitByteStr>,
 }
 
-#[derive(Default, FromVariant, Clone)]
+#[derive(Default, FromVariant)]
 #[darling(attributes(xml))]
 pub struct VariantAttrs {
     #[darling(flatten)]
     pub common: TagAttrs,
+    pub other: Flag,
 }
 
 #[derive(Default, FromDeriveInput, Clone)]

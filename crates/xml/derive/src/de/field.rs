@@ -1,5 +1,3 @@
-use crate::de::field;
-
 use super::attrs::{ContainerAttrs, FieldAttrs, FieldType};
 use darling::FromField;
 use heck::ToKebabCase;
