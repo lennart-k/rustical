@@ -3,7 +3,7 @@
 a CalDAV/CardDAV server
 
 > [!CAUTION]
-> RustiCal is not production-ready!
+> RustiCal is **not production-ready!**
 > There can be changes to the database without migrations and there's no guarantee that all endpoints are secured yet.
 > If you still want to play around with it in its current state, absolutely feel free to do so but know that not even I use it productively yet.
 
