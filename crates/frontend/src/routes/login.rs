@@ -28,8 +28,6 @@ pub async fn route_post_login<AP: AuthenticationProvider>(
     session: Session,
     auth_provider: Data<AP>,
 ) -> HttpResponse {
-    // TODO: implement auth check
-    dbg!(&form.username, &form.password);
     if let Ok(Some(user)) = auth_provider
         .validate_user_token(&form.username, &form.password)
         .await
