@@ -2,10 +2,11 @@ use rustical_xml::de::XmlRootParseStr;
 use rustical_xml::{Unit, Unparsed, XmlDeserialize};
 use std::collections::HashSet;
 use std::io::BufRead;
+use xml_derive::XmlRoot;
 
 #[test]
 fn test_struct_text_field() {
-    #[derive(Debug, XmlDeserialize, PartialEq)]
+    #[derive(Debug, XmlDeserialize, XmlRoot, PartialEq)]
     #[xml(root = b"document")]
     struct Document {
         #[xml(ty = "text")]
@@ -26,7 +27,7 @@ fn test_struct_text_field() {
 
 #[test]
 fn test_struct_document() {
-    #[derive(Debug, XmlDeserialize, PartialEq)]
+    #[derive(Debug, XmlDeserialize, XmlRoot, PartialEq)]
     #[xml(root = b"document")]
     struct Document {
         child: Child,
@@ -51,7 +52,7 @@ fn test_struct_document() {
 
 #[test]
 fn test_struct_rename_field() {
-    #[derive(Debug, XmlDeserialize, PartialEq)]
+    #[derive(Debug, XmlDeserialize, XmlRoot, PartialEq)]
     #[xml(root = b"document")]
     struct Document {
         #[xml(rename = b"ok-wow")]
@@ -77,7 +78,7 @@ fn test_struct_rename_field() {
 
 #[test]
 fn test_struct_optional_field() {
-    #[derive(Debug, XmlDeserialize, PartialEq)]
+    #[derive(Debug, XmlDeserialize, XmlRoot, PartialEq)]
     #[xml(root = b"document")]
     struct Document {
         #[xml(default = "Default::default")]
@@ -96,7 +97,7 @@ fn test_struct_optional_field() {
 
 #[test]
 fn test_struct_vec() {
-    #[derive(Debug, XmlDeserialize, PartialEq)]
+    #[derive(Debug, XmlDeserialize, XmlRoot, PartialEq)]
     #[xml(root = b"document")]
     struct Document {
         #[xml(rename = b"child", flatten)]
@@ -124,7 +125,7 @@ fn test_struct_vec() {
 
 #[test]
 fn test_struct_set() {
-    #[derive(Debug, XmlDeserialize, PartialEq)]
+    #[derive(Debug, XmlDeserialize, XmlRoot, PartialEq)]
     #[xml(root = b"document")]
     struct Document {
         #[xml(rename = b"child", flatten)]
@@ -152,7 +153,7 @@ fn test_struct_set() {
 
 #[test]
 fn test_struct_ns() {
-    #[derive(Debug, XmlDeserialize, PartialEq)]
+    #[derive(Debug, XmlDeserialize, XmlRoot, PartialEq)]
     #[xml(root = b"document", ns_strict)]
     struct Document {
         #[xml(ns = b"hello")]
@@ -165,7 +166,7 @@ fn test_struct_ns() {
 
 #[test]
 fn test_struct_attr() {
-    #[derive(Debug, XmlDeserialize, PartialEq)]
+    #[derive(Debug, XmlDeserialize, XmlRoot, PartialEq)]
     #[xml(root = b"document", ns_strict)]
     struct Document {
         #[xml(ns = b"hello")]
@@ -192,7 +193,7 @@ fn test_struct_attr() {
 
 #[test]
 fn test_struct_generics() {
-    #[derive(XmlDeserialize)]
+    #[derive(XmlDeserialize, XmlRoot)]
     #[xml(root = b"document", ns_strict)]
     struct Document<T: XmlDeserialize> {
         child: T,
@@ -212,7 +213,7 @@ fn test_struct_generics() {
 
 #[test]
 fn test_struct_unparsed() {
-    #[derive(XmlDeserialize)]
+    #[derive(XmlDeserialize, XmlRoot)]
     #[xml(root = b"document", ns_strict)]
     struct Document {
         child: Unparsed,

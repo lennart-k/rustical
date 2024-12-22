@@ -24,7 +24,8 @@ pub struct VariantAttrs {
 #[darling(attributes(xml))]
 pub struct EnumAttrs {
     #[darling(flatten)]
-    container: ContainerAttrs,
+    pub container: ContainerAttrs,
+    pub untagged: Flag,
 }
 
 #[derive(Default, FromDeriveInput, Clone)]

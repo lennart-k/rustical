@@ -56,6 +56,17 @@ pub struct NamedStruct {
 }
 
 impl NamedStruct {
+    pub fn impl_xml_root(&self) -> proc_macro2::TokenStream {
+        let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+        let ident = &self.ident;
+        let root = self.attrs.root.as_ref().expect("No root attribute found");
+        quote! {
+            impl #impl_generics ::rustical_xml::XmlRoot for #ident #type_generics #where_clause {
+                fn root_tag() -> &'static [u8] { #root }
+            }
+        }
+    }
+
     pub fn impl_de(&self) -> proc_macro2::TokenStream {
         let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
         let ident = &self.ident;
@@ -76,21 +87,9 @@ impl NamedStruct {
 
         let builder_field_builds = self.fields.iter().map(Field::builder_field_build);
 
-        let xml_root_impl = if let Some(root) = &self.attrs.root {
-            quote! {
-                impl #impl_generics ::rustical_xml::XmlRoot for #ident #type_generics #where_clause {
-                    fn root_tag() -> &'static [u8] { #root }
-                }
-            }
-        } else {
-            quote! {}
-        };
-
         let invalid_field_branch = invalid_field_branch(self.attrs.allow_invalid.is_present());
 
         quote! {
-            #xml_root_impl
-
             impl #impl_generics ::rustical_xml::XmlDeserialize for #ident #type_generics #where_clause {
                 fn deserialize<R: BufRead>(
                     reader: &mut quick_xml::NsReader<R>,

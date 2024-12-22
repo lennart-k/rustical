@@ -86,4 +86,4 @@ pub trait XmlRootParseStr<'i>: XmlRoot + XmlDeserialize {
     }
 }
 
-impl<'i, T: XmlRoot + XmlDeserialize> XmlRootParseStr<'i> for T {}
+impl<T: XmlRoot + XmlDeserialize> XmlRootParseStr<'_> for T {}
