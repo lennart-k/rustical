@@ -1,10 +1,9 @@
-use rustical_xml::XmlRoot;
+use rustical_xml::{de::XmlRootParseStr, XmlDeserialize, XmlRoot};
 use std::io::BufRead;
-use xml_derive::XmlDeserialize;
 
 #[test]
 fn test_struct_untagged_enum() {
-    #[derive(Debug, XmlDeserialize, PartialEq)]
+    #[derive(Debug, XmlDeserialize, XmlRoot, PartialEq)]
     #[xml(root = b"propfind")]
     struct Propfind {
         prop: Prop,
@@ -26,7 +25,7 @@ fn test_struct_untagged_enum() {
         r#"
         <propfind>
             <prop>
-                <A/>
+                <b/>
             </prop>
         </propfind>
     "#,
@@ -35,7 +34,7 @@ fn test_struct_untagged_enum() {
     assert_eq!(
         doc,
         Propfind {
-            prop: Prop { prop: PropEnum::A }
+            prop: Prop { prop: PropEnum::B }
         }
     );
 }

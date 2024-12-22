@@ -1,8 +1,8 @@
 use rustical_xml::de::XmlRootParseStr;
+use rustical_xml::XmlRoot;
 use rustical_xml::{Unit, Unparsed, XmlDeserialize};
 use std::collections::HashSet;
 use std::io::BufRead;
-use xml_derive::XmlRoot;
 
 #[test]
 fn test_struct_text_field() {

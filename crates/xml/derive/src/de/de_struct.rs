@@ -7,18 +7,9 @@ use syn::{DataStruct, DeriveInput};
 
 fn invalid_field_branch(allow: bool) -> proc_macro2::TokenStream {
     if allow {
-        quote! {
-            _ => {
-                // ignore because of allow_invalid flag
-            }
-        }
+        quote! {}
     } else {
-        quote! {
-            _ => {
-                // invalid field name
-                return Err(XmlDeError::InvalidFieldName)
-            }
-        }
+        quote! { return Err(XmlDeError::InvalidFieldName) }
     }
 }
 
@@ -114,7 +105,7 @@ impl NamedStruct {
                         let attr = attr?;
                         match attr.key.as_ref() {
                             #(#attr_field_branches)*
-                            #invalid_field_branch
+                            _ => { #invalid_field_branch }
                         }
                     }
 
@@ -133,7 +124,7 @@ impl NamedStruct {
                                     match (ns, name.as_ref()) {
                                         #(#named_field_branches)*
                                         #(#untagged_field_branches)*
-                                        #invalid_field_branch
+                                        _ => { #invalid_field_branch }
                                     }
                                 }
                                 Event::Text(bytes_text) => {

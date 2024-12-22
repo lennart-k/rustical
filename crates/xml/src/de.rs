@@ -1,5 +1,6 @@
 use std::io::BufRead;
 pub use xml_derive::XmlDeserialize;
+pub use xml_derive::XmlRoot;
 
 use quick_xml::events::{BytesStart, Event};
 use thiserror::Error;
