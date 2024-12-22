@@ -94,17 +94,17 @@ impl NamedStruct {
 
                     // initialise fields
                     struct StructBuilder #type_generics #where_clause {
-                        #(#builder_fields)*
+                        #(#builder_fields),*
                     }
 
                     let mut builder = StructBuilder {
-                        #(#builder_field_inits)*
+                        #(#builder_field_inits),*
                     };
 
                     for attr in start.attributes() {
                         let attr = attr?;
                         match attr.key.as_ref() {
-                            #(#attr_field_branches)*
+                            #(#attr_field_branches),*
                             _ => { #invalid_field_branch }
                         }
                     }
@@ -122,8 +122,8 @@ impl NamedStruct {
                                     let empty = matches!(event, Event::Empty(_));
                                     let (ns, name) = reader.resolve_element(start.name());
                                     match (ns, name.as_ref()) {
-                                        #(#named_field_branches)*
-                                        #(#untagged_field_branches)*
+                                        #(#named_field_branches),*
+                                        #(#untagged_field_branches),*
                                         _ => { #invalid_field_branch }
                                     }
                                 }
@@ -156,7 +156,7 @@ impl NamedStruct {
                     }
 
                     Ok(Self {
-                        #(#builder_field_builds)*
+                        #(#builder_field_builds),*
                     })
                 }
             }

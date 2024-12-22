@@ -1,3 +1,5 @@
+use crate::de::field;
+
 use super::attrs::{ContainerAttrs, FieldAttrs, FieldType};
 use darling::FromField;
 use heck::ToKebabCase;
@@ -45,7 +47,9 @@ impl Field {
             container_attrs,
         }
     }
-    pub fn de_name(&self) -> syn::LitByteStr {
+
+    /// Field name in XML
+    pub fn xml_name(&self) -> syn::LitByteStr {
         self.attrs
             .common
             .rename
@@ -56,10 +60,12 @@ impl Field {
             ))
     }
 
+    /// Whether to enforce the correct XML namespace
     pub fn ns_strict(&self) -> bool {
         self.attrs.common.ns_strict.is_present() || self.container_attrs.ns_strict.is_present()
     }
 
+    /// Field identifier
     pub fn field_ident(&self) -> &syn::Ident {
         self.field
             .ident
@@ -67,48 +73,52 @@ impl Field {
             .expect("tuple structs not supported")
     }
 
+    /// Field type
     pub fn ty(&self) -> &syn::Type {
         &self.field.ty
     }
 
+    /// Field in the builder struct for the deserializer
     pub fn builder_field(&self) -> proc_macro2::TokenStream {
         let field_ident = self.field_ident();
         let ty = self.ty();
-        match (self.attrs.flatten.is_present(), &self.attrs.default) {
-            (_, Some(_default)) => quote! { #field_ident: #ty, },
+
+        let builder_field_type = match (self.attrs.flatten.is_present(), &self.attrs.default) {
+            (_, Some(_default)) => quote! { #ty },
             (true, None) => {
                 let generic_type = get_generic_type(ty).expect("flatten attribute only implemented for explicit generics (rustical_xml will assume the first generic as the inner type)");
-                quote! { #field_ident: Vec<#generic_type>, }
+                quote! { Vec<#generic_type> }
             }
-            (false, None) => quote! { #field_ident: Option<#ty>, },
-        }
+            (false, None) => quote! { Option<#ty> },
+        };
+
+        quote! { #field_ident: #builder_field_type }
     }
 
+    /// Field initialiser in the builder struct for the deserializer
     pub fn builder_field_init(&self) -> proc_macro2::TokenStream {
         let field_ident = self.field_ident();
-        match (self.attrs.flatten.is_present(), &self.attrs.default) {
-            (_, Some(default)) => quote! { #field_ident: #default(), },
-            (true, None) => quote! { #field_ident: vec![], },
-            (false, None) => quote! { #field_ident: None, },
-        }
+        let builder_field_initialiser = match (self.attrs.flatten.is_present(), &self.attrs.default)
+        {
+            (_, Some(default)) => quote! { #default() },
+            (true, None) => quote! { vec![] },
+            (false, None) => quote! { None },
+        };
+        quote! { #field_ident: #builder_field_initialiser }
     }
 
+    /// Map builder field to target field
     pub fn builder_field_build(&self) -> proc_macro2::TokenStream {
         let field_ident = self.field_ident();
-        match (
+        let builder_value = match (
             self.attrs.flatten.is_present(),
             self.attrs.default.is_some(),
         ) {
-            (true, _) => quote! {
-                #field_ident: FromIterator::from_iter(builder.#field_ident.into_iter())
-            },
-            (false, true) => quote! {
-                #field_ident: builder.#field_ident,
-            },
-            (false, false) => quote! {
-                #field_ident: builder.#field_ident.expect("todo: handle missing field"),
-            },
-        }
+            (true, _) => quote! { FromIterator::from_iter(builder.#field_ident.into_iter()) },
+            (false, true) => quote! { builder.#field_ident },
+            (false, false) => quote! { builder.#field_ident.expect("todo: handle missing field") },
+        };
+        quote! { #field_ident: #builder_value }
     }
 
     pub fn named_branch(&self) -> Option<proc_macro2::TokenStream> {
@@ -126,7 +136,7 @@ impl Field {
             quote! {_}
         };
 
-        let field_name = self.de_name();
+        let field_name = self.xml_name();
         let field_ident = self.field_ident();
         let deserializer = self.ty();
         let value = quote! { <#deserializer as rustical_xml::XmlDeserialize>::deserialize(reader, &start, empty)? };
@@ -147,7 +157,7 @@ impl Field {
         };
 
         Some(quote! {
-            (#namespace_match, #field_name) => { #assignment; },
+            (#namespace_match, #field_name) => { #assignment; }
         })
     }
 
@@ -163,13 +173,13 @@ impl Field {
             quote! {
                 _ => {
                      builder.#field_ident.push(<#deserializer as rustical_xml::XmlDeserialize>::deserialize(reader, &start, empty)?);
-                },
+                }
             }
         } else {
             quote! {
                 _ => {
                      builder.#field_ident = Some(<#deserializer as rustical_xml::XmlDeserialize>::deserialize(reader, &start, empty)?);
-                },
+                }
             }
         })
     }
@@ -181,8 +191,8 @@ impl Field {
         let field_ident = self.field_ident();
         let value = wrap_option_if_no_default(
             quote! {
-            rustical_xml::Value::deserialize(text.as_ref())?
-                    },
+                rustical_xml::Value::deserialize(text.as_ref())?
+            },
             self.attrs.default.is_some(),
         );
         Some(quote! {
@@ -195,7 +205,7 @@ impl Field {
             return None;
         }
         let field_ident = self.field_ident();
-        let field_name = self.de_name();
+        let field_name = self.xml_name();
 
         let value = wrap_option_if_no_default(
             quote! {
