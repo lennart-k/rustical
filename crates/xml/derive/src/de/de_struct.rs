@@ -1,26 +1,9 @@
-use super::attrs::{FieldAttrs, FieldType};
 use crate::de::attrs::StructAttrs;
+use crate::de::Field;
 use core::panic;
-use darling::{FromDeriveInput, FromField};
-use heck::ToKebabCase;
+use darling::FromDeriveInput;
 use quote::quote;
-use syn::{AngleBracketedGenericArguments, DataStruct, DeriveInput, LitByteStr, TypePath};
-
-fn get_generic_type(ty: &syn::Type) -> Option<&syn::Type> {
-    if let syn::Type::Path(TypePath { path, .. }) = ty {
-        if let Some(seg) = path.segments.last() {
-            if let syn::PathArguments::AngleBracketed(AngleBracketedGenericArguments {
-                args, ..
-            }) = &seg.arguments
-            {
-                if let Some(syn::GenericArgument::Type(t)) = &args.first() {
-                    return Some(t);
-                }
-            }
-        }
-    }
-    None
-}
+use syn::{DataStruct, DeriveInput};
 
 fn invalid_field_branch(allow: bool) -> proc_macro2::TokenStream {
     if allow {
@@ -39,199 +22,6 @@ fn invalid_field_branch(allow: bool) -> proc_macro2::TokenStream {
     }
 }
 
-fn wrap_option_if_no_default(
-    value: proc_macro2::TokenStream,
-    has_default: bool,
-) -> proc_macro2::TokenStream {
-    if has_default {
-        value
-    } else {
-        quote! {Some(#value)}
-    }
-}
-
-pub struct Field {
-    pub field: syn::Field,
-    pub attrs: FieldAttrs,
-    pub struct_attrs: StructAttrs,
-}
-
-impl Field {
-    fn from_syn_field(field: syn::Field, struct_attrs: StructAttrs) -> Self {
-        Self {
-            attrs: FieldAttrs::from_field(&field).unwrap(),
-            field,
-            struct_attrs,
-        }
-    }
-    fn de_name(&self) -> LitByteStr {
-        self.attrs
-            .common
-            .rename
-            .to_owned()
-            .unwrap_or(LitByteStr::new(
-                self.field_ident().to_string().to_kebab_case().as_bytes(),
-                self.field_ident().span(),
-            ))
-    }
-
-    fn ns_strict(&self) -> bool {
-        self.attrs.common.ns_strict.is_present()
-            || self.struct_attrs.container.ns_strict.is_present()
-    }
-
-    fn field_ident(&self) -> &syn::Ident {
-        self.field
-            .ident
-            .as_ref()
-            .expect("tuple structs not supported")
-    }
-
-    fn ty(&self) -> &syn::Type {
-        &self.field.ty
-    }
-
-    fn builder_field(&self) -> proc_macro2::TokenStream {
-        let field_ident = self.field_ident();
-        let ty = self.ty();
-        match (self.attrs.flatten.is_present(), &self.attrs.default) {
-            (_, Some(_default)) => quote! { #field_ident: #ty, },
-            (true, None) => {
-                let generic_type = get_generic_type(ty).expect("flatten attribute only implemented for explicit generics (rustical_xml will assume the first generic as the inner type)");
-                quote! { #field_ident: Vec<#generic_type>, }
-            }
-            (false, None) => quote! { #field_ident: Option<#ty>, },
-        }
-    }
-
-    fn builder_field_init(&self) -> proc_macro2::TokenStream {
-        let field_ident = self.field_ident();
-        match (self.attrs.flatten.is_present(), &self.attrs.default) {
-            (_, Some(default)) => quote! { #field_ident: #default(), },
-            (true, None) => quote! { #field_ident: vec![], },
-            (false, None) => quote! { #field_ident: None, },
-        }
-    }
-
-    fn builder_field_build(&self) -> proc_macro2::TokenStream {
-        let field_ident = self.field_ident();
-        match (
-            self.attrs.flatten.is_present(),
-            self.attrs.default.is_some(),
-        ) {
-            (true, _) => quote! {
-                #field_ident: FromIterator::from_iter(builder.#field_ident.into_iter())
-            },
-            (false, true) => quote! {
-                #field_ident: builder.#field_ident,
-            },
-            (false, false) => quote! {
-                #field_ident: builder.#field_ident.expect("todo: handle missing field"),
-            },
-        }
-    }
-
-    fn named_branch(&self) -> Option<proc_macro2::TokenStream> {
-        if self.attrs.xml_ty != FieldType::Tag {
-            return None;
-        }
-
-        let namespace_match = if self.ns_strict() {
-            if let Some(ns) = &self.attrs.common.ns {
-                quote! {quick_xml::name::ResolveResult::Bound(quick_xml::name::Namespace(#ns))}
-            } else {
-                quote! {quick_xml::name::ResolveResult::Unbound}
-            }
-        } else {
-            quote! {_}
-        };
-
-        let field_name = self.de_name();
-        let field_ident = self.field_ident();
-        let deserializer = self.ty();
-        let value = quote! { <#deserializer as rustical_xml::XmlDeserialize>::deserialize(reader, &start, empty)? };
-        let assignment = match (self.attrs.flatten.is_present(), &self.attrs.default) {
-            (true, _) => {
-                // TODO: Make nicer, watch out with deserializer typing
-                let deserializer = get_generic_type(self.ty()).expect("flatten attribute only implemented for explicit generics (rustical_xml will assume the first generic as the inner type)");
-                quote! {
-                    builder.#field_ident.push(<#deserializer as rustical_xml::XmlDeserialize>::deserialize(reader, &start, empty)?);
-                }
-            }
-            (false, Some(_default)) => quote! {
-                builder.#field_ident = #value;
-            },
-            (false, None) => quote! {
-                builder.#field_ident = Some(#value);
-            },
-        };
-
-        Some(quote! {
-            (#namespace_match, #field_name) => { #assignment; },
-        })
-    }
-
-    fn untagged_branch(&self) -> Option<proc_macro2::TokenStream> {
-        if self.attrs.xml_ty != FieldType::Untagged {
-            return None;
-        }
-        let field_ident = self.field_ident();
-        let deserializer = self.ty();
-
-        Some(if self.attrs.flatten.is_present() {
-            let deserializer = get_generic_type(self.ty()).expect("flatten attribute only implemented for explicit generics (rustical_xml will assume the first generic as the inner type)");
-            quote! {
-                _ => {
-                     builder.#field_ident.push(<#deserializer as rustical_xml::XmlDeserialize>::deserialize(reader, &start, empty)?);
-                },
-            }
-        } else {
-            quote! {
-                _ => {
-                     builder.#field_ident = Some(<#deserializer as rustical_xml::XmlDeserialize>::deserialize(reader, &start, empty)?);
-                },
-            }
-        })
-    }
-
-    fn text_branch(&self) -> Option<proc_macro2::TokenStream> {
-        if self.attrs.xml_ty != FieldType::Text {
-            return None;
-        }
-        let field_ident = self.field_ident();
-        let value = wrap_option_if_no_default(
-            quote! {
-            rustical_xml::Value::deserialize(text.as_ref())?
-                    },
-            self.attrs.default.is_some(),
-        );
-        Some(quote! {
-            builder.#field_ident = #value;
-        })
-    }
-
-    fn attr_branch(&self) -> Option<proc_macro2::TokenStream> {
-        if self.attrs.xml_ty != FieldType::Attr {
-            return None;
-        }
-        let field_ident = self.field_ident();
-        let field_name = self.de_name();
-
-        let value = wrap_option_if_no_default(
-            quote! {
-            rustical_xml::Value::deserialize(attr.unescape_value()?.as_ref())?
-                    },
-            self.attrs.default.is_some(),
-        );
-
-        Some(quote! {
-            #field_name => {
-                builder.#field_ident = #value;
-            }
-        })
-    }
-}
-
 impl NamedStruct {
     pub fn parse(input: &DeriveInput, data: &DataStruct) -> Self {
         let attrs = StructAttrs::from_derive_input(input).unwrap();
@@ -241,7 +31,7 @@ impl NamedStruct {
                 fields: named
                     .named
                     .iter()
-                    .map(|field| Field::from_syn_field(field.to_owned(), attrs.clone()))
+                    .map(|field| Field::from_syn_field(field.to_owned(), attrs.container.clone()))
                     .collect(),
                 attrs,
                 ident: input.ident.to_owned(),
