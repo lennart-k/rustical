@@ -36,6 +36,7 @@ pub enum CalendarObjectProp {
     CalendarData(String),
 
     #[serde(other)]
+    #[strum_discriminants(strum(disabled))]
     #[default]
     Invalid,
 }

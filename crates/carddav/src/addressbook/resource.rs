@@ -1,5 +1,5 @@
 use super::methods::mkcol::route_mkcol;
-use super::methods::report::route_report_addressbook;
+// use super::methods::report::route_report_addressbook;
 use super::prop::{SupportedAddressData, SupportedReportSet};
 use crate::address_object::resource::AddressObjectResource;
 use crate::principal::PrincipalResource;
@@ -60,6 +60,7 @@ pub enum AddressbookProp {
     Getctag(String),
 
     #[serde(other)]
+    #[strum_discriminants(strum(disabled))]
     #[default]
     Invalid,
 }
@@ -241,8 +242,9 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressbookResourceServi
     #[inline]
     fn actix_additional_routes(res: actix_web::Resource) -> actix_web::Resource {
         let mkcol_method = web::method(Method::from_str("MKCOL").unwrap());
-        let report_method = web::method(Method::from_str("REPORT").unwrap());
+        // TODO: Re-enable REPORT
+        // let report_method = web::method(Method::from_str("REPORT").unwrap());
         res.route(mkcol_method.to(route_mkcol::<AS>))
-            .route(report_method.to(route_report_addressbook::<AS>))
+        // .route(report_method.to(route_report_addressbook::<AS>))
     }
 }

@@ -86,6 +86,7 @@ pub enum CalendarProp {
     Source(Option<HrefElement>),
 
     #[serde(other)]
+    #[strum_discriminants(strum(disabled))]
     #[default]
     Invalid,
 }

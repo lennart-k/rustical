@@ -43,6 +43,7 @@ pub enum PrincipalProp {
     CalendarUserAddressSet(HrefElement),
 
     #[serde(other)]
+    #[strum_discriminants(strum(disabled))]
     #[default]
     Invalid,
 }

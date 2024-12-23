@@ -37,6 +37,7 @@ pub enum AddressObjectProp {
     AddressData(String),
 
     #[serde(other)]
+    #[strum_discriminants(strum(disabled))]
     #[default]
     Invalid,
 }
