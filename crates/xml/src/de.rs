@@ -2,6 +2,7 @@ use quick_xml::name::Namespace;
 use quick_xml::name::ResolveResult;
 use std::io::BufRead;
 pub use xml_derive::XmlDeserialize;
+pub use xml_derive::XmlDocument;
 pub use xml_derive::XmlRootTag;
 
 use quick_xml::events::{BytesStart, Event};
@@ -74,7 +75,7 @@ impl<T: XmlRootTag + XmlDeserialize> XmlDocument for T {
     {
         let mut buf = Vec::new();
         let event = reader.read_event_into(&mut buf)?;
-        let empty = event.is_empty();
+        let empty = matches!(event, Event::Empty(_));
         match event {
             Event::Start(start) | Event::Empty(start) => {
                 let (ns, name) = reader.resolve_element(start.name());

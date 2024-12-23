@@ -1,3 +1,5 @@
+use core::panic;
+
 use super::attrs::EnumAttrs;
 use crate::de::attrs::VariantAttrs;
 use darling::{FromDeriveInput, FromVariant};
@@ -215,6 +217,37 @@ impl Enum {
                         writer.write_event(Event::End(BytesEnd::new(tag.to_owned())))?;
                     }
                     Ok(())
+                }
+            }
+        }
+    }
+
+    pub fn impl_xml_document(&self) -> proc_macro2::TokenStream {
+        if self.attrs.untagged.is_present() {
+            panic!("XmlDocument only supported for untagged enums");
+        }
+        let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+        let ident = &self.ident;
+
+        quote! {
+            impl #impl_generics ::rustical_xml::XmlDocument for #ident #type_generics #where_clause {
+                fn parse<R: ::std::io::BufRead>(mut reader: ::quick_xml::NsReader<R>) -> Result<Self, ::rustical_xml::XmlDeError>
+                where
+                    Self: ::rustical_xml::XmlDeserialize
+                {
+                    use ::quick_xml::events::Event;
+
+                    let mut buf = Vec::new();
+                    let event = reader.read_event_into(&mut buf)?;
+                    let empty = matches!(event, Event::Empty(_));
+
+                    match event {
+                        Event::Start(start) | Event::Empty(start) => {
+                            return Self::deserialize(&mut reader, &start, empty);
+                        }
+                        _ => {}
+                    };
+                    Err(::rustical_xml::XmlDeError::UnknownError)
                 }
             }
         }

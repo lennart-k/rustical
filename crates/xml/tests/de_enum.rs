@@ -96,3 +96,20 @@ fn test_tagged_enum_complex() {
     .unwrap();
     dbg!(asd);
 }
+
+#[test]
+fn test_enum_document() {
+    #[derive(Debug, XmlDeserialize, XmlDocument, PartialEq)]
+    enum Document {
+        Hello,
+        Goodbye,
+    }
+    assert_eq!(
+        Document::parse_str(r"<hello></hello>").unwrap(),
+        Document::Hello
+    );
+    assert_eq!(
+        Document::parse_str(r"<goodbye/>").unwrap(),
+        Document::Goodbye
+    );
+}
