@@ -29,8 +29,8 @@ pub enum XmlDeError {
     Other(String),
     #[error("Invalid variant: {0}")]
     InvalidVariant(String),
-    #[error("Invalid field name: ")]
-    InvalidFieldName,
+    #[error("Invalid field name: {0}")]
+    InvalidFieldName(String),
     #[error(transparent)]
     InvalidValue(#[from] crate::value::ParseValueError),
 }

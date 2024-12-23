@@ -219,6 +219,24 @@ impl Field {
         })
     }
 
+    pub fn tagname_branch(&self) -> Option<proc_macro2::TokenStream> {
+        if self.attrs.xml_ty != FieldType::TagName {
+            return None;
+        }
+        let field_ident = self.field_ident();
+
+        let value = wrap_option_if_no_default(
+            quote! {
+            rustical_xml::Value::deserialize(&String::from_utf8_lossy(name.as_ref()))?
+                    },
+            self.attrs.default.is_some(),
+        );
+
+        Some(quote! {
+            builder.#field_ident = #value;
+        })
+    }
+
     pub fn tag_writer(&self) -> Option<proc_macro2::TokenStream> {
         let field_ident = self.field_ident();
         let field_name = self.xml_name();
@@ -235,6 +253,8 @@ impl Field {
                 // TODO: untag!
                 self.#field_ident.serialize(None, writer)?;
             }),
+            // TODO: Think about what to do here
+            FieldType::TagName | FieldType::Namespace => None,
         }
     }
 }

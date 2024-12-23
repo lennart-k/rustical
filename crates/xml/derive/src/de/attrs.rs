@@ -47,6 +47,8 @@ pub enum FieldType {
     Attr,
     Text,
     Untagged,
+    TagName,
+    Namespace,
 }
 
 #[derive(Default, FromField)]

@@ -9,7 +9,7 @@ fn invalid_field_branch(allow: bool) -> proc_macro2::TokenStream {
     if allow {
         quote! {}
     } else {
-        quote! { return Err(XmlDeError::InvalidFieldName) }
+        quote! { return Err(XmlDeError::InvalidFieldName(format!("[{ns:?}]{tag:?}"))) }
     }
 }
 
@@ -80,6 +80,7 @@ impl NamedStruct {
         }
         let text_field_branches = self.fields.iter().filter_map(Field::text_branch);
         let attr_field_branches = self.fields.iter().filter_map(Field::attr_branch);
+        let tagname_field_branches = self.fields.iter().filter_map(Field::tagname_branch);
 
         let builder_field_builds = self.fields.iter().map(Field::builder_field_build);
 
@@ -106,11 +107,14 @@ impl NamedStruct {
                         #(#builder_field_inits),*
                     };
 
+                    let (ns, name) = reader.resolve_element(start.name());
+                    #(#tagname_field_branches);*
+
                     for attr in start.attributes() {
                         let attr = attr?;
                         match attr.key.as_ref() {
                             #(#attr_field_branches),*
-                            _ => { #invalid_field_branch }
+                            _ => { /* ignore */ }
                         }
                     }
 
@@ -129,7 +133,7 @@ impl NamedStruct {
                                     match (ns, name.as_ref()) {
                                         #(#named_field_branches),*
                                         #(#untagged_field_branches),*
-                                        _ => { #invalid_field_branch }
+                                        (ns, tag) => { #invalid_field_branch }
                                     }
                                 }
                                 Event::Text(bytes_text) => {
