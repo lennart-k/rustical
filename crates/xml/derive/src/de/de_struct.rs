@@ -47,7 +47,7 @@ pub struct NamedStruct {
 }
 
 impl NamedStruct {
-    pub fn impl_xml_root(&self) -> proc_macro2::TokenStream {
+    pub fn impl_xml_root_tag(&self) -> proc_macro2::TokenStream {
         let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
         let ident = &self.ident;
         let root = self.attrs.root.as_ref().expect("No root attribute found");
@@ -56,7 +56,7 @@ impl NamedStruct {
             None => quote! { None },
         };
         quote! {
-            impl #impl_generics ::rustical_xml::XmlRoot for #ident #type_generics #where_clause {
+            impl #impl_generics ::rustical_xml::XmlRootTag for #ident #type_generics #where_clause {
                 fn root_tag() -> &'static [u8] { #root }
                 fn root_ns() -> Option<&'static [u8]> { #ns }
             }

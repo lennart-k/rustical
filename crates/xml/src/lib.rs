@@ -7,7 +7,7 @@ mod value;
 
 pub use de::XmlDeError;
 pub use de::XmlDeserialize;
-pub use de::XmlRoot;
+pub use de::XmlRootTag;
 pub use se::XmlSerialize;
 pub use value::Value;
 

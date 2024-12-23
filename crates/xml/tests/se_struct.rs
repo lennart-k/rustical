@@ -1,9 +1,9 @@
-use rustical_xml::{XmlRoot, XmlSerialize};
+use rustical_xml::{XmlRootTag, XmlSerialize};
 use xml_derive::XmlDeserialize;
 
 #[test]
 fn test_struct_document() {
-    #[derive(Debug, XmlRoot, XmlSerialize, XmlDeserialize, PartialEq)]
+    #[derive(Debug, XmlRootTag, XmlSerialize, XmlDeserialize, PartialEq)]
     #[xml(root = b"document")]
     struct Document {
         child: Child,

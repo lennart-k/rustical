@@ -2,7 +2,7 @@ use quick_xml::name::Namespace;
 use quick_xml::name::ResolveResult;
 use std::io::BufRead;
 pub use xml_derive::XmlDeserialize;
-pub use xml_derive::XmlRoot;
+pub use xml_derive::XmlRootTag;
 
 use quick_xml::events::{BytesStart, Event};
 use thiserror::Error;
@@ -43,7 +43,7 @@ pub trait XmlDeserialize: Sized {
     ) -> Result<Self, XmlDeError>;
 }
 
-pub trait XmlRoot {
+pub trait XmlRootTag {
     fn root_tag() -> &'static [u8];
     fn root_ns() -> Option<&'static [u8]>;
 }
@@ -67,7 +67,7 @@ pub trait XmlDocument: XmlDeserialize {
     }
 }
 
-impl<T: XmlRoot + XmlDeserialize> XmlDocument for T {
+impl<T: XmlRootTag + XmlDeserialize> XmlDocument for T {
     fn parse<R: BufRead>(mut reader: quick_xml::NsReader<R>) -> Result<Self, XmlDeError>
     where
         Self: XmlDeserialize,
