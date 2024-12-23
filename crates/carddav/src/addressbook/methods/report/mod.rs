@@ -31,7 +31,7 @@ pub async fn route_report_addressbook<AS: AddressbookStore + ?Sized>(
         return Err(Error::Unauthorized);
     }
 
-    let request = ReportRequest::parse_str(&body).map_err(crate::Error::NewXmlDecodeError)?;
+    let request = ReportRequest::parse_str(&body)?;
 
     Ok(match request.clone() {
         ReportRequest::AddressbookMultiget(addr_multiget) => {

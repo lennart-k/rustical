@@ -83,7 +83,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_xml_sync_collection() {
+    fn test_xml_calendar_query() {
         let report_request = ReportRequest::parse_str(
             r#"
             <?xml version='1.0' encoding='UTF-8' ?>
