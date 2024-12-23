@@ -45,17 +45,20 @@ impl XmlDeserialize for Unit {
 }
 
 // TODO: actually implement
+#[derive(Debug, Clone, PartialEq)]
 pub struct Unparsed(BytesStart<'static>);
 
 impl XmlDeserialize for Unparsed {
     fn deserialize<R: BufRead>(
         reader: &mut quick_xml::NsReader<R>,
         start: &BytesStart,
-        _empty: bool,
+        empty: bool,
     ) -> Result<Self, XmlDeError> {
         // let reader_cloned = NsReader::from_reader(reader.get_ref().to_owned());
-        let mut buf = vec![];
-        reader.read_to_end_into(start.name(), &mut buf)?;
+        if !empty {
+            let mut buf = vec![];
+            reader.read_to_end_into(start.name(), &mut buf)?;
+        }
         Ok(Self(start.to_owned()))
     }
 }
