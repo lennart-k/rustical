@@ -44,6 +44,30 @@ pub trait XmlDeserialize: Sized {
 }
 
 pub trait XmlRoot {
+    fn root_tag() -> &'static [u8];
+    fn root_ns() -> Option<&'static [u8]>;
+}
+
+pub trait XmlDocument: XmlDeserialize {
+    fn parse<R: BufRead>(reader: quick_xml::NsReader<R>) -> Result<Self, XmlDeError>;
+
+    #[inline]
+    fn parse_reader<R: BufRead>(input: R) -> Result<Self, XmlDeError>
+    where
+        Self: XmlDeserialize,
+    {
+        let mut reader = quick_xml::NsReader::from_reader(input);
+        reader.config_mut().trim_text(true);
+        Self::parse(reader)
+    }
+
+    #[inline]
+    fn parse_str(s: &str) -> Result<Self, XmlDeError> {
+        Self::parse_reader(s.as_bytes())
+    }
+}
+
+impl<T: XmlRoot + XmlDeserialize> XmlDocument for T {
     fn parse<R: BufRead>(mut reader: quick_xml::NsReader<R>) -> Result<Self, XmlDeError>
     where
         Self: XmlDeserialize,
@@ -79,25 +103,4 @@ pub trait XmlRoot {
         };
         Err(XmlDeError::UnknownError)
     }
-
-    fn parse_reader<R: BufRead>(input: R) -> Result<Self, XmlDeError>
-    where
-        Self: XmlDeserialize,
-    {
-        let mut reader = quick_xml::NsReader::from_reader(input);
-        reader.config_mut().trim_text(true);
-        Self::parse(reader)
-    }
-
-    fn root_tag() -> &'static [u8];
-    fn root_ns() -> Option<&'static [u8]>;
 }
-
-pub trait XmlRootParseStr<'i>: XmlRoot + XmlDeserialize {
-    #[inline]
-    fn parse_str(s: &'i str) -> Result<Self, XmlDeError> {
-        Self::parse_reader(s.as_bytes())
-    }
-}
-
-impl<T: XmlRoot + XmlDeserialize> XmlRootParseStr<'_> for T {}

@@ -1,4 +1,4 @@
-use rustical_xml::{de::XmlRootParseStr, Unit, XmlDeserialize, XmlRoot};
+use rustical_xml::{de::XmlDocument, Unit, XmlDeserialize, XmlRoot};
 
 #[test]
 fn test_struct_tagged_enum() {

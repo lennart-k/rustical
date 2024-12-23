@@ -1,4 +1,4 @@
-use rustical_xml::de::XmlRootParseStr;
+use rustical_xml::de::XmlDocument;
 use rustical_xml::XmlRoot;
 use rustical_xml::{Unit, Unparsed, XmlDeserialize};
 use std::collections::HashSet;
