@@ -1,5 +1,4 @@
 use rustical_xml::{de::XmlRootParseStr, Unit, XmlDeserialize, XmlRoot};
-use std::io::BufRead;
 
 #[test]
 fn test_struct_tagged_enum() {
@@ -16,10 +15,16 @@ fn test_struct_tagged_enum() {
     }
 
     #[derive(Debug, XmlDeserialize, PartialEq)]
+    struct Displayname {
+        #[xml(ty = "text")]
+        name: String,
+    }
+
+    #[derive(Debug, XmlDeserialize, PartialEq)]
     enum PropEnum {
         A,
         B,
-        Displayname(String),
+        Displayname(Displayname),
     }
 
     let doc = Propfind::parse_str(
@@ -41,7 +46,9 @@ fn test_struct_tagged_enum() {
                 prop: vec![
                     PropEnum::B,
                     PropEnum::A,
-                    PropEnum::Displayname("Hello!".to_owned())
+                    PropEnum::Displayname(Displayname {
+                        name: "Hello!".to_owned()
+                    })
                 ]
             }
         }

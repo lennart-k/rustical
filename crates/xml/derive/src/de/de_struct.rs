@@ -82,7 +82,7 @@ impl NamedStruct {
 
         quote! {
             impl #impl_generics ::rustical_xml::XmlDeserialize for #ident #type_generics #where_clause {
-                fn deserialize<R: BufRead>(
+                fn deserialize<R: ::std::io::BufRead>(
                     reader: &mut quick_xml::NsReader<R>,
                     start: &quick_xml::events::BytesStart,
                     empty: bool
@@ -158,6 +158,36 @@ impl NamedStruct {
                     Ok(Self {
                         #(#builder_field_builds),*
                     })
+                }
+            }
+        }
+    }
+
+    pub fn impl_se(&self) -> proc_macro2::TokenStream {
+        let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+        let ident = &self.ident;
+        let tag_writers = self.fields.iter().map(Field::tag_writer);
+
+        // TODO: Implement attributes
+        quote! {
+            impl #impl_generics ::rustical_xml::XmlSerialize for #ident #type_generics #where_clause {
+                fn serialize<W: ::std::io::Write>(
+                    &self,
+                    tag: Option<&[u8]>,
+                    writer: &mut ::quick_xml::Writer<W>
+                ) -> ::std::io::Result<()> {
+                    use ::quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
+
+                    let tag_str = tag.map(String::from_utf8_lossy);
+
+                    if let Some(tag) = &tag_str {
+                        writer.write_event(Event::Start(BytesStart::new(tag.to_owned())))?;
+                    }
+                    #(#tag_writers);*
+                    if let Some(tag) = &tag_str {
+                        writer.write_event(Event::End(BytesEnd::new(tag.to_owned())))?;
+                    }
+                    Ok(())
                 }
             }
         }

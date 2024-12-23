@@ -2,11 +2,13 @@ use quick_xml::events::{BytesStart, Event};
 use std::io::BufRead;
 
 pub mod de;
+pub mod se;
 mod value;
 
 pub use de::XmlDeError;
 pub use de::XmlDeserialize;
 pub use de::XmlRoot;
+pub use se::XmlSerialize;
 pub use value::Value;
 
 impl<T: XmlDeserialize> XmlDeserialize for Option<T> {
@@ -39,33 +41,6 @@ impl XmlDeserialize for Unit {
                 _ => {}
             };
         }
-    }
-}
-
-impl XmlDeserialize for String {
-    fn deserialize<R: BufRead>(
-        reader: &mut quick_xml::NsReader<R>,
-        start: &BytesStart,
-        empty: bool,
-    ) -> Result<Self, XmlDeError> {
-        if empty {
-            return Ok(String::new());
-        }
-        let mut content = String::new();
-        let mut buf = Vec::new();
-        loop {
-            match reader.read_event_into(&mut buf)? {
-                Event::End(e) if e.name() == start.name() => {
-                    break;
-                }
-                Event::Eof => return Err(XmlDeError::Eof),
-                Event::Text(text) => {
-                    content.push_str(&text.unescape()?);
-                }
-                _a => return Err(XmlDeError::UnknownError),
-            };
-        }
-        Ok(content)
     }
 }
 

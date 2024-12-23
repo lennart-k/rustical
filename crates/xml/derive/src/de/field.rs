@@ -218,4 +218,23 @@ impl Field {
             }
         })
     }
+
+    pub fn tag_writer(&self) -> Option<proc_macro2::TokenStream> {
+        let field_ident = self.field_ident();
+        let field_name = self.xml_name();
+
+        match self.attrs.xml_ty {
+            FieldType::Attr => None,
+            FieldType::Text => Some(quote! {
+                writer.write_event(Event::Text(BytesText::new(&self.#field_ident)))?;
+            }),
+            FieldType::Tag => Some(quote! {
+                self.#field_ident.serialize(Some(#field_name), writer)?;
+            }),
+            FieldType::Untagged => Some(quote! {
+                // TODO: untag!
+                self.#field_ident.serialize(None, writer)?;
+            }),
+        }
+    }
 }
