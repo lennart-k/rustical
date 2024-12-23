@@ -229,3 +229,27 @@ fn test_struct_unparsed() {
     )
     .unwrap();
 }
+
+#[test]
+fn test_xml_values() {
+    #[derive(XmlDeserialize, XmlRootTag, PartialEq, Debug)]
+    #[xml(root = b"document", ns_strict)]
+    struct Document {
+        href: String,
+    }
+
+    let doc = Document::parse_str(
+        r#"
+        <document>
+            <href>/asd</href>
+        </document>
+    "#,
+    )
+    .unwrap();
+    assert_eq!(
+        doc,
+        Document {
+            href: "/asd".to_owned()
+        }
+    );
+}
