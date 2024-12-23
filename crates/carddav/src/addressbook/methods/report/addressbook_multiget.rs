@@ -14,14 +14,14 @@ use rustical_dav::{
     xml::{PropElement, PropfindType},
 };
 use rustical_store::{auth::User, AddressObject, AddressbookStore};
-use serde::Deserialize;
+use rustical_xml::XmlDeserialize;
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
 pub struct AddressbookMultigetRequest {
-    #[serde(flatten)]
+    #[xml(ty = "untagged")]
     prop: PropfindType,
+    #[xml(flatten)]
     href: Vec<String>,
 }
 
@@ -84,7 +84,10 @@ pub async fn handle_addressbook_multiget<AS: AddressbookStore + ?Sized>(
         PropfindType::Propname => {
             vec!["propname".to_owned()]
         }
-        PropfindType::Prop(PropElement { prop: prop_tags }) => prop_tags.into_inner(),
+        PropfindType::Prop(PropElement { prop: prop_tags }) => prop_tags
+            .into_iter()
+            .map(|propname| propname.name)
+            .collect(),
     };
     let props: Vec<&str> = props.iter().map(String::as_str).collect();
 

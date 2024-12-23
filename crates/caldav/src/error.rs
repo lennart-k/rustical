@@ -19,6 +19,9 @@ pub enum Error {
     DavError(#[from] rustical_dav::Error),
 
     #[error(transparent)]
+    NewXmlDecodeError(#[from] rustical_xml::XmlDeError),
+
+    #[error(transparent)]
     XmlDecodeError(#[from] quick_xml::DeError),
 
     #[error(transparent)]
@@ -35,6 +38,7 @@ impl actix_web::ResponseError for Error {
             },
             Error::DavError(err) => err.status_code(),
             Error::Unauthorized => StatusCode::UNAUTHORIZED,
+            Error::NewXmlDecodeError(_) => StatusCode::BAD_REQUEST,
             Error::XmlDecodeError(_) => StatusCode::BAD_REQUEST,
             Error::NotImplemented => StatusCode::INTERNAL_SERVER_ERROR,
             Error::Other(_) => StatusCode::INTERNAL_SERVER_ERROR,

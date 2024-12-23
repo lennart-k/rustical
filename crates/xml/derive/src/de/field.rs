@@ -71,23 +71,47 @@ impl Field {
             .expect("tuple structs not supported")
     }
 
-    /// Field type
-    pub fn ty(&self) -> &syn::Type {
+    fn is_optional(&self) -> bool {
+        if let syn::Type::Path(syn::TypePath { path, .. }) = &self.field.ty {
+            if path.segments.len() != 1 {
+                return false;
+            }
+            let type_ident = &path.segments.first().unwrap().ident;
+            let option: syn::Ident = syn::parse_str("Option").unwrap();
+            return type_ident == &option;
+        }
+        false
+    }
+
+    /// The type to deserialize to
+    /// - type Option<T> => optional: deserialize with T
+    /// - flatten Vec<T>: deserialize with T
+    /// - deserialize with T
+    pub fn deserializer_type(&self) -> &syn::Type {
+        if self.is_optional() {
+            return get_generic_type(&self.field.ty).unwrap();
+        }
+        if self.attrs.flatten.is_present() {
+            return get_generic_type(&self.field.ty).expect("flatten attribute only implemented for explicit generics (rustical_xml will assume the first generic as the inner type)");
+        }
         &self.field.ty
     }
 
     /// Field in the builder struct for the deserializer
     pub fn builder_field(&self) -> proc_macro2::TokenStream {
         let field_ident = self.field_ident();
-        let ty = self.ty();
+        let ty = self.deserializer_type();
 
-        let builder_field_type = match (self.attrs.flatten.is_present(), &self.attrs.default) {
-            (_, Some(_default)) => quote! { #ty },
-            (true, None) => {
-                let generic_type = get_generic_type(ty).expect("flatten attribute only implemented for explicit generics (rustical_xml will assume the first generic as the inner type)");
-                quote! { Vec<#generic_type> }
-            }
-            (false, None) => quote! { Option<#ty> },
+        let builder_field_type = match (
+            self.attrs.flatten.is_present(),
+            &self.attrs.default,
+            self.is_optional(),
+        ) {
+            (_, Some(_default), true) => panic!("default value for Option<T> doesn't make sense"),
+            (_, Some(_default), false) => quote! { #ty },
+            (true, None, true) => panic!("cannot flatten Option<T>"),
+            (true, None, false) => quote! { Vec<#ty> },
+            (false, None, _) => quote! { Option<#ty> },
         };
 
         quote! { #field_ident: #builder_field_type }
@@ -96,11 +120,16 @@ impl Field {
     /// Field initialiser in the builder struct for the deserializer
     pub fn builder_field_init(&self) -> proc_macro2::TokenStream {
         let field_ident = self.field_ident();
-        let builder_field_initialiser = match (self.attrs.flatten.is_present(), &self.attrs.default)
-        {
-            (_, Some(default)) => quote! { #default() },
-            (true, None) => quote! { vec![] },
-            (false, None) => quote! { None },
+        let builder_field_initialiser = match (
+            self.attrs.flatten.is_present(),
+            &self.attrs.default,
+            self.is_optional(),
+        ) {
+            (_, Some(_), true) => unreachable!(),
+            (_, Some(default), false) => quote! { #default() },
+            (true, None, true) => unreachable!(),
+            (true, None, false) => quote! { vec![] },
+            (false, None, _) => quote! { None },
         };
         quote! { #field_ident: #builder_field_initialiser }
     }
@@ -111,10 +140,18 @@ impl Field {
         let builder_value = match (
             self.attrs.flatten.is_present(),
             self.attrs.default.is_some(),
+            self.is_optional(),
         ) {
-            (true, _) => quote! { FromIterator::from_iter(builder.#field_ident.into_iter()) },
-            (false, true) => quote! { builder.#field_ident },
-            (false, false) => quote! { builder.#field_ident.expect("todo: handle missing field") },
+            (true, _, true) => unreachable!(),
+            (true, _, false) => {
+                quote! { FromIterator::from_iter(builder.#field_ident.into_iter()) }
+            }
+            (false, true, true) => unreachable!(),
+            (false, true, false) => quote! { builder.#field_ident },
+            (false, false, true) => quote! { builder.#field_ident },
+            (false, false, false) => {
+                quote! { builder.#field_ident.expect("todo: handle missing field") }
+            }
         };
         quote! { #field_ident: #builder_value }
     }
@@ -136,22 +173,14 @@ impl Field {
 
         let field_name = self.xml_name();
         let field_ident = self.field_ident();
-        let deserializer = self.ty();
+        let deserializer = self.deserializer_type();
         let value = quote! { <#deserializer as rustical_xml::XmlDeserialize>::deserialize(reader, &start, empty)? };
         let assignment = match (self.attrs.flatten.is_present(), &self.attrs.default) {
             (true, _) => {
-                // TODO: Make nicer, watch out with deserializer typing
-                let deserializer = get_generic_type(self.ty()).expect("flatten attribute only implemented for explicit generics (rustical_xml will assume the first generic as the inner type)");
-                quote! {
-                    builder.#field_ident.push(<#deserializer as rustical_xml::XmlDeserialize>::deserialize(reader, &start, empty)?);
-                }
+                quote! { builder.#field_ident.push(#value); }
             }
-            (false, Some(_default)) => quote! {
-                builder.#field_ident = #value;
-            },
-            (false, None) => quote! {
-                builder.#field_ident = Some(#value);
-            },
+            (false, Some(_default)) => quote! { builder.#field_ident = #value; },
+            (false, None) => quote! { builder.#field_ident = Some(#value); },
         };
 
         Some(quote! {
@@ -164,20 +193,16 @@ impl Field {
             return None;
         }
         let field_ident = self.field_ident();
-        let deserializer = self.ty();
+        let deserializer = self.deserializer_type();
+        let value = quote! { <#deserializer as rustical_xml::XmlDeserialize>::deserialize(reader, &start, empty)? };
 
         Some(if self.attrs.flatten.is_present() {
-            let deserializer = get_generic_type(self.ty()).expect("flatten attribute only implemented for explicit generics (rustical_xml will assume the first generic as the inner type)");
             quote! {
-                _ => {
-                     builder.#field_ident.push(<#deserializer as rustical_xml::XmlDeserialize>::deserialize(reader, &start, empty)?);
-                }
+                _ => { builder.#field_ident.push(#value); }
             }
         } else {
             quote! {
-                _ => {
-                     builder.#field_ident = Some(<#deserializer as rustical_xml::XmlDeserialize>::deserialize(reader, &start, empty)?);
-                }
+                _ => { builder.#field_ident = Some(#value); }
             }
         })
     }

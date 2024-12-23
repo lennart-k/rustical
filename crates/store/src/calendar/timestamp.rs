@@ -1,12 +1,13 @@
 use crate::Error;
 use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use chrono_tz::Tz;
+use derive_more::derive::Deref;
 use ical::{
     parser::{ical::component::IcalTimeZone, Component},
     property::Property,
 };
 use lazy_static::lazy_static;
-use serde::{Deserialize, Deserializer};
+use rustical_xml::Value;
 use std::{collections::HashMap, ops::Add};
 
 lazy_static! {
@@ -16,6 +17,24 @@ lazy_static! {
 const LOCAL_DATE_TIME: &str = "%Y%m%dT%H%M%S";
 const UTC_DATE_TIME: &str = "%Y%m%dT%H%M%SZ";
 const LOCAL_DATE: &str = "%Y%m%d";
+
+#[derive(Debug, Clone, Deref, PartialEq)]
+pub struct UtcDateTime(DateTime<Utc>);
+
+impl Value for UtcDateTime {
+    fn deserialize(val: &str) -> Result<Self, rustical_xml::XmlDeError> {
+        let input = <String as Value>::deserialize(val)?;
+        Ok(Self(
+            NaiveDateTime::parse_from_str(&input, UTC_DATE_TIME)
+                // TODO: proper error
+                .map_err(|_| rustical_xml::XmlDeError::UnknownError)?
+                .and_utc(),
+        ))
+    }
+    fn serialize(&self) -> String {
+        format!("{}", self.0.format(UTC_DATE_TIME))
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum CalDateTime {
@@ -27,22 +46,6 @@ pub enum CalDateTime {
     // https://en.wikipedia.org/wiki/Tz_database
     OlsonTZ(DateTime<Tz>),
     Date(NaiveDate),
-}
-
-pub fn deserialize_utc_datetime<'de, D>(deserializer: D) -> Result<Option<DateTime<Utc>>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    type Inner = Option<String>;
-    Ok(if let Some(input) = Inner::deserialize(deserializer)? {
-        Some(
-            NaiveDateTime::parse_from_str(&input, UTC_DATE_TIME)
-                .map_err(|err| serde::de::Error::custom(err.to_string()))?
-                .and_utc(),
-        )
-    } else {
-        None
-    })
 }
 
 impl Add<Duration> for CalDateTime {

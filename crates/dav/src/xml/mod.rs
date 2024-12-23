@@ -4,7 +4,7 @@ mod resourcetype;
 pub mod tag_list;
 pub mod tag_name;
 
-pub use propfind::{PropElement, PropfindType};
+pub use propfind::{PropElement, PropfindElement, PropfindType, Propname};
 
 use derive_more::derive::From;
 pub use multistatus::MultistatusElement;

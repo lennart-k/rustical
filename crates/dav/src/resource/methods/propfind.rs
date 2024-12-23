@@ -6,21 +6,15 @@ use crate::resource::Resource;
 use crate::resource::ResourceService;
 use crate::xml::MultistatusElement;
 use crate::xml::PropElement;
+use crate::xml::PropfindElement;
 use crate::xml::PropfindType;
 use crate::Error;
 use actix_web::web::Path;
 use actix_web::HttpRequest;
 use rustical_store::auth::User;
-use serde::Deserialize;
+use rustical_xml::de::XmlDocument;
 use tracing::instrument;
 use tracing_actix_web::RootSpan;
-
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
-struct PropfindElement {
-    #[serde(rename = "$value")]
-    prop: PropfindType,
-}
 
 #[instrument(parent = root_span.id(), skip(path_components, req, root_span))]
 #[allow(clippy::type_complexity)]
@@ -48,7 +42,7 @@ pub(crate) async fn route_propfind<R: ResourceService>(
 
     // A request body is optional. If empty we MUST return all props
     let propfind: PropfindElement = if !body.is_empty() {
-        quick_xml::de::from_str(&body).map_err(Error::XmlDeserializationError)?
+        PropfindElement::parse_str(&body).map_err(Error::NewXmlDeserializationError)?
     } else {
         PropfindElement {
             prop: PropfindType::Allprop,
@@ -58,7 +52,10 @@ pub(crate) async fn route_propfind<R: ResourceService>(
     let props = match propfind.prop {
         PropfindType::Allprop => vec!["allprop".to_owned()],
         PropfindType::Propname => vec!["propname".to_owned()],
-        PropfindType::Prop(PropElement { prop: prop_tags }) => prop_tags.into_inner(),
+        PropfindType::Prop(PropElement { prop: prop_tags }) => prop_tags
+            .into_iter()
+            .map(|propname| propname.name)
+            .collect(),
     };
     let props: Vec<&str> = props.iter().map(String::as_str).collect();
 

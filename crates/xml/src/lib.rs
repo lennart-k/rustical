@@ -12,15 +12,15 @@ pub use de::XmlRootTag;
 pub use se::XmlSerialize;
 pub use value::Value;
 
-impl<T: XmlDeserialize> XmlDeserialize for Option<T> {
-    fn deserialize<R: BufRead>(
-        reader: &mut quick_xml::NsReader<R>,
-        start: &BytesStart,
-        empty: bool,
-    ) -> Result<Self, XmlDeError> {
-        Ok(Some(T::deserialize(reader, start, empty)?))
-    }
-}
+// impl<T: XmlDeserialize> XmlDeserialize for Option<T> {
+//     fn deserialize<R: BufRead>(
+//         reader: &mut quick_xml::NsReader<R>,
+//         start: &BytesStart,
+//         empty: bool,
+//     ) -> Result<Self, XmlDeError> {
+//         Ok(Some(T::deserialize(reader, start, empty)?))
+//     }
+// }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Unit;

@@ -80,7 +80,6 @@ fn test_struct_optional_field() {
     #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
     #[xml(root = b"document")]
     struct Document {
-        #[xml(default = "Default::default")]
         child: Option<Child>,
     }
 

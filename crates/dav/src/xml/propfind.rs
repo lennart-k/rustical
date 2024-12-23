@@ -1,15 +1,26 @@
-use super::TagList;
-use serde::Deserialize;
+use rustical_xml::XmlDeserialize;
+use rustical_xml::XmlRootTag;
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
-pub struct PropElement {
-    #[serde(flatten)]
-    pub prop: TagList,
+#[derive(Debug, Clone, XmlDeserialize, XmlRootTag, PartialEq)]
+#[xml(root = b"propfind", ns = b"DAV:")]
+pub struct PropfindElement {
+    #[xml(ty = "untagged")]
+    pub prop: PropfindType,
 }
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, XmlDeserialize, PartialEq)]
+pub struct PropElement {
+    #[xml(ty = "untagged", flatten)]
+    pub prop: Vec<Propname>,
+}
+
+#[derive(Debug, Clone, XmlDeserialize, PartialEq)]
+pub struct Propname {
+    #[xml(ty = "tag_name")]
+    pub name: String,
+}
+
+#[derive(Debug, Clone, XmlDeserialize, PartialEq)]
 pub enum PropfindType {
     Propname,
     Allprop,

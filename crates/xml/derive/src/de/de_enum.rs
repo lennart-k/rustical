@@ -238,16 +238,19 @@ impl Enum {
                     use ::quick_xml::events::Event;
 
                     let mut buf = Vec::new();
-                    let event = reader.read_event_into(&mut buf)?;
-                    let empty = matches!(event, Event::Empty(_));
+                    loop {
+                        let event = reader.read_event_into(&mut buf)?;
+                        let empty = matches!(event, Event::Empty(_));
 
-                    match event {
-                        Event::Start(start) | Event::Empty(start) => {
-                            return Self::deserialize(&mut reader, &start, empty);
-                        }
-                        _ => {}
-                    };
-                    Err(::rustical_xml::XmlDeError::UnknownError)
+                        match event {
+                            Event::Decl(_) => { /* <?xml ... ?> ignore this */ }
+                            Event::Comment(_) => { /*  ignore this */ }
+                            Event::Start(start) | Event::Empty(start) => {
+                                return Self::deserialize(&mut reader, &start, empty);
+                            }
+                            _ => return Err(::rustical_xml::XmlDeError::UnknownError),
+                        };
+                    }
                 }
             }
         }

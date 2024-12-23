@@ -1,11 +1,12 @@
+use std::ops::Deref;
+
 use actix_web::HttpRequest;
-use chrono::{DateTime, Utc};
 use rustical_dav::{
     resource::{CommonPropertiesProp, EitherProp, Resource},
     xml::{MultistatusElement, PropElement, PropfindType},
 };
-use rustical_store::{auth::User, CalendarObject, CalendarStore};
-use serde::Deserialize;
+use rustical_store::{auth::User, calendar::UtcDateTime, CalendarObject, CalendarStore};
+use rustical_xml::{Unit, XmlDeserialize};
 
 use crate::{
     calendar_object::resource::{CalendarObjectProp, CalendarObjectResource},
@@ -14,70 +15,57 @@ use crate::{
 
 // TODO: Implement all the other filters
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
-struct TimeRangeElement {
-    #[serde(
-        rename = "@start",
-        deserialize_with = "rustical_store::calendar::deserialize_utc_datetime",
-        default
-    )]
-    start: Option<DateTime<Utc>>,
-    #[serde(
-        rename = "@end",
-        deserialize_with = "rustical_store::calendar::deserialize_utc_datetime",
-        default
-    )]
-    end: Option<DateTime<Utc>>,
+pub(crate) struct TimeRangeElement {
+    #[xml(ty = "attr")]
+    pub(crate) start: Option<UtcDateTime>,
+    #[xml(ty = "attr")]
+    pub(crate) end: Option<UtcDateTime>,
 }
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
 struct ParamFilterElement {
-    is_not_defined: Option<()>,
+    is_not_defined: Option<Unit>,
     text_match: Option<TextMatchElement>,
 
-    #[serde(rename = "@name")]
+    #[xml(ty = "attr")]
     name: String,
 }
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
 struct TextMatchElement {
-    #[serde(rename = "@collation")]
+    #[xml(ty = "attr")]
     collation: String,
-    #[serde(rename = "@negate-collation")]
+    #[xml(ty = "attr")]
     negate_collation: String,
 }
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
-struct PropFilterElement {
-    is_not_defined: Option<()>,
+pub(crate) struct PropFilterElement {
+    is_not_defined: Option<Unit>,
     time_range: Option<TimeRangeElement>,
     text_match: Option<TextMatchElement>,
-    #[serde(default)]
+    #[xml(flatten)]
     param_filter: Vec<ParamFilterElement>,
 }
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
 // https://datatracker.ietf.org/doc/html/rfc4791#section-9.7.1
-struct CompFilterElement {
-    is_not_defined: Option<()>,
-    time_range: Option<TimeRangeElement>,
-    #[serde(default)]
-    prop_filter: Vec<PropFilterElement>,
-    #[serde(default)]
-    comp_filter: Vec<CompFilterElement>,
+pub(crate) struct CompFilterElement {
+    pub(crate) is_not_defined: Option<Unit>,
+    pub(crate) time_range: Option<TimeRangeElement>,
+    #[xml(flatten)]
+    pub(crate) prop_filter: Vec<PropFilterElement>,
+    #[xml(flatten)]
+    pub(crate) comp_filter: Vec<CompFilterElement>,
 
-    #[serde(rename = "@name")]
-    name: String,
+    #[xml(ty = "attr")]
+    pub(crate) name: String,
 }
 
 impl CompFilterElement {
@@ -146,14 +134,14 @@ impl CompFilterElement {
         if let Some(time_range) = &self.time_range {
             if let Some(start) = &time_range.start {
                 if let Some(first_occurence) = cal_object.get_first_occurence().unwrap_or(None) {
-                    if start > &first_occurence.utc() {
+                    if start.deref() > &first_occurence.utc() {
                         return false;
                     }
                 };
             }
             if let Some(end) = &time_range.end {
                 if let Some(last_occurence) = cal_object.get_last_occurence().unwrap_or(None) {
-                    if end < &last_occurence.utc() {
+                    if end.deref() < &last_occurence.utc() {
                         return false;
                     }
                 };
@@ -164,12 +152,11 @@ impl CompFilterElement {
     }
 }
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
 // https://datatracker.ietf.org/doc/html/rfc4791#section-9.7
-struct FilterElement {
-    comp_filter: CompFilterElement,
+pub(crate) struct FilterElement {
+    pub(crate) comp_filter: CompFilterElement,
 }
 
 impl FilterElement {
@@ -178,15 +165,14 @@ impl FilterElement {
     }
 }
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
 // <!ELEMENT calendar-query ((DAV:allprop | DAV:propname | DAV:prop)?, filter, timezone?)>
 pub struct CalendarQueryRequest {
-    #[serde(flatten)]
+    #[xml(ty = "untagged")]
     pub prop: PropfindType,
-    filter: Option<FilterElement>,
-    timezone: Option<String>,
+    pub(crate) filter: Option<FilterElement>,
+    pub(crate) timezone: Option<String>,
 }
 
 pub async fn get_objects_calendar_query<C: CalendarStore + ?Sized>(
@@ -220,7 +206,10 @@ pub async fn handle_calendar_query<C: CalendarStore + ?Sized>(
         PropfindType::Propname => {
             vec!["propname".to_owned()]
         }
-        PropfindType::Prop(PropElement { prop: prop_tags }) => prop_tags.into_inner(),
+        PropfindType::Prop(PropElement { prop: prop_tags }) => prop_tags
+            .into_iter()
+            .map(|propname| propname.name)
+            .collect(),
     };
     let props: Vec<&str> = props.iter().map(String::as_str).collect();
 

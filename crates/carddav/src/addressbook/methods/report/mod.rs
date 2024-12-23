@@ -5,24 +5,15 @@ use actix_web::{
 };
 use addressbook_multiget::{handle_addressbook_multiget, AddressbookMultigetRequest};
 use rustical_store::{auth::User, AddressbookStore};
-use serde::{Deserialize, Serialize};
+use rustical_xml::{XmlDeserialize, XmlDocument};
 use sync_collection::{handle_sync_collection, SyncCollectionRequest};
 use tracing::instrument;
 
 mod addressbook_multiget;
 mod sync_collection;
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
-pub enum PropQuery {
-    Allprop,
-    Prop,
-    Propname,
-}
-
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
-pub enum ReportRequest {
+#[derive(XmlDeserialize, XmlDocument, Clone, Debug, PartialEq)]
+pub(crate) enum ReportRequest {
     AddressbookMultiget(AddressbookMultigetRequest),
     SyncCollection(SyncCollectionRequest),
 }
@@ -40,7 +31,7 @@ pub async fn route_report_addressbook<AS: AddressbookStore + ?Sized>(
         return Err(Error::Unauthorized);
     }
 
-    let request: ReportRequest = quick_xml::de::from_str(&body)?;
+    let request = ReportRequest::parse_str(&body).map_err(crate::Error::NewXmlDecodeError)?;
 
     Ok(match request.clone() {
         ReportRequest::AddressbookMultiget(addr_multiget) => {
@@ -66,4 +57,41 @@ pub async fn route_report_addressbook<AS: AddressbookStore + ?Sized>(
             .await?
         }
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use rustical_dav::xml::{PropElement, Propname};
+    use sync_collection::SyncLevel;
+
+    use super::*;
+
+    #[test]
+    fn test_xml_sync_collection() {
+        let report_request = ReportRequest::parse_str(
+            r#"
+        <?xml version='1.0' encoding='UTF-8' ?>
+        <sync-collection xmlns="DAV:">
+            <sync-token />
+            <sync-level>1</sync-level>
+            <prop>
+                <getetag />
+            </prop>
+        </sync-collection>"#,
+        )
+        .unwrap();
+        assert_eq!(
+            report_request,
+            ReportRequest::SyncCollection(SyncCollectionRequest {
+                sync_token: "".to_owned(),
+                sync_level: SyncLevel::One,
+                prop: rustical_dav::xml::PropfindType::Prop(PropElement {
+                    prop: vec![Propname {
+                        name: "getetag".to_owned()
+                    }]
+                }),
+                limit: None
+            })
+        )
+    }
 }

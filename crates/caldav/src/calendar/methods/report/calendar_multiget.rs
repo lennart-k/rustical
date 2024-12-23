@@ -13,16 +13,16 @@ use rustical_dav::{
     xml::{multistatus::ResponseElement, MultistatusElement, PropElement, PropfindType},
 };
 use rustical_store::{auth::User, CalendarObject, CalendarStore};
-use serde::Deserialize;
+use rustical_xml::XmlDeserialize;
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
 // <!ELEMENT calendar-query ((DAV:allprop | DAV:propname | DAV:prop)?, href+)>
-pub struct CalendarMultigetRequest {
-    #[serde(flatten)]
-    prop: PropfindType,
-    href: Vec<String>,
+pub(crate) struct CalendarMultigetRequest {
+    #[xml(ty = "untagged")]
+    pub(crate) prop: PropfindType,
+    #[xml(flatten)]
+    pub(crate) href: Vec<String>,
 }
 
 pub async fn get_objects_calendar_multiget<C: CalendarStore + ?Sized>(
@@ -78,7 +78,10 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
         PropfindType::Propname => {
             vec!["propname".to_owned()]
         }
-        PropfindType::Prop(PropElement { prop: prop_tags }) => prop_tags.into_inner(),
+        PropfindType::Prop(PropElement { prop: prop_tags }) => prop_tags
+            .into_iter()
+            .map(|propname| propname.name)
+            .collect(),
     };
     let props: Vec<&str> = props.iter().map(String::as_str).collect();
 

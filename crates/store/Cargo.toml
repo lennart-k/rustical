@@ -24,6 +24,7 @@ tracing = { workspace = true }
 pbkdf2 = { workspace = true }
 chrono-tz = { workspace = true }
 derive_more = { workspace = true }
+rustical_xml.workspace = true
 
 [dev-dependencies]
 rstest = { workspace = true }

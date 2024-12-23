@@ -9,34 +9,49 @@ use rustical_store::{
     synctoken::{format_synctoken, parse_synctoken},
     CalendarStore,
 };
-use serde::Deserialize;
+use rustical_xml::{Value, XmlDeserialize};
 
 use crate::{
     calendar_object::resource::{CalendarObjectProp, CalendarObjectResource},
     Error,
 };
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
-enum SyncLevel {
-    #[serde(rename = "1")]
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) enum SyncLevel {
     One,
     Infinity,
 }
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
+impl Value for SyncLevel {
+    fn deserialize(val: &str) -> Result<Self, rustical_xml::XmlDeError> {
+        Ok(match val {
+            "1" => Self::One,
+            "Infinity" => Self::Infinity,
+            // TODO: proper error
+            _ => return Err(rustical_xml::XmlDeError::UnknownError),
+        })
+    }
+    fn serialize(&self) -> String {
+        match self {
+            SyncLevel::One => "1",
+            SyncLevel::Infinity => "Infinity",
+        }
+        .to_owned()
+    }
+}
+
+#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
 // <!ELEMENT sync-collection (sync-token, sync-level, limit?, prop)>
 //    <!-- DAV:limit defined in RFC 5323, Section 5.17 -->
 //    <!-- DAV:prop defined in RFC 4918, Section 14.18 -->
-pub struct SyncCollectionRequest {
-    sync_token: String,
-    sync_level: SyncLevel,
-    timezone: Option<String>,
-    #[serde(flatten)]
+pub(crate) struct SyncCollectionRequest {
+    pub(crate) sync_token: String,
+    pub(crate) sync_level: SyncLevel,
+    pub(crate) timezone: Option<String>,
+    #[xml(ty = "untagged")]
     pub prop: PropfindType,
-    limit: Option<u64>,
+    pub(crate) limit: Option<u64>,
 }
 
 pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
@@ -55,7 +70,10 @@ pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
         PropfindType::Propname => {
             vec!["propname".to_owned()]
         }
-        PropfindType::Prop(PropElement { prop: prop_tags }) => prop_tags.into_inner(),
+        PropfindType::Prop(PropElement { prop: prop_tags }) => prop_tags
+            .into_iter()
+            .map(|propname| propname.name)
+            .collect(),
     };
     let props: Vec<&str> = props.iter().map(String::as_str).collect();
 
