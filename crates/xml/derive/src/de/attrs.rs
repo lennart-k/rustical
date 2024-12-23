@@ -36,6 +36,7 @@ pub struct StructAttrs {
     pub container: ContainerAttrs,
 
     pub root: Option<LitByteStr>,
+    pub ns: Option<LitByteStr>,
     pub allow_invalid: Flag,
 }
 

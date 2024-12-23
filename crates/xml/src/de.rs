@@ -1,3 +1,5 @@
+use quick_xml::name::Namespace;
+use quick_xml::name::ResolveResult;
 use std::io::BufRead;
 pub use xml_derive::XmlDeserialize;
 pub use xml_derive::XmlRoot;
@@ -15,8 +17,8 @@ pub enum XmlDeError {
     QuickXmlAttrError(#[from] quick_xml::events::attributes::AttrError),
     #[error("Unknown error")]
     UnknownError,
-    #[error("Invalid tag {0}. Expected {1}")]
-    InvalidTag(String, String),
+    #[error("Invalid tag [{0}]{1}. Expected [{2}]{3}")]
+    InvalidTag(String, String, String, String),
     #[error("Missing field {0}")]
     MissingField(&'static str),
     #[error("End of file, expected closing tags")]
@@ -51,15 +53,25 @@ pub trait XmlRoot {
         let empty = event.is_empty();
         match event {
             Event::Start(start) | Event::Empty(start) => {
-                let (_ns, name) = reader.resolve_element(start.name());
-                if name.as_ref() != Self::root_tag() {
+                let (ns, name) = reader.resolve_element(start.name());
+                let matches = match (Self::root_ns(), &ns, name) {
+                    // Wrong tag
+                    (_, _, name) if name.as_ref() != Self::root_tag() => false,
+                    // Wrong namespace
+                    (Some(root_ns), ns, _) if &ResolveResult::Bound(Namespace(root_ns)) != ns => {
+                        false
+                    }
+                    _ => true,
+                };
+                if !matches {
+                    let root_ns = Self::root_ns();
                     return Err(XmlDeError::InvalidTag(
+                        format!("{ns:?}"),
                         String::from_utf8_lossy(name.as_ref()).to_string(),
+                        format!("{root_ns:?}"),
                         String::from_utf8_lossy(Self::root_tag()).to_string(),
                     ));
                 };
-
-                // TODO: check namespace
 
                 return Self::deserialize(&mut reader, &start, empty);
             }
@@ -78,6 +90,7 @@ pub trait XmlRoot {
     }
 
     fn root_tag() -> &'static [u8];
+    fn root_ns() -> Option<&'static [u8]>;
 }
 
 pub trait XmlRootParseStr<'i>: XmlRoot + XmlDeserialize {
