@@ -2,13 +2,14 @@ use quick_xml::events::{BytesStart, Event};
 use std::io::BufRead;
 
 pub mod de;
+mod error;
 pub mod se;
 mod value;
 
-pub use de::XmlDeError;
 pub use de::XmlDeserialize;
 pub use de::XmlDocument;
 pub use de::XmlRootTag;
+pub use error::XmlDeError;
 pub use se::XmlSerialize;
 pub use value::Value;
 
