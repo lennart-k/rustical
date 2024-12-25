@@ -1,5 +1,5 @@
-use crate::de::attrs::StructAttrs;
-use crate::de::Field;
+use crate::attrs::StructAttrs;
+use crate::Field;
 use core::panic;
 use darling::FromDeriveInput;
 use quote::quote;

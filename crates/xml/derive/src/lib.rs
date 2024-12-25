@@ -1,8 +1,33 @@
 use core::panic;
 use syn::{parse_macro_input, DeriveInput};
 
-mod de;
-use de::{Enum, NamedStruct};
+pub(crate) mod attrs;
+mod field;
+mod variant;
+mod xml_enum;
+mod xml_struct;
+
+pub(crate) use field::Field;
+pub(crate) use variant::Variant;
+pub(crate) use xml_enum::Enum;
+pub(crate) use xml_struct::NamedStruct;
+
+pub(crate) fn get_generic_type(ty: &syn::Type) -> Option<&syn::Type> {
+    if let syn::Type::Path(syn::TypePath { path, .. }) = ty {
+        if let Some(seg) = path.segments.last() {
+            if let syn::PathArguments::AngleBracketed(syn::AngleBracketedGenericArguments {
+                args,
+                ..
+            }) = &seg.arguments
+            {
+                if let Some(syn::GenericArgument::Type(t)) = &args.first() {
+                    return Some(t);
+                }
+            }
+        }
+    }
+    None
+}
 
 #[proc_macro_derive(XmlDeserialize, attributes(xml))]
 pub fn derive_xml_deserialize(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
