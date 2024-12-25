@@ -8,7 +8,7 @@ use rustical_xml::XmlDeserialize;
 use serde::Serialize;
 use std::any::type_name;
 use std::marker::PhantomData;
-use strum::{EnumString, VariantNames};
+use strum::{EnumString, IntoStaticStr, VariantNames};
 
 #[derive(Clone)]
 pub struct RootResource<PR: Resource>(PhantomData<PR>);
@@ -19,15 +19,17 @@ impl<PR: Resource> Default for RootResource<PR> {
     }
 }
 
-#[derive(EnumString, VariantNames, Clone)]
+#[derive(EnumString, VariantNames, Clone, IntoStaticStr)]
 #[strum(serialize_all = "kebab-case")]
 pub enum RootResourcePropName {}
 
-#[derive(XmlDeserialize, Serialize, Default, Clone, PartialEq)]
-pub enum RootResourceProp {
-    #[serde(other)]
-    #[default]
-    Invalid,
+#[derive(XmlDeserialize, Serialize, Clone, PartialEq)]
+pub enum RootResourceProp {}
+
+impl From<RootResourceProp> for RootResourcePropName {
+    fn from(_value: RootResourceProp) -> Self {
+        unreachable!()
+    }
 }
 
 impl<PR: Resource> Resource for RootResource<PR> {

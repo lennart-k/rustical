@@ -10,7 +10,7 @@ use rustical_store::{auth::User, AddressObject, AddressbookStore};
 use rustical_xml::XmlDeserialize;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use strum::{EnumDiscriminants, EnumString, VariantNames};
+use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
 
 use super::methods::{get_object, put_object};
 
@@ -21,10 +21,10 @@ pub struct AddressObjectResourceService<AS: AddressbookStore + ?Sized> {
     object_id: String,
 }
 
-#[derive(Default, XmlDeserialize, Serialize, PartialEq, EnumDiscriminants)]
+#[derive(XmlDeserialize, Serialize, PartialEq, EnumDiscriminants, Clone)]
 #[strum_discriminants(
     name(AddressObjectPropName),
-    derive(EnumString, VariantNames),
+    derive(EnumString, VariantNames, IntoStaticStr),
     strum(serialize_all = "kebab-case")
 )]
 #[serde(rename_all = "kebab-case")]
@@ -36,12 +36,6 @@ pub enum AddressObjectProp {
     // CalDAV (RFC 4791)
     #[serde(rename = "CARD:address-data")]
     AddressData(String),
-
-    #[serde(other)]
-    #[xml(other)]
-    #[strum_discriminants(strum(disabled))]
-    #[default]
-    Invalid,
 }
 
 #[derive(Clone, From, Into)]
@@ -73,9 +67,6 @@ impl Resource for AddressObjectResource {
             }
             AddressObjectPropName::Getcontenttype => {
                 AddressObjectProp::Getcontenttype("text/vcard;charset=utf-8".to_owned())
-            }
-            AddressObjectPropName::Invalid => {
-                return Err(rustical_dav::Error::BadRequest("invalid prop name".to_owned()).into())
             }
         })
     }

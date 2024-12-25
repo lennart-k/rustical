@@ -12,7 +12,7 @@ use rustical_store::CalendarStore;
 use rustical_xml::XmlDeserialize;
 use serde::Serialize;
 use std::sync::Arc;
-use strum::{EnumDiscriminants, EnumString, VariantNames};
+use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
 
 pub struct PrincipalResourceService<C: CalendarStore + ?Sized> {
     principal: String,
@@ -24,10 +24,10 @@ pub struct PrincipalResource {
     principal: String,
 }
 
-#[derive(Default, XmlDeserialize, Serialize, PartialEq, EnumDiscriminants)]
+#[derive(XmlDeserialize, Serialize, PartialEq, EnumDiscriminants, Clone)]
 #[strum_discriminants(
     name(PrincipalPropName),
-    derive(EnumString, VariantNames),
+    derive(EnumString, VariantNames, IntoStaticStr),
     strum(serialize_all = "kebab-case")
 )]
 #[serde(rename_all = "kebab-case")]
@@ -42,12 +42,6 @@ pub enum PrincipalProp {
     CalendarHomeSet(HrefElement),
     #[serde(rename = "C:calendar-user-address-set")]
     CalendarUserAddressSet(HrefElement),
-
-    #[serde(other)]
-    #[xml(other)]
-    #[strum_discriminants(strum(disabled))]
-    #[default]
-    Invalid,
 }
 
 impl PrincipalResource {
@@ -79,9 +73,6 @@ impl Resource for PrincipalResource {
             PrincipalPropName::CalendarHomeSet => PrincipalProp::CalendarHomeSet(principal_href),
             PrincipalPropName::CalendarUserAddressSet => {
                 PrincipalProp::CalendarUserAddressSet(principal_href)
-            }
-            PrincipalPropName::Invalid => {
-                return Err(rustical_dav::Error::BadRequest("invalid prop name".to_owned()).into())
             }
         })
     }

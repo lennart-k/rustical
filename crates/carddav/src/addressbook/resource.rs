@@ -18,7 +18,7 @@ use rustical_xml::XmlDeserialize;
 use serde::Serialize;
 use std::str::FromStr;
 use std::sync::Arc;
-use strum::{EnumDiscriminants, EnumString, VariantNames};
+use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
 
 pub struct AddressbookResourceService<AS: AddressbookStore + ?Sized> {
     addr_store: Arc<AS>,
@@ -26,11 +26,11 @@ pub struct AddressbookResourceService<AS: AddressbookStore + ?Sized> {
     addressbook_id: String,
 }
 
-#[derive(Default, XmlDeserialize, Serialize, PartialEq, EnumDiscriminants)]
+#[derive(XmlDeserialize, Serialize, PartialEq, EnumDiscriminants, Clone)]
 #[serde(rename_all = "kebab-case")]
 #[strum_discriminants(
     name(AddressbookPropName),
-    derive(EnumString, VariantNames),
+    derive(EnumString, VariantNames, IntoStaticStr),
     strum(serialize_all = "kebab-case")
 )]
 pub enum AddressbookProp {
@@ -61,12 +61,6 @@ pub enum AddressbookProp {
 
     // Didn't find the spec
     Getctag(String),
-
-    #[serde(other)]
-    #[xml(other)]
-    #[strum_discriminants(strum(disabled))]
-    #[default]
-    Invalid,
 }
 
 #[derive(Clone, Debug, From, Into)]
@@ -107,9 +101,6 @@ impl Resource for AddressbookResource {
             }
             AddressbookPropName::SyncToken => AddressbookProp::SyncToken(self.0.format_synctoken()),
             AddressbookPropName::Getctag => AddressbookProp::Getctag(self.0.format_synctoken()),
-            AddressbookPropName::Invalid => {
-                return Err(rustical_dav::Error::BadRequest("invalid prop name".to_owned()).into())
-            }
         })
     }
 
@@ -129,7 +120,6 @@ impl Resource for AddressbookResource {
             AddressbookProp::SupportedAddressData(_) => Err(rustical_dav::Error::PropReadOnly),
             AddressbookProp::SyncToken(_) => Err(rustical_dav::Error::PropReadOnly),
             AddressbookProp::Getctag(_) => Err(rustical_dav::Error::PropReadOnly),
-            AddressbookProp::Invalid => Err(rustical_dav::Error::PropReadOnly),
         }
     }
 
@@ -149,7 +139,6 @@ impl Resource for AddressbookResource {
             AddressbookPropName::SupportedAddressData => Err(rustical_dav::Error::PropReadOnly),
             AddressbookPropName::SyncToken => Err(rustical_dav::Error::PropReadOnly),
             AddressbookPropName::Getctag => Err(rustical_dav::Error::PropReadOnly),
-            AddressbookPropName::Invalid => Err(rustical_dav::Error::PropReadOnly),
         }
     }
 

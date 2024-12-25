@@ -5,11 +5,13 @@ use darling::FromDeriveInput;
 use quote::quote;
 use syn::{DataStruct, DeriveInput};
 
-fn invalid_field_branch(allow: bool) -> proc_macro2::TokenStream {
+fn invalid_field_branch(ident: &syn::Ident, allow: bool) -> proc_macro2::TokenStream {
+    let ident = ident.to_string();
     if allow {
         quote! {}
     } else {
-        quote! { return Err(XmlDeError::InvalidFieldName(format!("[{ns:?}]{tag}", tag = String::from_utf8_lossy(tag)))) }
+        quote! {
+        return Err(XmlDeError::InvalidFieldName(#ident, format!("[{ns:?}]{tag}", tag = String::from_utf8_lossy(tag)))) }
     }
 }
 
@@ -85,7 +87,8 @@ impl NamedStruct {
 
         let builder_field_builds = self.fields.iter().map(Field::builder_field_build);
 
-        let invalid_field_branch = invalid_field_branch(self.attrs.allow_invalid.is_present());
+        let invalid_field_branch =
+            invalid_field_branch(ident, self.attrs.allow_invalid.is_present());
 
         quote! {
             impl #impl_generics ::rustical_xml::XmlDeserialize for #ident #type_generics #where_clause {

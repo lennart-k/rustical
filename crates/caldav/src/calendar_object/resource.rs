@@ -11,7 +11,7 @@ use rustical_store::{auth::User, CalendarObject, CalendarStore};
 use rustical_xml::XmlDeserialize;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use strum::{EnumDiscriminants, EnumString, VariantNames};
+use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
 
 pub struct CalendarObjectResourceService<C: CalendarStore + ?Sized> {
     cal_store: Arc<C>,
@@ -20,10 +20,10 @@ pub struct CalendarObjectResourceService<C: CalendarStore + ?Sized> {
     object_id: String,
 }
 
-#[derive(Default, XmlDeserialize, Serialize, PartialEq, EnumDiscriminants)]
+#[derive(XmlDeserialize, Serialize, PartialEq, EnumDiscriminants, Clone)]
 #[strum_discriminants(
     name(CalendarObjectPropName),
-    derive(EnumString, VariantNames),
+    derive(EnumString, VariantNames, IntoStaticStr),
     strum(serialize_all = "kebab-case")
 )]
 #[serde(rename_all = "kebab-case")]
@@ -35,12 +35,6 @@ pub enum CalendarObjectProp {
     // CalDAV (RFC 4791)
     #[serde(rename = "C:calendar-data")]
     CalendarData(String),
-
-    #[serde(other)]
-    #[xml(other)]
-    #[strum_discriminants(strum(disabled))]
-    #[default]
-    Invalid,
 }
 
 #[derive(Clone, From, Into)]
@@ -73,14 +67,12 @@ impl Resource for CalendarObjectResource {
             CalendarObjectPropName::Getcontenttype => {
                 CalendarObjectProp::Getcontenttype("text/calendar;charset=utf-8".to_owned())
             }
-            CalendarObjectPropName::Invalid => {
-                return Err(rustical_dav::Error::BadRequest("invalid prop name".to_owned()).into())
-            }
         })
     }
 
     #[inline]
     fn resource_name() -> &'static str {
+        let a: CalendarObjectPropName = CalendarObjectProp::Getetag("".to_owned()).into();
         "caldav_calendar_object"
     }
 

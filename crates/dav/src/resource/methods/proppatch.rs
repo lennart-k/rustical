@@ -1,5 +1,4 @@
 use crate::privileges::UserPrivilege;
-use crate::resource::InvalidProperty;
 use crate::resource::Resource;
 use crate::resource::ResourceService;
 use crate::xml::multistatus::{PropstatElement, PropstatWrapper, ResponseElement};
@@ -9,6 +8,7 @@ use crate::Error;
 use actix_web::http::StatusCode;
 use actix_web::{web::Path, HttpRequest};
 use rustical_store::auth::User;
+use rustical_xml::Unparsed;
 use rustical_xml::XmlDeserialize;
 use rustical_xml::XmlDocument;
 use rustical_xml::XmlRootTag;
@@ -16,6 +16,21 @@ use std::str::FromStr;
 use tracing::instrument;
 use tracing_actix_web::RootSpan;
 
+#[derive(XmlDeserialize, Clone, Debug)]
+#[xml(untagged)]
+enum SetPropertyPropWrapper<T: XmlDeserialize> {
+    Valid(T),
+    Invalid(Unparsed),
+}
+
+// We are <prop>
+#[derive(XmlDeserialize, Clone, Debug)]
+struct SetPropertyPropWrapperWrapper<T: XmlDeserialize> {
+    #[xml(ty = "untagged")]
+    property: SetPropertyPropWrapper<T>,
+}
+
+// We are <set>
 #[derive(XmlDeserialize, Clone, Debug)]
 struct SetPropertyElement<T: XmlDeserialize> {
     prop: T,
@@ -47,10 +62,6 @@ enum Operation<T: XmlDeserialize> {
 #[derive(XmlDeserialize, XmlRootTag, Clone, Debug)]
 #[xml(root = b"propertyupdate")]
 struct PropertyupdateElement<T: XmlDeserialize> {
-    // #[xml(flatten)]
-    // set: Vec<T>,
-    // #[xml(flatten)]
-    // remove: Vec<TagName>,
     #[xml(ty = "untagged", flatten)]
     operations: Vec<Operation<T>>,
 }
@@ -68,21 +79,9 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
     let resource_service = R::new(&req, path_components.clone()).await?;
 
     // Extract operations
-    let PropertyupdateElement::<<R::Resource as Resource>::Prop> { operations } =
-        XmlDocument::parse_str(&body).map_err(Error::XmlDeserializationError)?;
-
-    // Extract all set property names without verification
-    // Weird workaround because quick_xml doesn't allow untagged enums
-    let propnames: Vec<String> = PropertyupdateElement::<TagName>::parse_str(&body)
-        .map_err(Error::XmlDeserializationError)?
-        .operations
-        .into_iter()
-        .map(|op_el| match op_el {
-            Operation::Set(set_el) => set_el.prop.name,
-            // If we can't remove a nonexisting property then that's no big deal
-            Operation::Remove(remove_el) => remove_el.prop.property.name,
-        })
-        .collect();
+    let PropertyupdateElement::<SetPropertyPropWrapperWrapper<<R::Resource as Resource>::Prop>> {
+        operations,
+    } = XmlDocument::parse_str(&body).map_err(Error::XmlDeserializationError)?;
 
     let mut resource = resource_service.get_resource().await?;
     let privileges = resource.get_user_privileges(&user)?;
@@ -94,27 +93,34 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
     let mut props_conflict = Vec::new();
     let mut props_not_found = Vec::new();
 
-    for (operation, propname) in operations.into_iter().zip(propnames) {
+    for operation in operations.into_iter() {
         match operation {
             Operation::Set(SetPropertyElement { prop }) => {
-                if prop.invalid_property() {
-                    if <R::Resource as Resource>::list_props().contains(&propname.as_str()) {
-                        // This happens in following cases:
-                        // - read-only properties with #[serde(skip_deserializing)]
-                        // - internal properties
-                        props_conflict.push(propname)
-                    } else {
-                        props_not_found.push(propname);
+                match prop.property {
+                    SetPropertyPropWrapper::Valid(prop) => {
+                        let propname: <R::Resource as Resource>::PropName = prop.clone().into();
+                        let propname: &str = propname.into();
+                        match resource.set_prop(prop) {
+                            Ok(()) => props_ok.push(propname.to_owned()),
+                            Err(Error::PropReadOnly) => props_conflict.push(propname.to_owned()),
+                            Err(err) => return Err(err.into()),
+                        };
                     }
-                    continue;
+                    SetPropertyPropWrapper::Invalid(invalid) => {
+                        let propname = invalid.tag_name();
+                        if <R::Resource as Resource>::list_props().contains(&propname.as_str()) {
+                            // This happens in following cases:
+                            // - read-only properties with #[serde(skip_deserializing)]
+                            // - internal properties
+                            props_conflict.push(propname)
+                        } else {
+                            props_not_found.push(propname);
+                        }
+                    }
                 }
-                match resource.set_prop(prop) {
-                    Ok(()) => props_ok.push(propname),
-                    Err(Error::PropReadOnly) => props_conflict.push(propname),
-                    Err(err) => return Err(err.into()),
-                };
             }
-            Operation::Remove(_remove_el) => {
+            Operation::Remove(remove_el) => {
+                let propname = remove_el.prop.property.name;
                 match <<R::Resource as Resource>::PropName as FromStr>::from_str(&propname) {
                     Ok(prop) => match resource.remove_prop(&prop) {
                         Ok(()) => props_ok.push(propname),

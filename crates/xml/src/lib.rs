@@ -36,6 +36,13 @@ impl XmlDeserialize for () {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Unparsed(BytesStart<'static>);
 
+impl Unparsed {
+    pub fn tag_name(&self) -> String {
+        // TODO: respect namespace?
+        String::from_utf8_lossy(self.0.local_name().as_ref()).to_string()
+    }
+}
+
 impl XmlDeserialize for Unparsed {
     fn deserialize<R: BufRead>(
         reader: &mut quick_xml::NsReader<R>,

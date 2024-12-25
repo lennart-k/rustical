@@ -24,7 +24,7 @@ use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::str::FromStr;
 use std::sync::Arc;
-use strum::{EnumDiscriminants, EnumString, VariantNames};
+use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
 
 pub struct CalendarResourceService<C: CalendarStore + ?Sized> {
     cal_store: Arc<C>,
@@ -32,10 +32,10 @@ pub struct CalendarResourceService<C: CalendarStore + ?Sized> {
     calendar_id: String,
 }
 
-#[derive(Default, XmlDeserialize, Serialize, PartialEq, EnumDiscriminants)]
+#[derive(XmlDeserialize, Serialize, PartialEq, EnumDiscriminants, Clone)]
 #[strum_discriminants(
     name(CalendarPropName),
-    derive(EnumString, VariantNames),
+    derive(EnumString, VariantNames, IntoStaticStr),
     strum(serialize_all = "kebab-case")
 )]
 #[serde(rename_all = "kebab-case")]
@@ -90,11 +90,6 @@ pub enum CalendarProp {
     Getctag(String),
     #[serde(rename = "CS:source", alias = "source")]
     Source(Option<HrefElement>),
-
-    #[serde(other)]
-    #[strum_discriminants(strum(disabled))]
-    #[default]
-    Invalid,
 }
 
 #[derive(Clone, Debug, From, Into)]
@@ -168,9 +163,6 @@ impl Resource for CalendarResource {
             CalendarPropName::Source => {
                 CalendarProp::Source(self.0.subscription_url.to_owned().map(HrefElement::from))
             }
-            CalendarPropName::Invalid => {
-                return Err(rustical_dav::Error::BadRequest("invalid prop name".to_owned()).into())
-            }
         })
     }
 
@@ -209,7 +201,6 @@ impl Resource for CalendarResource {
             CalendarProp::Getctag(_) => Err(rustical_dav::Error::PropReadOnly),
             // Converting between a calendar subscription calendar and a normal one would be weird
             CalendarProp::Source(_) => Err(rustical_dav::Error::PropReadOnly),
-            CalendarProp::Invalid => Err(rustical_dav::Error::PropReadOnly),
         }
     }
 
@@ -248,7 +239,6 @@ impl Resource for CalendarResource {
             CalendarPropName::Getctag => Err(rustical_dav::Error::PropReadOnly),
             // Converting a calendar subscription calendar into a normal one would be weird
             CalendarPropName::Source => Err(rustical_dav::Error::PropReadOnly),
-            CalendarPropName::Invalid => Err(rustical_dav::Error::PropReadOnly),
         }
     }
 

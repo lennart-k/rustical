@@ -7,7 +7,6 @@ use actix_web::dev::ResourceMap;
 use actix_web::error::UrlGenerationError;
 use actix_web::test::TestRequest;
 use actix_web::{http::StatusCode, ResponseError};
-pub use invalid_property::InvalidProperty;
 use itertools::Itertools;
 pub use resource_service::ResourceService;
 use rustical_store::auth::User;
@@ -16,12 +15,11 @@ use serde::Serialize;
 use std::str::FromStr;
 use strum::{EnumString, VariantNames};
 
-mod invalid_property;
 mod methods;
 mod resource_service;
 
-pub trait ResourceProp: InvalidProperty + Serialize + XmlDeserialize {}
-impl<T: InvalidProperty + Serialize + XmlDeserialize> ResourceProp for T {}
+pub trait ResourceProp: Serialize + XmlDeserialize {}
+impl<T: Serialize + XmlDeserialize> ResourceProp for T {}
 
 pub trait ResourcePropName: FromStr + VariantNames {}
 impl<T: FromStr + VariantNames> ResourcePropName for T {}
@@ -29,7 +27,7 @@ impl<T: FromStr + VariantNames> ResourcePropName for T {}
 pub trait ResourceType: Serialize + XmlDeserialize {}
 impl<T: Serialize + XmlDeserialize> ResourceType for T {}
 
-#[derive(XmlDeserialize, Serialize, PartialEq, Default)]
+#[derive(XmlDeserialize, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub enum CommonPropertiesProp {
     // WebDAV (RFC 2518)
@@ -43,10 +41,6 @@ pub enum CommonPropertiesProp {
     // WebDAV Access Control Protocol (RFC 3477)
     CurrentUserPrivilegeSet(UserPrivilegeSet),
     Owner(HrefElement),
-
-    #[serde(other)]
-    #[default]
-    Invalid,
 }
 
 #[derive(Serialize)]
@@ -67,8 +61,8 @@ pub enum CommonPropertiesPropName {
 }
 
 pub trait Resource: Clone + 'static {
-    type PropName: ResourcePropName;
-    type Prop: ResourceProp + PartialEq;
+    type PropName: ResourcePropName + From<Self::Prop> + Into<&'static str>;
+    type Prop: ResourceProp + PartialEq + Clone;
     type Error: ResponseError + From<crate::Error>;
     type PrincipalResource: Resource;
 
