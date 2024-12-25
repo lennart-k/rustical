@@ -20,21 +20,6 @@ pub trait Value: Sized {
     fn deserialize(val: &str) -> Result<Self, XmlDeError>;
 }
 
-// impl<T: Value> Value for Option<T> {
-//     fn serialize(&self) -> String {
-//         match self {
-//             Some(inner) => inner.serialize(),
-//             None => "".to_owned(),
-//         }
-//     }
-//     fn deserialize(val: &str) -> Result<Self, XmlDeError> {
-//         match val {
-//             "" => Ok(None),
-//             val => Ok(Some(T::deserialize(val)?)),
-//         }
-//     }
-// }
-
 macro_rules! impl_value_parse {
     ($t:ty) => {
         impl Value for $t {

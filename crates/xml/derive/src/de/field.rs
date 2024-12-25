@@ -1,4 +1,7 @@
-use super::attrs::{ContainerAttrs, FieldAttrs, FieldType};
+use super::{
+    attrs::{ContainerAttrs, FieldAttrs, FieldType},
+    get_generic_type,
+};
 use darling::FromField;
 use heck::ToKebabCase;
 use quote::quote;
@@ -12,23 +15,6 @@ fn wrap_option_if_no_default(
     } else {
         quote! {Some(#value)}
     }
-}
-
-fn get_generic_type(ty: &syn::Type) -> Option<&syn::Type> {
-    if let syn::Type::Path(syn::TypePath { path, .. }) = ty {
-        if let Some(seg) = path.segments.last() {
-            if let syn::PathArguments::AngleBracketed(syn::AngleBracketedGenericArguments {
-                args,
-                ..
-            }) = &seg.arguments
-            {
-                if let Some(syn::GenericArgument::Type(t)) = &args.first() {
-                    return Some(t);
-                }
-            }
-        }
-    }
-    None
 }
 
 pub struct Field {

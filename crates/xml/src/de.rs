@@ -11,8 +11,6 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum XmlDeError {
     #[error(transparent)]
-    QuickXmlDeError(#[from] quick_xml::de::DeError),
-    #[error(transparent)]
     QuickXmlError(#[from] quick_xml::Error),
     #[error(transparent)]
     QuickXmlAttrError(#[from] quick_xml::events::attributes::AttrError),

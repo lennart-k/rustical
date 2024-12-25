@@ -9,7 +9,7 @@ fn invalid_field_branch(allow: bool) -> proc_macro2::TokenStream {
     if allow {
         quote! {}
     } else {
-        quote! { return Err(XmlDeError::InvalidFieldName(format!("[{ns:?}]{tag:?}"))) }
+        quote! { return Err(XmlDeError::InvalidFieldName(format!("[{ns:?}]{tag}", tag = String::from_utf8_lossy(tag)))) }
     }
 }
 
@@ -64,6 +64,7 @@ impl NamedStruct {
     }
 
     pub fn impl_de(&self) -> proc_macro2::TokenStream {
+        let builder_generics = &self.generics;
         let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
         let ident = &self.ident;
 
@@ -99,7 +100,7 @@ impl NamedStruct {
                     let mut buf = Vec::new();
 
                     // initialise fields
-                    struct StructBuilder #type_generics #where_clause {
+                    struct StructBuilder #builder_generics {
                         #(#builder_fields),*
                     }
 

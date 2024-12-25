@@ -19,6 +19,7 @@ pub struct VariantAttrs {
     #[darling(flatten)]
     pub common: TagAttrs,
     pub other: Flag,
+    pub skip_deserializing: Flag,
 }
 
 #[derive(Default, FromDeriveInput, Clone)]
