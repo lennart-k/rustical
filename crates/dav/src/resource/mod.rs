@@ -11,7 +11,8 @@ pub use invalid_property::InvalidProperty;
 use itertools::Itertools;
 pub use resource_service::ResourceService;
 use rustical_store::auth::User;
-use serde::{Deserialize, Serialize};
+use rustical_xml::XmlDeserialize;
+use serde::Serialize;
 use std::str::FromStr;
 use strum::{EnumString, VariantNames};
 
@@ -19,20 +20,21 @@ mod invalid_property;
 mod methods;
 mod resource_service;
 
-pub trait ResourceProp: InvalidProperty + Serialize + for<'de> Deserialize<'de> {}
-impl<T: InvalidProperty + Serialize + for<'de> Deserialize<'de>> ResourceProp for T {}
+pub trait ResourceProp: InvalidProperty + Serialize + XmlDeserialize {}
+impl<T: InvalidProperty + Serialize + XmlDeserialize> ResourceProp for T {}
 
 pub trait ResourcePropName: FromStr + VariantNames {}
 impl<T: FromStr + VariantNames> ResourcePropName for T {}
 
-pub trait ResourceType: Serialize + for<'de> Deserialize<'de> {}
-impl<T: Serialize + for<'de> Deserialize<'de>> ResourceType for T {}
+pub trait ResourceType: Serialize + XmlDeserialize {}
+impl<T: Serialize + XmlDeserialize> ResourceType for T {}
 
-#[derive(Deserialize, Serialize, PartialEq, Default)]
+#[derive(XmlDeserialize, Serialize, PartialEq, Default)]
 #[serde(rename_all = "kebab-case")]
 pub enum CommonPropertiesProp {
     // WebDAV (RFC 2518)
     #[serde(skip_deserializing)]
+    #[xml(skip_deserializing)]
     Resourcetype(Resourcetype),
 
     // WebDAV Current Principal Extension (RFC 5397)
@@ -40,7 +42,7 @@ pub enum CommonPropertiesProp {
 
     // WebDAV Access Control Protocol (RFC 3477)
     CurrentUserPrivilegeSet(UserPrivilegeSet),
-    Owner(Option<HrefElement>),
+    Owner(HrefElement),
 
     #[serde(other)]
     #[default]
@@ -97,11 +99,18 @@ pub trait Resource: Clone + 'static {
                 CommonPropertiesProp::CurrentUserPrivilegeSet(self.get_user_privileges(user)?)
             }
             CommonPropertiesPropName::Owner => {
-                CommonPropertiesProp::Owner(self.get_owner().map(|owner| {
+                // TODO: Reintroduce optional owner field
+                let owner = self.get_owner().unwrap_or(&user.id);
+                CommonPropertiesProp::Owner(
                     Self::PrincipalResource::get_url(rmap, [owner])
                         .unwrap()
-                        .into()
-                }))
+                        .into(),
+                )
+                // CommonPropertiesProp::Owner(self.get_owner().map(|owner| {
+                //     Self::PrincipalResource::get_url(rmap, [owner])
+                //         .unwrap()
+                //         .into()
+                // }))
             }
         })
     }

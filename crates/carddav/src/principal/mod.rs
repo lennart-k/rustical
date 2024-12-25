@@ -9,7 +9,8 @@ use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
 use rustical_store::auth::User;
 use rustical_store::AddressbookStore;
-use serde::{Deserialize, Serialize};
+use rustical_xml::XmlDeserialize;
+use serde::Serialize;
 use std::sync::Arc;
 use strum::{EnumDiscriminants, EnumString, VariantNames};
 
@@ -23,7 +24,7 @@ pub struct PrincipalResource {
     principal: String,
 }
 
-#[derive(Default, Deserialize, Serialize, PartialEq, EnumDiscriminants)]
+#[derive(Default, XmlDeserialize, Serialize, PartialEq, EnumDiscriminants)]
 #[strum_discriminants(
     name(PrincipalPropName),
     derive(EnumString, VariantNames),
@@ -43,6 +44,7 @@ pub enum PrincipalProp {
     PrincipalAddress(Option<HrefElement>),
 
     #[serde(other)]
+    #[xml(other)]
     #[strum_discriminants(strum(disabled))]
     #[default]
     Invalid,

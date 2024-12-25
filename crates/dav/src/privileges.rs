@@ -1,8 +1,8 @@
-use serde::{Deserialize, Serialize};
+use rustical_xml::XmlDeserialize;
+use serde::Serialize;
 use std::collections::HashSet;
 
-#[derive(Debug, Clone, Serialize, Deserialize, Eq, Hash, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, Serialize, XmlDeserialize, Eq, Hash, PartialEq)]
 pub enum UserPrivilege {
     Read,
     Write,
@@ -42,10 +42,9 @@ impl Serialize for UserPrivilegeSet {
     }
 }
 
-// TODO: implement Deserialize once we need it
-#[derive(Debug, Clone, Deserialize, Default, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, XmlDeserialize, Default, PartialEq)]
 pub struct UserPrivilegeSet {
+    #[xml(flatten)]
     privileges: HashSet<UserPrivilege>,
 }
 

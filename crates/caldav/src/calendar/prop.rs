@@ -1,20 +1,20 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct SupportedCalendarComponent {
     #[serde(rename = "@name")]
     pub name: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct SupportedCalendarComponentSet {
     #[serde(rename = "C:comp")]
     pub comp: Vec<SupportedCalendarComponent>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct CalendarData {
     #[serde(rename = "@content-type")]

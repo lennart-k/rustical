@@ -5,47 +5,53 @@ use crate::resource::ResourceService;
 use crate::xml::multistatus::{PropstatElement, PropstatWrapper, ResponseElement};
 use crate::xml::MultistatusElement;
 use crate::xml::TagList;
-use crate::xml::TagName;
 use crate::Error;
 use actix_web::http::StatusCode;
 use actix_web::{web::Path, HttpRequest};
 use rustical_store::auth::User;
-use serde::{Deserialize, Serialize};
+use rustical_xml::XmlDeserialize;
+use rustical_xml::XmlDocument;
+use rustical_xml::XmlRootTag;
 use std::str::FromStr;
 use tracing::instrument;
 use tracing_actix_web::RootSpan;
 
-// https://docs.rs/quick-xml/latest/quick_xml/de/index.html#normal-enum-variant
-#[derive(Deserialize, Serialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
-struct PropertyElement<T> {
-    #[serde(rename = "$value")]
+#[derive(XmlDeserialize, Clone, Debug)]
+struct SetPropertyElement<T: XmlDeserialize> {
     prop: T,
 }
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
-struct SetPropertyElement<T> {
-    prop: PropertyElement<T>,
+#[derive(XmlDeserialize, Clone, Debug)]
+struct TagName {
+    #[xml(ty = "tag_name")]
+    name: String,
 }
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
+#[derive(XmlDeserialize, Clone, Debug)]
+struct PropertyElement {
+    #[xml(ty = "untagged")]
+    property: TagName,
+}
+
+#[derive(XmlDeserialize, Clone, Debug)]
 struct RemovePropertyElement {
-    prop: PropertyElement<TagName>,
+    prop: PropertyElement,
 }
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
-enum Operation<PropType> {
-    Set(SetPropertyElement<PropType>),
+#[derive(XmlDeserialize, Clone, Debug)]
+enum Operation<T: XmlDeserialize> {
+    Set(SetPropertyElement<T>),
     Remove(RemovePropertyElement),
 }
 
-#[derive(Deserialize, Clone, Debug)]
-#[serde(rename_all = "kebab-case")]
-struct PropertyupdateElement<T> {
-    #[serde(rename = "$value", default = "Vec::new")]
+#[derive(XmlDeserialize, XmlRootTag, Clone, Debug)]
+#[xml(root = b"propertyupdate")]
+struct PropertyupdateElement<T: XmlDeserialize> {
+    // #[xml(flatten)]
+    // set: Vec<T>,
+    // #[xml(flatten)]
+    // remove: Vec<TagName>,
+    #[xml(ty = "untagged", flatten)]
     operations: Vec<Operation<T>>,
 }
 
@@ -63,18 +69,18 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
 
     // Extract operations
     let PropertyupdateElement::<<R::Resource as Resource>::Prop> { operations } =
-        quick_xml::de::from_str(&body).map_err(Error::XmlDeserializationError)?;
+        XmlDocument::parse_str(&body).map_err(Error::XmlDeserializationError)?;
 
     // Extract all set property names without verification
     // Weird workaround because quick_xml doesn't allow untagged enums
-    let propnames: Vec<String> = quick_xml::de::from_str::<PropertyupdateElement<TagName>>(&body)
+    let propnames: Vec<String> = PropertyupdateElement::<TagName>::parse_str(&body)
         .map_err(Error::XmlDeserializationError)?
         .operations
         .into_iter()
         .map(|op_el| match op_el {
-            Operation::Set(set_el) => set_el.prop.prop.into(),
+            Operation::Set(set_el) => set_el.prop.name,
             // If we can't remove a nonexisting property then that's no big deal
-            Operation::Remove(remove_el) => remove_el.prop.prop.into(),
+            Operation::Remove(remove_el) => remove_el.prop.property.name,
         })
         .collect();
 
@@ -90,9 +96,7 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
 
     for (operation, propname) in operations.into_iter().zip(propnames) {
         match operation {
-            Operation::Set(SetPropertyElement {
-                prop: PropertyElement { prop },
-            }) => {
+            Operation::Set(SetPropertyElement { prop }) => {
                 if prop.invalid_property() {
                     if <R::Resource as Resource>::list_props().contains(&propname.as_str()) {
                         // This happens in following cases:

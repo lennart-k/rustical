@@ -14,7 +14,8 @@ use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{Resource, ResourceService};
 use rustical_store::auth::User;
 use rustical_store::{Addressbook, AddressbookStore};
-use serde::{Deserialize, Serialize};
+use rustical_xml::XmlDeserialize;
+use serde::Serialize;
 use std::str::FromStr;
 use std::sync::Arc;
 use strum::{EnumDiscriminants, EnumString, VariantNames};
@@ -25,7 +26,7 @@ pub struct AddressbookResourceService<AS: AddressbookStore + ?Sized> {
     addressbook_id: String,
 }
 
-#[derive(Default, Deserialize, Serialize, PartialEq, EnumDiscriminants)]
+#[derive(Default, XmlDeserialize, Serialize, PartialEq, EnumDiscriminants)]
 #[serde(rename_all = "kebab-case")]
 #[strum_discriminants(
     name(AddressbookPropName),
@@ -48,8 +49,10 @@ pub enum AddressbookProp {
         alias = "supported-address-data"
     )]
     #[serde(skip_deserializing)]
+    #[xml(skip_deserializing)]
     SupportedAddressData(SupportedAddressData),
     #[serde(skip_deserializing)]
+    #[xml(skip_deserializing)]
     SupportedReportSet(SupportedReportSet),
     MaxResourceSize(i64),
 
@@ -60,6 +63,7 @@ pub enum AddressbookProp {
     Getctag(String),
 
     #[serde(other)]
+    #[xml(other)]
     #[strum_discriminants(strum(disabled))]
     #[default]
     Invalid,

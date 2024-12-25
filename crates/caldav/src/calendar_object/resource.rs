@@ -8,6 +8,7 @@ use rustical_dav::{
     resource::{Resource, ResourceService},
 };
 use rustical_store::{auth::User, CalendarObject, CalendarStore};
+use rustical_xml::XmlDeserialize;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use strum::{EnumDiscriminants, EnumString, VariantNames};
@@ -19,7 +20,7 @@ pub struct CalendarObjectResourceService<C: CalendarStore + ?Sized> {
     object_id: String,
 }
 
-#[derive(Default, Deserialize, Serialize, PartialEq, EnumDiscriminants)]
+#[derive(Default, XmlDeserialize, Serialize, PartialEq, EnumDiscriminants)]
 #[strum_discriminants(
     name(CalendarObjectPropName),
     derive(EnumString, VariantNames),
@@ -36,6 +37,7 @@ pub enum CalendarObjectProp {
     CalendarData(String),
 
     #[serde(other)]
+    #[xml(other)]
     #[strum_discriminants(strum(disabled))]
     #[default]
     Invalid,

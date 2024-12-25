@@ -19,7 +19,8 @@ use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
 use rustical_store::auth::User;
 use rustical_store::{Calendar, CalendarStore};
-use serde::{Deserialize, Serialize};
+use rustical_xml::XmlDeserialize;
+use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::str::FromStr;
 use std::sync::Arc;
@@ -31,7 +32,7 @@ pub struct CalendarResourceService<C: CalendarStore + ?Sized> {
     calendar_id: String,
 }
 
-#[derive(Default, Deserialize, Serialize, PartialEq, EnumDiscriminants)]
+#[derive(Default, XmlDeserialize, Serialize, PartialEq, EnumDiscriminants)]
 #[strum_discriminants(
     name(CalendarPropName),
     derive(EnumString, VariantNames),
@@ -48,6 +49,7 @@ pub enum CalendarProp {
     // in DAVx5 yet
     // https://github.com/bitfireAT/webdav-push/commit/461259a2f2174454b2b00033419b11fac52b79e3
     #[serde(skip_deserializing)]
+    #[xml(skip_deserializing)]
     #[serde(rename = "P:push-transports", alias = "push-transports")]
     Transports(Transports),
     Topic(String),
@@ -65,15 +67,19 @@ pub enum CalendarProp {
         rename = "C:supported-calendar-component-set",
         alias = "supported-calendar-component-set"
     )]
+    // TODO: Re-add
+    #[xml(skip_deserializing)]
     SupportedCalendarComponentSet(SupportedCalendarComponentSet),
     #[serde(
         rename = "C:supported-calendar-data",
         alias = "supported-calendar-data"
     )]
     #[serde(skip_deserializing)]
+    #[xml(skip_deserializing)]
     SupportedCalendarData(SupportedCalendarData),
     MaxResourceSize(i64),
     #[serde(skip_deserializing)]
+    #[xml(skip_deserializing)]
     SupportedReportSet(SupportedReportSet),
 
     // Collection Synchronization (RFC 6578)

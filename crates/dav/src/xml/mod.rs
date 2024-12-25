@@ -2,20 +2,15 @@ pub mod multistatus;
 mod propfind;
 mod resourcetype;
 pub mod tag_list;
-pub mod tag_name;
-
-pub use propfind::{PropElement, PropfindElement, PropfindType, Propname};
-
 use derive_more::derive::From;
 pub use multistatus::MultistatusElement;
-pub use tag_list::TagList;
-pub use tag_name::TagName;
-
+pub use propfind::{PropElement, PropfindElement, PropfindType, Propname};
 pub use resourcetype::Resourcetype;
+use rustical_xml::XmlDeserialize;
+use serde::Serialize;
+pub use tag_list::TagList;
 
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Deserialize, Serialize, From, PartialEq)]
+#[derive(XmlDeserialize, Debug, Clone, Serialize, From, PartialEq)]
 pub struct HrefElement {
     pub href: String,
 }
