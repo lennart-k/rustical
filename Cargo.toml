@@ -96,6 +96,11 @@ rand = "0.8"
 argon2 = "0.5"
 rpassword = "7.3"
 password-hash = { version = "0.5" }
+syn = { version = "2.0", features = ["full"] }
+quote = "1.0"
+proc-macro2 = "1.0"
+heck = "0.5"
+darling = "0.20"
 
 [dependencies]
 rustical_store = { workspace = true }
