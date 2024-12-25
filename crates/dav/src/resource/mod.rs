@@ -40,7 +40,7 @@ pub enum CommonPropertiesProp {
 
     // WebDAV Access Control Protocol (RFC 3477)
     CurrentUserPrivilegeSet(UserPrivilegeSet),
-    Owner(HrefElement),
+    Owner(Option<HrefElement>),
 }
 
 #[derive(Serialize)]
@@ -93,18 +93,11 @@ pub trait Resource: Clone + 'static {
                 CommonPropertiesProp::CurrentUserPrivilegeSet(self.get_user_privileges(user)?)
             }
             CommonPropertiesPropName::Owner => {
-                // TODO: Reintroduce optional owner field
-                let owner = self.get_owner().unwrap_or(&user.id);
-                CommonPropertiesProp::Owner(
+                CommonPropertiesProp::Owner(self.get_owner().map(|owner| {
                     Self::PrincipalResource::get_url(rmap, [owner])
                         .unwrap()
-                        .into(),
-                )
-                // CommonPropertiesProp::Owner(self.get_owner().map(|owner| {
-                //     Self::PrincipalResource::get_url(rmap, [owner])
-                //         .unwrap()
-                //         .into()
-                // }))
+                        .into()
+                }))
             }
         })
     }
