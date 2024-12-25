@@ -2,7 +2,6 @@ use super::{CalDateTime, EventObject, JournalObject, TodoObject};
 use crate::Error;
 use anyhow::Result;
 use ical::parser::{ical::component::IcalTimeZone, Component};
-use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{collections::HashMap, io::BufReader};
 
@@ -26,42 +25,6 @@ pub struct CalendarObject {
     id: String,
     ics: String,
     data: CalendarObjectComponent,
-}
-
-// Custom implementation for CalendarObject (de)serialization
-impl<'de> Deserialize<'de> for CalendarObject {
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        #[derive(Deserialize)]
-        struct Inner {
-            id: String,
-            ics: String,
-        }
-        let Inner { id, ics } = Inner::deserialize(deserializer)?;
-        Self::from_ics(id, ics).map_err(serde::de::Error::custom)
-    }
-}
-
-impl Serialize for CalendarObject {
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        #[derive(Serialize)]
-        struct Inner {
-            id: String,
-            ics: String,
-        }
-        Inner::serialize(
-            &Inner {
-                id: self.get_id().to_string(),
-                ics: self.get_ics().to_string(),
-            },
-            serializer,
-        )
-    }
 }
 
 impl CalendarObject {
