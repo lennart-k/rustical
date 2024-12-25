@@ -72,7 +72,6 @@ impl Resource for CalendarObjectResource {
 
     #[inline]
     fn resource_name() -> &'static str {
-        let a: CalendarObjectPropName = CalendarObjectProp::Getetag("".to_owned()).into();
         "caldav_calendar_object"
     }
 
