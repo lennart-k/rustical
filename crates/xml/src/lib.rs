@@ -12,32 +12,19 @@ pub use de::XmlRootTag;
 pub use se::XmlSerialize;
 pub use value::Value;
 
-// impl<T: XmlDeserialize> XmlDeserialize for Option<T> {
-//     fn deserialize<R: BufRead>(
-//         reader: &mut quick_xml::NsReader<R>,
-//         start: &BytesStart,
-//         empty: bool,
-//     ) -> Result<Self, XmlDeError> {
-//         Ok(Some(T::deserialize(reader, start, empty)?))
-//     }
-// }
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Unit;
-
-impl XmlDeserialize for Unit {
+impl XmlDeserialize for () {
     fn deserialize<R: BufRead>(
         reader: &mut quick_xml::NsReader<R>,
         start: &BytesStart,
         empty: bool,
     ) -> Result<Self, XmlDeError> {
         if empty {
-            return Ok(Unit);
+            return Ok(());
         }
         let mut buf = Vec::new();
         loop {
             match reader.read_event_into(&mut buf)? {
-                Event::End(e) if e.name() == start.name() => return Ok(Unit),
+                Event::End(e) if e.name() == start.name() => return Ok(()),
                 Event::Eof => return Err(XmlDeError::Eof),
                 _ => {}
             };

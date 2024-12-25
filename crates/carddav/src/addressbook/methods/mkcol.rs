@@ -2,14 +2,14 @@ use crate::Error;
 use actix_web::web::Path;
 use actix_web::{web::Data, HttpResponse};
 use rustical_store::{auth::User, Addressbook, AddressbookStore};
-use rustical_xml::{Unit, XmlDeserialize, XmlDocument, XmlRootTag};
+use rustical_xml::{XmlDeserialize, XmlDocument, XmlRootTag};
 use tracing::instrument;
 use tracing_actix_web::RootSpan;
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 pub struct Resourcetype {
-    addressbook: Option<Unit>,
-    collection: Option<Unit>,
+    addressbook: Option<()>,
+    collection: Option<()>,
 }
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
@@ -110,8 +110,8 @@ mod tests {
                 set: PropElement {
                     prop: MkcolAddressbookProp {
                         resourcetype: Some(Resourcetype {
-                            addressbook: Some(Unit),
-                            collection: Some(Unit)
+                            addressbook: Some(()),
+                            collection: Some(())
                         }),
                         displayname: Some("whoops".to_owned()),
                         description: Some("okay".to_owned())

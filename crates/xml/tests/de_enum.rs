@@ -1,4 +1,4 @@
-use rustical_xml::{de::XmlDocument, Unit, XmlDeserialize, XmlRootTag};
+use rustical_xml::{de::XmlDocument, XmlDeserialize, XmlRootTag};
 
 #[test]
 fn test_struct_tagged_enum() {
@@ -78,7 +78,7 @@ fn test_tagged_enum_complex() {
 
     #[derive(Debug, XmlDeserialize, PartialEq)]
     struct Nice {
-        nice: Unit,
+        nice: (),
     }
 
     let asd = Propfind::parse_str(
@@ -94,7 +94,6 @@ fn test_tagged_enum_complex() {
     "#,
     )
     .unwrap();
-    dbg!(asd);
 }
 
 #[test]

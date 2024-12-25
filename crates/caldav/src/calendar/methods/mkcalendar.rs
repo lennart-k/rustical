@@ -3,14 +3,14 @@ use actix_web::web::{Data, Path};
 use actix_web::HttpResponse;
 use rustical_store::auth::User;
 use rustical_store::{Calendar, CalendarStore};
-use rustical_xml::{Unit, XmlDeserialize, XmlDocument, XmlRootTag};
+use rustical_xml::{XmlDeserialize, XmlDocument, XmlRootTag};
 use tracing::instrument;
 use tracing_actix_web::RootSpan;
 
 #[derive(XmlDeserialize, Clone, Debug)]
 pub struct Resourcetype {
-    calendar: Option<Unit>,
-    collection: Option<Unit>,
+    calendar: Option<()>,
+    collection: Option<()>,
 }
 
 #[derive(XmlDeserialize, Clone, Debug)]

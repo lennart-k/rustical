@@ -1,6 +1,6 @@
 use rustical_xml::de::XmlDocument;
 use rustical_xml::XmlRootTag;
-use rustical_xml::{Unit, Unparsed, XmlDeserialize};
+use rustical_xml::{Unparsed, XmlDeserialize};
 use std::collections::HashSet;
 
 #[test]
@@ -155,11 +155,11 @@ fn test_struct_ns() {
     #[xml(root = b"document", ns_strict)]
     struct Document {
         #[xml(ns = b"hello")]
-        child: Unit,
+        child: (),
     }
 
     let doc = Document::parse_str(r#"<document><child xmlns="hello" /></document>"#).unwrap();
-    assert_eq!(doc, Document { child: Unit });
+    assert_eq!(doc, Document { child: () });
 }
 
 #[test]
@@ -168,7 +168,7 @@ fn test_struct_attr() {
     #[xml(root = b"document", ns_strict)]
     struct Document {
         #[xml(ns = b"hello")]
-        child: Unit,
+        child: (),
         #[xml(ty = "attr", default = "Default::default")]
         test: String,
         #[xml(ty = "attr")]
@@ -182,7 +182,7 @@ fn test_struct_attr() {
     assert_eq!(
         doc,
         Document {
-            child: Unit,
+            child: (),
             test: "hello!".to_owned(),
             number: 2
         }

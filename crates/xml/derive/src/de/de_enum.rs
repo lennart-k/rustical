@@ -117,7 +117,7 @@ impl Variant {
                     quote! {
                         #variant_name => {
                             // Make sure that content is still consumed
-                            ::rustical_xml::Unit::deserialize(reader, start, empty)?;
+                            <() as ::rustical_xml::XmlDeserialize>::deserialize(reader, start, empty)?;
                             Ok(Self::#ident)
                         }
                     }
@@ -129,7 +129,7 @@ impl Variant {
                     quote! {
                         _ => {
                             // Make sure that content is still consumed
-                            ::rustical_xml::Unit::deserialize(reader, start, empty)?;
+                            <() as ::rustical_xml::XmlDeserialize>::deserialize(reader, start, empty)?;
                             Ok(Self::#ident)
                         }
                     }
@@ -168,7 +168,7 @@ impl Variant {
             Fields::Unit => {
                 quote! {
                     // Make sure that content is still consumed
-                    if let Ok(_) = ::rustical_xml::Unit::deserialize(reader, start, empty) {
+                    if let Ok(_) = <() as ::rustical_xml::XmlDeserialize>::deserialize(reader, start, empty) {
                         return Ok(Self::#ident);
                     }
                 }

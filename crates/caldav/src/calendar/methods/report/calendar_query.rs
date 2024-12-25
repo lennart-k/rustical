@@ -6,7 +6,7 @@ use rustical_dav::{
     xml::{MultistatusElement, PropElement, PropfindType},
 };
 use rustical_store::{auth::User, calendar::UtcDateTime, CalendarObject, CalendarStore};
-use rustical_xml::{Unit, XmlDeserialize};
+use rustical_xml::XmlDeserialize;
 
 use crate::{
     calendar_object::resource::{CalendarObjectProp, CalendarObjectResource},
@@ -27,7 +27,7 @@ pub(crate) struct TimeRangeElement {
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
 struct ParamFilterElement {
-    is_not_defined: Option<Unit>,
+    is_not_defined: Option<()>,
     text_match: Option<TextMatchElement>,
 
     #[xml(ty = "attr")]
@@ -46,7 +46,7 @@ struct TextMatchElement {
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
 pub(crate) struct PropFilterElement {
-    is_not_defined: Option<Unit>,
+    is_not_defined: Option<()>,
     time_range: Option<TimeRangeElement>,
     text_match: Option<TextMatchElement>,
     #[xml(flatten)]
@@ -57,7 +57,7 @@ pub(crate) struct PropFilterElement {
 #[allow(dead_code)]
 // https://datatracker.ietf.org/doc/html/rfc4791#section-9.7.1
 pub(crate) struct CompFilterElement {
-    pub(crate) is_not_defined: Option<Unit>,
+    pub(crate) is_not_defined: Option<()>,
     pub(crate) time_range: Option<TimeRangeElement>,
     #[xml(flatten)]
     pub(crate) prop_filter: Vec<PropFilterElement>,
