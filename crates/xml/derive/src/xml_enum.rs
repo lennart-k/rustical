@@ -92,26 +92,37 @@ impl Enum {
     pub fn impl_se(&self) -> proc_macro2::TokenStream {
         let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
         let ident = &self.ident;
+        let enum_untagged = self.attrs.untagged.is_present();
+        let variant_serializers = self.variants.iter().map(Variant::se_branch);
 
-        // TODO: Implement attributes
         quote! {
             impl #impl_generics ::rustical_xml::XmlSerialize for #ident #type_generics #where_clause {
                 fn serialize<W: ::std::io::Write>(
                     &self,
+                    ns: Option<&[u8]>,
                     tag: Option<&[u8]>,
                     writer: &mut ::quick_xml::Writer<W>
                 ) -> ::std::io::Result<()> {
                     use ::quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
 
                     let tag_str = tag.map(String::from_utf8_lossy);
+                    const enum_untagged: bool = #enum_untagged;
 
                     if let Some(tag) = &tag_str {
-                        writer.write_event(Event::Start(BytesStart::new(tag.to_owned())))?;
+                        let bytes_start = BytesStart::new(tag.to_owned());
+                        writer.write_event(Event::Start(bytes_start))?;
                     }
+
+                    #(#variant_serializers);*
+
                     if let Some(tag) = &tag_str {
                         writer.write_event(Event::End(BytesEnd::new(tag.to_owned())))?;
                     }
                     Ok(())
+                }
+
+                fn attributes<'a>(&self) -> Vec<::quick_xml::events::attributes::Attribute<'a>> {
+                    vec![]
                 }
             }
         }

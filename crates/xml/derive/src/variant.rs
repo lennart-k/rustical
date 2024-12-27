@@ -172,4 +172,38 @@ impl Variant {
             }
         })
     }
+
+    pub fn se_branch(&self) -> proc_macro2::TokenStream {
+        let ident = self.ident();
+        let variant_name = self.xml_name();
+
+        match &self.variant.fields {
+            Fields::Named(_) => {
+                panic!(
+                    "struct variants are not supported, please use a tuple variant with a struct"
+                )
+            }
+            Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
+                if unnamed.len() != 1 {
+                    panic!("tuple variants should contain exactly one element");
+                }
+                quote! {
+                    if let Self::#ident(val) = &self {
+                        if !enum_untagged {
+                            ::rustical_xml::XmlSerialize::serialize(val, None, Some(#variant_name), writer)?;
+                        } else {
+                            ::rustical_xml::XmlSerialize::serialize(val, None, None, writer)?;
+                        };
+                    }
+                }
+            }
+            Fields::Unit => {
+                quote! {
+                     if let Self::#ident = self {
+                         ::rustical_xml::XmlSerialize::serialize(&(), ns, tag, writer)?;
+                     }
+                }
+            }
+        }
+    }
 }

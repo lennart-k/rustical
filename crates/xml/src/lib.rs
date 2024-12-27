@@ -1,3 +1,4 @@
+use quick_xml::events::BytesEnd;
 use quick_xml::events::{BytesStart, Event};
 use std::io::BufRead;
 
@@ -31,6 +32,27 @@ impl XmlDeserialize for () {
                 _ => {}
             };
         }
+    }
+}
+
+impl XmlSerialize for () {
+    fn serialize<W: std::io::Write>(
+        &self,
+        ns: Option<&[u8]>,
+        tag: Option<&[u8]>,
+        writer: &mut quick_xml::Writer<W>,
+    ) -> std::io::Result<()> {
+        let tag_str = tag.map(String::from_utf8_lossy);
+
+        if let Some(tag) = &tag_str {
+            writer.write_event(Event::Empty(BytesStart::new(tag.clone())))?;
+        }
+        Ok(())
+    }
+
+    #[allow(refining_impl_trait)]
+    fn attributes<'a>(&self) -> Vec<quick_xml::events::attributes::Attribute<'a>> {
+        vec![]
     }
 }
 
