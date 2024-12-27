@@ -258,10 +258,10 @@ impl Field {
                 writer.write_event(Event::Text(BytesText::new(&self.#field_ident)))?;
             }),
             FieldType::Tag => Some(quote! {
-                self.#field_ident.serialize(None, Some(#field_name), writer)?;
+                ::rustical_xml::XmlSerialize::serialize(&self.#field_ident, None, Some(#field_name), writer)?;
             }),
             FieldType::Untagged => Some(quote! {
-                self.#field_ident.serialize(None, None, writer)?;
+                ::rustical_xml::XmlSerialize::serialize(&self.#field_ident, None, None, writer)?;
             }),
             // TODO: Think about what to do here
             FieldType::TagName | FieldType::Namespace => None,

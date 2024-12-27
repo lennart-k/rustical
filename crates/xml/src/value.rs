@@ -1,9 +1,9 @@
-use quick_xml::events::{BytesStart, Event};
+use quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
 use std::num::{ParseFloatError, ParseIntError};
 use std::{convert::Infallible, io::BufRead};
 use thiserror::Error;
 
-use crate::{XmlDeError, XmlDeserialize};
+use crate::{XmlDeError, XmlDeserialize, XmlSerialize};
 
 #[derive(Debug, Error)]
 pub enum ParseValueError {
@@ -77,5 +77,31 @@ impl<T: Value> XmlDeserialize for T {
         }
 
         Value::deserialize(&string)
+    }
+}
+
+impl<T: Value> XmlSerialize for T {
+    fn serialize<W: std::io::Write>(
+        &self,
+        ns: Option<&[u8]>,
+        tag: Option<&[u8]>,
+        writer: &mut quick_xml::Writer<W>,
+    ) -> std::io::Result<()> {
+        let tag_str = tag.map(String::from_utf8_lossy);
+
+        if let Some(tag) = &tag_str {
+            writer.write_event(Event::Start(BytesStart::new(tag.clone())))?;
+        }
+        writer.write_event(Event::Text(BytesText::new(&self.serialize())))?;
+
+        if let Some(tag) = &tag_str {
+            writer.write_event(Event::End(BytesEnd::new(tag.clone())))?;
+        }
+        Ok(())
+    }
+
+    #[allow(refining_impl_trait)]
+    fn attributes<'a>(&self) -> Vec<quick_xml::events::attributes::Attribute<'a>> {
+        vec![]
     }
 }

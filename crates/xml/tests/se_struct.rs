@@ -25,7 +25,6 @@ fn test_struct_document() {
     .serialize_root(&mut writer)
     .unwrap();
     let out = String::from_utf8(buf).unwrap();
-    dbg!(out);
 }
 
 #[test]
@@ -56,5 +55,43 @@ fn test_struct_untagged_attr() {
     .serialize_root(&mut writer)
     .unwrap();
     let out = String::from_utf8(buf).unwrap();
-    dbg!(out);
+}
+
+#[test]
+fn test_struct_value_tagged() {
+    #[derive(Debug, XmlRootTag, XmlSerialize, PartialEq)]
+    #[xml(root = b"document")]
+    struct Document {
+        href: String,
+    }
+
+    let mut buf = Vec::new();
+    let mut writer = quick_xml::Writer::new(&mut buf);
+    Document {
+        href: "okay".to_owned(),
+    }
+    .serialize_root(&mut writer)
+    .unwrap();
+    let out = String::from_utf8(buf).unwrap();
+    assert_eq!(out, "<document><href>okay</href></document>");
+}
+
+#[test]
+fn test_struct_value_untagged() {
+    #[derive(Debug, XmlRootTag, XmlSerialize, PartialEq)]
+    #[xml(root = b"document")]
+    struct Document {
+        #[xml(ty = "untagged")]
+        href: String,
+    }
+
+    let mut buf = Vec::new();
+    let mut writer = quick_xml::Writer::new(&mut buf);
+    Document {
+        href: "okay".to_owned(),
+    }
+    .serialize_root(&mut writer)
+    .unwrap();
+    let out = String::from_utf8(buf).unwrap();
+    assert_eq!(out, "<document>okay</document>");
 }
