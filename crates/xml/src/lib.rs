@@ -8,10 +8,11 @@ mod value;
 
 pub use de::XmlDeserialize;
 pub use de::XmlDocument;
-pub use de::XmlRootTag;
 pub use error::XmlDeError;
 pub use se::XmlSerialize;
+pub use se::XmlSerializeRoot;
 pub use value::Value;
+pub use xml_derive::XmlRootTag;
 
 impl XmlDeserialize for () {
     fn deserialize<R: BufRead>(
@@ -57,4 +58,9 @@ impl XmlDeserialize for Unparsed {
         }
         Ok(Self(start.to_owned()))
     }
+}
+
+pub trait XmlRootTag {
+    fn root_tag() -> &'static [u8];
+    fn root_ns() -> Option<&'static [u8]>;
 }

@@ -3,11 +3,11 @@ use quick_xml::name::ResolveResult;
 use std::io::BufRead;
 pub use xml_derive::XmlDeserialize;
 pub use xml_derive::XmlDocument;
-pub use xml_derive::XmlRootTag;
 
 use quick_xml::events::{BytesStart, Event};
 
 use crate::XmlDeError;
+use crate::XmlRootTag;
 
 pub trait XmlDeserialize: Sized {
     fn deserialize<R: BufRead>(
@@ -15,11 +15,6 @@ pub trait XmlDeserialize: Sized {
         start: &BytesStart,
         empty: bool,
     ) -> Result<Self, XmlDeError>;
-}
-
-pub trait XmlRootTag {
-    fn root_tag() -> &'static [u8];
-    fn root_ns() -> Option<&'static [u8]>;
 }
 
 pub trait XmlDocument: XmlDeserialize {

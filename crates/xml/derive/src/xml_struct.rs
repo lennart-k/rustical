@@ -1,5 +1,5 @@
-use crate::attrs::StructAttrs;
-use crate::Field;
+use crate::attrs::{FieldType, StructAttrs};
+use crate::{field, Field};
 use core::panic;
 use darling::FromDeriveInput;
 use quote::quote;
@@ -181,11 +181,34 @@ impl NamedStruct {
         let ident = &self.ident;
         let tag_writers = self.fields.iter().map(Field::tag_writer);
 
-        // TODO: Implement attributes
+        let untagged_attributes = self
+            .fields
+            .iter()
+            .filter(|field| field.attrs.xml_ty == FieldType::Untagged)
+            .map(|field| {
+                let field_ident = field.field_ident();
+                quote! { bytes_start.extend_attributes(self.#field_ident.attributes()); }
+            });
+
+        let attributes = self
+            .fields
+            .iter()
+            .filter(|field| field.attrs.xml_ty == FieldType::Attr)
+            .map(|field| {
+                let field_name = field.xml_name();
+                quote! {
+                    ::quick_xml::events::attributes::Attribute {
+                        key: ::quick_xml::name::QName(#field_name),
+                        value: b"hello".into()
+                    }
+                }
+            });
+
         quote! {
             impl #impl_generics ::rustical_xml::XmlSerialize for #ident #type_generics #where_clause {
                 fn serialize<W: ::std::io::Write>(
                     &self,
+                    ns: Option<&[u8]>,
                     tag: Option<&[u8]>,
                     writer: &mut ::quick_xml::Writer<W>
                 ) -> ::std::io::Result<()> {
@@ -194,13 +217,20 @@ impl NamedStruct {
                     let tag_str = tag.map(String::from_utf8_lossy);
 
                     if let Some(tag) = &tag_str {
-                        writer.write_event(Event::Start(BytesStart::new(tag.to_owned())))?;
+                        let mut bytes_start = BytesStart::new(tag.to_owned());
+                        bytes_start.extend_attributes(self.attributes());
+                        #(#untagged_attributes);*
+                        writer.write_event(Event::Start(bytes_start))?;
                     }
                     #(#tag_writers);*
                     if let Some(tag) = &tag_str {
                         writer.write_event(Event::End(BytesEnd::new(tag.to_owned())))?;
                     }
                     Ok(())
+                }
+
+                fn attributes<'a>(&self) -> Vec<::quick_xml::events::attributes::Attribute<'a>> {
+                    vec![ #(#attributes),* ]
                 }
             }
         }

@@ -258,11 +258,10 @@ impl Field {
                 writer.write_event(Event::Text(BytesText::new(&self.#field_ident)))?;
             }),
             FieldType::Tag => Some(quote! {
-                self.#field_ident.serialize(Some(#field_name), writer)?;
+                self.#field_ident.serialize(None, Some(#field_name), writer)?;
             }),
             FieldType::Untagged => Some(quote! {
-                // TODO: untag!
-                self.#field_ident.serialize(None, writer)?;
+                self.#field_ident.serialize(None, None, writer)?;
             }),
             // TODO: Think about what to do here
             FieldType::TagName | FieldType::Namespace => None,

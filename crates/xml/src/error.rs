@@ -16,6 +16,8 @@ pub enum XmlDeError {
     Eof,
     #[error("Unsupported xml event: {0}")]
     UnsupportedEvent(&'static str),
+    #[error("{0}")]
+    Other(String),
     #[error("Invalid variant: {0}")]
     InvalidVariant(String),
     #[error("Invalid field name in {0}: {1}")]
