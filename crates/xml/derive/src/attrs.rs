@@ -59,6 +59,7 @@ pub struct FieldAttrs {
     pub common: TagAttrs,
     pub flatten: Flag,
     pub default: Option<syn::ExprPath>,
+    pub serialize_with: Option<syn::ExprPath>,
     #[darling(default, rename = "ty")]
     pub xml_ty: FieldType,
 }

@@ -1,3 +1,4 @@
+use quick_xml::Writer;
 use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
 use xml_derive::XmlDeserialize;
 
@@ -119,4 +120,33 @@ fn test_struct_vec() {
         out,
         "<document><href>okay</href><href>wow</href></document>"
     );
+}
+
+#[test]
+fn test_struct_serialize_with() {
+    #[derive(Debug, XmlRootTag, XmlSerialize, PartialEq)]
+    #[xml(root = b"document")]
+    struct Document {
+        #[xml(serialize_with = "serialize_href")]
+        href: String,
+    }
+
+    fn serialize_href<W: ::std::io::Write>(
+        val: &String,
+        ns: Option<&[u8]>,
+        tag: Option<&[u8]>,
+        writer: &mut Writer<W>,
+    ) -> std::io::Result<()> {
+        val.to_uppercase().serialize(ns, tag, writer)
+    }
+
+    let mut buf = Vec::new();
+    let mut writer = quick_xml::Writer::new(&mut buf);
+    Document {
+        href: "okay".to_owned(),
+    }
+    .serialize_root(&mut writer)
+    .unwrap();
+    let out = String::from_utf8(buf).unwrap();
+    assert_eq!(out, "<document><href>OKAY</href></document>");
 }

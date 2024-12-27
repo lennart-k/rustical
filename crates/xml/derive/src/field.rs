@@ -251,6 +251,11 @@ impl Field {
     pub fn tag_writer(&self) -> Option<proc_macro2::TokenStream> {
         let field_ident = self.field_ident();
         let field_name = self.xml_name();
+        let serializer = if let Some(serialize_with) = &self.attrs.serialize_with {
+            quote! { #serialize_with }
+        } else {
+            quote! { ::rustical_xml::XmlSerialize::serialize }
+        };
 
         match (&self.attrs.xml_ty, self.attrs.flatten.is_present()) {
             (FieldType::Attr, _) => None,
@@ -264,19 +269,19 @@ impl Field {
             }),
             (FieldType::Tag, true) => Some(quote! {
                 for item in self.#field_ident.iter() {
-                    ::rustical_xml::XmlSerialize::serialize(item, None, Some(#field_name), writer)?;
+                    #serializer(item, None, Some(#field_name), writer)?;
                 }
             }),
             (FieldType::Tag, false) => Some(quote! {
-                ::rustical_xml::XmlSerialize::serialize(&self.#field_ident, None, Some(#field_name), writer)?;
+                #serializer(&self.#field_ident, None, Some(#field_name), writer)?;
             }),
             (FieldType::Untagged, true) => Some(quote! {
                 for item in self.#field_ident.iter() {
-                    ::rustical_xml::XmlSerialize::serialize(item, None, None, writer)?;
+                    #serializer(item, None, None, writer)?;
                 }
             }),
             (FieldType::Untagged, false) => Some(quote! {
-                ::rustical_xml::XmlSerialize::serialize(&self.#field_ident, None, None, writer)?;
+                #serializer(&self.#field_ident, None, None, writer)?;
             }),
             // TODO: Think about what to do here
             (FieldType::TagName | FieldType::Namespace, _) => None,
