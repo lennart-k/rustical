@@ -63,17 +63,19 @@ fn test_struct_value_tagged() {
     #[xml(root = b"document")]
     struct Document {
         href: String,
+        num: usize,
     }
 
     let mut buf = Vec::new();
     let mut writer = quick_xml::Writer::new(&mut buf);
     Document {
         href: "okay".to_owned(),
+        num: 123,
     }
     .serialize_root(&mut writer)
     .unwrap();
     let out = String::from_utf8(buf).unwrap();
-    assert_eq!(out, "<document><href>okay</href></document>");
+    assert_eq!(out, "<document><href>okay</href><num>123</num></document>");
 }
 
 #[test]
@@ -88,10 +90,10 @@ fn test_struct_value_untagged() {
     let mut buf = Vec::new();
     let mut writer = quick_xml::Writer::new(&mut buf);
     Document {
-        href: "okay".to_owned(),
+        href: "okays".to_owned(),
     }
     .serialize_root(&mut writer)
     .unwrap();
     let out = String::from_utf8(buf).unwrap();
-    assert_eq!(out, "<document>okay</document>");
+    assert_eq!(out, "<document>okays</document>");
 }

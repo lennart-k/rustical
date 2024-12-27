@@ -196,10 +196,11 @@ impl NamedStruct {
             .filter(|field| field.attrs.xml_ty == FieldType::Attr)
             .map(|field| {
                 let field_name = field.xml_name();
+                let field_ident = field.field_ident();
                 quote! {
                     ::quick_xml::events::attributes::Attribute {
                         key: ::quick_xml::name::QName(#field_name),
-                        value: b"hello".into()
+                        value: ::std::borrow::Cow::from(::rustical_xml::Value::serialize(&self.#field_ident).into_bytes())
                     }
                 }
             });
