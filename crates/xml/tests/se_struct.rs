@@ -97,3 +97,26 @@ fn test_struct_value_untagged() {
     let out = String::from_utf8(buf).unwrap();
     assert_eq!(out, "<document>okays</document>");
 }
+
+#[test]
+fn test_struct_vec() {
+    #[derive(Debug, XmlRootTag, XmlSerialize, PartialEq)]
+    #[xml(root = b"document")]
+    struct Document {
+        #[xml(flatten)]
+        href: Vec<String>,
+    }
+
+    let mut buf = Vec::new();
+    let mut writer = quick_xml::Writer::new(&mut buf);
+    Document {
+        href: vec!["okay".to_owned(), "wow".to_owned()],
+    }
+    .serialize_root(&mut writer)
+    .unwrap();
+    let out = String::from_utf8(buf).unwrap();
+    assert_eq!(
+        out,
+        "<document><href>okay</href><href>wow</href></document>"
+    );
+}

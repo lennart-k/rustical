@@ -11,7 +11,27 @@ pub trait XmlSerialize {
         writer: &mut quick_xml::Writer<W>,
     ) -> std::io::Result<()>;
 
-    fn attributes<'a>(&self) -> impl IntoIterator<Item: Into<Attribute<'a>>>;
+    fn attributes<'a>(&self) -> Option<impl IntoIterator<Item: Into<Attribute<'a>>>>;
+}
+
+impl<T: XmlSerialize> XmlSerialize for Option<T> {
+    fn serialize<W: std::io::Write>(
+        &self,
+        ns: Option<&[u8]>,
+        tag: Option<&[u8]>,
+        writer: &mut quick_xml::Writer<W>,
+    ) -> std::io::Result<()> {
+        if let Some(some) = self {
+            some.serialize(ns, tag, writer)
+        } else {
+            Ok(())
+        }
+    }
+
+    #[allow(refining_impl_trait)]
+    fn attributes<'a>(&self) -> Option<Vec<Attribute<'a>>> {
+        None
+    }
 }
 
 pub trait XmlSerializeRoot {

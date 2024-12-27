@@ -252,19 +252,34 @@ impl Field {
         let field_ident = self.field_ident();
         let field_name = self.xml_name();
 
-        match self.attrs.xml_ty {
-            FieldType::Attr => None,
-            FieldType::Text => Some(quote! {
+        match (&self.attrs.xml_ty, self.attrs.flatten.is_present()) {
+            (FieldType::Attr, _) => None,
+            (FieldType::Text, true) => Some(quote! {
+                for item in self.#field_ident.iter() {
+                    writer.write_event(Event::Text(BytesText::new(item)))?;
+                }
+            }),
+            (FieldType::Text, false) => Some(quote! {
                 writer.write_event(Event::Text(BytesText::new(&self.#field_ident)))?;
             }),
-            FieldType::Tag => Some(quote! {
+            (FieldType::Tag, true) => Some(quote! {
+                for item in self.#field_ident.iter() {
+                    ::rustical_xml::XmlSerialize::serialize(item, None, Some(#field_name), writer)?;
+                }
+            }),
+            (FieldType::Tag, false) => Some(quote! {
                 ::rustical_xml::XmlSerialize::serialize(&self.#field_ident, None, Some(#field_name), writer)?;
             }),
-            FieldType::Untagged => Some(quote! {
+            (FieldType::Untagged, true) => Some(quote! {
+                for item in self.#field_ident.iter() {
+                    ::rustical_xml::XmlSerialize::serialize(item, None, None, writer)?;
+                }
+            }),
+            (FieldType::Untagged, false) => Some(quote! {
                 ::rustical_xml::XmlSerialize::serialize(&self.#field_ident, None, None, writer)?;
             }),
             // TODO: Think about what to do here
-            FieldType::TagName | FieldType::Namespace => None,
+            (FieldType::TagName | FieldType::Namespace, _) => None,
         }
     }
 }

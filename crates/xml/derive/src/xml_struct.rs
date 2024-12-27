@@ -187,7 +187,11 @@ impl NamedStruct {
             .filter(|field| field.attrs.xml_ty == FieldType::Untagged)
             .map(|field| {
                 let field_ident = field.field_ident();
-                quote! { bytes_start.extend_attributes(self.#field_ident.attributes()); }
+                quote! {
+                    if let Some(attrs) = self.#field_ident.attributes() {
+                        bytes_start.extend_attributes(attrs);
+                    }
+                }
             });
 
         let attributes = self
@@ -219,8 +223,10 @@ impl NamedStruct {
 
                     if let Some(tag) = &tag_str {
                         let mut bytes_start = BytesStart::new(tag.to_owned());
-                        bytes_start.extend_attributes(self.attributes());
-                        #(#untagged_attributes);*
+                        if let Some(attrs) = self.attributes() {
+                            bytes_start.extend_attributes(attrs);
+                        }
+                        // #(#untagged_attributes);*
                         writer.write_event(Event::Start(bytes_start))?;
                     }
                     #(#tag_writers);*
@@ -230,8 +236,8 @@ impl NamedStruct {
                     Ok(())
                 }
 
-                fn attributes<'a>(&self) -> Vec<::quick_xml::events::attributes::Attribute<'a>> {
-                    vec![ #(#attributes),* ]
+                fn attributes<'a>(&self) -> Option<Vec<::quick_xml::events::attributes::Attribute<'a>>> {
+                    Some(vec![ #(#attributes),* ])
                 }
             }
         }
