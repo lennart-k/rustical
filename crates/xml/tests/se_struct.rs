@@ -1,5 +1,7 @@
+use std::borrow::{Borrow, Cow};
+
 use quick_xml::Writer;
-use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
+use rustical_xml::{XmlDocument, XmlRootTag, XmlSerialize, XmlSerializeRoot};
 use xml_derive::XmlDeserialize;
 
 #[test]
@@ -132,7 +134,7 @@ fn test_struct_serialize_with() {
     }
 
     fn serialize_href<W: ::std::io::Write>(
-        val: &String,
+        val: &str,
         ns: Option<&[u8]>,
         tag: Option<&[u8]>,
         writer: &mut Writer<W>,
@@ -149,4 +151,40 @@ fn test_struct_serialize_with() {
     .unwrap();
     let out = String::from_utf8(buf).unwrap();
     assert_eq!(out, "<document><href>OKAY</href></document>");
+}
+
+#[test]
+fn test_struct_tag_list() {
+    #[derive(Debug, XmlRootTag, XmlSerialize, XmlDeserialize, PartialEq)]
+    #[xml(root = b"document")]
+    struct Document {
+        #[xml(ty = "untagged", flatten)]
+        tags: Vec<Tag>,
+    }
+
+    #[derive(Debug, XmlSerialize, XmlDeserialize, PartialEq)]
+    struct Tag {
+        #[xml(ty = "tag_name")]
+        name: String,
+    }
+
+    let mut buf = Vec::new();
+    let mut writer = quick_xml::Writer::new(&mut buf);
+    Document {
+        tags: vec![
+            Tag {
+                name: "hello".to_owned(),
+            },
+            Tag {
+                name: "ok".to_owned(),
+            },
+            Tag {
+                name: "wow".to_owned(),
+            },
+        ],
+    }
+    .serialize_root(&mut writer)
+    .unwrap();
+    let out = String::from_utf8(buf).unwrap();
+    dbg!(out);
 }

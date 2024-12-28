@@ -185,6 +185,7 @@ impl NamedStruct {
             .fields
             .iter()
             .filter(|field| field.attrs.xml_ty == FieldType::Untagged)
+            .filter(|field| !field.attrs.flatten.is_present())
             .map(|field| {
                 let field_ident = field.field_ident();
                 quote! {
@@ -209,6 +210,17 @@ impl NamedStruct {
                 }
             });
 
+        let tag_name_field = self
+            .fields
+            .iter()
+            .find(|field| field.attrs.xml_ty == FieldType::TagName)
+            .map(|field| {
+                let field_ident = field.field_ident();
+                quote! {
+                    let tag_str = Some(tag_str.unwrap_or(self.#field_ident.to_string()));
+                }
+            });
+
         quote! {
             impl #impl_generics ::rustical_xml::XmlSerialize for #ident #type_generics #where_clause {
                 fn serialize<W: ::std::io::Write>(
@@ -219,14 +231,15 @@ impl NamedStruct {
                 ) -> ::std::io::Result<()> {
                     use ::quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
 
-                    let tag_str = tag.map(String::from_utf8_lossy);
+                    let tag_str = tag.map(|a| String::from_utf8_lossy(a).to_string());
+                    #tag_name_field;
 
                     if let Some(tag) = &tag_str {
                         let mut bytes_start = BytesStart::new(tag.to_owned());
                         if let Some(attrs) = self.attributes() {
                             bytes_start.extend_attributes(attrs);
                         }
-                        // #(#untagged_attributes);*
+                        #(#untagged_attributes);*
                         writer.write_event(Event::Start(bytes_start))?;
                     }
                     #(#tag_writers);*

@@ -50,6 +50,16 @@ impl_value_parse!(u64);
 impl_value_parse!(isize);
 impl_value_parse!(usize);
 
+impl Value for &str {
+    fn serialize(&self) -> String {
+        self.to_string()
+    }
+
+    fn deserialize(val: &str) -> Result<Self, XmlDeError> {
+        Err(XmlDeError::Other("TODO: Handle this error".to_owned()))
+    }
+}
+
 impl<T: Value> XmlDeserialize for T {
     fn deserialize<R: BufRead>(
         reader: &mut quick_xml::NsReader<R>,
