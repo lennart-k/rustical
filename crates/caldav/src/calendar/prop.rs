@@ -1,29 +1,22 @@
 use rustical_xml::XmlSerialize;
-use serde::Serialize;
 
-#[derive(Debug, Clone, XmlSerialize, Serialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub struct SupportedCalendarComponent {
-    #[serde(rename = "@name")]
     #[xml(ty = "attr")]
     pub name: String,
 }
 
-#[derive(Debug, Clone, XmlSerialize, Serialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub struct SupportedCalendarComponentSet {
-    #[serde(rename = "C:comp")]
+    // #[serde(rename = "C:comp")]
     #[xml(flatten)]
     pub comp: Vec<SupportedCalendarComponent>,
 }
 
-#[derive(Debug, Clone, XmlSerialize, Serialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub struct CalendarData {
-    #[serde(rename = "@content-type")]
     #[xml(ty = "attr")]
     content_type: String,
-    #[serde(rename = "@version")]
     #[xml(ty = "attr")]
     version: String,
 }
@@ -37,86 +30,68 @@ impl Default for CalendarData {
     }
 }
 
-#[derive(Debug, Clone, XmlSerialize, Serialize, Default, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, XmlSerialize, Default, PartialEq)]
 pub struct SupportedCalendarData {
-    #[serde(rename = "C:calendar-data", alias = "calendar-data")]
+    // #[serde(rename = "C:calendar-data", alias = "calendar-data")]
     calendar_data: CalendarData,
 }
 
-#[derive(Debug, Clone, XmlSerialize, Serialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub enum ReportMethod {
     CalendarQuery,
     CalendarMultiget,
     SyncCollection,
 }
 
-#[derive(Debug, Clone, XmlSerialize, Serialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub struct ReportWrapper {
-    #[serde(rename = "$value")]
-    #[xml(ty = "untagged")]
     report: ReportMethod,
 }
 
-#[derive(Debug, Clone, XmlSerialize, Serialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
-pub struct SupportedReportWrapper {
-    report: ReportWrapper,
-}
-
-impl From<ReportMethod> for SupportedReportWrapper {
-    fn from(value: ReportMethod) -> Self {
-        Self {
-            report: ReportWrapper { report: value },
-        }
-    }
-}
-
 // RFC 3253 section-3.1.5
-#[derive(Debug, Clone, XmlSerialize, Serialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub struct SupportedReportSet {
     #[xml(flatten)]
-    supported_report: Vec<SupportedReportWrapper>,
+    supported_report: Vec<ReportWrapper>,
 }
 
 impl Default for SupportedReportSet {
     fn default() -> Self {
         Self {
             supported_report: vec![
-                ReportMethod::CalendarQuery.into(),
-                ReportMethod::CalendarMultiget.into(),
-                ReportMethod::SyncCollection.into(),
+                ReportWrapper {
+                    report: ReportMethod::CalendarQuery,
+                },
+                ReportWrapper {
+                    report: ReportMethod::CalendarMultiget,
+                },
+                ReportWrapper {
+                    report: ReportMethod::SyncCollection,
+                },
             ],
         }
     }
 }
 
-#[derive(Debug, Clone, XmlSerialize, Serialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub enum Transport {
-    #[serde(rename = "P:web-push")]
+    // #[serde(rename = "P:web-push")]
     WebPush,
 }
 
-#[derive(Debug, Clone, XmlSerialize, Serialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub struct TransportWrapper {
-    #[serde(rename = "$value")]
     #[xml(ty = "untagged")]
     transport: Transport,
 }
 
-#[derive(Debug, Clone, XmlSerialize, Serialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub struct Transports {
     // NOTE: Here we implement an older version of the spec since the new property name is not reflected
     // in DAVx5 yet
     // https://github.com/bitfireAT/webdav-push/commit/461259a2f2174454b2b00033419b11fac52b79e3
-    #[serde(rename = "P:transport")]
-    #[xml(flatten)]
+    // #[serde(rename = "P:transport")]
+    #[xml(flatten, rename = b"transport")]
     transports: Vec<TransportWrapper>,
 }
 
