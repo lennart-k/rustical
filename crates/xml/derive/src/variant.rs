@@ -199,9 +199,13 @@ impl Variant {
             }
             Fields::Unit => {
                 quote! {
-                     if let Self::#ident = self {
-                         ::rustical_xml::XmlSerialize::serialize(&(), ns, tag, writer)?;
-                     }
+                    if let Self::#ident = &self {
+                        if !enum_untagged {
+                            ::rustical_xml::XmlSerialize::serialize(&(), None, Some(#variant_name), writer)?;
+                        } else {
+                            ::rustical_xml::XmlSerialize::serialize(&(), None, None, writer)?;
+                        };
+                    }
                 }
             }
         }
