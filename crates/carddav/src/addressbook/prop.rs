@@ -1,18 +1,17 @@
-use serde::Serialize;
+use rustical_xml::XmlSerialize;
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub struct AddressDataType {
-    #[serde(rename = "@content-type")]
+    #[xml(ty = "attr")]
     pub content_type: String,
-    #[serde(rename = "@version")]
+    #[xml(ty = "attr")]
     pub version: String,
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub struct SupportedAddressData {
-    #[serde(rename = "CARD:address-data-type", alias = "address-data-type")]
+    // #[serde(rename = "CARD:address-data-type", alias = "address-data-type")]
+    #[xml(flatten)]
     address_data_type: Vec<AddressDataType>,
 }
 
@@ -33,22 +32,19 @@ impl Default for SupportedAddressData {
     }
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub enum ReportMethod {
     AddressbookMultiget,
     SyncCollection,
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub struct ReportWrapper {
-    #[serde(rename = "$value")]
+    #[xml(ty = "untagged")]
     report: ReportMethod,
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub struct SupportedReportWrapper {
     report: ReportWrapper,
 }
@@ -62,9 +58,9 @@ impl From<ReportMethod> for SupportedReportWrapper {
 }
 
 // RFC 3253 section-3.1.5
-#[derive(Debug, Clone, Serialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub struct SupportedReportSet {
+    #[xml(flatten)]
     supported_report: Vec<SupportedReportWrapper>,
 }
 

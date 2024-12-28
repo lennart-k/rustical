@@ -4,7 +4,7 @@ use actix_web::dev::ResourceMap;
 use actix_web::HttpRequest;
 use async_trait::async_trait;
 use rustical_store::auth::User;
-use rustical_xml::XmlDeserialize;
+use rustical_xml::{XmlDeserialize, XmlSerialize};
 use serde::Serialize;
 use std::any::type_name;
 use std::marker::PhantomData;
@@ -23,7 +23,7 @@ impl<PR: Resource> Default for RootResource<PR> {
 #[strum(serialize_all = "kebab-case")]
 pub enum RootResourcePropName {}
 
-#[derive(XmlDeserialize, Serialize, Clone, PartialEq)]
+#[derive(XmlDeserialize, XmlSerialize, Serialize, Clone, PartialEq)]
 pub enum RootResourceProp {}
 
 impl From<RootResourceProp> for RootResourcePropName {

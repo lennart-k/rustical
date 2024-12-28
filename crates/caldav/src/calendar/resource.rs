@@ -19,8 +19,7 @@ use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
 use rustical_store::auth::User;
 use rustical_store::{Calendar, CalendarStore};
-use rustical_xml::XmlDeserialize;
-use serde::Serialize;
+use rustical_xml::{XmlDeserialize, XmlSerialize};
 use sha2::{Digest, Sha256};
 use std::str::FromStr;
 use std::sync::Arc;
@@ -32,13 +31,12 @@ pub struct CalendarResourceService<C: CalendarStore + ?Sized> {
     calendar_id: String,
 }
 
-#[derive(XmlDeserialize, Serialize, PartialEq, EnumDiscriminants, Clone)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone)]
 #[strum_discriminants(
     name(CalendarPropName),
     derive(EnumString, VariantNames, IntoStaticStr),
     strum(serialize_all = "kebab-case")
 )]
-#[serde(rename_all = "kebab-case")]
 pub enum CalendarProp {
     // WebDAV (RFC 2518)
     Displayname(Option<String>),
@@ -48,37 +46,28 @@ pub enum CalendarProp {
     // NOTE: Here we implement an older version of the spec since the new property name is not reflected
     // in DAVx5 yet
     // https://github.com/bitfireAT/webdav-push/commit/461259a2f2174454b2b00033419b11fac52b79e3
-    #[serde(skip_deserializing)]
     #[xml(skip_deserializing)]
-    #[serde(rename = "P:push-transports", alias = "push-transports")]
+    // #[serde(rename = "P:push-transports", alias = "push-transports")]
     Transports(Transports),
     Topic(String),
 
     // CalDAV (RFC 4791)
-    #[serde(rename = "IC:calendar-color", alias = "calendar-color")]
+    // #[serde(rename = "IC:calendar-color", alias = "calendar-color")]
     CalendarColor(Option<String>),
-    #[serde(rename = "C:calendar-description", alias = "calendar-description")]
+    // #[serde(rename = "C:calendar-description", alias = "calendar-description")]
     CalendarDescription(Option<String>),
-    #[serde(rename = "C:calendar-timezone", alias = "calendar-timezone")]
+    // #[serde(rename = "C:calendar-timezone", alias = "calendar-timezone")]
     CalendarTimezone(Option<String>),
-    #[serde(rename = "IC:calendar-order", alias = "calendar-order")]
+    // #[serde(rename = "IC:calendar-order", alias = "calendar-order")]
     CalendarOrder(Option<i64>),
-    #[serde(
-        rename = "C:supported-calendar-component-set",
-        alias = "supported-calendar-component-set"
-    )]
+    // #[serde(rename = "C:supported-calendar-component-set")]
     // TODO: Re-add
     #[xml(skip_deserializing)]
     SupportedCalendarComponentSet(SupportedCalendarComponentSet),
-    #[serde(
-        rename = "C:supported-calendar-data",
-        alias = "supported-calendar-data"
-    )]
-    #[serde(skip_deserializing)]
+    // #[serde(rename = "C:supported-calendar-data")]
     #[xml(skip_deserializing)]
     SupportedCalendarData(SupportedCalendarData),
     MaxResourceSize(i64),
-    #[serde(skip_deserializing)]
     #[xml(skip_deserializing)]
     SupportedReportSet(SupportedReportSet),
 
@@ -86,9 +75,9 @@ pub enum CalendarProp {
     SyncToken(String),
 
     // CalendarServer
-    #[serde(rename = "CS:getctag", alias = "getctag")]
+    // #[serde(rename = "CS:getctag", alias = "getctag")]
     Getctag(String),
-    #[serde(rename = "CS:source", alias = "source")]
+    // #[serde(rename = "CS:source", alias = "source")]
     Source(Option<HrefElement>),
 }
 

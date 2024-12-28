@@ -10,28 +10,22 @@ use actix_web::{http::StatusCode, ResponseError};
 use itertools::Itertools;
 pub use resource_service::ResourceService;
 use rustical_store::auth::User;
-use rustical_xml::XmlDeserialize;
-use serde::Serialize;
+use rustical_xml::{XmlDeserialize, XmlSerialize};
 use std::str::FromStr;
 use strum::{EnumString, VariantNames};
 
 mod methods;
 mod resource_service;
 
-pub trait ResourceProp: Serialize + XmlDeserialize {}
-impl<T: Serialize + XmlDeserialize> ResourceProp for T {}
+pub trait ResourceProp: XmlSerialize + XmlDeserialize {}
+impl<T: XmlSerialize + XmlDeserialize> ResourceProp for T {}
 
 pub trait ResourcePropName: FromStr + VariantNames {}
 impl<T: FromStr + VariantNames> ResourcePropName for T {}
 
-pub trait ResourceType: Serialize + XmlDeserialize {}
-impl<T: Serialize + XmlDeserialize> ResourceType for T {}
-
-#[derive(XmlDeserialize, Serialize, PartialEq)]
-#[serde(rename_all = "kebab-case")]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq)]
 pub enum CommonPropertiesProp {
     // WebDAV (RFC 2518)
-    #[serde(skip_deserializing)]
     #[xml(skip_deserializing)]
     Resourcetype(Resourcetype),
 
@@ -39,15 +33,15 @@ pub enum CommonPropertiesProp {
     CurrentUserPrincipal(HrefElement),
 
     // WebDAV Access Control Protocol (RFC 3477)
+    #[xml(skip_deserializing)]
     CurrentUserPrivilegeSet(UserPrivilegeSet),
     Owner(Option<HrefElement>),
 }
 
-#[derive(Serialize)]
+#[derive(XmlSerialize)]
+#[xml(untagged)]
 pub enum EitherProp<Left: ResourceProp, Right: ResourceProp> {
-    #[serde(untagged)]
     Left(Left),
-    #[serde(untagged)]
     Right(Right),
 }
 

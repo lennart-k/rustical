@@ -14,8 +14,7 @@ use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{Resource, ResourceService};
 use rustical_store::auth::User;
 use rustical_store::{Addressbook, AddressbookStore};
-use rustical_xml::XmlDeserialize;
-use serde::Serialize;
+use rustical_xml::{XmlDeserialize, XmlSerialize};
 use std::str::FromStr;
 use std::sync::Arc;
 use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
@@ -26,8 +25,7 @@ pub struct AddressbookResourceService<AS: AddressbookStore + ?Sized> {
     addressbook_id: String,
 }
 
-#[derive(XmlDeserialize, Serialize, PartialEq, EnumDiscriminants, Clone)]
-#[serde(rename_all = "kebab-case")]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone)]
 #[strum_discriminants(
     name(AddressbookPropName),
     derive(EnumString, VariantNames, IntoStaticStr),
@@ -39,19 +37,11 @@ pub enum AddressbookProp {
     Getcontenttype(String),
 
     // CardDAV (RFC 6352)
-    #[serde(
-        rename = "CARD:addressbook-description",
-        alias = "addressbook-description"
-    )]
+    #[xml(ns = b"urn:ietf:params:xml:ns:carddav")]
     AddressbookDescription(Option<String>),
-    #[serde(
-        rename = "CARD:supported-address-data",
-        alias = "supported-address-data"
-    )]
-    #[serde(skip_deserializing)]
     #[xml(skip_deserializing)]
+    #[xml(ns = b"urn:ietf:params:xml:ns:carddav")]
     SupportedAddressData(SupportedAddressData),
-    #[serde(skip_deserializing)]
     #[xml(skip_deserializing)]
     SupportedReportSet(SupportedReportSet),
     MaxResourceSize(i64),

@@ -9,8 +9,7 @@ use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml::HrefElement;
 use rustical_store::auth::User;
 use rustical_store::CalendarStore;
-use rustical_xml::XmlDeserialize;
-use serde::Serialize;
+use rustical_xml::{XmlDeserialize, XmlSerialize};
 use std::sync::Arc;
 use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
 
@@ -24,23 +23,21 @@ pub struct PrincipalResource {
     principal: String,
 }
 
-#[derive(XmlDeserialize, Serialize, PartialEq, EnumDiscriminants, Clone)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone)]
 #[strum_discriminants(
     name(PrincipalPropName),
     derive(EnumString, VariantNames, IntoStaticStr),
     strum(serialize_all = "kebab-case")
 )]
-#[serde(rename_all = "kebab-case")]
 pub enum PrincipalProp {
     // WebDAV Access Control (RFC 3744)
-    #[serde(rename = "principal-URL")]
     #[strum_discriminants(strum(serialize = "principal-URL"))]
     PrincipalUrl(HrefElement),
 
     // CalDAV (RFC 4791)
-    #[serde(rename = "C:calendar-home-set")]
+    // #[serde(rename = "C:calendar-home-set")]
     CalendarHomeSet(HrefElement),
-    #[serde(rename = "C:calendar-user-address-set")]
+    // #[serde(rename = "C:calendar-user-address-set")]
     CalendarUserAddressSet(HrefElement),
 }
 

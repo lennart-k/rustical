@@ -1,8 +1,7 @@
-use rustical_xml::XmlDeserialize;
-use serde::Serialize;
+use rustical_xml::{XmlDeserialize, XmlSerialize};
 use std::collections::HashSet;
 
-#[derive(Debug, Clone, Serialize, XmlDeserialize, Eq, Hash, PartialEq)]
+#[derive(Debug, Clone, XmlSerialize, XmlDeserialize, Eq, Hash, PartialEq)]
 pub enum UserPrivilege {
     Read,
     Write,
@@ -14,37 +13,33 @@ pub enum UserPrivilege {
     All,
 }
 
-impl Serialize for UserPrivilegeSet {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        #[derive(Serialize)]
-        #[serde(rename_all = "kebab-case")]
-        pub struct UserPrivilegeWrapper<'a> {
-            #[serde(rename = "$value")]
-            privilege: &'a UserPrivilege,
+impl XmlSerialize for UserPrivilegeSet {
+    fn serialize<W: std::io::Write>(
+        &self,
+        ns: Option<&[u8]>,
+        tag: Option<&[u8]>,
+        writer: &mut quick_xml::Writer<W>,
+    ) -> std::io::Result<()> {
+        #[derive(XmlSerialize)]
+        pub struct FakeUserPrivilegeSet {
+            #[xml(rename = b"privilege", flatten)]
+            privileges: Vec<UserPrivilege>,
         }
-        #[derive(Serialize)]
-        #[serde(rename_all = "kebab-case")]
-        pub struct FakeUserPrivilegeSet<'a> {
-            #[serde(rename = "privilege")]
-            privileges: Vec<UserPrivilegeWrapper<'a>>,
-        }
+
         FakeUserPrivilegeSet {
-            privileges: self
-                .privileges
-                .iter()
-                .map(|privilege| UserPrivilegeWrapper { privilege })
-                .collect(),
+            privileges: self.privileges.iter().cloned().collect(),
         }
-        .serialize(serializer)
+        .serialize(ns, tag, writer)
+    }
+
+    #[allow(refining_impl_trait)]
+    fn attributes<'a>(&self) -> Option<Vec<quick_xml::events::attributes::Attribute<'a>>> {
+        None
     }
 }
 
-#[derive(Debug, Clone, XmlDeserialize, Default, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct UserPrivilegeSet {
-    #[xml(flatten)]
     privileges: HashSet<UserPrivilege>,
 }
 

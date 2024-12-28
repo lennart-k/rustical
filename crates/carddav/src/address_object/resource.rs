@@ -7,8 +7,8 @@ use rustical_dav::{
     resource::{Resource, ResourceService},
 };
 use rustical_store::{auth::User, AddressObject, AddressbookStore};
-use rustical_xml::XmlDeserialize;
-use serde::{Deserialize, Serialize};
+use rustical_xml::{XmlDeserialize, XmlSerialize};
+use serde::Deserialize;
 use std::sync::Arc;
 use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
 
@@ -21,20 +21,19 @@ pub struct AddressObjectResourceService<AS: AddressbookStore + ?Sized> {
     object_id: String,
 }
 
-#[derive(XmlDeserialize, Serialize, PartialEq, EnumDiscriminants, Clone)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone)]
 #[strum_discriminants(
     name(AddressObjectPropName),
     derive(EnumString, VariantNames, IntoStaticStr),
     strum(serialize_all = "kebab-case")
 )]
-#[serde(rename_all = "kebab-case")]
 pub enum AddressObjectProp {
     // WebDAV (RFC 2518)
     Getetag(String),
     Getcontenttype(String),
 
     // CalDAV (RFC 4791)
-    #[serde(rename = "CARD:address-data")]
+    #[xml(ns = b"urn:ietf:params:xml:ns:carddav")]
     AddressData(String),
 }
 

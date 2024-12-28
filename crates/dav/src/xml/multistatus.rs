@@ -4,33 +4,37 @@ use actix_web::{
     http::{header::ContentType, StatusCode},
     HttpRequest, HttpResponse, Responder, ResponseError,
 };
-use serde::{Serialize, Serializer};
+use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
 
 // Intermediate struct because of a serde limitation, see following article:
 // https://stackoverflow.com/questions/78444158/unsupportedcannot-serialize-enum-newtype-variant-exampledata
-#[derive(Serialize)]
-pub struct PropTagWrapper<T: Serialize> {
-    #[serde(rename = "$value")]
+#[derive(XmlSerialize)]
+pub struct PropTagWrapper<T: XmlSerialize> {
+    #[xml(flatten, ty = "untagged")]
     pub prop: Vec<T>,
 }
 
 // RFC 2518
 // <!ELEMENT propstat (prop, status, responsedescription?) >
-#[derive(Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct PropstatElement<PropType: Serialize> {
+#[derive(XmlSerialize)]
+pub struct PropstatElement<PropType: XmlSerialize> {
     pub prop: PropType,
-    #[serde(serialize_with = "serialize_status")]
+    #[xml(serialize_with = "xml_serialize_status")]
     pub status: StatusCode,
 }
 
-fn serialize_status<S: Serializer>(status: &StatusCode, serializer: S) -> Result<S::Ok, S::Error> {
-    format!("HTTP/1.1 {}", status).serialize(serializer)
+fn xml_serialize_status<W: ::std::io::Write>(
+    status: &StatusCode,
+    ns: Option<&[u8]>,
+    tag: Option<&[u8]>,
+    writer: &mut quick_xml::Writer<W>,
+) -> std::io::Result<()> {
+    XmlSerialize::serialize(&format!("HTTP/1.1 {}", status), ns, tag, writer)
 }
 
-#[derive(Serialize)]
-#[serde(untagged)]
-pub enum PropstatWrapper<T: Serialize> {
+#[derive(XmlSerialize)]
+#[xml(untagged)]
+pub enum PropstatWrapper<T: XmlSerialize> {
     Normal(PropstatElement<PropTagWrapper<T>>),
     TagList(PropstatElement<TagList>),
 }
@@ -38,26 +42,30 @@ pub enum PropstatWrapper<T: Serialize> {
 // RFC 2518
 // <!ELEMENT response (href, ((href*, status)|(propstat+)),
 // responsedescription?) >
-#[derive(Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub struct ResponseElement<PropstatType: Serialize> {
+#[derive(XmlSerialize)]
+pub struct ResponseElement<PropstatType: XmlSerialize> {
     pub href: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(serialize_with = "serialize_optional_status")]
+    #[xml(serialize_with = "xml_serialize_optional_status")]
     pub status: Option<StatusCode>,
+    #[xml(flatten)]
     pub propstat: Vec<PropstatWrapper<PropstatType>>,
 }
 
-fn serialize_optional_status<S: Serializer>(
-    status_option: &Option<StatusCode>,
-    serializer: S,
-) -> Result<S::Ok, S::Error> {
-    status_option
-        .map(|status| format!("HTTP/1.1 {}", status))
-        .serialize(serializer)
+fn xml_serialize_optional_status<W: ::std::io::Write>(
+    val: &Option<StatusCode>,
+    ns: Option<&[u8]>,
+    tag: Option<&[u8]>,
+    writer: &mut quick_xml::Writer<W>,
+) -> std::io::Result<()> {
+    XmlSerialize::serialize(
+        &val.map(|status| format!("HTTP/1.1 {}", status)),
+        ns,
+        tag,
+        writer,
+    )
 }
 
-impl<PT: Serialize> Default for ResponseElement<PT> {
+impl<PT: XmlSerialize> Default for ResponseElement<PT> {
     fn default() -> Self {
         Self {
             href: String::new(),
@@ -70,30 +78,24 @@ impl<PT: Serialize> Default for ResponseElement<PT> {
 // RFC 2518
 // <!ELEMENT multistatus (response+, responsedescription?) >
 // Extended by sync-token as specified in RFC 6578
-#[derive(Serialize)]
-#[serde(rename = "multistatus", rename_all = "kebab-case")]
-pub struct MultistatusElement<PropType: Serialize, MemberPropType: Serialize> {
-    #[serde(rename = "response")]
+#[derive(XmlSerialize, XmlRootTag)]
+#[xml(root = b"multistatus")]
+pub struct MultistatusElement<PropType: XmlSerialize, MemberPropType: XmlSerialize> {
+    #[xml(rename = b"response", flatten)]
     pub responses: Vec<ResponseElement<PropType>>,
-    #[serde(rename = "response")]
+    #[xml(rename = b"response", flatten)]
     pub member_responses: Vec<ResponseElement<MemberPropType>>,
-    #[serde(rename = "@xmlns")]
+    // TODO: napespaces
     pub ns_dav: &'static str,
-    #[serde(rename = "@xmlns:P")]
     pub ns_davpush: &'static str,
-    #[serde(rename = "@xmlns:C")]
     pub ns_caldav: &'static str,
-    #[serde(rename = "@xmlns:IC")]
     pub ns_ical: &'static str,
-    #[serde(rename = "@xmlns:CS")]
     pub ns_calendarserver: &'static str,
-    #[serde(rename = "@xmlns:CARD")]
     pub ns_carddav: &'static str,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub sync_token: Option<String>,
 }
 
-impl<T1: Serialize, T2: Serialize> Default for MultistatusElement<T1, T2> {
+impl<T1: XmlSerialize, T2: XmlSerialize> Default for MultistatusElement<T1, T2> {
     fn default() -> Self {
         Self {
             responses: vec![],
@@ -109,19 +111,18 @@ impl<T1: Serialize, T2: Serialize> Default for MultistatusElement<T1, T2> {
     }
 }
 
-impl<T1: Serialize, T2: Serialize> Responder for MultistatusElement<T1, T2> {
+impl<T1: XmlSerialize, T2: XmlSerialize> Responder for MultistatusElement<T1, T2> {
     type Body = BoxBody;
 
     fn respond_to(self, _req: &HttpRequest) -> HttpResponse<Self::Body> {
-        let mut output = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".to_owned();
-        let mut ser = quick_xml::se::Serializer::new(&mut output);
-        ser.indent(' ', 4);
-        if let Err(err) = self.serialize(ser) {
+        let mut output: Vec<_> = b"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".into();
+        let mut writer = quick_xml::Writer::new_with_indent(&mut output, b' ', 4);
+        if let Err(err) = self.serialize_root(&mut writer) {
             return crate::Error::from(err).error_response();
         }
 
         HttpResponse::MultiStatus()
             .content_type(ContentType::xml())
-            .body(output)
+            .body(String::from_utf8(output).unwrap())
     }
 }
