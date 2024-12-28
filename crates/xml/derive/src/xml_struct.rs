@@ -221,6 +221,8 @@ impl NamedStruct {
                 }
             });
 
+        let is_empty = tag_writers.len() == 0;
+
         quote! {
             impl #impl_generics ::rustical_xml::XmlSerialize for #ident #type_generics #where_clause {
                 fn serialize<W: ::std::io::Write>(
@@ -240,11 +242,17 @@ impl NamedStruct {
                             bytes_start.extend_attributes(attrs);
                         }
                         #(#untagged_attributes);*
-                        writer.write_event(Event::Start(bytes_start))?;
+                        if #is_empty {
+                            writer.write_event(Event::Empty(bytes_start))?;
+                        } else {
+                            writer.write_event(Event::Start(bytes_start))?;
+                        }
                     }
-                    #(#tag_writers);*
-                    if let Some(tag) = &tag_str {
-                        writer.write_event(Event::End(BytesEnd::new(tag.to_owned())))?;
+                    if !#is_empty {
+                        #(#tag_writers);*
+                        if let Some(tag) = &tag_str {
+                            writer.write_event(Event::End(BytesEnd::new(tag.to_owned())))?;
+                        }
                     }
                     Ok(())
                 }
