@@ -68,6 +68,7 @@ impl Resource for AddressbookResource {
     type PrincipalResource = PrincipalResource;
 
     fn get_resourcetype(&self) -> &'static [&'static str] {
+        // TODO: namespace
         &["collection", "CARD:addressbook"]
     }
 

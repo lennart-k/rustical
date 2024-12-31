@@ -66,11 +66,13 @@ pub enum CalendarProp {
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     #[xml(skip_deserializing)]
     SupportedCalendarComponentSet(SupportedCalendarComponentSet),
-    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     #[xml(skip_deserializing)]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     SupportedCalendarData(SupportedCalendarData),
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     MaxResourceSize(i64),
     #[xml(skip_deserializing)]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     SupportedReportSet(SupportedReportSet),
 
     // Collection Synchronization (RFC 6578)

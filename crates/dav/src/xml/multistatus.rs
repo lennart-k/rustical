@@ -87,7 +87,12 @@ impl<PT: XmlSerialize> Default for ResponseElement<PT> {
 // Extended by sync-token as specified in RFC 6578
 #[derive(XmlSerialize, XmlRootTag)]
 #[xml(root = b"multistatus", ns = "crate::namespace::NS_DAV")]
-#[xml(ns_prefix(crate::namespace::NS_DAV = b"D"))]
+#[xml(ns_prefix(
+    crate::namespace::NS_DAV = b"D",
+    crate::namespace::NS_CARDDAV = b"CARD",
+    crate::namespace::NS_CALDAV = b"CAL",
+    crate::namespace::NS_CALENDARSERVER = b"CS"
+))]
 pub struct MultistatusElement<PropType: XmlSerialize, MemberPropType: XmlSerialize> {
     #[xml(rename = b"response", flatten)]
     pub responses: Vec<ResponseElement<PropType>>,
