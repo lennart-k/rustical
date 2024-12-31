@@ -1,14 +1,13 @@
-use rustical_xml::XmlSerialize;
+use rustical_xml::{XmlDeserialize, XmlSerialize};
 
-#[derive(Debug, Clone, XmlSerialize, PartialEq)]
+#[derive(Debug, Clone, XmlDeserialize, XmlSerialize, PartialEq)]
 pub struct SupportedCalendarComponent {
     #[xml(ty = "attr")]
     pub name: String,
 }
 
-#[derive(Debug, Clone, XmlSerialize, PartialEq)]
+#[derive(Debug, Clone, XmlDeserialize, XmlSerialize, PartialEq)]
 pub struct SupportedCalendarComponentSet {
-    // #[serde(rename = "C:comp")]
     #[xml(flatten)]
     pub comp: Vec<SupportedCalendarComponent>,
 }
@@ -32,7 +31,7 @@ impl Default for CalendarData {
 
 #[derive(Debug, Clone, XmlSerialize, Default, PartialEq)]
 pub struct SupportedCalendarData {
-    // #[serde(rename = "C:calendar-data", alias = "calendar-data")]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     calendar_data: CalendarData,
 }
 
@@ -75,7 +74,7 @@ impl Default for SupportedReportSet {
 
 #[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub enum Transport {
-    // #[serde(rename = "P:web-push")]
+    #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
     WebPush,
 }
 
@@ -90,8 +89,8 @@ pub struct Transports {
     // NOTE: Here we implement an older version of the spec since the new property name is not reflected
     // in DAVx5 yet
     // https://github.com/bitfireAT/webdav-push/commit/461259a2f2174454b2b00033419b11fac52b79e3
-    // #[serde(rename = "P:transport")]
     #[xml(flatten, rename = b"transport")]
+    #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
     transports: Vec<TransportWrapper>,
 }
 

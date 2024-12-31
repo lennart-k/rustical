@@ -64,7 +64,6 @@ pub enum CalendarProp {
     CalendarOrder(Option<i64>),
     // TODO: Re-add
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
-    #[xml(skip_deserializing)]
     SupportedCalendarComponentSet(SupportedCalendarComponentSet),
     #[xml(skip_deserializing)]
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
