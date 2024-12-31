@@ -99,24 +99,37 @@ impl Enum {
             impl #impl_generics ::rustical_xml::XmlSerialize for #ident #type_generics #where_clause {
                 fn serialize<W: ::std::io::Write>(
                     &self,
-                    ns: Option<&[u8]>,
+                    ns: Option<::quick_xml::name::Namespace>,
                     tag: Option<&[u8]>,
+                    namespaces: &::std::collections::HashMap<::quick_xml::name::Namespace, &[u8]>,
                     writer: &mut ::quick_xml::Writer<W>
                 ) -> ::std::io::Result<()> {
                     use ::quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
 
-                    let tag_str = tag.map(String::from_utf8_lossy);
+                    let prefix = ns
+                        .map(|ns| namespaces.get(&ns))
+                        .unwrap_or(None)
+                        .map(|prefix| [*prefix, b":"].concat());
+                    let has_prefix = prefix.is_some();
+                    let tagname = tag.map(|tag| [&prefix.unwrap_or_default(), tag].concat());
+                    let qname = tagname.as_ref().map(|tagname| ::quick_xml::name::QName(tagname));
+
                     const enum_untagged: bool = #enum_untagged;
 
-                    if let Some(tag) = &tag_str {
-                        let bytes_start = BytesStart::new(tag.to_owned());
+                    if let Some(qname) = &qname {
+                        let mut bytes_start = BytesStart::from(qname.to_owned());
+                        if !has_prefix {
+                            if let Some(ns) = &ns {
+                                bytes_start.push_attribute((b"xmlns".as_ref(), ns.as_ref()));
+                            }
+                        }
                         writer.write_event(Event::Start(bytes_start))?;
                     }
 
                     #(#variant_serializers);*
 
-                    if let Some(tag) = &tag_str {
-                        writer.write_event(Event::End(BytesEnd::new(tag.to_owned())))?;
+                    if let Some(qname) = &qname {
+                        writer.write_event(Event::End(BytesEnd::from(qname.to_owned())))?;
                     }
                     Ok(())
                 }

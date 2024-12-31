@@ -37,10 +37,10 @@ pub enum AddressbookProp {
     Getcontenttype(String),
 
     // CardDAV (RFC 6352)
-    #[xml(ns = b"urn:ietf:params:xml:ns:carddav")]
+    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     AddressbookDescription(Option<String>),
     #[xml(skip_deserializing)]
-    #[xml(ns = b"urn:ietf:params:xml:ns:carddav")]
+    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     SupportedAddressData(SupportedAddressData),
     #[xml(skip_deserializing)]
     SupportedReportSet(SupportedReportSet),

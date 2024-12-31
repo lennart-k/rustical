@@ -1,6 +1,6 @@
+use quick_xml::name::Namespace;
 use rustical_xml::de::XmlDocument;
-use rustical_xml::XmlRootTag;
-use rustical_xml::{Unparsed, XmlDeserialize};
+use rustical_xml::{Unparsed, XmlDeserialize, XmlRootTag};
 use std::collections::HashSet;
 
 #[test]
@@ -151,10 +151,12 @@ fn test_struct_set() {
 
 #[test]
 fn test_struct_ns() {
+    const NS_HELLO: Namespace = Namespace(b"hello");
+
     #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
     #[xml(root = b"document", ns_strict)]
     struct Document {
-        #[xml(ns = b"hello")]
+        #[xml(ns = "NS_HELLO")]
         child: (),
     }
 
@@ -164,10 +166,12 @@ fn test_struct_ns() {
 
 #[test]
 fn test_struct_attr() {
+    const NS_HELLO: Namespace = Namespace(b"hello");
+
     #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
     #[xml(root = b"document", ns_strict)]
     struct Document {
-        #[xml(ns = b"hello")]
+        #[xml(ns = "NS_HELLO")]
         child: (),
         #[xml(ty = "attr", default = "Default::default")]
         test: String,

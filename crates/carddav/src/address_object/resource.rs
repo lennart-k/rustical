@@ -33,7 +33,7 @@ pub enum AddressObjectProp {
     Getcontenttype(String),
 
     // CalDAV (RFC 4791)
-    #[xml(ns = b"urn:ietf:params:xml:ns:carddav")]
+    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     AddressData(String),
 }
 

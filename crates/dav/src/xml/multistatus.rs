@@ -1,9 +1,12 @@
-use crate::{namespace::Namespace, xml::TagList};
+use std::collections::HashMap;
+
+use crate::xml::TagList;
 use actix_web::{
     body::BoxBody,
     http::{header::ContentType, StatusCode},
     HttpRequest, HttpResponse, Responder, ResponseError,
 };
+use quick_xml::name::Namespace;
 use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
 
 // Intermediate struct because of a serde limitation, see following article:
@@ -25,11 +28,12 @@ pub struct PropstatElement<PropType: XmlSerialize> {
 
 fn xml_serialize_status<W: ::std::io::Write>(
     status: &StatusCode,
-    ns: Option<&[u8]>,
+    ns: Option<Namespace>,
     tag: Option<&[u8]>,
+    namespaces: &HashMap<Namespace, &[u8]>,
     writer: &mut quick_xml::Writer<W>,
 ) -> std::io::Result<()> {
-    XmlSerialize::serialize(&format!("HTTP/1.1 {}", status), ns, tag, writer)
+    XmlSerialize::serialize(&format!("HTTP/1.1 {}", status), ns, tag, namespaces, writer)
 }
 
 #[derive(XmlSerialize)]
@@ -53,14 +57,16 @@ pub struct ResponseElement<PropstatType: XmlSerialize> {
 
 fn xml_serialize_optional_status<W: ::std::io::Write>(
     val: &Option<StatusCode>,
-    ns: Option<&[u8]>,
+    ns: Option<Namespace>,
     tag: Option<&[u8]>,
+    namespaces: &HashMap<Namespace, &[u8]>,
     writer: &mut quick_xml::Writer<W>,
 ) -> std::io::Result<()> {
     XmlSerialize::serialize(
         &val.map(|status| format!("HTTP/1.1 {}", status)),
         ns,
         tag,
+        namespaces,
         writer,
     )
 }
@@ -86,12 +92,12 @@ pub struct MultistatusElement<PropType: XmlSerialize, MemberPropType: XmlSeriali
     #[xml(rename = b"response", flatten)]
     pub member_responses: Vec<ResponseElement<MemberPropType>>,
     // TODO: napespaces
-    pub ns_dav: &'static str,
-    pub ns_davpush: &'static str,
-    pub ns_caldav: &'static str,
-    pub ns_ical: &'static str,
-    pub ns_calendarserver: &'static str,
-    pub ns_carddav: &'static str,
+    // pub ns_dav: &'static str,
+    // pub ns_davpush: &'static str,
+    // pub ns_caldav: &'static str,
+    // pub ns_ical: &'static str,
+    // pub ns_calendarserver: &'static str,
+    // pub ns_carddav: &'static str,
     pub sync_token: Option<String>,
 }
 
@@ -100,12 +106,12 @@ impl<T1: XmlSerialize, T2: XmlSerialize> Default for MultistatusElement<T1, T2> 
         Self {
             responses: vec![],
             member_responses: vec![],
-            ns_dav: Namespace::Dav.as_str(),
-            ns_davpush: Namespace::DavPush.as_str(),
-            ns_caldav: Namespace::CalDAV.as_str(),
-            ns_ical: Namespace::ICal.as_str(),
-            ns_calendarserver: Namespace::CServer.as_str(),
-            ns_carddav: Namespace::CardDAV.as_str(),
+            // ns_dav: Namespace::Dav.as_str(),
+            // ns_davpush: Namespace::DavPush.as_str(),
+            // ns_caldav: Namespace::CalDAV.as_str(),
+            // ns_ical: Namespace::ICal.as_str(),
+            // ns_calendarserver: Namespace::CServer.as_str(),
+            // ns_carddav: Namespace::CardDAV.as_str(),
             sync_token: None,
         }
     }

@@ -2,7 +2,7 @@ use rustical_xml::XmlDeserialize;
 use rustical_xml::XmlRootTag;
 
 #[derive(Debug, Clone, XmlDeserialize, XmlRootTag, PartialEq)]
-#[xml(root = b"propfind", ns = b"DAV:")]
+#[xml(root = b"propfind", ns = "crate::namespace::NS_DAV")]
 pub struct PropfindElement {
     #[xml(ty = "untagged")]
     pub prop: PropfindType,

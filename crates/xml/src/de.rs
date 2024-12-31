@@ -54,11 +54,7 @@ impl<T: XmlRootTag + XmlDeserialize> XmlDocument for T {
                         // Wrong tag
                         (_, _, name) if name.as_ref() != Self::root_tag() => false,
                         // Wrong namespace
-                        (Some(root_ns), ns, _)
-                            if &ResolveResult::Bound(Namespace(root_ns)) != ns =>
-                        {
-                            false
-                        }
+                        (Some(root_ns), ns, _) if &ResolveResult::Bound(root_ns) != ns => false,
                         _ => true,
                     };
                     if !matches {

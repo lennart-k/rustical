@@ -36,9 +36,9 @@ pub enum PrincipalProp {
     PrincipalUrl(HrefElement),
 
     // CardDAV (RFC 6352)
-    #[xml(ns = b"urn:ietf:params:xml:ns:carddav")]
+    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     AddressbookHomeSet(HrefElement),
-    #[xml(ns = b"urn:ietf:params:xml:ns:carddav")]
+    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     PrincipalAddress(Option<HrefElement>),
 }
 

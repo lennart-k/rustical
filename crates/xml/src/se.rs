@@ -1,4 +1,6 @@
-use quick_xml::events::attributes::Attribute;
+use std::collections::HashMap;
+
+use quick_xml::{events::attributes::Attribute, name::Namespace};
 pub use xml_derive::XmlSerialize;
 
 use crate::XmlRootTag;
@@ -6,8 +8,9 @@ use crate::XmlRootTag;
 pub trait XmlSerialize {
     fn serialize<W: std::io::Write>(
         &self,
-        ns: Option<&[u8]>,
+        ns: Option<Namespace>,
         tag: Option<&[u8]>,
+        namespaces: &HashMap<Namespace, &[u8]>,
         writer: &mut quick_xml::Writer<W>,
     ) -> std::io::Result<()>;
 
@@ -17,12 +20,13 @@ pub trait XmlSerialize {
 impl<T: XmlSerialize> XmlSerialize for Option<T> {
     fn serialize<W: std::io::Write>(
         &self,
-        ns: Option<&[u8]>,
+        ns: Option<Namespace>,
         tag: Option<&[u8]>,
+        namespaces: &HashMap<Namespace, &[u8]>,
         writer: &mut quick_xml::Writer<W>,
     ) -> std::io::Result<()> {
         if let Some(some) = self {
-            some.serialize(ns, tag, writer)
+            some.serialize(ns, tag, namespaces, writer)
         } else {
             Ok(())
         }
@@ -46,6 +50,7 @@ impl<T: XmlSerialize + XmlRootTag> XmlSerializeRoot for T {
         &self,
         writer: &mut quick_xml::Writer<W>,
     ) -> std::io::Result<()> {
-        self.serialize(Self::root_ns(), Some(Self::root_tag()), writer)
+        let namespaces = HashMap::new();
+        self.serialize(Self::root_ns(), Some(Self::root_tag()), &namespaces, writer)
     }
 }

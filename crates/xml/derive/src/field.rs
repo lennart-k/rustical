@@ -148,13 +148,23 @@ impl Field {
         }
 
         let namespace_match = if self.ns_strict() {
-            if let Some(ns) = &self.attrs.common.ns {
-                quote! {quick_xml::name::ResolveResult::Bound(quick_xml::name::Namespace(#ns))}
+            if self.attrs.common.ns.is_some() {
+                quote! {quick_xml::name::ResolveResult::Bound(ns)}
             } else {
                 quote! {quick_xml::name::ResolveResult::Unbound}
             }
         } else {
             quote! {_}
+        };
+
+        let namespace_condition = if self.ns_strict() {
+            self.attrs
+                .common
+                .ns
+                .as_ref()
+                .map(|ns| quote! { if ns == #ns })
+        } else {
+            None
         };
 
         let field_name = self.xml_name();
@@ -170,7 +180,7 @@ impl Field {
         };
 
         Some(quote! {
-            (#namespace_match, #field_name) => { #assignment; }
+            (#namespace_match, #field_name) #namespace_condition => { #assignment; }
         })
     }
 
@@ -256,6 +266,10 @@ impl Field {
         } else {
             quote! { ::rustical_xml::XmlSerialize::serialize }
         };
+        let ns = match &self.attrs.common.ns {
+            Some(ns) => quote! { Some(#ns) },
+            None => quote! { None },
+        };
 
         match (&self.attrs.xml_ty, self.attrs.flatten.is_present()) {
             (FieldType::Attr, _) => None,
@@ -269,19 +283,19 @@ impl Field {
             }),
             (FieldType::Tag, true) => Some(quote! {
                 for item in self.#field_ident.iter() {
-                    #serializer(item, None, Some(#field_name), writer)?;
+                    #serializer(item, #ns, Some(#field_name), namespaces, writer)?;
                 }
             }),
             (FieldType::Tag, false) => Some(quote! {
-                #serializer(&self.#field_ident, None, Some(#field_name), writer)?;
+                #serializer(&self.#field_ident, #ns, Some(#field_name), namespaces, writer)?;
             }),
             (FieldType::Untagged, true) => Some(quote! {
                 for item in self.#field_ident.iter() {
-                    #serializer(item, None, None, writer)?;
+                    #serializer(item, None, None, namespaces, writer)?;
                 }
             }),
             (FieldType::Untagged, false) => Some(quote! {
-                #serializer(&self.#field_ident, None, None, writer)?;
+                #serializer(&self.#field_ident, None, None, namespaces, writer)?;
             }),
             // TODO: Think about what to do here
             (FieldType::TagName | FieldType::Namespace, _) => None,

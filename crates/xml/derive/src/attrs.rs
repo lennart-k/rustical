@@ -10,7 +10,8 @@ pub struct ContainerAttrs {
 pub struct TagAttrs {
     pub rename: Option<LitByteStr>,
     pub ns_strict: Flag,
-    pub ns: Option<LitByteStr>,
+    // pub ns: Option<LitByteStr>,
+    pub ns: Option<syn::ExprPath>,
 }
 
 #[derive(Default, FromVariant)]
@@ -37,7 +38,7 @@ pub struct StructAttrs {
     pub container: ContainerAttrs,
 
     pub root: Option<LitByteStr>,
-    pub ns: Option<LitByteStr>,
+    pub ns: Option<syn::ExprPath>,
     pub allow_invalid: Flag,
 }
 

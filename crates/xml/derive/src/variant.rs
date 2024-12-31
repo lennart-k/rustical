@@ -176,6 +176,10 @@ impl Variant {
     pub fn se_branch(&self) -> proc_macro2::TokenStream {
         let ident = self.ident();
         let variant_name = self.xml_name();
+        let ns = match &self.attrs.common.ns {
+            Some(ns) => quote! { Some(#ns) },
+            None => quote! { None },
+        };
 
         match &self.variant.fields {
             Fields::Named(_) => {
@@ -190,9 +194,9 @@ impl Variant {
                 quote! {
                     if let Self::#ident(val) = &self {
                         if !enum_untagged {
-                            ::rustical_xml::XmlSerialize::serialize(val, None, Some(#variant_name), writer)?;
+                            ::rustical_xml::XmlSerialize::serialize(val, #ns, Some(#variant_name), namespaces, writer)?;
                         } else {
-                            ::rustical_xml::XmlSerialize::serialize(val, None, None, writer)?;
+                            ::rustical_xml::XmlSerialize::serialize(val, None, None, namespaces, writer)?;
                         };
                     }
                 }
@@ -201,9 +205,9 @@ impl Variant {
                 quote! {
                     if let Self::#ident = &self {
                         if !enum_untagged {
-                            ::rustical_xml::XmlSerialize::serialize(&(), None, Some(#variant_name), writer)?;
+                            ::rustical_xml::XmlSerialize::serialize(&(), #ns, Some(#variant_name), namespaces, writer)?;
                         } else {
-                            ::rustical_xml::XmlSerialize::serialize(&(), None, None, writer)?;
+                            ::rustical_xml::XmlSerialize::serialize(&(), None, None, namespaces, writer)?;
                         };
                     }
                 }

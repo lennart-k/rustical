@@ -1,5 +1,7 @@
 use derive_more::derive::From;
+use quick_xml::name::Namespace;
 use rustical_xml::XmlSerialize;
+use std::collections::HashMap;
 
 #[derive(Clone, Debug, PartialEq, From)]
 pub struct TagList(Vec<String>);
@@ -7,8 +9,9 @@ pub struct TagList(Vec<String>);
 impl XmlSerialize for TagList {
     fn serialize<W: std::io::Write>(
         &self,
-        ns: Option<&[u8]>,
+        ns: Option<Namespace>,
         tag: Option<&[u8]>,
+        namespaces: &HashMap<Namespace, &[u8]>,
         writer: &mut quick_xml::Writer<W>,
     ) -> std::io::Result<()> {
         #[derive(Debug, XmlSerialize, PartialEq)]
@@ -25,7 +28,7 @@ impl XmlSerialize for TagList {
         Inner {
             tags: self.0.iter().map(|t| Tag { name: t.to_owned() }).collect(),
         }
-        .serialize(ns, tag, writer)
+        .serialize(ns, tag, namespaces, writer)
     }
 
     #[allow(refining_impl_trait)]

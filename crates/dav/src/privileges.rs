@@ -1,5 +1,6 @@
+use quick_xml::name::Namespace;
 use rustical_xml::{XmlDeserialize, XmlSerialize};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone, XmlSerialize, XmlDeserialize, Eq, Hash, PartialEq)]
 pub enum UserPrivilege {
@@ -16,8 +17,9 @@ pub enum UserPrivilege {
 impl XmlSerialize for UserPrivilegeSet {
     fn serialize<W: std::io::Write>(
         &self,
-        ns: Option<&[u8]>,
+        ns: Option<Namespace>,
         tag: Option<&[u8]>,
+        namespaces: &HashMap<Namespace, &[u8]>,
         writer: &mut quick_xml::Writer<W>,
     ) -> std::io::Result<()> {
         #[derive(XmlSerialize)]
@@ -29,7 +31,7 @@ impl XmlSerialize for UserPrivilegeSet {
         FakeUserPrivilegeSet {
             privileges: self.privileges.iter().cloned().collect(),
         }
-        .serialize(ns, tag, writer)
+        .serialize(ns, tag, namespaces, writer)
     }
 
     #[allow(refining_impl_trait)]

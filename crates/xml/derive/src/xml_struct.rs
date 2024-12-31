@@ -60,7 +60,7 @@ impl NamedStruct {
         quote! {
             impl #impl_generics ::rustical_xml::XmlRootTag for #ident #type_generics #where_clause {
                 fn root_tag() -> &'static [u8] { #root }
-                fn root_ns() -> Option<&'static [u8]> { #ns }
+                fn root_ns() -> Option<::quick_xml::name::Namespace<'static>> { #ns }
             }
         }
     }
@@ -217,7 +217,8 @@ impl NamedStruct {
             .map(|field| {
                 let field_ident = field.field_ident();
                 quote! {
-                    let tag_str = Some(tag_str.unwrap_or(self.#field_ident.to_string()));
+                    let tag_str = self.#field_ident.to_string();
+                    let tag = Some(tag.unwrap_or(tag_str.as_bytes()));
                 }
             });
 
@@ -227,17 +228,30 @@ impl NamedStruct {
             impl #impl_generics ::rustical_xml::XmlSerialize for #ident #type_generics #where_clause {
                 fn serialize<W: ::std::io::Write>(
                     &self,
-                    ns: Option<&[u8]>,
+                    ns: Option<::quick_xml::name::Namespace>,
                     tag: Option<&[u8]>,
+                    namespaces: &::std::collections::HashMap<::quick_xml::name::Namespace, &[u8]>,
                     writer: &mut ::quick_xml::Writer<W>
                 ) -> ::std::io::Result<()> {
                     use ::quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
 
-                    let tag_str = tag.map(|a| String::from_utf8_lossy(a).to_string());
                     #tag_name_field;
 
-                    if let Some(tag) = &tag_str {
-                        let mut bytes_start = BytesStart::new(tag.to_owned());
+                    let prefix = ns
+                        .map(|ns| namespaces.get(&ns))
+                        .unwrap_or(None)
+                        .map(|prefix| [*prefix, b":"].concat());
+                    let has_prefix = prefix.is_some();
+                    let tagname = tag.map(|tag| [&prefix.unwrap_or_default(), tag].concat());
+                    let qname = tagname.as_ref().map(|tagname| ::quick_xml::name::QName(tagname));
+
+                    if let Some(qname) = &qname {
+                        let mut bytes_start = BytesStart::from(qname.to_owned());
+                        if !has_prefix {
+                            if let Some(ns) = &ns {
+                                bytes_start.push_attribute((b"xmlns".as_ref(), ns.as_ref()));
+                            }
+                        }
                         if let Some(attrs) = self.attributes() {
                             bytes_start.extend_attributes(attrs);
                         }
@@ -250,8 +264,8 @@ impl NamedStruct {
                     }
                     if !#is_empty {
                         #(#tag_writers);*
-                        if let Some(tag) = &tag_str {
-                            writer.write_event(Event::End(BytesEnd::new(tag.to_owned())))?;
+                        if let Some(qname) = &qname {
+                            writer.write_event(Event::End(BytesEnd::from(qname.to_owned())))?;
                         }
                     }
                     Ok(())

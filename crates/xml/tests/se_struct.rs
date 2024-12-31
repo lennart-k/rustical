@@ -1,5 +1,9 @@
-use std::borrow::{Borrow, Cow};
+use std::{
+    borrow::{Borrow, Cow},
+    collections::HashMap,
+};
 
+use quick_xml::name::Namespace;
 use quick_xml::Writer;
 use rustical_xml::{XmlDocument, XmlRootTag, XmlSerialize, XmlSerializeRoot};
 use xml_derive::XmlDeserialize;
@@ -135,11 +139,12 @@ fn test_struct_serialize_with() {
 
     fn serialize_href<W: ::std::io::Write>(
         val: &str,
-        ns: Option<&[u8]>,
+        ns: Option<Namespace>,
         tag: Option<&[u8]>,
+        namespaces: &HashMap<Namespace, &[u8]>,
         writer: &mut Writer<W>,
     ) -> std::io::Result<()> {
-        val.to_uppercase().serialize(ns, tag, writer)
+        val.to_uppercase().serialize(ns, tag, namespaces, writer)
     }
 
     let mut buf = Vec::new();
@@ -182,6 +187,29 @@ fn test_struct_tag_list() {
                 name: "wow".to_owned(),
             },
         ],
+    }
+    .serialize_root(&mut writer)
+    .unwrap();
+    let out = String::from_utf8(buf).unwrap();
+    dbg!(out);
+}
+
+#[test]
+fn test_struct_ns() {
+    // const NS: Namespace = Namespace(b"TEST", quick_xml::name::Namespace(b"NS:TEST:"));
+    const NS: Namespace = quick_xml::name::Namespace(b"NS:TEST:");
+
+    #[derive(Debug, XmlRootTag, XmlSerialize)]
+    #[xml(root = b"document")]
+    struct Document {
+        #[xml(ns = "NS", rename = b"okay")]
+        child: String,
+    }
+
+    let mut buf = Vec::new();
+    let mut writer = quick_xml::Writer::new(&mut buf);
+    Document {
+        child: "hello!".to_string(),
     }
     .serialize_root(&mut writer)
     .unwrap();

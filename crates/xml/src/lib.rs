@@ -1,5 +1,6 @@
-use quick_xml::events::BytesEnd;
 use quick_xml::events::{BytesStart, Event};
+use quick_xml::name::{Namespace, QName};
+use std::collections::HashMap;
 use std::io::BufRead;
 
 pub mod de;
@@ -38,14 +39,26 @@ impl XmlDeserialize for () {
 impl XmlSerialize for () {
     fn serialize<W: std::io::Write>(
         &self,
-        ns: Option<&[u8]>,
+        ns: Option<Namespace>,
         tag: Option<&[u8]>,
+        namespaces: &HashMap<Namespace, &[u8]>,
         writer: &mut quick_xml::Writer<W>,
     ) -> std::io::Result<()> {
-        let tag_str = tag.map(String::from_utf8_lossy);
-
-        if let Some(tag) = &tag_str {
-            writer.write_event(Event::Empty(BytesStart::new(tag.clone())))?;
+        let prefix = ns
+            .map(|ns| namespaces.get(&ns))
+            .unwrap_or(None)
+            .map(|prefix| [*prefix, b":"].concat());
+        let has_prefix = prefix.is_some();
+        let tagname = tag.map(|tag| [&prefix.unwrap_or_default(), tag].concat());
+        let qname = tagname.as_ref().map(|tagname| QName(tagname));
+        if let Some(qname) = &qname {
+            let mut bytes_start = BytesStart::from(qname.to_owned());
+            if !has_prefix {
+                if let Some(ns) = &ns {
+                    bytes_start.push_attribute((b"xmlns".as_ref(), ns.as_ref()));
+                }
+            }
+            writer.write_event(Event::Empty(bytes_start))?;
         }
         Ok(())
     }
@@ -84,5 +97,5 @@ impl XmlDeserialize for Unparsed {
 
 pub trait XmlRootTag {
     fn root_tag() -> &'static [u8];
-    fn root_ns() -> Option<&'static [u8]>;
+    fn root_ns() -> Option<Namespace<'static>>;
 }
