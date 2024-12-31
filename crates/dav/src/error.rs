@@ -23,9 +23,6 @@ pub enum Error {
     XmlDeserializationError(#[from] rustical_xml::XmlDeError),
 
     #[error(transparent)]
-    XmlSerializationError(#[from] quick_xml::SeError),
-
-    #[error(transparent)]
     IOError(#[from] std::io::Error),
 }
 
@@ -37,7 +34,6 @@ impl actix_web::error::ResponseError for Error {
             Self::BadRequest(_) => StatusCode::BAD_REQUEST,
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
             Self::XmlDeserializationError(_) => StatusCode::BAD_REQUEST,
-            Self::XmlSerializationError(_) => StatusCode::BAD_REQUEST,
             Error::PropReadOnly => StatusCode::CONFLICT,
             Self::IOError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
