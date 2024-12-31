@@ -98,4 +98,5 @@ impl XmlDeserialize for Unparsed {
 pub trait XmlRootTag {
     fn root_tag() -> &'static [u8];
     fn root_ns() -> Option<Namespace<'static>>;
+    fn root_ns_prefixes() -> HashMap<Namespace<'static>, &'static [u8]>;
 }

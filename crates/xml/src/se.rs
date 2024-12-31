@@ -50,7 +50,7 @@ impl<T: XmlSerialize + XmlRootTag> XmlSerializeRoot for T {
         &self,
         writer: &mut quick_xml::Writer<W>,
     ) -> std::io::Result<()> {
-        let namespaces = HashMap::new();
+        let namespaces = Self::root_ns_prefixes();
         self.serialize(Self::root_ns(), Some(Self::root_tag()), &namespaces, writer)
     }
 }

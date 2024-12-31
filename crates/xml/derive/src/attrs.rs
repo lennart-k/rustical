@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use darling::{util::Flag, FromDeriveInput, FromField, FromMeta, FromVariant};
 use syn::LitByteStr;
 
@@ -10,8 +12,7 @@ pub struct ContainerAttrs {
 pub struct TagAttrs {
     pub rename: Option<LitByteStr>,
     pub ns_strict: Flag,
-    // pub ns: Option<LitByteStr>,
-    pub ns: Option<syn::ExprPath>,
+    pub ns: Option<syn::Path>,
 }
 
 #[derive(Default, FromVariant)]
@@ -38,7 +39,9 @@ pub struct StructAttrs {
     pub container: ContainerAttrs,
 
     pub root: Option<LitByteStr>,
-    pub ns: Option<syn::ExprPath>,
+    pub ns: Option<syn::Path>,
+    #[darling(default)]
+    pub ns_prefix: HashMap<syn::Path, LitByteStr>,
     pub allow_invalid: Flag,
 }
 

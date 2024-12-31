@@ -57,10 +57,28 @@ impl NamedStruct {
             Some(ns) => quote! { Some(#ns) },
             None => quote! { None },
         };
+
+        let prefixes = if self.attrs.root.is_some() {
+            self.attrs
+                .ns_prefix
+                .iter()
+                .map(|(ns, prefix)| {
+                    quote! { (#ns, #prefix.as_ref()) }
+                })
+                .collect()
+        } else {
+            vec![]
+        };
+
         quote! {
             impl #impl_generics ::rustical_xml::XmlRootTag for #ident #type_generics #where_clause {
                 fn root_tag() -> &'static [u8] { #root }
                 fn root_ns() -> Option<::quick_xml::name::Namespace<'static>> { #ns }
+                fn root_ns_prefixes() -> ::std::collections::HashMap<::quick_xml::name::Namespace<'static>, &'static [u8]> {
+                    ::std::collections::HashMap::from_iter(vec![
+                        #(#prefixes),*
+                    ])
+                }
             }
         }
     }
@@ -224,6 +242,23 @@ impl NamedStruct {
 
         let is_empty = tag_writers.len() == 0;
 
+        // If we are the root element write the xmlns attributes
+        let prefix_attributes = if self.attrs.root.is_some() {
+            self.attrs
+                .ns_prefix
+                .iter()
+                .map(|(ns, prefix)| {
+                    let attr_name = [b"xmlns:".as_ref(), &prefix.value()].concat();
+                    let a = syn::LitByteStr::new(&attr_name, prefix.span());
+                    quote! {
+                         bytes_start.push_attribute((#a.as_ref(), #ns.as_ref()));
+                    }
+                })
+                .collect()
+        } else {
+            vec![]
+        };
+
         quote! {
             impl #impl_generics ::rustical_xml::XmlSerialize for #ident #type_generics #where_clause {
                 fn serialize<W: ::std::io::Write>(
@@ -252,6 +287,7 @@ impl NamedStruct {
                                 bytes_start.push_attribute((b"xmlns".as_ref(), ns.as_ref()));
                             }
                         }
+                        #(#prefix_attributes);*
                         if let Some(attrs) = self.attributes() {
                             bytes_start.extend_attributes(attrs);
                         }

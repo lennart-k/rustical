@@ -47,6 +47,7 @@ pub enum PropstatWrapper<T: XmlSerialize> {
 // <!ELEMENT response (href, ((href*, status)|(propstat+)),
 // responsedescription?) >
 #[derive(XmlSerialize)]
+#[xml(ns = "crate::namespace::NS_DAV")]
 pub struct ResponseElement<PropstatType: XmlSerialize> {
     pub href: String,
     #[xml(serialize_with = "xml_serialize_optional_status")]
@@ -85,19 +86,13 @@ impl<PT: XmlSerialize> Default for ResponseElement<PT> {
 // <!ELEMENT multistatus (response+, responsedescription?) >
 // Extended by sync-token as specified in RFC 6578
 #[derive(XmlSerialize, XmlRootTag)]
-#[xml(root = b"multistatus")]
+#[xml(root = b"multistatus", ns = "crate::namespace::NS_DAV")]
+#[xml(ns_prefix(crate::namespace::NS_DAV = b"D"))]
 pub struct MultistatusElement<PropType: XmlSerialize, MemberPropType: XmlSerialize> {
     #[xml(rename = b"response", flatten)]
     pub responses: Vec<ResponseElement<PropType>>,
     #[xml(rename = b"response", flatten)]
     pub member_responses: Vec<ResponseElement<MemberPropType>>,
-    // TODO: napespaces
-    // pub ns_dav: &'static str,
-    // pub ns_davpush: &'static str,
-    // pub ns_caldav: &'static str,
-    // pub ns_ical: &'static str,
-    // pub ns_calendarserver: &'static str,
-    // pub ns_carddav: &'static str,
     pub sync_token: Option<String>,
 }
 
@@ -106,12 +101,6 @@ impl<T1: XmlSerialize, T2: XmlSerialize> Default for MultistatusElement<T1, T2> 
         Self {
             responses: vec![],
             member_responses: vec![],
-            // ns_dav: Namespace::Dav.as_str(),
-            // ns_davpush: Namespace::DavPush.as_str(),
-            // ns_caldav: Namespace::CalDAV.as_str(),
-            // ns_ical: Namespace::ICal.as_str(),
-            // ns_calendarserver: Namespace::CServer.as_str(),
-            // ns_carddav: Namespace::CardDAV.as_str(),
             sync_token: None,
         }
     }
