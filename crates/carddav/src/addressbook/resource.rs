@@ -33,7 +33,9 @@ pub struct AddressbookResourceService<AS: AddressbookStore + ?Sized> {
 )]
 pub enum AddressbookProp {
     // WebDAV (RFC 2518)
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     Displayname(Option<String>),
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     Getcontenttype(String),
 
     // CardDAV (RFC 6352)
@@ -43,10 +45,13 @@ pub enum AddressbookProp {
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     SupportedAddressData(SupportedAddressData),
     #[xml(skip_deserializing)]
+    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     SupportedReportSet(SupportedReportSet),
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     MaxResourceSize(i64),
 
     // Collection Synchronization (RFC 6578)
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     SyncToken(String),
 
     // Didn't find the spec

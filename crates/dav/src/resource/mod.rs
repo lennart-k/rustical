@@ -27,14 +27,18 @@ impl<T: FromStr + VariantNames> ResourcePropName for T {}
 pub enum CommonPropertiesProp {
     // WebDAV (RFC 2518)
     #[xml(skip_deserializing)]
+    #[xml(ns = "crate::namespace::NS_DAV")]
     Resourcetype(Resourcetype),
 
     // WebDAV Current Principal Extension (RFC 5397)
+    #[xml(ns = "crate::namespace::NS_DAV")]
     CurrentUserPrincipal(HrefElement),
 
     // WebDAV Access Control Protocol (RFC 3477)
     #[xml(skip_deserializing)]
+    #[xml(ns = "crate::namespace::NS_DAV")]
     CurrentUserPrivilegeSet(UserPrivilegeSet),
+    #[xml(ns = "crate::namespace::NS_DAV")]
     Owner(Option<HrefElement>),
 }
 

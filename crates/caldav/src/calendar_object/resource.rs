@@ -28,11 +28,13 @@ pub struct CalendarObjectResourceService<C: CalendarStore + ?Sized> {
 )]
 pub enum CalendarObjectProp {
     // WebDAV (RFC 2518)
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     Getetag(String),
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     Getcontenttype(String),
 
     // CalDAV (RFC 4791)
-    // #[serde(rename = "C:calendar-data")]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     CalendarData(String),
 }
 

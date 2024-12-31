@@ -31,8 +31,9 @@ pub struct PrincipalResource {
 )]
 pub enum PrincipalProp {
     // WebDAV Access Control (RFC 3744)
-    #[xml(rename = b"principal-URL")]
     #[strum_discriminants(strum(serialize = "principal-URL"))]
+    #[xml(rename = b"principal-URL")]
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     PrincipalUrl(HrefElement),
 
     // CardDAV (RFC 6352)

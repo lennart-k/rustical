@@ -39,7 +39,9 @@ pub struct CalendarResourceService<C: CalendarStore + ?Sized> {
 )]
 pub enum CalendarProp {
     // WebDAV (RFC 2518)
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     Displayname(Option<String>),
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     Getcontenttype(String),
 
     // WebDav Push
@@ -47,24 +49,24 @@ pub enum CalendarProp {
     // in DAVx5 yet
     // https://github.com/bitfireAT/webdav-push/commit/461259a2f2174454b2b00033419b11fac52b79e3
     #[xml(skip_deserializing)]
-    // #[serde(rename = "P:push-transports", alias = "push-transports")]
+    #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
     Transports(Transports),
     Topic(String),
 
     // CalDAV (RFC 4791)
-    // #[serde(rename = "IC:calendar-color", alias = "calendar-color")]
+    #[xml(ns = "rustical_dav::namespace::NS_ICAL")]
     CalendarColor(Option<String>),
-    // #[serde(rename = "C:calendar-description", alias = "calendar-description")]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     CalendarDescription(Option<String>),
-    // #[serde(rename = "C:calendar-timezone", alias = "calendar-timezone")]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     CalendarTimezone(Option<String>),
-    // #[serde(rename = "IC:calendar-order", alias = "calendar-order")]
+    #[xml(ns = "rustical_dav::namespace::NS_ICAL")]
     CalendarOrder(Option<i64>),
-    // #[serde(rename = "C:supported-calendar-component-set")]
     // TODO: Re-add
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     #[xml(skip_deserializing)]
     SupportedCalendarComponentSet(SupportedCalendarComponentSet),
-    // #[serde(rename = "C:supported-calendar-data")]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     #[xml(skip_deserializing)]
     SupportedCalendarData(SupportedCalendarData),
     MaxResourceSize(i64),
@@ -72,12 +74,13 @@ pub enum CalendarProp {
     SupportedReportSet(SupportedReportSet),
 
     // Collection Synchronization (RFC 6578)
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     SyncToken(String),
 
     // CalendarServer
-    // #[serde(rename = "CS:getctag", alias = "getctag")]
+    #[xml(ns = "rustical_dav::namespace::NS_CALENDARSERVER")]
     Getctag(String),
-    // #[serde(rename = "CS:source", alias = "source")]
+    #[xml(ns = "rustical_dav::namespace::NS_CALENDARSERVER")]
     Source(Option<HrefElement>),
 }
 

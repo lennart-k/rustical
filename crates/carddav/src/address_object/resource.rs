@@ -29,7 +29,9 @@ pub struct AddressObjectResourceService<AS: AddressbookStore + ?Sized> {
 )]
 pub enum AddressObjectProp {
     // WebDAV (RFC 2518)
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     Getetag(String),
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     Getcontenttype(String),
 
     // CalDAV (RFC 4791)

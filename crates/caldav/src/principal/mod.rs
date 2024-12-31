@@ -32,12 +32,13 @@ pub struct PrincipalResource {
 pub enum PrincipalProp {
     // WebDAV Access Control (RFC 3744)
     #[strum_discriminants(strum(serialize = "principal-URL"))]
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     PrincipalUrl(HrefElement),
 
     // CalDAV (RFC 4791)
-    // #[serde(rename = "C:calendar-home-set")]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     CalendarHomeSet(HrefElement),
-    // #[serde(rename = "C:calendar-user-address-set")]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     CalendarUserAddressSet(HrefElement),
 }
 
