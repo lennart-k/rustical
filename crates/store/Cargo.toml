@@ -29,3 +29,5 @@ rustical_xml.workspace = true
 [dev-dependencies]
 rstest = { workspace = true }
 rstest_reuse = { workspace = true }
+rustical_store_sqlite.workspace = true
+tokio.workspace = true

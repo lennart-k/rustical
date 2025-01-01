@@ -18,7 +18,7 @@ impl XmlSerialize for Resourcetype {
     ) -> std::io::Result<()> {
         let tag_str = tag.map(String::from_utf8_lossy);
         if let Some(tag) = &tag_str {
-            writer.write_event(Event::Start(BytesStart::new(tag.to_owned())))?;
+            writer.write_event(Event::Start(BytesStart::new(tag.clone())))?;
         }
 
         for &ty in self.0 {
@@ -26,7 +26,7 @@ impl XmlSerialize for Resourcetype {
         }
 
         if let Some(tag) = &tag_str {
-            writer.write_event(Event::End(BytesEnd::new(tag.to_owned())))?;
+            writer.write_event(Event::End(BytesEnd::new(tag.clone())))?;
         }
         Ok(())
     }
