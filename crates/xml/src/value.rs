@@ -103,7 +103,13 @@ impl<T: Value> XmlSerialize for T {
         let prefix = ns
             .map(|ns| namespaces.get(&ns))
             .unwrap_or(None)
-            .map(|prefix| [*prefix, b":"].concat());
+            .map(|prefix| {
+                if !prefix.is_empty() {
+                    [*prefix, b":"].concat()
+                } else {
+                    Vec::new()
+                }
+            });
         let has_prefix = prefix.is_some();
         let tagname = tag.map(|tag| [&prefix.unwrap_or_default(), tag].concat());
         let qname = tagname.as_ref().map(|tagname| QName(tagname));

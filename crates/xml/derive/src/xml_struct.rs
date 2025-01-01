@@ -248,7 +248,12 @@ impl NamedStruct {
                 .ns_prefix
                 .iter()
                 .map(|(ns, prefix)| {
-                    let attr_name = [b"xmlns:".as_ref(), &prefix.value()].concat();
+                    let sep = if !prefix.value().is_empty() {
+                        b":".to_vec()
+                    } else {
+                        b"".to_vec()
+                    };
+                    let attr_name = [b"xmlns".as_ref(), &sep, &prefix.value()].concat();
                     let a = syn::LitByteStr::new(&attr_name, prefix.span());
                     quote! {
                          bytes_start.push_attribute((#a.as_ref(), #ns.as_ref()));
@@ -275,7 +280,13 @@ impl NamedStruct {
                     let prefix = ns
                         .map(|ns| namespaces.get(&ns))
                         .unwrap_or(None)
-                        .map(|prefix| [*prefix, b":"].concat());
+                        .map(|prefix| {
+                            if !prefix.is_empty() {
+                                [*prefix, b":"].concat()
+                            } else {
+                                Vec::new()
+                            }
+                        });
                     let has_prefix = prefix.is_some();
                     let tagname = tag.map(|tag| [&prefix.unwrap_or_default(), tag].concat());
                     let qname = tagname.as_ref().map(|tagname| ::quick_xml::name::QName(tagname));

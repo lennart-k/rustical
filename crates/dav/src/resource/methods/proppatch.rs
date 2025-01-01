@@ -33,6 +33,7 @@ struct SetPropertyPropWrapperWrapper<T: XmlDeserialize> {
 // We are <set>
 #[derive(XmlDeserialize, Clone, Debug)]
 struct SetPropertyElement<T: XmlDeserialize> {
+    #[xml(ns = "crate::namespace::NS_DAV")]
     prop: T,
 }
 
@@ -50,17 +51,21 @@ struct PropertyElement {
 
 #[derive(XmlDeserialize, Clone, Debug)]
 struct RemovePropertyElement {
+    #[xml(ns = "crate::namespace::NS_DAV")]
     prop: PropertyElement,
 }
 
 #[derive(XmlDeserialize, Clone, Debug)]
 enum Operation<T: XmlDeserialize> {
+    #[xml(ns = "crate::namespace::NS_DAV")]
     Set(SetPropertyElement<T>),
+    #[xml(ns = "crate::namespace::NS_DAV")]
     Remove(RemovePropertyElement),
 }
 
 #[derive(XmlDeserialize, XmlRootTag, Clone, Debug)]
 #[xml(root = b"propertyupdate")]
+#[xml(ns = "crate::namespace::NS_DAV")]
 struct PropertyupdateElement<T: XmlDeserialize> {
     #[xml(ty = "untagged", flatten)]
     operations: Vec<Operation<T>>,

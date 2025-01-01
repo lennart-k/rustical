@@ -88,7 +88,7 @@ impl<PT: XmlSerialize> Default for ResponseElement<PT> {
 #[derive(XmlSerialize, XmlRootTag)]
 #[xml(root = b"multistatus", ns = "crate::namespace::NS_DAV")]
 #[xml(ns_prefix(
-    crate::namespace::NS_DAV = b"D",
+    crate::namespace::NS_DAV = b"",
     crate::namespace::NS_CARDDAV = b"CARD",
     crate::namespace::NS_CALDAV = b"CAL",
     crate::namespace::NS_CALENDARSERVER = b"CS"
