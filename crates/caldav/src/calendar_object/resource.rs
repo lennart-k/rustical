@@ -30,8 +30,8 @@ pub enum CalendarObjectProp {
     // WebDAV (RFC 2518)
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     Getetag(String),
-    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
-    Getcontenttype(String),
+    #[xml(ns = "rustical_dav::namespace::NS_DAV", skip_deserializing)]
+    Getcontenttype(&'static str),
 
     // CalDAV (RFC 4791)
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
@@ -66,7 +66,7 @@ impl Resource for CalendarObjectResource {
                 CalendarObjectProp::CalendarData(self.object.get_ics().to_owned())
             }
             CalendarObjectPropName::Getcontenttype => {
-                CalendarObjectProp::Getcontenttype("text/calendar;charset=utf-8".to_owned())
+                CalendarObjectProp::Getcontenttype("text/calendar;charset=utf-8")
             }
         })
     }

@@ -31,8 +31,8 @@ pub enum AddressObjectProp {
     // WebDAV (RFC 2518)
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     Getetag(String),
-    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
-    Getcontenttype(String),
+    #[xml(ns = "rustical_dav::namespace::NS_DAV", skip_deserializing)]
+    Getcontenttype(&'static str),
 
     // CalDAV (RFC 4791)
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
@@ -67,7 +67,7 @@ impl Resource for AddressObjectResource {
                 AddressObjectProp::AddressData(self.object.get_vcf().to_owned())
             }
             AddressObjectPropName::Getcontenttype => {
-                AddressObjectProp::Getcontenttype("text/vcard;charset=utf-8".to_owned())
+                AddressObjectProp::Getcontenttype("text/vcard;charset=utf-8")
             }
         })
     }

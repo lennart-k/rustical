@@ -35,17 +35,15 @@ pub enum AddressbookProp {
     // WebDAV (RFC 2518)
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     Displayname(Option<String>),
-    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
-    Getcontenttype(String),
+    #[xml(ns = "rustical_dav::namespace::NS_DAV", skip_deserializing)]
+    Getcontenttype(&'static str),
 
     // CardDAV (RFC 6352)
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     AddressbookDescription(Option<String>),
-    #[xml(skip_deserializing)]
-    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
+    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV", skip_deserializing)]
     SupportedAddressData(SupportedAddressData),
-    #[xml(skip_deserializing)]
-    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
+    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV", skip_deserializing)]
     SupportedReportSet(SupportedReportSet),
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     MaxResourceSize(i64),
@@ -83,7 +81,7 @@ impl Resource for AddressbookResource {
                 AddressbookProp::Displayname(self.0.displayname.clone())
             }
             AddressbookPropName::Getcontenttype => {
-                AddressbookProp::Getcontenttype("text/vcard;charset=utf-8".to_owned())
+                AddressbookProp::Getcontenttype("text/vcard;charset=utf-8")
             }
             AddressbookPropName::MaxResourceSize => AddressbookProp::MaxResourceSize(10000000),
             AddressbookPropName::SupportedReportSet => {

@@ -41,8 +41,8 @@ pub enum CalendarProp {
     // WebDAV (RFC 2518)
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     Displayname(Option<String>),
-    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
-    Getcontenttype(String),
+    #[xml(ns = "rustical_dav::namespace::NS_DAV", skip_deserializing)]
+    Getcontenttype(&'static str),
 
     // WebDav Push
     // NOTE: Here we implement an older version of the spec since the new property name is not reflected
@@ -62,11 +62,9 @@ pub enum CalendarProp {
     CalendarTimezone(Option<String>),
     #[xml(ns = "rustical_dav::namespace::NS_ICAL")]
     CalendarOrder(Option<i64>),
-    // TODO: Re-add
-    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV", skip_deserializing)]
     SupportedCalendarComponentSet(SupportedCalendarComponentSet),
-    #[xml(skip_deserializing)]
-    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV", skip_deserializing)]
     SupportedCalendarData(SupportedCalendarData),
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     MaxResourceSize(i64),
@@ -119,25 +117,13 @@ impl Resource for CalendarResource {
             }
             CalendarPropName::CalendarOrder => CalendarProp::CalendarOrder(Some(self.0.order)),
             CalendarPropName::SupportedCalendarComponentSet => {
-                CalendarProp::SupportedCalendarComponentSet(SupportedCalendarComponentSet {
-                    comp: vec![
-                        SupportedCalendarComponent {
-                            name: "VEVENT".to_owned(),
-                        },
-                        SupportedCalendarComponent {
-                            name: "VTODO".to_owned(),
-                        },
-                        SupportedCalendarComponent {
-                            name: "VJOURNAL".to_owned(),
-                        },
-                    ],
-                })
+                CalendarProp::SupportedCalendarComponentSet(SupportedCalendarComponentSet::default())
             }
             CalendarPropName::SupportedCalendarData => {
                 CalendarProp::SupportedCalendarData(SupportedCalendarData::default())
             }
             CalendarPropName::Getcontenttype => {
-                CalendarProp::Getcontenttype("text/calendar;charset=utf-8".to_owned())
+                CalendarProp::Getcontenttype("text/calendar;charset=utf-8")
             }
             CalendarPropName::Transports => CalendarProp::Transports(Default::default()),
             CalendarPropName::Topic => {

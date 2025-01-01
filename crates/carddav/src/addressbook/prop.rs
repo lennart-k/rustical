@@ -3,29 +3,28 @@ use rustical_xml::XmlSerialize;
 #[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub struct AddressDataType {
     #[xml(ty = "attr")]
-    pub content_type: String,
+    pub content_type: &'static str,
     #[xml(ty = "attr")]
-    pub version: String,
+    pub version: &'static str,
 }
 
 #[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub struct SupportedAddressData {
-    // #[serde(rename = "CARD:address-data-type", alias = "address-data-type")]
-    #[xml(flatten)]
-    address_data_type: Vec<AddressDataType>,
+    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV", flatten)]
+    address_data_type: &'static [AddressDataType],
 }
 
 impl Default for SupportedAddressData {
     fn default() -> Self {
         Self {
-            address_data_type: vec![
+            address_data_type: &[
                 AddressDataType {
-                    content_type: "text/vcard".to_owned(),
-                    version: "3.0".to_owned(),
+                    content_type: "text/vcard",
+                    version: "3.0",
                 },
                 AddressDataType {
-                    content_type: "text/vcard".to_owned(),
-                    version: "4.0".to_owned(),
+                    content_type: "text/vcard",
+                    version: "4.0",
                 },
             ],
         }
@@ -34,42 +33,34 @@ impl Default for SupportedAddressData {
 
 #[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub enum ReportMethod {
+    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     AddressbookMultiget,
     SyncCollection,
 }
 
 #[derive(Debug, Clone, XmlSerialize, PartialEq)]
-pub struct ReportWrapper {
-    #[xml(ty = "untagged")]
-    report: ReportMethod,
-}
-
-#[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub struct SupportedReportWrapper {
-    report: ReportWrapper,
-}
-
-impl From<ReportMethod> for SupportedReportWrapper {
-    fn from(value: ReportMethod) -> Self {
-        Self {
-            report: ReportWrapper { report: value },
-        }
-    }
+    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
+    report: ReportMethod,
 }
 
 // RFC 3253 section-3.1.5
 #[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub struct SupportedReportSet {
-    #[xml(flatten)]
-    supported_report: Vec<SupportedReportWrapper>,
+    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV", flatten)]
+    supported_report: &'static [SupportedReportWrapper],
 }
 
 impl Default for SupportedReportSet {
     fn default() -> Self {
         Self {
-            supported_report: vec![
-                ReportMethod::AddressbookMultiget.into(),
-                ReportMethod::SyncCollection.into(),
+            supported_report: &[
+                SupportedReportWrapper {
+                    report: ReportMethod::AddressbookMultiget,
+                },
+                SupportedReportWrapper {
+                    report: ReportMethod::SyncCollection,
+                },
             ],
         }
     }

@@ -1,15 +1,24 @@
+use derive_more::derive::From;
 use rustical_xml::{XmlDeserialize, XmlSerialize};
 
-#[derive(Debug, Clone, XmlDeserialize, XmlSerialize, PartialEq)]
+#[derive(Debug, Clone, XmlDeserialize, XmlSerialize, PartialEq, From)]
 pub struct SupportedCalendarComponent {
     #[xml(ty = "attr")]
-    pub name: String,
+    pub name: &'static str,
 }
 
 #[derive(Debug, Clone, XmlDeserialize, XmlSerialize, PartialEq)]
 pub struct SupportedCalendarComponentSet {
     #[xml(flatten)]
     pub comp: Vec<SupportedCalendarComponent>,
+}
+
+impl Default for SupportedCalendarComponentSet {
+    fn default() -> Self {
+        Self {
+            comp: vec!["VEVENT".into(), "VTODO".into(), "VJOURNAL".into()],
+        }
+    }
 }
 
 #[derive(Debug, Clone, XmlSerialize, PartialEq)]
