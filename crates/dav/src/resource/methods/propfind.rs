@@ -49,29 +49,24 @@ pub(crate) async fn route_propfind<R: ResourceService>(
         }
     };
 
-    let props = match propfind.prop {
-        PropfindType::Allprop => vec!["allprop".to_owned()],
-        PropfindType::Propname => vec!["propname".to_owned()],
+    // TODO: respect namespaces?
+    let props = match &propfind.prop {
+        PropfindType::Allprop => vec!["allprop"],
+        PropfindType::Propname => vec!["propname"],
         PropfindType::Prop(PropElement { prop: prop_tags }) => prop_tags
-            .into_iter()
-            .map(|propname| propname.name)
+            .iter()
+            .map(|propname| propname.name.as_str())
             .collect(),
     };
-    let props: Vec<&str> = props.iter().map(String::as_str).collect();
 
     let mut member_responses = Vec::new();
     if depth != Depth::Zero {
         for (path, member) in resource_service.get_members(req.resource_map()).await? {
-            member_responses.push(member.propfind(
-                &path,
-                props.clone(),
-                &user,
-                req.resource_map(),
-            )?);
+            member_responses.push(member.propfind(&path, &props, &user, req.resource_map())?);
         }
     }
 
-    let response = resource.propfind(req.path(), props, &user, req.resource_map())?;
+    let response = resource.propfind(req.path(), &props, &user, req.resource_map())?;
 
     Ok(MultistatusElement {
         responses: vec![response],

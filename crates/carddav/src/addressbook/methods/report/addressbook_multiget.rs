@@ -99,7 +99,7 @@ pub async fn handle_addressbook_multiget<AS: AddressbookStore + ?Sized>(
                 object,
                 principal: principal.to_owned(),
             }
-            .propfind(&path, props.clone(), user, req.resource_map())?,
+            .propfind(&path, &props, user, req.resource_map())?,
         );
     }
 

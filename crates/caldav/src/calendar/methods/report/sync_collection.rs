@@ -94,7 +94,7 @@ pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
                 object,
                 principal: principal.to_owned(),
             }
-            .propfind(&path, props.clone(), user, req.resource_map())?,
+            .propfind(&path, &props, user, req.resource_map())?,
         );
     }
 

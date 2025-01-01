@@ -141,10 +141,12 @@ pub trait Resource: Clone + 'static {
     fn propfind(
         &self,
         path: &str,
-        mut props: Vec<&str>,
+        props: &[&str],
         user: &User,
         rmap: &ResourceMap,
     ) -> Result<ResponseElement<EitherProp<Self::Prop, CommonPropertiesProp>>, Self::Error> {
+        let mut props = props.to_vec();
+
         if props.contains(&"propname") {
             if props.len() != 1 {
                 // propname MUST be the only queried prop per spec
@@ -154,7 +156,7 @@ pub trait Resource: Clone + 'static {
             }
             let props = Self::list_props()
                 .into_iter()
-                .map(str::to_owned)
+                .map(str::to_string)
                 .collect_vec();
 
             return Ok(ResponseElement {
@@ -186,7 +188,7 @@ pub trait Resource: Clone + 'static {
             } else if let Ok(internal_prop) = CommonPropertiesPropName::from_str(prop) {
                 internal_props.push(internal_prop);
             } else {
-                invalid_props.push(prop)
+                invalid_props.push(prop.to_string())
             }
         }
 
@@ -212,11 +214,7 @@ pub trait Resource: Clone + 'static {
         if !invalid_props.is_empty() {
             propstats.push(PropstatWrapper::TagList(PropstatElement {
                 status: StatusCode::NOT_FOUND,
-                prop: invalid_props
-                    .into_iter()
-                    .map(|s| s.to_owned())
-                    .collect_vec()
-                    .into(),
+                prop: invalid_props.into(),
             }));
         }
         Ok(ResponseElement {
