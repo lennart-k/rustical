@@ -3,7 +3,7 @@ use actix_web::web::{Data, Path};
 use actix_web::HttpResponse;
 use rustical_store::auth::User;
 use rustical_store::{Calendar, CalendarStore};
-use rustical_xml::{XmlDeserialize, XmlDocument, XmlRootTag};
+use rustical_xml::{Unparsed, XmlDeserialize, XmlDocument, XmlRootTag};
 use tracing::instrument;
 use tracing_actix_web::RootSpan;
 
@@ -21,6 +21,9 @@ pub struct MkcolCalendarProp {
     calendar_timezone: Option<String>,
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     calendar_timezone_id: Option<String>,
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
+    #[allow(dead_code)]
+    resourcetype: Unparsed,
 }
 
 #[derive(XmlDeserialize, Clone, Debug)]
