@@ -56,7 +56,8 @@ pub enum AddressbookProp {
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     SyncToken(String),
 
-    // Didn't find the spec
+    // https://github.com/apple/ccs-calendarserver/blob/master/doc/Extensions/caldav-ctag.txt
+    #[xml(ns = "rustical_dav::namespace::NS_CALENDARSERVER")]
     Getctag(String),
 }
 
