@@ -18,7 +18,12 @@ cargo install --git https://github.com/lennart-k/rustical
 ### Docker
 
 ```sh
-docker run -p 4000:4000 -v YOUR_CONFIG_TOML:/etc/rustical/config.toml -v YOUR_DATA_DIRECTORY:YOUR_DATA_DIRECTORY ghcr.io/lennart-k/rustical
+docker run \
+  -p 4000:4000 \
+  -v YOUR_DATA_DIR:/var/lib/rustical/ \
+  -v YOUR_CONFIG_TOML:/etc/rustical/config.toml \
+  -v YOUR_DATA_DIRECTORY:YOUR_DATA_DIRECTORY \
+  ghcr.io/lennart-k/rustical
 ```
 
 ## Configuration
@@ -29,7 +34,8 @@ You can generate a default `config.toml` with
 rustical gen-config
 ```
 
-There, you can customize your username, password, and app tokens.
+You'll have to set your database path to something like `/var/lib/rustical/db.sqlite3`.
+There you also set your username, password, and app tokens.
 Password hashes can be generated with
 
 ```sh
@@ -43,21 +49,6 @@ Since it's sensitive information, the secure but slow hash algorithm `argon2` is
 
 I recommend to generate random app tokens for each CalDAV/CardDAV client.
 These can use the faster `pbkdf2` algorithm.
-
-## Todo
-
-- [x] Auth
-  - current state: RustiCal should be safe against unauthenticated request, however many routes are not checked for authorization yet
-  - [x] static authentication
-  - [ ] Access control
-  - [x] preparation for different principal types (groups)
-- [x] WebDAV sync extension [RFC 6578](https://www.rfc-editor.org/rfc/rfc6578)
-  - [x] implement getctag [see](https://github.com/apple/ccs-calendarserver/blob/master/doc/Extensions/caldav-ctag.txt)
-  - [ ] implement WebDAV If header
-- [ ] Onboarding
-  - [x] config generation
-  - [ ] usable documentation
-  - [ ] usable frontend
 
 ## Relevant RFCs
 
