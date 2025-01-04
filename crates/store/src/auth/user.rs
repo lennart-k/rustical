@@ -27,10 +27,6 @@ impl ResponseError for UnauthorizedError {
                 header::WWW_AUTHENTICATE,
                 r#"Basic realm="RustiCal", charset="UTF-8""#,
             ))
-            // The force_close is a workaround for a bug where something freezes when the
-            // connection is reused after a 401.
-            // possibly related to https://github.com/actix/actix-web/issues/1805
-            .force_close()
             .finish()
     }
 }

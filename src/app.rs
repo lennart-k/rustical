@@ -48,5 +48,5 @@ pub fn make_app<AS: AddressbookStore + ?Sized, CS: CalendarStore + ?Sized>(
                 frontend_config,
             )
         }))
-        .service(web::redirect("/", "/frontend").see_other())
+    // .service(web::redirect("/", "/frontend").see_other())
 }

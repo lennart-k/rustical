@@ -1,4 +1,5 @@
 use crate::config::Config;
+use actix_web::http::KeepAlive;
 use actix_web::HttpServer;
 use anyhow::Result;
 use app::make_app;
@@ -75,6 +76,10 @@ async fn main() -> Result<()> {
                 )
             })
             .bind((config.http.host, config.http.port))?
+            // Workaround for a weird bug where
+            // new requests might timeout since they cannot properly reuse the connection
+            // https://github.com/lennart-k/rustical/issues/10
+            .keep_alive(KeepAlive::Disabled)
             .run()
             .await?;
         }

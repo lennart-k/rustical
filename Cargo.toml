@@ -97,7 +97,6 @@ quote = "1.0"
 proc-macro2 = "1.0"
 heck = "0.5"
 darling = "0.20"
-axum = { version = "0.7", features = ["http2"] }
 
 [dependencies]
 rustical_store = { workspace = true }
@@ -133,4 +132,3 @@ rpassword.workspace = true
 argon2.workspace = true
 pbkdf2.workspace = true
 password-hash.workspace = true
-axum.workspace = true
