@@ -8,45 +8,33 @@ use tracing::instrument;
 use tracing_actix_web::RootSpan;
 
 #[derive(XmlDeserialize, Clone, Debug)]
-pub struct Resourcetype {
-    calendar: Option<()>,
-    collection: Option<()>,
-}
-
-#[derive(XmlDeserialize, Clone, Debug)]
-pub struct CalendarComponentElement {
-    #[xml(ty = "attr")]
-    name: String,
-}
-
-#[derive(XmlDeserialize, Clone, Debug)]
-pub struct SupportedCalendarComponentSetElement {
-    #[xml(flatten)]
-    comp: Vec<CalendarComponentElement>,
-}
-
-#[derive(XmlDeserialize, Clone, Debug)]
 pub struct MkcolCalendarProp {
-    // TODO: Add namespaces
-    resourcetype: Option<Resourcetype>,
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     displayname: Option<String>,
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     calendar_description: Option<String>,
+    #[xml(ns = "rustical_dav::namespace::NS_ICAL")]
     calendar_color: Option<String>,
-    order: Option<i64>,
+    #[xml(ns = "rustical_dav::namespace::NS_ICAL")]
+    calendar_order: Option<i64>,
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     calendar_timezone: Option<String>,
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     calendar_timezone_id: Option<String>,
-    supported_calendar_component_set: Option<SupportedCalendarComponentSetElement>,
 }
 
 #[derive(XmlDeserialize, Clone, Debug)]
-pub struct PropElement<T: XmlDeserialize> {
-    prop: T,
+pub struct PropElement {
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
+    prop: MkcolCalendarProp,
 }
 
 #[derive(XmlDeserialize, XmlRootTag, Clone, Debug)]
 #[xml(root = b"mkcalendar")]
+#[xml(ns = "rustical_dav::namespace::NS_DAV")]
 struct MkcalendarRequest {
-    set: PropElement<MkcolCalendarProp>,
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
+    set: PropElement,
 }
 
 #[instrument(parent = root_span.id(), skip(store, root_span))]
@@ -68,7 +56,7 @@ pub async fn route_mkcalendar<C: CalendarStore + ?Sized>(
     let calendar = Calendar {
         id: cal_id.to_owned(),
         principal: principal.to_owned(),
-        order: request.order.unwrap_or(0),
+        order: request.calendar_order.unwrap_or(0),
         displayname: request.displayname,
         timezone: request.calendar_timezone,
         timezone_id: request.calendar_timezone_id,
@@ -78,20 +66,6 @@ pub async fn route_mkcalendar<C: CalendarStore + ?Sized>(
         synctoken: 0,
         subscription_url: None,
     };
-
-    match store.get_calendar(&principal, &cal_id).await {
-        Err(rustical_store::Error::NotFound) => {
-            // No conflict, no worries
-        }
-        Ok(_) => {
-            // oh no, there's a conflict
-            return Ok(HttpResponse::Conflict().body("A calendar already exists at this URI"));
-        }
-        Err(err) => {
-            // some other error
-            return Err(err.into());
-        }
-    }
 
     match store.insert_calendar(calendar).await {
         // The spec says we should return a mkcalendar-response but I don't know what goes into it.
@@ -112,7 +86,7 @@ mod tests {
 
     #[test]
     fn test_xml_mkcalendar() {
-        let mkcalendar_request = MkcalendarRequest::parse_str(r#"
+        MkcalendarRequest::parse_str(r#"
             <?xml version='1.0' encoding='UTF-8' ?>
             <CAL:mkcalendar xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav">
                 <set>

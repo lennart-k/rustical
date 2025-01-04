@@ -131,6 +131,7 @@ mod tests {
                     }
                 }),
                 timezone: None,
+                timezone_id: None,
             })
         )
     }
