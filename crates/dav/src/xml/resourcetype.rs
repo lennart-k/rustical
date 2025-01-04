@@ -1,46 +1,24 @@
-use std::collections::HashMap;
-
-use quick_xml::events::attributes::Attribute;
-use quick_xml::events::{BytesEnd, BytesStart, Event};
-use quick_xml::name::Namespace;
 use rustical_xml::XmlSerialize;
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct Resourcetype(pub &'static [&'static str]);
+#[derive(Debug, Clone, PartialEq, XmlSerialize)]
+pub struct Resourcetype {
+    #[xml(flatten, ty = "untagged")]
+    pub inner: &'static [ResourcetypeInner],
+}
 
-impl XmlSerialize for Resourcetype {
-    fn serialize<W: std::io::Write>(
-        &self,
-        ns: Option<Namespace>,
-        tag: Option<&[u8]>,
-        namespaces: &HashMap<Namespace, &[u8]>,
-        writer: &mut quick_xml::Writer<W>,
-    ) -> std::io::Result<()> {
-        let tag_str = tag.map(String::from_utf8_lossy);
-        if let Some(tag) = &tag_str {
-            writer.write_event(Event::Start(BytesStart::new(tag.clone())))?;
-        }
-
-        for &ty in self.0 {
-            writer.write_event(Event::Empty(BytesStart::new(ty)))?;
-        }
-
-        if let Some(tag) = &tag_str {
-            writer.write_event(Event::End(BytesEnd::new(tag.clone())))?;
-        }
-        Ok(())
-    }
-
-    #[allow(refining_impl_trait)]
-    fn attributes<'a>(&self) -> Option<Vec<Attribute<'a>>> {
-        None
-    }
+#[derive(Debug, Clone, PartialEq, XmlSerialize)]
+pub struct ResourcetypeInner {
+    #[xml(ty = "namespace")]
+    pub ns: quick_xml::name::Namespace<'static>,
+    #[xml(ty = "tag_name")]
+    pub name: &'static str,
 }
 
 #[cfg(test)]
 mod tests {
-    use super::Resourcetype;
     use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
+
+    use super::{Resourcetype, ResourcetypeInner};
 
     #[derive(XmlSerialize, XmlRootTag)]
     #[xml(root = b"document")]
@@ -53,14 +31,25 @@ mod tests {
         let mut buf = Vec::new();
         let mut writer = quick_xml::Writer::new(&mut buf);
         Document {
-            resourcetype: Resourcetype(&["collection", "hello"]),
+            resourcetype: Resourcetype {
+                inner: &[
+                    ResourcetypeInner {
+                        ns: crate::namespace::NS_DAV,
+                        name: "displayname",
+                    },
+                    ResourcetypeInner {
+                        ns: crate::namespace::NS_CALENDARSERVER,
+                        name: "calendar-color",
+                    },
+                ],
+            },
         }
         .serialize_root(&mut writer)
         .unwrap();
         let out = String::from_utf8(buf).unwrap();
         assert_eq!(
             out,
-            "<document><resourcetype><collection/><hello/></resourcetype></document>"
+            "<document><resourcetype><displayname xmlns=\"DAV:\"/><calendar-color xmlns=\"http://calendarserver.org/ns/\"/></resourcetype></document>"
         )
     }
 }

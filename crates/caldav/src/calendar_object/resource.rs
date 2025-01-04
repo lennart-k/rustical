@@ -6,6 +6,7 @@ use derive_more::derive::{From, Into};
 use rustical_dav::{
     privileges::UserPrivilegeSet,
     resource::{Resource, ResourceService},
+    xml::Resourcetype,
 };
 use rustical_store::{auth::User, CalendarObject, CalendarStore};
 use rustical_xml::{XmlDeserialize, XmlSerialize};
@@ -53,8 +54,8 @@ impl Resource for CalendarObjectResource {
     type Error = Error;
     type PrincipalResource = PrincipalResource;
 
-    fn get_resourcetype(&self) -> &'static [&'static str] {
-        &[]
+    fn get_resourcetype(&self) -> Resourcetype {
+        Resourcetype { inner: &[] }
     }
 
     fn get_prop(

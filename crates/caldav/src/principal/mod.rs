@@ -4,7 +4,7 @@ use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{Resource, ResourceService};
-use rustical_dav::xml::HrefElement;
+use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
 use rustical_store::CalendarStore;
 use rustical_xml::{XmlDeserialize, XmlSerialize};
@@ -57,8 +57,19 @@ impl Resource for PrincipalResource {
     type Error = Error;
     type PrincipalResource = PrincipalResource;
 
-    fn get_resourcetype(&self) -> &'static [&'static str] {
-        &["collection", "principal"]
+    fn get_resourcetype(&self) -> Resourcetype {
+        Resourcetype {
+            inner: &[
+                ResourcetypeInner {
+                    ns: rustical_dav::namespace::NS_DAV,
+                    name: "collection",
+                },
+                ResourcetypeInner {
+                    ns: rustical_dav::namespace::NS_DAV,
+                    name: "principal",
+                },
+            ],
+        }
     }
 
     fn get_prop(

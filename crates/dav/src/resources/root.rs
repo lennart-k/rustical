@@ -1,5 +1,6 @@
 use crate::privileges::UserPrivilegeSet;
 use crate::resource::{Resource, ResourceService};
+use crate::xml::{Resourcetype, ResourcetypeInner};
 use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
 use rustical_store::auth::User;
@@ -37,8 +38,13 @@ impl<PR: Resource> Resource for RootResource<PR> {
     type Error = PR::Error;
     type PrincipalResource = PR;
 
-    fn get_resourcetype(&self) -> &'static [&'static str] {
-        &["collection"]
+    fn get_resourcetype(&self) -> Resourcetype {
+        Resourcetype {
+            inner: &[ResourcetypeInner {
+                ns: crate::namespace::NS_DAV,
+                name: "collection",
+            }],
+        }
     }
 
     fn get_prop(

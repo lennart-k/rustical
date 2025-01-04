@@ -11,6 +11,7 @@ use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{Resource, ResourceService};
+use rustical_dav::xml::{Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
 use rustical_store::{Addressbook, AddressbookStore};
 use rustical_xml::{XmlDeserialize, XmlSerialize};
@@ -68,9 +69,19 @@ impl Resource for AddressbookResource {
     type Error = Error;
     type PrincipalResource = PrincipalResource;
 
-    fn get_resourcetype(&self) -> &'static [&'static str] {
-        // TODO: namespace
-        &["collection", "CARD:addressbook"]
+    fn get_resourcetype(&self) -> Resourcetype {
+        Resourcetype {
+            inner: &[
+                ResourcetypeInner {
+                    ns: rustical_dav::namespace::NS_DAV,
+                    name: "collection",
+                },
+                ResourcetypeInner {
+                    ns: rustical_dav::namespace::NS_CARDDAV,
+                    name: "addressbook",
+                },
+            ],
+        }
     }
 
     fn get_prop(

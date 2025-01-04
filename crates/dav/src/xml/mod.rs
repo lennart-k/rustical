@@ -5,7 +5,7 @@ pub mod tag_list;
 use derive_more::derive::From;
 pub use multistatus::MultistatusElement;
 pub use propfind::{PropElement, PropfindElement, PropfindType, Propname};
-pub use resourcetype::Resourcetype;
+pub use resourcetype::{Resourcetype, ResourcetypeInner};
 use rustical_xml::{XmlDeserialize, XmlSerialize};
 pub use tag_list::TagList;
 

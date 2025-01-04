@@ -13,7 +13,7 @@ use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{Resource, ResourceService};
-use rustical_dav::xml::HrefElement;
+use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
 use rustical_store::{Calendar, CalendarStore};
 use rustical_xml::{XmlDeserialize, XmlSerialize};
@@ -93,11 +93,33 @@ impl Resource for CalendarResource {
     type Error = Error;
     type PrincipalResource = PrincipalResource;
 
-    fn get_resourcetype(&self) -> &'static [&'static str] {
+    fn get_resourcetype(&self) -> Resourcetype {
         if self.0.subscription_url.is_none() {
-            &["collection", "C:calendar"]
+            Resourcetype {
+                inner: &[
+                    ResourcetypeInner {
+                        ns: rustical_dav::namespace::NS_DAV,
+                        name: "collection",
+                    },
+                    ResourcetypeInner {
+                        ns: rustical_dav::namespace::NS_CALDAV,
+                        name: "calendar",
+                    },
+                ],
+            }
         } else {
-            &["collection", "CS:subscribed"]
+            Resourcetype {
+                inner: &[
+                    ResourcetypeInner {
+                        ns: rustical_dav::namespace::NS_DAV,
+                        name: "collection",
+                    },
+                    ResourcetypeInner {
+                        ns: rustical_dav::namespace::NS_CALENDARSERVER,
+                        name: "subscribed",
+                    },
+                ],
+            }
         }
     }
 

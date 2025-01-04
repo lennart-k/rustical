@@ -1,5 +1,5 @@
 use crate::attrs::{FieldType, StructAttrs};
-use crate::{field, Field};
+use crate::Field;
 use core::panic;
 use darling::FromDeriveInput;
 use quote::quote;
@@ -197,7 +197,7 @@ impl NamedStruct {
     pub fn impl_se(&self) -> proc_macro2::TokenStream {
         let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
         let ident = &self.ident;
-        let tag_writers = self.fields.iter().map(Field::tag_writer);
+        let tag_writers: Vec<_> = self.fields.iter().filter_map(Field::tag_writer).collect();
 
         let untagged_attributes = self
             .fields
@@ -240,7 +240,18 @@ impl NamedStruct {
                 }
             });
 
-        let is_empty = tag_writers.len() == 0;
+        let namespace_field = self
+            .fields
+            .iter()
+            .find(|field| field.attrs.xml_ty == FieldType::Namespace)
+            .map(|field| {
+                let field_ident = field.field_ident();
+                quote! {
+                    let ns = Some(self.#field_ident);
+                }
+            });
+
+        let is_empty = tag_writers.is_empty();
 
         // If we are the root element write the xmlns attributes
         let prefix_attributes = if self.attrs.root.is_some() {
@@ -276,6 +287,7 @@ impl NamedStruct {
                     use ::quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
 
                     #tag_name_field;
+                    #namespace_field;
 
                     let prefix = ns
                         .map(|ns| namespaces.get(&ns))
