@@ -9,7 +9,7 @@ pub struct SupportedCalendarComponent {
 
 #[derive(Debug, Clone, XmlDeserialize, XmlSerialize, PartialEq)]
 pub struct SupportedCalendarComponentSet {
-    #[xml(flatten)]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV", flatten)]
     pub comp: Vec<SupportedCalendarComponent>,
 }
 
