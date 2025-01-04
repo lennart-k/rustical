@@ -175,7 +175,8 @@ impl Enum {
                             }
                             Event::Comment(_) => { /* ignore */ }
                             Event::Decl(_) => {
-                                return Err(::rustical_xml::XmlDeError::UnsupportedEvent("Declaration"));
+                                /* ignore */
+                                // return Err(::rustical_xml::XmlDeError::UnsupportedEvent("Declaration"));
                             }
                             Event::PI(_) => {
                                 return Err(::rustical_xml::XmlDeError::UnsupportedEvent("Processing instruction"));

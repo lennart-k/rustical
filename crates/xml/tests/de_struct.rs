@@ -256,3 +256,33 @@ fn test_xml_values() {
         }
     );
 }
+
+#[test]
+fn test_struct_xml_decl() {
+    #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
+    #[xml(root = b"document")]
+    struct Document {
+        child: Child,
+    }
+
+    #[derive(Debug, XmlDeserialize, PartialEq, Default)]
+    struct Child {
+        #[xml(ty = "text")]
+        text: String,
+    }
+
+    let doc = Document::parse_str(
+        r#"
+    <?xml version="1.0" encoding="utf-8"?>
+    <document><child>Hello!</child></document>"#,
+    )
+    .unwrap();
+    assert_eq!(
+        doc,
+        Document {
+            child: Child {
+                text: "Hello!".to_owned()
+            }
+        }
+    );
+}
