@@ -8,12 +8,16 @@ use actix_web::HttpRequest;
 use actix_web::HttpResponse;
 use actix_web::Responder;
 use rustical_store::auth::User;
+use tracing::instrument;
+use tracing_actix_web::RootSpan;
 
+#[instrument(parent = root_span.id(), skip(path, req, root_span, resource_service))]
 pub async fn route_delete<R: ResourceService>(
     path: Path<R::PathComponents>,
     req: HttpRequest,
     user: User,
     resource_service: Data<R>,
+    root_span: RootSpan,
 ) -> Result<impl Responder, R::Error> {
     let no_trash = req
         .headers()
