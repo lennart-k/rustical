@@ -7,6 +7,7 @@ CREATE TABLE calendars (
     "order" INT DEFAULT 0 NOT NULL,
     color TEXT,
     timezone TEXT,
+    timezone_id TEXT,
     deleted_at DATETIME,
     subscription_url TEXT,
     PRIMARY KEY (principal, id)

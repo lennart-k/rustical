@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO calendars (principal, id, displayname, description, \"order\", color, timezone, timezone_id)\n                VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 8
+    },
+    "nullable": []
+  },
+  "hash": "32969555ebbf5d7220c1c0d2d2c793a69d9bbaa1a1a9ec16611ad1b1d303d5d6"
+}

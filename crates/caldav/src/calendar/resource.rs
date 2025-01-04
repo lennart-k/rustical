@@ -61,6 +61,9 @@ pub enum CalendarProp {
     CalendarDescription(Option<String>),
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     CalendarTimezone(Option<String>),
+    // https://datatracker.ietf.org/doc/html/rfc7809
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
+    CalendarTimezoneId(Option<String>),
     #[xml(ns = "rustical_dav::namespace::NS_ICAL")]
     CalendarOrder(Option<i64>),
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV", skip_deserializing)]
@@ -138,6 +141,9 @@ impl Resource for CalendarResource {
             CalendarPropName::CalendarTimezone => {
                 CalendarProp::CalendarTimezone(self.0.timezone.clone())
             }
+            CalendarPropName::CalendarTimezoneId => {
+                CalendarProp::CalendarTimezoneId(self.0.timezone_id.clone())
+            }
             CalendarPropName::CalendarOrder => CalendarProp::CalendarOrder(Some(self.0.order)),
             CalendarPropName::SupportedCalendarComponentSet => {
                 CalendarProp::SupportedCalendarComponentSet(SupportedCalendarComponentSet::default())
@@ -186,6 +192,11 @@ impl Resource for CalendarResource {
                 self.0.timezone = timezone;
                 Ok(())
             }
+            CalendarProp::CalendarTimezoneId(timezone_id) => {
+                // TODO: Set or remove timezone accordingly
+                self.0.timezone_id = timezone_id;
+                Ok(())
+            }
             CalendarProp::CalendarOrder(order) => {
                 self.0.order = order.unwrap_or_default();
                 Ok(())
@@ -222,6 +233,10 @@ impl Resource for CalendarResource {
             }
             CalendarPropName::CalendarTimezone => {
                 self.0.timezone = None;
+                Ok(())
+            }
+            CalendarPropName::CalendarTimezoneId => {
+                self.0.timezone_id = None;
                 Ok(())
             }
             CalendarPropName::CalendarOrder => {

@@ -16,7 +16,6 @@ pub struct EventObject {
 
 impl EventObject {
     pub fn get_first_occurence(&self) -> Result<Option<CalDateTime>, Error> {
-        // This is safe since we enforce the event's existance in the constructor
         if let Some(dtstart) = self.event.get_property("DTSTART") {
             CalDateTime::parse_prop(dtstart, &self.timezones)
         } else {
@@ -25,7 +24,6 @@ impl EventObject {
     }
 
     pub fn get_last_occurence(&self) -> Result<Option<CalDateTime>, Error> {
-        // This is safe since we enforce the event's existence in the constructor
         if let Some(_rrule) = self.event.get_property("RRULE") {
             // TODO: understand recurrence rules
             return Ok(None);

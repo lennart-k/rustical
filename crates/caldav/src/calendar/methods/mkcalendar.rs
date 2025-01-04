@@ -27,6 +27,7 @@ pub struct SupportedCalendarComponentSetElement {
 
 #[derive(XmlDeserialize, Clone, Debug)]
 pub struct MkcolCalendarProp {
+    // TODO: Add namespaces
     resourcetype: Option<Resourcetype>,
     displayname: Option<String>,
     calendar_description: Option<String>,
@@ -70,6 +71,7 @@ pub async fn route_mkcalendar<C: CalendarStore + ?Sized>(
         order: request.order.unwrap_or(0),
         displayname: request.displayname,
         timezone: request.calendar_timezone,
+        timezone_id: request.calendar_timezone_id,
         color: request.calendar_color,
         description: request.calendar_description,
         deleted_at: None,

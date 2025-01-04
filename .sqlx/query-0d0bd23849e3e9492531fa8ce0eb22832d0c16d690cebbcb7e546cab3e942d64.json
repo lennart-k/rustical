@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE calendars SET principal = ?, id = ?, displayname = ?, description = ?, \"order\" = ?, color = ?, timezone = ?, timezone_id = ?\n                WHERE (principal, id) = (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 10
+    },
+    "nullable": []
+  },
+  "hash": "0d0bd23849e3e9492531fa8ce0eb22832d0c16d690cebbcb7e546cab3e942d64"
+}
