@@ -17,7 +17,6 @@ use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
 use rustical_store::{Calendar, CalendarStore};
 use rustical_xml::{XmlDeserialize, XmlSerialize};
-use sha2::{Digest, Sha256};
 use std::str::FromStr;
 use std::sync::Arc;
 use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
@@ -49,10 +48,10 @@ pub enum CalendarProp {
     // NOTE: Here we implement an older version of the spec since the new property name is not reflected
     // in DAVx5 yet
     // https://github.com/bitfireAT/webdav-push/commit/461259a2f2174454b2b00033419b11fac52b79e3
-    #[xml(skip_deserializing)]
-    #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
-    Transports(Transports),
-    Topic(String),
+    // #[xml(skip_deserializing)]
+    // #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
+    // Transports(Transports),
+    // Topic(String),
 
     // CalDAV (RFC 4791)
     #[xml(ns = "rustical_dav::namespace::NS_ICAL")]
@@ -154,14 +153,14 @@ impl Resource for CalendarResource {
             CalendarPropName::Getcontenttype => {
                 CalendarProp::Getcontenttype("text/calendar;charset=utf-8")
             }
-            CalendarPropName::Transports => CalendarProp::Transports(Default::default()),
-            CalendarPropName::Topic => {
-                let url = CalendarResource::get_url(rmap, [&self.0.principal, &self.0.id]).unwrap();
-                let mut hasher = Sha256::new();
-                hasher.update(url);
-                let topic = format!("{:x}", hasher.finalize());
-                CalendarProp::Topic(topic)
-            }
+            // CalendarPropName::Transports => CalendarProp::Transports(Default::default()),
+            // CalendarPropName::Topic => {
+            //     let url = CalendarResource::get_url(rmap, [&self.0.principal, &self.0.id]).unwrap();
+            //     let mut hasher = Sha256::new();
+            //     hasher.update(url);
+            //     let topic = format!("{:x}", hasher.finalize());
+            //     CalendarProp::Topic(topic)
+            // }
             CalendarPropName::MaxResourceSize => CalendarProp::MaxResourceSize(10000000),
             CalendarPropName::SupportedReportSet => {
                 CalendarProp::SupportedReportSet(SupportedReportSet::default())
@@ -206,8 +205,8 @@ impl Resource for CalendarResource {
             }
             CalendarProp::SupportedCalendarData(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::Getcontenttype(_) => Err(rustical_dav::Error::PropReadOnly),
-            CalendarProp::Transports(_) => Err(rustical_dav::Error::PropReadOnly),
-            CalendarProp::Topic(_) => Err(rustical_dav::Error::PropReadOnly),
+            // CalendarProp::Transports(_) => Err(rustical_dav::Error::PropReadOnly),
+            // CalendarProp::Topic(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::MaxResourceSize(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::SupportedReportSet(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::SyncToken(_) => Err(rustical_dav::Error::PropReadOnly),
@@ -248,8 +247,8 @@ impl Resource for CalendarResource {
             }
             CalendarPropName::SupportedCalendarData => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::Getcontenttype => Err(rustical_dav::Error::PropReadOnly),
-            CalendarPropName::Transports => Err(rustical_dav::Error::PropReadOnly),
-            CalendarPropName::Topic => Err(rustical_dav::Error::PropReadOnly),
+            // CalendarPropName::Transports => Err(rustical_dav::Error::PropReadOnly),
+            // CalendarPropName::Topic => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::MaxResourceSize => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::SupportedReportSet => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::SyncToken => Err(rustical_dav::Error::PropReadOnly),
