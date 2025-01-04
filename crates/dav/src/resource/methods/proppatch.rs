@@ -6,6 +6,7 @@ use crate::xml::MultistatusElement;
 use crate::xml::TagList;
 use crate::Error;
 use actix_web::http::StatusCode;
+use actix_web::web::Data;
 use actix_web::{web::Path, HttpRequest};
 use rustical_store::auth::User;
 use rustical_xml::Unparsed;
@@ -71,24 +72,23 @@ struct PropertyupdateElement<T: XmlDeserialize> {
     operations: Vec<Operation<T>>,
 }
 
-#[instrument(parent = root_span.id(), skip(path, req, root_span))]
+#[instrument(parent = root_span.id(), skip(path, req, root_span, resource_service))]
 pub(crate) async fn route_proppatch<R: ResourceService>(
     path: Path<R::PathComponents>,
     body: String,
     req: HttpRequest,
     user: User,
     root_span: RootSpan,
+    resource_service: Data<R>,
 ) -> Result<MultistatusElement<String, String>, R::Error> {
-    let path_components = path.into_inner();
     let href = req.path().to_owned();
-    let resource_service = R::new(&req, path_components.clone()).await?;
 
     // Extract operations
     let PropertyupdateElement::<SetPropertyPropWrapperWrapper<<R::Resource as Resource>::Prop>> {
         operations,
     } = XmlDocument::parse_str(&body).map_err(Error::XmlDeserializationError)?;
 
-    let mut resource = resource_service.get_resource().await?;
+    let mut resource = resource_service.get_resource(&path).await?;
     let privileges = resource.get_user_privileges(&user)?;
     if !privileges.has(&UserPrivilege::Write) {
         return Err(Error::Unauthorized.into());
@@ -141,7 +141,7 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
 
     if props_not_found.is_empty() && props_conflict.is_empty() {
         // Only save if no errors occured
-        resource_service.save_resource(resource).await?;
+        resource_service.save_resource(&path, resource).await?;
     }
 
     Ok(MultistatusElement {

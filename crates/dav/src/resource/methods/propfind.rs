@@ -9,6 +9,7 @@ use crate::xml::PropElement;
 use crate::xml::PropfindElement;
 use crate::xml::PropfindType;
 use crate::Error;
+use actix_web::web::Data;
 use actix_web::web::Path;
 use actix_web::HttpRequest;
 use rustical_store::auth::User;
@@ -16,15 +17,16 @@ use rustical_xml::de::XmlDocument;
 use tracing::instrument;
 use tracing_actix_web::RootSpan;
 
-#[instrument(parent = root_span.id(), skip(path_components, req, root_span))]
+#[instrument(parent = root_span.id(), skip(path, req, root_span, resource_service))]
 #[allow(clippy::type_complexity)]
 pub(crate) async fn route_propfind<R: ResourceService>(
-    path_components: Path<R::PathComponents>,
+    path: Path<R::PathComponents>,
     body: String,
     req: HttpRequest,
     user: User,
     depth: Depth,
     root_span: RootSpan,
+    resource_service: Data<R>,
 ) -> Result<
     MultistatusElement<
         EitherProp<<R::Resource as Resource>::Prop, CommonPropertiesProp>,
@@ -32,9 +34,7 @@ pub(crate) async fn route_propfind<R: ResourceService>(
     >,
     R::Error,
 > {
-    let resource_service = R::new(&req, path_components.into_inner()).await?;
-
-    let resource = resource_service.get_resource().await?;
+    let resource = resource_service.get_resource(&path).await?;
     let privileges = resource.get_user_privileges(&user)?;
     if !privileges.has(&UserPrivilege::Read) {
         return Err(Error::Unauthorized.into());
@@ -61,7 +61,10 @@ pub(crate) async fn route_propfind<R: ResourceService>(
 
     let mut member_responses = Vec::new();
     if depth != Depth::Zero {
-        for (path, member) in resource_service.get_members(req.resource_map()).await? {
+        for (path, member) in resource_service
+            .get_members(&path, req.resource_map())
+            .await?
+        {
             member_responses.push(member.propfind(&path, &props, &user, req.resource_map())?);
         }
     }

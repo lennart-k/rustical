@@ -1,8 +1,6 @@
 use crate::addressbook::resource::AddressbookResource;
 use crate::Error;
 use actix_web::dev::ResourceMap;
-use actix_web::web::Data;
-use actix_web::HttpRequest;
 use async_trait::async_trait;
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{Resource, ResourceService};
@@ -14,8 +12,13 @@ use std::sync::Arc;
 use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
 
 pub struct PrincipalResourceService<A: AddressbookStore + ?Sized> {
-    principal: String,
     addr_store: Arc<A>,
+}
+
+impl<A: AddressbookStore + ?Sized> PrincipalResourceService<A> {
+    pub fn new(addr_store: Arc<A>) -> Self {
+        Self { addr_store }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -97,39 +100,26 @@ impl<A: AddressbookStore + ?Sized> ResourceService for PrincipalResourceService<
     type Resource = PrincipalResource;
     type Error = Error;
 
-    async fn new(
-        req: &HttpRequest,
-        (principal,): Self::PathComponents,
-    ) -> Result<Self, Self::Error> {
-        let addr_store = req
-            .app_data::<Data<A>>()
-            .expect("no addressbook store in app_data!")
-            .clone()
-            .into_inner();
-
-        Ok(Self {
-            addr_store,
-            principal,
-        })
-    }
-
-    async fn get_resource(&self) -> Result<Self::Resource, Self::Error> {
+    async fn get_resource(
+        &self,
+        (principal,): &Self::PathComponents,
+    ) -> Result<Self::Resource, Self::Error> {
         Ok(PrincipalResource {
-            principal: self.principal.to_owned(),
+            principal: principal.to_owned(),
         })
     }
 
     async fn get_members(
         &self,
+        (principal,): &Self::PathComponents,
         rmap: &ResourceMap,
     ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
-        let addressbooks = self.addr_store.get_addressbooks(&self.principal).await?;
+        let addressbooks = self.addr_store.get_addressbooks(principal).await?;
         Ok(addressbooks
             .into_iter()
             .map(|addressbook| {
                 (
-                    AddressbookResource::get_url(rmap, vec![&self.principal, &addressbook.id])
-                        .unwrap(),
+                    AddressbookResource::get_url(rmap, vec![principal, &addressbook.id]).unwrap(),
                     addressbook.into(),
                 )
             })

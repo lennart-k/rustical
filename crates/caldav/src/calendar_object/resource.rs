@@ -1,6 +1,6 @@
 use super::methods::{get_event, put_event};
 use crate::{principal::PrincipalResource, Error};
-use actix_web::{dev::ResourceMap, web::Data, HttpRequest};
+use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::{
@@ -15,9 +15,12 @@ use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
 
 pub struct CalendarObjectResourceService<C: CalendarStore + ?Sized> {
     cal_store: Arc<C>,
-    principal: String,
-    cal_id: String,
-    object_id: String,
+}
+
+impl<C: CalendarStore + ?Sized> CalendarObjectResourceService<C> {
+    pub fn new(cal_store: Arc<C>) -> Self {
+        Self { cal_store }
+    }
 }
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone)]
@@ -117,44 +120,35 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarObjectResourceServic
     type MemberType = CalendarObjectResource;
     type Error = Error;
 
-    async fn new(
-        req: &HttpRequest,
-        path_components: Self::PathComponents,
-    ) -> Result<Self, Self::Error> {
-        let CalendarObjectPathComponents {
+    async fn get_resource(
+        &self,
+        CalendarObjectPathComponents {
             principal,
             cal_id,
             object_id,
-        } = path_components;
-
-        let cal_store = req
-            .app_data::<Data<C>>()
-            .expect("no calendar store in app_data!")
-            .clone()
-            .into_inner();
-
-        Ok(Self {
-            cal_store,
-            principal,
-            cal_id,
-            object_id,
-        })
-    }
-
-    async fn get_resource(&self) -> Result<Self::Resource, Self::Error> {
+        }: &Self::PathComponents,
+    ) -> Result<Self::Resource, Self::Error> {
         let object = self
             .cal_store
-            .get_object(&self.principal, &self.cal_id, &self.object_id)
+            .get_object(principal, cal_id, object_id)
             .await?;
         Ok(CalendarObjectResource {
             object,
-            principal: self.principal.to_owned(),
+            principal: principal.to_owned(),
         })
     }
 
-    async fn delete_resource(&self, use_trashbin: bool) -> Result<(), Self::Error> {
+    async fn delete_resource(
+        &self,
+        CalendarObjectPathComponents {
+            principal,
+            cal_id,
+            object_id,
+        }: &Self::PathComponents,
+        use_trashbin: bool,
+    ) -> Result<(), Self::Error> {
         self.cal_store
-            .delete_object(&self.principal, &self.cal_id, &self.object_id, use_trashbin)
+            .delete_object(principal, cal_id, object_id, use_trashbin)
             .await?;
         Ok(())
     }

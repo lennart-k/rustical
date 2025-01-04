@@ -19,7 +19,7 @@ pub async fn get_object<AS: AddressbookStore + ?Sized>(
 ) -> Result<HttpResponse, Error> {
     let AddressObjectPathComponents {
         principal,
-        cal_id,
+        addressbook_id,
         object_id,
     } = path.into_inner();
 
@@ -27,12 +27,14 @@ pub async fn get_object<AS: AddressbookStore + ?Sized>(
         return Ok(HttpResponse::Unauthorized().body(""));
     }
 
-    let addressbook = store.get_addressbook(&principal, &cal_id).await?;
+    let addressbook = store.get_addressbook(&principal, &addressbook_id).await?;
     if user.id != addressbook.principal {
         return Ok(HttpResponse::Unauthorized().body(""));
     }
 
-    let object = store.get_object(&principal, &cal_id, &object_id).await?;
+    let object = store
+        .get_object(&principal, &addressbook_id, &object_id)
+        .await?;
 
     Ok(HttpResponse::Ok()
         .insert_header(("ETag", object.get_etag()))
@@ -51,7 +53,7 @@ pub async fn put_object<AS: AddressbookStore + ?Sized>(
 ) -> Result<HttpResponse, Error> {
     let AddressObjectPathComponents {
         principal,
-        cal_id: addressbook_id,
+        addressbook_id,
         object_id,
     } = path.into_inner();
 

@@ -7,7 +7,6 @@ use crate::Error;
 use actix_web::dev::ResourceMap;
 use actix_web::http::Method;
 use actix_web::web;
-use actix_web::{web::Data, HttpRequest};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::privileges::UserPrivilegeSet;
@@ -21,8 +20,12 @@ use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
 
 pub struct AddressbookResourceService<AS: AddressbookStore + ?Sized> {
     addr_store: Arc<AS>,
-    principal: String,
-    addressbook_id: String,
+}
+
+impl<A: AddressbookStore + ?Sized> AddressbookResourceService<A> {
+    pub fn new(addr_store: Arc<A>) -> Self {
+        Self { addr_store }
+    }
 }
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone)]
@@ -157,10 +160,13 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressbookResourceServi
     type Resource = AddressbookResource;
     type Error = Error;
 
-    async fn get_resource(&self) -> Result<Self::Resource, Error> {
+    async fn get_resource(
+        &self,
+        (principal, addressbook_id): &Self::PathComponents,
+    ) -> Result<Self::Resource, Error> {
         let addressbook = self
             .addr_store
-            .get_addressbook(&self.principal, &self.addressbook_id)
+            .get_addressbook(principal, addressbook_id)
             .await
             .map_err(|_e| Error::NotFound)?;
         Ok(addressbook.into())
@@ -168,60 +174,48 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressbookResourceServi
 
     async fn get_members(
         &self,
+        (principal, addressbook_id): &Self::PathComponents,
         rmap: &ResourceMap,
     ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
         Ok(self
             .addr_store
-            .get_objects(&self.principal, &self.addressbook_id)
+            .get_objects(principal, addressbook_id)
             .await?
             .into_iter()
             .map(|object| {
                 (
                     AddressObjectResource::get_url(
                         rmap,
-                        vec![&self.principal, &self.addressbook_id, object.get_id()],
+                        vec![principal, addressbook_id, object.get_id()],
                     )
                     .unwrap(),
                     AddressObjectResource {
                         object,
-                        principal: self.principal.to_owned(),
+                        principal: principal.to_owned(),
                     },
                 )
             })
             .collect())
     }
 
-    async fn new(
-        req: &HttpRequest,
-        path_components: Self::PathComponents,
-    ) -> Result<Self, Self::Error> {
-        let addr_store = req
-            .app_data::<Data<AS>>()
-            .expect("no addressbook store in app_data!")
-            .clone()
-            .into_inner();
-
-        Ok(Self {
-            principal: path_components.0,
-            addressbook_id: path_components.1,
-            addr_store,
-        })
-    }
-
-    async fn save_resource(&self, file: Self::Resource) -> Result<(), Self::Error> {
+    async fn save_resource(
+        &self,
+        (principal, addressbook_id): &Self::PathComponents,
+        file: Self::Resource,
+    ) -> Result<(), Self::Error> {
         self.addr_store
-            .update_addressbook(
-                self.principal.to_owned(),
-                self.addressbook_id.to_owned(),
-                file.into(),
-            )
+            .update_addressbook(principal.to_owned(), addressbook_id.to_owned(), file.into())
             .await?;
         Ok(())
     }
 
-    async fn delete_resource(&self, use_trashbin: bool) -> Result<(), Self::Error> {
+    async fn delete_resource(
+        &self,
+        (principal, addressbook_id): &Self::PathComponents,
+        use_trashbin: bool,
+    ) -> Result<(), Self::Error> {
         self.addr_store
-            .delete_addressbook(&self.principal, &self.addressbook_id, use_trashbin)
+            .delete_addressbook(principal, addressbook_id, use_trashbin)
             .await?;
         Ok(())
     }

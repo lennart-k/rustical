@@ -52,17 +52,21 @@ pub fn configure_dav<AP: AuthenticationProvider, C: CalendarStore + ?Sized>(
                 }),
             )
             .app_data(Data::from(store.clone()))
-            .service(RootResourceService::<PrincipalResource>::actix_resource())
+            .service(RootResourceService::<PrincipalResource>::default().actix_resource())
             .service(
                 web::scope("/user").service(
                     web::scope("/{principal}")
-                        .service(PrincipalResourceService::<C>::actix_resource())
+                        .service(PrincipalResourceService::<C>::new(store.clone()).actix_resource())
                         .service(
                             web::scope("/{calendar}")
-                                .service(CalendarResourceService::<C>::actix_resource())
+                                .service(
+                                    CalendarResourceService::<C>::new(store.clone())
+                                        .actix_resource(),
+                                )
                                 .service(
                                     web::scope("/{object}").service(
-                                        CalendarObjectResourceService::<C>::actix_resource(),
+                                        CalendarObjectResourceService::<C>::new(store.clone())
+                                            .actix_resource(),
                                     ),
                                 ),
                         ),

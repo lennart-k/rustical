@@ -1,9 +1,7 @@
 use super::methods::mkcalendar::route_mkcalendar;
-use super::methods::post::route_post;
 use super::methods::report::route_report_calendar;
 use super::prop::{
-    SupportedCalendarComponent, SupportedCalendarComponentSet, SupportedCalendarData,
-    SupportedReportSet, Transports,
+    SupportedCalendarComponentSet, SupportedCalendarData, SupportedReportSet, Transports,
 };
 use crate::calendar_object::resource::CalendarObjectResource;
 use crate::principal::PrincipalResource;
@@ -11,7 +9,6 @@ use crate::Error;
 use actix_web::dev::ResourceMap;
 use actix_web::http::Method;
 use actix_web::web;
-use actix_web::{web::Data, HttpRequest};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::privileges::UserPrivilegeSet;
@@ -27,8 +24,12 @@ use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
 
 pub struct CalendarResourceService<C: CalendarStore + ?Sized> {
     cal_store: Arc<C>,
-    principal: String,
-    calendar_id: String,
+}
+
+impl<C: CalendarStore + ?Sized> CalendarResourceService<C> {
+    pub fn new(cal_store: Arc<C>) -> Self {
+        Self { cal_store }
+    }
 }
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone)]
@@ -243,10 +244,13 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
     type Resource = CalendarResource;
     type Error = Error;
 
-    async fn get_resource(&self) -> Result<Self::Resource, Error> {
+    async fn get_resource(
+        &self,
+        (principal, cal_id): &Self::PathComponents,
+    ) -> Result<Self::Resource, Error> {
         let calendar = self
             .cal_store
-            .get_calendar(&self.principal, &self.calendar_id)
+            .get_calendar(principal, cal_id)
             .await
             .map_err(|_e| Error::NotFound)?;
         Ok(calendar.into())
@@ -254,60 +258,45 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
 
     async fn get_members(
         &self,
+        (principal, cal_id): &Self::PathComponents,
         rmap: &ResourceMap,
     ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
         Ok(self
             .cal_store
-            .get_objects(&self.principal, &self.calendar_id)
+            .get_objects(principal, cal_id)
             .await?
             .into_iter()
             .map(|object| {
                 (
-                    CalendarObjectResource::get_url(
-                        rmap,
-                        vec![&self.principal, &self.calendar_id, object.get_id()],
-                    )
-                    .unwrap(),
+                    CalendarObjectResource::get_url(rmap, vec![principal, cal_id, object.get_id()])
+                        .unwrap(),
                     CalendarObjectResource {
                         object,
-                        principal: self.principal.to_owned(),
+                        principal: principal.to_owned(),
                     },
                 )
             })
             .collect())
     }
 
-    async fn new(
-        req: &HttpRequest,
-        path_components: Self::PathComponents,
-    ) -> Result<Self, Self::Error> {
-        let cal_store = req
-            .app_data::<Data<C>>()
-            .expect("no calendar store in app_data!")
-            .clone()
-            .into_inner();
-
-        Ok(Self {
-            principal: path_components.0,
-            calendar_id: path_components.1,
-            cal_store,
-        })
-    }
-
-    async fn save_resource(&self, file: Self::Resource) -> Result<(), Self::Error> {
+    async fn save_resource(
+        &self,
+        (principal, cal_id): &Self::PathComponents,
+        file: Self::Resource,
+    ) -> Result<(), Self::Error> {
         self.cal_store
-            .update_calendar(
-                self.principal.to_owned(),
-                self.calendar_id.to_owned(),
-                file.into(),
-            )
+            .update_calendar(principal.to_owned(), cal_id.to_owned(), file.into())
             .await?;
         Ok(())
     }
 
-    async fn delete_resource(&self, use_trashbin: bool) -> Result<(), Self::Error> {
+    async fn delete_resource(
+        &self,
+        (principal, cal_id): &Self::PathComponents,
+        use_trashbin: bool,
+    ) -> Result<(), Self::Error> {
         self.cal_store
-            .delete_calendar(&self.principal, &self.calendar_id, use_trashbin)
+            .delete_calendar(principal, cal_id, use_trashbin)
             .await?;
         Ok(())
     }
@@ -319,6 +308,5 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
 
         res.route(report_method.to(route_report_calendar::<C>))
             .route(mkcalendar_method.to(route_mkcalendar::<C>))
-            .post(route_post::<C>)
     }
 }

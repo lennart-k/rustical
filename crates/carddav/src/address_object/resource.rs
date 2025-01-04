@@ -1,5 +1,5 @@
 use crate::{principal::PrincipalResource, Error};
-use actix_web::{dev::ResourceMap, web::Data, HttpRequest};
+use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::{
@@ -16,9 +16,12 @@ use super::methods::{get_object, put_object};
 
 pub struct AddressObjectResourceService<AS: AddressbookStore + ?Sized> {
     addr_store: Arc<AS>,
-    principal: String,
-    cal_id: String,
-    object_id: String,
+}
+
+impl<A: AddressbookStore + ?Sized> AddressObjectResourceService<A> {
+    pub fn new(addr_store: Arc<A>) -> Self {
+        Self { addr_store }
+    }
 }
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone)]
@@ -89,7 +92,7 @@ impl Resource for AddressObjectResource {
 #[derive(Debug, Clone)]
 pub struct AddressObjectPathComponents {
     pub principal: String,
-    pub cal_id: String,
+    pub addressbook_id: String,
     pub object_id: String,
 }
 
@@ -99,13 +102,13 @@ impl<'de> Deserialize<'de> for AddressObjectPathComponents {
         D: serde::Deserializer<'de>,
     {
         type Inner = (String, String, String);
-        let (principal, calendar, mut object) = Inner::deserialize(deserializer)?;
+        let (principal, addressbook_id, mut object) = Inner::deserialize(deserializer)?;
         if object.ends_with(".vcf") {
             object.truncate(object.len() - 4);
         }
         Ok(Self {
             principal,
-            cal_id: calendar,
+            addressbook_id,
             object_id: object,
         })
     }
@@ -118,44 +121,35 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressObjectResourceSer
     type MemberType = AddressObjectResource;
     type Error = Error;
 
-    async fn new(
-        req: &HttpRequest,
-        path_components: Self::PathComponents,
-    ) -> Result<Self, Self::Error> {
-        let AddressObjectPathComponents {
+    async fn get_resource(
+        &self,
+        AddressObjectPathComponents {
             principal,
-            cal_id,
+            addressbook_id,
             object_id,
-        } = path_components;
-
-        let addr_store = req
-            .app_data::<Data<AS>>()
-            .expect("no addressbook store in app_data!")
-            .clone()
-            .into_inner();
-
-        Ok(Self {
-            addr_store,
-            principal,
-            cal_id,
-            object_id,
-        })
-    }
-
-    async fn get_resource(&self) -> Result<Self::Resource, Self::Error> {
+        }: &Self::PathComponents,
+    ) -> Result<Self::Resource, Self::Error> {
         let object = self
             .addr_store
-            .get_object(&self.principal, &self.cal_id, &self.object_id)
+            .get_object(principal, addressbook_id, object_id)
             .await?;
         Ok(AddressObjectResource {
             object,
-            principal: self.principal.to_owned(),
+            principal: principal.to_owned(),
         })
     }
 
-    async fn delete_resource(&self, use_trashbin: bool) -> Result<(), Self::Error> {
+    async fn delete_resource(
+        &self,
+        AddressObjectPathComponents {
+            principal,
+            addressbook_id,
+            object_id,
+        }: &Self::PathComponents,
+        use_trashbin: bool,
+    ) -> Result<(), Self::Error> {
         self.addr_store
-            .delete_object(&self.principal, &self.cal_id, &self.object_id, use_trashbin)
+            .delete_object(principal, addressbook_id, object_id, use_trashbin)
             .await?;
         Ok(())
     }

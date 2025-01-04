@@ -57,17 +57,21 @@ pub fn configure_dav<AP: AuthenticationProvider, A: AddressbookStore + ?Sized>(
                 }),
             )
             .app_data(Data::from(store.clone()))
-            .service(RootResourceService::<PrincipalResource>::actix_resource())
+            .service(RootResourceService::<PrincipalResource>::default().actix_resource())
             .service(
                 web::scope("/user").service(
                     web::scope("/{principal}")
-                        .service(PrincipalResourceService::<A>::actix_resource())
+                        .service(PrincipalResourceService::<A>::new(store.clone()).actix_resource())
                         .service(
                             web::scope("/{addressbook}")
-                                .service(AddressbookResourceService::<A>::actix_resource())
+                                .service(
+                                    AddressbookResourceService::<A>::new(store.clone())
+                                        .actix_resource(),
+                                )
                                 .service(
                                     web::scope("/{object}").service(
-                                        AddressObjectResourceService::<A>::actix_resource(),
+                                        AddressObjectResourceService::<A>::new(store.clone())
+                                            .actix_resource(),
                                     ),
                                 ),
                         ),

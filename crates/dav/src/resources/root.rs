@@ -1,7 +1,6 @@
 use crate::privileges::UserPrivilegeSet;
 use crate::resource::{Resource, ResourceService};
 use actix_web::dev::ResourceMap;
-use actix_web::HttpRequest;
 use async_trait::async_trait;
 use rustical_store::auth::User;
 use rustical_xml::{XmlDeserialize, XmlSerialize};
@@ -61,8 +60,13 @@ impl<PR: Resource> Resource for RootResource<PR> {
     }
 }
 
-#[derive(Default)]
 pub struct RootResourceService<PR: Resource>(PhantomData<PR>);
+
+impl<PR: Resource> Default for RootResourceService<PR> {
+    fn default() -> Self {
+        Self(PhantomData)
+    }
+}
 
 #[async_trait(?Send)]
 impl<PR: Resource> ResourceService for RootResourceService<PR> {
@@ -71,14 +75,7 @@ impl<PR: Resource> ResourceService for RootResourceService<PR> {
     type Resource = RootResource<PR>;
     type Error = PR::Error;
 
-    async fn new(
-        _req: &HttpRequest,
-        _path_components: Self::PathComponents,
-    ) -> Result<Self, Self::Error> {
-        Ok(Self(Default::default()))
-    }
-
-    async fn get_resource(&self) -> Result<Self::Resource, Self::Error> {
+    async fn get_resource(&self, _: &()) -> Result<Self::Resource, Self::Error> {
         Ok(RootResource::<PR>::default())
     }
 }

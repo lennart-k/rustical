@@ -1,8 +1,6 @@
 use crate::calendar::resource::CalendarResource;
 use crate::Error;
 use actix_web::dev::ResourceMap;
-use actix_web::web::Data;
-use actix_web::HttpRequest;
 use async_trait::async_trait;
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{Resource, ResourceService};
@@ -14,8 +12,13 @@ use std::sync::Arc;
 use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
 
 pub struct PrincipalResourceService<C: CalendarStore + ?Sized> {
-    principal: String,
     cal_store: Arc<C>,
+}
+
+impl<C: CalendarStore + ?Sized> PrincipalResourceService<C> {
+    pub fn new(cal_store: Arc<C>) -> Self {
+        Self { cal_store }
+    }
 }
 
 #[derive(Clone)]
@@ -96,38 +99,26 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResourceService<C> 
     type Resource = PrincipalResource;
     type Error = Error;
 
-    async fn new(
-        req: &HttpRequest,
-        (principal,): Self::PathComponents,
-    ) -> Result<Self, Self::Error> {
-        let cal_store = req
-            .app_data::<Data<C>>()
-            .expect("no calendar store in app_data!")
-            .clone()
-            .into_inner();
-
-        Ok(Self {
-            cal_store,
-            principal,
-        })
-    }
-
-    async fn get_resource(&self) -> Result<Self::Resource, Self::Error> {
+    async fn get_resource(
+        &self,
+        (principal,): &Self::PathComponents,
+    ) -> Result<Self::Resource, Self::Error> {
         Ok(PrincipalResource {
-            principal: self.principal.to_owned(),
+            principal: principal.to_owned(),
         })
     }
 
     async fn get_members(
         &self,
+        (principal,): &Self::PathComponents,
         rmap: &ResourceMap,
     ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
-        let calendars = self.cal_store.get_calendars(&self.principal).await?;
+        let calendars = self.cal_store.get_calendars(principal).await?;
         Ok(calendars
             .into_iter()
             .map(|cal| {
                 (
-                    CalendarResource::get_url(rmap, vec![&self.principal, &cal.id]).unwrap(),
+                    CalendarResource::get_url(rmap, vec![principal, &cal.id]).unwrap(),
                     cal.into(),
                 )
             })

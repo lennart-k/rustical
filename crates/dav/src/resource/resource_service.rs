@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
-use actix_web::{dev::ResourceMap, http::Method, web, HttpRequest, ResponseError};
+use actix_web::web::Data;
+use actix_web::{dev::ResourceMap, http::Method, web, ResponseError};
 use async_trait::async_trait;
 use serde::Deserialize;
 
@@ -14,23 +15,30 @@ pub trait ResourceService: Sized + 'static {
     type Resource: Resource<Error = Self::Error>;
     type Error: ResponseError + From<crate::Error>;
 
-    async fn new(
-        req: &HttpRequest,
-        path_components: Self::PathComponents,
-    ) -> Result<Self, Self::Error>;
-
     async fn get_members(
         &self,
+        path: &Self::PathComponents,
         _rmap: &ResourceMap,
     ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
         Ok(vec![])
     }
 
-    async fn get_resource(&self) -> Result<Self::Resource, Self::Error>;
-    async fn save_resource(&self, _file: Self::Resource) -> Result<(), Self::Error> {
+    async fn get_resource(
+        &self,
+        path: &Self::PathComponents,
+    ) -> Result<Self::Resource, Self::Error>;
+    async fn save_resource(
+        &self,
+        path: &Self::PathComponents,
+        file: Self::Resource,
+    ) -> Result<(), Self::Error> {
         Err(crate::Error::Unauthorized.into())
     }
-    async fn delete_resource(&self, _use_trashbin: bool) -> Result<(), Self::Error> {
+    async fn delete_resource(
+        &self,
+        path: &Self::PathComponents,
+        _use_trashbin: bool,
+    ) -> Result<(), Self::Error> {
         Err(crate::Error::Unauthorized.into())
     }
 
@@ -40,9 +48,10 @@ pub trait ResourceService: Sized + 'static {
     }
 
     #[inline]
-    fn actix_resource() -> actix_web::Resource {
+    fn actix_resource(self) -> actix_web::Resource {
         Self::actix_additional_routes(
             web::resource("")
+                .app_data(Data::new(self))
                 .name(Self::resource_name())
                 .route(
                     web::method(Method::from_str("PROPFIND").unwrap()).to(route_propfind::<Self>),
