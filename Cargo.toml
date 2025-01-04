@@ -35,7 +35,7 @@ rand_core = { version = "0.6", features = ["std"] }
 chrono = { version = "0.4", features = ["serde"] }
 regex = "1.10"
 lazy_static = "1.5"
-rstest = "0.23"
+rstest = "0.24"
 rstest_reuse = "0.7"
 sha2 = "0.10"
 tokio = { version = "1", features = [
@@ -53,7 +53,7 @@ rust-embed = "8.5"
 futures-core = "0.3.31"
 hex = { version = "0.4.3", features = ["serde"] }
 mime_guess = "2.0.5"
-itertools = "0.13"
+itertools = "0.14"
 log = "0.4"
 strum = { version = "0.26", features = ["strum_macros", "derive"] }
 derive_more = { version = "1.0", features = [
