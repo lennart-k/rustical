@@ -23,8 +23,8 @@ mod setup_tracing;
 struct Args {
     #[arg(short, long, env, default_value = "/etc/rustical/config.toml")]
     config_file: String,
-    #[arg(long, env, help = "Run database migrations (only for sql store)")]
-    migrate: bool,
+    #[arg(long, env, help = "Do no run database migrations (only for sql store)")]
+    no_migrations: bool,
 
     #[command(subcommand)]
     command: Option<Command>,
@@ -61,7 +61,8 @@ async fn main() -> Result<()> {
 
             setup_tracing(&config.tracing);
 
-            let (addr_store, cal_store) = get_data_stores(args.migrate, &config.data_store).await?;
+            let (addr_store, cal_store) =
+                get_data_stores(!args.no_migrations, &config.data_store).await?;
 
             let user_store = Arc::new(match config.auth {
                 config::AuthConfig::Static(config) => StaticUserStore::new(config),
