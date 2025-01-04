@@ -88,27 +88,16 @@ pub enum Transport {
 }
 
 #[derive(Debug, Clone, XmlSerialize, PartialEq)]
-pub struct TransportWrapper {
-    #[xml(ty = "untagged")]
-    transport: Transport,
-}
-
-#[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub struct Transports {
-    // NOTE: Here we implement an older version of the spec since the new property name is not reflected
-    // in DAVx5 yet
-    // https://github.com/bitfireAT/webdav-push/commit/461259a2f2174454b2b00033419b11fac52b79e3
-    #[xml(flatten, rename = b"transport")]
+    #[xml(flatten, ty = "untagged")]
     #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
-    transports: Vec<TransportWrapper>,
+    transports: Vec<Transport>,
 }
 
 impl Default for Transports {
     fn default() -> Self {
         Self {
-            transports: vec![TransportWrapper {
-                transport: Transport::WebPush,
-            }],
+            transports: vec![Transport::WebPush],
         }
     }
 }
