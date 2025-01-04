@@ -17,7 +17,7 @@ pub trait ResourceService: Sized + 'static {
 
     async fn get_members(
         &self,
-        path: &Self::PathComponents,
+        _path: &Self::PathComponents,
         _rmap: &ResourceMap,
     ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
         Ok(vec![])
@@ -25,18 +25,18 @@ pub trait ResourceService: Sized + 'static {
 
     async fn get_resource(
         &self,
-        path: &Self::PathComponents,
+        _path: &Self::PathComponents,
     ) -> Result<Self::Resource, Self::Error>;
     async fn save_resource(
         &self,
-        path: &Self::PathComponents,
-        file: Self::Resource,
+        _path: &Self::PathComponents,
+        _file: Self::Resource,
     ) -> Result<(), Self::Error> {
         Err(crate::Error::Unauthorized.into())
     }
     async fn delete_resource(
         &self,
-        path: &Self::PathComponents,
+        _path: &Self::PathComponents,
         _use_trashbin: bool,
     ) -> Result<(), Self::Error> {
         Err(crate::Error::Unauthorized.into())
