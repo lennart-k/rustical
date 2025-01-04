@@ -22,7 +22,6 @@ docker run \
   -p 4000:4000 \
   -v YOUR_DATA_DIR:/var/lib/rustical/ \
   -v YOUR_CONFIG_TOML:/etc/rustical/config.toml \
-  -v YOUR_DATA_DIRECTORY:YOUR_DATA_DIRECTORY \
   ghcr.io/lennart-k/rustical
 ```
 
