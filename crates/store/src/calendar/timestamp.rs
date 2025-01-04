@@ -26,8 +26,9 @@ impl Value for UtcDateTime {
         let input = <String as Value>::deserialize(val)?;
         Ok(Self(
             NaiveDateTime::parse_from_str(&input, UTC_DATE_TIME)
-                // TODO: proper error
-                .map_err(|_| rustical_xml::XmlDeError::UnknownError)?
+                .map_err(|_| {
+                    rustical_xml::XmlDeError::Other("Could not parse as UTC timestamp".to_owned())
+                })?
                 .and_utc(),
         ))
     }

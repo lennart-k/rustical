@@ -1,10 +1,8 @@
-use quick_xml::name::Namespace;
+use quick_xml::events::{BytesStart, Event};
 use quick_xml::name::ResolveResult;
 use std::io::BufRead;
 pub use xml_derive::XmlDeserialize;
 pub use xml_derive::XmlDocument;
-
-use quick_xml::events::{BytesStart, Event};
 
 use crate::XmlDeError;
 use crate::XmlRootTag;
@@ -69,7 +67,7 @@ impl<T: XmlRootTag + XmlDeserialize> XmlDocument for T {
 
                     return Self::deserialize(&mut reader, &start, empty);
                 }
-                _ => return Err(XmlDeError::UnknownError),
+                _ => return Err(XmlDeError::UnsupportedEvent("unknown, todo")),
             };
         }
     }

@@ -57,7 +57,7 @@ impl Value for &str {
         self.to_string()
     }
 
-    fn deserialize(val: &str) -> Result<Self, XmlDeError> {
+    fn deserialize(_val: &str) -> Result<Self, XmlDeError> {
         Err(XmlDeError::Other("TODO: Handle this error".to_owned()))
     }
 }

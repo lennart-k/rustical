@@ -26,8 +26,11 @@ impl Value for SyncLevel {
         Ok(match val {
             "1" => Self::One,
             "Infinity" => Self::Infinity,
-            // TODO: proper error
-            _ => return Err(rustical_xml::XmlDeError::UnknownError),
+            _ => {
+                return Err(rustical_xml::XmlDeError::Other(
+                    "Invalid sync-level".to_owned(),
+                ))
+            }
         })
     }
     fn serialize(&self) -> String {

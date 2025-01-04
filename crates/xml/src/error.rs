@@ -6,8 +6,6 @@ pub enum XmlDeError {
     QuickXmlError(#[from] quick_xml::Error),
     #[error(transparent)]
     QuickXmlAttrError(#[from] quick_xml::events::attributes::AttrError),
-    #[error("Unknown error")]
-    UnknownError,
     #[error("Invalid tag [{0}]{1}. Expected [{2}]{3}")]
     InvalidTag(String, String, String, String),
     #[error("Missing field {0}")]
