@@ -173,6 +173,7 @@ pub struct CalendarQueryRequest {
     pub prop: PropfindType,
     pub(crate) filter: Option<FilterElement>,
     pub(crate) timezone: Option<String>,
+    pub(crate) timezone_id: Option<String>,
 }
 
 pub async fn get_objects_calendar_query<C: CalendarStore + ?Sized>(
