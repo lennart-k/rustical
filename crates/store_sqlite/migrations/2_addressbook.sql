@@ -24,7 +24,7 @@ CREATE TABLE addressobjectchangelog (
     principal TEXT NOT NULL,
     addressbook_id TEXT NOT NULL,
     object_id TEXT NOT NULL,
-    operation INTEGER NOT NULL,
+    "operation" INTEGER NOT NULL,
     synctoken INTEGER DEFAULT 0 NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (principal, addressbook_id, created_at),

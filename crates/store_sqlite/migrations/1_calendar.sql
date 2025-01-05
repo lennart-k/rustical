@@ -29,7 +29,7 @@ CREATE TABLE calendarobjectchangelog (
     principal TEXT NOT NULL,
     cal_id TEXT NOT NULL,
     object_id TEXT NOT NULL,
-    operation INTEGER NOT NULL,
+    "operation" INTEGER NOT NULL,
     synctoken INTEGER DEFAULT 0 NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (principal, cal_id, created_at),

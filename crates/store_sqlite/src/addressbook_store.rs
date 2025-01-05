@@ -39,7 +39,7 @@ async fn log_object_operation(
 
     sqlx::query!(
         r#"
-        INSERT INTO addressobjectchangelog (principal, addressbook_id, object_id, operation, synctoken)
+        INSERT INTO addressobjectchangelog (principal, addressbook_id, object_id, "operation", synctoken)
         VALUES (?1, ?2, ?3, ?4, (
             SELECT synctoken FROM addressbooks WHERE (principal, id) = (?1, ?2)
         ))"#,

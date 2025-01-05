@@ -41,7 +41,7 @@ async fn log_object_operation(
 
     sqlx::query!(
         r#"
-        INSERT INTO calendarobjectchangelog (principal, cal_id, object_id, operation, synctoken)
+        INSERT INTO calendarobjectchangelog (principal, cal_id, object_id, "operation", synctoken)
         VALUES (?1, ?2, ?3, ?4, (
             SELECT synctoken FROM calendars WHERE (principal, id) = (?1, ?2)
         ))"#,
