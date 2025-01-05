@@ -9,7 +9,6 @@ use rustical_store::{auth::User, Calendar, CalendarStore};
 #[derive(Template)]
 #[template(path = "pages/calendar.html")]
 struct CalendarPage {
-    owner: String,
     calendar: Calendar,
 }
 
@@ -20,7 +19,6 @@ pub async fn route_calendar<C: CalendarStore + ?Sized>(
 ) -> Result<impl Responder, rustical_store::Error> {
     let (owner, cal_id) = path.into_inner();
     Ok(CalendarPage {
-        owner: owner.to_owned(),
         calendar: store.get_calendar(&owner, &cal_id).await?,
     })
 }

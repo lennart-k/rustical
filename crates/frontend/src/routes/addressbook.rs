@@ -9,7 +9,6 @@ use rustical_store::{auth::User, Addressbook, AddressbookStore};
 #[derive(Template)]
 #[template(path = "pages/addressbook.html")]
 struct AddressbookPage {
-    owner: String,
     addressbook: Addressbook,
 }
 
@@ -20,7 +19,6 @@ pub async fn route_addressbook<AS: AddressbookStore + ?Sized>(
 ) -> Result<impl Responder, rustical_store::Error> {
     let (owner, addrbook_id) = path.into_inner();
     Ok(AddressbookPage {
-        owner: owner.to_owned(),
         addressbook: store.get_addressbook(&owner, &addrbook_id).await?,
     })
 }
