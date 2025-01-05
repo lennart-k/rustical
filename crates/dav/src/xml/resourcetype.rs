@@ -1,10 +1,7 @@
 use rustical_xml::XmlSerialize;
 
 #[derive(Debug, Clone, PartialEq, XmlSerialize)]
-pub struct Resourcetype {
-    #[xml(flatten, ty = "untagged")]
-    pub inner: &'static [ResourcetypeInner],
-}
+pub struct Resourcetype(#[xml(flatten, ty = "untagged")] pub &'static [ResourcetypeInner]);
 
 #[derive(Debug, Clone, PartialEq, XmlSerialize)]
 pub struct ResourcetypeInner {
@@ -31,18 +28,16 @@ mod tests {
         let mut buf = Vec::new();
         let mut writer = quick_xml::Writer::new(&mut buf);
         Document {
-            resourcetype: Resourcetype {
-                inner: &[
-                    ResourcetypeInner {
-                        ns: crate::namespace::NS_DAV,
-                        name: "displayname",
-                    },
-                    ResourcetypeInner {
-                        ns: crate::namespace::NS_CALENDARSERVER,
-                        name: "calendar-color",
-                    },
-                ],
-            },
+            resourcetype: Resourcetype(&[
+                ResourcetypeInner {
+                    ns: crate::namespace::NS_DAV,
+                    name: "displayname",
+                },
+                ResourcetypeInner {
+                    ns: crate::namespace::NS_CALENDARSERVER,
+                    name: "calendar-color",
+                },
+            ]),
         }
         .serialize_root(&mut writer)
         .unwrap();

@@ -58,18 +58,16 @@ impl Resource for PrincipalResource {
     type PrincipalResource = PrincipalResource;
 
     fn get_resourcetype(&self) -> Resourcetype {
-        Resourcetype {
-            inner: &[
-                ResourcetypeInner {
-                    ns: rustical_dav::namespace::NS_DAV,
-                    name: "collection",
-                },
-                ResourcetypeInner {
-                    ns: rustical_dav::namespace::NS_DAV,
-                    name: "principal",
-                },
-            ],
-        }
+        Resourcetype(&[
+            ResourcetypeInner {
+                ns: rustical_dav::namespace::NS_DAV,
+                name: "collection",
+            },
+            ResourcetypeInner {
+                ns: rustical_dav::namespace::NS_DAV,
+                name: "principal",
+            },
+        ])
     }
 
     fn get_prop(

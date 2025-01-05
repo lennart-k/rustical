@@ -55,7 +55,7 @@ impl Resource for CalendarObjectResource {
     type PrincipalResource = PrincipalResource;
 
     fn get_resourcetype(&self) -> Resourcetype {
-        Resourcetype { inner: &[] }
+        Resourcetype(&[])
     }
 
     fn get_prop(

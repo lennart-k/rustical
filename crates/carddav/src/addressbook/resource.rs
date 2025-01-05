@@ -71,18 +71,16 @@ impl Resource for AddressbookResource {
     type PrincipalResource = PrincipalResource;
 
     fn get_resourcetype(&self) -> Resourcetype {
-        Resourcetype {
-            inner: &[
-                ResourcetypeInner {
-                    ns: rustical_dav::namespace::NS_DAV,
-                    name: "collection",
-                },
-                ResourcetypeInner {
-                    ns: rustical_dav::namespace::NS_CARDDAV,
-                    name: "addressbook",
-                },
-            ],
-        }
+        Resourcetype(&[
+            ResourcetypeInner {
+                ns: rustical_dav::namespace::NS_DAV,
+                name: "collection",
+            },
+            ResourcetypeInner {
+                ns: rustical_dav::namespace::NS_CARDDAV,
+                name: "addressbook",
+            },
+        ])
     }
 
     fn get_prop(
