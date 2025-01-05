@@ -21,7 +21,6 @@ CREATE TABLE addressobjects (
 );
 
 CREATE TABLE addressobjectchangelog (
-    -- The actual sync token is the SQLite field 'ROWID'
     principal TEXT NOT NULL,
     addressbook_id TEXT NOT NULL,
     object_id TEXT NOT NULL,

@@ -26,7 +26,6 @@ CREATE TABLE calendarobjects (
 );
 
 CREATE TABLE calendarobjectchangelog (
-    -- The actual sync token is the SQLite field 'ROWID'
     principal TEXT NOT NULL,
     cal_id TEXT NOT NULL,
     object_id TEXT NOT NULL,
