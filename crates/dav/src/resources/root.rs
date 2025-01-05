@@ -39,10 +39,7 @@ impl<PR: Resource> Resource for RootResource<PR> {
     type PrincipalResource = PR;
 
     fn get_resourcetype(&self) -> Resourcetype {
-        Resourcetype(&[ResourcetypeInner {
-            ns: crate::namespace::NS_DAV,
-            name: "collection",
-        }])
+        Resourcetype(&[ResourcetypeInner(crate::namespace::NS_DAV, "collection")])
     }
 
     fn get_prop(

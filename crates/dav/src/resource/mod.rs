@@ -207,9 +207,7 @@ pub trait Resource: Clone + 'static {
 
         let mut propstats = vec![PropstatWrapper::Normal(PropstatElement {
             status: StatusCode::OK,
-            prop: PropTagWrapper {
-                prop: prop_responses,
-            },
+            prop: PropTagWrapper(prop_responses),
         })];
         if !invalid_props.is_empty() {
             propstats.push(PropstatWrapper::TagList(PropstatElement {

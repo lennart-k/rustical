@@ -72,14 +72,8 @@ impl Resource for AddressbookResource {
 
     fn get_resourcetype(&self) -> Resourcetype {
         Resourcetype(&[
-            ResourcetypeInner {
-                ns: rustical_dav::namespace::NS_DAV,
-                name: "collection",
-            },
-            ResourcetypeInner {
-                ns: rustical_dav::namespace::NS_CARDDAV,
-                name: "addressbook",
-            },
+            ResourcetypeInner(rustical_dav::namespace::NS_DAV, "collection"),
+            ResourcetypeInner(rustical_dav::namespace::NS_CARDDAV, "addressbook"),
         ])
     }
 

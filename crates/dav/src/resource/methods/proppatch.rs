@@ -26,10 +26,9 @@ enum SetPropertyPropWrapper<T: XmlDeserialize> {
 
 // We are <prop>
 #[derive(XmlDeserialize, Clone, Debug)]
-struct SetPropertyPropWrapperWrapper<T: XmlDeserialize> {
-    #[xml(ty = "untagged")]
-    property: SetPropertyPropWrapper<T>,
-}
+struct SetPropertyPropWrapperWrapper<T: XmlDeserialize>(
+    #[xml(ty = "untagged")] SetPropertyPropWrapper<T>,
+);
 
 // We are <set>
 #[derive(XmlDeserialize, Clone, Debug)]
@@ -39,16 +38,10 @@ struct SetPropertyElement<T: XmlDeserialize> {
 }
 
 #[derive(XmlDeserialize, Clone, Debug)]
-struct TagName {
-    #[xml(ty = "tag_name")]
-    name: String,
-}
+struct TagName(#[xml(ty = "tag_name")] String);
 
 #[derive(XmlDeserialize, Clone, Debug)]
-struct PropertyElement {
-    #[xml(ty = "untagged")]
-    property: TagName,
-}
+struct PropertyElement(#[xml(ty = "untagged")] TagName);
 
 #[derive(XmlDeserialize, Clone, Debug)]
 struct RemovePropertyElement {
@@ -67,10 +60,7 @@ enum Operation<T: XmlDeserialize> {
 #[derive(XmlDeserialize, XmlRootTag, Clone, Debug)]
 #[xml(root = b"propertyupdate")]
 #[xml(ns = "crate::namespace::NS_DAV")]
-struct PropertyupdateElement<T: XmlDeserialize> {
-    #[xml(ty = "untagged", flatten)]
-    operations: Vec<Operation<T>>,
-}
+struct PropertyupdateElement<T: XmlDeserialize>(#[xml(ty = "untagged", flatten)] Vec<Operation<T>>);
 
 #[instrument(parent = root_span.id(), skip(path, req, root_span, resource_service))]
 pub(crate) async fn route_proppatch<R: ResourceService>(
@@ -84,9 +74,9 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
     let href = req.path().to_owned();
 
     // Extract operations
-    let PropertyupdateElement::<SetPropertyPropWrapperWrapper<<R::Resource as Resource>::Prop>> {
+    let PropertyupdateElement::<SetPropertyPropWrapperWrapper<<R::Resource as Resource>::Prop>>(
         operations,
-    } = XmlDocument::parse_str(&body).map_err(Error::XmlDeserializationError)?;
+    ) = XmlDocument::parse_str(&body).map_err(Error::XmlDeserializationError)?;
 
     let mut resource = resource_service.get_resource(&path).await?;
     let privileges = resource.get_user_privileges(&user)?;
@@ -100,8 +90,10 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
 
     for operation in operations.into_iter() {
         match operation {
-            Operation::Set(SetPropertyElement { prop }) => {
-                match prop.property {
+            Operation::Set(SetPropertyElement {
+                prop: SetPropertyPropWrapperWrapper(property),
+            }) => {
+                match property {
                     SetPropertyPropWrapper::Valid(prop) => {
                         let propname: <R::Resource as Resource>::PropName = prop.clone().into();
                         let propname: &str = propname.into();
@@ -125,7 +117,7 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
                 }
             }
             Operation::Remove(remove_el) => {
-                let propname = remove_el.prop.property.name;
+                let propname = remove_el.prop.0 .0;
                 match <<R::Resource as Resource>::PropName as FromStr>::from_str(&propname) {
                     Ok(prop) => match resource.remove_prop(&prop) {
                         Ok(()) => props_ok.push(propname),

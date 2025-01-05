@@ -100,25 +100,13 @@ impl Resource for CalendarResource {
     fn get_resourcetype(&self) -> Resourcetype {
         if self.0.subscription_url.is_none() {
             Resourcetype(&[
-                ResourcetypeInner {
-                    ns: rustical_dav::namespace::NS_DAV,
-                    name: "collection",
-                },
-                ResourcetypeInner {
-                    ns: rustical_dav::namespace::NS_CALDAV,
-                    name: "calendar",
-                },
+                ResourcetypeInner(rustical_dav::namespace::NS_DAV, "collection"),
+                ResourcetypeInner(rustical_dav::namespace::NS_CALDAV, "calendar"),
             ])
         } else {
             Resourcetype(&[
-                ResourcetypeInner {
-                    ns: rustical_dav::namespace::NS_DAV,
-                    name: "collection",
-                },
-                ResourcetypeInner {
-                    ns: rustical_dav::namespace::NS_CALENDARSERVER,
-                    name: "subscribed",
-                },
+                ResourcetypeInner(rustical_dav::namespace::NS_DAV, "collection"),
+                ResourcetypeInner(rustical_dav::namespace::NS_CALENDARSERVER, "subscribed"),
             ])
         }
     }

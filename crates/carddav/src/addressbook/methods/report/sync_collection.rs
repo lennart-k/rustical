@@ -70,10 +70,9 @@ pub async fn handle_sync_collection<AS: AddressbookStore + ?Sized>(
         PropfindType::Propname => {
             vec!["propname".to_owned()]
         }
-        PropfindType::Prop(PropElement { prop: prop_tags }) => prop_tags
-            .into_iter()
-            .map(|propname| propname.name)
-            .collect(),
+        PropfindType::Prop(PropElement(prop_tags)) => {
+            prop_tags.into_iter().map(|propname| propname.0).collect()
+        }
     };
     let props: Vec<&str> = props.iter().map(String::as_str).collect();
 

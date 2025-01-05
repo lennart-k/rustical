@@ -13,7 +13,7 @@ use actix_web::web::Data;
 use actix_web::web::Path;
 use actix_web::HttpRequest;
 use rustical_store::auth::User;
-use rustical_xml::de::XmlDocument;
+use rustical_xml::XmlDocument;
 use tracing::instrument;
 use tracing_actix_web::RootSpan;
 
@@ -53,9 +53,9 @@ pub(crate) async fn route_propfind<R: ResourceService>(
     let props = match &propfind.prop {
         PropfindType::Allprop => vec!["allprop"],
         PropfindType::Propname => vec!["propname"],
-        PropfindType::Prop(PropElement { prop: prop_tags }) => prop_tags
+        PropfindType::Prop(PropElement(prop_tags)) => prop_tags
             .iter()
-            .map(|propname| propname.name.as_str())
+            .map(|propname| propname.0.as_str())
             .collect(),
     };
 

@@ -9,13 +9,8 @@ use actix_web::{
 use quick_xml::name::Namespace;
 use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
 
-// Intermediate struct because of a serde limitation, see following article:
-// https://stackoverflow.com/questions/78444158/unsupportedcannot-serialize-enum-newtype-variant-exampledata
 #[derive(XmlSerialize)]
-pub struct PropTagWrapper<T: XmlSerialize> {
-    #[xml(flatten, ty = "untagged")]
-    pub prop: Vec<T>,
-}
+pub struct PropTagWrapper<T: XmlSerialize>(#[xml(flatten, ty = "untagged")] pub Vec<T>);
 
 // RFC 2518
 // <!ELEMENT propstat (prop, status, responsedescription?) >
