@@ -216,3 +216,26 @@ fn test_struct_ns() {
     let out = String::from_utf8(buf).unwrap();
     dbg!(out);
 }
+
+#[test]
+fn test_struct_tuple() {
+    #[derive(Debug, XmlRootTag, XmlSerialize, PartialEq)]
+    #[xml(root = b"document")]
+    struct Document {
+        child: Child,
+    }
+
+    #[derive(Debug, XmlSerialize, PartialEq, Default)]
+    struct Child(#[xml(ty = "tag_name")] String, #[xml(ty = "text")] String);
+
+    let mut buf = Vec::new();
+    let mut writer = quick_xml::Writer::new(&mut buf);
+
+    Document {
+        child: Child("child".to_owned(), "Hello!".to_owned()),
+    }
+    .serialize_root(&mut writer)
+    .unwrap();
+    let out = String::from_utf8(buf).unwrap();
+    dbg!(out);
+}

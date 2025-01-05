@@ -5,6 +5,8 @@ use super::{
 use darling::FromField;
 use heck::ToKebabCase;
 use quote::quote;
+use quote::ToTokens;
+use syn::spanned::Spanned;
 
 fn wrap_option_if_no_default(
     value: proc_macro2::TokenStream,
@@ -19,29 +21,34 @@ fn wrap_option_if_no_default(
 
 pub struct Field {
     pub field: syn::Field,
+    pub field_num: usize,
     pub attrs: FieldAttrs,
     pub container_attrs: ContainerAttrs,
 }
 
 impl Field {
-    pub fn from_syn_field(field: syn::Field, container_attrs: ContainerAttrs) -> Self {
+    pub fn from_syn_field(
+        field: syn::Field,
+        field_num: usize,
+        container_attrs: ContainerAttrs,
+    ) -> Self {
         Self {
             attrs: FieldAttrs::from_field(&field).unwrap(),
             field,
+            field_num,
             container_attrs,
         }
     }
 
     /// Field name in XML
     pub fn xml_name(&self) -> syn::LitByteStr {
-        self.attrs
-            .common
-            .rename
-            .to_owned()
-            .unwrap_or(syn::LitByteStr::new(
-                self.field_ident().to_string().to_kebab_case().as_bytes(),
-                self.field_ident().span(),
-            ))
+        self.attrs.common.rename.to_owned().unwrap_or({
+            let ident = self
+                .field_ident()
+                .as_ref()
+                .expect("unnamed tag fields need a rename attribute");
+            syn::LitByteStr::new(ident.to_string().to_kebab_case().as_bytes(), ident.span())
+        })
     }
 
     /// Whether to enforce the correct XML namespace
@@ -50,11 +57,23 @@ impl Field {
     }
 
     /// Field identifier
-    pub fn field_ident(&self) -> &syn::Ident {
-        self.field
-            .ident
+    pub fn field_ident(&self) -> &Option<syn::Ident> {
+        &self.field.ident
+    }
+
+    /// Builder field identifier, unnamed fields also get an identifier
+    pub fn builder_field_ident(&self) -> syn::Ident {
+        self.field_ident().to_owned().unwrap_or(syn::Ident::new(
+            &format!("_{i}", i = self.field_num),
+            self.field.span(),
+        ))
+    }
+
+    pub fn target_field_index(&self) -> proc_macro2::TokenStream {
+        self.field_ident()
             .as_ref()
-            .expect("tuple structs not supported")
+            .map(syn::Ident::to_token_stream)
+            .unwrap_or(syn::Index::from(self.field_num).to_token_stream())
     }
 
     fn is_optional(&self) -> bool {
@@ -85,7 +104,7 @@ impl Field {
 
     /// Field in the builder struct for the deserializer
     pub fn builder_field(&self) -> proc_macro2::TokenStream {
-        let field_ident = self.field_ident();
+        let builder_field_ident = self.builder_field_ident();
         let ty = self.deserializer_type();
 
         let builder_field_type = match (
@@ -100,12 +119,12 @@ impl Field {
             (false, None, _) => quote! { Option<#ty> },
         };
 
-        quote! { #field_ident: #builder_field_type }
+        quote! { #builder_field_ident: #builder_field_type }
     }
 
     /// Field initialiser in the builder struct for the deserializer
     pub fn builder_field_init(&self) -> proc_macro2::TokenStream {
-        let field_ident = self.field_ident();
+        let builder_field_ident = self.builder_field_ident();
         let builder_field_initialiser = match (
             self.attrs.flatten.is_present(),
             &self.attrs.default,
@@ -117,12 +136,14 @@ impl Field {
             (true, None, false) => quote! { vec![] },
             (false, None, _) => quote! { None },
         };
-        quote! { #field_ident: #builder_field_initialiser }
+        quote! { #builder_field_ident: #builder_field_initialiser }
     }
 
     /// Map builder field to target field
     pub fn builder_field_build(&self) -> proc_macro2::TokenStream {
-        let field_ident = self.field_ident();
+        // If named: use field_ident, if unnamed: use field_num
+        let target_field_index = self.target_field_index();
+        let builder_field_ident = self.builder_field_ident();
         let builder_value = match (
             self.attrs.flatten.is_present(),
             self.attrs.default.is_some(),
@@ -130,16 +151,16 @@ impl Field {
         ) {
             (true, _, true) => unreachable!(),
             (true, _, false) => {
-                quote! { FromIterator::from_iter(builder.#field_ident.into_iter()) }
+                quote! { FromIterator::from_iter(builder.#builder_field_ident.into_iter()) }
             }
             (false, true, true) => unreachable!(),
-            (false, true, false) => quote! { builder.#field_ident },
-            (false, false, true) => quote! { builder.#field_ident },
+            (false, true, false) => quote! { builder.#builder_field_ident },
+            (false, false, true) => quote! { builder.#builder_field_ident },
             (false, false, false) => {
-                quote! { builder.#field_ident.expect("todo: handle missing field") }
+                quote! { builder.#builder_field_ident.expect("todo: handle missing field") }
             }
         };
-        quote! { #field_ident: #builder_value }
+        quote! { #target_field_index: #builder_value }
     }
 
     pub fn named_branch(&self) -> Option<proc_macro2::TokenStream> {
@@ -168,15 +189,15 @@ impl Field {
         };
 
         let field_name = self.xml_name();
-        let field_ident = self.field_ident();
+        let builder_field_ident = self.builder_field_ident();
         let deserializer = self.deserializer_type();
         let value = quote! { <#deserializer as rustical_xml::XmlDeserialize>::deserialize(reader, &start, empty)? };
         let assignment = match (self.attrs.flatten.is_present(), &self.attrs.default) {
             (true, _) => {
-                quote! { builder.#field_ident.push(#value); }
+                quote! { builder.#builder_field_ident.push(#value); }
             }
-            (false, Some(_default)) => quote! { builder.#field_ident = #value; },
-            (false, None) => quote! { builder.#field_ident = Some(#value); },
+            (false, Some(_default)) => quote! { builder.#builder_field_ident = #value; },
+            (false, None) => quote! { builder.#builder_field_ident = Some(#value); },
         };
 
         Some(quote! {
@@ -188,17 +209,17 @@ impl Field {
         if self.attrs.xml_ty != FieldType::Untagged {
             return None;
         }
-        let field_ident = self.field_ident();
+        let builder_field_ident = self.builder_field_ident();
         let deserializer = self.deserializer_type();
         let value = quote! { <#deserializer as rustical_xml::XmlDeserialize>::deserialize(reader, &start, empty)? };
 
         Some(if self.attrs.flatten.is_present() {
             quote! {
-                _ => { builder.#field_ident.push(#value); }
+                _ => { builder.#builder_field_ident.push(#value); }
             }
         } else {
             quote! {
-                _ => { builder.#field_ident = Some(#value); }
+                _ => { builder.#builder_field_ident = Some(#value); }
             }
         })
     }
@@ -207,7 +228,7 @@ impl Field {
         if self.attrs.xml_ty != FieldType::Text {
             return None;
         }
-        let field_ident = self.field_ident();
+        let builder_field_ident = self.builder_field_ident();
         let value = wrap_option_if_no_default(
             quote! {
                 rustical_xml::Value::deserialize(text.as_ref())?
@@ -215,7 +236,7 @@ impl Field {
             self.attrs.default.is_some(),
         );
         Some(quote! {
-            builder.#field_ident = #value;
+            builder.#builder_field_ident = #value;
         })
     }
 
@@ -223,7 +244,7 @@ impl Field {
         if self.attrs.xml_ty != FieldType::Attr {
             return None;
         }
-        let field_ident = self.field_ident();
+        let builder_field_ident = self.builder_field_ident();
         let field_name = self.xml_name();
 
         let value = wrap_option_if_no_default(
@@ -235,7 +256,7 @@ impl Field {
 
         Some(quote! {
             #field_name => {
-                builder.#field_ident = #value;
+                builder.#builder_field_ident = #value;
             }
         })
     }
@@ -244,7 +265,7 @@ impl Field {
         if self.attrs.xml_ty != FieldType::TagName {
             return None;
         }
-        let field_ident = self.field_ident();
+        let builder_field_ident = self.builder_field_ident();
 
         let value = wrap_option_if_no_default(
             quote! {
@@ -254,13 +275,12 @@ impl Field {
         );
 
         Some(quote! {
-            builder.#field_ident = #value;
+            builder.#builder_field_ident = #value;
         })
     }
 
     pub fn tag_writer(&self) -> Option<proc_macro2::TokenStream> {
-        let field_ident = self.field_ident();
-        let field_name = self.xml_name();
+        let target_field_index = self.target_field_index();
         let serializer = if let Some(serialize_with) = &self.attrs.serialize_with {
             quote! { #serialize_with }
         } else {
@@ -274,28 +294,34 @@ impl Field {
         match (&self.attrs.xml_ty, self.attrs.flatten.is_present()) {
             (FieldType::Attr, _) => None,
             (FieldType::Text, true) => Some(quote! {
-                for item in self.#field_ident.iter() {
+                for item in self.#target_field_index.iter() {
                     writer.write_event(Event::Text(BytesText::new(item)))?;
                 }
             }),
             (FieldType::Text, false) => Some(quote! {
-                writer.write_event(Event::Text(BytesText::new(&self.#field_ident)))?;
+                writer.write_event(Event::Text(BytesText::new(&self.#target_field_index)))?;
             }),
-            (FieldType::Tag, true) => Some(quote! {
-                for item in self.#field_ident.iter() {
-                    #serializer(item, #ns, Some(#field_name), namespaces, writer)?;
-                }
-            }),
-            (FieldType::Tag, false) => Some(quote! {
-                #serializer(&self.#field_ident, #ns, Some(#field_name), namespaces, writer)?;
-            }),
+            (FieldType::Tag, true) => {
+                let field_name = self.xml_name();
+                Some(quote! {
+                    for item in self.#target_field_index.iter() {
+                        #serializer(item, #ns, Some(#field_name), namespaces, writer)?;
+                    }
+                })
+            }
+            (FieldType::Tag, false) => {
+                let field_name = self.xml_name();
+                Some(quote! {
+                    #serializer(&self.#target_field_index, #ns, Some(#field_name), namespaces, writer)?;
+                })
+            }
             (FieldType::Untagged, true) => Some(quote! {
-                for item in self.#field_ident.iter() {
+                for item in self.#target_field_index.iter() {
                     #serializer(item, None, None, namespaces, writer)?;
                 }
             }),
             (FieldType::Untagged, false) => Some(quote! {
-                #serializer(&self.#field_ident, None, None, namespaces, writer)?;
+                #serializer(&self.#target_field_index, None, None, namespaces, writer)?;
             }),
             // TODO: Think about what to do here
             (FieldType::TagName | FieldType::Namespace, _) => None,

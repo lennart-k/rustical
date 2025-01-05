@@ -24,13 +24,29 @@ impl NamedStruct {
                 fields: named
                     .named
                     .iter()
-                    .map(|field| Field::from_syn_field(field.to_owned(), attrs.container.clone()))
+                    .enumerate()
+                    .map(|(i, field)| {
+                        Field::from_syn_field(field.to_owned(), i, attrs.container.clone())
+                    })
                     .collect(),
                 attrs,
                 ident: input.ident.to_owned(),
                 generics: input.generics.to_owned(),
             },
-            syn::Fields::Unnamed(_) => panic!("not implemented for tuple struct"),
+            syn::Fields::Unnamed(unnamed) => NamedStruct {
+                fields: unnamed
+                    .unnamed
+                    .iter()
+                    .enumerate()
+                    .map(|(i, field)| {
+                        Field::from_syn_field(field.to_owned(), i, attrs.container.clone())
+                    })
+                    .collect(),
+                attrs,
+                ident: input.ident.to_owned(),
+                generics: input.generics.to_owned(),
+            },
+
             syn::Fields::Unit => NamedStruct {
                 fields: vec![],
                 attrs,
@@ -219,11 +235,11 @@ impl NamedStruct {
             .filter(|field| field.attrs.xml_ty == FieldType::Attr)
             .map(|field| {
                 let field_name = field.xml_name();
-                let field_ident = field.field_ident();
+                let field_index = field.target_field_index();
                 quote! {
                     ::quick_xml::events::attributes::Attribute {
                         key: ::quick_xml::name::QName(#field_name),
-                        value: ::std::borrow::Cow::from(::rustical_xml::Value::serialize(&self.#field_ident).into_bytes())
+                        value: ::std::borrow::Cow::from(::rustical_xml::Value::serialize(&self.#field_index).into_bytes())
                     }
                 }
             });
@@ -233,9 +249,9 @@ impl NamedStruct {
             .iter()
             .find(|field| field.attrs.xml_ty == FieldType::TagName)
             .map(|field| {
-                let field_ident = field.field_ident();
+                let field_index = field.target_field_index();
                 quote! {
-                    let tag_str = self.#field_ident.to_string();
+                    let tag_str = self.#field_index.to_string();
                     let tag = Some(tag.unwrap_or(tag_str.as_bytes()));
                 }
             });
@@ -245,9 +261,9 @@ impl NamedStruct {
             .iter()
             .find(|field| field.attrs.xml_ty == FieldType::Namespace)
             .map(|field| {
-                let field_ident = field.field_ident();
+                let field_index = field.target_field_index();
                 quote! {
-                    let ns = Some(self.#field_ident);
+                    let ns = Some(self.#field_index);
                 }
             });
 

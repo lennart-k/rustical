@@ -286,3 +286,28 @@ fn test_struct_xml_decl() {
         }
     );
 }
+
+#[test]
+fn test_struct_tuple() {
+    #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
+    #[xml(root = b"document")]
+    struct Document {
+        child: Child,
+    }
+
+    #[derive(Debug, XmlDeserialize, PartialEq, Default)]
+    struct Child(#[xml(ty = "tag_name")] String, #[xml(ty = "text")] String);
+
+    let doc = Document::parse_str(
+        r#"
+    <?xml version="1.0" encoding="utf-8"?>
+    <document><child>Hello!</child></document>"#,
+    )
+    .unwrap();
+    assert_eq!(
+        doc,
+        Document {
+            child: Child("child".to_owned(), "Hello!".to_owned())
+        }
+    );
+}
