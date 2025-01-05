@@ -32,7 +32,7 @@ CREATE TABLE calendarobjectchangelog (
     "operation" INTEGER NOT NULL,
     synctoken INTEGER DEFAULT 0 NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (principal, cal_id, created_at),
+    PRIMARY KEY (principal, cal_id, synctoken, created_at),
     FOREIGN KEY (principal, cal_id)
     REFERENCES calendars (principal, id) ON DELETE CASCADE
 );

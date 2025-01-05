@@ -27,7 +27,7 @@ CREATE TABLE addressobjectchangelog (
     "operation" INTEGER NOT NULL,
     synctoken INTEGER DEFAULT 0 NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (principal, addressbook_id, created_at),
+    PRIMARY KEY (principal, addressbook_id, synctoken, created_at),
     FOREIGN KEY (principal, addressbook_id)
     REFERENCES addressbooks (principal, id) ON DELETE CASCADE
 );
