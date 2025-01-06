@@ -63,6 +63,16 @@ impl UserPrivilegeSet {
             Self::default()
         }
     }
+
+    pub fn read_only() -> Self {
+        Self {
+            privileges: HashSet::from([
+                UserPrivilege::Read,
+                UserPrivilege::ReadAcl,
+                UserPrivilege::ReadCurrentUserPrivilegeSet,
+            ]),
+        }
+    }
 }
 
 impl<const N: usize> From<[UserPrivilege; N]> for UserPrivilegeSet {

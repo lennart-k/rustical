@@ -89,7 +89,16 @@ pub enum CalendarProp {
 }
 
 #[derive(Clone, Debug, From, Into)]
-pub struct CalendarResource(Calendar);
+pub struct CalendarResource {
+    pub cal: Calendar,
+    pub read_only: bool,
+}
+
+impl From<CalendarResource> for Calendar {
+    fn from(value: CalendarResource) -> Self {
+        value.cal
+    }
+}
 
 impl Resource for CalendarResource {
     type PropName = CalendarPropName;
@@ -98,7 +107,7 @@ impl Resource for CalendarResource {
     type PrincipalResource = PrincipalResource;
 
     fn get_resourcetype(&self) -> Resourcetype {
-        if self.0.subscription_url.is_none() {
+        if self.cal.subscription_url.is_none() {
             Resourcetype(&[
                 ResourcetypeInner(rustical_dav::namespace::NS_DAV, "collection"),
                 ResourcetypeInner(rustical_dav::namespace::NS_CALDAV, "calendar"),
@@ -118,18 +127,20 @@ impl Resource for CalendarResource {
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
-            CalendarPropName::Displayname => CalendarProp::Displayname(self.0.displayname.clone()),
-            CalendarPropName::CalendarColor => CalendarProp::CalendarColor(self.0.color.clone()),
+            CalendarPropName::Displayname => {
+                CalendarProp::Displayname(self.cal.displayname.clone())
+            }
+            CalendarPropName::CalendarColor => CalendarProp::CalendarColor(self.cal.color.clone()),
             CalendarPropName::CalendarDescription => {
-                CalendarProp::CalendarDescription(self.0.description.clone())
+                CalendarProp::CalendarDescription(self.cal.description.clone())
             }
             CalendarPropName::CalendarTimezone => {
-                CalendarProp::CalendarTimezone(self.0.timezone.clone())
+                CalendarProp::CalendarTimezone(self.cal.timezone.clone())
             }
             CalendarPropName::CalendarTimezoneId => {
-                CalendarProp::CalendarTimezoneId(self.0.timezone_id.clone())
+                CalendarProp::CalendarTimezoneId(self.cal.timezone_id.clone())
             }
-            CalendarPropName::CalendarOrder => CalendarProp::CalendarOrder(Some(self.0.order)),
+            CalendarPropName::CalendarOrder => CalendarProp::CalendarOrder(Some(self.cal.order)),
             CalendarPropName::SupportedCalendarComponentSet => {
                 CalendarProp::SupportedCalendarComponentSet(SupportedCalendarComponentSet::default())
             }
@@ -142,7 +153,8 @@ impl Resource for CalendarResource {
             CalendarPropName::Transports => CalendarProp::Transports(Default::default()),
             CalendarPropName::Topic => {
                 // TODO: Add salt since this could be public
-                let url = CalendarResource::get_url(rmap, [&self.0.principal, &self.0.id]).unwrap();
+                let url =
+                    CalendarResource::get_url(rmap, [&self.cal.principal, &self.cal.id]).unwrap();
                 let mut hasher = Sha256::new();
                 hasher.update(url);
                 let topic = format!("{:x}", hasher.finalize());
@@ -152,39 +164,42 @@ impl Resource for CalendarResource {
             CalendarPropName::SupportedReportSet => {
                 CalendarProp::SupportedReportSet(SupportedReportSet::default())
             }
-            CalendarPropName::SyncToken => CalendarProp::SyncToken(self.0.format_synctoken()),
-            CalendarPropName::Getctag => CalendarProp::Getctag(self.0.format_synctoken()),
+            CalendarPropName::SyncToken => CalendarProp::SyncToken(self.cal.format_synctoken()),
+            CalendarPropName::Getctag => CalendarProp::Getctag(self.cal.format_synctoken()),
             CalendarPropName::Source => {
-                CalendarProp::Source(self.0.subscription_url.to_owned().map(HrefElement::from))
+                CalendarProp::Source(self.cal.subscription_url.to_owned().map(HrefElement::from))
             }
         })
     }
 
     fn set_prop(&mut self, prop: Self::Prop) -> Result<(), rustical_dav::Error> {
+        if self.read_only {
+            return Err(rustical_dav::Error::PropReadOnly);
+        }
         match prop {
             CalendarProp::Displayname(displayname) => {
-                self.0.displayname = displayname;
+                self.cal.displayname = displayname;
                 Ok(())
             }
             CalendarProp::CalendarColor(color) => {
-                self.0.color = color;
+                self.cal.color = color;
                 Ok(())
             }
             CalendarProp::CalendarDescription(description) => {
-                self.0.description = description;
+                self.cal.description = description;
                 Ok(())
             }
             CalendarProp::CalendarTimezone(timezone) => {
-                self.0.timezone = timezone;
+                self.cal.timezone = timezone;
                 Ok(())
             }
             CalendarProp::CalendarTimezoneId(timezone_id) => {
                 // TODO: Set or remove timezone accordingly
-                self.0.timezone_id = timezone_id;
+                self.cal.timezone_id = timezone_id;
                 Ok(())
             }
             CalendarProp::CalendarOrder(order) => {
-                self.0.order = order.unwrap_or_default();
+                self.cal.order = order.unwrap_or_default();
                 Ok(())
             }
             CalendarProp::SupportedCalendarComponentSet(_) => {
@@ -204,29 +219,32 @@ impl Resource for CalendarResource {
     }
 
     fn remove_prop(&mut self, prop: &Self::PropName) -> Result<(), rustical_dav::Error> {
+        if self.read_only {
+            return Err(rustical_dav::Error::PropReadOnly);
+        }
         match prop {
             CalendarPropName::Displayname => {
-                self.0.displayname = None;
+                self.cal.displayname = None;
                 Ok(())
             }
             CalendarPropName::CalendarColor => {
-                self.0.color = None;
+                self.cal.color = None;
                 Ok(())
             }
             CalendarPropName::CalendarDescription => {
-                self.0.description = None;
+                self.cal.description = None;
                 Ok(())
             }
             CalendarPropName::CalendarTimezone => {
-                self.0.timezone = None;
+                self.cal.timezone = None;
                 Ok(())
             }
             CalendarPropName::CalendarTimezoneId => {
-                self.0.timezone_id = None;
+                self.cal.timezone_id = None;
                 Ok(())
             }
             CalendarPropName::CalendarOrder => {
-                self.0.order = 0;
+                self.cal.order = 0;
                 Ok(())
             }
             CalendarPropName::SupportedCalendarComponentSet => {
@@ -251,12 +269,15 @@ impl Resource for CalendarResource {
     }
 
     fn get_owner(&self) -> Option<&str> {
-        Some(&self.0.principal)
+        Some(&self.cal.principal)
     }
 
     fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
-        // TODO: read-only for subscription
-        Ok(UserPrivilegeSet::owner_only(self.0.principal == user.id))
+        if self.cal.subscription_url.is_some() {
+            return Ok(UserPrivilegeSet::read_only());
+        }
+
+        Ok(UserPrivilegeSet::owner_only(self.cal.principal == user.id))
     }
 }
 
@@ -276,7 +297,10 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
             .get_calendar(principal, cal_id)
             .await
             .map_err(|_e| Error::NotFound)?;
-        Ok(calendar.into())
+        Ok(CalendarResource {
+            cal: calendar,
+            read_only: self.cal_store.is_read_only(),
+        })
     }
 
     async fn get_members(

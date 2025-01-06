@@ -140,4 +140,8 @@ impl<AS: AddressbookStore> CalendarStore for ContactBirthdayStore<AS> {
     ) -> Result<(), Error> {
         Err(Error::ReadOnly)
     }
+
+    fn is_read_only(&self) -> bool {
+        true
+    }
 }

@@ -379,4 +379,8 @@ impl CalendarStore for SqliteStore {
 
         Ok((objects, deleted_objects, new_synctoken))
     }
+
+    fn is_read_only(&self) -> bool {
+        false
+    }
 }

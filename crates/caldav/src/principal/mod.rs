@@ -122,7 +122,10 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResourceService<C> 
             .map(|cal| {
                 (
                     CalendarResource::get_url(rmap, vec![principal, &cal.id]).unwrap(),
-                    cal.into(),
+                    CalendarResource {
+                        cal,
+                        read_only: self.cal_store.is_read_only(),
+                    },
                 )
             })
             .collect())
