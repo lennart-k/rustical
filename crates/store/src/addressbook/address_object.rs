@@ -1,6 +1,10 @@
 use std::{collections::HashMap, io::BufReader};
 
-use crate::{calendar::CalDateTime, Error};
+use crate::{
+    calendar::{CalDateTime, LOCAL_DATE},
+    CalendarObject, Error,
+};
+use chrono::Datelike;
 use ical::parser::{
     vcard::{self, component::VcardContact},
     Component,
@@ -48,5 +52,50 @@ impl AddressObject {
     pub fn get_birthday(&self) -> Option<CalDateTime> {
         let prop = self.vcard.get_property("BDAY")?;
         CalDateTime::parse_prop(prop, &HashMap::default()).unwrap_or(None)
+    }
+
+    pub fn get_full_name(&self) -> Option<&String> {
+        let prop = self.vcard.get_property("FN")?;
+        prop.value.as_ref()
+    }
+
+    pub fn get_birthday_object(&self) -> Result<Option<CalendarObject>, Error> {
+        Ok(if let Some(birthday) = self.get_birthday() {
+            let fullname = if let Some(name) = self.get_full_name() {
+                name
+            } else {
+                return Ok(None);
+            };
+            let birthday = birthday.date();
+            let year = birthday.year();
+            let birthday_start = birthday.format(LOCAL_DATE);
+            let birthday_end = birthday.succ_opt().unwrap_or(birthday).format(LOCAL_DATE);
+            Some(CalendarObject::from_ics(
+                self.get_id().to_owned(),
+                format!(
+                    r#"BEGIN:VCALENDAR
+VERSION:2.0
+CALSCALE:GREGORIAN
+PRODID:-//github.com/lennart-k/rustical birthday calendar//EN
+BEGIN:VEVENT
+DTSTART;VALUE=DATE:{birthday_start}
+DTEND;VALUE=DATE:{birthday_end}
+UID:{uid}
+RRULE:FREQ=YEARLY
+SUMMARY:🎂 {fullname} ({year})
+TRANSP:TRANSPARENT
+BEGIN:VALARM
+TRIGGER;VALUE=DURATION:-PT0M
+ACTION:DISPLAY
+DESCRIPTION:🎂 {fullname} ({year})
+END:VALARM
+END:VEVENT
+END:VCALENDAR"#,
+                    uid = self.get_id(),
+                ),
+            )?)
+        } else {
+            None
+        })
     }
 }

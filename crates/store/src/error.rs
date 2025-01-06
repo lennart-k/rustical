@@ -12,6 +12,9 @@ pub enum Error {
     #[error("Invalid ics/vcf input: {0}")]
     InvalidData(String),
 
+    #[error("Read-only")]
+    ReadOnly,
+
     #[error(transparent)]
     ParserError(#[from] ical::parser::ParserError),
 
@@ -25,6 +28,7 @@ impl ResponseError for Error {
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::AlreadyExists => StatusCode::CONFLICT,
             Self::InvalidData(_) => StatusCode::BAD_REQUEST,
+            Self::ReadOnly => StatusCode::FORBIDDEN,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

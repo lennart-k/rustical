@@ -16,7 +16,7 @@ lazy_static! {
 
 const LOCAL_DATE_TIME: &str = "%Y%m%dT%H%M%S";
 const UTC_DATE_TIME: &str = "%Y%m%dT%H%M%SZ";
-const LOCAL_DATE: &str = "%Y%m%d";
+pub const LOCAL_DATE: &str = "%Y%m%d";
 
 #[derive(Debug, Clone, Deref, PartialEq)]
 pub struct UtcDateTime(DateTime<Utc>);
@@ -123,6 +123,24 @@ impl CalDateTime {
         };
 
         Self::parse(&prop_value, timezone).map(Some)
+    }
+
+    pub fn format(&self) -> String {
+        match self {
+            Self::Utc(utc) => utc.format(UTC_DATE_TIME).to_string(),
+            Self::Date(date) => date.format(LOCAL_DATE).to_string(),
+            Self::Local(datetime) => datetime.format(LOCAL_DATE_TIME).to_string(),
+            Self::OlsonTZ(datetime) => datetime.format(LOCAL_DATE_TIME).to_string(),
+        }
+    }
+
+    pub fn date(&self) -> NaiveDate {
+        match self {
+            Self::Utc(utc) => utc.date_naive(),
+            Self::Date(date) => date.to_owned(),
+            Self::Local(datetime) => datetime.date(),
+            Self::OlsonTZ(datetime) => datetime.date_naive(),
+        }
     }
 
     pub fn parse(value: &str, timezone: Option<Tz>) -> Result<Self, Error> {
