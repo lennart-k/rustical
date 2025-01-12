@@ -4,7 +4,7 @@ use rustical_xml::XmlRootTag;
 #[derive(Debug, Clone, XmlDeserialize, XmlRootTag, PartialEq)]
 #[xml(root = b"propfind", ns = "crate::namespace::NS_DAV")]
 pub struct PropfindElement {
-    #[xml(ns = "crate::namespace::NS_DAV")]
+    #[xml(ty = "untagged")]
     pub prop: PropfindType,
 }
 
