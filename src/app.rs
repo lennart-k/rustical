@@ -5,7 +5,6 @@ use actix_web::{web, App};
 use rustical_frontend::{configure_frontend, FrontendConfig};
 use rustical_store::auth::AuthenticationProvider;
 use rustical_store::{AddressbookStore, CalendarStore, SubscriptionStore};
-use rustical_store_sqlite::subscription_store;
 use std::sync::Arc;
 use tracing_actix_web::TracingLogger;
 

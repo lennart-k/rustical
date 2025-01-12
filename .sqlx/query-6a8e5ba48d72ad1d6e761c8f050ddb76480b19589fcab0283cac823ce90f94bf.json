@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT OR REPLACE INTO subscriptions (id, topic, expiration, push_resource) VALUES (?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "6a8e5ba48d72ad1d6e761c8f050ddb76480b19589fcab0283cac823ce90f94bf"
+}
