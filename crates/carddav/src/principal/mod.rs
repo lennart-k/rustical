@@ -33,6 +33,9 @@ pub struct PrincipalResource {
     strum(serialize_all = "kebab-case")
 )]
 pub enum PrincipalProp {
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
+    Displayname(String),
+
     // WebDAV Access Control (RFC 3744)
     #[strum_discriminants(strum(serialize = "principal-URL"))]
     #[xml(rename = b"principal-URL")]
@@ -80,6 +83,7 @@ impl Resource for PrincipalResource {
         let principal_href = HrefElement::new(Self::get_principal_url(rmap, &self.principal));
 
         Ok(match prop {
+            PrincipalPropName::Displayname => PrincipalProp::Displayname(self.principal.to_owned()),
             PrincipalPropName::PrincipalUrl => PrincipalProp::PrincipalUrl(principal_href),
             PrincipalPropName::AddressbookHomeSet => {
                 PrincipalProp::AddressbookHomeSet(principal_href)
