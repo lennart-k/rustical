@@ -76,11 +76,6 @@ impl Resource for AddressObjectResource {
         })
     }
 
-    #[inline]
-    fn resource_name() -> &'static str {
-        "carddav_address_object"
-    }
-
     fn get_owner(&self) -> Option<&str> {
         Some(&self.principal)
     }

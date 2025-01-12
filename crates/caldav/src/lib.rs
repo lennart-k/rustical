@@ -6,15 +6,17 @@ use actix_web::web::{self, Data};
 use actix_web::HttpResponse;
 use calendar::resource::CalendarResourceService;
 use calendar_object::resource::CalendarObjectResourceService;
+use calendar_set::CalendarSetResourceService;
 use principal::{PrincipalResource, PrincipalResourceService};
-use rustical_dav::resource::ResourceService;
+use rustical_dav::resource::{NamedRoute, ResourceService, ResourceServiceRoute};
 use rustical_dav::resources::RootResourceService;
 use rustical_store::auth::{AuthenticationMiddleware, AuthenticationProvider};
-use rustical_store::CalendarStore;
+use rustical_store::{AddressbookStore, CalendarStore, ContactBirthdayStore};
 use std::sync::Arc;
 
 pub mod calendar;
 pub mod calendar_object;
+pub mod calendar_set;
 pub mod error;
 pub mod principal;
 
@@ -24,11 +26,17 @@ pub fn configure_well_known(cfg: &mut web::ServiceConfig, caldav_root: String) {
     cfg.service(web::redirect("/caldav", caldav_root).permanent());
 }
 
-pub fn configure_dav<AP: AuthenticationProvider, C: CalendarStore + ?Sized>(
+pub fn configure_dav<
+    AP: AuthenticationProvider,
+    AS: AddressbookStore + ?Sized,
+    C: CalendarStore + ?Sized,
+>(
     cfg: &mut web::ServiceConfig,
     auth_provider: Arc<AP>,
     store: Arc<C>,
+    addr_store: Arc<AS>,
 ) {
+    let birthday_store = Arc::new(ContactBirthdayStore::new(addr_store));
     cfg.service(
         web::scope("")
             .wrap(AuthenticationMiddleware::new(auth_provider))
@@ -53,24 +61,36 @@ pub fn configure_dav<AP: AuthenticationProvider, C: CalendarStore + ?Sized>(
                 }),
             )
             .app_data(Data::from(store.clone()))
+            .app_data(Data::from(birthday_store.clone()))
             .service(RootResourceService::<PrincipalResource>::default().actix_resource())
             .service(
                 web::scope("/user").service(
                     web::scope("/{principal}")
-                        .service(PrincipalResourceService::<C>::new(store.clone()).actix_resource())
-                        .service(
-                            web::scope("/{calendar}")
-                                .service(
-                                    CalendarResourceService::<C>::new(store.clone())
-                                        .actix_resource(),
-                                )
-                                .service(
-                                    web::scope("/{object}").service(
-                                        CalendarObjectResourceService::<C>::new(store.clone())
-                                            .actix_resource(),
-                                    ),
-                                ),
-                        ),
+                        .service(PrincipalResourceService(&[
+                            "calendar", "birthdays"
+                        ]).actix_resource().name(PrincipalResource::route_name()))
+                        .service(web::scope("/calendar")
+                            .service(CalendarSetResourceService::new(store.clone()).actix_resource())
+                            .service(
+                                web::scope("/{calendar}")
+                                    .service(
+                                        ResourceServiceRoute(CalendarResourceService::new(store.clone()))
+                                    )
+                                        .service(web::scope("/{object}").service(CalendarObjectResourceService::new(store.clone()).actix_resource()
+                                    ))
+                            )
+                        )
+                        .service(web::scope("/birthdays")
+                            .service(CalendarSetResourceService::new(birthday_store.clone()).actix_resource())
+                            .service(
+                                web::scope("/{calendar}")
+                                    .service(
+                                        ResourceServiceRoute(CalendarResourceService::new(birthday_store.clone()))
+                                    )
+                                        .service(web::scope("/{object}").service(CalendarObjectResourceService::new(birthday_store.clone()).actix_resource()
+                                    ))
+                            )
+                        )
                 ),
             ),
     );

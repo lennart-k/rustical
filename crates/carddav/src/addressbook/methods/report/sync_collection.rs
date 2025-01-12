@@ -83,11 +83,7 @@ pub async fn handle_sync_collection<AS: AddressbookStore + ?Sized>(
 
     let mut responses = Vec::new();
     for object in new_objects {
-        let path = AddressObjectResource::get_url(
-            req.resource_map(),
-            vec![principal, addressbook_id, &object.get_id()],
-        )
-        .unwrap();
+        let path = format!("{}/{}", req.path().trim_end_matches('/'), object.get_id());
         responses.push(
             AddressObjectResource {
                 object,
@@ -98,11 +94,7 @@ pub async fn handle_sync_collection<AS: AddressbookStore + ?Sized>(
     }
 
     for object_id in deleted_objects {
-        let path = AddressObjectResource::get_url(
-            req.resource_map(),
-            vec![principal, addressbook_id, &object_id],
-        )
-        .unwrap();
+        let path = format!("{}/{}", req.path().trim_end_matches('/'), object_id);
         responses.push(ResponseElement {
             href: path,
             status: Some(StatusCode::NOT_FOUND),

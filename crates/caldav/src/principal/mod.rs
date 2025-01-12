@@ -1,30 +1,22 @@
-use crate::calendar::resource::CalendarResource;
+use crate::calendar_set::CalendarSetResource;
 use crate::Error;
 use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
 use rustical_dav::privileges::UserPrivilegeSet;
-use rustical_dav::resource::{Resource, ResourceService};
+use rustical_dav::resource::{NamedRoute, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
-use rustical_store::CalendarStore;
 use rustical_xml::{XmlDeserialize, XmlSerialize};
-use std::sync::Arc;
 use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
-
-pub struct PrincipalResourceService<C: CalendarStore + ?Sized> {
-    cal_store: Arc<C>,
-}
-
-impl<C: CalendarStore + ?Sized> PrincipalResourceService<C> {
-    pub fn new(cal_store: Arc<C>) -> Self {
-        Self { cal_store }
-    }
-}
 
 #[derive(Clone)]
 pub struct PrincipalResource {
     principal: String,
+    home_set: &'static [&'static str],
 }
+
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
+pub struct CalendarHomeSet(#[xml(ty = "untagged", flatten)] Vec<HrefElement>);
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone)]
 #[strum_discriminants(
@@ -40,7 +32,7 @@ pub enum PrincipalProp {
 
     // CalDAV (RFC 4791)
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
-    CalendarHomeSet(HrefElement),
+    CalendarHomeSet(CalendarHomeSet),
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     CalendarUserAddressSet(HrefElement),
 }
@@ -48,6 +40,12 @@ pub enum PrincipalProp {
 impl PrincipalResource {
     pub fn get_principal_url(rmap: &ResourceMap, principal: &str) -> String {
         Self::get_url(rmap, vec![principal]).unwrap()
+    }
+}
+
+impl NamedRoute for PrincipalResource {
+    fn route_name() -> &'static str {
+        "caldav_principal"
     }
 }
 
@@ -70,20 +68,21 @@ impl Resource for PrincipalResource {
         _user: &User,
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
-        let principal_href = HrefElement::new(Self::get_url(rmap, vec![&self.principal]).unwrap());
+        let principal_url = Self::get_url(rmap, vec![&self.principal]).unwrap();
+        let home_set = CalendarHomeSet(
+            self.home_set
+                .iter()
+                .map(|&home_name| format!("{}/{}", principal_url, home_name).into())
+                .collect(),
+        );
 
         Ok(match prop {
-            PrincipalPropName::PrincipalUrl => PrincipalProp::PrincipalUrl(principal_href),
-            PrincipalPropName::CalendarHomeSet => PrincipalProp::CalendarHomeSet(principal_href),
+            PrincipalPropName::PrincipalUrl => PrincipalProp::PrincipalUrl(principal_url.into()),
+            PrincipalPropName::CalendarHomeSet => PrincipalProp::CalendarHomeSet(home_set),
             PrincipalPropName::CalendarUserAddressSet => {
-                PrincipalProp::CalendarUserAddressSet(principal_href)
+                PrincipalProp::CalendarUserAddressSet(principal_url.into())
             }
         })
-    }
-
-    #[inline]
-    fn resource_name() -> &'static str {
-        "caldav_principal"
     }
 
     fn get_owner(&self) -> Option<&str> {
@@ -95,10 +94,12 @@ impl Resource for PrincipalResource {
     }
 }
 
+pub struct PrincipalResourceService(pub &'static [&'static str]);
+
 #[async_trait(?Send)]
-impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResourceService<C> {
+impl ResourceService for PrincipalResourceService {
     type PathComponents = (String,);
-    type MemberType = CalendarResource;
+    type MemberType = CalendarSetResource;
     type Resource = PrincipalResource;
     type Error = Error;
 
@@ -108,23 +109,22 @@ impl<C: CalendarStore + ?Sized> ResourceService for PrincipalResourceService<C> 
     ) -> Result<Self::Resource, Self::Error> {
         Ok(PrincipalResource {
             principal: principal.to_owned(),
+            home_set: self.0,
         })
     }
 
     async fn get_members(
         &self,
         (principal,): &Self::PathComponents,
-        rmap: &ResourceMap,
     ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
-        let calendars = self.cal_store.get_calendars(principal).await?;
-        Ok(calendars
-            .into_iter()
-            .map(|cal| {
+        Ok(self
+            .0
+            .iter()
+            .map(|&set_name| {
                 (
-                    CalendarResource::get_url(rmap, vec![principal, &cal.id]).unwrap(),
-                    CalendarResource {
-                        cal,
-                        read_only: self.cal_store.is_read_only(),
+                    set_name.to_string(),
+                    CalendarSetResource {
+                        principal: principal.to_owned(),
                     },
                 )
             })

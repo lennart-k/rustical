@@ -1,4 +1,5 @@
-use crate::addressbook::resource::AddressbookResource;
+use crate::calendar::resource::CalendarResource;
+use crate::principal::PrincipalResource;
 use crate::Error;
 use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
@@ -6,24 +7,14 @@ use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{NamedRoute, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
-use rustical_store::AddressbookStore;
+use rustical_store::CalendarStore;
 use rustical_xml::{XmlDeserialize, XmlSerialize};
 use std::sync::Arc;
 use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
 
-pub struct PrincipalResourceService<A: AddressbookStore + ?Sized> {
-    addr_store: Arc<A>,
-}
-
-impl<A: AddressbookStore + ?Sized> PrincipalResourceService<A> {
-    pub fn new(addr_store: Arc<A>) -> Self {
-        Self { addr_store }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct PrincipalResource {
-    principal: String,
+#[derive(Clone)]
+pub struct CalendarSetResource {
+    pub(crate) principal: String,
 }
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone)]
@@ -35,40 +26,21 @@ pub struct PrincipalResource {
 pub enum PrincipalProp {
     // WebDAV Access Control (RFC 3744)
     #[strum_discriminants(strum(serialize = "principal-URL"))]
-    #[xml(rename = b"principal-URL")]
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     PrincipalUrl(HrefElement),
-
-    // CardDAV (RFC 6352)
-    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
-    AddressbookHomeSet(HrefElement),
-    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
-    PrincipalAddress(Option<HrefElement>),
 }
 
-impl PrincipalResource {
-    pub fn get_principal_url(rmap: &ResourceMap, principal: &str) -> String {
-        Self::get_url(rmap, vec![principal]).unwrap()
-    }
-}
-
-impl NamedRoute for PrincipalResource {
-    fn route_name() -> &'static str {
-        "carddav_principal"
-    }
-}
-
-impl Resource for PrincipalResource {
+impl Resource for CalendarSetResource {
     type PropName = PrincipalPropName;
     type Prop = PrincipalProp;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
 
     fn get_resourcetype(&self) -> Resourcetype {
-        Resourcetype(&[
-            ResourcetypeInner(rustical_dav::namespace::NS_DAV, "collection"),
-            ResourcetypeInner(rustical_dav::namespace::NS_DAV, "principal"),
-        ])
+        Resourcetype(&[ResourcetypeInner(
+            rustical_dav::namespace::NS_DAV,
+            "collection",
+        )])
     }
 
     fn get_prop(
@@ -77,14 +49,12 @@ impl Resource for PrincipalResource {
         _user: &User,
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
-        let principal_href = HrefElement::new(Self::get_principal_url(rmap, &self.principal));
+        let principal_href = HrefElement::new(
+            Self::PrincipalResource::get_url(rmap, vec![&self.principal]).unwrap(),
+        );
 
         Ok(match prop {
             PrincipalPropName::PrincipalUrl => PrincipalProp::PrincipalUrl(principal_href),
-            PrincipalPropName::AddressbookHomeSet => {
-                PrincipalProp::AddressbookHomeSet(principal_href)
-            }
-            PrincipalPropName::PrincipalAddress => PrincipalProp::PrincipalAddress(None),
         })
     }
 
@@ -97,18 +67,28 @@ impl Resource for PrincipalResource {
     }
 }
 
+pub struct CalendarSetResourceService<C: CalendarStore + ?Sized> {
+    cal_store: Arc<C>,
+}
+
+impl<C: CalendarStore + ?Sized> CalendarSetResourceService<C> {
+    pub fn new(cal_store: Arc<C>) -> Self {
+        Self { cal_store }
+    }
+}
+
 #[async_trait(?Send)]
-impl<A: AddressbookStore + ?Sized> ResourceService for PrincipalResourceService<A> {
+impl<C: CalendarStore + ?Sized> ResourceService for CalendarSetResourceService<C> {
     type PathComponents = (String,);
-    type MemberType = AddressbookResource;
-    type Resource = PrincipalResource;
+    type MemberType = CalendarResource;
+    type Resource = CalendarSetResource;
     type Error = Error;
 
     async fn get_resource(
         &self,
         (principal,): &Self::PathComponents,
     ) -> Result<Self::Resource, Self::Error> {
-        Ok(PrincipalResource {
+        Ok(CalendarSetResource {
             principal: principal.to_owned(),
         })
     }
@@ -117,10 +97,18 @@ impl<A: AddressbookStore + ?Sized> ResourceService for PrincipalResourceService<
         &self,
         (principal,): &Self::PathComponents,
     ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
-        let addressbooks = self.addr_store.get_addressbooks(principal).await?;
-        Ok(addressbooks
+        let calendars = self.cal_store.get_calendars(principal).await?;
+        Ok(calendars
             .into_iter()
-            .map(|addressbook| (addressbook.id.to_owned(), addressbook.into()))
+            .map(|cal| {
+                (
+                    cal.id.to_owned(),
+                    CalendarResource {
+                        cal,
+                        read_only: self.cal_store.is_read_only(),
+                    },
+                )
+            })
             .collect())
     }
 }

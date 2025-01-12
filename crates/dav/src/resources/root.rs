@@ -1,12 +1,11 @@
 use crate::privileges::UserPrivilegeSet;
-use crate::resource::{Resource, ResourceService};
+use crate::resource::{NamedRoute, Resource, ResourceService};
 use crate::xml::{Resourcetype, ResourcetypeInner};
 use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
 use rustical_store::auth::User;
 use rustical_xml::{XmlDeserialize, XmlSerialize};
 use serde::Serialize;
-use std::any::type_name;
 use std::marker::PhantomData;
 use strum::{EnumString, IntoStaticStr, VariantNames};
 
@@ -32,7 +31,7 @@ impl From<RootResourceProp> for RootResourcePropName {
     }
 }
 
-impl<PR: Resource> Resource for RootResource<PR> {
+impl<PR: Resource + NamedRoute> Resource for RootResource<PR> {
     type PropName = RootResourcePropName;
     type Prop = RootResourceProp;
     type Error = PR::Error;
@@ -51,16 +50,12 @@ impl<PR: Resource> Resource for RootResource<PR> {
         unreachable!("we shouldn't end up here")
     }
 
-    #[inline]
-    fn resource_name() -> &'static str {
-        type_name::<Self>()
-    }
-
     fn get_user_privileges(&self, _user: &User) -> Result<UserPrivilegeSet, Self::Error> {
         Ok(UserPrivilegeSet::all())
     }
 }
 
+#[derive(Clone)]
 pub struct RootResourceService<PR: Resource>(PhantomData<PR>);
 
 impl<PR: Resource> Default for RootResourceService<PR> {
@@ -70,7 +65,7 @@ impl<PR: Resource> Default for RootResourceService<PR> {
 }
 
 #[async_trait(?Send)]
-impl<PR: Resource> ResourceService for RootResourceService<PR> {
+impl<PR: Resource + NamedRoute> ResourceService for RootResourceService<PR> {
     type PathComponents = ();
     type MemberType = PR;
     type Resource = RootResource<PR>;

@@ -75,11 +75,6 @@ impl Resource for CalendarObjectResource {
         })
     }
 
-    #[inline]
-    fn resource_name() -> &'static str {
-        "caldav_calendar_object"
-    }
-
     fn get_owner(&self) -> Option<&str> {
         Some(&self.principal)
     }

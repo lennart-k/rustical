@@ -143,11 +143,6 @@ impl Resource for AddressbookResource {
         }
     }
 
-    #[inline]
-    fn resource_name() -> &'static str {
-        "carddav_addressbook"
-    }
-
     fn get_owner(&self) -> Option<&str> {
         Some(&self.0.principal)
     }
@@ -179,7 +174,6 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressbookResourceServi
     async fn get_members(
         &self,
         (principal, addressbook_id): &Self::PathComponents,
-        rmap: &ResourceMap,
     ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
         Ok(self
             .addr_store
@@ -188,11 +182,7 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressbookResourceServi
             .into_iter()
             .map(|object| {
                 (
-                    AddressObjectResource::get_url(
-                        rmap,
-                        vec![principal, addressbook_id, object.get_id()],
-                    )
-                    .unwrap(),
+                    object.get_id().to_string(),
                     AddressObjectResource {
                         object,
                         principal: principal.to_owned(),

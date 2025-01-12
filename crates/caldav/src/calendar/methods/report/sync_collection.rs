@@ -86,11 +86,7 @@ pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
 
     let mut responses = Vec::new();
     for object in new_objects {
-        let path = CalendarObjectResource::get_url(
-            req.resource_map(),
-            vec![principal, cal_id, &object.get_id()],
-        )
-        .unwrap();
+        let path = format!("{}/{}", req.path().trim_end_matches('/'), object.get_id());
         responses.push(
             CalendarObjectResource {
                 object,
@@ -101,11 +97,7 @@ pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
     }
 
     for object_id in deleted_objects {
-        let path = CalendarObjectResource::get_url(
-            req.resource_map(),
-            vec![principal, cal_id, &object_id],
-        )
-        .unwrap();
+        let path = format!("{}/{}", req.path().trim_end_matches('/'), object_id);
         responses.push(ResponseElement {
             href: path,
             status: Some(StatusCode::NOT_FOUND),

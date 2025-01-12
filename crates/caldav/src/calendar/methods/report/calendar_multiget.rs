@@ -1,6 +1,5 @@
 use crate::{
     calendar_object::resource::{CalendarObjectProp, CalendarObjectResource},
-    principal::PrincipalResource,
     Error,
 };
 use actix_web::{
@@ -27,13 +26,12 @@ pub(crate) struct CalendarMultigetRequest {
 
 pub async fn get_objects_calendar_multiget<C: CalendarStore + ?Sized>(
     cal_query: &CalendarMultigetRequest,
-    principal_url: &str,
+    path: &str,
     principal: &str,
     cal_id: &str,
     store: &C,
 ) -> Result<(Vec<CalendarObject>, Vec<String>), Error> {
-    let resource_def =
-        ResourceDef::prefix(principal_url).join(&ResourceDef::new("/{cal_id}/{object_id}"));
+    let resource_def = ResourceDef::prefix(path).join(&ResourceDef::new("/{object_id}"));
 
     let mut result = vec![];
     let mut not_found = vec![];
@@ -43,9 +41,6 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore + ?Sized>(
         if !resource_def.capture_match_info(&mut path) {
             not_found.push(href.to_owned());
         };
-        if path.get("cal_id").unwrap() != cal_id {
-            not_found.push(href.to_owned());
-        }
         let object_id = path.get("object_id").unwrap();
         match store.get_object(principal, cal_id, object_id).await {
             Ok(object) => result.push(object),
@@ -66,9 +61,8 @@ pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
     cal_store: &C,
 ) -> Result<MultistatusElement<EitherProp<CalendarObjectProp, CommonPropertiesProp>, String>, Error>
 {
-    let principal_url = PrincipalResource::get_url(req.resource_map(), vec![principal]).unwrap();
     let (objects, not_found) =
-        get_objects_calendar_multiget(&cal_multiget, &principal_url, principal, cal_id, cal_store)
+        get_objects_calendar_multiget(&cal_multiget, req.path(), principal, cal_id, cal_store)
             .await?;
 
     let props = match cal_multiget.prop {

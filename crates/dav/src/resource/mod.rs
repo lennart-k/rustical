@@ -4,8 +4,6 @@ use crate::xml::{multistatus::ResponseElement, TagList};
 use crate::xml::{HrefElement, Resourcetype};
 use crate::Error;
 use actix_web::dev::ResourceMap;
-use actix_web::error::UrlGenerationError;
-use actix_web::test::TestRequest;
 use actix_web::{http::StatusCode, ResponseError};
 use itertools::Itertools;
 pub use resource_service::ResourceService;
@@ -16,6 +14,8 @@ use strum::{EnumString, VariantNames};
 
 mod methods;
 mod resource_service;
+
+pub use resource_service::*;
 
 pub trait ResourceProp: XmlSerialize + XmlDeserialize {}
 impl<T: XmlSerialize + XmlDeserialize> ResourceProp for T {}
@@ -62,7 +62,7 @@ pub trait Resource: Clone + 'static {
     type PropName: ResourcePropName + From<Self::Prop> + Into<&'static str>;
     type Prop: ResourceProp + PartialEq + Clone;
     type Error: ResponseError + From<crate::Error>;
-    type PrincipalResource: Resource;
+    type PrincipalResource: Resource + NamedRoute;
 
     fn get_resourcetype(&self) -> Resourcetype;
 
@@ -115,25 +115,8 @@ pub trait Resource: Clone + 'static {
         Err(crate::Error::PropReadOnly)
     }
 
-    fn resource_name() -> &'static str;
-
     fn get_owner(&self) -> Option<&str> {
         None
-    }
-
-    fn get_url<U, I>(rmap: &ResourceMap, elements: U) -> Result<String, UrlGenerationError>
-    where
-        U: IntoIterator<Item = I>,
-        I: AsRef<str>,
-    {
-        Ok(rmap
-            .url_for(
-                &TestRequest::default().to_http_request(),
-                Self::resource_name(),
-                elements,
-            )?
-            .path()
-            .to_owned())
     }
 
     fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error>;

@@ -27,7 +27,12 @@ pub fn make_app<AS: AddressbookStore + ?Sized, CS: CalendarStore + ?Sized>(
         .wrap(TracingLogger::default())
         .wrap(NormalizePath::trim())
         .service(web::scope("/caldav").configure(|cfg| {
-            rustical_caldav::configure_dav(cfg, auth_provider.clone(), cal_store.clone())
+            rustical_caldav::configure_dav(
+                cfg,
+                auth_provider.clone(),
+                cal_store.clone(),
+                addr_store.clone(),
+            )
         }))
         .service(web::scope("/carddav").configure(|cfg| {
             rustical_carddav::configure_dav(cfg, auth_provider.clone(), addr_store.clone())

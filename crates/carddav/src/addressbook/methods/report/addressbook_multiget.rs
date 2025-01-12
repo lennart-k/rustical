@@ -1,6 +1,5 @@
 use crate::{
     address_object::resource::{AddressObjectProp, AddressObjectResource},
-    principal::PrincipalResource,
     Error,
 };
 use actix_web::{
@@ -10,8 +9,7 @@ use actix_web::{
 };
 use rustical_dav::{
     resource::{CommonPropertiesProp, EitherProp, Resource},
-    xml::{multistatus::ResponseElement, MultistatusElement},
-    xml::{PropElement, PropfindType},
+    xml::{multistatus::ResponseElement, MultistatusElement, PropElement, PropfindType},
 };
 use rustical_store::{auth::User, AddressObject, AddressbookStore};
 use rustical_xml::XmlDeserialize;
@@ -27,13 +25,12 @@ pub struct AddressbookMultigetRequest {
 
 pub async fn get_objects_addressbook_multiget<AS: AddressbookStore + ?Sized>(
     addressbook_multiget: &AddressbookMultigetRequest,
-    principal_url: &str,
+    path: &str,
     principal: &str,
     addressbook_id: &str,
     store: &AS,
 ) -> Result<(Vec<AddressObject>, Vec<String>), Error> {
-    let resource_def =
-        ResourceDef::prefix(principal_url).join(&ResourceDef::new("/{addressbook_id}/{object_id}"));
+    let resource_def = ResourceDef::prefix(path).join(&ResourceDef::new("/{object_id}"));
 
     let mut result = vec![];
     let mut not_found = vec![];
@@ -67,15 +64,9 @@ pub async fn handle_addressbook_multiget<AS: AddressbookStore + ?Sized>(
     addr_store: &AS,
 ) -> Result<MultistatusElement<EitherProp<AddressObjectProp, CommonPropertiesProp>, String>, Error>
 {
-    let principal_url = PrincipalResource::get_url(req.resource_map(), vec![principal]).unwrap();
-    let (objects, not_found) = get_objects_addressbook_multiget(
-        &addr_multiget,
-        &principal_url,
-        principal,
-        cal_id,
-        addr_store,
-    )
-    .await?;
+    let (objects, not_found) =
+        get_objects_addressbook_multiget(&addr_multiget, req.path(), principal, cal_id, addr_store)
+            .await?;
 
     let props = match addr_multiget.prop {
         PropfindType::Allprop => {

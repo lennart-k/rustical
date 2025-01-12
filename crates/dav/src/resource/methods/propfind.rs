@@ -61,11 +61,13 @@ pub(crate) async fn route_propfind<R: ResourceService>(
 
     let mut member_responses = Vec::new();
     if depth != Depth::Zero {
-        for (path, member) in resource_service
-            .get_members(&path, req.resource_map())
-            .await?
-        {
-            member_responses.push(member.propfind(&path, &props, &user, req.resource_map())?);
+        for (subpath, member) in resource_service.get_members(&path).await? {
+            member_responses.push(member.propfind(
+                &format!("{}/{}", req.path().trim_end_matches('/'), subpath),
+                &props,
+                &user,
+                req.resource_map(),
+            )?);
         }
     }
 

@@ -22,16 +22,6 @@ use std::str::FromStr;
 use std::sync::Arc;
 use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
 
-pub struct CalendarResourceService<C: CalendarStore + ?Sized> {
-    cal_store: Arc<C>,
-}
-
-impl<C: CalendarStore + ?Sized> CalendarResourceService<C> {
-    pub fn new(cal_store: Arc<C>) -> Self {
-        Self { cal_store }
-    }
-}
-
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone)]
 #[strum_discriminants(
     name(CalendarPropName),
@@ -122,7 +112,7 @@ impl Resource for CalendarResource {
 
     fn get_prop(
         &self,
-        rmap: &ResourceMap,
+        _rmap: &ResourceMap,
         _user: &User,
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
@@ -153,8 +143,9 @@ impl Resource for CalendarResource {
             CalendarPropName::Transports => CalendarProp::Transports(Default::default()),
             CalendarPropName::Topic => {
                 // TODO: Add salt since this could be public
-                let url =
-                    CalendarResource::get_url(rmap, [&self.cal.principal, &self.cal.id]).unwrap();
+                // let url =
+                //     CalendarResource::get_url(rmap, [&self.cal.principal, &self.cal.id]).unwrap();
+                let url = "TODO!".to_owned();
                 let mut hasher = Sha256::new();
                 hasher.update(url);
                 let topic = format!("{:x}", hasher.finalize());
@@ -263,11 +254,6 @@ impl Resource for CalendarResource {
         }
     }
 
-    #[inline]
-    fn resource_name() -> &'static str {
-        "caldav_calendar"
-    }
-
     fn get_owner(&self) -> Option<&str> {
         Some(&self.cal.principal)
     }
@@ -278,6 +264,16 @@ impl Resource for CalendarResource {
         }
 
         Ok(UserPrivilegeSet::owner_only(self.cal.principal == user.id))
+    }
+}
+
+pub struct CalendarResourceService<C: CalendarStore + ?Sized> {
+    cal_store: Arc<C>,
+}
+
+impl<C: CalendarStore + ?Sized> CalendarResourceService<C> {
+    pub fn new(cal_store: Arc<C>) -> Self {
+        Self { cal_store }
     }
 }
 
@@ -292,11 +288,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
         &self,
         (principal, cal_id): &Self::PathComponents,
     ) -> Result<Self::Resource, Error> {
-        let calendar = self
-            .cal_store
-            .get_calendar(principal, cal_id)
-            .await
-            .map_err(|_e| Error::NotFound)?;
+        let calendar = self.cal_store.get_calendar(principal, cal_id).await?;
         Ok(CalendarResource {
             cal: calendar,
             read_only: self.cal_store.is_read_only(),
@@ -306,7 +298,6 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
     async fn get_members(
         &self,
         (principal, cal_id): &Self::PathComponents,
-        rmap: &ResourceMap,
     ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
         Ok(self
             .cal_store
@@ -315,8 +306,7 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
             .into_iter()
             .map(|object| {
                 (
-                    CalendarObjectResource::get_url(rmap, vec![principal, cal_id, object.get_id()])
-                        .unwrap(),
+                    object.get_id().to_string(),
                     CalendarObjectResource {
                         object,
                         principal: principal.to_owned(),

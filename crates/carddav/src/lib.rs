@@ -12,7 +12,7 @@ use address_object::resource::AddressObjectResourceService;
 use addressbook::resource::AddressbookResourceService;
 pub use error::Error;
 use principal::{PrincipalResource, PrincipalResourceService};
-use rustical_dav::resource::ResourceService;
+use rustical_dav::resource::{NamedRoute, ResourceService};
 use rustical_dav::resources::RootResourceService;
 use rustical_store::{
     auth::{AuthenticationMiddleware, AuthenticationProvider},
@@ -62,7 +62,11 @@ pub fn configure_dav<AP: AuthenticationProvider, A: AddressbookStore + ?Sized>(
             .service(
                 web::scope("/user").service(
                     web::scope("/{principal}")
-                        .service(PrincipalResourceService::<A>::new(store.clone()).actix_resource())
+                        .service(
+                            PrincipalResourceService::new(store.clone())
+                                .actix_resource()
+                                .name(PrincipalResource::route_name()),
+                        )
                         .service(
                             web::scope("/{addressbook}")
                                 .service(

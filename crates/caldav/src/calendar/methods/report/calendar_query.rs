@@ -110,8 +110,7 @@ impl CompFilterElement {
         if self
             .comp_filter
             .iter()
-            .map(|filter| filter.matches(cal_object))
-            .all(|x| x)
+            .all(|filter| filter.matches(cal_object))
         {
             return true;
         }
@@ -215,11 +214,7 @@ pub async fn handle_calendar_query<C: CalendarStore + ?Sized>(
 
     let mut responses = Vec::new();
     for object in objects {
-        let path = CalendarObjectResource::get_url(
-            req.resource_map(),
-            vec![principal, cal_id, object.get_id()],
-        )
-        .unwrap();
+        let path = format!("{}/{}", req.path().trim_end_matches('/'), object.get_id());
         responses.push(
             CalendarObjectResource {
                 object,
