@@ -4,6 +4,7 @@ use sqlx::{sqlite::SqliteConnectOptions, Pool, Sqlite, SqlitePool};
 pub mod addressbook_store;
 pub mod calendar_store;
 pub mod error;
+pub mod subscription_store;
 
 pub use error::Error;
 

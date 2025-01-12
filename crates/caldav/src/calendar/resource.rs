@@ -1,4 +1,5 @@
 use super::methods::mkcalendar::route_mkcalendar;
+use super::methods::post::route_post;
 use super::methods::report::route_report_calendar;
 use super::prop::{
     SupportedCalendarComponentSet, SupportedCalendarData, SupportedReportSet, Transports,
@@ -15,8 +16,9 @@ use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
-use rustical_store::{Calendar, CalendarStore};
+use rustical_store::{Calendar, CalendarStore, SubscriptionStore};
 use rustical_xml::{XmlDeserialize, XmlSerialize};
+use std::marker::PhantomData;
 use std::str::FromStr;
 use std::sync::Arc;
 use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
@@ -254,18 +256,24 @@ impl Resource for CalendarResource {
     }
 }
 
-pub struct CalendarResourceService<C: CalendarStore + ?Sized> {
+pub struct CalendarResourceService<C: CalendarStore + ?Sized, S: SubscriptionStore + ?Sized> {
     cal_store: Arc<C>,
+    __phantom_sub: PhantomData<S>,
 }
 
-impl<C: CalendarStore + ?Sized> CalendarResourceService<C> {
+impl<C: CalendarStore + ?Sized, S: SubscriptionStore + ?Sized> CalendarResourceService<C, S> {
     pub fn new(cal_store: Arc<C>) -> Self {
-        Self { cal_store }
+        Self {
+            cal_store,
+            __phantom_sub: PhantomData,
+        }
     }
 }
 
 #[async_trait(?Send)]
-impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
+impl<C: CalendarStore + ?Sized, S: SubscriptionStore + ?Sized> ResourceService
+    for CalendarResourceService<C, S>
+{
     type MemberType = CalendarObjectResource;
     type PathComponents = (String, String); // principal, calendar_id
     type Resource = CalendarResource;
@@ -332,5 +340,6 @@ impl<C: CalendarStore + ?Sized> ResourceService for CalendarResourceService<C> {
 
         res.route(report_method.to(route_report_calendar::<C>))
             .route(mkcalendar_method.to(route_mkcalendar::<C>))
+            .post(route_post::<C, S>)
     }
 }

@@ -7,7 +7,7 @@ use clap::{Parser, Subcommand};
 use commands::{cmd_gen_config, cmd_pwhash};
 use config::{DataStoreConfig, SqliteDataStoreConfig};
 use rustical_store::auth::StaticUserStore;
-use rustical_store::{AddressbookStore, CalendarStore};
+use rustical_store::{AddressbookStore, CalendarStore, SubscriptionStore};
 use rustical_store_sqlite::{create_db_pool, SqliteStore};
 use setup_tracing::setup_tracing;
 use std::fs;
@@ -39,12 +39,20 @@ enum Command {
 async fn get_data_stores(
     migrate: bool,
     config: &DataStoreConfig,
-) -> Result<(Arc<dyn AddressbookStore>, Arc<dyn CalendarStore>)> {
+) -> Result<(
+    Arc<dyn AddressbookStore>,
+    Arc<dyn CalendarStore>,
+    Arc<dyn SubscriptionStore>,
+)> {
     Ok(match &config {
         DataStoreConfig::Sqlite(SqliteDataStoreConfig { db_url }) => {
             let db = create_db_pool(db_url, migrate).await?;
             let sqlite_store = Arc::new(SqliteStore::new(db));
-            (sqlite_store.clone(), sqlite_store.clone())
+            (
+                sqlite_store.clone(),
+                sqlite_store.clone(),
+                sqlite_store.clone(),
+            )
         }
     })
 }
@@ -61,7 +69,7 @@ async fn main() -> Result<()> {
 
             setup_tracing(&config.tracing);
 
-            let (addr_store, cal_store) =
+            let (addr_store, cal_store, subscription_store) =
                 get_data_stores(!args.no_migrations, &config.data_store).await?;
 
             let user_store = Arc::new(match config.auth {
@@ -72,6 +80,7 @@ async fn main() -> Result<()> {
                 make_app(
                     addr_store.clone(),
                     cal_store.clone(),
+                    subscription_store.clone(),
                     user_store.clone(),
                     config.frontend.clone(),
                 )

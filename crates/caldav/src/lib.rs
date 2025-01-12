@@ -11,14 +11,16 @@ use principal::{PrincipalResource, PrincipalResourceService};
 use rustical_dav::resource::{NamedRoute, ResourceService, ResourceServiceRoute};
 use rustical_dav::resources::RootResourceService;
 use rustical_store::auth::{AuthenticationMiddleware, AuthenticationProvider};
-use rustical_store::{AddressbookStore, CalendarStore, ContactBirthdayStore};
+use rustical_store::{AddressbookStore, CalendarStore, ContactBirthdayStore, SubscriptionStore};
 use std::sync::Arc;
+use subscription::subscription_resource;
 
 pub mod calendar;
 pub mod calendar_object;
 pub mod calendar_set;
 pub mod error;
 pub mod principal;
+mod subscription;
 
 pub use error::Error;
 
@@ -30,11 +32,13 @@ pub fn configure_dav<
     AP: AuthenticationProvider,
     AS: AddressbookStore + ?Sized,
     C: CalendarStore + ?Sized,
+    S: SubscriptionStore + ?Sized,
 >(
     cfg: &mut web::ServiceConfig,
     auth_provider: Arc<AP>,
     store: Arc<C>,
     addr_store: Arc<AS>,
+    subscription_store: Arc<S>,
 ) {
     let birthday_store = Arc::new(ContactBirthdayStore::new(addr_store));
     cfg.service(
@@ -62,6 +66,7 @@ pub fn configure_dav<
             )
             .app_data(Data::from(store.clone()))
             .app_data(Data::from(birthday_store.clone()))
+            .app_data(Data::from(subscription_store))
             .service(RootResourceService::<PrincipalResource>::default().actix_resource())
             .service(
                 web::scope("/user").service(
@@ -74,7 +79,7 @@ pub fn configure_dav<
                             .service(
                                 web::scope("/{calendar}")
                                     .service(
-                                        ResourceServiceRoute(CalendarResourceService::new(store.clone()))
+                                        ResourceServiceRoute(CalendarResourceService::<_, S>::new(store.clone()))
                                     )
                                         .service(web::scope("/{object}").service(CalendarObjectResourceService::new(store.clone()).actix_resource()
                                     ))
@@ -85,13 +90,13 @@ pub fn configure_dav<
                             .service(
                                 web::scope("/{calendar}")
                                     .service(
-                                        ResourceServiceRoute(CalendarResourceService::new(birthday_store.clone()))
+                                        ResourceServiceRoute(CalendarResourceService::<_, S>::new(birthday_store.clone()))
                                     )
                                         .service(web::scope("/{object}").service(CalendarObjectResourceService::new(birthday_store.clone()).actix_resource()
                                     ))
                             )
                         )
                 ),
-            ),
+            ).service(subscription_resource::<S>()),
     );
 }

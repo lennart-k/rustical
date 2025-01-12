@@ -4,13 +4,19 @@ use actix_web::middleware::NormalizePath;
 use actix_web::{web, App};
 use rustical_frontend::{configure_frontend, FrontendConfig};
 use rustical_store::auth::AuthenticationProvider;
-use rustical_store::{AddressbookStore, CalendarStore};
+use rustical_store::{AddressbookStore, CalendarStore, SubscriptionStore};
+use rustical_store_sqlite::subscription_store;
 use std::sync::Arc;
 use tracing_actix_web::TracingLogger;
 
-pub fn make_app<AS: AddressbookStore + ?Sized, CS: CalendarStore + ?Sized>(
+pub fn make_app<
+    AS: AddressbookStore + ?Sized,
+    CS: CalendarStore + ?Sized,
+    S: SubscriptionStore + ?Sized,
+>(
     addr_store: Arc<AS>,
     cal_store: Arc<CS>,
+    subscription_store: Arc<S>,
     auth_provider: Arc<impl AuthenticationProvider>,
     frontend_config: FrontendConfig,
 ) -> App<
@@ -32,6 +38,7 @@ pub fn make_app<AS: AddressbookStore + ?Sized, CS: CalendarStore + ?Sized>(
                 auth_provider.clone(),
                 cal_store.clone(),
                 addr_store.clone(),
+                subscription_store,
             )
         }))
         .service(web::scope("/carddav").configure(|cfg| {
