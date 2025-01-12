@@ -61,6 +61,7 @@ derive_more = { version = "1.0", features = [
   "try_into",
   "into",
   "deref",
+  "constructor",
 ] }
 askama = { version = "0.12", features = [
   "serde",
