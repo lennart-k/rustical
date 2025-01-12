@@ -132,15 +132,15 @@ impl CompFilterElement {
 
         if let Some(time_range) = &self.time_range {
             if let Some(start) = &time_range.start {
-                if let Some(first_occurence) = cal_object.get_first_occurence().unwrap_or(None) {
-                    if start.deref() > &first_occurence.utc() {
+                if let Some(last_occurence) = cal_object.get_last_occurence().unwrap_or(None) {
+                    if start.deref() > &last_occurence.utc() {
                         return false;
                     }
                 };
             }
             if let Some(end) = &time_range.end {
-                if let Some(last_occurence) = cal_object.get_last_occurence().unwrap_or(None) {
-                    if end.deref() < &last_occurence.utc() {
+                if let Some(first_occurence) = cal_object.get_first_occurence().unwrap_or(None) {
+                    if end.deref() < &first_occurence.utc() {
                         return false;
                     }
                 };
