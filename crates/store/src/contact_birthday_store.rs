@@ -1,9 +1,13 @@
+use std::sync::Arc;
+
 use crate::{
     AddressObject, Addressbook, AddressbookStore, Calendar, CalendarObject, CalendarStore, Error,
 };
 use async_trait::async_trait;
+use derive_more::derive::Constructor;
 
-pub struct ContactBirthdayStore<AS: AddressbookStore>(AS);
+#[derive(Constructor, Clone)]
+pub struct ContactBirthdayStore<AS: AddressbookStore + ?Sized>(Arc<AS>);
 
 fn birthday_calendar(addressbook: Addressbook) -> Calendar {
     Calendar {
@@ -24,7 +28,7 @@ fn birthday_calendar(addressbook: Addressbook) -> Calendar {
 }
 
 #[async_trait]
-impl<AS: AddressbookStore> CalendarStore for ContactBirthdayStore<AS> {
+impl<AS: AddressbookStore + ?Sized> CalendarStore for ContactBirthdayStore<AS> {
     async fn get_calendar(&self, principal: &str, id: &str) -> Result<Calendar, Error> {
         let addressbook = self.0.get_addressbook(principal, id).await?;
         Ok(birthday_calendar(addressbook))
