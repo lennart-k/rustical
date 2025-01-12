@@ -1,4 +1,4 @@
-FROM rust:1.83 AS chef
+FROM rust:1.84 AS chef
 RUN apt-get update \
   && apt-get install -y musl-dev musl-tools --no-install-recommends \
   && rustup target add x86_64-unknown-linux-musl \
