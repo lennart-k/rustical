@@ -25,6 +25,15 @@ pub struct CalendarHomeSet(#[xml(ty = "untagged", flatten)] Vec<HrefElement>);
     strum(serialize_all = "kebab-case")
 )]
 pub enum PrincipalProp {
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
+    Displayname(String),
+
+    // Scheduling Extensions to CalDAV (RFC 6638)
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
+    CalendarUserType(&'static str),
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
+    CalendarUserAddressSet(HrefElement),
+
     // WebDAV Access Control (RFC 3744)
     #[strum_discriminants(strum(serialize = "principal-URL"))]
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
@@ -33,8 +42,6 @@ pub enum PrincipalProp {
     // CalDAV (RFC 4791)
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     CalendarHomeSet(CalendarHomeSet),
-    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
-    CalendarUserAddressSet(HrefElement),
 }
 
 impl PrincipalResource {
@@ -77,6 +84,8 @@ impl Resource for PrincipalResource {
         );
 
         Ok(match prop {
+            PrincipalPropName::CalendarUserType => PrincipalProp::CalendarUserType("INDIVIDUAL"),
+            PrincipalPropName::Displayname => PrincipalProp::Displayname(self.principal.to_owned()),
             PrincipalPropName::PrincipalUrl => PrincipalProp::PrincipalUrl(principal_url.into()),
             PrincipalPropName::CalendarHomeSet => PrincipalProp::CalendarHomeSet(home_set),
             PrincipalPropName::CalendarUserAddressSet => {
