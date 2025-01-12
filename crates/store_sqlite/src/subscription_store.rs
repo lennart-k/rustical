@@ -2,7 +2,7 @@ use crate::SqliteStore;
 use async_trait::async_trait;
 use rustical_store::{Error, Subscription, SubscriptionStore};
 
-#[async_trait(?Send)]
+#[async_trait]
 impl SubscriptionStore for SqliteStore {
     async fn get_subscriptions(&self, topic: &str) -> Result<Vec<Subscription>, Error> {
         Ok(sqlx::query_as!(

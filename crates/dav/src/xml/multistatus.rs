@@ -14,10 +14,12 @@ pub struct PropTagWrapper<T: XmlSerialize>(#[xml(flatten, ty = "untagged")] pub 
 
 // RFC 2518
 // <!ELEMENT propstat (prop, status, responsedescription?) >
-#[derive(XmlSerialize)]
+#[derive(XmlSerialize, Debug)]
 pub struct PropstatElement<PropType: XmlSerialize> {
+    #[xml(ns = "crate::namespace::NS_DAV")]
     pub prop: PropType,
     #[xml(serialize_with = "xml_serialize_status")]
+    #[xml(ns = "crate::namespace::NS_DAV")]
     pub status: StatusCode,
 }
 

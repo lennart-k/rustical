@@ -133,3 +133,7 @@ rpassword.workspace = true
 argon2.workspace = true
 pbkdf2.workspace = true
 password-hash.workspace = true
+reqwest = "0.12.12"
+rustical_xml.workspace = true
+rustical_dav.workspace = true
+quick-xml.workspace = true

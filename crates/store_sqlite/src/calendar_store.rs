@@ -1,8 +1,12 @@
-use super::{ChangeOperation, SqliteStore};
+use super::ChangeOperation;
 use async_trait::async_trait;
+use rustical_store::synctoken::format_synctoken;
 use rustical_store::{Calendar, CalendarObject, CalendarStore, Error};
+use rustical_store::{CollectionOperation, CollectionOperationType};
 use sqlx::Sqlite;
+use sqlx::SqlitePool;
 use sqlx::Transaction;
+use tokio::sync::mpsc::Sender;
 use tracing::instrument;
 
 #[derive(Debug, Clone)]
@@ -26,16 +30,21 @@ async fn log_object_operation(
     cal_id: &str,
     object_id: &str,
     operation: ChangeOperation,
-) -> Result<(), Error> {
-    sqlx::query!(
+) -> Result<String, Error> {
+    struct Synctoken {
+        synctoken: i64,
+    }
+    let Synctoken { synctoken } = sqlx::query_as!(
+        Synctoken,
         r#"
         UPDATE calendars
         SET synctoken = synctoken + 1
-        WHERE (principal, id) = (?1, ?2)"#,
+        WHERE (principal, id) = (?1, ?2)
+        RETURNING synctoken"#,
         principal,
         cal_id
     )
-    .execute(&mut **tx)
+    .fetch_one(&mut **tx)
     .await
     .map_err(crate::Error::from)?;
 
@@ -53,11 +62,23 @@ async fn log_object_operation(
     .execute(&mut **tx)
     .await
     .map_err(crate::Error::from)?;
-    Ok(())
+    Ok(format_synctoken(synctoken))
+}
+
+#[derive(Debug)]
+pub struct SqliteCalendarStore {
+    db: SqlitePool,
+    sender: Sender<CollectionOperation>,
+}
+
+impl SqliteCalendarStore {
+    pub fn new(db: SqlitePool, sender: Sender<CollectionOperation>) -> Self {
+        Self { db, sender }
+    }
 }
 
 #[async_trait]
-impl CalendarStore for SqliteStore {
+impl CalendarStore for SqliteCalendarStore {
     #[instrument]
     async fn get_calendar(&self, principal: &str, id: &str) -> Result<Calendar, Error> {
         let cal = sqlx::query_as!(
@@ -157,6 +178,12 @@ impl CalendarStore for SqliteStore {
         id: &str,
         use_trashbin: bool,
     ) -> Result<(), Error> {
+        let cal = match self.get_calendar(principal, id).await {
+            Ok(cal) => Some(cal),
+            Err(Error::NotFound) => None,
+            Err(err) => return Err(err),
+        };
+
         match use_trashbin {
             true => {
                 sqlx::query!(
@@ -177,6 +204,16 @@ impl CalendarStore for SqliteStore {
                 .map_err(crate::Error::from)?;
             }
         };
+
+        if let Some(cal) = cal {
+            // TODO: Watch for errors here?
+            let _ = self.sender.try_send(CollectionOperation {
+                r#type: CollectionOperationType::Delete,
+                domain: rustical_store::CollectionOperationDomain::Calendar,
+                topic: cal.push_topic,
+                sync_token: None,
+            });
+        }
         Ok(())
     }
 
@@ -267,7 +304,7 @@ impl CalendarStore for SqliteStore {
         .await
         .map_err(crate::Error::from)?;
 
-        log_object_operation(
+        let synctoken = log_object_operation(
             &mut tx,
             &principal,
             &cal_id,
@@ -275,6 +312,14 @@ impl CalendarStore for SqliteStore {
             ChangeOperation::Add,
         )
         .await?;
+
+        // TODO: Watch for errors here?
+        let _ = self.sender.try_send(CollectionOperation {
+            r#type: CollectionOperationType::Object,
+            domain: rustical_store::CollectionOperationDomain::Calendar,
+            topic: self.get_calendar(&principal, &cal_id).await?.push_topic,
+            sync_token: Some(synctoken),
+        });
 
         tx.commit().await.map_err(crate::Error::from)?;
         Ok(())
@@ -312,8 +357,16 @@ impl CalendarStore for SqliteStore {
                 .map_err(crate::Error::from)?;
             }
         };
-        log_object_operation(&mut tx, principal, cal_id, id, ChangeOperation::Delete).await?;
+        let synctoken =
+            log_object_operation(&mut tx, principal, cal_id, id, ChangeOperation::Delete).await?;
         tx.commit().await.map_err(crate::Error::from)?;
+        // TODO: Watch for errors here?
+        let _ = self.sender.try_send(CollectionOperation {
+            r#type: CollectionOperationType::Object,
+            domain: rustical_store::CollectionOperationDomain::Calendar,
+            topic: self.get_calendar(principal, cal_id).await?.push_topic,
+            sync_token: Some(synctoken),
+        });
         Ok(())
     }
 
@@ -335,8 +388,17 @@ impl CalendarStore for SqliteStore {
         .execute(&mut *tx)
         .await.map_err(crate::Error::from)?;
 
-        log_object_operation(&mut tx, principal, cal_id, object_id, ChangeOperation::Add).await?;
+        let synctoken =
+            log_object_operation(&mut tx, principal, cal_id, object_id, ChangeOperation::Add)
+                .await?;
         tx.commit().await.map_err(crate::Error::from)?;
+        // TODO: Watch for errors here?
+        let _ = self.sender.try_send(CollectionOperation {
+            r#type: CollectionOperationType::Object,
+            domain: rustical_store::CollectionOperationDomain::Calendar,
+            topic: self.get_calendar(principal, cal_id).await?.push_topic,
+            sync_token: Some(synctoken),
+        });
         Ok(())
     }
 

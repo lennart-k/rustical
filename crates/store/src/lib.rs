@@ -16,3 +16,24 @@ pub use subscription_store::*;
 
 pub use addressbook::{AddressObject, Addressbook};
 pub use calendar::{Calendar, CalendarObject};
+
+#[derive(Debug, Clone)]
+pub enum CollectionOperationType {
+    // Sync-Token increased
+    Object,
+    Delete,
+}
+
+#[derive(Debug, Clone)]
+pub enum CollectionOperationDomain {
+    Calendar,
+    Addressbook,
+}
+
+#[derive(Debug, Clone)]
+pub struct CollectionOperation {
+    pub r#type: CollectionOperationType,
+    pub domain: CollectionOperationDomain,
+    pub topic: String,
+    pub sync_token: Option<String>,
+}

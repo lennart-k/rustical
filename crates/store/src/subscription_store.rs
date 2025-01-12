@@ -9,7 +9,7 @@ pub struct Subscription {
     pub push_resource: String,
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 pub trait SubscriptionStore: Send + Sync + 'static {
     async fn get_subscriptions(&self, topic: &str) -> Result<Vec<Subscription>, Error>;
     async fn get_subscription(&self, id: &str) -> Result<Subscription, Error>;

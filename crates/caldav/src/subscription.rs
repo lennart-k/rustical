@@ -2,7 +2,11 @@ use actix_web::{
     web::{self, Data, Path},
     HttpResponse,
 };
+use rustical_dav::xml::multistatus::PropstatElement;
 use rustical_store::SubscriptionStore;
+use rustical_xml::{XmlRootTag, XmlSerialize};
+
+use crate::calendar::resource::CalendarProp;
 
 async fn handle_delete<S: SubscriptionStore + ?Sized>(
     store: Data<S>,
@@ -17,4 +21,10 @@ pub fn subscription_resource<S: SubscriptionStore + ?Sized>() -> actix_web::Reso
     web::resource("/subscription/{id}")
         .name("subscription")
         .delete(handle_delete::<S>)
+}
+
+#[derive(XmlSerialize, XmlRootTag)]
+#[xml(root = b"push-message", ns = "rustical_dav::namespace::NS_DAVPUSH")]
+pub struct PushMessage {
+    propstat: PropstatElement<CalendarProp>,
 }
