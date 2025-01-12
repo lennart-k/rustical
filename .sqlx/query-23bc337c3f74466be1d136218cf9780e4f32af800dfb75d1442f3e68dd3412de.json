@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT principal, id, synctoken, displayname, \"order\", description, color, timezone, timezone_id, deleted_at, subscription_url\n                FROM calendars\n                WHERE principal = ? AND deleted_at IS NOT NULL",
+  "query": "SELECT principal, id, synctoken, \"order\", displayname, description, color, timezone, timezone_id, deleted_at, subscription_url, push_topic\n                FROM calendars\n                WHERE (principal, id) = (?, ?)",
   "describe": {
     "columns": [
       {
@@ -19,14 +19,14 @@
         "type_info": "Integer"
       },
       {
-        "name": "displayname",
+        "name": "order",
         "ordinal": 3,
-        "type_info": "Text"
+        "type_info": "Integer"
       },
       {
-        "name": "order",
+        "name": "displayname",
         "ordinal": 4,
-        "type_info": "Integer"
+        "type_info": "Text"
       },
       {
         "name": "description",
@@ -57,24 +57,30 @@
         "name": "subscription_url",
         "ordinal": 10,
         "type_info": "Text"
+      },
+      {
+        "name": "push_topic",
+        "ordinal": 11,
+        "type_info": "Text"
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 2
     },
     "nullable": [
       false,
       false,
       false,
-      true,
       false,
       true,
       true,
       true,
       true,
       true,
-      true
+      true,
+      true,
+      false
     ]
   },
-  "hash": "9770a3a1c85aa92e7787ede67e86aa680e0831613cc9cb87cb19928fc538d35c"
+  "hash": "23bc337c3f74466be1d136218cf9780e4f32af800dfb75d1442f3e68dd3412de"
 }

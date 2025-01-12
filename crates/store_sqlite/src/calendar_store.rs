@@ -62,7 +62,7 @@ impl CalendarStore for SqliteStore {
     async fn get_calendar(&self, principal: &str, id: &str) -> Result<Calendar, Error> {
         let cal = sqlx::query_as!(
             Calendar,
-            r#"SELECT principal, id, synctoken, "order", displayname, description, color, timezone, timezone_id, deleted_at, subscription_url
+            r#"SELECT principal, id, synctoken, "order", displayname, description, color, timezone, timezone_id, deleted_at, subscription_url, push_topic
                 FROM calendars
                 WHERE (principal, id) = (?, ?)"#,
             principal,
@@ -77,7 +77,7 @@ impl CalendarStore for SqliteStore {
     async fn get_calendars(&self, principal: &str) -> Result<Vec<Calendar>, Error> {
         let cals = sqlx::query_as!(
             Calendar,
-            r#"SELECT principal, id, synctoken, displayname, "order", description, color, timezone, timezone_id, deleted_at, subscription_url
+            r#"SELECT principal, id, synctoken, displayname, "order", description, color, timezone, timezone_id, deleted_at, subscription_url, push_topic
                 FROM calendars
                 WHERE principal = ? AND deleted_at IS NULL"#,
             principal
@@ -91,7 +91,7 @@ impl CalendarStore for SqliteStore {
     async fn get_deleted_calendars(&self, principal: &str) -> Result<Vec<Calendar>, Error> {
         let cals = sqlx::query_as!(
             Calendar,
-            r#"SELECT principal, id, synctoken, displayname, "order", description, color, timezone, timezone_id, deleted_at, subscription_url
+            r#"SELECT principal, id, synctoken, displayname, "order", description, color, timezone, timezone_id, deleted_at, subscription_url, push_topic
                 FROM calendars
                 WHERE principal = ? AND deleted_at IS NOT NULL"#,
             principal
@@ -104,8 +104,8 @@ impl CalendarStore for SqliteStore {
     #[instrument]
     async fn insert_calendar(&self, calendar: Calendar) -> Result<(), Error> {
         sqlx::query!(
-            r#"INSERT INTO calendars (principal, id, displayname, description, "order", color, timezone, timezone_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)"#,
+            r#"INSERT INTO calendars (principal, id, displayname, description, "order", color, timezone, timezone_id, push_topic)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"#,
             calendar.principal,
             calendar.id,
             calendar.displayname,
@@ -113,7 +113,8 @@ impl CalendarStore for SqliteStore {
             calendar.order,
             calendar.color,
             calendar.timezone,
-            calendar.timezone_id
+            calendar.timezone_id,
+            calendar.push_topic,
         )
         .execute(&self.db)
         .await.map_err(crate::Error::from)?;
@@ -128,7 +129,7 @@ impl CalendarStore for SqliteStore {
         calendar: Calendar,
     ) -> Result<(), Error> {
         let result = sqlx::query!(
-            r#"UPDATE calendars SET principal = ?, id = ?, displayname = ?, description = ?, "order" = ?, color = ?, timezone = ?, timezone_id = ?
+            r#"UPDATE calendars SET principal = ?, id = ?, displayname = ?, description = ?, "order" = ?, color = ?, timezone = ?, timezone_id = ?, push_topic = ?
                 WHERE (principal, id) = (?, ?)"#,
             calendar.principal,
             calendar.id,
@@ -138,6 +139,7 @@ impl CalendarStore for SqliteStore {
             calendar.color,
             calendar.timezone,
             calendar.timezone_id,
+            calendar.push_topic,
             principal,
             id
         ).execute(&self.db).await.map_err(crate::Error::from)?;

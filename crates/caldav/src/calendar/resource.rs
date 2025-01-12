@@ -17,7 +17,6 @@ use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
 use rustical_store::{Calendar, CalendarStore};
 use rustical_xml::{XmlDeserialize, XmlSerialize};
-use sha2::{Digest, Sha256};
 use std::str::FromStr;
 use std::sync::Arc;
 use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
@@ -36,9 +35,6 @@ pub enum CalendarProp {
     Getcontenttype(&'static str),
 
     // WebDav Push
-    // NOTE: Here we implement an older version of the spec since the new property name is not reflected
-    // in DAVx5 yet
-    // https://github.com/bitfireAT/webdav-push/commit/461259a2f2174454b2b00033419b11fac52b79e3
     #[xml(skip_deserializing)]
     #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
     Transports(Transports),
@@ -141,16 +137,7 @@ impl Resource for CalendarResource {
                 CalendarProp::Getcontenttype("text/calendar;charset=utf-8")
             }
             CalendarPropName::Transports => CalendarProp::Transports(Default::default()),
-            CalendarPropName::Topic => {
-                // TODO: Add salt since this could be public
-                // let url =
-                //     CalendarResource::get_url(rmap, [&self.cal.principal, &self.cal.id]).unwrap();
-                let url = "TODO!".to_owned();
-                let mut hasher = Sha256::new();
-                hasher.update(url);
-                let topic = format!("{:x}", hasher.finalize());
-                CalendarProp::Topic(topic)
-            }
+            CalendarPropName::Topic => CalendarProp::Topic(self.cal.push_topic.to_owned()),
             CalendarPropName::MaxResourceSize => CalendarProp::MaxResourceSize(10000000),
             CalendarPropName::SupportedReportSet => {
                 CalendarProp::SupportedReportSet(SupportedReportSet::default())

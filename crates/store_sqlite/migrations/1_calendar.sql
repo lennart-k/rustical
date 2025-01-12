@@ -10,6 +10,7 @@ CREATE TABLE calendars (
     timezone_id TEXT,
     deleted_at DATETIME,
     subscription_url TEXT,
+    push_topic TEXT UNIQUE NOT NULL,
     PRIMARY KEY (principal, id)
 );
 

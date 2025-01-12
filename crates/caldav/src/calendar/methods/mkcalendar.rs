@@ -68,6 +68,7 @@ pub async fn route_mkcalendar<C: CalendarStore + ?Sized>(
         deleted_at: None,
         synctoken: 0,
         subscription_url: None,
+        push_topic: uuid::Uuid::new_v4().to_string(),
     };
 
     match store.insert_calendar(calendar).await {

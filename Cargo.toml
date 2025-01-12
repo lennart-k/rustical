@@ -20,6 +20,7 @@ publish = false
 debug = 0
 
 [workspace.dependencies]
+uuid = { version = "1.11", features = ["v4", "fast-rng"] }
 async-trait = "0.1"
 actix-web = "4.9"
 tracing = { version = "0.1", features = ["async-await"] }
@@ -98,7 +99,6 @@ quote = "1.0"
 proc-macro2 = "1.0"
 heck = "0.5"
 darling = "0.20"
-
 [dependencies]
 rustical_store = { workspace = true }
 rustical_store_sqlite = { workspace = true }

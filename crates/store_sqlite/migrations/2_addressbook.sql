@@ -5,6 +5,7 @@ CREATE TABLE addressbooks (
     displayname TEXT,
     description TEXT,
     deleted_at DATETIME,
+    push_topic TEXT UNIQUE NOT NULL,
     PRIMARY KEY (principal, id)
 );
 

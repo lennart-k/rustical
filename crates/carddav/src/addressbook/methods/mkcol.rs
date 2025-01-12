@@ -54,6 +54,7 @@ pub async fn route_mkcol<AS: AddressbookStore + ?Sized>(
         description: request.description,
         deleted_at: None,
         synctoken: 0,
+        push_topic: uuid::Uuid::new_v4().to_string(),
     };
 
     match store.get_addressbook(&principal, &addressbook_id).await {

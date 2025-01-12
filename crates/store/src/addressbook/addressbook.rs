@@ -10,6 +10,7 @@ pub struct Addressbook {
     pub description: Option<String>,
     pub deleted_at: Option<NaiveDateTime>,
     pub synctoken: i64,
+    pub push_topic: String,
 }
 
 impl Addressbook {

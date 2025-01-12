@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT principal, id, synctoken, displayname, description, deleted_at\n                FROM addressbooks\n                WHERE (principal, id) = (?, ?)",
+  "query": "SELECT principal, id, synctoken, displayname, description, deleted_at, push_topic\n                FROM addressbooks\n                WHERE principal = ? AND deleted_at IS NOT NULL",
   "describe": {
     "columns": [
       {
@@ -32,10 +32,15 @@
         "name": "deleted_at",
         "ordinal": 5,
         "type_info": "Datetime"
+      },
+      {
+        "name": "push_topic",
+        "ordinal": 6,
+        "type_info": "Text"
       }
     ],
     "parameters": {
-      "Right": 2
+      "Right": 1
     },
     "nullable": [
       false,
@@ -43,8 +48,9 @@
       false,
       true,
       true,
-      true
+      true,
+      false
     ]
   },
-  "hash": "d1dd991de4ba20fd7940ae0dbe5d6c1298ed928adbf51e2fcacd060b518786c7"
+  "hash": "e5ded4814aae1fc033bb90d27c745f76d3799958d929e8e8d16aa3ceff98e72d"
 }

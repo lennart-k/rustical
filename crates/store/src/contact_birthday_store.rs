@@ -5,6 +5,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use derive_more::derive::Constructor;
+use sha2::{Digest, Sha256};
 
 #[derive(Constructor, Clone)]
 pub struct ContactBirthdayStore<AS: AddressbookStore + ?Sized>(Arc<AS>);
@@ -24,6 +25,12 @@ fn birthday_calendar(addressbook: Addressbook) -> Calendar {
         deleted_at: addressbook.deleted_at,
         synctoken: addressbook.synctoken,
         subscription_url: None,
+        push_topic: {
+            let mut hasher = Sha256::new();
+            hasher.update("birthdays");
+            hasher.update(addressbook.push_topic);
+            format!("{:x}", hasher.finalize())
+        },
     }
 }
 

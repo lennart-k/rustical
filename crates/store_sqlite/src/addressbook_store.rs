@@ -63,7 +63,7 @@ impl AddressbookStore for SqliteStore {
     ) -> Result<Addressbook, rustical_store::Error> {
         let addressbook = sqlx::query_as!(
             Addressbook,
-            r#"SELECT principal, id, synctoken, displayname, description, deleted_at
+            r#"SELECT principal, id, synctoken, displayname, description, deleted_at, push_topic
                 FROM addressbooks
                 WHERE (principal, id) = (?, ?)"#,
             principal,
@@ -82,7 +82,7 @@ impl AddressbookStore for SqliteStore {
     ) -> Result<Vec<Addressbook>, rustical_store::Error> {
         let addressbooks = sqlx::query_as!(
             Addressbook,
-            r#"SELECT principal, id, synctoken, displayname, description, deleted_at
+            r#"SELECT principal, id, synctoken, displayname, description, deleted_at, push_topic
                 FROM addressbooks
                 WHERE principal = ? AND deleted_at IS NULL"#,
             principal
@@ -100,7 +100,7 @@ impl AddressbookStore for SqliteStore {
     ) -> Result<Vec<Addressbook>, rustical_store::Error> {
         let addressbooks = sqlx::query_as!(
             Addressbook,
-            r#"SELECT principal, id, synctoken, displayname, description, deleted_at
+            r#"SELECT principal, id, synctoken, displayname, description, deleted_at, push_topic
                 FROM addressbooks
                 WHERE principal = ? AND deleted_at IS NOT NULL"#,
             principal
@@ -119,12 +119,13 @@ impl AddressbookStore for SqliteStore {
         addressbook: Addressbook,
     ) -> Result<(), rustical_store::Error> {
         let result = sqlx::query!(
-            r#"UPDATE addressbooks SET principal = ?, id = ?, displayname = ?, description = ?
+            r#"UPDATE addressbooks SET principal = ?, id = ?, displayname = ?, description = ?, push_topic = ?
                 WHERE (principal, id) = (?, ?)"#,
             addressbook.principal,
             addressbook.id,
             addressbook.displayname,
             addressbook.description,
+            addressbook.push_topic,
             principal,
             id
         )
@@ -143,12 +144,13 @@ impl AddressbookStore for SqliteStore {
         addressbook: Addressbook,
     ) -> Result<(), rustical_store::Error> {
         sqlx::query!(
-            r#"INSERT INTO addressbooks (principal, id, displayname, description)
-                VALUES (?, ?, ?, ?)"#,
+            r#"INSERT INTO addressbooks (principal, id, displayname, description, push_topic)
+                VALUES (?, ?, ?, ?, ?)"#,
             addressbook.principal,
             addressbook.id,
             addressbook.displayname,
             addressbook.description,
+            addressbook.push_topic,
         )
         .execute(&self.db)
         .await

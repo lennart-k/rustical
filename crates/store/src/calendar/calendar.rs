@@ -15,6 +15,7 @@ pub struct Calendar {
     pub deleted_at: Option<NaiveDateTime>,
     pub synctoken: i64,
     pub subscription_url: Option<String>,
+    pub push_topic: String,
 }
 
 impl Calendar {
