@@ -85,11 +85,9 @@ mod tests {
             ReportRequest::SyncCollection(SyncCollectionRequest {
                 sync_token: "".to_owned(),
                 sync_level: SyncLevel::One,
-                prop: rustical_dav::xml::PropfindType::Prop(PropElement {
-                    prop: vec![Propname {
-                        name: "getetag".to_owned()
-                    }]
-                }),
+                prop: rustical_dav::xml::PropfindType::Prop(PropElement(vec![Propname(
+                    "getetag".to_owned()
+                )])),
                 limit: None
             })
         )

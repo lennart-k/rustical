@@ -53,16 +53,10 @@ fn propfind_prop() {
     assert_eq!(
         propfind,
         PropfindElement {
-            prop: PropfindType::Prop(PropElement {
-                prop: vec![
-                    Propname {
-                        name: "displayname".to_owned()
-                    },
-                    Propname {
-                        name: "color".to_owned()
-                    },
-                ]
-            })
+            prop: PropfindType::Prop(PropElement(vec![
+                Propname("displayname".to_owned()),
+                Propname("color".to_owned()),
+            ]))
         }
     );
 }

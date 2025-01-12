@@ -104,11 +104,7 @@ mod tests {
         assert_eq!(
             report_request,
             ReportRequest::CalendarQuery(CalendarQueryRequest {
-                prop: PropfindType::Prop(PropElement {
-                    prop: vec![Propname {
-                        name: "getetag".to_owned()
-                    }]
-                }),
+                prop: PropfindType::Prop(PropElement(vec![Propname("getetag".to_owned())])),
                 filter: Some(FilterElement {
                     comp_filter: CompFilterElement {
                         is_not_defined: None,
