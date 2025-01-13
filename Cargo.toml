@@ -80,6 +80,7 @@ sqlx = { version = "0.8", default-features = false, features = [
   "macros",
   "migrate",
 ] }
+sqlx-sqlite = { version = "0.8", features = ["bundled"] }
 ical = { version = "0.11", features = ["generator", "serde"] }
 toml = "0.8"
 rustical_dav = { path = "./crates/dav/" }
@@ -133,7 +134,11 @@ rpassword.workspace = true
 argon2.workspace = true
 pbkdf2.workspace = true
 password-hash.workspace = true
-reqwest = "0.12.12"
+reqwest = { version = "0.12", features = [
+  "rustls-tls",
+  "charset",
+  "http2",
+], default-features = false }
 rustical_xml.workspace = true
 rustical_dav.workspace = true
 quick-xml.workspace = true
