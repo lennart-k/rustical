@@ -1,9 +1,9 @@
-FROM rust:1.83 AS chef
-RUN apt-get update \
-  && apt-get install -y musl-dev musl-tools --no-install-recommends \
+FROM rust:1.84-alpine AS chef
+RUN apk add --no-cache musl-dev \
   && rustup target add x86_64-unknown-linux-musl \
   && cargo install cargo-chef --locked \
   && rm -rf "$CARGO_HOME/registry"
+
 WORKDIR /rustical
 
 FROM chef AS planner
