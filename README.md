@@ -54,8 +54,8 @@ rustical pwhash
 You can also run the upper commands in Docker with
 
 ```sh
-docker run --rm ghcr.io/lennart-k/rustical gen-config
-docker run -it --rm ghcr.io/lennart-k/rustical pwhash
+docker run --rm ghcr.io/lennart-k/rustical rustical gen-config
+docker run -it --rm ghcr.io/lennart-k/rustical rustical pwhash
 ```
 
 ### Password vs app tokens
