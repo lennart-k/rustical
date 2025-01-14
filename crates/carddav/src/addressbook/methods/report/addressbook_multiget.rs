@@ -40,9 +40,6 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore + ?Sized>(
         if !resource_def.capture_match_info(&mut path) {
             not_found.push(href.to_owned());
         };
-        if path.get("addressbook_id").unwrap() != addressbook_id {
-            not_found.push(href.to_owned());
-        }
         let object_id = path.get("object_id").unwrap();
         match store.get_object(principal, addressbook_id, object_id).await {
             Ok(object) => result.push(object),
