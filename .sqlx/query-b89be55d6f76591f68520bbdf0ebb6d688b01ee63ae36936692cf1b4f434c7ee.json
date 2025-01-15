@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        UPDATE addressbooks\n        SET synctoken = synctoken + 1\n        WHERE (principal, id) = (?1, ?2)\n        RETURNING synctoken",
+  "describe": {
+    "columns": [
+      {
+        "name": "synctoken",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b89be55d6f76591f68520bbdf0ebb6d688b01ee63ae36936692cf1b4f434c7ee"
+}
