@@ -49,7 +49,7 @@ Password hashes can be generated with
 rustical pwhash
 ```
 
-#### Docker
+### Docker
 
 You can also run the upper commands in Docker with
 
@@ -61,7 +61,8 @@ docker run -it --rm ghcr.io/lennart-k/rustical rustical pwhash
 ### Password vs app tokens
 
 The password is meant as a password you use to log in to the frontend.
-Since it's sensitive information, the secure but slow hash algorithm `argon2` is chosen.
+Since it's sensitive information,
+the secure but slow hash algorithm `argon2` is chosen.
 
 I recommend to generate random app tokens for each CalDAV/CardDAV client.
 These can use the faster `pbkdf2` algorithm.
