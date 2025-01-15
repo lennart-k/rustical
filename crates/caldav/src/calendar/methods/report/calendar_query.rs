@@ -13,16 +13,12 @@ use crate::{
     Error,
 };
 
-// TODO: Implement all the other filters
-
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
 pub(crate) struct TimeRangeElement {
     #[xml(ty = "attr")]
-    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     pub(crate) start: Option<UtcDateTime>,
     #[xml(ty = "attr")]
-    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     pub(crate) end: Option<UtcDateTime>,
 }
 
@@ -42,10 +38,8 @@ struct ParamFilterElement {
 #[allow(dead_code)]
 struct TextMatchElement {
     #[xml(ty = "attr")]
-    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     collation: String,
     #[xml(ty = "attr")]
-    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     negate_collation: String,
 }
 
@@ -58,8 +52,7 @@ pub(crate) struct PropFilterElement {
     time_range: Option<TimeRangeElement>,
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     text_match: Option<TextMatchElement>,
-    #[xml(flatten)]
-    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV", flatten)]
     param_filter: Vec<ParamFilterElement>,
 }
 
@@ -83,42 +76,23 @@ pub(crate) struct CompFilterElement {
 impl CompFilterElement {
     // match the VCALENDAR part
     pub fn matches_root(&self, cal_object: &CalendarObject) -> bool {
-        //   A CALDAV:comp-filter is said to match if:
-        //
-        // *  The CALDAV:comp-filter XML element is empty and the calendar
-        //    object or calendar component type specified by the "name"
-        //    attribute exists in the current scope;
-        //
-        // or:
-        //
-        // *  The CALDAV:comp-filter XML element contains a CALDAV:is-not-
-        //    defined XML element and the calendar object or calendar
-        //    component type specified by the "name" attribute does not exist
-        //    in the current scope;
+        let comp_vcal = self.name == "VCALENDAR";
+        match (self.is_not_defined, comp_vcal) {
+            // Client wants VCALENDAR to not exist but we are a VCALENDAR
+            (Some(()), true) => return false,
+            // Client is asking for something different than a vcalendar
+            (None, false) => return false,
+            _ => {}
+        };
 
-        let is_defined = self.name == "VCALENDAR";
-        if self.is_not_defined.is_some() && is_defined {
-            return false;
-        }
-        if !is_defined {
+        if self.time_range.is_some() {
+            // <time-range> should be applied on VEVENT/VTODO but not on VCALENDAR
             return false;
         }
 
-        //
-        // or:
-        //
-        // *  The CALDAV:comp-filter XML element contains a CALDAV:time-range
-        //    XML element and at least one recurrence instance in the
-        //    targeted calendar component is scheduled to overlap the
-        //    specified time range, and all specified CALDAV:prop-filter and
-        //    CALDAV:comp-filter child XML elements also match the targeted
-        //    calendar component;
-        //
-        // or:
-        //
-        // *  The CALDAV:comp-filter XML element only contains CALDAV:prop-
-        //    filter and CALDAV:comp-filter child XML elements that all match
-        //    the targeted calendar component.
+        // TODO: Implement prop-filter at some point
+
+        // Apply sub-comp-filters on VEVENT/VTODO/VJOURNAL component
         if self
             .comp_filter
             .iter()
@@ -132,15 +106,16 @@ impl CompFilterElement {
 
     // match the VEVENT/VTODO/VJOURNAL part
     pub fn matches(&self, cal_object: &CalendarObject) -> bool {
-        // TODO: evaulate prop-filter
-        let component_name = cal_object.get_component_name();
-        let is_defined = self.name == component_name;
-        if self.is_not_defined.is_some() && is_defined {
-            return false;
-        }
-        if !is_defined {
-            return false;
-        }
+        let comp_name_matches = self.name == cal_object.get_component_name();
+        match (self.is_not_defined, comp_name_matches) {
+            // Client wants VCALENDAR to not exist but we are a VCALENDAR
+            (Some(()), true) => return false,
+            // Client is asking for something different than a vcalendar
+            (None, false) => return false,
+            _ => {}
+        };
+
+        // TODO: Implement prop-filter (and comp-filter?) at some point
 
         if let Some(time_range) = &self.time_range {
             if let Some(start) = &time_range.start {
@@ -158,8 +133,7 @@ impl CompFilterElement {
                 };
             }
         }
-
-        self.name == component_name
+        true
     }
 }
 
