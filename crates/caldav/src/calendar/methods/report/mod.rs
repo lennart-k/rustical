@@ -78,7 +78,7 @@ mod tests {
     use calendar_query::{CompFilterElement, FilterElement, TimeRangeElement};
     use rustical_dav::xml::{PropElement, PropfindType, Propname};
     use rustical_store::calendar::UtcDateTime;
-    use rustical_xml::Value;
+    use rustical_xml::ValueDeserialize;
 
     use super::*;
 
@@ -114,8 +114,10 @@ mod tests {
                             is_not_defined: None,
                             time_range: Some(TimeRangeElement {
                                 start: Some(
-                                    <UtcDateTime as Value>::deserialize("20240924T143437Z")
-                                        .unwrap()
+                                    <UtcDateTime as ValueDeserialize>::deserialize(
+                                        "20240924T143437Z"
+                                    )
+                                    .unwrap()
                                 ),
                                 end: None
                             }),
