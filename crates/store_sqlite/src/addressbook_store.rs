@@ -363,6 +363,8 @@ impl AddressbookStore for SqliteAddressbookStore {
         .await
         .map_err(crate::Error::from)?;
 
+        tx.commit().await.map_err(crate::Error::from)?;
+
         // TODO: Watch for errors here?
         let _ = self.sender.try_send(CollectionOperation {
             r#type: CollectionOperationType::Object,
@@ -374,7 +376,6 @@ impl AddressbookStore for SqliteAddressbookStore {
             sync_token: Some(synctoken),
         });
 
-        tx.commit().await.map_err(crate::Error::from)?;
         Ok(())
     }
 

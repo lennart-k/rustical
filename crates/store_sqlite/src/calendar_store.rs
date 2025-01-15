@@ -308,6 +308,8 @@ impl CalendarStore for SqliteCalendarStore {
         )
         .await?;
 
+        tx.commit().await.map_err(crate::Error::from)?;
+
         // TODO: Watch for errors here?
         let _ = self.sender.try_send(CollectionOperation {
             r#type: CollectionOperationType::Object,
@@ -315,8 +317,6 @@ impl CalendarStore for SqliteCalendarStore {
             topic: self.get_calendar(&principal, &cal_id).await?.push_topic,
             sync_token: Some(synctoken),
         });
-
-        tx.commit().await.map_err(crate::Error::from)?;
         Ok(())
     }
 
