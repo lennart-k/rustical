@@ -1,13 +1,13 @@
 use derive_more::derive::From;
-use rustical_xml::{XmlDeserialize, XmlSerialize};
+use rustical_xml::XmlSerialize;
 
-#[derive(Debug, Clone, XmlDeserialize, XmlSerialize, PartialEq, From)]
+#[derive(Debug, Clone, XmlSerialize, PartialEq, From)]
 pub struct SupportedCalendarComponent {
     #[xml(ty = "attr")]
     pub name: &'static str,
 }
 
-#[derive(Debug, Clone, XmlDeserialize, XmlSerialize, PartialEq)]
+#[derive(Debug, Clone, XmlSerialize, PartialEq)]
 pub struct SupportedCalendarComponentSet {
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV", flatten)]
     pub comp: Vec<SupportedCalendarComponent>,

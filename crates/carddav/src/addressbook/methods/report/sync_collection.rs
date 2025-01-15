@@ -13,7 +13,7 @@ use rustical_store::{
     synctoken::{format_synctoken, parse_synctoken},
     AddressbookStore,
 };
-use rustical_xml::{Value, XmlDeserialize};
+use rustical_xml::{ValueDeserialize, ValueSerialize, XmlDeserialize};
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum SyncLevel {
@@ -21,7 +21,7 @@ pub(crate) enum SyncLevel {
     Infinity,
 }
 
-impl Value for SyncLevel {
+impl ValueDeserialize for SyncLevel {
     fn deserialize(val: &str) -> Result<Self, rustical_xml::XmlDeError> {
         Ok(match val {
             "1" => Self::One,
@@ -33,6 +33,8 @@ impl Value for SyncLevel {
             }
         })
     }
+}
+impl ValueSerialize for SyncLevel {
     fn serialize(&self) -> String {
         match self {
             SyncLevel::One => "1",

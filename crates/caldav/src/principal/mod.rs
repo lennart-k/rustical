@@ -29,7 +29,7 @@ pub enum PrincipalProp {
     Displayname(String),
 
     // Scheduling Extensions to CalDAV (RFC 6638)
-    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV", skip_deserializing)]
     CalendarUserType(&'static str),
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     CalendarUserAddressSet(HrefElement),

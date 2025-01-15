@@ -17,18 +17,23 @@ pub enum ParseValueError {
     ParseFloatError(#[from] ParseFloatError),
 }
 
-pub trait Value: Sized {
+pub trait ValueSerialize: Sized {
     fn serialize(&self) -> String;
+}
+
+pub trait ValueDeserialize: Sized {
     fn deserialize(val: &str) -> Result<Self, XmlDeError>;
 }
 
 macro_rules! impl_value_parse {
     ($t:ty) => {
-        impl Value for $t {
+        impl ValueSerialize for $t {
             fn serialize(&self) -> String {
                 self.to_string()
             }
+        }
 
+        impl ValueDeserialize for $t {
             fn deserialize(val: &str) -> Result<Self, XmlDeError> {
                 val.parse()
                     .map_err(ParseValueError::from)
@@ -52,17 +57,13 @@ impl_value_parse!(u64);
 impl_value_parse!(isize);
 impl_value_parse!(usize);
 
-impl Value for &str {
+impl ValueSerialize for &str {
     fn serialize(&self) -> String {
         self.to_string()
     }
-
-    fn deserialize(_val: &str) -> Result<Self, XmlDeError> {
-        Err(XmlDeError::Other("TODO: Handle this error".to_owned()))
-    }
 }
 
-impl<T: Value> XmlDeserialize for T {
+impl<T: ValueDeserialize> XmlDeserialize for T {
     fn deserialize<R: BufRead>(
         reader: &mut quick_xml::NsReader<R>,
         _start: &BytesStart,
@@ -88,11 +89,11 @@ impl<T: Value> XmlDeserialize for T {
             }
         }
 
-        Value::deserialize(&string)
+        ValueDeserialize::deserialize(&string)
     }
 }
 
-impl<T: Value> XmlSerialize for T {
+impl<T: ValueSerialize> XmlSerialize for T {
     fn serialize<W: std::io::Write>(
         &self,
         ns: Option<Namespace>,

@@ -13,7 +13,7 @@ pub use de::XmlDocument;
 pub use error::XmlDeError;
 pub use se::XmlSerialize;
 pub use se::XmlSerializeRoot;
-pub use value::Value;
+pub use value::{ParseValueError, ValueDeserialize, ValueSerialize};
 pub use xml_derive::XmlRootTag;
 
 impl XmlDeserialize for () {

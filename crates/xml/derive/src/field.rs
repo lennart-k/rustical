@@ -232,7 +232,7 @@ impl Field {
         let builder_field_ident = self.builder_field_ident();
         let value = wrap_option_if_no_default(
             quote! {
-                rustical_xml::Value::deserialize(text.as_ref())?
+                ::rustical_xml::ValueDeserialize::deserialize(text.as_ref())?
             },
             self.attrs.default.is_some(),
         );
@@ -250,8 +250,8 @@ impl Field {
 
         let value = wrap_option_if_no_default(
             quote! {
-            rustical_xml::Value::deserialize(attr.unescape_value()?.as_ref())?
-                    },
+            ::rustical_xml::ValueDeserialize::deserialize(attr.unescape_value()?.as_ref())?
+                },
             self.attrs.default.is_some(),
         );
 
@@ -270,7 +270,7 @@ impl Field {
 
         let value = wrap_option_if_no_default(
             quote! {
-            rustical_xml::Value::deserialize(&String::from_utf8_lossy(name.as_ref()))?
+            rustical_xml::ValueDeserialize::deserialize(&String::from_utf8_lossy(name.as_ref()))?
                     },
             self.attrs.default.is_some(),
         );

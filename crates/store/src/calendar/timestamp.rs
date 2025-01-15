@@ -7,7 +7,7 @@ use ical::{
     property::Property,
 };
 use lazy_static::lazy_static;
-use rustical_xml::Value;
+use rustical_xml::{ValueDeserialize, ValueSerialize};
 use std::{collections::HashMap, ops::Add};
 
 lazy_static! {
@@ -21,9 +21,9 @@ pub const LOCAL_DATE: &str = "%Y%m%d";
 #[derive(Debug, Clone, Deref, PartialEq)]
 pub struct UtcDateTime(DateTime<Utc>);
 
-impl Value for UtcDateTime {
+impl ValueDeserialize for UtcDateTime {
     fn deserialize(val: &str) -> Result<Self, rustical_xml::XmlDeError> {
-        let input = <String as Value>::deserialize(val)?;
+        let input = <String as ValueDeserialize>::deserialize(val)?;
         Ok(Self(
             NaiveDateTime::parse_from_str(&input, UTC_DATE_TIME)
                 .map_err(|_| {
@@ -32,6 +32,8 @@ impl Value for UtcDateTime {
                 .and_utc(),
         ))
     }
+}
+impl ValueSerialize for UtcDateTime {
     fn serialize(&self) -> String {
         format!("{}", self.0.format(UTC_DATE_TIME))
     }

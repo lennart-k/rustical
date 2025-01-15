@@ -239,7 +239,7 @@ impl NamedStruct {
                 quote! {
                     ::quick_xml::events::attributes::Attribute {
                         key: ::quick_xml::name::QName(#field_name),
-                        value: ::std::borrow::Cow::from(::rustical_xml::Value::serialize(&self.#field_index).into_bytes())
+                        value: ::std::borrow::Cow::from(::rustical_xml::ValueSerialize::serialize(&self.#field_index).into_bytes())
                     }
                 }
             });
