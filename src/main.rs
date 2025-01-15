@@ -95,8 +95,9 @@ async fn main() -> Result<()> {
         Some(Command::Pwhash(pwhash_args)) => cmd_pwhash(pwhash_args)?,
         None => {
             let config: Config = toml::from_str(
-                &fs::read_to_string(&args.config_file)
-                    .expect(&format!("No config file found at {}", &args.config_file)),
+                &fs::read_to_string(&args.config_file).unwrap_or_else(|err| {
+                    panic!("Could not open file at {}: {}", &args.config_file, err)
+                }),
             )?;
 
             setup_tracing(&config.tracing);
