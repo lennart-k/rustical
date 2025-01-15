@@ -100,6 +100,12 @@ quote = "1.0"
 proc-macro2 = "1.0"
 heck = "0.5"
 darling = "0.20"
+reqwest = { version = "0.12", features = [
+  "rustls-tls",
+  "charset",
+  "http2",
+], default-features = false }
+
 [dependencies]
 rustical_store = { workspace = true }
 rustical_store_sqlite = { workspace = true }
@@ -134,11 +140,6 @@ rpassword.workspace = true
 argon2.workspace = true
 pbkdf2.workspace = true
 password-hash.workspace = true
-reqwest = { version = "0.12", features = [
-  "rustls-tls",
-  "charset",
-  "http2",
-], default-features = false }
-rustical_xml.workspace = true
+reqwest.workspace = true
 rustical_dav.workspace = true
 quick-xml.workspace = true
