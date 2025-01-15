@@ -7,7 +7,8 @@ use rustical_frontend::FrontendConfig;
 use rustical_store::auth::{static_user_store::UserEntry, StaticUserStoreConfig, User};
 
 use crate::config::{
-    AuthConfig, Config, DataStoreConfig, HttpConfig, SqliteDataStoreConfig, TracingConfig,
+    AuthConfig, Config, DataStoreConfig, DavPushConfig, HttpConfig, SqliteDataStoreConfig,
+    TracingConfig,
 };
 
 #[derive(Debug, Parser)]
@@ -46,6 +47,7 @@ pub fn cmd_gen_config(_args: GenConfigArgs) -> anyhow::Result<()> {
         frontend: FrontendConfig {
             secret_key: generate_frontend_secret(),
         },
+        dav_push: DavPushConfig::default(),
     };
     let generated_config = toml::to_string(&config)?;
     println!("{generated_config}");

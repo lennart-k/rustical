@@ -45,6 +45,25 @@ pub struct TracingConfig {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, default)]
+pub struct DavPushConfig {
+    pub enable: bool,
+    #[serde(default)]
+    // Allowed Push servers, accepts any by default
+    // Specify as URL origins
+    pub allowed_push_servers: Option<Vec<String>>,
+}
+
+impl Default for DavPushConfig {
+    fn default() -> Self {
+        Self {
+            enable: true,
+            allowed_push_servers: None,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
     pub data_store: DataStoreConfig,
@@ -54,4 +73,6 @@ pub struct Config {
     pub frontend: FrontendConfig,
     #[serde(default)]
     pub tracing: TracingConfig,
+    #[serde(default)]
+    pub dav_push: DavPushConfig,
 }
