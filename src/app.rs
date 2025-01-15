@@ -37,11 +37,16 @@ pub fn make_app<
                 auth_provider.clone(),
                 cal_store.clone(),
                 addr_store.clone(),
-                subscription_store,
+                subscription_store.clone(),
             )
         }))
         .service(web::scope("/carddav").configure(|cfg| {
-            rustical_carddav::configure_dav(cfg, auth_provider.clone(), addr_store.clone())
+            rustical_carddav::configure_dav(
+                cfg,
+                auth_provider.clone(),
+                addr_store.clone(),
+                subscription_store,
+            )
         }))
         .service(
             web::scope("/.well-known")

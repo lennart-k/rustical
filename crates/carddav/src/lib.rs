@@ -16,7 +16,7 @@ use rustical_dav::resource::{NamedRoute, ResourceService};
 use rustical_dav::resources::RootResourceService;
 use rustical_store::{
     auth::{AuthenticationMiddleware, AuthenticationProvider},
-    AddressbookStore,
+    AddressbookStore, SubscriptionStore,
 };
 use std::sync::Arc;
 
@@ -29,10 +29,15 @@ pub fn configure_well_known(cfg: &mut web::ServiceConfig, carddav_root: String) 
     cfg.service(web::redirect("/carddav", carddav_root).permanent());
 }
 
-pub fn configure_dav<AP: AuthenticationProvider, A: AddressbookStore + ?Sized>(
+pub fn configure_dav<
+    AP: AuthenticationProvider,
+    A: AddressbookStore + ?Sized,
+    S: SubscriptionStore + ?Sized,
+>(
     cfg: &mut web::ServiceConfig,
     auth_provider: Arc<AP>,
     store: Arc<A>,
+    subscription_store: Arc<S>,
 ) {
     cfg.service(
         web::scope("")
@@ -58,6 +63,7 @@ pub fn configure_dav<AP: AuthenticationProvider, A: AddressbookStore + ?Sized>(
                 }),
             )
             .app_data(Data::from(store.clone()))
+            .app_data(Data::from(subscription_store))
             .service(RootResourceService::<PrincipalResource>::default().actix_resource())
             .service(
                 web::scope("/user").service(
@@ -70,7 +76,7 @@ pub fn configure_dav<AP: AuthenticationProvider, A: AddressbookStore + ?Sized>(
                         .service(
                             web::scope("/{addressbook}")
                                 .service(
-                                    AddressbookResourceService::<A>::new(store.clone())
+                                    AddressbookResourceService::<A, S>::new(store.clone())
                                         .actix_resource(),
                                 )
                                 .service(

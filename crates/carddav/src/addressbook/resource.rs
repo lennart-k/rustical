@@ -1,4 +1,5 @@
 use super::methods::mkcol::route_mkcol;
+use super::methods::post::route_post;
 use super::methods::report::route_report_addressbook;
 use super::prop::{SupportedAddressData, SupportedReportSet};
 use crate::address_object::resource::AddressObjectResource;
@@ -10,22 +11,29 @@ use actix_web::web;
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::privileges::UserPrivilegeSet;
+use rustical_dav::push::Transports;
 use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml::{Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
-use rustical_store::{Addressbook, AddressbookStore};
+use rustical_store::{Addressbook, AddressbookStore, SubscriptionStore};
 use rustical_xml::{XmlDeserialize, XmlSerialize};
+use std::marker::PhantomData;
 use std::str::FromStr;
 use std::sync::Arc;
 use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
 
-pub struct AddressbookResourceService<AS: AddressbookStore + ?Sized> {
+pub struct AddressbookResourceService<AS: AddressbookStore + ?Sized, S: SubscriptionStore + ?Sized>
+{
     addr_store: Arc<AS>,
+    __phantom_sub: PhantomData<S>,
 }
 
-impl<A: AddressbookStore + ?Sized> AddressbookResourceService<A> {
+impl<A: AddressbookStore + ?Sized, S: SubscriptionStore + ?Sized> AddressbookResourceService<A, S> {
     pub fn new(addr_store: Arc<A>) -> Self {
-        Self { addr_store }
+        Self {
+            addr_store,
+            __phantom_sub: PhantomData,
+        }
     }
 }
 
@@ -41,6 +49,13 @@ pub enum AddressbookProp {
     Displayname(Option<String>),
     #[xml(ns = "rustical_dav::namespace::NS_DAV", skip_deserializing)]
     Getcontenttype(&'static str),
+
+    // WebDav Push
+    #[xml(skip_deserializing)]
+    #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
+    Transports(Transports),
+    #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
+    Topic(String),
 
     // CardDAV (RFC 6352)
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
@@ -90,6 +105,8 @@ impl Resource for AddressbookResource {
             AddressbookPropName::Getcontenttype => {
                 AddressbookProp::Getcontenttype("text/vcard;charset=utf-8")
             }
+            AddressbookPropName::Transports => AddressbookProp::Transports(Default::default()),
+            AddressbookPropName::Topic => AddressbookProp::Topic(self.0.push_topic.to_owned()),
             AddressbookPropName::MaxResourceSize => AddressbookProp::MaxResourceSize(10000000),
             AddressbookPropName::SupportedReportSet => {
                 AddressbookProp::SupportedReportSet(SupportedReportSet::default())
@@ -116,6 +133,8 @@ impl Resource for AddressbookResource {
                 Ok(())
             }
             AddressbookProp::Getcontenttype(_) => Err(rustical_dav::Error::PropReadOnly),
+            AddressbookProp::Transports(_) => Err(rustical_dav::Error::PropReadOnly),
+            AddressbookProp::Topic(_) => Err(rustical_dav::Error::PropReadOnly),
             AddressbookProp::MaxResourceSize(_) => Err(rustical_dav::Error::PropReadOnly),
             AddressbookProp::SupportedReportSet(_) => Err(rustical_dav::Error::PropReadOnly),
             AddressbookProp::SupportedAddressData(_) => Err(rustical_dav::Error::PropReadOnly),
@@ -135,6 +154,8 @@ impl Resource for AddressbookResource {
                 Ok(())
             }
             AddressbookPropName::Getcontenttype => Err(rustical_dav::Error::PropReadOnly),
+            AddressbookPropName::Transports => Err(rustical_dav::Error::PropReadOnly),
+            AddressbookPropName::Topic => Err(rustical_dav::Error::PropReadOnly),
             AddressbookPropName::MaxResourceSize => Err(rustical_dav::Error::PropReadOnly),
             AddressbookPropName::SupportedReportSet => Err(rustical_dav::Error::PropReadOnly),
             AddressbookPropName::SupportedAddressData => Err(rustical_dav::Error::PropReadOnly),
@@ -153,7 +174,9 @@ impl Resource for AddressbookResource {
 }
 
 #[async_trait(?Send)]
-impl<AS: AddressbookStore + ?Sized> ResourceService for AddressbookResourceService<AS> {
+impl<AS: AddressbookStore + ?Sized, S: SubscriptionStore + ?Sized> ResourceService
+    for AddressbookResourceService<AS, S>
+{
     type MemberType = AddressObjectResource;
     type PathComponents = (String, String); // principal, addressbook_id
     type Resource = AddressbookResource;
@@ -220,5 +243,6 @@ impl<AS: AddressbookStore + ?Sized> ResourceService for AddressbookResourceServi
         let report_method = web::method(Method::from_str("REPORT").unwrap());
         res.route(mkcol_method.to(route_mkcol::<AS>))
             .route(report_method.to(route_report_addressbook::<AS>))
+            .post(route_post::<AS, S>)
     }
 }

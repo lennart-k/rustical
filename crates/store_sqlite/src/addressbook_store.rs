@@ -1,7 +1,12 @@
-use super::{ChangeOperation, SqliteStore};
+use super::ChangeOperation;
 use async_trait::async_trait;
-use rustical_store::{AddressObject, Addressbook, AddressbookStore};
-use sqlx::{Sqlite, Transaction};
+use derive_more::derive::Constructor;
+use rustical_store::{
+    synctoken::format_synctoken, AddressObject, Addressbook, AddressbookStore, CollectionOperation,
+    CollectionOperationDomain, CollectionOperationType, Error,
+};
+use sqlx::{Sqlite, SqlitePool, Transaction};
+use tokio::sync::mpsc::Sender;
 use tracing::instrument;
 
 #[derive(Debug, Clone)]
@@ -25,16 +30,21 @@ async fn log_object_operation(
     addressbook_id: &str,
     object_id: &str,
     operation: ChangeOperation,
-) -> Result<(), sqlx::Error> {
-    sqlx::query!(
+) -> Result<String, sqlx::Error> {
+    struct Synctoken {
+        synctoken: i64,
+    }
+    let Synctoken { synctoken } = sqlx::query_as!(
+        Synctoken,
         r#"
         UPDATE addressbooks
         SET synctoken = synctoken + 1
-        WHERE (principal, id) = (?1, ?2)"#,
+        WHERE (principal, id) = (?1, ?2)
+        RETURNING synctoken"#,
         principal,
         addressbook_id
     )
-    .execute(&mut **tx)
+    .fetch_one(&mut **tx)
     .await?;
 
     sqlx::query!(
@@ -50,11 +60,17 @@ async fn log_object_operation(
     )
     .execute(&mut **tx)
     .await?;
-    Ok(())
+    Ok(format_synctoken(synctoken))
+}
+
+#[derive(Debug, Constructor)]
+pub struct SqliteAddressbookStore {
+    db: SqlitePool,
+    sender: Sender<CollectionOperation>,
 }
 
 #[async_trait]
-impl AddressbookStore for SqliteStore {
+impl AddressbookStore for SqliteAddressbookStore {
     #[instrument]
     async fn get_addressbook(
         &self,
@@ -165,6 +181,12 @@ impl AddressbookStore for SqliteStore {
         addressbook_id: &str,
         use_trashbin: bool,
     ) -> Result<(), rustical_store::Error> {
+        let addressbook = match self.get_addressbook(principal, addressbook_id).await {
+            Ok(addressbook) => Some(addressbook),
+            Err(Error::NotFound) => None,
+            Err(err) => return Err(err),
+        };
+
         match use_trashbin {
             true => {
                 sqlx::query!(
@@ -185,6 +207,17 @@ impl AddressbookStore for SqliteStore {
                 .map_err(crate::Error::from)?;
             }
         };
+
+        if let Some(addressbook) = addressbook {
+            // TODO: Watch for errors here?
+            let _ = self.sender.try_send(CollectionOperation {
+                r#type: CollectionOperationType::Delete,
+                domain: CollectionOperationDomain::Addressbook,
+                topic: addressbook.push_topic,
+                sync_token: None,
+            });
+        }
+
         Ok(())
     }
 
@@ -320,7 +353,7 @@ impl AddressbookStore for SqliteStore {
         .await
         .map_err(crate::Error::from)?;
 
-        log_object_operation(
+        let synctoken = log_object_operation(
             &mut tx,
             &principal,
             &addressbook_id,
@@ -329,6 +362,17 @@ impl AddressbookStore for SqliteStore {
         )
         .await
         .map_err(crate::Error::from)?;
+
+        // TODO: Watch for errors here?
+        let _ = self.sender.try_send(CollectionOperation {
+            r#type: CollectionOperationType::Object,
+            domain: CollectionOperationDomain::Addressbook,
+            topic: self
+                .get_addressbook(&principal, &addressbook_id)
+                .await?
+                .push_topic,
+            sync_token: Some(synctoken),
+        });
 
         tx.commit().await.map_err(crate::Error::from)?;
         Ok(())
@@ -366,7 +410,7 @@ impl AddressbookStore for SqliteStore {
                 .map_err(crate::Error::from)?;
             }
         };
-        log_object_operation(
+        let synctoken = log_object_operation(
             &mut tx,
             principal,
             addressbook_id,
@@ -375,7 +419,19 @@ impl AddressbookStore for SqliteStore {
         )
         .await
         .map_err(crate::Error::from)?;
+
         tx.commit().await.map_err(crate::Error::from)?;
+
+        // TODO: Watch for errors here?
+        let _ = self.sender.try_send(CollectionOperation {
+            r#type: CollectionOperationType::Object,
+            domain: CollectionOperationDomain::Addressbook,
+            topic: self
+                .get_addressbook(principal, addressbook_id)
+                .await?
+                .push_topic,
+            sync_token: Some(synctoken),
+        });
         Ok(())
     }
 
@@ -397,7 +453,7 @@ impl AddressbookStore for SqliteStore {
         .execute(&mut *tx)
         .await.map_err(crate::Error::from)?;
 
-        log_object_operation(
+        let synctoken = log_object_operation(
             &mut tx,
             principal,
             addressbook_id,
@@ -407,6 +463,18 @@ impl AddressbookStore for SqliteStore {
         .await
         .map_err(crate::Error::from)?;
         tx.commit().await.map_err(crate::Error::from)?;
+
+        // TODO: Watch for errors here?
+        let _ = self.sender.try_send(CollectionOperation {
+            r#type: CollectionOperationType::Object,
+            domain: CollectionOperationDomain::Addressbook,
+            topic: self
+                .get_addressbook(principal, addressbook_id)
+                .await?
+                .push_topic,
+            sync_token: Some(synctoken),
+        });
+
         Ok(())
     }
 }

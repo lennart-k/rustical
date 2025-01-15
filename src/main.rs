@@ -9,6 +9,7 @@ use config::{DataStoreConfig, SqliteDataStoreConfig};
 use rustical_dav::xml::multistatus::PropstatElement;
 use rustical_store::auth::StaticUserStore;
 use rustical_store::{AddressbookStore, CalendarStore, CollectionOperation, SubscriptionStore};
+use rustical_store_sqlite::addressbook_store::SqliteAddressbookStore;
 use rustical_store_sqlite::calendar_store::SqliteCalendarStore;
 use rustical_store_sqlite::{create_db_pool, SqliteStore};
 use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
@@ -56,7 +57,7 @@ async fn get_data_stores(
             // Channel to watch for changes (for DAV Push)
             let (send, recv) = tokio::sync::mpsc::channel(1000);
 
-            let addressbook_store = Arc::new(SqliteStore::new(db.clone()));
+            let addressbook_store = Arc::new(SqliteAddressbookStore::new(db.clone(), send.clone()));
             let cal_store = Arc::new(SqliteCalendarStore::new(db.clone(), send));
             let subscription_store = Arc::new(SqliteStore::new(db.clone()));
             (addressbook_store, cal_store, subscription_store, recv)
@@ -107,7 +108,6 @@ async fn main() -> Result<()> {
             tokio::spawn(async move {
                 let subscription_store = subscription_store_clone.clone();
                 while let Some(message) = update_recv.recv().await {
-                    dbg!(&message);
                     if let Ok(subscribers) =
                         subscription_store.get_subscriptions(&message.topic).await
                     {

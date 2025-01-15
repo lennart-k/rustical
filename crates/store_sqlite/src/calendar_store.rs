@@ -1,5 +1,6 @@
 use super::ChangeOperation;
 use async_trait::async_trait;
+use derive_more::derive::Constructor;
 use rustical_store::synctoken::format_synctoken;
 use rustical_store::{Calendar, CalendarObject, CalendarStore, Error};
 use rustical_store::{CollectionOperation, CollectionOperationType};
@@ -65,16 +66,10 @@ async fn log_object_operation(
     Ok(format_synctoken(synctoken))
 }
 
-#[derive(Debug)]
+#[derive(Debug, Constructor)]
 pub struct SqliteCalendarStore {
     db: SqlitePool,
     sender: Sender<CollectionOperation>,
-}
-
-impl SqliteCalendarStore {
-    pub fn new(db: SqlitePool, sender: Sender<CollectionOperation>) -> Self {
-        Self { db, sender }
-    }
 }
 
 #[async_trait]

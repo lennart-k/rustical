@@ -1,9 +1,7 @@
 use super::methods::mkcalendar::route_mkcalendar;
 use super::methods::post::route_post;
 use super::methods::report::route_report_calendar;
-use super::prop::{
-    SupportedCalendarComponentSet, SupportedCalendarData, SupportedReportSet, Transports,
-};
+use super::prop::{SupportedCalendarComponentSet, SupportedCalendarData, SupportedReportSet};
 use crate::calendar_object::resource::CalendarObjectResource;
 use crate::principal::PrincipalResource;
 use crate::Error;
@@ -13,6 +11,7 @@ use actix_web::web;
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::privileges::UserPrivilegeSet;
+use rustical_dav::push::Transports;
 use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;

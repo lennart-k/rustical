@@ -4,27 +4,27 @@ use actix_web::web::{Data, Path};
 use actix_web::{HttpRequest, HttpResponse};
 use rustical_dav::push::PushRegister;
 use rustical_store::auth::User;
-use rustical_store::{CalendarStore, Subscription, SubscriptionStore};
+use rustical_store::{AddressbookStore, Subscription, SubscriptionStore};
 use rustical_xml::XmlDocument;
 use tracing::instrument;
 use tracing_actix_web::RootSpan;
 
 #[instrument(parent = root_span.id(), skip(store, subscription_store, root_span, req))]
-pub async fn route_post<C: CalendarStore + ?Sized, S: SubscriptionStore + ?Sized>(
+pub async fn route_post<A: AddressbookStore + ?Sized, S: SubscriptionStore + ?Sized>(
     path: Path<(String, String)>,
     body: String,
     user: User,
-    store: Data<C>,
+    store: Data<A>,
     subscription_store: Data<S>,
     root_span: RootSpan,
     req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
-    let (principal, cal_id) = path.into_inner();
+    let (principal, addressbook_id) = path.into_inner();
     if principal != user.id {
         return Err(Error::Unauthorized);
     }
 
-    let calendar = store.get_calendar(&principal, &cal_id).await?;
+    let addressbook = store.get_addressbook(&principal, &addressbook_id).await?;
     let request = PushRegister::parse_str(&body)?;
     let sub_id = uuid::Uuid::new_v4().to_string();
 
@@ -42,7 +42,7 @@ pub async fn route_post<C: CalendarStore + ?Sized, S: SubscriptionStore + ?Sized
             .web_push_subscription
             .push_resource
             .to_owned(),
-        topic: calendar.push_topic,
+        topic: addressbook.push_topic,
         expiration: expires.naive_local(),
     };
     subscription_store.upsert_subscription(subscription).await?;

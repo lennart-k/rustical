@@ -14,3 +14,4 @@ serde = { workspace = true }
 sqlx = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
+derive_more.workspace = true
