@@ -93,7 +93,10 @@ async fn main() -> Result<()> {
         Some(Command::GenConfig(gen_config_args)) => cmd_gen_config(gen_config_args)?,
         Some(Command::Pwhash(pwhash_args)) => cmd_pwhash(pwhash_args)?,
         None => {
-            let config: Config = toml::from_str(&fs::read_to_string(&args.config_file)?)?;
+            let config: Config = toml::from_str(
+                &fs::read_to_string(&args.config_file)
+                    .expect(&format!("No config file found at {}", &args.config_file)),
+            )?;
 
             setup_tracing(&config.tracing);
 
