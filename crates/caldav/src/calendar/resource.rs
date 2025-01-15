@@ -50,6 +50,8 @@ pub enum CalendarProp {
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     CalendarTimezone(Option<String>),
     // https://datatracker.ietf.org/doc/html/rfc7809
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV", skip_deserializing)]
+    TimezoneServiceSet(HrefElement),
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     CalendarTimezoneId(Option<String>),
     #[xml(ns = "rustical_dav::namespace::NS_ICAL")]
@@ -124,6 +126,10 @@ impl Resource for CalendarResource {
             CalendarPropName::CalendarTimezone => {
                 CalendarProp::CalendarTimezone(self.cal.timezone.clone())
             }
+            // chrono_tz uses the IANA database
+            CalendarPropName::TimezoneServiceSet => CalendarProp::TimezoneServiceSet(
+                "https://www.iana.org/time-zones".to_owned().into(),
+            ),
             CalendarPropName::CalendarTimezoneId => {
                 CalendarProp::CalendarTimezoneId(self.cal.timezone_id.clone())
             }
@@ -169,11 +175,19 @@ impl Resource for CalendarResource {
                 Ok(())
             }
             CalendarProp::CalendarTimezone(timezone) => {
+                // TODO: Ensure that timezone-id is also updated
                 self.cal.timezone = timezone;
                 Ok(())
             }
+            CalendarProp::TimezoneServiceSet(_) => Err(rustical_dav::Error::PropReadOnly),
             CalendarProp::CalendarTimezoneId(timezone_id) => {
-                // TODO: Set or remove timezone accordingly
+                if let Some(tzid) = &timezone_id {
+                    // Validate timezone id
+                    chrono_tz::Tz::from_str(tzid).map_err(|_| {
+                        rustical_dav::Error::BadRequest(format!("Invalid timezone-id: {}", tzid))
+                    })?;
+                    // TODO: Ensure that timezone is also updated (For now hope that clients play nice)
+                }
                 self.cal.timezone_id = timezone_id;
                 Ok(())
             }
@@ -218,6 +232,7 @@ impl Resource for CalendarResource {
                 self.cal.timezone = None;
                 Ok(())
             }
+            CalendarPropName::TimezoneServiceSet => Err(rustical_dav::Error::PropReadOnly),
             CalendarPropName::CalendarTimezoneId => {
                 self.cal.timezone_id = None;
                 Ok(())
@@ -270,9 +285,7 @@ impl<C: CalendarStore, S: SubscriptionStore> CalendarResourceService<C, S> {
 }
 
 #[async_trait(?Send)]
-impl<C: CalendarStore, S: SubscriptionStore> ResourceService
-    for CalendarResourceService<C, S>
-{
+impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourceService<C, S> {
     type MemberType = CalendarObjectResource;
     type PathComponents = (String, String); // principal, calendar_id
     type Resource = CalendarResource;
