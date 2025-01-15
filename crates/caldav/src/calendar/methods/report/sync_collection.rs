@@ -1,64 +1,21 @@
 use actix_web::{http::StatusCode, HttpRequest};
 use rustical_dav::{
     resource::{CommonPropertiesProp, EitherProp, Resource},
-    xml::{multistatus::ResponseElement, MultistatusElement},
-    xml::{PropElement, PropfindType},
+    xml::{
+        multistatus::ResponseElement, sync_collection::SyncCollectionRequest, MultistatusElement,
+        PropElement, PropfindType,
+    },
 };
 use rustical_store::{
     auth::User,
     synctoken::{format_synctoken, parse_synctoken},
     CalendarStore,
 };
-use rustical_xml::{ValueDeserialize, ValueSerialize, XmlDeserialize};
 
 use crate::{
     calendar_object::resource::{CalendarObjectProp, CalendarObjectResource},
     Error,
 };
-
-#[derive(Clone, Debug, PartialEq)]
-pub(crate) enum SyncLevel {
-    One,
-    Infinity,
-}
-
-impl ValueDeserialize for SyncLevel {
-    fn deserialize(val: &str) -> Result<Self, rustical_xml::XmlError> {
-        Ok(match val {
-            "1" => Self::One,
-            "Infinity" => Self::Infinity,
-            _ => {
-                return Err(rustical_xml::XmlError::Other(
-                    "Invalid sync-level".to_owned(),
-                ))
-            }
-        })
-    }
-}
-
-impl ValueSerialize for SyncLevel {
-    fn serialize(&self) -> String {
-        match self {
-            SyncLevel::One => "1",
-            SyncLevel::Infinity => "Infinity",
-        }
-        .to_owned()
-    }
-}
-
-#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
-#[allow(dead_code)]
-// <!ELEMENT sync-collection (sync-token, sync-level, limit?, prop)>
-//    <!-- DAV:limit defined in RFC 5323, Section 5.17 -->
-//    <!-- DAV:prop defined in RFC 4918, Section 14.18 -->
-pub(crate) struct SyncCollectionRequest {
-    pub(crate) sync_token: String,
-    pub(crate) sync_level: SyncLevel,
-    pub(crate) timezone: Option<String>,
-    #[xml(ty = "untagged")]
-    pub prop: PropfindType,
-    pub(crate) limit: Option<u64>,
-}
 
 pub async fn handle_sync_collection<C: CalendarStore>(
     sync_collection: SyncCollectionRequest,

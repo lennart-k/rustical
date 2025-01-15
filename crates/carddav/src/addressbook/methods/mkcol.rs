@@ -8,26 +8,34 @@ use tracing_actix_web::RootSpan;
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 pub struct Resourcetype {
+    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     addressbook: Option<()>,
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     collection: Option<()>,
 }
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 pub struct MkcolAddressbookProp {
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     resourcetype: Option<Resourcetype>,
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     displayname: Option<String>,
     #[xml(rename = b"addressbook-description")]
+    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     description: Option<String>,
 }
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 pub struct PropElement<T: XmlDeserialize> {
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     prop: T,
 }
 
 #[derive(XmlDeserialize, XmlRootTag, Clone, Debug, PartialEq)]
 #[xml(root = b"mkcol")]
+#[xml(ns = "rustical_dav::namespace::NS_DAV")]
 struct MkcolRequest {
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     set: PropElement<MkcolAddressbookProp>,
 }
 

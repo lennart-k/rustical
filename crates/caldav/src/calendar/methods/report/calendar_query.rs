@@ -19,15 +19,19 @@ use crate::{
 #[allow(dead_code)]
 pub(crate) struct TimeRangeElement {
     #[xml(ty = "attr")]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     pub(crate) start: Option<UtcDateTime>,
     #[xml(ty = "attr")]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     pub(crate) end: Option<UtcDateTime>,
 }
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
 struct ParamFilterElement {
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     is_not_defined: Option<()>,
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     text_match: Option<TextMatchElement>,
 
     #[xml(ty = "attr")]
@@ -38,18 +42,24 @@ struct ParamFilterElement {
 #[allow(dead_code)]
 struct TextMatchElement {
     #[xml(ty = "attr")]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     collation: String,
     #[xml(ty = "attr")]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     negate_collation: String,
 }
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
 pub(crate) struct PropFilterElement {
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     is_not_defined: Option<()>,
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     time_range: Option<TimeRangeElement>,
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     text_match: Option<TextMatchElement>,
     #[xml(flatten)]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     param_filter: Vec<ParamFilterElement>,
 }
 
@@ -57,14 +67,16 @@ pub(crate) struct PropFilterElement {
 #[allow(dead_code)]
 // https://datatracker.ietf.org/doc/html/rfc4791#section-9.7.1
 pub(crate) struct CompFilterElement {
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     pub(crate) is_not_defined: Option<()>,
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     pub(crate) time_range: Option<TimeRangeElement>,
-    #[xml(flatten)]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV", flatten)]
     pub(crate) prop_filter: Vec<PropFilterElement>,
-    #[xml(flatten)]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV", flatten)]
     pub(crate) comp_filter: Vec<CompFilterElement>,
 
-    #[xml(ty = "attr")]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV", ty = "attr")]
     pub(crate) name: String,
 }
 
@@ -155,6 +167,7 @@ impl CompFilterElement {
 #[allow(dead_code)]
 // https://datatracker.ietf.org/doc/html/rfc4791#section-9.7
 pub(crate) struct FilterElement {
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     pub(crate) comp_filter: CompFilterElement,
 }
 
@@ -170,8 +183,11 @@ impl FilterElement {
 pub struct CalendarQueryRequest {
     #[xml(ty = "untagged")]
     pub prop: PropfindType,
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     pub(crate) filter: Option<FilterElement>,
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     pub(crate) timezone: Option<String>,
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     pub(crate) timezone_id: Option<String>,
 }
 

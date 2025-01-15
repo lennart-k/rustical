@@ -25,9 +25,7 @@ impl NamedStruct {
                     .named
                     .iter()
                     .enumerate()
-                    .map(|(i, field)| {
-                        Field::from_syn_field(field.to_owned(), i, attrs.container.clone())
-                    })
+                    .map(|(i, field)| Field::from_syn_field(field.to_owned(), i))
                     .collect(),
                 attrs,
                 ident: input.ident.to_owned(),
@@ -38,9 +36,7 @@ impl NamedStruct {
                     .unnamed
                     .iter()
                     .enumerate()
-                    .map(|(i, field)| {
-                        Field::from_syn_field(field.to_owned(), i, attrs.container.clone())
-                    })
+                    .map(|(i, field)| Field::from_syn_field(field.to_owned(), i))
                     .collect(),
                 attrs,
                 ident: input.ident.to_owned(),

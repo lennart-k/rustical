@@ -1,5 +1,5 @@
 use super::{
-    attrs::{ContainerAttrs, FieldAttrs, FieldType},
+    attrs::{FieldAttrs, FieldType},
     get_generic_type,
 };
 use darling::FromField;
@@ -23,20 +23,14 @@ pub struct Field {
     pub field: syn::Field,
     pub field_num: usize,
     pub attrs: FieldAttrs,
-    pub container_attrs: ContainerAttrs,
 }
 
 impl Field {
-    pub fn from_syn_field(
-        field: syn::Field,
-        field_num: usize,
-        container_attrs: ContainerAttrs,
-    ) -> Self {
+    pub fn from_syn_field(field: syn::Field, field_num: usize) -> Self {
         Self {
             attrs: FieldAttrs::from_field(&field).unwrap(),
             field,
             field_num,
-            container_attrs,
         }
     }
 
@@ -49,11 +43,6 @@ impl Field {
                 .expect("unnamed tag fields need a rename attribute");
             syn::LitByteStr::new(ident.to_string().to_kebab_case().as_bytes(), ident.span())
         })
-    }
-
-    /// Whether to enforce the correct XML namespace
-    pub fn ns_strict(&self) -> bool {
-        self.attrs.common.ns_strict.is_present() || self.container_attrs.ns_strict.is_present()
     }
 
     /// Field identifier
@@ -169,25 +158,18 @@ impl Field {
             return None;
         }
 
-        let namespace_match = if self.ns_strict() {
-            if self.attrs.common.ns.is_some() {
-                quote! {quick_xml::name::ResolveResult::Bound(ns)}
-            } else {
-                quote! {quick_xml::name::ResolveResult::Unbound}
-            }
+        let namespace_match = if self.attrs.common.ns.is_some() {
+            quote! {quick_xml::name::ResolveResult::Bound(ns)}
         } else {
-            quote! {_}
+            quote! {quick_xml::name::ResolveResult::Unbound}
         };
 
-        let namespace_condition = if self.ns_strict() {
-            self.attrs
-                .common
-                .ns
-                .as_ref()
-                .map(|ns| quote! { if ns == #ns })
-        } else {
-            None
-        };
+        let namespace_condition = self
+            .attrs
+            .common
+            .ns
+            .as_ref()
+            .map(|ns| quote! { if ns == #ns });
 
         let field_name = self.xml_name();
         let builder_field_ident = self.builder_field_ident();

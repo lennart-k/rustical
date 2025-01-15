@@ -21,6 +21,7 @@ pub(crate) struct CalendarMultigetRequest {
     #[xml(ty = "untagged")]
     pub(crate) prop: PropfindType,
     #[xml(flatten)]
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     pub(crate) href: Vec<String>,
 }
 

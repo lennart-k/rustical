@@ -5,9 +5,10 @@ use actix_web::{
 };
 use calendar_multiget::{handle_calendar_multiget, CalendarMultigetRequest};
 use calendar_query::{handle_calendar_query, CalendarQueryRequest};
+use rustical_dav::xml::sync_collection::SyncCollectionRequest;
 use rustical_store::{auth::User, CalendarStore};
 use rustical_xml::{XmlDeserialize, XmlDocument};
-use sync_collection::{handle_sync_collection, SyncCollectionRequest};
+use sync_collection::handle_sync_collection;
 use tracing::instrument;
 
 mod calendar_multiget;
@@ -16,8 +17,11 @@ mod sync_collection;
 
 #[derive(XmlDeserialize, XmlDocument, Clone, Debug, PartialEq)]
 pub(crate) enum ReportRequest {
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     CalendarMultiget(CalendarMultigetRequest),
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     CalendarQuery(CalendarQueryRequest),
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     SyncCollection(SyncCollectionRequest),
 }
 
@@ -130,6 +134,33 @@ mod tests {
                 }),
                 timezone: None,
                 timezone_id: None,
+            })
+        )
+    }
+
+    #[test]
+    fn test_xml_calendar_multiget() {
+        let report_request = ReportRequest::parse_str(r#"
+            <?xml version="1.0" encoding="UTF-8"?>
+            <calendar-multiget xmlns="urn:ietf:params:xml:ns:caldav" xmlns:D="DAV:">
+                <D:prop>
+                    <D:getetag/>
+                    <D:displayname/>
+                </D:prop>
+                <D:href>/caldav/user/user/6f787542-5256-401a-8db97003260da/ae7a998fdfd1d84a20391168962c62b</D:href>
+            </calendar-multiget>
+        "#).unwrap();
+
+        assert_eq!(
+            report_request,
+            ReportRequest::CalendarMultiget(CalendarMultigetRequest {
+                prop: rustical_dav::xml::PropfindType::Prop(PropElement(vec![
+                    Propname("getetag".to_owned()),
+                    Propname("displayname".to_owned())
+                ])),
+                href: vec![
+                    "/caldav/user/user/6f787542-5256-401a-8db97003260da/ae7a998fdfd1d84a20391168962c62b".to_owned()
+                ]
             })
         )
     }

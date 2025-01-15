@@ -8,6 +8,7 @@ pub use propfind::{PropElement, PropfindElement, PropfindType, Propname};
 pub use resourcetype::{Resourcetype, ResourcetypeInner};
 use rustical_xml::{XmlDeserialize, XmlSerialize};
 pub use tag_list::TagList;
+pub mod sync_collection;
 
 #[derive(XmlDeserialize, XmlSerialize, Debug, Clone, From, PartialEq)]
 pub struct HrefElement {

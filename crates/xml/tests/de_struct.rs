@@ -154,7 +154,7 @@ fn test_struct_ns() {
     const NS_HELLO: Namespace = Namespace(b"hello");
 
     #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
-    #[xml(root = b"document", ns_strict)]
+    #[xml(root = b"document")]
     struct Document {
         #[xml(ns = "NS_HELLO")]
         child: (),
@@ -169,7 +169,7 @@ fn test_struct_attr() {
     const NS_HELLO: Namespace = Namespace(b"hello");
 
     #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
-    #[xml(root = b"document", ns_strict)]
+    #[xml(root = b"document")]
     struct Document {
         #[xml(ns = "NS_HELLO")]
         child: (),
@@ -196,12 +196,12 @@ fn test_struct_attr() {
 #[test]
 fn test_struct_generics() {
     #[derive(XmlDeserialize, XmlRootTag)]
-    #[xml(root = b"document", ns_strict)]
+    #[xml(root = b"document")]
     struct Document<T: XmlDeserialize> {
         child: T,
     }
 
-    let doc = Document::<Unparsed>::parse_str(
+    let _ = Document::<Unparsed>::parse_str(
         r#"
          <document>
              <child>
@@ -216,12 +216,12 @@ fn test_struct_generics() {
 #[test]
 fn test_struct_unparsed() {
     #[derive(XmlDeserialize, XmlRootTag)]
-    #[xml(root = b"document", ns_strict)]
+    #[xml(root = b"document")]
     struct Document {
         child: Unparsed,
     }
 
-    let doc = Document::parse_str(
+    let _ = Document::parse_str(
         r#"
          <document>
              <child>
@@ -236,7 +236,7 @@ fn test_struct_unparsed() {
 #[test]
 fn test_xml_values() {
     #[derive(XmlDeserialize, XmlRootTag, PartialEq, Debug)]
-    #[xml(root = b"document", ns_strict)]
+    #[xml(root = b"document")]
     struct Document {
         href: String,
     }

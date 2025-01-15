@@ -4,14 +4,8 @@ use darling::{util::Flag, FromDeriveInput, FromField, FromMeta, FromVariant};
 use syn::LitByteStr;
 
 #[derive(Default, FromMeta, Clone)]
-pub struct ContainerAttrs {
-    pub ns_strict: Flag,
-}
-
-#[derive(Default, FromMeta, Clone)]
 pub struct TagAttrs {
     pub rename: Option<LitByteStr>,
-    pub ns_strict: Flag,
     pub ns: Option<syn::Path>,
 }
 
@@ -27,18 +21,12 @@ pub struct VariantAttrs {
 #[derive(Default, FromDeriveInput, Clone)]
 #[darling(attributes(xml))]
 pub struct EnumAttrs {
-    #[darling(flatten)]
-    // TODO: implement ns_strict
-    pub _container: ContainerAttrs,
     pub untagged: Flag,
 }
 
 #[derive(Default, FromDeriveInput, Clone)]
 #[darling(attributes(xml))]
 pub struct StructAttrs {
-    #[darling(flatten)]
-    pub container: ContainerAttrs,
-
     pub root: Option<LitByteStr>,
     pub ns: Option<syn::Path>,
     #[darling(default)]

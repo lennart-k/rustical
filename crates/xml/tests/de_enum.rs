@@ -81,7 +81,7 @@ fn test_tagged_enum_complex() {
         nice: (),
     }
 
-    let asd = Propfind::parse_str(
+    let _ = Propfind::parse_str(
         r#"
         <propfind>
             <prop>

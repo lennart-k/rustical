@@ -16,11 +16,12 @@ use rustical_xml::XmlDeserialize;
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
+#[xml(ns = "rustical_dav::namespace::NS_DAV")]
 pub struct AddressbookMultigetRequest {
-    #[xml(ty = "untagged")]
-    prop: PropfindType,
-    #[xml(flatten)]
-    href: Vec<String>,
+    #[xml(ns = "rustical_dav::namespace::NS_DAV", ty = "untagged")]
+    pub(crate) prop: PropfindType,
+    #[xml(ns = "rustical_dav::namespace::NS_DAV", flatten)]
+    pub(crate) href: Vec<String>,
 }
 
 pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
