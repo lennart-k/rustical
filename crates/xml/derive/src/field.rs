@@ -158,7 +158,7 @@ impl Field {
             (false, false, true) => quote! { builder.#builder_field_ident },
             (false, false, false) => {
                 let field_ident = self.field_ident().into_token_stream().to_string();
-                quote! { builder.#builder_field_ident.ok_or(::rustical_xml::XmlDeError::MissingField(#field_ident))? }
+                quote! { builder.#builder_field_ident.ok_or(::rustical_xml::XmlError::MissingField(#field_ident))? }
             }
         };
         quote! { #target_field_index: #builder_value }

@@ -20,7 +20,7 @@ pub enum Error {
     PropReadOnly,
 
     #[error(transparent)]
-    XmlDeserializationError(#[from] rustical_xml::XmlDeError),
+    XmlDeserializationError(#[from] rustical_xml::XmlError),
 
     #[error(transparent)]
     IOError(#[from] std::io::Error),

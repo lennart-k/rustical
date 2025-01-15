@@ -10,7 +10,7 @@ mod value;
 
 pub use de::XmlDeserialize;
 pub use de::XmlDocument;
-pub use error::XmlDeError;
+pub use error::XmlError;
 pub use se::XmlSerialize;
 pub use se::XmlSerializeRoot;
 pub use value::{ParseValueError, ValueDeserialize, ValueSerialize};
@@ -21,7 +21,7 @@ impl XmlDeserialize for () {
         reader: &mut quick_xml::NsReader<R>,
         start: &BytesStart,
         empty: bool,
-    ) -> Result<Self, XmlDeError> {
+    ) -> Result<Self, XmlError> {
         if empty {
             return Ok(());
         }
@@ -29,7 +29,7 @@ impl XmlDeserialize for () {
         loop {
             match reader.read_event_into(&mut buf)? {
                 Event::End(e) if e.name() == start.name() => return Ok(()),
-                Event::Eof => return Err(XmlDeError::Eof),
+                Event::Eof => return Err(XmlError::Eof),
                 _ => {}
             };
         }
@@ -91,7 +91,7 @@ impl XmlDeserialize for Unparsed {
         reader: &mut quick_xml::NsReader<R>,
         start: &BytesStart,
         empty: bool,
-    ) -> Result<Self, XmlDeError> {
+    ) -> Result<Self, XmlError> {
         // let reader_cloned = NsReader::from_reader(reader.get_ref().to_owned());
         if !empty {
             let mut buf = vec![];

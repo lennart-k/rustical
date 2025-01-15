@@ -22,12 +22,12 @@ pub const LOCAL_DATE: &str = "%Y%m%d";
 pub struct UtcDateTime(DateTime<Utc>);
 
 impl ValueDeserialize for UtcDateTime {
-    fn deserialize(val: &str) -> Result<Self, rustical_xml::XmlDeError> {
+    fn deserialize(val: &str) -> Result<Self, rustical_xml::XmlError> {
         let input = <String as ValueDeserialize>::deserialize(val)?;
         Ok(Self(
             NaiveDateTime::parse_from_str(&input, UTC_DATE_TIME)
                 .map_err(|_| {
-                    rustical_xml::XmlDeError::Other("Could not parse as UTC timestamp".to_owned())
+                    rustical_xml::XmlError::Other("Could not parse as UTC timestamp".to_owned())
                 })?
                 .and_utc(),
         ))

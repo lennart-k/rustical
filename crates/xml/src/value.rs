@@ -5,7 +5,7 @@ use std::num::{ParseFloatError, ParseIntError};
 use std::{convert::Infallible, io::BufRead};
 use thiserror::Error;
 
-use crate::{XmlDeError, XmlDeserialize, XmlSerialize};
+use crate::{XmlError, XmlDeserialize, XmlSerialize};
 
 #[derive(Debug, Error)]
 pub enum ParseValueError {
@@ -22,7 +22,7 @@ pub trait ValueSerialize: Sized {
 }
 
 pub trait ValueDeserialize: Sized {
-    fn deserialize(val: &str) -> Result<Self, XmlDeError>;
+    fn deserialize(val: &str) -> Result<Self, XmlError>;
 }
 
 macro_rules! impl_value_parse {
@@ -34,10 +34,10 @@ macro_rules! impl_value_parse {
         }
 
         impl ValueDeserialize for $t {
-            fn deserialize(val: &str) -> Result<Self, XmlDeError> {
+            fn deserialize(val: &str) -> Result<Self, XmlError> {
                 val.parse()
                     .map_err(ParseValueError::from)
-                    .map_err(XmlDeError::from)
+                    .map_err(XmlError::from)
             }
         }
     };
@@ -68,7 +68,7 @@ impl<T: ValueDeserialize> XmlDeserialize for T {
         reader: &mut quick_xml::NsReader<R>,
         _start: &BytesStart,
         empty: bool,
-    ) -> Result<Self, XmlDeError> {
+    ) -> Result<Self, XmlError> {
         let mut string = String::new();
 
         if !empty {
@@ -78,13 +78,13 @@ impl<T: ValueDeserialize> XmlDeserialize for T {
                     Event::Text(text) => {
                         if !string.is_empty() {
                             // Content already written
-                            return Err(XmlDeError::UnsupportedEvent("content already written"));
+                            return Err(XmlError::UnsupportedEvent("content already written"));
                         }
                         string = String::from_utf8_lossy(text.as_ref()).to_string();
                     }
                     Event::End(_) => break,
-                    Event::Eof => return Err(XmlDeError::Eof),
-                    _ => return Err(XmlDeError::UnsupportedEvent("todo")),
+                    Event::Eof => return Err(XmlError::Eof),
+                    _ => return Err(XmlError::UnsupportedEvent("todo")),
                 };
             }
         }

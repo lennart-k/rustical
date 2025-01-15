@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum XmlDeError {
+pub enum XmlError {
     #[error(transparent)]
     QuickXmlError(#[from] quick_xml::Error),
     #[error(transparent)]

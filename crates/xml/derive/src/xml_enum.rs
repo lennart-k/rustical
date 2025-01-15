@@ -28,10 +28,10 @@ impl Enum {
                     reader: &mut quick_xml::NsReader<R>,
                     start: &quick_xml::events::BytesStart,
                     empty: bool
-                ) -> Result<Self, rustical_xml::XmlDeError> {
+                ) -> Result<Self, rustical_xml::XmlError> {
                     #(#variant_branches);*
 
-                    Err(rustical_xml::XmlDeError::InvalidVariant("could not match".to_owned()))
+                    Err(rustical_xml::XmlError::InvalidVariant("could not match".to_owned()))
                 }
             }
         }
@@ -49,14 +49,14 @@ impl Enum {
                     reader: &mut quick_xml::NsReader<R>,
                     start: &quick_xml::events::BytesStart,
                     empty: bool
-                ) -> Result<Self, rustical_xml::XmlDeError> {
+                ) -> Result<Self, rustical_xml::XmlError> {
                     let (_ns, name) = reader.resolve_element(start.name());
 
                     match name.as_ref() {
                         #(#variant_branches),*
                         name => {
                             // Handle invalid variant name
-                            Err(rustical_xml::XmlDeError::InvalidVariant(String::from_utf8_lossy(name).to_string()))
+                            Err(rustical_xml::XmlError::InvalidVariant(String::from_utf8_lossy(name).to_string()))
                         }
                     }
                 }
@@ -150,7 +150,7 @@ impl Enum {
 
         quote! {
             impl #impl_generics ::rustical_xml::XmlDocument for #ident #type_generics #where_clause {
-                fn parse<R: ::std::io::BufRead>(mut reader: ::quick_xml::NsReader<R>) -> Result<Self, ::rustical_xml::XmlDeError>
+                fn parse<R: ::std::io::BufRead>(mut reader: ::quick_xml::NsReader<R>) -> Result<Self, ::rustical_xml::XmlError>
                 where
                     Self: ::rustical_xml::XmlDeserialize
                 {
@@ -166,26 +166,26 @@ impl Enum {
                                 return <Self as ::rustical_xml::XmlDeserialize>::deserialize(&mut reader, &start, empty);
                             }
 
-                            Event::Eof => return Err(::rustical_xml::XmlDeError::Eof),
+                            Event::Eof => return Err(::rustical_xml::XmlError::Eof),
                             Event::Text(bytes_text) => {
-                                return Err(::rustical_xml::XmlDeError::UnsupportedEvent("Text"));
+                                return Err(::rustical_xml::XmlError::UnsupportedEvent("Text"));
                             }
                             Event::CData(cdata) => {
-                                return Err(::rustical_xml::XmlDeError::UnsupportedEvent("CDATA"));
+                                return Err(::rustical_xml::XmlError::UnsupportedEvent("CDATA"));
                             }
                             Event::Comment(_) => { /* ignore */ }
                             Event::Decl(_) => {
                                 /* ignore */
-                                // return Err(::rustical_xml::XmlDeError::UnsupportedEvent("Declaration"));
+                                // return Err(::rustical_xml::XmlError::UnsupportedEvent("Declaration"));
                             }
                             Event::PI(_) => {
-                                return Err(::rustical_xml::XmlDeError::UnsupportedEvent("Processing instruction"));
+                                return Err(::rustical_xml::XmlError::UnsupportedEvent("Processing instruction"));
                             }
                             Event::DocType(doctype) => {
-                                return Err(::rustical_xml::XmlDeError::UnsupportedEvent("Doctype in the middle of the document"));
+                                return Err(::rustical_xml::XmlError::UnsupportedEvent("Doctype in the middle of the document"));
                             }
                             Event::End(end) => {
-                                return Err(::rustical_xml::XmlDeError::UnsupportedEvent("Premature end"));
+                                return Err(::rustical_xml::XmlError::UnsupportedEvent("Premature end"));
                             }
                         };
                     }

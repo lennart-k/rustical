@@ -11,7 +11,7 @@ fn invalid_field_branch(ident: &syn::Ident, allow: bool) -> proc_macro2::TokenSt
         quote! {}
     } else {
         quote! {
-        return Err(XmlDeError::InvalidFieldName(#ident, format!("[{ns:?}]{tag}", tag = String::from_utf8_lossy(tag)))) }
+        return Err(XmlError::InvalidFieldName(#ident, format!("[{ns:?}]{tag}", tag = String::from_utf8_lossy(tag)))) }
     }
 }
 
@@ -130,9 +130,9 @@ impl NamedStruct {
                     reader: &mut quick_xml::NsReader<R>,
                     start: &quick_xml::events::BytesStart,
                     empty: bool
-                ) -> Result<Self, rustical_xml::XmlDeError> {
+                ) -> Result<Self, rustical_xml::XmlError> {
                     use quick_xml::events::Event;
-                    use rustical_xml::XmlDeError;
+                    use rustical_xml::XmlError;
 
                     let mut buf = Vec::new();
 
@@ -163,7 +163,7 @@ impl NamedStruct {
                                 Event::End(e) if e.name() == start.name() => {
                                     break;
                                 }
-                                Event::Eof => return Err(XmlDeError::Eof),
+                                Event::Eof => return Err(XmlError::Eof),
                                 // start of a child element
                                 Event::Start(start) | Event::Empty(start) => {
                                     let empty = matches!(event, Event::Empty(_));
@@ -179,24 +179,24 @@ impl NamedStruct {
                                     #(#text_field_branches)*
                                 }
                                 Event::CData(cdata) => {
-                                    return Err(XmlDeError::UnsupportedEvent("CDATA"));
+                                    return Err(XmlError::UnsupportedEvent("CDATA"));
                                 }
                                 Event::Comment(_) => { /* ignore */ }
                                 Event::Decl(_) => {
                                     // Error: not supported
-                                    return Err(XmlDeError::UnsupportedEvent("Declaration"));
+                                    return Err(XmlError::UnsupportedEvent("Declaration"));
                                 }
                                 Event::PI(_) => {
                                     // Error: not supported
-                                    return Err(XmlDeError::UnsupportedEvent("Processing instruction"));
+                                    return Err(XmlError::UnsupportedEvent("Processing instruction"));
                                 }
                                 Event::DocType(doctype) => {
                                     // Error: start of new document
-                                    return Err(XmlDeError::UnsupportedEvent("Doctype in the middle of the document"));
+                                    return Err(XmlError::UnsupportedEvent("Doctype in the middle of the document"));
                                 }
                                 Event::End(end) => {
                                     // Error: premature end
-                                    return Err(XmlDeError::Other("Unexpected closing tag for wrong element".to_owned()));
+                                    return Err(XmlError::Other("Unexpected closing tag for wrong element".to_owned()));
                                 }
                             }
                         }

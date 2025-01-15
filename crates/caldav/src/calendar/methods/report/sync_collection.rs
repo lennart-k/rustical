@@ -23,12 +23,12 @@ pub(crate) enum SyncLevel {
 }
 
 impl ValueDeserialize for SyncLevel {
-    fn deserialize(val: &str) -> Result<Self, rustical_xml::XmlDeError> {
+    fn deserialize(val: &str) -> Result<Self, rustical_xml::XmlError> {
         Ok(match val {
             "1" => Self::One,
             "Infinity" => Self::Infinity,
             _ => {
-                return Err(rustical_xml::XmlDeError::Other(
+                return Err(rustical_xml::XmlError::Other(
                     "Invalid sync-level".to_owned(),
                 ))
             }

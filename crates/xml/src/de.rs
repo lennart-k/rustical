@@ -4,7 +4,7 @@ use std::io::BufRead;
 pub use xml_derive::XmlDeserialize;
 pub use xml_derive::XmlDocument;
 
-use crate::XmlDeError;
+use crate::XmlError;
 use crate::XmlRootTag;
 
 pub trait XmlDeserialize: Sized {
@@ -12,14 +12,14 @@ pub trait XmlDeserialize: Sized {
         reader: &mut quick_xml::NsReader<R>,
         start: &BytesStart,
         empty: bool,
-    ) -> Result<Self, XmlDeError>;
+    ) -> Result<Self, XmlError>;
 }
 
 pub trait XmlDocument: XmlDeserialize {
-    fn parse<R: BufRead>(reader: quick_xml::NsReader<R>) -> Result<Self, XmlDeError>;
+    fn parse<R: BufRead>(reader: quick_xml::NsReader<R>) -> Result<Self, XmlError>;
 
     #[inline]
-    fn parse_reader<R: BufRead>(input: R) -> Result<Self, XmlDeError>
+    fn parse_reader<R: BufRead>(input: R) -> Result<Self, XmlError>
     where
         Self: XmlDeserialize,
     {
@@ -29,13 +29,13 @@ pub trait XmlDocument: XmlDeserialize {
     }
 
     #[inline]
-    fn parse_str(s: &str) -> Result<Self, XmlDeError> {
+    fn parse_str(s: &str) -> Result<Self, XmlError> {
         Self::parse_reader(s.as_bytes())
     }
 }
 
 impl<T: XmlRootTag + XmlDeserialize> XmlDocument for T {
-    fn parse<R: BufRead>(mut reader: quick_xml::NsReader<R>) -> Result<Self, XmlDeError>
+    fn parse<R: BufRead>(mut reader: quick_xml::NsReader<R>) -> Result<Self, XmlError>
     where
         Self: XmlDeserialize,
     {
@@ -57,7 +57,7 @@ impl<T: XmlRootTag + XmlDeserialize> XmlDocument for T {
                     };
                     if !matches {
                         let root_ns = Self::root_ns();
-                        return Err(XmlDeError::InvalidTag(
+                        return Err(XmlError::InvalidTag(
                             format!("{ns:?}"),
                             String::from_utf8_lossy(name.as_ref()).to_string(),
                             format!("{root_ns:?}"),
@@ -67,7 +67,7 @@ impl<T: XmlRootTag + XmlDeserialize> XmlDocument for T {
 
                     return Self::deserialize(&mut reader, &start, empty);
                 }
-                _ => return Err(XmlDeError::UnsupportedEvent("unknown, todo")),
+                _ => return Err(XmlError::UnsupportedEvent("unknown, todo")),
             };
         }
     }

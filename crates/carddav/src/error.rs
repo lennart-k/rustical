@@ -19,7 +19,7 @@ pub enum Error {
     DavError(#[from] rustical_dav::Error),
 
     #[error(transparent)]
-    XmlDecodeError(#[from] rustical_xml::XmlDeError),
+    XmlDecodeError(#[from] rustical_xml::XmlError),
 
     #[error(transparent)]
     Other(#[from] anyhow::Error),
