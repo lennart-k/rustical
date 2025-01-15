@@ -24,7 +24,7 @@ pub(crate) struct CalendarMultigetRequest {
     pub(crate) href: Vec<String>,
 }
 
-pub async fn get_objects_calendar_multiget<C: CalendarStore + ?Sized>(
+pub async fn get_objects_calendar_multiget<C: CalendarStore>(
     cal_query: &CalendarMultigetRequest,
     path: &str,
     principal: &str,
@@ -52,7 +52,7 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore + ?Sized>(
     Ok((result, not_found))
 }
 
-pub async fn handle_calendar_multiget<C: CalendarStore + ?Sized>(
+pub async fn handle_calendar_multiget<C: CalendarStore>(
     cal_multiget: CalendarMultigetRequest,
     req: HttpRequest,
     user: &User,

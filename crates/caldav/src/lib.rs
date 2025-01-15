@@ -30,9 +30,9 @@ pub fn configure_well_known(cfg: &mut web::ServiceConfig, caldav_root: String) {
 
 pub fn configure_dav<
     AP: AuthenticationProvider,
-    AS: AddressbookStore + ?Sized,
-    C: CalendarStore + ?Sized,
-    S: SubscriptionStore + ?Sized,
+    AS: AddressbookStore,
+    C: CalendarStore,
+    S: SubscriptionStore,
 >(
     cfg: &mut web::ServiceConfig,
     auth_provider: Arc<AP>,

@@ -12,7 +12,7 @@ struct AddressbookPage {
     addressbook: Addressbook,
 }
 
-pub async fn route_addressbook<AS: AddressbookStore + ?Sized>(
+pub async fn route_addressbook<AS: AddressbookStore>(
     path: Path<(String, String)>,
     store: Data<AS>,
     _user: User,
@@ -23,7 +23,7 @@ pub async fn route_addressbook<AS: AddressbookStore + ?Sized>(
     })
 }
 
-pub async fn route_addressbook_restore<AS: AddressbookStore + ?Sized>(
+pub async fn route_addressbook_restore<AS: AddressbookStore>(
     path: Path<(String, String)>,
     req: HttpRequest,
     store: Data<AS>,

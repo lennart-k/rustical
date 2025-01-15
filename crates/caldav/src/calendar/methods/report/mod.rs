@@ -22,7 +22,7 @@ pub(crate) enum ReportRequest {
 }
 
 #[instrument(skip(req, cal_store))]
-pub async fn route_report_calendar<C: CalendarStore + ?Sized>(
+pub async fn route_report_calendar<C: CalendarStore>(
     path: Path<(String, String)>,
     body: String,
     user: User,

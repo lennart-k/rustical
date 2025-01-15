@@ -60,7 +60,7 @@ pub(crate) struct SyncCollectionRequest {
     pub(crate) limit: Option<u64>,
 }
 
-pub async fn handle_sync_collection<C: CalendarStore + ?Sized>(
+pub async fn handle_sync_collection<C: CalendarStore>(
     sync_collection: SyncCollectionRequest,
     req: HttpRequest,
     user: &User,

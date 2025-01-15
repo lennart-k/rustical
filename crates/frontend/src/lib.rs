@@ -39,7 +39,7 @@ struct UserPage {
     pub deleted_addressbooks: Vec<Addressbook>,
 }
 
-async fn route_user<CS: CalendarStore + ?Sized, AS: AddressbookStore + ?Sized>(
+async fn route_user<CS: CalendarStore, AS: AddressbookStore>(
     path: Path<String>,
     cal_store: Data<CS>,
     addr_store: Data<AS>,
@@ -99,11 +99,7 @@ fn unauthorized_handler<B>(res: ServiceResponse<B>) -> actix_web::Result<ErrorHa
     Ok(ErrorHandlerResponse::Response(res))
 }
 
-pub fn configure_frontend<
-    AP: AuthenticationProvider,
-    CS: CalendarStore + ?Sized,
-    AS: AddressbookStore + ?Sized,
->(
+pub fn configure_frontend<AP: AuthenticationProvider, CS: CalendarStore, AS: AddressbookStore>(
     cfg: &mut web::ServiceConfig,
     auth_provider: Arc<AP>,
     cal_store: Arc<CS>,

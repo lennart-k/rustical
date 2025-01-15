@@ -56,7 +56,7 @@ pub(crate) struct SyncCollectionRequest {
     pub(crate) limit: Option<u64>,
 }
 
-pub async fn handle_sync_collection<AS: AddressbookStore + ?Sized>(
+pub async fn handle_sync_collection<AS: AddressbookStore>(
     sync_collection: SyncCollectionRequest,
     req: HttpRequest,
     user: &User,

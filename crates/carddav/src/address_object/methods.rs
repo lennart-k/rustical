@@ -11,7 +11,7 @@ use tracing::instrument;
 use tracing_actix_web::RootSpan;
 
 #[instrument(parent = root_span.id(), skip(store, root_span))]
-pub async fn get_object<AS: AddressbookStore + ?Sized>(
+pub async fn get_object<AS: AddressbookStore>(
     path: Path<AddressObjectPathComponents>,
     store: Data<AS>,
     user: User,
@@ -43,7 +43,7 @@ pub async fn get_object<AS: AddressbookStore + ?Sized>(
 }
 
 #[instrument(parent = root_span.id(), skip(store, req, root_span))]
-pub async fn put_object<AS: AddressbookStore + ?Sized>(
+pub async fn put_object<AS: AddressbookStore>(
     path: Path<AddressObjectPathComponents>,
     store: Data<AS>,
     body: String,

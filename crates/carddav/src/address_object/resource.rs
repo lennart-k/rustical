@@ -1,7 +1,7 @@
 use crate::{principal::PrincipalResource, Error};
 use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
-use derive_more::derive::{From, Into};
+use derive_more::derive::{Constructor, From, Into};
 use rustical_dav::{
     privileges::UserPrivilegeSet,
     resource::{Resource, ResourceService},
@@ -15,14 +15,9 @@ use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
 
 use super::methods::{get_object, put_object};
 
-pub struct AddressObjectResourceService<AS: AddressbookStore + ?Sized> {
+#[derive(Constructor)]
+pub struct AddressObjectResourceService<AS: AddressbookStore> {
     addr_store: Arc<AS>,
-}
-
-impl<A: AddressbookStore + ?Sized> AddressObjectResourceService<A> {
-    pub fn new(addr_store: Arc<A>) -> Self {
-        Self { addr_store }
-    }
 }
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone)]
@@ -111,7 +106,7 @@ impl<'de> Deserialize<'de> for AddressObjectPathComponents {
 }
 
 #[async_trait(?Send)]
-impl<AS: AddressbookStore + ?Sized> ResourceService for AddressObjectResourceService<AS> {
+impl<AS: AddressbookStore> ResourceService for AddressObjectResourceService<AS> {
     type PathComponents = AddressObjectPathComponents;
     type Resource = AddressObjectResource;
     type MemberType = AddressObjectResource;

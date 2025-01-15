@@ -11,11 +11,11 @@ use rustical_xml::{XmlDeserialize, XmlSerialize};
 use std::sync::Arc;
 use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
 
-pub struct PrincipalResourceService<A: AddressbookStore + ?Sized> {
+pub struct PrincipalResourceService<A: AddressbookStore> {
     addr_store: Arc<A>,
 }
 
-impl<A: AddressbookStore + ?Sized> PrincipalResourceService<A> {
+impl<A: AddressbookStore> PrincipalResourceService<A> {
     pub fn new(addr_store: Arc<A>) -> Self {
         Self { addr_store }
     }
@@ -102,7 +102,7 @@ impl Resource for PrincipalResource {
 }
 
 #[async_trait(?Send)]
-impl<A: AddressbookStore + ?Sized> ResourceService for PrincipalResourceService<A> {
+impl<A: AddressbookStore> ResourceService for PrincipalResourceService<A> {
     type PathComponents = (String,);
     type MemberType = AddressbookResource;
     type Resource = PrincipalResource;

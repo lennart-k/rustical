@@ -19,7 +19,7 @@ pub(crate) enum ReportRequest {
 }
 
 #[instrument(skip(req, addr_store))]
-pub async fn route_report_addressbook<AS: AddressbookStore + ?Sized>(
+pub async fn route_report_addressbook<AS: AddressbookStore>(
     path: Path<(String, String)>,
     body: String,
     user: User,

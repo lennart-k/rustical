@@ -255,12 +255,12 @@ impl Resource for CalendarResource {
     }
 }
 
-pub struct CalendarResourceService<C: CalendarStore + ?Sized, S: SubscriptionStore + ?Sized> {
+pub struct CalendarResourceService<C: CalendarStore, S: SubscriptionStore> {
     cal_store: Arc<C>,
     __phantom_sub: PhantomData<S>,
 }
 
-impl<C: CalendarStore + ?Sized, S: SubscriptionStore + ?Sized> CalendarResourceService<C, S> {
+impl<C: CalendarStore, S: SubscriptionStore> CalendarResourceService<C, S> {
     pub fn new(cal_store: Arc<C>) -> Self {
         Self {
             cal_store,
@@ -270,7 +270,7 @@ impl<C: CalendarStore + ?Sized, S: SubscriptionStore + ?Sized> CalendarResourceS
 }
 
 #[async_trait(?Send)]
-impl<C: CalendarStore + ?Sized, S: SubscriptionStore + ?Sized> ResourceService
+impl<C: CalendarStore, S: SubscriptionStore> ResourceService
     for CalendarResourceService<C, S>
 {
     type MemberType = CalendarObjectResource;

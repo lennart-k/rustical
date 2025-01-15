@@ -8,7 +8,7 @@ use rustical_xml::{XmlRootTag, XmlSerialize};
 
 use crate::calendar::resource::CalendarProp;
 
-async fn handle_delete<S: SubscriptionStore + ?Sized>(
+async fn handle_delete<S: SubscriptionStore>(
     store: Data<S>,
     path: Path<String>,
 ) -> Result<HttpResponse, rustical_store::Error> {
@@ -17,7 +17,7 @@ async fn handle_delete<S: SubscriptionStore + ?Sized>(
     Ok(HttpResponse::NoContent().body("Unregistered"))
 }
 
-pub fn subscription_resource<S: SubscriptionStore + ?Sized>() -> actix_web::Resource {
+pub fn subscription_resource<S: SubscriptionStore>() -> actix_web::Resource {
     web::resource("/subscription/{id}")
         .name("subscription")
         .delete(handle_delete::<S>)

@@ -10,7 +10,7 @@ use tracing::instrument;
 use tracing_actix_web::RootSpan;
 
 #[instrument(parent = root_span.id(), skip(store, subscription_store, root_span, req))]
-pub async fn route_post<C: CalendarStore + ?Sized, S: SubscriptionStore + ?Sized>(
+pub async fn route_post<C: CalendarStore, S: SubscriptionStore>(
     path: Path<(String, String)>,
     body: String,
     user: User,

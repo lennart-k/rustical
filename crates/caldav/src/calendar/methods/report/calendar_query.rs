@@ -175,7 +175,7 @@ pub struct CalendarQueryRequest {
     pub(crate) timezone_id: Option<String>,
 }
 
-pub async fn get_objects_calendar_query<C: CalendarStore + ?Sized>(
+pub async fn get_objects_calendar_query<C: CalendarStore>(
     cal_query: &CalendarQueryRequest,
     principal: &str,
     cal_id: &str,
@@ -188,7 +188,7 @@ pub async fn get_objects_calendar_query<C: CalendarStore + ?Sized>(
     Ok(objects)
 }
 
-pub async fn handle_calendar_query<C: CalendarStore + ?Sized>(
+pub async fn handle_calendar_query<C: CalendarStore>(
     cal_query: CalendarQueryRequest,
     req: HttpRequest,
     user: &User,

@@ -41,7 +41,7 @@ struct MkcalendarRequest {
 }
 
 #[instrument(parent = root_span.id(), skip(store, root_span))]
-pub async fn route_mkcalendar<C: CalendarStore + ?Sized>(
+pub async fn route_mkcalendar<C: CalendarStore>(
     path: Path<(String, String)>,
     body: String,
     user: User,

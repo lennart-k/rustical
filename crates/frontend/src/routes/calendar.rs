@@ -12,7 +12,7 @@ struct CalendarPage {
     calendar: Calendar,
 }
 
-pub async fn route_calendar<C: CalendarStore + ?Sized>(
+pub async fn route_calendar<C: CalendarStore>(
     path: Path<(String, String)>,
     store: Data<C>,
     _user: User,
@@ -23,7 +23,7 @@ pub async fn route_calendar<C: CalendarStore + ?Sized>(
     })
 }
 
-pub async fn route_calendar_restore<CS: CalendarStore + ?Sized>(
+pub async fn route_calendar_restore<CS: CalendarStore>(
     path: Path<(String, String)>,
     req: HttpRequest,
     store: Data<CS>,

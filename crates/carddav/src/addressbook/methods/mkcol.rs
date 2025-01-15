@@ -32,7 +32,7 @@ struct MkcolRequest {
 }
 
 #[instrument(parent = root_span.id(), skip(store, root_span))]
-pub async fn route_mkcol<AS: AddressbookStore + ?Sized>(
+pub async fn route_mkcol<AS: AddressbookStore>(
     path: Path<(String, String)>,
     body: String,
     user: User,

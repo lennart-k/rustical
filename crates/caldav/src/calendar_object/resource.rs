@@ -14,11 +14,11 @@ use serde::Deserialize;
 use std::sync::Arc;
 use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
 
-pub struct CalendarObjectResourceService<C: CalendarStore + ?Sized> {
+pub struct CalendarObjectResourceService<C: CalendarStore> {
     cal_store: Arc<C>,
 }
 
-impl<C: CalendarStore + ?Sized> CalendarObjectResourceService<C> {
+impl<C: CalendarStore> CalendarObjectResourceService<C> {
     pub fn new(cal_store: Arc<C>) -> Self {
         Self { cal_store }
     }
@@ -110,7 +110,7 @@ impl<'de> Deserialize<'de> for CalendarObjectPathComponents {
 }
 
 #[async_trait(?Send)]
-impl<C: CalendarStore + ?Sized> ResourceService for CalendarObjectResourceService<C> {
+impl<C: CalendarStore> ResourceService for CalendarObjectResourceService<C> {
     type PathComponents = CalendarObjectPathComponents;
     type Resource = CalendarObjectResource;
     type MemberType = CalendarObjectResource;

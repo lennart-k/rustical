@@ -46,9 +46,9 @@ async fn get_data_stores(
     migrate: bool,
     config: &DataStoreConfig,
 ) -> Result<(
-    Arc<dyn AddressbookStore>,
-    Arc<dyn CalendarStore>,
-    Arc<dyn SubscriptionStore>,
+    Arc<impl AddressbookStore>,
+    Arc<impl CalendarStore>,
+    Arc<impl SubscriptionStore>,
     Receiver<CollectionOperation>,
 )> {
     Ok(match &config {

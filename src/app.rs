@@ -8,11 +8,7 @@ use rustical_store::{AddressbookStore, CalendarStore, SubscriptionStore};
 use std::sync::Arc;
 use tracing_actix_web::TracingLogger;
 
-pub fn make_app<
-    AS: AddressbookStore + ?Sized,
-    CS: CalendarStore + ?Sized,
-    S: SubscriptionStore + ?Sized,
->(
+pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
     addr_store: Arc<AS>,
     cal_store: Arc<CS>,
     subscription_store: Arc<S>,

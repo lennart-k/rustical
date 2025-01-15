@@ -12,7 +12,7 @@ use tracing_actix_web::RootSpan;
 use super::resource::CalendarObjectPathComponents;
 
 #[instrument(parent = root_span.id(), skip(store, root_span))]
-pub async fn get_event<C: CalendarStore + ?Sized>(
+pub async fn get_event<C: CalendarStore>(
     path: Path<CalendarObjectPathComponents>,
     store: Data<C>,
     user: User,
@@ -42,7 +42,7 @@ pub async fn get_event<C: CalendarStore + ?Sized>(
 }
 
 #[instrument(parent = root_span.id(), skip(store, req, root_span))]
-pub async fn put_event<C: CalendarStore + ?Sized>(
+pub async fn put_event<C: CalendarStore>(
     path: Path<CalendarObjectPathComponents>,
     store: Data<C>,
     body: String,

@@ -22,13 +22,13 @@ use std::str::FromStr;
 use std::sync::Arc;
 use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
 
-pub struct AddressbookResourceService<AS: AddressbookStore + ?Sized, S: SubscriptionStore + ?Sized>
+pub struct AddressbookResourceService<AS: AddressbookStore, S: SubscriptionStore>
 {
     addr_store: Arc<AS>,
     __phantom_sub: PhantomData<S>,
 }
 
-impl<A: AddressbookStore + ?Sized, S: SubscriptionStore + ?Sized> AddressbookResourceService<A, S> {
+impl<A: AddressbookStore, S: SubscriptionStore> AddressbookResourceService<A, S> {
     pub fn new(addr_store: Arc<A>) -> Self {
         Self {
             addr_store,
@@ -174,7 +174,7 @@ impl Resource for AddressbookResource {
 }
 
 #[async_trait(?Send)]
-impl<AS: AddressbookStore + ?Sized, S: SubscriptionStore + ?Sized> ResourceService
+impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
     for AddressbookResourceService<AS, S>
 {
     type MemberType = AddressObjectResource;

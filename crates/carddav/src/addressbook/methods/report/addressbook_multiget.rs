@@ -23,7 +23,7 @@ pub struct AddressbookMultigetRequest {
     href: Vec<String>,
 }
 
-pub async fn get_objects_addressbook_multiget<AS: AddressbookStore + ?Sized>(
+pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
     addressbook_multiget: &AddressbookMultigetRequest,
     path: &str,
     principal: &str,
@@ -52,7 +52,7 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore + ?Sized>(
     Ok((result, not_found))
 }
 
-pub async fn handle_addressbook_multiget<AS: AddressbookStore + ?Sized>(
+pub async fn handle_addressbook_multiget<AS: AddressbookStore>(
     addr_multiget: AddressbookMultigetRequest,
     req: HttpRequest,
     user: &User,

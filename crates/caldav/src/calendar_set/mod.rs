@@ -67,18 +67,18 @@ impl Resource for CalendarSetResource {
     }
 }
 
-pub struct CalendarSetResourceService<C: CalendarStore + ?Sized> {
+pub struct CalendarSetResourceService<C: CalendarStore> {
     cal_store: Arc<C>,
 }
 
-impl<C: CalendarStore + ?Sized> CalendarSetResourceService<C> {
+impl<C: CalendarStore> CalendarSetResourceService<C> {
     pub fn new(cal_store: Arc<C>) -> Self {
         Self { cal_store }
     }
 }
 
 #[async_trait(?Send)]
-impl<C: CalendarStore + ?Sized> ResourceService for CalendarSetResourceService<C> {
+impl<C: CalendarStore> ResourceService for CalendarSetResourceService<C> {
     type PathComponents = (String,);
     type MemberType = CalendarResource;
     type Resource = CalendarSetResource;
