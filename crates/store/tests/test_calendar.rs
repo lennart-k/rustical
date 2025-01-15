@@ -9,20 +9,14 @@ const EVENT: &str = include_str!("examples/event.ics");
 #[template]
 #[rstest]
 #[case::sqlite(async {
-    let (send, _recv) = tokio::sync::mpsc::channel(100);
-    SqliteCalendarStore::new(create_test_db().await.unwrap(), send)
-})]
+     let (send, _recv) = tokio::sync::mpsc::channel(100);
+     SqliteCalendarStore::new(create_test_db().await.unwrap(), send)
+ })]
 async fn cal_store<CS: CalendarStore>(
     #[future(awt)]
     #[case]
     mut store: CS,
 ) {
-}
-
-#[apply(cal_store)]
-#[tokio::test]
-async fn test_init<CS: CalendarStore>(_store: CS) {
-    // store.get_events("asd").await.unwrap();
 }
 
 #[apply(cal_store)]
