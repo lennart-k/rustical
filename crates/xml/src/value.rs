@@ -1,3 +1,4 @@
+use crate::{XmlDeserialize, XmlError, XmlSerialize};
 use quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
 use quick_xml::name::{Namespace, QName};
 use std::collections::HashMap;
@@ -5,7 +6,13 @@ use std::num::{ParseFloatError, ParseIntError};
 use std::{convert::Infallible, io::BufRead};
 use thiserror::Error;
 
-use crate::{XmlError, XmlDeserialize, XmlSerialize};
+pub trait ValueSerialize {
+    fn serialize(&self) -> String;
+}
+
+pub trait ValueDeserialize: Sized {
+    fn deserialize(val: &str) -> Result<Self, XmlError>;
+}
 
 #[derive(Debug, Error)]
 pub enum ParseValueError {
@@ -15,14 +22,6 @@ pub enum ParseValueError {
     ParseIntError(#[from] ParseIntError),
     #[error(transparent)]
     ParseFloatError(#[from] ParseFloatError),
-}
-
-pub trait ValueSerialize: Sized {
-    fn serialize(&self) -> String;
-}
-
-pub trait ValueDeserialize: Sized {
-    fn deserialize(val: &str) -> Result<Self, XmlError>;
 }
 
 macro_rules! impl_value_parse {

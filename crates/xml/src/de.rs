@@ -72,3 +72,23 @@ impl<T: XmlRootTag + XmlDeserialize> XmlDocument for T {
         }
     }
 }
+
+impl XmlDeserialize for () {
+    fn deserialize<R: BufRead>(
+        reader: &mut quick_xml::NsReader<R>,
+        start: &BytesStart,
+        empty: bool,
+    ) -> Result<Self, XmlError> {
+        if empty {
+            return Ok(());
+        }
+        let mut buf = Vec::new();
+        loop {
+            match reader.read_event_into(&mut buf)? {
+                Event::End(e) if e.name() == start.name() => return Ok(()),
+                Event::Eof => return Err(XmlError::Eof),
+                _ => {}
+            };
+        }
+    }
+}

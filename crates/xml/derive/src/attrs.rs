@@ -28,7 +28,8 @@ pub struct VariantAttrs {
 #[darling(attributes(xml))]
 pub struct EnumAttrs {
     #[darling(flatten)]
-    pub container: ContainerAttrs,
+    // TODO: implement ns_strict
+    pub _container: ContainerAttrs,
     pub untagged: Flag,
 }
 

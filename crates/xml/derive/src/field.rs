@@ -324,7 +324,7 @@ impl Field {
             (FieldType::Untagged, false) => Some(quote! {
                 #serializer(&self.#target_field_index, None, None, namespaces, writer)?;
             }),
-            // TODO: Think about what to do here
+            // We ignore this :)
             (FieldType::TagName | FieldType::Namespace, _) => None,
         }
     }
