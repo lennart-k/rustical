@@ -43,8 +43,12 @@ pub async fn create_db_pool(db_url: &str, migrate: bool) -> Result<Pool<Sqlite>,
     Ok(db)
 }
 
-pub async fn create_test_store() -> Result<SqliteStore, sqlx::Error> {
+pub async fn create_test_db() -> Result<SqlitePool, sqlx::Error> {
     let db = SqlitePool::connect("sqlite::memory:").await?;
     sqlx::migrate!("./migrations").run(&db).await?;
-    Ok(SqliteStore::new(db))
+    Ok(db)
+}
+
+pub async fn create_test_store() -> Result<SqliteStore, sqlx::Error> {
+    Ok(SqliteStore::new(create_test_db().await?))
 }

@@ -1,14 +1,17 @@
 use rstest::rstest;
 use rstest_reuse::{self, apply, template};
 use rustical_store::{CalendarObject, CalendarStore};
-use rustical_store_sqlite::create_test_store;
+use rustical_store_sqlite::{calendar_store::SqliteCalendarStore, create_test_db};
 
 const TIMEZONE: &str = include_str!("examples/timezone.ics");
 const EVENT: &str = include_str!("examples/event.ics");
 
 #[template]
 #[rstest]
-#[case::sqlite(async {create_test_store().await.unwrap() })]
+#[case::sqlite(async {
+    let (send, _recv) = tokio::sync::mpsc::channel(100);
+    SqliteCalendarStore::new(create_test_db().await.unwrap(), send)
+})]
 async fn cal_store<CS: CalendarStore>(
     #[future(awt)]
     #[case]
