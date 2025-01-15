@@ -12,6 +12,9 @@ use std::{collections::HashMap, ops::Add};
 
 lazy_static! {
     static ref RE_DURATION: regex::Regex = regex::Regex::new(r"^(?<sign>[+-])?P((?P<W>\d+)W)?((?P<D>\d+)D)?(T((?P<H>\d+)H)?((?P<M>\d+)M)?((?P<S>\d+)S)?)?$").unwrap();
+
+    static ref RE_VCARD_DATE_MM_DD: regex::Regex =
+        regex::Regex::new(r"^--(?<m>\d{2})(?<d>\d{2})$").unwrap();
 }
 
 const LOCAL_DATE_TIME: &str = "%Y%m%dT%H%M%S";
@@ -39,7 +42,7 @@ impl ValueSerialize for UtcDateTime {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum CalDateTime {
     // Form 1, example: 19980118T230000
     Local(NaiveDateTime),
@@ -168,6 +171,25 @@ impl CalDateTime {
             return Ok(CalDateTime::Date(date));
         }
 
+        if let Ok(date) = NaiveDate::parse_from_str(value, "%Y-%m-%d") {
+            return Ok(CalDateTime::Date(date));
+        }
+        if let Ok(date) = NaiveDate::parse_from_str(value, "%Y%m%d") {
+            return Ok(CalDateTime::Date(date));
+        }
+        if let Some(captures) = RE_VCARD_DATE_MM_DD.captures(value) {
+            // Because 1972 is a leap year
+            let year = 1972;
+            // Cannot fail because of the regex
+            let month = captures.name("m").unwrap().as_str().parse().ok().unwrap();
+            let day = captures.name("d").unwrap().as_str().parse().ok().unwrap();
+
+            return Ok(CalDateTime::Date(
+                NaiveDate::from_ymd_opt(year, month, day)
+                    .ok_or(Error::InvalidData(format!("Could not parse date {value}")))?,
+            ));
+        }
+
         Err(Error::InvalidData("Invalid datetime format".to_owned()))
     }
 
@@ -224,4 +246,20 @@ fn test_parse_duration() {
     assert_eq!(parse_duration("PT12H").unwrap(), Duration::hours(12));
     assert_eq!(parse_duration("PT12M").unwrap(), Duration::minutes(12));
     assert_eq!(parse_duration("PT12S").unwrap(), Duration::seconds(12));
+}
+
+#[test]
+fn test_vcard_date() {
+    assert_eq!(
+        CalDateTime::parse("19850412", None).unwrap(),
+        CalDateTime::Date(NaiveDate::from_ymd_opt(1985, 4, 12).unwrap())
+    );
+    assert_eq!(
+        CalDateTime::parse("1985-04-12", None).unwrap(),
+        CalDateTime::Date(NaiveDate::from_ymd_opt(1985, 4, 12).unwrap())
+    );
+    assert_eq!(
+        CalDateTime::parse("--0412", None).unwrap(),
+        CalDateTime::Date(NaiveDate::from_ymd_opt(1972, 4, 12).unwrap())
+    );
 }
