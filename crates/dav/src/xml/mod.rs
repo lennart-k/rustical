@@ -12,6 +12,7 @@ pub mod sync_collection;
 
 #[derive(XmlDeserialize, XmlSerialize, Debug, Clone, From, PartialEq)]
 pub struct HrefElement {
+    #[xml(ns = "crate::namespace::NS_DAV")]
     pub href: String,
 }
 
