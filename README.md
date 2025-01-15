@@ -66,6 +66,17 @@ Since it's sensitive information, the secure but slow hash algorithm `argon2` is
 I recommend to generate random app tokens for each CalDAV/CardDAV client.
 These can use the faster `pbkdf2` algorithm.
 
+### WebDAV Push
+
+RustiCal supports [WebDAV Push](https://github.com/bitfireAT/webdav-push/) which can notify compatible clients like DAVx5 about changed calendar/addressbook objects.
+Since push messages are currently not encrypted you might potentially want to ensure that users only subscribe through your push server (e.g. [ntfy.sh](https://ntfy.sh/)), you can configure it the following:
+
+```toml
+[dav_push]
+# Must strictly be the URL origin (so no trailing slashes)
+allowed_push_servers = ["https://your-instance-ntfy.sh"]
+```
+
 ## Relevant RFCs
 
 - Versioning Extensions to WebDAV: [RFC 3253](https://datatracker.ietf.org/doc/html/rfc3253)
