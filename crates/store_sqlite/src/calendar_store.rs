@@ -1,6 +1,7 @@
 use super::ChangeOperation;
 use async_trait::async_trait;
 use derive_more::derive::Constructor;
+use rustical_store::calendar::CalDateTime;
 use rustical_store::synctoken::format_synctoken;
 use rustical_store::{Calendar, CalendarObject, CalendarStore, Error};
 use rustical_store::{CollectionOperation, CollectionOperationType};
@@ -277,22 +278,45 @@ impl CalendarStore for SqliteCalendarStore {
 
         let (object_id, ics) = (object.get_id(), object.get_ics());
 
+        let first_occurence = object
+            .get_first_occurence()
+            .ok()
+            .flatten()
+            .as_ref()
+            .map(CalDateTime::date);
+        let last_occurence = object
+            .get_last_occurence()
+            .ok()
+            .flatten()
+            .as_ref()
+            .map(CalDateTime::date);
+        let etag = object.get_etag();
+        let object_type = object.get_object_type() as u8;
+
         (if overwrite {
             sqlx::query!(
-                "REPLACE INTO calendarobjects (principal, cal_id, id, ics) VALUES (?, ?, ?, ?)",
-                principal,
-                cal_id,
-                object_id,
-                ics
-            )
-        } else {
-            // If the object already exists a database error is thrown and handled in error.rs
-            sqlx::query!(
-                "INSERT INTO calendarobjects (principal, cal_id, id, ics) VALUES (?, ?, ?, ?)",
+                "REPLACE INTO calendarobjects (principal, cal_id, id, ics, first_occurence, last_occurence, etag, object_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 principal,
                 cal_id,
                 object_id,
                 ics,
+                first_occurence,
+                last_occurence,
+                etag,
+                object_type,
+            )
+        } else {
+            // If the object already exists a database error is thrown and handled in error.rs
+            sqlx::query!(
+                "INSERT INTO calendarobjects (principal, cal_id, id, ics, first_occurence, last_occurence, etag, object_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                principal,
+                cal_id,
+                object_id,
+                ics,
+                first_occurence,
+                last_occurence,
+                etag,
+                object_type,
             )
         })
         .execute(&mut *tx)

@@ -21,10 +21,22 @@ CREATE TABLE calendarobjects (
     ics TEXT NOT NULL,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     deleted_at DATETIME,
+
+    -- For more efficient calendar-queries
+    first_occurence DATE,
+    last_occurence DATE,
+    etag TEXT,
+    object_type INTEGER NOT NULL,  -- VEVENT(0)/VTODO(1)/VJOURNAL(2)
+
     PRIMARY KEY (principal, cal_id, id),
     FOREIGN KEY (principal, cal_id)
     REFERENCES calendars (principal, id) ON DELETE CASCADE
 );
+
+CREATE INDEX idx_calobjs_first_occurence ON calendarobjects (first_occurence);
+CREATE INDEX idx_calobjs_last_occurence ON calendarobjects (last_occurence);
+CREATE INDEX idx_calobjs_etag ON calendarobjects (etag);
+CREATE INDEX idx_calobjs_obj_type ON calendarobjects (object_type);
 
 CREATE TABLE calendarobjectchangelog (
     principal TEXT NOT NULL,
@@ -37,3 +49,5 @@ CREATE TABLE calendarobjectchangelog (
     FOREIGN KEY (principal, cal_id)
     REFERENCES calendars (principal, id) ON DELETE CASCADE
 );
+
+CREATE INDEX idx_calobj_log_cal ON calendarobjectchangelog (cal_id);

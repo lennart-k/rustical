@@ -8,9 +8,9 @@ use std::{collections::HashMap, io::BufReader};
 #[derive(Debug, Clone)]
 // specified in https://datatracker.ietf.org/doc/html/rfc5545#section-3.6
 pub enum CalendarObjectType {
-    Event,
-    Journal,
-    Todo,
+    Event = 0,
+    Todo = 1,
+    Journal = 2,
 }
 
 #[derive(Debug, Clone)]
@@ -111,6 +111,14 @@ impl CalendarObject {
             CalendarObjectComponent::Todo(_) => "VTODO",
             CalendarObjectComponent::Event(_) => "VEVENT",
             CalendarObjectComponent::Journal(_) => "VJOURNAL",
+        }
+    }
+
+    pub fn get_object_type(&self) -> CalendarObjectType {
+        match self.data {
+            CalendarObjectComponent::Todo(_) => CalendarObjectType::Todo,
+            CalendarObjectComponent::Event(_) => CalendarObjectType::Event,
+            CalendarObjectComponent::Journal(_) => CalendarObjectType::Journal,
         }
     }
 

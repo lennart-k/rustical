@@ -32,3 +32,5 @@ CREATE TABLE addressobjectchangelog (
     FOREIGN KEY (principal, addressbook_id)
     REFERENCES addressbooks (principal, id) ON DELETE CASCADE
 );
+
+CREATE INDEX idx_addrobj_log_cal ON addressobjectchangelog (addressbook_id);
