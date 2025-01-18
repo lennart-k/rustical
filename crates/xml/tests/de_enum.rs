@@ -112,3 +112,52 @@ fn test_enum_document() {
         Document::Goodbye
     );
 }
+
+#[test]
+fn test_untagged_enum() {
+    #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
+    #[xml(root = b"document")]
+    struct Document {
+        prop: PropElement,
+    }
+
+    #[derive(Debug, XmlDeserialize, PartialEq)]
+    struct PropElement {
+        #[xml(ty = "untagged", flatten)]
+        props: Vec<Prop>,
+    }
+
+    #[derive(Debug, XmlDeserialize, PartialEq)]
+    #[xml(untagged)]
+    enum Prop {
+        DefaultProp(DefaultProp),
+        ExtensionProp(ExtensionProp),
+    }
+
+    #[derive(Debug, XmlDeserialize, PartialEq)]
+    enum DefaultProp {
+        Displayname(String),
+    }
+    #[derive(Debug, XmlDeserialize, PartialEq)]
+    enum ExtensionProp {
+        Extension(Extension),
+    }
+
+    #[derive(Debug, XmlDeserialize, PartialEq)]
+    struct Extension {
+        okay: Option<()>,
+        nice: Option<()>,
+    }
+
+    let doc = Document::parse_str(
+        r#"<document>
+        <prop>
+            <displayname>Hello</displayname>
+            <extension><okay /></extension>
+            <displayname>Hello</displayname>
+        </prop>
+    </document>"#,
+    )
+    .unwrap();
+    dbg!(doc);
+}
