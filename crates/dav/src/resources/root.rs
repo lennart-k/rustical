@@ -1,14 +1,13 @@
+use crate::extensions::{
+    CommonPropertiesExtension, CommonPropertiesProp, CommonPropertiesPropName,
+};
 use crate::privileges::UserPrivilegeSet;
 use crate::resource::{NamedRoute, Resource, ResourceService};
 use crate::xml::{Resourcetype, ResourcetypeInner};
 use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
-use quick_xml::name::Namespace;
 use rustical_store::auth::User;
-use rustical_xml::{EnumVariants, XmlDeserialize, XmlSerialize};
-use serde::Serialize;
 use std::marker::PhantomData;
-use strum::{EnumString, IntoStaticStr};
 
 #[derive(Clone)]
 pub struct RootResource<PR: Resource>(PhantomData<PR>);
@@ -19,28 +18,9 @@ impl<PR: Resource> Default for RootResource<PR> {
     }
 }
 
-#[derive(EnumString, Clone, IntoStaticStr)]
-#[strum(serialize_all = "kebab-case")]
-pub enum RootResourcePropName {}
-
-impl From<RootResourcePropName> for (Option<Namespace<'static>>, &'static str) {
-    fn from(_value: RootResourcePropName) -> Self {
-        (None, "unreachable")
-    }
-}
-
-#[derive(XmlDeserialize, XmlSerialize, Serialize, Clone, PartialEq, EnumVariants)]
-pub enum RootResourceProp {}
-
-impl From<RootResourceProp> for RootResourcePropName {
-    fn from(_value: RootResourceProp) -> Self {
-        unreachable!()
-    }
-}
-
 impl<PR: Resource + NamedRoute> Resource for RootResource<PR> {
-    type PropName = RootResourcePropName;
-    type Prop = RootResourceProp;
+    type PropName = CommonPropertiesPropName;
+    type Prop = CommonPropertiesProp;
     type Error = PR::Error;
     type PrincipalResource = PR;
 
@@ -53,11 +33,11 @@ impl<PR: Resource + NamedRoute> Resource for RootResource<PR> {
 
     fn get_prop(
         &self,
-        _rmap: &ResourceMap,
-        _user: &User,
-        _prop: &Self::PropName,
+        rmap: &ResourceMap,
+        user: &User,
+        prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
-        unreachable!("we shouldn't end up here")
+        CommonPropertiesExtension::get_prop(self, rmap, user, prop)
     }
 
     fn get_user_privileges(&self, _user: &User) -> Result<UserPrivilegeSet, Self::Error> {

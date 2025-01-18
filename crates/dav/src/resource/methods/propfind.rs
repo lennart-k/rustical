@@ -1,7 +1,5 @@
 use crate::depth_header::Depth;
 use crate::privileges::UserPrivilege;
-use crate::resource::CommonPropertiesProp;
-use crate::resource::EitherProp;
 use crate::resource::Resource;
 use crate::resource::ResourceService;
 use crate::xml::MultistatusElement;
@@ -28,10 +26,7 @@ pub(crate) async fn route_propfind<R: ResourceService>(
     root_span: RootSpan,
     resource_service: Data<R>,
 ) -> Result<
-    MultistatusElement<
-        EitherProp<<R::Resource as Resource>::Prop, CommonPropertiesProp>,
-        EitherProp<<R::MemberType as Resource>::Prop, CommonPropertiesProp>,
-    >,
+    MultistatusElement<<R::Resource as Resource>::Prop, <R::MemberType as Resource>::Prop>,
     R::Error,
 > {
     let resource = resource_service.get_resource(&path).await?;

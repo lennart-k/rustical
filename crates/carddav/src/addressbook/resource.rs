@@ -11,7 +11,8 @@ use actix_web::web;
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::extensions::{
-    DavPushExtension, DavPushExtensionProp, SyncTokenExtension, SyncTokenExtensionProp,
+    CommonPropertiesExtension, CommonPropertiesProp, DavPushExtension, DavPushExtensionProp,
+    SyncTokenExtension, SyncTokenExtensionProp,
 };
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{Resource, ResourceService};
@@ -63,6 +64,7 @@ pub enum AddressbookPropWrapper {
     Addressbook(AddressbookProp),
     SyncToken(SyncTokenExtensionProp),
     DavPush(DavPushExtensionProp),
+    Common(CommonPropertiesProp),
 }
 
 #[derive(Clone, Debug, From, Into)]
@@ -95,8 +97,8 @@ impl Resource for AddressbookResource {
 
     fn get_prop(
         &self,
-        _rmap: &ResourceMap,
-        _user: &User,
+        rmap: &ResourceMap,
+        user: &User,
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
@@ -129,6 +131,9 @@ impl Resource for AddressbookResource {
             AddressbookPropWrapperName::DavPush(prop) => {
                 AddressbookPropWrapper::DavPush(<Self as DavPushExtension>::get_prop(self, prop)?)
             }
+            AddressbookPropWrapperName::Common(prop) => AddressbookPropWrapper::Common(
+                CommonPropertiesExtension::get_prop(self, rmap, user, prop)?,
+            ),
         })
     }
 
@@ -148,12 +153,9 @@ impl Resource for AddressbookResource {
                 AddressbookProp::SupportedReportSet(_) => Err(rustical_dav::Error::PropReadOnly),
                 AddressbookProp::SupportedAddressData(_) => Err(rustical_dav::Error::PropReadOnly),
             },
-            AddressbookPropWrapper::SyncToken(prop) => {
-                <Self as SyncTokenExtension>::set_prop(self, prop)
-            }
-            AddressbookPropWrapper::DavPush(prop) => {
-                <Self as DavPushExtension>::set_prop(self, prop)
-            }
+            AddressbookPropWrapper::SyncToken(prop) => SyncTokenExtension::set_prop(self, prop),
+            AddressbookPropWrapper::DavPush(prop) => DavPushExtension::set_prop(self, prop),
+            AddressbookPropWrapper::Common(prop) => CommonPropertiesExtension::set_prop(self, prop),
         }
     }
 
@@ -174,10 +176,11 @@ impl Resource for AddressbookResource {
                 AddressbookPropName::SupportedAddressData => Err(rustical_dav::Error::PropReadOnly),
             },
             AddressbookPropWrapperName::SyncToken(prop) => {
-                <Self as SyncTokenExtension>::remove_prop(self, prop)
+                SyncTokenExtension::remove_prop(self, prop)
             }
-            AddressbookPropWrapperName::DavPush(prop) => {
-                <Self as DavPushExtension>::remove_prop(self, prop)
+            AddressbookPropWrapperName::DavPush(prop) => DavPushExtension::remove_prop(self, prop),
+            AddressbookPropWrapperName::Common(prop) => {
+                CommonPropertiesExtension::remove_prop(self, prop)
             }
         }
     }

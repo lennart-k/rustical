@@ -1,5 +1,5 @@
 use crate::{
-    calendar_object::resource::{CalendarObjectProp, CalendarObjectResource},
+    calendar_object::resource::{CalendarObjectPropWrapper, CalendarObjectResource},
     Error,
 };
 use actix_web::{
@@ -8,7 +8,7 @@ use actix_web::{
     HttpRequest,
 };
 use rustical_dav::{
-    resource::{CommonPropertiesProp, EitherProp, Resource},
+    resource::Resource,
     xml::{multistatus::ResponseElement, MultistatusElement, PropElement, PropfindType},
 };
 use rustical_store::{auth::User, CalendarObject, CalendarStore};
@@ -60,8 +60,7 @@ pub async fn handle_calendar_multiget<C: CalendarStore>(
     principal: &str,
     cal_id: &str,
     cal_store: &C,
-) -> Result<MultistatusElement<EitherProp<CalendarObjectProp, CommonPropertiesProp>, String>, Error>
-{
+) -> Result<MultistatusElement<CalendarObjectPropWrapper, String>, Error> {
     let (objects, not_found) =
         get_objects_calendar_multiget(&cal_multiget, req.path(), principal, cal_id, cal_store)
             .await?;

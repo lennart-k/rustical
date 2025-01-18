@@ -3,6 +3,7 @@ use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
 use derive_more::derive::{Constructor, From, Into};
 use rustical_dav::{
+    extensions::{CommonPropertiesExtension, CommonPropertiesProp},
     privileges::UserPrivilegeSet,
     resource::{Resource, ResourceService},
     xml::Resourcetype,
@@ -33,6 +34,13 @@ pub enum AddressObjectProp {
     AddressData(String),
 }
 
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
+#[xml(unit_variants_ident = "AddressObjectPropWrapperName", untagged)]
+pub enum AddressObjectPropWrapper {
+    AddressObject(AddressObjectProp),
+    Common(CommonPropertiesProp),
+}
+
 #[derive(Clone, From, Into)]
 pub struct AddressObjectResource {
     pub object: AddressObject,
@@ -40,8 +48,8 @@ pub struct AddressObjectResource {
 }
 
 impl Resource for AddressObjectResource {
-    type PropName = AddressObjectPropName;
-    type Prop = AddressObjectProp;
+    type PropName = AddressObjectPropWrapperName;
+    type Prop = AddressObjectPropWrapper;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
 
@@ -51,18 +59,27 @@ impl Resource for AddressObjectResource {
 
     fn get_prop(
         &self,
-        _rmap: &ResourceMap,
-        _user: &User,
+        rmap: &ResourceMap,
+        user: &User,
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
-            AddressObjectPropName::Getetag => AddressObjectProp::Getetag(self.object.get_etag()),
-            AddressObjectPropName::AddressData => {
-                AddressObjectProp::AddressData(self.object.get_vcf().to_owned())
+            AddressObjectPropWrapperName::AddressObject(prop) => {
+                AddressObjectPropWrapper::AddressObject(match prop {
+                    AddressObjectPropName::Getetag => {
+                        AddressObjectProp::Getetag(self.object.get_etag())
+                    }
+                    AddressObjectPropName::AddressData => {
+                        AddressObjectProp::AddressData(self.object.get_vcf().to_owned())
+                    }
+                    AddressObjectPropName::Getcontenttype => {
+                        AddressObjectProp::Getcontenttype("text/vcard;charset=utf-8")
+                    }
+                })
             }
-            AddressObjectPropName::Getcontenttype => {
-                AddressObjectProp::Getcontenttype("text/vcard;charset=utf-8")
-            }
+            AddressObjectPropWrapperName::Common(prop) => AddressObjectPropWrapper::Common(
+                CommonPropertiesExtension::get_prop(self, rmap, user, prop)?,
+            ),
         })
     }
 

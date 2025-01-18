@@ -2,6 +2,7 @@ use crate::addressbook::resource::AddressbookResource;
 use crate::Error;
 use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
+use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{NamedRoute, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
@@ -43,6 +44,13 @@ pub enum PrincipalProp {
     PrincipalAddress(Option<HrefElement>),
 }
 
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
+#[xml(unit_variants_ident = "PrincipalPropWrapperName", untagged)]
+pub enum PrincipalPropWrapper {
+    Principal(PrincipalProp),
+    Common(CommonPropertiesProp),
+}
+
 impl PrincipalResource {
     pub fn get_principal_url(rmap: &ResourceMap, principal: &str) -> String {
         Self::get_url(rmap, vec![principal]).unwrap()
@@ -56,8 +64,8 @@ impl NamedRoute for PrincipalResource {
 }
 
 impl Resource for PrincipalResource {
-    type PropName = PrincipalPropName;
-    type Prop = PrincipalProp;
+    type PropName = PrincipalPropWrapperName;
+    type Prop = PrincipalPropWrapper;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
 
@@ -71,18 +79,28 @@ impl Resource for PrincipalResource {
     fn get_prop(
         &self,
         rmap: &ResourceMap,
-        _user: &User,
+        user: &User,
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         let principal_href = HrefElement::new(Self::get_principal_url(rmap, &self.principal));
 
         Ok(match prop {
-            PrincipalPropName::Displayname => PrincipalProp::Displayname(self.principal.to_owned()),
-            PrincipalPropName::PrincipalUrl => PrincipalProp::PrincipalUrl(principal_href),
-            PrincipalPropName::AddressbookHomeSet => {
-                PrincipalProp::AddressbookHomeSet(principal_href)
+            PrincipalPropWrapperName::Principal(prop) => {
+                PrincipalPropWrapper::Principal(match prop {
+                    PrincipalPropName::Displayname => {
+                        PrincipalProp::Displayname(self.principal.to_owned())
+                    }
+                    PrincipalPropName::PrincipalUrl => PrincipalProp::PrincipalUrl(principal_href),
+                    PrincipalPropName::AddressbookHomeSet => {
+                        PrincipalProp::AddressbookHomeSet(principal_href)
+                    }
+                    PrincipalPropName::PrincipalAddress => PrincipalProp::PrincipalAddress(None),
+                })
             }
-            PrincipalPropName::PrincipalAddress => PrincipalProp::PrincipalAddress(None),
+
+            PrincipalPropWrapperName::Common(prop) => PrincipalPropWrapper::Common(
+                CommonPropertiesExtension::get_prop(self, rmap, user, prop)?,
+            ),
         })
     }
 

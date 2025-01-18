@@ -1,7 +1,7 @@
 use crate::privileges::UserPrivilegeSet;
 use crate::xml::multistatus::{PropTagWrapper, PropstatElement, PropstatWrapper};
+use crate::xml::Resourcetype;
 use crate::xml::{multistatus::ResponseElement, TagList};
-use crate::xml::{HrefElement, Resourcetype};
 use crate::Error;
 use actix_web::dev::ResourceMap;
 use actix_web::{http::StatusCode, ResponseError};
@@ -11,7 +11,6 @@ pub use resource_service::ResourceService;
 use rustical_store::auth::User;
 use rustical_xml::{EnumVariants, XmlDeserialize, XmlSerialize};
 use std::str::FromStr;
-use strum::EnumString;
 
 mod methods;
 mod resource_service;
@@ -24,41 +23,6 @@ impl<T: XmlSerialize + XmlDeserialize> ResourceProp for T {}
 pub trait ResourcePropName: FromStr {}
 impl<T: FromStr> ResourcePropName for T {}
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumVariants)]
-pub enum CommonPropertiesProp {
-    // WebDAV (RFC 2518)
-    #[xml(skip_deserializing)]
-    #[xml(ns = "crate::namespace::NS_DAV")]
-    Resourcetype(Resourcetype),
-
-    // WebDAV Current Principal Extension (RFC 5397)
-    #[xml(ns = "crate::namespace::NS_DAV")]
-    CurrentUserPrincipal(HrefElement),
-
-    // WebDAV Access Control Protocol (RFC 3477)
-    #[xml(skip_deserializing)]
-    #[xml(ns = "crate::namespace::NS_DAV")]
-    CurrentUserPrivilegeSet(UserPrivilegeSet),
-    #[xml(ns = "crate::namespace::NS_DAV")]
-    Owner(Option<HrefElement>),
-}
-
-#[derive(XmlSerialize)]
-#[xml(untagged)]
-pub enum EitherProp<Left: ResourceProp, Right: ResourceProp> {
-    Left(Left),
-    Right(Right),
-}
-
-#[derive(EnumString, Clone)]
-#[strum(serialize_all = "kebab-case")]
-pub enum CommonPropertiesPropName {
-    Resourcetype,
-    CurrentUserPrincipal,
-    CurrentUserPrivilegeSet,
-    Owner,
-}
-
 pub trait Resource: Clone + 'static {
     type PropName: ResourcePropName
         + From<Self::Prop>
@@ -70,41 +34,7 @@ pub trait Resource: Clone + 'static {
     fn get_resourcetype(&self) -> Resourcetype;
 
     fn list_props() -> Vec<(Option<Namespace<'static>>, &'static str)> {
-        [
-            Self::Prop::variant_names(),
-            CommonPropertiesProp::variant_names(),
-        ]
-        .concat()
-    }
-
-    fn get_internal_prop(
-        &self,
-        rmap: &ResourceMap,
-        user: &User,
-        prop: &CommonPropertiesPropName,
-    ) -> Result<CommonPropertiesProp, Self::Error> {
-        Ok(match prop {
-            CommonPropertiesPropName::Resourcetype => {
-                CommonPropertiesProp::Resourcetype(self.get_resourcetype())
-            }
-            CommonPropertiesPropName::CurrentUserPrincipal => {
-                CommonPropertiesProp::CurrentUserPrincipal(
-                    Self::PrincipalResource::get_url(rmap, [&user.id])
-                        .unwrap()
-                        .into(),
-                )
-            }
-            CommonPropertiesPropName::CurrentUserPrivilegeSet => {
-                CommonPropertiesProp::CurrentUserPrivilegeSet(self.get_user_privileges(user)?)
-            }
-            CommonPropertiesPropName::Owner => {
-                CommonPropertiesProp::Owner(self.get_owner().map(|owner| {
-                    Self::PrincipalResource::get_url(rmap, [owner])
-                        .unwrap()
-                        .into()
-                }))
-            }
-        })
+        Self::Prop::variant_names()
     }
 
     fn get_prop(
@@ -134,7 +64,7 @@ pub trait Resource: Clone + 'static {
         props: &[&str],
         user: &User,
         rmap: &ResourceMap,
-    ) -> Result<ResponseElement<EitherProp<Self::Prop, CommonPropertiesProp>>, Self::Error> {
+    ) -> Result<ResponseElement<Self::Prop>, Self::Error> {
         let mut props = props.to_vec();
 
         if props.contains(&"propname") {
@@ -174,30 +104,19 @@ pub trait Resource: Clone + 'static {
         }
 
         let mut valid_props = vec![];
-        let mut internal_props = vec![];
         let mut invalid_props = vec![];
         for prop in props {
             if let Ok(valid_prop) = Self::PropName::from_str(prop) {
                 valid_props.push(valid_prop);
-            } else if let Ok(internal_prop) = CommonPropertiesPropName::from_str(prop) {
-                internal_props.push(internal_prop);
             } else {
                 invalid_props.push(prop.to_string())
             }
         }
 
-        let internal_prop_responses: Vec<_> = internal_props
-            .into_iter()
-            .map(|prop| self.get_internal_prop(rmap, user, &prop))
-            .map_ok(EitherProp::Right)
-            .collect::<Result<_, Self::Error>>()?;
-
-        let mut prop_responses = valid_props
+        let prop_responses = valid_props
             .into_iter()
             .map(|prop| self.get_prop(rmap, user, &prop))
-            .map_ok(EitherProp::Left)
             .collect::<Result<Vec<_>, Self::Error>>()?;
-        prop_responses.extend(internal_prop_responses);
 
         let mut propstats = vec![PropstatWrapper::Normal(PropstatElement {
             status: StatusCode::OK,

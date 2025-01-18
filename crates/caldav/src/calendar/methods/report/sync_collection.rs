@@ -1,6 +1,6 @@
 use actix_web::{http::StatusCode, HttpRequest};
 use rustical_dav::{
-    resource::{CommonPropertiesProp, EitherProp, Resource},
+    resource::Resource,
     xml::{
         multistatus::ResponseElement, sync_collection::SyncCollectionRequest, MultistatusElement,
         PropElement, PropfindType,
@@ -13,7 +13,7 @@ use rustical_store::{
 };
 
 use crate::{
-    calendar_object::resource::{CalendarObjectProp, CalendarObjectResource},
+    calendar_object::resource::{CalendarObjectPropWrapper, CalendarObjectResource},
     Error,
 };
 
@@ -24,8 +24,7 @@ pub async fn handle_sync_collection<C: CalendarStore>(
     principal: &str,
     cal_id: &str,
     cal_store: &C,
-) -> Result<MultistatusElement<EitherProp<CalendarObjectProp, CommonPropertiesProp>, String>, Error>
-{
+) -> Result<MultistatusElement<CalendarObjectPropWrapper, String>, Error> {
     let props = match sync_collection.prop {
         PropfindType::Allprop => {
             vec!["allprop".to_owned()]

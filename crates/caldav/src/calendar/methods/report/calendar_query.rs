@@ -2,14 +2,14 @@ use std::ops::Deref;
 
 use actix_web::HttpRequest;
 use rustical_dav::{
-    resource::{CommonPropertiesProp, EitherProp, Resource},
+    resource::Resource,
     xml::{MultistatusElement, PropElement, PropfindType},
 };
 use rustical_store::{auth::User, calendar::UtcDateTime, CalendarObject, CalendarStore};
 use rustical_xml::XmlDeserialize;
 
 use crate::{
-    calendar_object::resource::{CalendarObjectProp, CalendarObjectResource},
+    calendar_object::resource::{CalendarObjectPropWrapper, CalendarObjectResource},
     Error,
 };
 
@@ -185,8 +185,7 @@ pub async fn handle_calendar_query<C: CalendarStore>(
     principal: &str,
     cal_id: &str,
     cal_store: &C,
-) -> Result<MultistatusElement<EitherProp<CalendarObjectProp, CommonPropertiesProp>, String>, Error>
-{
+) -> Result<MultistatusElement<CalendarObjectPropWrapper, String>, Error> {
     let objects = get_objects_calendar_query(&cal_query, principal, cal_id, cal_store).await?;
 
     let props = match cal_query.prop {

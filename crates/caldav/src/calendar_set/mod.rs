@@ -3,6 +3,7 @@ use crate::principal::PrincipalResource;
 use crate::Error;
 use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
+use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{NamedRoute, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
@@ -24,9 +25,16 @@ pub enum PrincipalProp {
     PrincipalUrl(HrefElement),
 }
 
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
+#[xml(unit_variants_ident = "PrincipalPropWrapperName", untagged)]
+pub enum PrincipalPropWrapper {
+    Principal(PrincipalProp),
+    Common(CommonPropertiesProp),
+}
+
 impl Resource for CalendarSetResource {
-    type PropName = PrincipalPropName;
-    type Prop = PrincipalProp;
+    type PropName = PrincipalPropWrapperName;
+    type Prop = PrincipalPropWrapper;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
 
@@ -40,7 +48,7 @@ impl Resource for CalendarSetResource {
     fn get_prop(
         &self,
         rmap: &ResourceMap,
-        _user: &User,
+        user: &User,
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         let principal_href = HrefElement::new(
@@ -48,7 +56,15 @@ impl Resource for CalendarSetResource {
         );
 
         Ok(match prop {
-            PrincipalPropName::PrincipalUrl => PrincipalProp::PrincipalUrl(principal_href),
+            PrincipalPropWrapperName::Principal(prop) => {
+                PrincipalPropWrapper::Principal(match prop {
+                    PrincipalPropName::PrincipalUrl => PrincipalProp::PrincipalUrl(principal_href),
+                })
+            }
+
+            PrincipalPropWrapperName::Common(prop) => PrincipalPropWrapper::Common(
+                <Self as CommonPropertiesExtension>::get_prop(self, rmap, user, prop)?,
+            ),
         })
     }
 

@@ -1,10 +1,10 @@
 use crate::{
-    address_object::resource::{AddressObjectProp, AddressObjectResource},
+    address_object::resource::{AddressObjectPropWrapper, AddressObjectResource},
     Error,
 };
 use actix_web::{http::StatusCode, HttpRequest};
 use rustical_dav::{
-    resource::{CommonPropertiesProp, EitherProp, Resource},
+    resource::Resource,
     xml::{
         multistatus::ResponseElement, sync_collection::SyncCollectionRequest, MultistatusElement,
         PropElement, PropfindType,
@@ -23,8 +23,7 @@ pub async fn handle_sync_collection<AS: AddressbookStore>(
     principal: &str,
     addressbook_id: &str,
     addr_store: &AS,
-) -> Result<MultistatusElement<EitherProp<AddressObjectProp, CommonPropertiesProp>, String>, Error>
-{
+) -> Result<MultistatusElement<AddressObjectPropWrapper, String>, Error> {
     let props = match sync_collection.prop {
         PropfindType::Allprop => {
             vec!["allprop".to_owned()]

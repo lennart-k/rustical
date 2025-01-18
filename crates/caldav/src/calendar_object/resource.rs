@@ -4,6 +4,7 @@ use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::{
+    extensions::{CommonPropertiesExtension, CommonPropertiesProp},
     privileges::UserPrivilegeSet,
     resource::{Resource, ResourceService},
     xml::Resourcetype,
@@ -37,6 +38,13 @@ pub enum CalendarObjectProp {
     CalendarData(String),
 }
 
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
+#[xml(unit_variants_ident = "CalendarObjectPropWrapperName", untagged)]
+pub enum CalendarObjectPropWrapper {
+    CalendarObject(CalendarObjectProp),
+    Common(CommonPropertiesProp),
+}
+
 #[derive(Clone, From, Into)]
 pub struct CalendarObjectResource {
     pub object: CalendarObject,
@@ -44,8 +52,8 @@ pub struct CalendarObjectResource {
 }
 
 impl Resource for CalendarObjectResource {
-    type PropName = CalendarObjectPropName;
-    type Prop = CalendarObjectProp;
+    type PropName = CalendarObjectPropWrapperName;
+    type Prop = CalendarObjectPropWrapper;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
 
@@ -55,18 +63,27 @@ impl Resource for CalendarObjectResource {
 
     fn get_prop(
         &self,
-        _rmap: &ResourceMap,
-        _user: &User,
+        rmap: &ResourceMap,
+        user: &User,
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
-            CalendarObjectPropName::Getetag => CalendarObjectProp::Getetag(self.object.get_etag()),
-            CalendarObjectPropName::CalendarData => {
-                CalendarObjectProp::CalendarData(self.object.get_ics().to_owned())
+            CalendarObjectPropWrapperName::CalendarObject(prop) => {
+                CalendarObjectPropWrapper::CalendarObject(match prop {
+                    CalendarObjectPropName::Getetag => {
+                        CalendarObjectProp::Getetag(self.object.get_etag())
+                    }
+                    CalendarObjectPropName::CalendarData => {
+                        CalendarObjectProp::CalendarData(self.object.get_ics().to_owned())
+                    }
+                    CalendarObjectPropName::Getcontenttype => {
+                        CalendarObjectProp::Getcontenttype("text/calendar;charset=utf-8")
+                    }
+                })
             }
-            CalendarObjectPropName::Getcontenttype => {
-                CalendarObjectProp::Getcontenttype("text/calendar;charset=utf-8")
-            }
+            CalendarObjectPropWrapperName::Common(prop) => CalendarObjectPropWrapper::Common(
+                CommonPropertiesExtension::get_prop(self, rmap, user, prop)?,
+            ),
         })
     }
 

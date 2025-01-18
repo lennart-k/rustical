@@ -11,7 +11,8 @@ use actix_web::web;
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::extensions::{
-    DavPushExtension, DavPushExtensionProp, SyncTokenExtension, SyncTokenExtensionProp,
+    CommonPropertiesExtension, CommonPropertiesProp, DavPushExtension, DavPushExtensionProp,
+    SyncTokenExtension, SyncTokenExtensionProp,
 };
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{Resource, ResourceService};
@@ -66,6 +67,7 @@ pub enum CalendarPropWrapper {
     Calendar(CalendarProp),
     SyncToken(SyncTokenExtensionProp),
     DavPush(DavPushExtensionProp),
+    Common(CommonPropertiesProp),
 }
 
 #[derive(Clone, Debug, From, Into)]
@@ -117,8 +119,8 @@ impl Resource for CalendarResource {
 
     fn get_prop(
         &self,
-        _rmap: &ResourceMap,
-        _user: &User,
+        rmap: &ResourceMap,
+        user: &User,
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
@@ -160,18 +162,19 @@ impl Resource for CalendarResource {
                 CalendarPropName::SupportedReportSet => {
                     CalendarProp::SupportedReportSet(SupportedReportSet::default())
                 }
-                // CalendarPropName::SyncToken => CalendarProp::SyncToken(self.get_synctoken()),
-                // CalendarPropName::Getctag => CalendarProp::Getctag(self.get_synctoken()),
                 CalendarPropName::Source => CalendarProp::Source(
                     self.cal.subscription_url.to_owned().map(HrefElement::from),
                 ),
             }),
             CalendarPropWrapperName::SyncToken(prop) => {
-                CalendarPropWrapper::SyncToken(<Self as SyncTokenExtension>::get_prop(self, prop)?)
+                CalendarPropWrapper::SyncToken(SyncTokenExtension::get_prop(self, prop)?)
             }
             CalendarPropWrapperName::DavPush(prop) => {
-                CalendarPropWrapper::DavPush(<Self as DavPushExtension>::get_prop(self, prop)?)
+                CalendarPropWrapper::DavPush(DavPushExtension::get_prop(self, prop)?)
             }
+            CalendarPropWrapperName::Common(prop) => CalendarPropWrapper::Common(
+                CommonPropertiesExtension::get_prop(self, rmap, user, prop)?,
+            ),
         })
     }
 
@@ -227,10 +230,9 @@ impl Resource for CalendarResource {
                 // Converting between a calendar subscription calendar and a normal one would be weird
                 CalendarProp::Source(_) => Err(rustical_dav::Error::PropReadOnly),
             },
-            CalendarPropWrapper::SyncToken(prop) => {
-                <Self as SyncTokenExtension>::set_prop(self, prop)
-            }
-            CalendarPropWrapper::DavPush(prop) => <Self as DavPushExtension>::set_prop(self, prop),
+            CalendarPropWrapper::SyncToken(prop) => SyncTokenExtension::set_prop(self, prop),
+            CalendarPropWrapper::DavPush(prop) => DavPushExtension::set_prop(self, prop),
+            CalendarPropWrapper::Common(prop) => CommonPropertiesExtension::set_prop(self, prop),
         }
     }
 
@@ -275,11 +277,10 @@ impl Resource for CalendarResource {
                 // Converting a calendar subscription calendar into a normal one would be weird
                 CalendarPropName::Source => Err(rustical_dav::Error::PropReadOnly),
             },
-            CalendarPropWrapperName::SyncToken(prop) => {
-                <Self as SyncTokenExtension>::remove_prop(self, prop)
-            }
-            CalendarPropWrapperName::DavPush(prop) => {
-                <Self as DavPushExtension>::remove_prop(self, prop)
+            CalendarPropWrapperName::SyncToken(prop) => SyncTokenExtension::remove_prop(self, prop),
+            CalendarPropWrapperName::DavPush(prop) => DavPushExtension::remove_prop(self, prop),
+            CalendarPropWrapperName::Common(prop) => {
+                CommonPropertiesExtension::remove_prop(self, prop)
             }
         }
     }

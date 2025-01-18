@@ -14,7 +14,6 @@ futures-util = { workspace = true }
 quick-xml = { workspace = true }
 rustical_store = { workspace = true }
 serde = { workspace = true }
-strum = { workspace = true }
 thiserror = { workspace = true }
 itertools = { workspace = true }
 log = { workspace = true }

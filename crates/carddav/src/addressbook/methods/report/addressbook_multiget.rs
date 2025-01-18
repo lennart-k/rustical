@@ -1,5 +1,5 @@
 use crate::{
-    address_object::resource::{AddressObjectProp, AddressObjectResource},
+    address_object::resource::{AddressObjectPropWrapper, AddressObjectResource},
     Error,
 };
 use actix_web::{
@@ -8,7 +8,7 @@ use actix_web::{
     HttpRequest,
 };
 use rustical_dav::{
-    resource::{CommonPropertiesProp, EitherProp, Resource},
+    resource::Resource,
     xml::{multistatus::ResponseElement, MultistatusElement, PropElement, PropfindType},
 };
 use rustical_store::{auth::User, AddressObject, AddressbookStore};
@@ -60,8 +60,7 @@ pub async fn handle_addressbook_multiget<AS: AddressbookStore>(
     principal: &str,
     cal_id: &str,
     addr_store: &AS,
-) -> Result<MultistatusElement<EitherProp<AddressObjectProp, CommonPropertiesProp>, String>, Error>
-{
+) -> Result<MultistatusElement<AddressObjectPropWrapper, String>, Error> {
     let (objects, not_found) =
         get_objects_addressbook_multiget(&addr_multiget, req.path(), principal, cal_id, addr_store)
             .await?;

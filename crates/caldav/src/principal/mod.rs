@@ -2,6 +2,7 @@ use crate::calendar_set::CalendarSetResource;
 use crate::Error;
 use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
+use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{NamedRoute, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
@@ -38,6 +39,13 @@ pub enum PrincipalProp {
     CalendarHomeSet(CalendarHomeSet),
 }
 
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
+#[xml(unit_variants_ident = "PrincipalPropWrapperName", untagged)]
+pub enum PrincipalPropWrapper {
+    Principal(PrincipalProp),
+    Common(CommonPropertiesProp),
+}
+
 impl PrincipalResource {
     pub fn get_principal_url(rmap: &ResourceMap, principal: &str) -> String {
         Self::get_url(rmap, vec![principal]).unwrap()
@@ -51,8 +59,8 @@ impl NamedRoute for PrincipalResource {
 }
 
 impl Resource for PrincipalResource {
-    type PropName = PrincipalPropName;
-    type Prop = PrincipalProp;
+    type PropName = PrincipalPropWrapperName;
+    type Prop = PrincipalPropWrapper;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
 
@@ -66,7 +74,7 @@ impl Resource for PrincipalResource {
     fn get_prop(
         &self,
         rmap: &ResourceMap,
-        _user: &User,
+        user: &User,
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         let principal_url = Self::get_url(rmap, vec![&self.principal]).unwrap();
@@ -78,13 +86,26 @@ impl Resource for PrincipalResource {
         );
 
         Ok(match prop {
-            PrincipalPropName::CalendarUserType => PrincipalProp::CalendarUserType("INDIVIDUAL"),
-            PrincipalPropName::Displayname => PrincipalProp::Displayname(self.principal.to_owned()),
-            PrincipalPropName::PrincipalUrl => PrincipalProp::PrincipalUrl(principal_url.into()),
-            PrincipalPropName::CalendarHomeSet => PrincipalProp::CalendarHomeSet(home_set),
-            PrincipalPropName::CalendarUserAddressSet => {
-                PrincipalProp::CalendarUserAddressSet(principal_url.into())
+            PrincipalPropWrapperName::Principal(prop) => {
+                PrincipalPropWrapper::Principal(match prop {
+                    PrincipalPropName::CalendarUserType => {
+                        PrincipalProp::CalendarUserType("INDIVIDUAL")
+                    }
+                    PrincipalPropName::Displayname => {
+                        PrincipalProp::Displayname(self.principal.to_owned())
+                    }
+                    PrincipalPropName::PrincipalUrl => {
+                        PrincipalProp::PrincipalUrl(principal_url.into())
+                    }
+                    PrincipalPropName::CalendarHomeSet => PrincipalProp::CalendarHomeSet(home_set),
+                    PrincipalPropName::CalendarUserAddressSet => {
+                        PrincipalProp::CalendarUserAddressSet(principal_url.into())
+                    }
+                })
             }
+            PrincipalPropWrapperName::Common(prop) => PrincipalPropWrapper::Common(
+                <Self as CommonPropertiesExtension>::get_prop(self, rmap, user, prop)?,
+            ),
         })
     }
 
