@@ -14,10 +14,15 @@ pub use se::XmlSerialize;
 pub use se::XmlSerializeRoot;
 pub use unparsed::Unparsed;
 pub use value::{ParseValueError, ValueDeserialize, ValueSerialize};
+pub use xml_derive::EnumVariants;
 pub use xml_derive::XmlRootTag;
 
 pub trait XmlRootTag {
     fn root_tag() -> &'static [u8];
     fn root_ns() -> Option<Namespace<'static>>;
     fn root_ns_prefixes() -> HashMap<Namespace<'static>, &'static [u8]>;
+}
+
+pub trait EnumVariants {
+    const TAGGED_VARIANTS: &'static [(Option<Namespace<'static>>, &'static str)];
 }

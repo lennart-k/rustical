@@ -61,3 +61,15 @@ pub fn derive_xml_document(input: proc_macro::TokenStream) -> proc_macro::TokenS
     }
     .into()
 }
+
+#[proc_macro_derive(EnumVariants, attributes(xml))]
+pub fn derive_enum_variants(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+
+    match &input.data {
+        syn::Data::Struct(_) => panic!("Struct not supported, use XmlRootTag instead"),
+        syn::Data::Enum(e) => Enum::parse(&input, e).impl_enum_variants(),
+        syn::Data::Union(_) => panic!("Union not supported as root"),
+    }
+    .into()
+}

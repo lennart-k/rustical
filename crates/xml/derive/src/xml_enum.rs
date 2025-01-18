@@ -193,4 +193,27 @@ impl Enum {
             }
         }
     }
+
+    pub fn impl_enum_variants(&self) -> proc_macro2::TokenStream {
+        let (impl_generics, type_generics, where_clause) = self.generics.split_for_impl();
+        let ident = &self.ident;
+
+        let tagged_variants = self.variants.iter().map(|variant| {
+            let ns = match &variant.attrs.common.ns {
+                Some(ns) => quote! { Some(#ns) },
+                None => quote! { None },
+            };
+            let b_xml_name = variant.xml_name().value();
+            let xml_name = String::from_utf8_lossy(&b_xml_name);
+            quote! {(#ns, #xml_name)}
+        });
+
+        quote! {
+            impl #impl_generics ::rustical_xml::EnumVariants for #ident #type_generics #where_clause {
+                const TAGGED_VARIANTS: &'static [(Option<::quick_xml::name::Namespace<'static>>, &'static str)] = &[
+                    #(#tagged_variants),*
+                ];
+            }
+        }
+    }
 }
