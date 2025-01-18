@@ -31,8 +31,6 @@ pub enum CalendarProp {
     // WebDAV (RFC 2518)
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     Displayname(Option<String>),
-    #[xml(ns = "rustical_dav::namespace::NS_DAV", skip_deserializing)]
-    Getcontenttype(&'static str),
 
     // CalDAV (RFC 4791)
     #[xml(ns = "rustical_dav::namespace::NS_ICAL")]
@@ -155,9 +153,6 @@ impl Resource for CalendarResource {
                 CalendarPropName::SupportedCalendarData => {
                     CalendarProp::SupportedCalendarData(SupportedCalendarData::default())
                 }
-                CalendarPropName::Getcontenttype => {
-                    CalendarProp::Getcontenttype("text/calendar;charset=utf-8")
-                }
                 CalendarPropName::MaxResourceSize => CalendarProp::MaxResourceSize(10000000),
                 CalendarPropName::SupportedReportSet => {
                     CalendarProp::SupportedReportSet(SupportedReportSet::default())
@@ -224,7 +219,6 @@ impl Resource for CalendarResource {
                     Err(rustical_dav::Error::PropReadOnly)
                 }
                 CalendarProp::SupportedCalendarData(_) => Err(rustical_dav::Error::PropReadOnly),
-                CalendarProp::Getcontenttype(_) => Err(rustical_dav::Error::PropReadOnly),
                 CalendarProp::MaxResourceSize(_) => Err(rustical_dav::Error::PropReadOnly),
                 CalendarProp::SupportedReportSet(_) => Err(rustical_dav::Error::PropReadOnly),
                 // Converting between a calendar subscription calendar and a normal one would be weird
@@ -271,7 +265,6 @@ impl Resource for CalendarResource {
                     Err(rustical_dav::Error::PropReadOnly)
                 }
                 CalendarPropName::SupportedCalendarData => Err(rustical_dav::Error::PropReadOnly),
-                CalendarPropName::Getcontenttype => Err(rustical_dav::Error::PropReadOnly),
                 CalendarPropName::MaxResourceSize => Err(rustical_dav::Error::PropReadOnly),
                 CalendarPropName::SupportedReportSet => Err(rustical_dav::Error::PropReadOnly),
                 // Converting a calendar subscription calendar into a normal one would be weird
