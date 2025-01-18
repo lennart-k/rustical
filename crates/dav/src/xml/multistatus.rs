@@ -88,7 +88,8 @@ impl<PT: XmlSerialize> Default for ResponseElement<PT> {
     crate::namespace::NS_DAV = b"",
     crate::namespace::NS_CARDDAV = b"CARD",
     crate::namespace::NS_CALDAV = b"CAL",
-    crate::namespace::NS_CALENDARSERVER = b"CS"
+    crate::namespace::NS_CALENDARSERVER = b"CS",
+    crate::namespace::NS_DAVPUSH = b"PUSH"
 ))]
 pub struct MultistatusElement<PropType: XmlSerialize, MemberPropType: XmlSerialize> {
     #[xml(rename = b"response", flatten)]
