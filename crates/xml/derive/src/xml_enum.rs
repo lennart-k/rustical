@@ -207,7 +207,7 @@ impl Enum {
                 impl #impl_generics ::rustical_xml::EnumVariants for #ident #type_generics #where_clause {
                     const TAGGED_VARIANTS: &'static [(Option<::quick_xml::name::Namespace<'static>>, &'static str)] = &[];
 
-                    fn variant_names() -> Vec<(Option<Namespace<'static>>, &'static str)> {
+                    fn variant_names() -> Vec<(Option<::quick_xml::name::Namespace<'static>>, &'static str)> {
                         [
                             #(#untagged_variants),*
                         ].concat()
@@ -231,7 +231,7 @@ impl Enum {
                         #(#tagged_variants),*
                     ];
 
-                    fn variant_names() -> Vec<(Option<Namespace<'static>>, &'static str)> {
+                    fn variant_names() -> Vec<(Option<::quick_xml::name::Namespace<'static>>, &'static str)> {
                         [Self::TAGGED_VARIANTS,].concat()
                     }
                 }
