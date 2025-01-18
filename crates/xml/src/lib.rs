@@ -14,6 +14,7 @@ pub use se::XmlSerialize;
 pub use se::XmlSerializeRoot;
 pub use unparsed::Unparsed;
 pub use value::{ParseValueError, ValueDeserialize, ValueSerialize};
+pub use xml_derive::EnumUnitVariants;
 pub use xml_derive::EnumVariants;
 pub use xml_derive::XmlRootTag;
 

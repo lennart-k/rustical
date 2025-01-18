@@ -2,6 +2,7 @@ use super::{attrs::EnumAttrs, Variant};
 use crate::attrs::VariantAttrs;
 use core::panic;
 use darling::{FromDeriveInput, FromVariant};
+use proc_macro2::Span;
 use quote::quote;
 use syn::{DataEnum, DeriveInput};
 
@@ -233,6 +234,76 @@ impl Enum {
 
                     fn variant_names() -> Vec<(Option<::quick_xml::name::Namespace<'static>>, &'static str)> {
                         [Self::TAGGED_VARIANTS,].concat()
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn impl_enum_unit_variants(&self) -> proc_macro2::TokenStream {
+        let ident = &self.ident;
+        if self.attrs.untagged.is_present() {
+            panic!("EnumUnitVariants not implemented for untagged enums");
+        }
+        let unit_enum_ident = if let Some(name) = &self.attrs.unit_variants_name {
+            syn::Ident::new(name, Span::call_site())
+        } else {
+            panic!("unit_variants_name not set");
+        };
+
+        let tagged_variants: Vec<_> = self
+            .variants
+            .iter()
+            .filter(|variant| !variant.attrs.other.is_present())
+            .collect();
+
+        let variant_outputs: Vec<_> = tagged_variants
+            .iter()
+            .map(|variant| {
+                let ns = match &variant.attrs.common.ns {
+                    Some(ns) => quote! { Some(#ns) },
+                    None => quote! { None },
+                };
+                let b_xml_name = variant.xml_name().value();
+                let xml_name = String::from_utf8_lossy(&b_xml_name);
+                quote! {(#ns, #xml_name)}
+            })
+            .collect();
+
+        let variant_idents: Vec<_> = tagged_variants
+            .iter()
+            .map(|variant| &variant.variant.ident)
+            .collect();
+
+        let unit_to_output_branches =
+            variant_idents
+                .iter()
+                .zip(&variant_outputs)
+                .map(|(variant_ident, out)| {
+                    quote! { #unit_enum_ident::#variant_ident => #out }
+                });
+
+        let from_enum_to_unit_branches = variant_idents.iter().map(|variant_ident| {
+            quote! { #ident::#variant_ident { .. } => #unit_enum_ident::#variant_ident }
+        });
+
+        quote! {
+            enum #unit_enum_ident {
+                #(#variant_idents),*
+            }
+
+            impl From<#unit_enum_ident> for (Option<::quick_xml::name::Namespace<'static>>, &'static str) {
+                fn from(val: #unit_enum_ident) -> Self {
+                    match val {
+                        #(#unit_to_output_branches),*
+                    }
+                }
+            }
+
+            impl From<#ident> for #unit_enum_ident {
+                fn from(val: #ident) -> Self {
+                    match val {
+                        #(#from_enum_to_unit_branches),*
                     }
                 }
             }

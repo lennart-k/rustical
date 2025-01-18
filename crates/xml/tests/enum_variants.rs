@@ -1,5 +1,6 @@
 use quick_xml::name::Namespace;
 use rustical_xml::EnumVariants;
+use xml_derive::EnumUnitVariants;
 
 pub const NS_DAV: Namespace = Namespace(b"DAV:");
 pub const NS_DAVPUSH: Namespace = Namespace(b"https://bitfire.at/webdav-push");
@@ -14,7 +15,8 @@ enum ExtensionProp {
     Hello,
 }
 
-#[derive(EnumVariants)]
+#[derive(EnumVariants, EnumUnitVariants)]
+#[xml(unit_variants_name = "CalendarPropName")]
 enum CalendarProp {
     // WebDAV (RFC 2518)
     #[xml(ns = "NS_DAV")]
@@ -59,4 +61,16 @@ fn test_enum_untagged_variants() {
             (None, "hello"),
         ]
     );
+}
+
+#[test]
+fn test_enum_unit_variants() {
+    let displayname: (Option<Namespace>, &str) = CalendarPropName::Displayname.into();
+    assert_eq!(displayname, (Some(NS_DAV), "displayname"));
+    let topic: (Option<Namespace>, &str) = CalendarPropName::Topic.into();
+    assert_eq!(topic, (None, "topic"));
+
+    let propname: CalendarPropName = CalendarProp::Displayname(None).into();
+    let displayname: (Option<Namespace>, &str) = propname.into();
+    assert_eq!(displayname, (Some(NS_DAV), "displayname"));
 }

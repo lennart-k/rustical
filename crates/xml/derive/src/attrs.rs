@@ -22,6 +22,7 @@ pub struct VariantAttrs {
 #[darling(attributes(xml))]
 pub struct EnumAttrs {
     pub untagged: Flag,
+    pub unit_variants_name: Option<String>,
 }
 
 #[derive(Default, FromDeriveInput, Clone)]
