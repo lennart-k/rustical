@@ -8,7 +8,6 @@ use crate::Error;
 use actix_web::http::StatusCode;
 use actix_web::web::Data;
 use actix_web::{web::Path, HttpRequest};
-use itertools::Itertools;
 use quick_xml::name::Namespace;
 use rustical_store::auth::User;
 use rustical_xml::EnumUnitVariants;
@@ -110,16 +109,21 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
                     }
                     SetPropertyPropWrapper::Invalid(invalid) => {
                         let propname = invalid.tag_name();
-                        if <R::Resource as Resource>::list_props()
+
+                        if let Some(full_propname) = <R::Resource as Resource>::list_props()
                             .into_iter()
-                            .map(|(_ns, tag)| tag)
-                            .collect_vec()
-                            .contains(&propname.as_str())
+                            .find_map(|(ns, tag)| {
+                                if tag == propname.as_str() {
+                                    Some((ns, tag.to_owned()))
+                                } else {
+                                    None
+                                }
+                            })
                         {
                             // This happens in following cases:
                             // - read-only properties with #[serde(skip_deserializing)]
                             // - internal properties
-                            props_conflict.push((None, propname))
+                            props_conflict.push(full_propname)
                         } else {
                             props_not_found.push((None, propname));
                         }
@@ -133,7 +137,10 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
                 ) {
                     Ok(prop) => match resource.remove_prop(&prop) {
                         Ok(()) => props_ok.push((None, propname)),
-                        Err(Error::PropReadOnly) => props_conflict.push((None, propname)),
+                        Err(Error::PropReadOnly) => props_conflict.push({
+                            let (ns, tag) = prop.into();
+                            (ns, tag.to_owned())
+                        }),
                         Err(err) => return Err(err.into()),
                     },
                     // I guess removing a nonexisting property should be successful :)
