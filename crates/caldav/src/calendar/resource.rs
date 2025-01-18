@@ -283,7 +283,7 @@ impl Resource for CalendarResource {
 
     fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
         if self.cal.subscription_url.is_some() || self.read_only {
-            return Ok(UserPrivilegeSet::read_only());
+            return Ok(UserPrivilegeSet::owner_read(self.cal.principal == user.id));
         }
 
         Ok(UserPrivilegeSet::owner_only(self.cal.principal == user.id))

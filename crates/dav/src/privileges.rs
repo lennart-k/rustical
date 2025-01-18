@@ -64,6 +64,14 @@ impl UserPrivilegeSet {
         }
     }
 
+    pub fn owner_read(is_owner: bool) -> Self {
+        if is_owner {
+            Self::read_only()
+        } else {
+            Self::default()
+        }
+    }
+
     pub fn read_only() -> Self {
         Self {
             privileges: HashSet::from([

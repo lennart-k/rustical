@@ -1,10 +1,13 @@
 use super::resource::AddressObjectPathComponents;
+use crate::addressbook::resource::AddressbookResource;
 use crate::Error;
 use actix_web::http::header;
 use actix_web::http::header::HeaderValue;
 use actix_web::web::{Data, Path};
 use actix_web::HttpRequest;
 use actix_web::HttpResponse;
+use rustical_dav::privileges::UserPrivilege;
+use rustical_dav::resource::Resource;
 use rustical_store::auth::User;
 use rustical_store::{AddressObject, AddressbookStore};
 use tracing::instrument;
@@ -28,8 +31,12 @@ pub async fn get_object<AS: AddressbookStore>(
     }
 
     let addressbook = store.get_addressbook(&principal, &addressbook_id).await?;
-    if user.id != addressbook.principal {
-        return Ok(HttpResponse::Unauthorized().body(""));
+    let addressbook_resource = AddressbookResource(addressbook);
+    if !addressbook_resource
+        .get_user_privileges(&user)?
+        .has(&UserPrivilege::Read)
+    {
+        return Err(Error::Unauthorized);
     }
 
     let object = store

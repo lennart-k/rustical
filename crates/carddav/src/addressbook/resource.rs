@@ -66,7 +66,7 @@ pub enum AddressbookPropWrapper {
 }
 
 #[derive(Clone, Debug, From, Into)]
-pub struct AddressbookResource(Addressbook);
+pub struct AddressbookResource(pub(crate) Addressbook);
 
 impl SyncTokenExtension for AddressbookResource {
     fn get_synctoken(&self) -> String {
