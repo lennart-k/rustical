@@ -81,7 +81,6 @@ impl DavPushExtension for AddressbookResource {
 }
 
 impl Resource for AddressbookResource {
-    type PropName = AddressbookPropWrapperName;
     type Prop = AddressbookPropWrapper;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
@@ -97,7 +96,7 @@ impl Resource for AddressbookResource {
         &self,
         rmap: &ResourceMap,
         user: &User,
-        prop: &Self::PropName,
+        prop: &AddressbookPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
             AddressbookPropWrapperName::Addressbook(prop) => {
@@ -153,7 +152,10 @@ impl Resource for AddressbookResource {
         }
     }
 
-    fn remove_prop(&mut self, prop: &Self::PropName) -> Result<(), rustical_dav::Error> {
+    fn remove_prop(
+        &mut self,
+        prop: &AddressbookPropWrapperName,
+    ) -> Result<(), rustical_dav::Error> {
         match prop {
             AddressbookPropWrapperName::Addressbook(prop) => match prop {
                 AddressbookPropName::Displayname => {

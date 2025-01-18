@@ -52,7 +52,6 @@ pub struct CalendarObjectResource {
 }
 
 impl Resource for CalendarObjectResource {
-    type PropName = CalendarObjectPropWrapperName;
     type Prop = CalendarObjectPropWrapper;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
@@ -65,7 +64,7 @@ impl Resource for CalendarObjectResource {
         &self,
         rmap: &ResourceMap,
         user: &User,
-        prop: &Self::PropName,
+        prop: &CalendarObjectPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
             CalendarObjectPropWrapperName::CalendarObject(prop) => {

@@ -59,7 +59,6 @@ impl NamedRoute for PrincipalResource {
 }
 
 impl Resource for PrincipalResource {
-    type PropName = PrincipalPropWrapperName;
     type Prop = PrincipalPropWrapper;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
@@ -75,7 +74,7 @@ impl Resource for PrincipalResource {
         &self,
         rmap: &ResourceMap,
         user: &User,
-        prop: &Self::PropName,
+        prop: &PrincipalPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
         let principal_url = Self::get_url(rmap, vec![&self.principal]).unwrap();
         let home_set = CalendarHomeSet(

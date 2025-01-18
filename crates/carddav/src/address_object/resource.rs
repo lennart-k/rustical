@@ -48,7 +48,6 @@ pub struct AddressObjectResource {
 }
 
 impl Resource for AddressObjectResource {
-    type PropName = AddressObjectPropWrapperName;
     type Prop = AddressObjectPropWrapper;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
@@ -61,7 +60,7 @@ impl Resource for AddressObjectResource {
         &self,
         rmap: &ResourceMap,
         user: &User,
-        prop: &Self::PropName,
+        prop: &AddressObjectPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
             AddressObjectPropWrapperName::AddressObject(prop) => {

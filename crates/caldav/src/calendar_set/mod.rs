@@ -24,7 +24,6 @@ pub enum PrincipalPropWrapper {
 }
 
 impl Resource for CalendarSetResource {
-    type PropName = PrincipalPropWrapperName;
     type Prop = PrincipalPropWrapper;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
@@ -40,7 +39,7 @@ impl Resource for CalendarSetResource {
         &self,
         rmap: &ResourceMap,
         user: &User,
-        prop: &Self::PropName,
+        prop: &PrincipalPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
             PrincipalPropWrapperName::Common(prop) => PrincipalPropWrapper::Common(

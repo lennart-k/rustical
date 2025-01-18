@@ -19,7 +19,6 @@ impl<PR: Resource> Default for RootResource<PR> {
 }
 
 impl<PR: Resource + NamedRoute> Resource for RootResource<PR> {
-    type PropName = CommonPropertiesPropName;
     type Prop = CommonPropertiesProp;
     type Error = PR::Error;
     type PrincipalResource = PR;
@@ -35,7 +34,7 @@ impl<PR: Resource + NamedRoute> Resource for RootResource<PR> {
         &self,
         rmap: &ResourceMap,
         user: &User,
-        prop: &Self::PropName,
+        prop: &CommonPropertiesPropName,
     ) -> Result<Self::Prop, Self::Error> {
         CommonPropertiesExtension::get_prop(self, rmap, user, prop)
     }

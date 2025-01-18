@@ -1,5 +1,6 @@
 use quick_xml::name::Namespace;
 use std::collections::HashMap;
+use std::str::FromStr;
 
 pub mod de;
 mod error;
@@ -34,6 +35,6 @@ pub trait EnumVariants {
     fn variant_names() -> Vec<(Option<Namespace<'static>>, &'static str)>;
 }
 
-pub trait EnumUnitVariants {
-    type UnitVariants;
+pub trait EnumUnitVariants: Sized {
+    type UnitVariants: Into<(Option<Namespace<'static>>, &'static str)> + From<Self> + FromStr;
 }

@@ -93,7 +93,6 @@ impl DavPushExtension for CalendarResource {
 }
 
 impl Resource for CalendarResource {
-    type PropName = CalendarPropWrapperName;
     type Prop = CalendarPropWrapper;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
@@ -119,7 +118,7 @@ impl Resource for CalendarResource {
         &self,
         rmap: &ResourceMap,
         user: &User,
-        prop: &Self::PropName,
+        prop: &CalendarPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
             CalendarPropWrapperName::Calendar(prop) => CalendarPropWrapper::Calendar(match prop {
@@ -230,7 +229,7 @@ impl Resource for CalendarResource {
         }
     }
 
-    fn remove_prop(&mut self, prop: &Self::PropName) -> Result<(), rustical_dav::Error> {
+    fn remove_prop(&mut self, prop: &CalendarPropWrapperName) -> Result<(), rustical_dav::Error> {
         if self.read_only {
             return Err(rustical_dav::Error::PropReadOnly);
         }

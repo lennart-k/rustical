@@ -11,6 +11,7 @@ use actix_web::{web::Path, HttpRequest};
 use itertools::Itertools;
 use quick_xml::name::Namespace;
 use rustical_store::auth::User;
+use rustical_xml::EnumUnitVariants;
 use rustical_xml::Unparsed;
 use rustical_xml::XmlDeserialize;
 use rustical_xml::XmlDocument;
@@ -97,7 +98,7 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
             }) => {
                 match property {
                     SetPropertyPropWrapper::Valid(prop) => {
-                        let propname: <R::Resource as Resource>::PropName = prop.clone().into();
+                        let propname: <<R::Resource as Resource>::Prop as EnumUnitVariants>::UnitVariants = prop.clone().into();
                         let (ns, propname): (Option<Namespace>, &str) = propname.into();
                         match resource.set_prop(prop) {
                             Ok(()) => props_ok.push((ns, propname.to_owned())),
@@ -127,7 +128,9 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
             }
             Operation::Remove(remove_el) => {
                 let propname = remove_el.prop.0 .0;
-                match <<R::Resource as Resource>::PropName as FromStr>::from_str(&propname) {
+                match <<R::Resource as Resource>::Prop as EnumUnitVariants>::UnitVariants::from_str(
+                    &propname,
+                ) {
                     Ok(prop) => match resource.remove_prop(&prop) {
                         Ok(()) => props_ok.push((None, propname)),
                         Err(Error::PropReadOnly) => props_conflict.push((None, propname)),

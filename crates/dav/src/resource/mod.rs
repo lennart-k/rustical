@@ -9,7 +9,7 @@ use itertools::Itertools;
 use quick_xml::name::Namespace;
 pub use resource_service::ResourceService;
 use rustical_store::auth::User;
-use rustical_xml::{EnumVariants, XmlDeserialize, XmlSerialize};
+use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 use std::str::FromStr;
 
 mod methods;
@@ -24,10 +24,7 @@ pub trait ResourcePropName: FromStr {}
 impl<T: FromStr> ResourcePropName for T {}
 
 pub trait Resource: Clone + 'static {
-    type PropName: ResourcePropName
-        + From<Self::Prop>
-        + Into<(Option<Namespace<'static>>, &'static str)>;
-    type Prop: ResourceProp + PartialEq + Clone + EnumVariants;
+    type Prop: ResourceProp + PartialEq + Clone + EnumVariants + EnumUnitVariants;
     type Error: ResponseError + From<crate::Error>;
     type PrincipalResource: Resource + NamedRoute;
 
@@ -41,14 +38,17 @@ pub trait Resource: Clone + 'static {
         &self,
         rmap: &ResourceMap,
         user: &User,
-        prop: &Self::PropName,
+        prop: &<Self::Prop as EnumUnitVariants>::UnitVariants,
     ) -> Result<Self::Prop, Self::Error>;
 
     fn set_prop(&mut self, _prop: Self::Prop) -> Result<(), crate::Error> {
         Err(crate::Error::PropReadOnly)
     }
 
-    fn remove_prop(&mut self, _prop: &Self::PropName) -> Result<(), crate::Error> {
+    fn remove_prop(
+        &mut self,
+        _prop: &<Self::Prop as EnumUnitVariants>::UnitVariants,
+    ) -> Result<(), crate::Error> {
         Err(crate::Error::PropReadOnly)
     }
 
@@ -106,7 +106,7 @@ pub trait Resource: Clone + 'static {
         let mut valid_props = vec![];
         let mut invalid_props = vec![];
         for prop in props {
-            if let Ok(valid_prop) = Self::PropName::from_str(prop) {
+            if let Ok(valid_prop) = <Self::Prop as EnumUnitVariants>::UnitVariants::from_str(prop) {
                 valid_props.push(valid_prop);
             } else {
                 invalid_props.push(prop.to_string())

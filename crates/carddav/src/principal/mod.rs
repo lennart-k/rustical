@@ -64,7 +64,6 @@ impl NamedRoute for PrincipalResource {
 }
 
 impl Resource for PrincipalResource {
-    type PropName = PrincipalPropWrapperName;
     type Prop = PrincipalPropWrapper;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
@@ -80,7 +79,7 @@ impl Resource for PrincipalResource {
         &self,
         rmap: &ResourceMap,
         user: &User,
-        prop: &Self::PropName,
+        prop: &PrincipalPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
         let principal_href = HrefElement::new(Self::get_principal_url(rmap, &self.principal));
 
