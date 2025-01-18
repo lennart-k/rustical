@@ -20,7 +20,7 @@ a CalDAV/CardDAV server
 ### Manual
 
 ```sh
-cargo install --git https://github.com/lennart-k/rustical
+cargo install --locked --git https://github.com/lennart-k/rustical
 ```
 
 ### Docker
