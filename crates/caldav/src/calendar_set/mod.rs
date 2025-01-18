@@ -5,8 +5,8 @@ use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
-use rustical_dav::resource::{NamedRoute, Resource, ResourceService};
-use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
+use rustical_dav::resource::{Resource, ResourceService};
+use rustical_dav::xml::{Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
 use rustical_store::CalendarStore;
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
@@ -18,17 +18,8 @@ pub struct CalendarSetResource {
 }
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
-#[xml(unit_variants_ident = "PrincipalPropName")]
-pub enum PrincipalProp {
-    // WebDAV Access Control (RFC 3744)
-    #[xml(ns = "rustical_dav::namespace::NS_DAV", rename = b"principal-URL")]
-    PrincipalUrl(HrefElement),
-}
-
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
 #[xml(unit_variants_ident = "PrincipalPropWrapperName", untagged)]
 pub enum PrincipalPropWrapper {
-    Principal(PrincipalProp),
     Common(CommonPropertiesProp),
 }
 
@@ -51,17 +42,7 @@ impl Resource for CalendarSetResource {
         user: &User,
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
-        let principal_href = HrefElement::new(
-            Self::PrincipalResource::get_url(rmap, vec![&self.principal]).unwrap(),
-        );
-
         Ok(match prop {
-            PrincipalPropWrapperName::Principal(prop) => {
-                PrincipalPropWrapper::Principal(match prop {
-                    PrincipalPropName::PrincipalUrl => PrincipalProp::PrincipalUrl(principal_href),
-                })
-            }
-
             PrincipalPropWrapperName::Common(prop) => PrincipalPropWrapper::Common(
                 <Self as CommonPropertiesExtension>::get_prop(self, rmap, user, prop)?,
             ),
