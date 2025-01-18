@@ -33,3 +33,7 @@ pub trait EnumVariants {
     // Returns all valid xml names including untagged variants
     fn variant_names() -> Vec<(Option<Namespace<'static>>, &'static str)>;
 }
+
+pub trait EnumUnitVariants {
+    type UnitVariants;
+}

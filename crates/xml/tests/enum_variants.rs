@@ -12,7 +12,8 @@ pub const NS_ICAL: Namespace = Namespace(b"http://apple.com/ns/ical/");
 pub const NS_CALENDARSERVER: Namespace = Namespace(b"http://calendarserver.org/ns/");
 pub const NS_NEXTCLOUD: Namespace = Namespace(b"http://nextcloud.com/ns");
 
-#[derive(EnumVariants)]
+#[derive(EnumVariants, EnumUnitVariants)]
+#[xml(unit_variants_ident = "ExtensionsPropName")]
 enum ExtensionProp {
     Hello,
 }
@@ -44,8 +45,8 @@ fn test_enum_tagged_variants() {
     );
 }
 
-#[derive(EnumVariants)]
-#[xml(untagged)]
+#[derive(EnumVariants, EnumUnitVariants)]
+#[xml(untagged, unit_variants_ident = "UnionPropName")]
 enum UnionProp {
     Calendar(CalendarProp),
     Extension(ExtensionProp),
@@ -77,5 +78,37 @@ fn test_enum_unit_variants() {
     assert_eq!(displayname, (Some(NS_DAV), "displayname"));
 
     let propname: CalendarPropName = FromStr::from_str("displayname").unwrap();
+    assert_eq!(propname, CalendarPropName::Displayname)
+}
+
+#[test]
+fn test_enum_unit_variants_untagged() {
+    let displayname: (Option<Namespace>, &str) =
+        UnionPropName::Calendar(CalendarPropName::Displayname).into();
     assert_eq!(displayname, (Some(NS_DAV), "displayname"));
+    let hello: (Option<Namespace>, &str) =
+        UnionPropName::Extension(ExtensionsPropName::Hello).into();
+    assert_eq!(hello, (None, "hello"));
+
+    let propname: UnionPropName = FromStr::from_str("displayname").unwrap();
+    assert_eq!(
+        propname,
+        UnionPropName::Calendar(CalendarPropName::Displayname)
+    );
+    let propname: UnionPropName = FromStr::from_str("hello").unwrap();
+    assert_eq!(
+        propname,
+        UnionPropName::Extension(ExtensionsPropName::Hello)
+    );
+
+    let propname: UnionPropName = UnionProp::Calendar(CalendarProp::Displayname(None)).into();
+    assert_eq!(
+        propname,
+        UnionPropName::Calendar(CalendarPropName::Displayname)
+    );
+    let propname: UnionPropName = UnionProp::Extension(ExtensionProp::Hello).into();
+    assert_eq!(
+        propname,
+        UnionPropName::Extension(ExtensionsPropName::Hello)
+    );
 }
