@@ -8,25 +8,25 @@ use rustical_dav::resource::{NamedRoute, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
 use rustical_store::CalendarStore;
-use rustical_xml::{XmlDeserialize, XmlSerialize};
+use rustical_xml::{EnumVariants, XmlDeserialize, XmlSerialize};
 use std::sync::Arc;
-use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
+use strum::{EnumDiscriminants, EnumString, IntoStaticStr};
 
 #[derive(Clone)]
 pub struct CalendarSetResource {
     pub(crate) principal: String,
 }
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone, EnumVariants)]
 #[strum_discriminants(
     name(PrincipalPropName),
-    derive(EnumString, VariantNames, IntoStaticStr),
+    derive(EnumString, IntoStaticStr),
     strum(serialize_all = "kebab-case")
 )]
 pub enum PrincipalProp {
     // WebDAV Access Control (RFC 3744)
     #[strum_discriminants(strum(serialize = "principal-URL"))]
-    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
+    #[xml(ns = "rustical_dav::namespace::NS_DAV", rename = b"principal-URL")]
     PrincipalUrl(HrefElement),
 }
 
@@ -38,7 +38,7 @@ impl Resource for CalendarSetResource {
 
     fn get_resourcetype(&self) -> Resourcetype {
         Resourcetype(&[ResourcetypeInner(
-            rustical_dav::namespace::NS_DAV,
+            Some(rustical_dav::namespace::NS_DAV),
             "collection",
         )])
     }

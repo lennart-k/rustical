@@ -4,7 +4,7 @@ use rustical_xml::XmlSerialize;
 use std::collections::HashMap;
 
 #[derive(Clone, Debug, PartialEq, From)]
-pub struct TagList(Vec<String>);
+pub struct TagList(Vec<(Option<Namespace<'static>>, String)>);
 
 impl XmlSerialize for TagList {
     fn serialize<W: std::io::Write>(
@@ -18,9 +18,18 @@ impl XmlSerialize for TagList {
         struct Inner(#[xml(ty = "untagged", flatten)] Vec<Tag>);
 
         #[derive(Debug, XmlSerialize, PartialEq)]
-        struct Tag(#[xml(ty = "tag_name")] String);
-        Inner(self.0.iter().map(|t| Tag(t.to_owned())).collect())
-            .serialize(ns, tag, namespaces, writer)
+        struct Tag(
+            #[xml(ty = "namespace")] Option<Namespace<'static>>,
+            #[xml(ty = "tag_name")] String,
+        );
+
+        Inner(
+            self.0
+                .iter()
+                .map(|(ns, tag)| Tag(ns.to_owned(), tag.to_owned()))
+                .collect(),
+        )
+        .serialize(ns, tag, namespaces, writer)
     }
 
     #[allow(refining_impl_trait)]

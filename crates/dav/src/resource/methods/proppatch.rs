@@ -8,6 +8,7 @@ use crate::Error;
 use actix_web::http::StatusCode;
 use actix_web::web::Data;
 use actix_web::{web::Path, HttpRequest};
+use itertools::Itertools;
 use rustical_store::auth::User;
 use rustical_xml::Unparsed;
 use rustical_xml::XmlDeserialize;
@@ -98,20 +99,27 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
                         let propname: <R::Resource as Resource>::PropName = prop.clone().into();
                         let propname: &str = propname.into();
                         match resource.set_prop(prop) {
-                            Ok(()) => props_ok.push(propname.to_owned()),
-                            Err(Error::PropReadOnly) => props_conflict.push(propname.to_owned()),
+                            Ok(()) => props_ok.push((None, propname.to_owned())),
+                            Err(Error::PropReadOnly) => {
+                                props_conflict.push((None, propname.to_owned()))
+                            }
                             Err(err) => return Err(err.into()),
                         };
                     }
                     SetPropertyPropWrapper::Invalid(invalid) => {
                         let propname = invalid.tag_name();
-                        if <R::Resource as Resource>::list_props().contains(&propname.as_str()) {
+                        if <R::Resource as Resource>::list_props()
+                            .into_iter()
+                            .map(|(_ns, tag)| tag)
+                            .collect_vec()
+                            .contains(&propname.as_str())
+                        {
                             // This happens in following cases:
                             // - read-only properties with #[serde(skip_deserializing)]
                             // - internal properties
-                            props_conflict.push(propname)
+                            props_conflict.push((None, propname))
                         } else {
-                            props_not_found.push(propname);
+                            props_not_found.push((None, propname));
                         }
                     }
                 }
@@ -120,12 +128,12 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
                 let propname = remove_el.prop.0 .0;
                 match <<R::Resource as Resource>::PropName as FromStr>::from_str(&propname) {
                     Ok(prop) => match resource.remove_prop(&prop) {
-                        Ok(()) => props_ok.push(propname),
-                        Err(Error::PropReadOnly) => props_conflict.push(propname),
+                        Ok(()) => props_ok.push((None, propname)),
+                        Err(Error::PropReadOnly) => props_conflict.push((None, propname)),
                         Err(err) => return Err(err.into()),
                     },
                     // I guess removing a nonexisting property should be successful :)
-                    Err(_) => props_ok.push(propname),
+                    Err(_) => props_ok.push((None, propname)),
                 };
             }
         }

@@ -4,10 +4,10 @@ use crate::xml::{Resourcetype, ResourcetypeInner};
 use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
 use rustical_store::auth::User;
-use rustical_xml::{XmlDeserialize, XmlSerialize};
+use rustical_xml::{EnumVariants, XmlDeserialize, XmlSerialize};
 use serde::Serialize;
 use std::marker::PhantomData;
-use strum::{EnumString, IntoStaticStr, VariantNames};
+use strum::{EnumString, IntoStaticStr};
 
 #[derive(Clone)]
 pub struct RootResource<PR: Resource>(PhantomData<PR>);
@@ -18,11 +18,11 @@ impl<PR: Resource> Default for RootResource<PR> {
     }
 }
 
-#[derive(EnumString, VariantNames, Clone, IntoStaticStr)]
+#[derive(EnumString, Clone, IntoStaticStr)]
 #[strum(serialize_all = "kebab-case")]
 pub enum RootResourcePropName {}
 
-#[derive(XmlDeserialize, XmlSerialize, Serialize, Clone, PartialEq)]
+#[derive(XmlDeserialize, XmlSerialize, Serialize, Clone, PartialEq, EnumVariants)]
 pub enum RootResourceProp {}
 
 impl From<RootResourceProp> for RootResourcePropName {
@@ -38,7 +38,10 @@ impl<PR: Resource + NamedRoute> Resource for RootResource<PR> {
     type PrincipalResource = PR;
 
     fn get_resourcetype(&self) -> Resourcetype {
-        Resourcetype(&[ResourcetypeInner(crate::namespace::NS_DAV, "collection")])
+        Resourcetype(&[ResourcetypeInner(
+            Some(crate::namespace::NS_DAV),
+            "collection",
+        )])
     }
 
     fn get_prop(

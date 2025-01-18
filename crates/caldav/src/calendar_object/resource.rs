@@ -9,10 +9,10 @@ use rustical_dav::{
     xml::Resourcetype,
 };
 use rustical_store::{auth::User, CalendarObject, CalendarStore};
-use rustical_xml::{XmlDeserialize, XmlSerialize};
+use rustical_xml::{EnumVariants, XmlDeserialize, XmlSerialize};
 use serde::Deserialize;
 use std::sync::Arc;
-use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
+use strum::{EnumDiscriminants, EnumString, IntoStaticStr};
 
 pub struct CalendarObjectResourceService<C: CalendarStore> {
     cal_store: Arc<C>,
@@ -24,10 +24,10 @@ impl<C: CalendarStore> CalendarObjectResourceService<C> {
     }
 }
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone, EnumVariants)]
 #[strum_discriminants(
     name(CalendarObjectPropName),
-    derive(EnumString, VariantNames, IntoStaticStr),
+    derive(EnumString, IntoStaticStr),
     strum(serialize_all = "kebab-case")
 )]
 pub enum CalendarObjectProp {

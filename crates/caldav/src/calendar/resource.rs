@@ -16,16 +16,17 @@ use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
 use rustical_store::{Calendar, CalendarStore, SubscriptionStore};
+use rustical_xml::EnumVariants;
 use rustical_xml::{XmlDeserialize, XmlSerialize};
 use std::marker::PhantomData;
 use std::str::FromStr;
 use std::sync::Arc;
-use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
+use strum::{EnumDiscriminants, EnumString, IntoStaticStr};
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone, EnumVariants)]
 #[strum_discriminants(
     name(CalendarPropName),
-    derive(EnumString, VariantNames, IntoStaticStr),
+    derive(EnumString, IntoStaticStr),
     strum(serialize_all = "kebab-case")
 )]
 pub enum CalendarProp {
@@ -89,6 +90,12 @@ impl From<CalendarResource> for Calendar {
     }
 }
 
+impl CalendarResource {
+    fn get_synctoken(&self) -> String {
+        self.cal.format_synctoken()
+    }
+}
+
 impl Resource for CalendarResource {
     type PropName = CalendarPropName;
     type Prop = CalendarProp;
@@ -98,13 +105,16 @@ impl Resource for CalendarResource {
     fn get_resourcetype(&self) -> Resourcetype {
         if self.cal.subscription_url.is_none() {
             Resourcetype(&[
-                ResourcetypeInner(rustical_dav::namespace::NS_DAV, "collection"),
-                ResourcetypeInner(rustical_dav::namespace::NS_CALDAV, "calendar"),
+                ResourcetypeInner(Some(rustical_dav::namespace::NS_DAV), "collection"),
+                ResourcetypeInner(Some(rustical_dav::namespace::NS_CALDAV), "calendar"),
             ])
         } else {
             Resourcetype(&[
-                ResourcetypeInner(rustical_dav::namespace::NS_DAV, "collection"),
-                ResourcetypeInner(rustical_dav::namespace::NS_CALENDARSERVER, "subscribed"),
+                ResourcetypeInner(Some(rustical_dav::namespace::NS_DAV), "collection"),
+                ResourcetypeInner(
+                    Some(rustical_dav::namespace::NS_CALENDARSERVER),
+                    "subscribed",
+                ),
             ])
         }
     }
@@ -149,8 +159,8 @@ impl Resource for CalendarResource {
             CalendarPropName::SupportedReportSet => {
                 CalendarProp::SupportedReportSet(SupportedReportSet::default())
             }
-            CalendarPropName::SyncToken => CalendarProp::SyncToken(self.cal.format_synctoken()),
-            CalendarPropName::Getctag => CalendarProp::Getctag(self.cal.format_synctoken()),
+            CalendarPropName::SyncToken => CalendarProp::SyncToken(self.get_synctoken()),
+            CalendarPropName::Getctag => CalendarProp::Getctag(self.get_synctoken()),
             CalendarPropName::Source => {
                 CalendarProp::Source(self.cal.subscription_url.to_owned().map(HrefElement::from))
             }

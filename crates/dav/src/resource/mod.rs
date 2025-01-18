@@ -6,11 +6,12 @@ use crate::Error;
 use actix_web::dev::ResourceMap;
 use actix_web::{http::StatusCode, ResponseError};
 use itertools::Itertools;
+use quick_xml::name::Namespace;
 pub use resource_service::ResourceService;
 use rustical_store::auth::User;
-use rustical_xml::{XmlDeserialize, XmlSerialize};
+use rustical_xml::{EnumVariants, XmlDeserialize, XmlSerialize};
 use std::str::FromStr;
-use strum::{EnumString, VariantNames};
+use strum::EnumString;
 
 mod methods;
 mod resource_service;
@@ -20,10 +21,10 @@ pub use resource_service::*;
 pub trait ResourceProp: XmlSerialize + XmlDeserialize {}
 impl<T: XmlSerialize + XmlDeserialize> ResourceProp for T {}
 
-pub trait ResourcePropName: FromStr + VariantNames {}
-impl<T: FromStr + VariantNames> ResourcePropName for T {}
+pub trait ResourcePropName: FromStr {}
+impl<T: FromStr> ResourcePropName for T {}
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumVariants)]
 pub enum CommonPropertiesProp {
     // WebDAV (RFC 2518)
     #[xml(skip_deserializing)]
@@ -49,7 +50,7 @@ pub enum EitherProp<Left: ResourceProp, Right: ResourceProp> {
     Right(Right),
 }
 
-#[derive(EnumString, VariantNames, Clone)]
+#[derive(EnumString, Clone)]
 #[strum(serialize_all = "kebab-case")]
 pub enum CommonPropertiesPropName {
     Resourcetype,
@@ -60,14 +61,18 @@ pub enum CommonPropertiesPropName {
 
 pub trait Resource: Clone + 'static {
     type PropName: ResourcePropName + From<Self::Prop> + Into<&'static str>;
-    type Prop: ResourceProp + PartialEq + Clone;
+    type Prop: ResourceProp + PartialEq + Clone + EnumVariants;
     type Error: ResponseError + From<crate::Error>;
     type PrincipalResource: Resource + NamedRoute;
 
     fn get_resourcetype(&self) -> Resourcetype;
 
-    fn list_props() -> Vec<&'static str> {
-        [Self::PropName::VARIANTS, CommonPropertiesPropName::VARIANTS].concat()
+    fn list_props() -> Vec<(Option<Namespace<'static>>, &'static str)> {
+        [
+            Self::Prop::variant_names(),
+            CommonPropertiesProp::variant_names(),
+        ]
+        .concat()
     }
 
     fn get_internal_prop(
@@ -137,9 +142,10 @@ pub trait Resource: Clone + 'static {
                     Error::BadRequest("propname MUST be the only queried prop".to_owned()).into(),
                 );
             }
+
             let props = Self::list_props()
                 .into_iter()
-                .map(str::to_string)
+                .map(|(ns, tag)| (ns.to_owned(), tag.to_string()))
                 .collect_vec();
 
             return Ok(ResponseElement {
@@ -159,7 +165,10 @@ pub trait Resource: Clone + 'static {
                     Error::BadRequest("allprop MUST be the only queried prop".to_owned()).into(),
                 );
             }
-            props = Self::list_props();
+            props = Self::list_props()
+                .into_iter()
+                .map(|(_ns, tag)| tag)
+                .collect();
         }
 
         let mut valid_props = vec![];
@@ -195,7 +204,11 @@ pub trait Resource: Clone + 'static {
         if !invalid_props.is_empty() {
             propstats.push(PropstatWrapper::TagList(PropstatElement {
                 status: StatusCode::NOT_FOUND,
-                prop: invalid_props.into(),
+                prop: invalid_props
+                    .into_iter()
+                    .map(|tag| (None, tag))
+                    .collect_vec()
+                    .into(),
             }));
         }
         Ok(ResponseElement {

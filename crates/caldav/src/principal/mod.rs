@@ -6,8 +6,8 @@ use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{NamedRoute, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
-use rustical_xml::{XmlDeserialize, XmlSerialize};
-use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
+use rustical_xml::{EnumVariants, XmlDeserialize, XmlSerialize};
+use strum::{EnumDiscriminants, EnumString, IntoStaticStr};
 
 #[derive(Clone)]
 pub struct PrincipalResource {
@@ -18,10 +18,10 @@ pub struct PrincipalResource {
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
 pub struct CalendarHomeSet(#[xml(ty = "untagged", flatten)] Vec<HrefElement>);
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone, EnumVariants)]
 #[strum_discriminants(
     name(PrincipalPropName),
-    derive(EnumString, VariantNames, IntoStaticStr),
+    derive(EnumString, IntoStaticStr),
     strum(serialize_all = "kebab-case")
 )]
 pub enum PrincipalProp {
@@ -36,7 +36,7 @@ pub enum PrincipalProp {
 
     // WebDAV Access Control (RFC 3744)
     #[strum_discriminants(strum(serialize = "principal-URL"))]
-    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
+    #[xml(ns = "rustical_dav::namespace::NS_DAV", rename = b"principal-URL")]
     PrincipalUrl(HrefElement),
 
     // CalDAV (RFC 4791)
@@ -64,8 +64,8 @@ impl Resource for PrincipalResource {
 
     fn get_resourcetype(&self) -> Resourcetype {
         Resourcetype(&[
-            ResourcetypeInner(rustical_dav::namespace::NS_DAV, "collection"),
-            ResourcetypeInner(rustical_dav::namespace::NS_DAV, "principal"),
+            ResourcetypeInner(Some(rustical_dav::namespace::NS_DAV), "collection"),
+            ResourcetypeInner(Some(rustical_dav::namespace::NS_DAV), "principal"),
         ])
     }
 

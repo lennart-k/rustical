@@ -16,14 +16,13 @@ use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml::{Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
 use rustical_store::{Addressbook, AddressbookStore, SubscriptionStore};
-use rustical_xml::{XmlDeserialize, XmlSerialize};
+use rustical_xml::{EnumVariants, XmlDeserialize, XmlSerialize};
 use std::marker::PhantomData;
 use std::str::FromStr;
 use std::sync::Arc;
-use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
+use strum::{EnumDiscriminants, EnumString, IntoStaticStr};
 
-pub struct AddressbookResourceService<AS: AddressbookStore, S: SubscriptionStore>
-{
+pub struct AddressbookResourceService<AS: AddressbookStore, S: SubscriptionStore> {
     addr_store: Arc<AS>,
     __phantom_sub: PhantomData<S>,
 }
@@ -37,10 +36,10 @@ impl<A: AddressbookStore, S: SubscriptionStore> AddressbookResourceService<A, S>
     }
 }
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone, EnumVariants)]
 #[strum_discriminants(
     name(AddressbookPropName),
-    derive(EnumString, VariantNames, IntoStaticStr),
+    derive(EnumString, IntoStaticStr),
     strum(serialize_all = "kebab-case")
 )]
 pub enum AddressbookProp {
@@ -87,8 +86,8 @@ impl Resource for AddressbookResource {
 
     fn get_resourcetype(&self) -> Resourcetype {
         Resourcetype(&[
-            ResourcetypeInner(rustical_dav::namespace::NS_DAV, "collection"),
-            ResourcetypeInner(rustical_dav::namespace::NS_CARDDAV, "addressbook"),
+            ResourcetypeInner(Some(rustical_dav::namespace::NS_DAV), "collection"),
+            ResourcetypeInner(Some(rustical_dav::namespace::NS_CARDDAV), "addressbook"),
         ])
     }
 

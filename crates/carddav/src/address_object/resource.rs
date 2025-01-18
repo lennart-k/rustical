@@ -8,10 +8,10 @@ use rustical_dav::{
     xml::Resourcetype,
 };
 use rustical_store::{auth::User, AddressObject, AddressbookStore};
-use rustical_xml::{XmlDeserialize, XmlSerialize};
+use rustical_xml::{EnumVariants, XmlDeserialize, XmlSerialize};
 use serde::Deserialize;
 use std::sync::Arc;
-use strum::{EnumDiscriminants, EnumString, IntoStaticStr, VariantNames};
+use strum::{EnumDiscriminants, EnumString, IntoStaticStr};
 
 use super::methods::{get_object, put_object};
 
@@ -20,10 +20,10 @@ pub struct AddressObjectResourceService<AS: AddressbookStore> {
     addr_store: Arc<AS>,
 }
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone, EnumVariants)]
 #[strum_discriminants(
     name(AddressObjectPropName),
-    derive(EnumString, VariantNames, IntoStaticStr),
+    derive(EnumString, IntoStaticStr),
     strum(serialize_all = "kebab-case")
 )]
 pub enum AddressObjectProp {
