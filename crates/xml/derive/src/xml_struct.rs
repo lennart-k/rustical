@@ -259,7 +259,7 @@ impl NamedStruct {
             .map(|field| {
                 let field_index = field.target_field_index();
                 quote! {
-                    let ns = Some(self.#field_index);
+                    let ns = self.#field_index;
                 }
             });
 

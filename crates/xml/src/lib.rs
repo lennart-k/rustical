@@ -25,4 +25,7 @@ pub trait XmlRootTag {
 
 pub trait EnumVariants {
     const TAGGED_VARIANTS: &'static [(Option<Namespace<'static>>, &'static str)];
+
+    // Returns all valid xml names including untagged variants
+    fn variant_names() -> Vec<(Option<Namespace<'static>>, &'static str)>;
 }

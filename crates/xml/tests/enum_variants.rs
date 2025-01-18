@@ -10,7 +10,12 @@ pub const NS_CALENDARSERVER: Namespace = Namespace(b"http://calendarserver.org/n
 pub const NS_NEXTCLOUD: Namespace = Namespace(b"http://nextcloud.com/ns");
 
 #[derive(EnumVariants)]
-pub enum CalendarProp {
+enum ExtensionProp {
+    Hello,
+}
+
+#[derive(EnumVariants)]
+enum CalendarProp {
     // WebDAV (RFC 2518)
     #[xml(ns = "NS_DAV")]
     Displayname(Option<String>),
@@ -23,7 +28,7 @@ pub enum CalendarProp {
 }
 
 #[test]
-fn test_enum_variants() {
+fn test_enum_tagged_variants() {
     assert_eq!(
         CalendarProp::TAGGED_VARIANTS,
         &[
@@ -31,6 +36,27 @@ fn test_enum_variants() {
             (Some(NS_DAV), "getcontenttype"),
             (Some(NS_DAV), "principal-URL"),
             (None, "topic"),
+        ]
+    );
+}
+
+#[derive(EnumVariants)]
+#[xml(untagged)]
+enum UnionProp {
+    Calendar(CalendarProp),
+    Extension(ExtensionProp),
+}
+
+#[test]
+fn test_enum_untagged_variants() {
+    assert_eq!(
+        UnionProp::variant_names(),
+        vec![
+            (Some(NS_DAV), "displayname"),
+            (Some(NS_DAV), "getcontenttype"),
+            (Some(NS_DAV), "principal-URL"),
+            (None, "topic"),
+            (None, "hello"),
         ]
     );
 }
