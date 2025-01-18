@@ -10,8 +10,10 @@ use actix_web::http::Method;
 use actix_web::web;
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
+use rustical_dav::extensions::{
+    DavPushExtension, DavPushExtensionProp, SyncTokenExtension, SyncTokenExtensionProp,
+};
 use rustical_dav::privileges::UserPrivilegeSet;
-use rustical_dav::push::Transports;
 use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml::{Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
@@ -44,13 +46,6 @@ pub enum AddressbookProp {
     #[xml(ns = "rustical_dav::namespace::NS_DAV", skip_deserializing)]
     Getcontenttype(&'static str),
 
-    // WebDav Push
-    #[xml(skip_deserializing)]
-    #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
-    Transports(Transports),
-    #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
-    Topic(String),
-
     // CardDAV (RFC 6352)
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     AddressbookDescription(Option<String>),
@@ -60,22 +55,34 @@ pub enum AddressbookProp {
     SupportedReportSet(SupportedReportSet),
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     MaxResourceSize(i64),
+}
 
-    // Collection Synchronization (RFC 6578)
-    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
-    SyncToken(String),
-
-    // https://github.com/apple/ccs-calendarserver/blob/master/doc/Extensions/caldav-ctag.txt
-    #[xml(ns = "rustical_dav::namespace::NS_CALENDARSERVER")]
-    Getctag(String),
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
+#[xml(unit_variants_ident = "AddressbookPropWrapperName", untagged)]
+pub enum AddressbookPropWrapper {
+    Addressbook(AddressbookProp),
+    SyncToken(SyncTokenExtensionProp),
+    DavPush(DavPushExtensionProp),
 }
 
 #[derive(Clone, Debug, From, Into)]
 pub struct AddressbookResource(Addressbook);
 
+impl SyncTokenExtension for AddressbookResource {
+    fn get_synctoken(&self) -> String {
+        self.0.format_synctoken()
+    }
+}
+
+impl DavPushExtension for AddressbookResource {
+    fn get_topic(&self) -> String {
+        self.0.push_topic.to_owned()
+    }
+}
+
 impl Resource for AddressbookResource {
-    type PropName = AddressbookPropName;
-    type Prop = AddressbookProp;
+    type PropName = AddressbookPropWrapperName;
+    type Prop = AddressbookPropWrapper;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
 
@@ -93,68 +100,85 @@ impl Resource for AddressbookResource {
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
-            AddressbookPropName::Displayname => {
-                AddressbookProp::Displayname(self.0.displayname.clone())
+            AddressbookPropWrapperName::Addressbook(prop) => {
+                AddressbookPropWrapper::Addressbook(match prop {
+                    AddressbookPropName::Displayname => {
+                        AddressbookProp::Displayname(self.0.displayname.clone())
+                    }
+                    AddressbookPropName::Getcontenttype => {
+                        AddressbookProp::Getcontenttype("text/vcard;charset=utf-8")
+                    }
+                    AddressbookPropName::MaxResourceSize => {
+                        AddressbookProp::MaxResourceSize(10000000)
+                    }
+                    AddressbookPropName::SupportedReportSet => {
+                        AddressbookProp::SupportedReportSet(SupportedReportSet::default())
+                    }
+                    AddressbookPropName::AddressbookDescription => {
+                        AddressbookProp::AddressbookDescription(self.0.description.to_owned())
+                    }
+                    AddressbookPropName::SupportedAddressData => {
+                        AddressbookProp::SupportedAddressData(SupportedAddressData::default())
+                    }
+                })
             }
-            AddressbookPropName::Getcontenttype => {
-                AddressbookProp::Getcontenttype("text/vcard;charset=utf-8")
+
+            AddressbookPropWrapperName::SyncToken(prop) => AddressbookPropWrapper::SyncToken(
+                <Self as SyncTokenExtension>::get_prop(self, prop)?,
+            ),
+            AddressbookPropWrapperName::DavPush(prop) => {
+                AddressbookPropWrapper::DavPush(<Self as DavPushExtension>::get_prop(self, prop)?)
             }
-            AddressbookPropName::Transports => AddressbookProp::Transports(Default::default()),
-            AddressbookPropName::Topic => AddressbookProp::Topic(self.0.push_topic.to_owned()),
-            AddressbookPropName::MaxResourceSize => AddressbookProp::MaxResourceSize(10000000),
-            AddressbookPropName::SupportedReportSet => {
-                AddressbookProp::SupportedReportSet(SupportedReportSet::default())
-            }
-            AddressbookPropName::AddressbookDescription => {
-                AddressbookProp::AddressbookDescription(self.0.description.to_owned())
-            }
-            AddressbookPropName::SupportedAddressData => {
-                AddressbookProp::SupportedAddressData(SupportedAddressData::default())
-            }
-            AddressbookPropName::SyncToken => AddressbookProp::SyncToken(self.0.format_synctoken()),
-            AddressbookPropName::Getctag => AddressbookProp::Getctag(self.0.format_synctoken()),
         })
     }
 
     fn set_prop(&mut self, prop: Self::Prop) -> Result<(), rustical_dav::Error> {
         match prop {
-            AddressbookProp::Displayname(displayname) => {
-                self.0.displayname = displayname;
-                Ok(())
+            AddressbookPropWrapper::Addressbook(prop) => match prop {
+                AddressbookProp::Displayname(displayname) => {
+                    self.0.displayname = displayname;
+                    Ok(())
+                }
+                AddressbookProp::AddressbookDescription(description) => {
+                    self.0.description = description;
+                    Ok(())
+                }
+                AddressbookProp::Getcontenttype(_) => Err(rustical_dav::Error::PropReadOnly),
+                AddressbookProp::MaxResourceSize(_) => Err(rustical_dav::Error::PropReadOnly),
+                AddressbookProp::SupportedReportSet(_) => Err(rustical_dav::Error::PropReadOnly),
+                AddressbookProp::SupportedAddressData(_) => Err(rustical_dav::Error::PropReadOnly),
+            },
+            AddressbookPropWrapper::SyncToken(prop) => {
+                <Self as SyncTokenExtension>::set_prop(self, prop)
             }
-            AddressbookProp::AddressbookDescription(description) => {
-                self.0.description = description;
-                Ok(())
+            AddressbookPropWrapper::DavPush(prop) => {
+                <Self as DavPushExtension>::set_prop(self, prop)
             }
-            AddressbookProp::Getcontenttype(_) => Err(rustical_dav::Error::PropReadOnly),
-            AddressbookProp::Transports(_) => Err(rustical_dav::Error::PropReadOnly),
-            AddressbookProp::Topic(_) => Err(rustical_dav::Error::PropReadOnly),
-            AddressbookProp::MaxResourceSize(_) => Err(rustical_dav::Error::PropReadOnly),
-            AddressbookProp::SupportedReportSet(_) => Err(rustical_dav::Error::PropReadOnly),
-            AddressbookProp::SupportedAddressData(_) => Err(rustical_dav::Error::PropReadOnly),
-            AddressbookProp::SyncToken(_) => Err(rustical_dav::Error::PropReadOnly),
-            AddressbookProp::Getctag(_) => Err(rustical_dav::Error::PropReadOnly),
         }
     }
 
     fn remove_prop(&mut self, prop: &Self::PropName) -> Result<(), rustical_dav::Error> {
         match prop {
-            AddressbookPropName::Displayname => {
-                self.0.displayname = None;
-                Ok(())
+            AddressbookPropWrapperName::Addressbook(prop) => match prop {
+                AddressbookPropName::Displayname => {
+                    self.0.displayname = None;
+                    Ok(())
+                }
+                AddressbookPropName::AddressbookDescription => {
+                    self.0.description = None;
+                    Ok(())
+                }
+                AddressbookPropName::Getcontenttype => Err(rustical_dav::Error::PropReadOnly),
+                AddressbookPropName::MaxResourceSize => Err(rustical_dav::Error::PropReadOnly),
+                AddressbookPropName::SupportedReportSet => Err(rustical_dav::Error::PropReadOnly),
+                AddressbookPropName::SupportedAddressData => Err(rustical_dav::Error::PropReadOnly),
+            },
+            AddressbookPropWrapperName::SyncToken(prop) => {
+                <Self as SyncTokenExtension>::remove_prop(self, prop)
             }
-            AddressbookPropName::AddressbookDescription => {
-                self.0.description = None;
-                Ok(())
+            AddressbookPropWrapperName::DavPush(prop) => {
+                <Self as DavPushExtension>::remove_prop(self, prop)
             }
-            AddressbookPropName::Getcontenttype => Err(rustical_dav::Error::PropReadOnly),
-            AddressbookPropName::Transports => Err(rustical_dav::Error::PropReadOnly),
-            AddressbookPropName::Topic => Err(rustical_dav::Error::PropReadOnly),
-            AddressbookPropName::MaxResourceSize => Err(rustical_dav::Error::PropReadOnly),
-            AddressbookPropName::SupportedReportSet => Err(rustical_dav::Error::PropReadOnly),
-            AddressbookPropName::SupportedAddressData => Err(rustical_dav::Error::PropReadOnly),
-            AddressbookPropName::SyncToken => Err(rustical_dav::Error::PropReadOnly),
-            AddressbookPropName::Getctag => Err(rustical_dav::Error::PropReadOnly),
         }
     }
 

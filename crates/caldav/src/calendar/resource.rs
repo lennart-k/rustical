@@ -10,8 +10,10 @@ use actix_web::http::Method;
 use actix_web::web;
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
+use rustical_dav::extensions::{
+    DavPushExtension, DavPushExtensionProp, SyncTokenExtension, SyncTokenExtensionProp,
+};
 use rustical_dav::privileges::UserPrivilegeSet;
-use rustical_dav::push::Transports;
 use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
@@ -30,13 +32,6 @@ pub enum CalendarProp {
     Displayname(Option<String>),
     #[xml(ns = "rustical_dav::namespace::NS_DAV", skip_deserializing)]
     Getcontenttype(&'static str),
-
-    // WebDav Push
-    #[xml(skip_deserializing)]
-    #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
-    Transports(Transports),
-    #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
-    Topic(String),
 
     // CalDAV (RFC 4791)
     #[xml(ns = "rustical_dav::namespace::NS_ICAL")]
@@ -61,16 +56,16 @@ pub enum CalendarProp {
     #[xml(skip_deserializing)]
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     SupportedReportSet(SupportedReportSet),
-
-    // Collection Synchronization (RFC 6578)
-    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
-    SyncToken(String),
-
-    // CalendarServer
-    #[xml(ns = "rustical_dav::namespace::NS_CALENDARSERVER")]
-    Getctag(String),
     #[xml(ns = "rustical_dav::namespace::NS_CALENDARSERVER")]
     Source(Option<HrefElement>),
+}
+
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
+#[xml(unit_variants_ident = "CalendarPropWrapperName", untagged)]
+pub enum CalendarPropWrapper {
+    Calendar(CalendarProp),
+    SyncToken(SyncTokenExtensionProp),
+    DavPush(DavPushExtensionProp),
 }
 
 #[derive(Clone, Debug, From, Into)]
@@ -85,15 +80,21 @@ impl From<CalendarResource> for Calendar {
     }
 }
 
-impl CalendarResource {
+impl SyncTokenExtension for CalendarResource {
     fn get_synctoken(&self) -> String {
         self.cal.format_synctoken()
     }
 }
 
+impl DavPushExtension for CalendarResource {
+    fn get_topic(&self) -> String {
+        self.cal.push_topic.to_owned()
+    }
+}
+
 impl Resource for CalendarResource {
-    type PropName = CalendarPropName;
-    type Prop = CalendarProp;
+    type PropName = CalendarPropWrapperName;
+    type Prop = CalendarPropWrapper;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
 
@@ -121,43 +122,55 @@ impl Resource for CalendarResource {
         prop: &Self::PropName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
-            CalendarPropName::Displayname => {
-                CalendarProp::Displayname(self.cal.displayname.clone())
+            CalendarPropWrapperName::Calendar(prop) => CalendarPropWrapper::Calendar(match prop {
+                CalendarPropName::Displayname => {
+                    CalendarProp::Displayname(self.cal.displayname.clone())
+                }
+                CalendarPropName::CalendarColor => {
+                    CalendarProp::CalendarColor(self.cal.color.clone())
+                }
+                CalendarPropName::CalendarDescription => {
+                    CalendarProp::CalendarDescription(self.cal.description.clone())
+                }
+                CalendarPropName::CalendarTimezone => {
+                    CalendarProp::CalendarTimezone(self.cal.timezone.clone())
+                }
+                // chrono_tz uses the IANA database
+                CalendarPropName::TimezoneServiceSet => CalendarProp::TimezoneServiceSet(
+                    "https://www.iana.org/time-zones".to_owned().into(),
+                ),
+                CalendarPropName::CalendarTimezoneId => {
+                    CalendarProp::CalendarTimezoneId(self.cal.timezone_id.clone())
+                }
+                CalendarPropName::CalendarOrder => {
+                    CalendarProp::CalendarOrder(Some(self.cal.order))
+                }
+                CalendarPropName::SupportedCalendarComponentSet => {
+                    CalendarProp::SupportedCalendarComponentSet(
+                        SupportedCalendarComponentSet::default(),
+                    )
+                }
+                CalendarPropName::SupportedCalendarData => {
+                    CalendarProp::SupportedCalendarData(SupportedCalendarData::default())
+                }
+                CalendarPropName::Getcontenttype => {
+                    CalendarProp::Getcontenttype("text/calendar;charset=utf-8")
+                }
+                CalendarPropName::MaxResourceSize => CalendarProp::MaxResourceSize(10000000),
+                CalendarPropName::SupportedReportSet => {
+                    CalendarProp::SupportedReportSet(SupportedReportSet::default())
+                }
+                // CalendarPropName::SyncToken => CalendarProp::SyncToken(self.get_synctoken()),
+                // CalendarPropName::Getctag => CalendarProp::Getctag(self.get_synctoken()),
+                CalendarPropName::Source => CalendarProp::Source(
+                    self.cal.subscription_url.to_owned().map(HrefElement::from),
+                ),
+            }),
+            CalendarPropWrapperName::SyncToken(prop) => {
+                CalendarPropWrapper::SyncToken(<Self as SyncTokenExtension>::get_prop(self, prop)?)
             }
-            CalendarPropName::CalendarColor => CalendarProp::CalendarColor(self.cal.color.clone()),
-            CalendarPropName::CalendarDescription => {
-                CalendarProp::CalendarDescription(self.cal.description.clone())
-            }
-            CalendarPropName::CalendarTimezone => {
-                CalendarProp::CalendarTimezone(self.cal.timezone.clone())
-            }
-            // chrono_tz uses the IANA database
-            CalendarPropName::TimezoneServiceSet => CalendarProp::TimezoneServiceSet(
-                "https://www.iana.org/time-zones".to_owned().into(),
-            ),
-            CalendarPropName::CalendarTimezoneId => {
-                CalendarProp::CalendarTimezoneId(self.cal.timezone_id.clone())
-            }
-            CalendarPropName::CalendarOrder => CalendarProp::CalendarOrder(Some(self.cal.order)),
-            CalendarPropName::SupportedCalendarComponentSet => {
-                CalendarProp::SupportedCalendarComponentSet(SupportedCalendarComponentSet::default())
-            }
-            CalendarPropName::SupportedCalendarData => {
-                CalendarProp::SupportedCalendarData(SupportedCalendarData::default())
-            }
-            CalendarPropName::Getcontenttype => {
-                CalendarProp::Getcontenttype("text/calendar;charset=utf-8")
-            }
-            CalendarPropName::Transports => CalendarProp::Transports(Default::default()),
-            CalendarPropName::Topic => CalendarProp::Topic(self.cal.push_topic.to_owned()),
-            CalendarPropName::MaxResourceSize => CalendarProp::MaxResourceSize(10000000),
-            CalendarPropName::SupportedReportSet => {
-                CalendarProp::SupportedReportSet(SupportedReportSet::default())
-            }
-            CalendarPropName::SyncToken => CalendarProp::SyncToken(self.get_synctoken()),
-            CalendarPropName::Getctag => CalendarProp::Getctag(self.get_synctoken()),
-            CalendarPropName::Source => {
-                CalendarProp::Source(self.cal.subscription_url.to_owned().map(HrefElement::from))
+            CalendarPropWrapperName::DavPush(prop) => {
+                CalendarPropWrapper::DavPush(<Self as DavPushExtension>::get_prop(self, prop)?)
             }
         })
     }
@@ -167,52 +180,57 @@ impl Resource for CalendarResource {
             return Err(rustical_dav::Error::PropReadOnly);
         }
         match prop {
-            CalendarProp::Displayname(displayname) => {
-                self.cal.displayname = displayname;
-                Ok(())
-            }
-            CalendarProp::CalendarColor(color) => {
-                self.cal.color = color;
-                Ok(())
-            }
-            CalendarProp::CalendarDescription(description) => {
-                self.cal.description = description;
-                Ok(())
-            }
-            CalendarProp::CalendarTimezone(timezone) => {
-                // TODO: Ensure that timezone-id is also updated
-                self.cal.timezone = timezone;
-                Ok(())
-            }
-            CalendarProp::TimezoneServiceSet(_) => Err(rustical_dav::Error::PropReadOnly),
-            CalendarProp::CalendarTimezoneId(timezone_id) => {
-                if let Some(tzid) = &timezone_id {
-                    // Validate timezone id
-                    chrono_tz::Tz::from_str(tzid).map_err(|_| {
-                        rustical_dav::Error::BadRequest(format!("Invalid timezone-id: {}", tzid))
-                    })?;
-                    // TODO: Ensure that timezone is also updated (For now hope that clients play nice)
+            CalendarPropWrapper::Calendar(prop) => match prop {
+                CalendarProp::Displayname(displayname) => {
+                    self.cal.displayname = displayname;
+                    Ok(())
                 }
-                self.cal.timezone_id = timezone_id;
-                Ok(())
+                CalendarProp::CalendarColor(color) => {
+                    self.cal.color = color;
+                    Ok(())
+                }
+                CalendarProp::CalendarDescription(description) => {
+                    self.cal.description = description;
+                    Ok(())
+                }
+                CalendarProp::CalendarTimezone(timezone) => {
+                    // TODO: Ensure that timezone-id is also updated
+                    self.cal.timezone = timezone;
+                    Ok(())
+                }
+                CalendarProp::TimezoneServiceSet(_) => Err(rustical_dav::Error::PropReadOnly),
+                CalendarProp::CalendarTimezoneId(timezone_id) => {
+                    if let Some(tzid) = &timezone_id {
+                        // Validate timezone id
+                        chrono_tz::Tz::from_str(tzid).map_err(|_| {
+                            rustical_dav::Error::BadRequest(format!(
+                                "Invalid timezone-id: {}",
+                                tzid
+                            ))
+                        })?;
+                        // TODO: Ensure that timezone is also updated (For now hope that clients play nice)
+                    }
+                    self.cal.timezone_id = timezone_id;
+                    Ok(())
+                }
+                CalendarProp::CalendarOrder(order) => {
+                    self.cal.order = order.unwrap_or_default();
+                    Ok(())
+                }
+                CalendarProp::SupportedCalendarComponentSet(_) => {
+                    Err(rustical_dav::Error::PropReadOnly)
+                }
+                CalendarProp::SupportedCalendarData(_) => Err(rustical_dav::Error::PropReadOnly),
+                CalendarProp::Getcontenttype(_) => Err(rustical_dav::Error::PropReadOnly),
+                CalendarProp::MaxResourceSize(_) => Err(rustical_dav::Error::PropReadOnly),
+                CalendarProp::SupportedReportSet(_) => Err(rustical_dav::Error::PropReadOnly),
+                // Converting between a calendar subscription calendar and a normal one would be weird
+                CalendarProp::Source(_) => Err(rustical_dav::Error::PropReadOnly),
+            },
+            CalendarPropWrapper::SyncToken(prop) => {
+                <Self as SyncTokenExtension>::set_prop(self, prop)
             }
-            CalendarProp::CalendarOrder(order) => {
-                self.cal.order = order.unwrap_or_default();
-                Ok(())
-            }
-            CalendarProp::SupportedCalendarComponentSet(_) => {
-                Err(rustical_dav::Error::PropReadOnly)
-            }
-            CalendarProp::SupportedCalendarData(_) => Err(rustical_dav::Error::PropReadOnly),
-            CalendarProp::Getcontenttype(_) => Err(rustical_dav::Error::PropReadOnly),
-            CalendarProp::Transports(_) => Err(rustical_dav::Error::PropReadOnly),
-            CalendarProp::Topic(_) => Err(rustical_dav::Error::PropReadOnly),
-            CalendarProp::MaxResourceSize(_) => Err(rustical_dav::Error::PropReadOnly),
-            CalendarProp::SupportedReportSet(_) => Err(rustical_dav::Error::PropReadOnly),
-            CalendarProp::SyncToken(_) => Err(rustical_dav::Error::PropReadOnly),
-            CalendarProp::Getctag(_) => Err(rustical_dav::Error::PropReadOnly),
-            // Converting between a calendar subscription calendar and a normal one would be weird
-            CalendarProp::Source(_) => Err(rustical_dav::Error::PropReadOnly),
+            CalendarPropWrapper::DavPush(prop) => <Self as DavPushExtension>::set_prop(self, prop),
         }
     }
 
@@ -221,44 +239,48 @@ impl Resource for CalendarResource {
             return Err(rustical_dav::Error::PropReadOnly);
         }
         match prop {
-            CalendarPropName::Displayname => {
-                self.cal.displayname = None;
-                Ok(())
+            CalendarPropWrapperName::Calendar(prop) => match prop {
+                CalendarPropName::Displayname => {
+                    self.cal.displayname = None;
+                    Ok(())
+                }
+                CalendarPropName::CalendarColor => {
+                    self.cal.color = None;
+                    Ok(())
+                }
+                CalendarPropName::CalendarDescription => {
+                    self.cal.description = None;
+                    Ok(())
+                }
+                CalendarPropName::CalendarTimezone => {
+                    self.cal.timezone = None;
+                    Ok(())
+                }
+                CalendarPropName::TimezoneServiceSet => Err(rustical_dav::Error::PropReadOnly),
+                CalendarPropName::CalendarTimezoneId => {
+                    self.cal.timezone_id = None;
+                    Ok(())
+                }
+                CalendarPropName::CalendarOrder => {
+                    self.cal.order = 0;
+                    Ok(())
+                }
+                CalendarPropName::SupportedCalendarComponentSet => {
+                    Err(rustical_dav::Error::PropReadOnly)
+                }
+                CalendarPropName::SupportedCalendarData => Err(rustical_dav::Error::PropReadOnly),
+                CalendarPropName::Getcontenttype => Err(rustical_dav::Error::PropReadOnly),
+                CalendarPropName::MaxResourceSize => Err(rustical_dav::Error::PropReadOnly),
+                CalendarPropName::SupportedReportSet => Err(rustical_dav::Error::PropReadOnly),
+                // Converting a calendar subscription calendar into a normal one would be weird
+                CalendarPropName::Source => Err(rustical_dav::Error::PropReadOnly),
+            },
+            CalendarPropWrapperName::SyncToken(prop) => {
+                <Self as SyncTokenExtension>::remove_prop(self, prop)
             }
-            CalendarPropName::CalendarColor => {
-                self.cal.color = None;
-                Ok(())
+            CalendarPropWrapperName::DavPush(prop) => {
+                <Self as DavPushExtension>::remove_prop(self, prop)
             }
-            CalendarPropName::CalendarDescription => {
-                self.cal.description = None;
-                Ok(())
-            }
-            CalendarPropName::CalendarTimezone => {
-                self.cal.timezone = None;
-                Ok(())
-            }
-            CalendarPropName::TimezoneServiceSet => Err(rustical_dav::Error::PropReadOnly),
-            CalendarPropName::CalendarTimezoneId => {
-                self.cal.timezone_id = None;
-                Ok(())
-            }
-            CalendarPropName::CalendarOrder => {
-                self.cal.order = 0;
-                Ok(())
-            }
-            CalendarPropName::SupportedCalendarComponentSet => {
-                Err(rustical_dav::Error::PropReadOnly)
-            }
-            CalendarPropName::SupportedCalendarData => Err(rustical_dav::Error::PropReadOnly),
-            CalendarPropName::Getcontenttype => Err(rustical_dav::Error::PropReadOnly),
-            CalendarPropName::Transports => Err(rustical_dav::Error::PropReadOnly),
-            CalendarPropName::Topic => Err(rustical_dav::Error::PropReadOnly),
-            CalendarPropName::MaxResourceSize => Err(rustical_dav::Error::PropReadOnly),
-            CalendarPropName::SupportedReportSet => Err(rustical_dav::Error::PropReadOnly),
-            CalendarPropName::SyncToken => Err(rustical_dav::Error::PropReadOnly),
-            CalendarPropName::Getctag => Err(rustical_dav::Error::PropReadOnly),
-            // Converting a calendar subscription calendar into a normal one would be weird
-            CalendarPropName::Source => Err(rustical_dav::Error::PropReadOnly),
         }
     }
 
