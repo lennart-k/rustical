@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use quick_xml::name::Namespace;
 use rustical_xml::EnumVariants;
 use xml_derive::EnumUnitVariants;
@@ -16,7 +18,7 @@ enum ExtensionProp {
 }
 
 #[derive(EnumVariants, EnumUnitVariants)]
-#[xml(unit_variants_name = "CalendarPropName")]
+#[xml(unit_variants_ident = "CalendarPropName")]
 enum CalendarProp {
     // WebDAV (RFC 2518)
     #[xml(ns = "NS_DAV")]
@@ -72,5 +74,8 @@ fn test_enum_unit_variants() {
 
     let propname: CalendarPropName = CalendarProp::Displayname(None).into();
     let displayname: (Option<Namespace>, &str) = propname.into();
+    assert_eq!(displayname, (Some(NS_DAV), "displayname"));
+
+    let propname: CalendarPropName = FromStr::from_str("displayname").unwrap();
     assert_eq!(displayname, (Some(NS_DAV), "displayname"));
 }

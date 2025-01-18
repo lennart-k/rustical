@@ -16,11 +16,10 @@ use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml::{Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
 use rustical_store::{Addressbook, AddressbookStore, SubscriptionStore};
-use rustical_xml::{EnumVariants, XmlDeserialize, XmlSerialize};
+use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 use std::marker::PhantomData;
 use std::str::FromStr;
 use std::sync::Arc;
-use strum::{EnumDiscriminants, EnumString, IntoStaticStr};
 
 pub struct AddressbookResourceService<AS: AddressbookStore, S: SubscriptionStore> {
     addr_store: Arc<AS>,
@@ -36,12 +35,8 @@ impl<A: AddressbookStore, S: SubscriptionStore> AddressbookResourceService<A, S>
     }
 }
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone, EnumVariants)]
-#[strum_discriminants(
-    name(AddressbookPropName),
-    derive(EnumString, IntoStaticStr),
-    strum(serialize_all = "kebab-case")
-)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
+#[xml(unit_variants_ident = "AddressbookPropName")]
 pub enum AddressbookProp {
     // WebDAV (RFC 2518)
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]

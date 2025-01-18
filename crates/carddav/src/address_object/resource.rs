@@ -8,10 +8,9 @@ use rustical_dav::{
     xml::Resourcetype,
 };
 use rustical_store::{auth::User, AddressObject, AddressbookStore};
-use rustical_xml::{EnumVariants, XmlDeserialize, XmlSerialize};
+use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 use serde::Deserialize;
 use std::sync::Arc;
-use strum::{EnumDiscriminants, EnumString, IntoStaticStr};
 
 use super::methods::{get_object, put_object};
 
@@ -20,12 +19,8 @@ pub struct AddressObjectResourceService<AS: AddressbookStore> {
     addr_store: Arc<AS>,
 }
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone, EnumVariants)]
-#[strum_discriminants(
-    name(AddressObjectPropName),
-    derive(EnumString, IntoStaticStr),
-    strum(serialize_all = "kebab-case")
-)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
+#[xml(unit_variants_ident = "AddressObjectPropName")]
 pub enum AddressObjectProp {
     // WebDAV (RFC 2518)
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]

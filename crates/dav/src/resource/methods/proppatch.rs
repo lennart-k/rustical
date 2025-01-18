@@ -9,6 +9,7 @@ use actix_web::http::StatusCode;
 use actix_web::web::Data;
 use actix_web::{web::Path, HttpRequest};
 use itertools::Itertools;
+use quick_xml::name::Namespace;
 use rustical_store::auth::User;
 use rustical_xml::Unparsed;
 use rustical_xml::XmlDeserialize;
@@ -97,11 +98,11 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
                 match property {
                     SetPropertyPropWrapper::Valid(prop) => {
                         let propname: <R::Resource as Resource>::PropName = prop.clone().into();
-                        let propname: &str = propname.into();
+                        let (ns, propname): (Option<Namespace>, &str) = propname.into();
                         match resource.set_prop(prop) {
-                            Ok(()) => props_ok.push((None, propname.to_owned())),
+                            Ok(()) => props_ok.push((ns, propname.to_owned())),
                             Err(Error::PropReadOnly) => {
-                                props_conflict.push((None, propname.to_owned()))
+                                props_conflict.push((ns, propname.to_owned()))
                             }
                             Err(err) => return Err(err.into()),
                         };

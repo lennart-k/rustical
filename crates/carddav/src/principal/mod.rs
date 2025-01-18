@@ -7,9 +7,8 @@ use rustical_dav::resource::{NamedRoute, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
 use rustical_store::AddressbookStore;
-use rustical_xml::{EnumVariants, XmlDeserialize, XmlSerialize};
+use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 use std::sync::Arc;
-use strum::{EnumDiscriminants, EnumString, IntoStaticStr};
 
 pub struct PrincipalResourceService<A: AddressbookStore> {
     addr_store: Arc<A>,
@@ -26,18 +25,13 @@ pub struct PrincipalResource {
     principal: String,
 }
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, EnumDiscriminants, Clone, EnumVariants)]
-#[strum_discriminants(
-    name(PrincipalPropName),
-    derive(EnumString, IntoStaticStr),
-    strum(serialize_all = "kebab-case")
-)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
+#[xml(unit_variants_ident = "PrincipalPropName")]
 pub enum PrincipalProp {
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     Displayname(String),
 
     // WebDAV Access Control (RFC 3744)
-    #[strum_discriminants(strum(serialize = "principal-URL"))]
     #[xml(rename = b"principal-URL")]
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     PrincipalUrl(HrefElement),

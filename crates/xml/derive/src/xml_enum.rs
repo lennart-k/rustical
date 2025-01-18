@@ -2,7 +2,6 @@ use super::{attrs::EnumAttrs, Variant};
 use crate::attrs::VariantAttrs;
 use core::panic;
 use darling::{FromDeriveInput, FromVariant};
-use proc_macro2::Span;
 use quote::quote;
 use syn::{DataEnum, DeriveInput};
 
@@ -245,11 +244,11 @@ impl Enum {
         if self.attrs.untagged.is_present() {
             panic!("EnumUnitVariants not implemented for untagged enums");
         }
-        let unit_enum_ident = if let Some(name) = &self.attrs.unit_variants_name {
-            syn::Ident::new(name, Span::call_site())
-        } else {
-            panic!("unit_variants_name not set");
-        };
+        let unit_enum_ident = self
+            .attrs
+            .unit_variants_ident
+            .as_ref()
+            .expect("unit_variants_ident no set");
 
         let tagged_variants: Vec<_> = self
             .variants
@@ -287,8 +286,15 @@ impl Enum {
             quote! { #ident::#variant_ident { .. } => #unit_enum_ident::#variant_ident }
         });
 
+        let str_to_unit_branches = tagged_variants.iter().map(|variant| {
+            let variant_ident = &variant.variant.ident;
+            let b_xml_name = variant.xml_name().value();
+            let xml_name = String::from_utf8_lossy(&b_xml_name);
+            quote! { #xml_name => Ok(#unit_enum_ident::#variant_ident) }
+        });
+
         quote! {
-            enum #unit_enum_ident {
+            pub enum #unit_enum_ident {
                 #(#variant_idents),*
             }
 
@@ -304,6 +310,17 @@ impl Enum {
                 fn from(val: #ident) -> Self {
                     match val {
                         #(#from_enum_to_unit_branches),*
+                    }
+                }
+            }
+
+            impl ::std::str::FromStr for #unit_enum_ident {
+                type Err = ::rustical_xml::FromStrError;
+
+                fn from_str(val: &str) -> Result<Self, Self::Err> {
+                    match val {
+                        #(#str_to_unit_branches),*,
+                        _ => Err(::rustical_xml::FromStrError)
                     }
                 }
             }

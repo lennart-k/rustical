@@ -60,7 +60,9 @@ pub enum CommonPropertiesPropName {
 }
 
 pub trait Resource: Clone + 'static {
-    type PropName: ResourcePropName + From<Self::Prop> + Into<&'static str>;
+    type PropName: ResourcePropName
+        + From<Self::Prop>
+        + Into<(Option<Namespace<'static>>, &'static str)>;
     type Prop: ResourceProp + PartialEq + Clone + EnumVariants;
     type Error: ResponseError + From<crate::Error>;
     type PrincipalResource: Resource + NamedRoute;

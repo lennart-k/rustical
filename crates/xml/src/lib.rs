@@ -24,6 +24,9 @@ pub trait XmlRootTag {
     fn root_ns_prefixes() -> HashMap<Namespace<'static>, &'static [u8]>;
 }
 
+#[derive(Debug)]
+pub struct FromStrError;
+
 pub trait EnumVariants {
     const TAGGED_VARIANTS: &'static [(Option<Namespace<'static>>, &'static str)];
 

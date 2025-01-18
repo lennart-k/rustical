@@ -12,7 +12,6 @@ actix-web = { workspace = true }
 async-trait = { workspace = true }
 thiserror = { workspace = true }
 quick-xml = { workspace = true }
-strum = { workspace = true }
 tracing = { workspace = true }
 tracing-actix-web = { workspace = true }
 futures-util = { workspace = true }
