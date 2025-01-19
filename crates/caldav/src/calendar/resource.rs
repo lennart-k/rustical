@@ -145,9 +145,7 @@ impl Resource for CalendarResource {
                     CalendarProp::CalendarOrder(Some(self.cal.order))
                 }
                 CalendarPropName::SupportedCalendarComponentSet => {
-                    CalendarProp::SupportedCalendarComponentSet(
-                        SupportedCalendarComponentSet::default(),
-                    )
+                    CalendarProp::SupportedCalendarComponentSet(self.cal.components.clone().into())
                 }
                 CalendarPropName::SupportedCalendarData => {
                     CalendarProp::SupportedCalendarData(SupportedCalendarData::default())
@@ -214,8 +212,9 @@ impl Resource for CalendarResource {
                     self.cal.order = order.unwrap_or_default();
                     Ok(())
                 }
-                CalendarProp::SupportedCalendarComponentSet(_) => {
-                    Err(rustical_dav::Error::PropReadOnly)
+                CalendarProp::SupportedCalendarComponentSet(comp_set) => {
+                    self.cal.components = comp_set.into();
+                    Ok(())
                 }
                 CalendarProp::SupportedCalendarData(_) => Err(rustical_dav::Error::PropReadOnly),
                 CalendarProp::MaxResourceSize(_) => Err(rustical_dav::Error::PropReadOnly),

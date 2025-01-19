@@ -1,3 +1,4 @@
+use super::CalendarObjectType;
 use crate::synctoken::format_synctoken;
 use chrono::NaiveDateTime;
 use serde::Serialize;
@@ -16,6 +17,7 @@ pub struct Calendar {
     pub synctoken: i64,
     pub subscription_url: Option<String>,
     pub push_topic: String,
+    pub components: Vec<CalendarObjectType>,
 }
 
 impl Calendar {

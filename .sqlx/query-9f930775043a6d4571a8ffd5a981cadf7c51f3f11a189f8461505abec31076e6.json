@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT principal, id, synctoken, displayname, \"order\", description, color, timezone, timezone_id, deleted_at, subscription_url, push_topic\n                FROM calendars\n                WHERE principal = ? AND deleted_at IS NOT NULL",
+  "query": "SELECT *\n                FROM calendars\n                WHERE (principal, id) = (?, ?)",
   "describe": {
     "columns": [
       {
@@ -24,14 +24,14 @@
         "type_info": "Text"
       },
       {
-        "name": "order",
+        "name": "description",
         "ordinal": 4,
-        "type_info": "Integer"
+        "type_info": "Text"
       },
       {
-        "name": "description",
+        "name": "order",
         "ordinal": 5,
-        "type_info": "Text"
+        "type_info": "Integer"
       },
       {
         "name": "color",
@@ -62,25 +62,43 @@
         "name": "push_topic",
         "ordinal": 11,
         "type_info": "Text"
+      },
+      {
+        "name": "comp_event",
+        "ordinal": 12,
+        "type_info": "Bool"
+      },
+      {
+        "name": "comp_todo",
+        "ordinal": 13,
+        "type_info": "Bool"
+      },
+      {
+        "name": "comp_journal",
+        "ordinal": 14,
+        "type_info": "Bool"
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 2
     },
     "nullable": [
       false,
       false,
       false,
       true,
+      true,
       false,
       true,
       true,
       true,
       true,
       true,
-      true,
+      false,
+      false,
+      false,
       false
     ]
   },
-  "hash": "ad596abc6b3826251bdf640ece558fde44fcbd4f7d27c283658de38330bef095"
+  "hash": "9f930775043a6d4571a8ffd5a981cadf7c51f3f11a189f8461505abec31076e6"
 }

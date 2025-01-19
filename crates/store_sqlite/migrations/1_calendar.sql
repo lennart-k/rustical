@@ -11,6 +11,9 @@ CREATE TABLE calendars (
     deleted_at DATETIME,
     subscription_url TEXT,
     push_topic TEXT UNIQUE NOT NULL,
+    comp_event BOOLEAN NOT NULL,
+    comp_todo BOOLEAN NOT NULL,
+    comp_journal BOOLEAN NOT NULL,
     PRIMARY KEY (principal, id)
 );
 

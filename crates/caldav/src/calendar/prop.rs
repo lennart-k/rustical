@@ -1,23 +1,37 @@
-use derive_more::derive::From;
-use rustical_xml::XmlSerialize;
+use derive_more::derive::{From, Into};
+use rustical_store::calendar::CalendarObjectType;
+use rustical_xml::{XmlDeserialize, XmlSerialize};
 
-#[derive(Debug, Clone, XmlSerialize, PartialEq, From)]
+#[derive(Debug, Clone, XmlSerialize, XmlDeserialize, PartialEq, From, Into)]
 pub struct SupportedCalendarComponent {
     #[xml(ty = "attr")]
-    pub name: &'static str,
+    pub name: CalendarObjectType,
 }
 
-#[derive(Debug, Clone, XmlSerialize, PartialEq)]
+#[derive(Debug, Clone, XmlSerialize, XmlDeserialize, PartialEq)]
 pub struct SupportedCalendarComponentSet {
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV", flatten)]
     pub comp: Vec<SupportedCalendarComponent>,
 }
 
-impl Default for SupportedCalendarComponentSet {
-    fn default() -> Self {
+impl From<Vec<CalendarObjectType>> for SupportedCalendarComponentSet {
+    fn from(value: Vec<CalendarObjectType>) -> Self {
         Self {
-            comp: vec!["VEVENT".into(), "VTODO".into(), "VJOURNAL".into()],
+            comp: value
+                .into_iter()
+                .map(SupportedCalendarComponent::from)
+                .collect(),
         }
+    }
+}
+
+impl From<SupportedCalendarComponentSet> for Vec<CalendarObjectType> {
+    fn from(value: SupportedCalendarComponentSet) -> Self {
+        value
+            .comp
+            .into_iter()
+            .map(CalendarObjectType::from)
+            .collect()
     }
 }
 

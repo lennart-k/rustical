@@ -1,10 +1,11 @@
 use super::ChangeOperation;
 use async_trait::async_trait;
 use derive_more::derive::Constructor;
-use rustical_store::calendar::CalDateTime;
+use rustical_store::calendar::{CalDateTime, CalendarObjectType};
 use rustical_store::synctoken::format_synctoken;
 use rustical_store::{Calendar, CalendarObject, CalendarStore, Error};
 use rustical_store::{CollectionOperation, CollectionOperationType};
+use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};
 use tokio::sync::mpsc::Sender;
 use tracing::{error, instrument};
@@ -23,6 +24,55 @@ impl TryFrom<CalendarObjectRow> for CalendarObject {
     }
 }
 
+#[derive(Debug, Default, Clone)]
+struct CalendarRow {
+    principal: String,
+    id: String,
+    displayname: Option<String>,
+    order: i64,
+    description: Option<String>,
+    color: Option<String>,
+    timezone: Option<String>,
+    timezone_id: Option<String>,
+    deleted_at: Option<NaiveDateTime>,
+    synctoken: i64,
+    subscription_url: Option<String>,
+    push_topic: String,
+    comp_event: bool,
+    comp_todo: bool,
+    comp_journal: bool,
+}
+
+impl From<CalendarRow> for Calendar {
+    fn from(value: CalendarRow) -> Self {
+        let mut components = vec![];
+        if value.comp_event {
+            components.push(CalendarObjectType::Event);
+        }
+        if value.comp_todo {
+            components.push(CalendarObjectType::Todo);
+        }
+        if value.comp_journal {
+            components.push(CalendarObjectType::Journal);
+        }
+        Self {
+            principal: value.principal,
+            id: value.id,
+            displayname: value.displayname,
+            order: value.order,
+            description: value.description,
+            color: value.color,
+            timezone: value.timezone,
+            timezone_id: value.timezone_id,
+            deleted_at: value.deleted_at,
+            synctoken: value.synctoken,
+            subscription_url: value.subscription_url,
+            push_topic: value.push_topic,
+            components,
+        }
+    }
+}
+
 #[derive(Debug, Constructor)]
 pub struct SqliteCalendarStore {
     db: SqlitePool,
@@ -36,16 +86,17 @@ impl SqliteCalendarStore {
         id: &str,
     ) -> Result<Calendar, Error> {
         let cal = sqlx::query_as!(
-            Calendar,
-            r#"SELECT principal, id, synctoken, "order", displayname, description, color, timezone, timezone_id, deleted_at, subscription_url, push_topic
+            CalendarRow,
+            r#"SELECT *
                 FROM calendars
                 WHERE (principal, id) = (?, ?)"#,
             principal,
             id
         )
         .fetch_one(executor)
-        .await.map_err(crate::Error::from)?;
-        Ok(cal)
+        .await
+        .map_err(crate::Error::from)?;
+        Ok(cal.into())
     }
 
     async fn _get_calendars<'e, E: Executor<'e, Database = Sqlite>>(
@@ -53,15 +104,16 @@ impl SqliteCalendarStore {
         principal: &str,
     ) -> Result<Vec<Calendar>, Error> {
         let cals = sqlx::query_as!(
-            Calendar,
-            r#"SELECT principal, id, synctoken, displayname, "order", description, color, timezone, timezone_id, deleted_at, subscription_url, push_topic
+            CalendarRow,
+            r#"SELECT *
                 FROM calendars
                 WHERE principal = ? AND deleted_at IS NULL"#,
             principal
         )
         .fetch_all(executor)
-        .await.map_err(crate::Error::from)?;
-        Ok(cals)
+        .await
+        .map_err(crate::Error::from)?;
+        Ok(cals.into_iter().map(Calendar::from).collect())
     }
 
     async fn _get_deleted_calendars<'e, E: Executor<'e, Database = Sqlite>>(
@@ -69,24 +121,29 @@ impl SqliteCalendarStore {
         principal: &str,
     ) -> Result<Vec<Calendar>, Error> {
         let cals = sqlx::query_as!(
-            Calendar,
-            r#"SELECT principal, id, synctoken, displayname, "order", description, color, timezone, timezone_id, deleted_at, subscription_url, push_topic
+            CalendarRow,
+            r#"SELECT *
                 FROM calendars
                 WHERE principal = ? AND deleted_at IS NOT NULL"#,
             principal
         )
         .fetch_all(executor)
-        .await.map_err(crate::Error::from)?;
-        Ok(cals)
+        .await
+        .map_err(crate::Error::from)?;
+        Ok(cals.into_iter().map(Calendar::from).collect())
     }
 
     async fn _insert_calendar<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         calendar: Calendar,
     ) -> Result<(), Error> {
+        let comp_event = calendar.components.contains(&CalendarObjectType::Event);
+        let comp_todo = calendar.components.contains(&CalendarObjectType::Todo);
+        let comp_journal = calendar.components.contains(&CalendarObjectType::Journal);
+
         sqlx::query!(
-            r#"INSERT INTO calendars (principal, id, displayname, description, "order", color, timezone, timezone_id, push_topic)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"#,
+            r#"INSERT INTO calendars (principal, id, displayname, description, "order", color, timezone, timezone_id, push_topic, comp_event, comp_todo, comp_journal)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"#,
             calendar.principal,
             calendar.id,
             calendar.displayname,
@@ -96,9 +153,11 @@ impl SqliteCalendarStore {
             calendar.timezone,
             calendar.timezone_id,
             calendar.push_topic,
+            comp_event, comp_todo, comp_journal
         )
         .execute(executor)
         .await.map_err(crate::Error::from)?;
+
         Ok(())
     }
 
@@ -108,8 +167,12 @@ impl SqliteCalendarStore {
         id: String,
         calendar: Calendar,
     ) -> Result<(), Error> {
+        let comp_event = calendar.components.contains(&CalendarObjectType::Event);
+        let comp_todo = calendar.components.contains(&CalendarObjectType::Todo);
+        let comp_journal = calendar.components.contains(&CalendarObjectType::Journal);
+
         let result = sqlx::query!(
-            r#"UPDATE calendars SET principal = ?, id = ?, displayname = ?, description = ?, "order" = ?, color = ?, timezone = ?, timezone_id = ?, push_topic = ?
+            r#"UPDATE calendars SET principal = ?, id = ?, displayname = ?, description = ?, "order" = ?, color = ?, timezone = ?, timezone_id = ?, push_topic = ?, comp_event = ?, comp_todo = ?, comp_journal = ?
                 WHERE (principal, id) = (?, ?)"#,
             calendar.principal,
             calendar.id,
@@ -120,6 +183,7 @@ impl SqliteCalendarStore {
             calendar.timezone,
             calendar.timezone_id,
             calendar.push_topic,
+            comp_event, comp_todo, comp_journal,
             principal,
             id
         ).execute(executor).await.map_err(crate::Error::from)?;

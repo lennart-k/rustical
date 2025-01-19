@@ -1,7 +1,8 @@
 use std::sync::Arc;
 
 use crate::{
-    AddressObject, Addressbook, AddressbookStore, Calendar, CalendarObject, CalendarStore, Error,
+    calendar::CalendarObjectType, AddressObject, Addressbook, AddressbookStore, Calendar,
+    CalendarObject, CalendarStore, Error,
 };
 use async_trait::async_trait;
 use derive_more::derive::Constructor;
@@ -31,6 +32,7 @@ fn birthday_calendar(addressbook: Addressbook) -> Calendar {
             hasher.update(addressbook.push_topic);
             format!("{:x}", hasher.finalize())
         },
+        components: vec![CalendarObjectType::Event],
     }
 }
 

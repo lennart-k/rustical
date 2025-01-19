@@ -2,15 +2,41 @@ use super::{CalDateTime, EventObject, JournalObject, TodoObject};
 use crate::Error;
 use anyhow::Result;
 use ical::parser::{ical::component::IcalTimeZone, Component};
+use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::{collections::HashMap, io::BufReader};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 // specified in https://datatracker.ietf.org/doc/html/rfc5545#section-3.6
 pub enum CalendarObjectType {
     Event = 0,
     Todo = 1,
     Journal = 2,
+}
+
+impl rustical_xml::ValueSerialize for CalendarObjectType {
+    fn serialize(&self) -> String {
+        match self {
+            CalendarObjectType::Event => "VEVENT",
+            CalendarObjectType::Todo => "VTODO",
+            CalendarObjectType::Journal => "VJOURNAL",
+        }
+        .to_owned()
+    }
+}
+
+impl rustical_xml::ValueDeserialize for CalendarObjectType {
+    fn deserialize(val: &str) -> std::result::Result<Self, rustical_xml::XmlError> {
+        match <String as rustical_xml::ValueDeserialize>::deserialize(val)?.as_str() {
+            "VEVENT" => Ok(Self::Event),
+            "VTODO" => Ok(Self::Todo),
+            "VJOURNAL" => Ok(Self::Journal),
+            _ => Err(rustical_xml::XmlError::Other(format!(
+                "Invalid value '{}', must be VEVENT, VTODO, or VJOURNAL",
+                val
+            ))),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
