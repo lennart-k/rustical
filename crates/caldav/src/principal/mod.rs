@@ -12,7 +12,7 @@ use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize}
 #[derive(Clone)]
 pub struct PrincipalResource {
     principal: String,
-    home_set: &'static [&'static str],
+    home_set: &'static [(&'static str, bool)],
 }
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
@@ -80,7 +80,7 @@ impl Resource for PrincipalResource {
         let home_set = CalendarHomeSet(
             self.home_set
                 .iter()
-                .map(|&home_name| format!("{}/{}", principal_url, home_name).into())
+                .map(|&(home_name, _read_only)| format!("{}/{}", principal_url, home_name).into())
                 .collect(),
         );
 
@@ -117,7 +117,7 @@ impl Resource for PrincipalResource {
     }
 }
 
-pub struct PrincipalResourceService(pub &'static [&'static str]);
+pub struct PrincipalResourceService(pub &'static [(&'static str, bool)]);
 
 #[async_trait(?Send)]
 impl ResourceService for PrincipalResourceService {
@@ -143,11 +143,12 @@ impl ResourceService for PrincipalResourceService {
         Ok(self
             .0
             .iter()
-            .map(|&set_name| {
+            .map(|&(set_name, read_only)| {
                 (
                     set_name.to_string(),
                     CalendarSetResource {
                         principal: principal.to_owned(),
+                        read_only,
                     },
                 )
             })

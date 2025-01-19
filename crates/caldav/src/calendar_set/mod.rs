@@ -15,6 +15,7 @@ use std::sync::Arc;
 #[derive(Clone)]
 pub struct CalendarSetResource {
     pub(crate) principal: String,
+    pub(crate) read_only: bool,
 }
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
@@ -53,7 +54,11 @@ impl Resource for CalendarSetResource {
     }
 
     fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
-        Ok(UserPrivilegeSet::owner_only(self.principal == user.id))
+        Ok(if self.read_only {
+            UserPrivilegeSet::owner_read(self.principal == user.id)
+        } else {
+            UserPrivilegeSet::owner_only(self.principal == user.id)
+        })
     }
 }
 
@@ -80,6 +85,7 @@ impl<C: CalendarStore> ResourceService for CalendarSetResourceService<C> {
     ) -> Result<Self::Resource, Self::Error> {
         Ok(CalendarSetResource {
             principal: principal.to_owned(),
+            read_only: self.cal_store.is_read_only(),
         })
     }
 

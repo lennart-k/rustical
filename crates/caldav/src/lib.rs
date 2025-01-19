@@ -72,7 +72,7 @@ pub fn configure_dav<
                 web::scope("/user").service(
                     web::scope("/{principal}")
                         .service(PrincipalResourceService(&[
-                            "calendar", "birthdays"
+                            ("calendar", false), ("birthdays", true)
                         ]).actix_resource().name(PrincipalResource::route_name()))
                         .service(web::scope("/calendar")
                             .service(CalendarSetResourceService::new(store.clone()).actix_resource())
