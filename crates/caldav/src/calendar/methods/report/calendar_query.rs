@@ -1,12 +1,13 @@
-use std::ops::Deref;
-
 use actix_web::HttpRequest;
 use rustical_dav::{
     resource::Resource,
     xml::{MultistatusElement, PropElement, PropfindType},
 };
-use rustical_store::{auth::User, calendar::UtcDateTime, CalendarObject, CalendarStore};
+use rustical_store::{
+    auth::User, calendar::UtcDateTime, calendar_store::CalendarQuery, CalendarObject, CalendarStore,
+};
 use rustical_xml::XmlDeserialize;
+use std::ops::Deref;
 
 use crate::{
     calendar_object::resource::{CalendarObjectPropWrapper, CalendarObjectResource},
@@ -141,6 +142,7 @@ impl CompFilterElement {
 #[allow(dead_code)]
 // https://datatracker.ietf.org/doc/html/rfc4791#section-9.7
 pub(crate) struct FilterElement {
+    // This comp-filter matches on VCALENDAR
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     pub(crate) comp_filter: CompFilterElement,
 }
@@ -148,6 +150,27 @@ pub(crate) struct FilterElement {
 impl FilterElement {
     pub fn matches(&self, cal_object: &CalendarObject) -> bool {
         self.comp_filter.matches_root(cal_object)
+    }
+}
+
+impl From<&FilterElement> for CalendarQuery {
+    fn from(value: &FilterElement) -> Self {
+        let comp_filter_vcalendar = &value.comp_filter;
+        for comp_filter in comp_filter_vcalendar.comp_filter.iter() {
+            // A calendar object cannot contain both VEVENT and VTODO, so we only have to handle
+            // whatever we get first
+            if matches!(comp_filter.name.as_str(), "VEVENT" | "VTODO") {
+                if let Some(time_range) = &comp_filter.time_range {
+                    let start = time_range.start.as_ref().map(|start| start.date_naive());
+                    let end = time_range.end.as_ref().map(|end| end.date_naive());
+                    return CalendarQuery {
+                        time_start: start,
+                        time_end: end,
+                    };
+                }
+            }
+        }
+        Default::default()
     }
 }
 
@@ -165,13 +188,25 @@ pub struct CalendarQueryRequest {
     pub(crate) timezone_id: Option<String>,
 }
 
+impl From<&CalendarQueryRequest> for CalendarQuery {
+    fn from(value: &CalendarQueryRequest) -> Self {
+        value
+            .filter
+            .as_ref()
+            .map(CalendarQuery::from)
+            .unwrap_or_default()
+    }
+}
+
 pub async fn get_objects_calendar_query<C: CalendarStore>(
     cal_query: &CalendarQueryRequest,
     principal: &str,
     cal_id: &str,
     store: &C,
 ) -> Result<Vec<CalendarObject>, Error> {
-    let mut objects = store.get_objects(principal, cal_id).await?;
+    let mut objects = store
+        .calendar_query(principal, cal_id, cal_query.into())
+        .await?;
     if let Some(filter) = &cal_query.filter {
         objects.retain(|object| filter.matches(object));
     }

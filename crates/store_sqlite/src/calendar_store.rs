@@ -1,7 +1,9 @@
 use super::ChangeOperation;
 use async_trait::async_trait;
+use chrono::TimeDelta;
 use derive_more::derive::Constructor;
 use rustical_store::calendar::{CalDateTime, CalendarObjectType};
+use rustical_store::calendar_store::CalendarQuery;
 use rustical_store::synctoken::format_synctoken;
 use rustical_store::{Calendar, CalendarObject, CalendarStore, Error};
 use rustical_store::{CollectionOperation, CollectionOperationType};
@@ -254,6 +256,40 @@ impl SqliteCalendarStore {
         .collect()
     }
 
+    async fn _calendar_query<'e, E: Executor<'e, Database = Sqlite>>(
+        executor: E,
+        principal: &str,
+        cal_id: &str,
+        query: CalendarQuery,
+    ) -> Result<Vec<CalendarObject>, Error> {
+        // We extend our query interval by one day in each direction since we really don't want to
+        // miss any objects because of timezone differences
+        // I've previously tried NaiveDate::MIN,MAX, but it seems like sqlite cannot handle these
+        let start = query.time_start.map(|start| start - TimeDelta::days(1));
+        let end = query.time_end.map(|end| end + TimeDelta::days(1));
+
+        sqlx::query_as!(
+            CalendarObjectRow,
+            r"SELECT id, ics FROM calendarobjects
+                WHERE principal = ? AND cal_id = ? AND deleted_at IS NULL
+                    AND (last_occurence IS NULL OR ? IS NULL OR last_occurence >= date(?))
+                    AND (first_occurence IS NULL OR ? IS NULL OR first_occurence <= date(?))
+            ",
+            principal,
+            cal_id,
+            start,
+            start,
+            end,
+            end,
+        )
+        .fetch_all(executor)
+        .await
+        .map_err(crate::Error::from)?
+        .into_iter()
+        .map(|row| row.try_into().map_err(rustical_store::Error::from))
+        .collect()
+    }
+
     async fn _get_object<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
@@ -495,6 +531,16 @@ impl CalendarStore for SqliteCalendarStore {
     #[instrument]
     async fn restore_calendar(&self, principal: &str, id: &str) -> Result<(), Error> {
         Self::_restore_calendar(&self.db, principal, id).await
+    }
+
+    #[instrument]
+    async fn calendar_query(
+        &self,
+        principal: &str,
+        cal_id: &str,
+        query: CalendarQuery,
+    ) -> Result<Vec<CalendarObject>, Error> {
+        Self::_calendar_query(&self.db, principal, cal_id, query).await
     }
 
     #[instrument]

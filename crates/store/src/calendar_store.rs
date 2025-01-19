@@ -1,6 +1,13 @@
 use crate::calendar::{Calendar, CalendarObject};
 use crate::error::Error;
 use async_trait::async_trait;
+use chrono::NaiveDate;
+
+#[derive(Default, Debug, Clone)]
+pub struct CalendarQuery {
+    pub time_start: Option<NaiveDate>,
+    pub time_end: Option<NaiveDate>,
+}
 
 #[async_trait]
 pub trait CalendarStore: Send + Sync + 'static {
@@ -29,6 +36,17 @@ pub trait CalendarStore: Send + Sync + 'static {
         cal_id: &str,
         synctoken: i64,
     ) -> Result<(Vec<CalendarObject>, Vec<String>, i64), Error>;
+
+    /// Since the <calendar-query> rules are rather complex this function
+    /// is only meant to do some prefiltering
+    async fn calendar_query(
+        &self,
+        principal: &str,
+        cal_id: &str,
+        _query: CalendarQuery,
+    ) -> Result<Vec<CalendarObject>, Error> {
+        self.get_objects(principal, cal_id).await
+    }
 
     async fn get_objects(
         &self,
