@@ -47,7 +47,7 @@ pub struct TracingConfig {
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields, default)]
 pub struct DavPushConfig {
-    pub enable: bool,
+    pub enabled: bool,
     #[serde(default)]
     // Allowed Push servers, accepts any by default
     // Specify as URL origins
@@ -57,7 +57,7 @@ pub struct DavPushConfig {
 impl Default for DavPushConfig {
     fn default() -> Self {
         Self {
-            enable: true,
+            enabled: true,
             allowed_push_servers: None,
         }
     }

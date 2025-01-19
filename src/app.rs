@@ -23,7 +23,7 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
         Error = actix_web::Error,
     >,
 > {
-    App::new()
+    let mut app = App::new()
         // .wrap(Logger::new("[%s] %r"))
         .wrap(TracingLogger::default())
         .wrap(NormalizePath::trim())
@@ -50,15 +50,20 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
                 .configure(|cfg| {
                     rustical_carddav::configure_well_known(cfg, "/carddav".to_string())
                 }),
-        )
-        .service(web::scope("/frontend").configure(|cfg| {
-            configure_frontend(
-                cfg,
-                auth_provider.clone(),
-                cal_store.clone(),
-                addr_store.clone(),
-                frontend_config,
-            )
-        }))
-        .service(web::redirect("/", "/frontend").see_other())
+        );
+
+    if frontend_config.enabled {
+        app = app
+            .service(web::scope("/frontend").configure(|cfg| {
+                configure_frontend(
+                    cfg,
+                    auth_provider.clone(),
+                    cal_store.clone(),
+                    addr_store.clone(),
+                    frontend_config,
+                )
+            }))
+            .service(web::redirect("/", "/frontend").see_other());
+    }
+    app
 }

@@ -82,7 +82,7 @@ async fn main() -> Result<()> {
             let (addr_store, cal_store, subscription_store, update_recv) =
                 get_data_stores(!args.no_migrations, &config.data_store).await?;
 
-            if config.dav_push.enable {
+            if config.dav_push.enabled {
                 tokio::spawn(push_notifier(
                     config.dav_push.allowed_push_servers,
                     update_recv,

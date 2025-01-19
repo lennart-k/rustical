@@ -46,6 +46,7 @@ pub fn cmd_gen_config(_args: GenConfigArgs) -> anyhow::Result<()> {
         tracing: TracingConfig::default(),
         frontend: FrontendConfig {
             secret_key: generate_frontend_secret(),
+            enabled: true,
         },
         dav_push: DavPushConfig::default(),
     };
