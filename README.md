@@ -41,7 +41,8 @@ You can generate a default `config.toml` with
 rustical gen-config
 ```
 
-> [!WARNING] > `rustical gen-config` generates a random `frontend.secret_key`.
+> [!WARNING]
+> `rustical gen-config` generates a random `frontend.secret_key`.
 > This secret is used to generate session cookies so if it is leaked an attacker could use it to authenticate to against any endpoint (also when the frontend is disabled).
 
 You'll have to set your database path to something like `/var/lib/rustical/db.sqlite3`.
