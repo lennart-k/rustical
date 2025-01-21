@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use crate::{
     calendar::CalendarObjectType, AddressObject, Addressbook, AddressbookStore, Calendar,
@@ -99,14 +99,17 @@ impl<AS: AddressbookStore> CalendarStore for ContactBirthdayStore<AS> {
         principal: &str,
         cal_id: &str,
     ) -> Result<Vec<CalendarObject>, Error> {
-        let objects: Result<Vec<Option<CalendarObject>>, Error> = self
+        let objects: Result<Vec<HashMap<&'static str, CalendarObject>>, Error> = self
             .0
             .get_objects(principal, cal_id)
             .await?
             .iter()
-            .map(AddressObject::get_birthday_object)
+            .map(AddressObject::get_significant_dates)
             .collect();
-        let objects = objects?.into_iter().flatten().collect();
+        let objects = objects?
+            .into_iter()
+            .flat_map(HashMap::into_values)
+            .collect();
 
         Ok(objects)
     }
@@ -117,12 +120,14 @@ impl<AS: AddressbookStore> CalendarStore for ContactBirthdayStore<AS> {
         cal_id: &str,
         object_id: &str,
     ) -> Result<CalendarObject, Error> {
-        Ok(self
-            .0
-            .get_object(principal, cal_id, object_id)
+        let (addressobject_id, date_type) = object_id.rsplit_once("-").ok_or(Error::NotFound)?;
+        dbg!(addressobject_id, date_type);
+        self.0
+            .get_object(principal, cal_id, addressobject_id)
             .await?
-            .get_birthday_object()?
-            .ok_or(Error::NotFound)?)
+            .get_significant_dates()?
+            .remove(date_type)
+            .ok_or(Error::NotFound)
     }
 
     async fn put_object(

@@ -49,6 +49,11 @@ impl AddressObject {
         &self.vcf
     }
 
+    pub fn get_anniversary(&self) -> Option<CalDateTime> {
+        let prop = self.vcard.get_property("ANNIVERSARY")?;
+        CalDateTime::parse_prop(prop, &HashMap::default()).unwrap_or(None)
+    }
+
     pub fn get_birthday(&self) -> Option<CalDateTime> {
         let prop = self.vcard.get_property("BDAY")?;
         CalDateTime::parse_prop(prop, &HashMap::default()).unwrap_or(None)
@@ -57,6 +62,50 @@ impl AddressObject {
     pub fn get_full_name(&self) -> Option<&String> {
         let prop = self.vcard.get_property("FN")?;
         prop.value.as_ref()
+    }
+
+    pub fn get_anniversary_object(&self) -> Result<Option<CalendarObject>, Error> {
+        Ok(if let Some(anniversary) = self.get_anniversary() {
+            let fullname = if let Some(name) = self.get_full_name() {
+                name
+            } else {
+                return Ok(None);
+            };
+            let anniversary = anniversary.date();
+            let year = anniversary.year();
+            let anniversary_start = anniversary.format(LOCAL_DATE);
+            let anniversary_end = anniversary
+                .succ_opt()
+                .unwrap_or(anniversary)
+                .format(LOCAL_DATE);
+            let uid = format!("{}-anniversary", self.get_id());
+
+            Some(CalendarObject::from_ics(
+                uid.clone(),
+                format!(
+                    r#"BEGIN:VCALENDAR
+VERSION:2.0
+CALSCALE:GREGORIAN
+PRODID:-//github.com/lennart-k/rustical birthday calendar//EN
+BEGIN:VEVENT
+DTSTART;VALUE=DATE:{anniversary_start}
+DTEND;VALUE=DATE:{anniversary_end}
+UID:{uid}
+RRULE:FREQ=YEARLY
+SUMMARY:💍 {fullname} ({year})
+TRANSP:TRANSPARENT
+BEGIN:VALARM
+TRIGGER;VALUE=DURATION:-PT0M
+ACTION:DISPLAY
+DESCRIPTION:💍 {fullname} ({year})
+END:VALARM
+END:VEVENT
+END:VCALENDAR"#,
+                ),
+            )?)
+        } else {
+            None
+        })
     }
 
     pub fn get_birthday_object(&self) -> Result<Option<CalendarObject>, Error> {
@@ -70,8 +119,10 @@ impl AddressObject {
             let year = birthday.year();
             let birthday_start = birthday.format(LOCAL_DATE);
             let birthday_end = birthday.succ_opt().unwrap_or(birthday).format(LOCAL_DATE);
+            let uid = format!("{}-birthday", self.get_id());
+
             Some(CalendarObject::from_ics(
-                self.get_id().to_owned(),
+                uid.clone(),
                 format!(
                     r#"BEGIN:VCALENDAR
 VERSION:2.0
@@ -91,11 +142,22 @@ DESCRIPTION:🎂 {fullname} ({year})
 END:VALARM
 END:VEVENT
 END:VCALENDAR"#,
-                    uid = self.get_id(),
                 ),
             )?)
         } else {
             None
         })
+    }
+
+    /// Get significant dates associated with this address object
+    pub fn get_significant_dates(&self) -> Result<HashMap<&'static str, CalendarObject>, Error> {
+        let mut out = HashMap::new();
+        if let Some(birthday) = self.get_birthday_object()? {
+            out.insert("birthday", birthday);
+        }
+        if let Some(anniversary) = self.get_anniversary_object()? {
+            out.insert("anniversary", anniversary);
+        }
+        Ok(out)
     }
 }
