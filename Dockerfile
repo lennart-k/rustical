@@ -1,6 +1,18 @@
-FROM rust:1.84-alpine AS chef
-RUN apk add --no-cache musl-dev \
-  && rustup target add x86_64-unknown-linux-musl \
+FROM --platform=$BUILDPLATFORM rust:1.84-alpine AS chef
+
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+
+# Stupid workaound with tempfiles since environment variables
+# from RUN commands don't persist across stages
+RUN case $TARGETPLATFORM in \
+  "linux/amd64") echo x86_64-unknown-linux-musl > /tmp/rust_target;; \
+  "linux/arm64") echo aarch64-unknown-linux-musl > /tmp/rust_target;; \
+  *) echo "Unsupported platform ${TARGETPLATFORM}"; exit 1;;  \
+  esac
+
+RUN apk add --no-cache musl-dev gcc \
+  && rustup target add "$(cat /tmp/rust_target)" \
   && cargo install cargo-chef --locked \
   && rm -rf "$CARGO_HOME/registry"
 
@@ -16,10 +28,10 @@ FROM chef AS builder
 # x86_64-unknown-linux-musl does static linking by default
 WORKDIR /rustical
 COPY --from=planner /rustical/recipe.json recipe.json
-RUN cargo chef cook --release --target x86_64-unknown-linux-musl
+RUN cargo chef cook --release --target "$(cat /tmp/rust_target)"
 
 COPY . .
-RUN --mount=type=cache,target=target cargo install --target x86_64-unknown-linux-musl --path .
+RUN --mount=type=cache,target=target cargo install --target $TARGET --path .
 
 FROM scratch
 COPY --from=builder /usr/local/cargo/bin/rustical /usr/local/bin/rustical

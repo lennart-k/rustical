@@ -16,6 +16,9 @@ repository.workspace = true
 resolver = "2"
 publish = false
 
+[profile.release]
+lto = true
+
 [profile.dev]
 debug = 0
 
