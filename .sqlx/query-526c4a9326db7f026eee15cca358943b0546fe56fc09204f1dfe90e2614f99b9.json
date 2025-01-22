@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n        INSERT INTO addressobjectchangelog (principal, addressbook_id, object_id, \"operation\", synctoken)\n        VALUES (?1, ?2, ?3, ?4, (\n            SELECT synctoken FROM addressbooks WHERE (principal, id) = (?1, ?2)\n        ))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "526c4a9326db7f026eee15cca358943b0546fe56fc09204f1dfe90e2614f99b9"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE addressbooks SET deleted_at = NULL WHERE (principal, id) = (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "fcc493f5e491abdac2c2d7d5f636c770e449daf8f5ab4873950ab126edfcce7b"
+}
