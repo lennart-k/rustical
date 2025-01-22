@@ -28,6 +28,10 @@ pub struct MkcolCalendarProp {
     resourcetype: Unparsed,
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     supported_calendar_component_set: Option<SupportedCalendarComponentSet>,
+    // Ignore that property, we don't support it but also don't want to throw an error
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
+    #[allow(dead_code)]
+    calendar_free_busy_set: Unparsed,
 }
 
 #[derive(XmlDeserialize, Clone, Debug)]
