@@ -337,7 +337,7 @@ impl SqliteCalendarStore {
 
         (if overwrite {
             sqlx::query!(
-                "REPLACE INTO calendarobjects (principal, cal_id, id, ics, first_occurence, last_occurence, etag, object_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                "REPLACE INTO calendarobjects (principal, cal_id, id, ics, first_occurence, last_occurence, etag, object_type) VALUES (?, ?, ?, ?, date(?), date(?), ?, ?)",
                 principal,
                 cal_id,
                 object_id,
@@ -350,7 +350,7 @@ impl SqliteCalendarStore {
         } else {
             // If the object already exists a database error is thrown and handled in error.rs
             sqlx::query!(
-                "INSERT INTO calendarobjects (principal, cal_id, id, ics, first_occurence, last_occurence, etag, object_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO calendarobjects (principal, cal_id, id, ics, first_occurence, last_occurence, etag, object_type) VALUES (?, ?, ?, ?, date(?), date(?), ?, ?)",
                 principal,
                 cal_id,
                 object_id,
