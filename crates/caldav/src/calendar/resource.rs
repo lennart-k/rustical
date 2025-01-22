@@ -9,6 +9,7 @@ use actix_web::dev::ResourceMap;
 use actix_web::http::Method;
 use actix_web::web;
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use derive_more::derive::{From, Into};
 use rustical_dav::extensions::{
     CommonPropertiesExtension, CommonPropertiesProp, DavPushExtension, DavPushExtensionProp,
@@ -18,6 +19,7 @@ use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
+use rustical_store::calendar::CalDateTime;
 use rustical_store::{Calendar, CalendarStore, SubscriptionStore};
 use rustical_xml::{EnumUnitVariants, EnumVariants};
 use rustical_xml::{XmlDeserialize, XmlSerialize};
@@ -57,6 +59,12 @@ pub enum CalendarProp {
     SupportedReportSet(SupportedReportSet),
     #[xml(ns = "rustical_dav::namespace::NS_CALENDARSERVER")]
     Source(Option<HrefElement>),
+    #[xml(skip_deserializing)]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
+    MinDateTime(String),
+    #[xml(skip_deserializing)]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
+    MaxDateTime(String),
 }
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
@@ -157,6 +165,12 @@ impl Resource for CalendarResource {
                 CalendarPropName::Source => CalendarProp::Source(
                     self.cal.subscription_url.to_owned().map(HrefElement::from),
                 ),
+                CalendarPropName::MinDateTime => {
+                    CalendarProp::MinDateTime(CalDateTime::Utc(DateTime::<Utc>::MIN_UTC).format())
+                }
+                CalendarPropName::MaxDateTime => {
+                    CalendarProp::MaxDateTime(CalDateTime::Utc(DateTime::<Utc>::MAX_UTC).format())
+                }
             }),
             CalendarPropWrapperName::SyncToken(prop) => {
                 CalendarPropWrapper::SyncToken(SyncTokenExtension::get_prop(self, prop)?)
@@ -221,6 +235,8 @@ impl Resource for CalendarResource {
                 CalendarProp::SupportedReportSet(_) => Err(rustical_dav::Error::PropReadOnly),
                 // Converting between a calendar subscription calendar and a normal one would be weird
                 CalendarProp::Source(_) => Err(rustical_dav::Error::PropReadOnly),
+                CalendarProp::MinDateTime(_) => Err(rustical_dav::Error::PropReadOnly),
+                CalendarProp::MaxDateTime(_) => Err(rustical_dav::Error::PropReadOnly),
             },
             CalendarPropWrapper::SyncToken(prop) => SyncTokenExtension::set_prop(self, prop),
             CalendarPropWrapper::DavPush(prop) => DavPushExtension::set_prop(self, prop),
@@ -267,6 +283,8 @@ impl Resource for CalendarResource {
                 CalendarPropName::SupportedReportSet => Err(rustical_dav::Error::PropReadOnly),
                 // Converting a calendar subscription calendar into a normal one would be weird
                 CalendarPropName::Source => Err(rustical_dav::Error::PropReadOnly),
+                CalendarPropName::MinDateTime => Err(rustical_dav::Error::PropReadOnly),
+                CalendarPropName::MaxDateTime => Err(rustical_dav::Error::PropReadOnly),
             },
             CalendarPropWrapperName::SyncToken(prop) => SyncTokenExtension::remove_prop(self, prop),
             CalendarPropWrapperName::DavPush(prop) => DavPushExtension::remove_prop(self, prop),
