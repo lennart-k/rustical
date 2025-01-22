@@ -31,7 +31,7 @@ pub struct MkcolCalendarProp {
     // Ignore that property, we don't support it but also don't want to throw an error
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     #[allow(dead_code)]
-    calendar_free_busy_set: Unparsed,
+    calendar_free_busy_set: Option<Unparsed>,
 }
 
 #[derive(XmlDeserialize, Clone, Debug)]
