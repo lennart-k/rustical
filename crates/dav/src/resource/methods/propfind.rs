@@ -37,7 +37,7 @@ pub(crate) async fn route_propfind<R: ResourceService>(
 
     // A request body is optional. If empty we MUST return all props
     let propfind: PropfindElement = if !body.is_empty() {
-        PropfindElement::parse_str(&body).map_err(Error::XmlDeserializationError)?
+        PropfindElement::parse_str(&body).map_err(Error::XmlError)?
     } else {
         PropfindElement {
             prop: PropfindType::Allprop,

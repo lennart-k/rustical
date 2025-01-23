@@ -78,7 +78,7 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
     // Extract operations
     let PropertyupdateElement::<SetPropertyPropWrapperWrapper<<R::Resource as Resource>::Prop>>(
         operations,
-    ) = XmlDocument::parse_str(&body).map_err(Error::XmlDeserializationError)?;
+    ) = XmlDocument::parse_str(&body).map_err(Error::XmlError)?;
 
     let mut resource = resource_service.get_resource(&path).await?;
     let privileges = resource.get_user_privileges(&user)?;

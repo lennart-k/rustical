@@ -20,7 +20,7 @@ pub enum Error {
     PropReadOnly,
 
     #[error(transparent)]
-    XmlDeserializationError(#[from] rustical_xml::XmlError),
+    XmlError(#[from] rustical_xml::XmlError),
 
     #[error(transparent)]
     IOError(#[from] std::io::Error),
@@ -33,7 +33,7 @@ impl actix_web::error::ResponseError for Error {
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::BadRequest(_) => StatusCode::BAD_REQUEST,
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
-            Self::XmlDeserializationError(_) => StatusCode::BAD_REQUEST,
+            Self::XmlError(_) => StatusCode::BAD_REQUEST,
             Error::PropReadOnly => StatusCode::CONFLICT,
             Self::IOError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
