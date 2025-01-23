@@ -121,7 +121,6 @@ impl<AS: AddressbookStore> CalendarStore for ContactBirthdayStore<AS> {
         object_id: &str,
     ) -> Result<CalendarObject, Error> {
         let (addressobject_id, date_type) = object_id.rsplit_once("-").ok_or(Error::NotFound)?;
-        dbg!(addressobject_id, date_type);
         self.0
             .get_object(principal, cal_id, addressobject_id)
             .await?
