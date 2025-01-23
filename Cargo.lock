@@ -2765,7 +2765,6 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "actix-web-httpauth",
- "anyhow",
  "async-trait",
  "base64 0.22.1",
  "chrono",
@@ -2792,7 +2791,6 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "actix-web-httpauth",
- "anyhow",
  "async-trait",
  "base64 0.22.1",
  "chrono",
@@ -2838,7 +2836,6 @@ version = "0.1.0"
 dependencies = [
  "actix-session",
  "actix-web",
- "anyhow",
  "askama",
  "askama_actix",
  "futures-core",

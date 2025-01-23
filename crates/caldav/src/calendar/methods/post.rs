@@ -44,8 +44,7 @@ pub async fn route_post<C: CalendarStore, S: SubscriptionStore>(
     let sub_id = uuid::Uuid::new_v4().to_string();
 
     let expires = if let Some(expires) = request.expires {
-        chrono::DateTime::parse_from_rfc2822(&expires)
-            .map_err(|err| crate::Error::Other(err.into()))?
+        chrono::DateTime::parse_from_rfc2822(&expires).map_err(Error::from)?
     } else {
         chrono::Utc::now().fixed_offset() + chrono::Duration::weeks(1)
     };

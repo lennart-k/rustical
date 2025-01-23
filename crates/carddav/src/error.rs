@@ -16,13 +16,13 @@ pub enum Error {
     StoreError(#[from] rustical_store::Error),
 
     #[error(transparent)]
+    ChronoParseError(#[from] chrono::ParseError),
+
+    #[error(transparent)]
     DavError(#[from] rustical_dav::Error),
 
     #[error(transparent)]
     XmlDecodeError(#[from] rustical_xml::XmlError),
-
-    #[error(transparent)]
-    Other(#[from] anyhow::Error),
 }
 
 impl actix_web::ResponseError for Error {
@@ -33,11 +33,11 @@ impl actix_web::ResponseError for Error {
                 rustical_store::Error::InvalidData(_) => StatusCode::BAD_REQUEST,
                 _ => StatusCode::INTERNAL_SERVER_ERROR,
             },
+            Error::ChronoParseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Error::DavError(err) => err.status_code(),
             Error::Unauthorized => StatusCode::UNAUTHORIZED,
             Error::XmlDecodeError(_) => StatusCode::BAD_REQUEST,
             Error::NotImplemented => StatusCode::INTERNAL_SERVER_ERROR,
-            Error::Other(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Error::NotFound => StatusCode::NOT_FOUND,
         }
     }

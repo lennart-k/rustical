@@ -1,6 +1,5 @@
 use super::{CalDateTime, EventObject, JournalObject, TodoObject};
 use crate::Error;
-use anyhow::Result;
 use ical::parser::{ical::component::IcalTimeZone, Component};
 use serde::Serialize;
 use sha2::{Digest, Sha256};

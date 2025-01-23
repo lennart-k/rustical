@@ -7,7 +7,6 @@ repository.workspace = true
 publish = false
 
 [dependencies]
-anyhow = { workspace = true }
 actix-web = { workspace = true }
 async-trait = { workspace = true }
 thiserror = { workspace = true }
