@@ -16,6 +16,16 @@ repository.workspace = true
 resolver = "2"
 publish = false
 
+[features]
+debug = ["opentelemetry"]
+opentelemetry = [
+  "dep:opentelemetry",
+  "dep:opentelemetry-otlp",
+  "dep:opentelemetry_sdk",
+  "dep:opentelemetry-semantic-conventions",
+  "dep:tracing-opentelemetry",
+]
+
 [profile.dev]
 debug = 0
 
@@ -122,12 +132,14 @@ sqlx = { workspace = true }
 async-trait = { workspace = true }
 tracing-actix-web = { workspace = true }
 
-opentelemetry = "0.27"
-opentelemetry-otlp = "0.27"
-opentelemetry_sdk = { version = "0.27", features = ["rt-tokio"] }
+opentelemetry = { version = "0.27", optional = true }
+opentelemetry-otlp = { version = "0.27", optional = true }
+opentelemetry_sdk = { version = "0.27", features = [
+  "rt-tokio",
+], optional = true }
+opentelemetry-semantic-conventions = { version = "0.27", optional = true }
+tracing-opentelemetry = { version = "0.28", optional = true }
 
-opentelemetry-semantic-conventions = "0.27"
-tracing-opentelemetry = "0.28"
 tracing-subscriber = { version = "0.3", features = [
   "env-filter",
   "fmt",

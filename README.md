@@ -3,9 +3,9 @@
 a CalDAV/CardDAV server
 
 > [!CAUTION]
-> RustiCal is **not production-ready!**
-> There can be changes to the database without migrations and there's no guarantee that all endpoints are secured yet.
-> If you still want to play around with it in its current state, absolutely feel free to do so but know that not even I use it productively yet.
+> If you're installing RustiCal, you are a very early adopter!
+>
+> - You should be unafraid to inspect the SQLite database yourself if something goes wrong in the future
 
 ## Features
 
@@ -41,8 +41,7 @@ You can generate a default `config.toml` with
 rustical gen-config
 ```
 
-> [!WARNING]
-> `rustical gen-config` generates a random `frontend.secret_key`.
+> [!WARNING] > `rustical gen-config` generates a random `frontend.secret_key`.
 > This secret is used to generate session cookies so if it is leaked an attacker could use it to authenticate to against any endpoint (also when the frontend is disabled).
 
 You'll have to set your database path to something like `/var/lib/rustical/db.sqlite3`.
@@ -80,6 +79,16 @@ Since push messages are currently not encrypted you might potentially want to en
 [dav_push]
 # Must strictly be the URL origin (so no trailing slashes)
 allowed_push_servers = ["https://your-instance-ntfy.sh"]
+```
+
+## Debugging
+
+RustiCal supports exporting opentelemetry traces to inspect with tools like [Jaeger](https://www.jaegertracing.io/).
+To enable you need to compile with the `opentelemtry` (or `debug`) feature and enable opentelemetry in the config with
+
+```toml
+[tracing]
+opentelemetry = true
 ```
 
 ## Relevant RFCs
