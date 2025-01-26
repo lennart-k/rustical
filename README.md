@@ -3,9 +3,9 @@
 a CalDAV/CardDAV server
 
 > [!CAUTION]
-> If you're installing RustiCal, you are a very early adopter!
->
-> - You should be unafraid to inspect the SQLite database yourself if something goes wrong in the future
+> RustiCal is **not production-ready!**
+> There can be changes to the database without migrations and there's no guarantee that all endpoints are secured yet.
+> If you still want to play around with it in its current state, absolutely feel free to do so but know that not even I use it productively yet.
 
 ## Features
 
