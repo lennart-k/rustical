@@ -46,10 +46,8 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
         }))
         .service(
             web::scope("/.well-known")
-                .configure(|cfg| rustical_caldav::configure_well_known(cfg, "/caldav".to_string()))
-                .configure(|cfg| {
-                    rustical_carddav::configure_well_known(cfg, "/carddav".to_string())
-                }),
+                .service(web::redirect("/caldav", "/caldav"))
+                .service(web::redirect("/carddav", "/carddav")),
         );
 
     if frontend_config.enabled {

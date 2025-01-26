@@ -25,10 +25,6 @@ pub mod addressbook;
 pub mod error;
 pub mod principal;
 
-pub fn configure_well_known(cfg: &mut web::ServiceConfig, carddav_root: String) {
-    cfg.service(web::redirect("/carddav", carddav_root).permanent());
-}
-
 pub fn configure_dav<AP: AuthenticationProvider, A: AddressbookStore, S: SubscriptionStore>(
     cfg: &mut web::ServiceConfig,
     auth_provider: Arc<AP>,

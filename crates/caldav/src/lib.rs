@@ -24,10 +24,6 @@ mod subscription;
 
 pub use error::Error;
 
-pub fn configure_well_known(cfg: &mut web::ServiceConfig, caldav_root: String) {
-    cfg.service(web::redirect("/caldav", caldav_root).permanent());
-}
-
 pub fn configure_dav<
     AP: AuthenticationProvider,
     AS: AddressbookStore,
