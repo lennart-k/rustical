@@ -1,4 +1,4 @@
-use actix_web::dev::ServiceResponse;
+use actix_web::dev::{HttpServiceFactory, ServiceResponse};
 use actix_web::http::header::{HeaderName, HeaderValue};
 use actix_web::http::{Method, StatusCode};
 use actix_web::middleware::{ErrorHandlerResponse, ErrorHandlers};
@@ -24,21 +24,20 @@ mod subscription;
 
 pub use error::Error;
 
-pub fn configure_dav<
+pub fn caldav_service<
     AP: AuthenticationProvider,
     AS: AddressbookStore,
     C: CalendarStore,
     S: SubscriptionStore,
 >(
-    cfg: &mut web::ServiceConfig,
     auth_provider: Arc<AP>,
     store: Arc<C>,
     addr_store: Arc<AS>,
     subscription_store: Arc<S>,
-) {
+) -> impl HttpServiceFactory {
     let birthday_store = Arc::new(ContactBirthdayStore::new(addr_store));
-    cfg.service(
-        web::scope("")
+
+    web::scope("")
             .wrap(AuthenticationMiddleware::new(auth_provider))
             .wrap(
                 ErrorHandlers::new().handler(StatusCode::METHOD_NOT_ALLOWED, |res| {
@@ -93,6 +92,5 @@ pub fn configure_dav<
                             )
                         )
                 ),
-            ).service(subscription_resource::<S>()),
-    );
+            ).service(subscription_resource::<S>())
 }
