@@ -4,7 +4,7 @@ use password_hash::PasswordHasher;
 use pbkdf2::Params;
 use rand::{rngs::OsRng, RngCore};
 use rustical_frontend::FrontendConfig;
-use rustical_store::auth::{static_user_store::UserEntry, StaticUserStoreConfig, User};
+use rustical_store::auth::{StaticUserStoreConfig, User};
 
 use crate::config::{
     AuthConfig, Config, DataStoreConfig, DavPushConfig, HttpConfig, SqliteDataStoreConfig,
@@ -26,15 +26,14 @@ pub fn cmd_gen_config(_args: GenConfigArgs) -> anyhow::Result<()> {
     let config = Config {
         http: HttpConfig::default(),
         auth: AuthConfig::Static(StaticUserStoreConfig {
-            users: vec![UserEntry {
-                user: User {
-                    id: "default".to_owned(),
-                    displayname: Some("Default user".to_owned()),
-                    password: Some(
-                        "generate a password hash with rustical pwhash --algorithm argon2"
-                            .to_owned(),
-                    ),
-                },
+            users: vec![User {
+                id: "default".to_owned(),
+                displayname: Some("Default user".to_owned()),
+                password: Some(
+                    "generate a password hash with rustical pwhash --algorithm argon2".to_owned(),
+                ),
+                groups: vec![],
+                inherited_groups: vec![],
                 app_tokens: vec![
                     "generate an app token hash with rustical pwhash --algorithm pbkdf2".to_owned(),
                 ],

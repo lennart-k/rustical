@@ -12,6 +12,12 @@ pub struct User {
     pub id: String,
     pub displayname: Option<String>,
     pub password: Option<String>,
+    #[serde(default)]
+    pub app_tokens: Vec<String>,
+    #[serde(default)]
+    pub groups: Vec<String>,
+    #[serde(skip)]
+    pub inherited_groups: Vec<String>,
 }
 
 #[derive(Clone, Debug, Display)]

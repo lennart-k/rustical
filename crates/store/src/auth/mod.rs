@@ -1,7 +1,6 @@
 pub mod middleware;
 pub mod static_user_store;
 pub mod user;
-pub mod user_store;
 use crate::error::Error;
 use async_trait::async_trait;
 
