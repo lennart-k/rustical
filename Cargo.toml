@@ -100,7 +100,7 @@ rustical_carddav = { path = "./crates/carddav/" }
 rustical_frontend = { path = "./crates/frontend/" }
 rustical_xml = { path = "./crates/xml/" }
 chrono-tz = "0.10"
-rand = "0.9"
+rand = "0.8"
 argon2 = "0.5"
 rpassword = "7.3"
 password-hash = { version = "0.5" }
