@@ -1,4 +1,4 @@
-CREATE TABLE subscriptions (
+CREATE TABLE davpush_subscriptions (
     id TEXT NOT NULL,
     topic TEXT NOT NULL,
     expiration DATETIME NOT NULL,

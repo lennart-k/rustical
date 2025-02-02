@@ -8,7 +8,7 @@ impl SubscriptionStore for SqliteStore {
         Ok(sqlx::query_as!(
             Subscription,
             r#"SELECT id, topic, expiration, push_resource
-                FROM subscriptions
+                FROM davpush_subscriptions
                 WHERE (topic) = (?)"#,
             topic
         )
@@ -21,7 +21,7 @@ impl SubscriptionStore for SqliteStore {
         Ok(sqlx::query_as!(
             Subscription,
             r#"SELECT id, topic, expiration, push_resource
-                FROM subscriptions
+                FROM davpush_subscriptions
                 WHERE (id) = (?)"#,
             id
         )
@@ -32,7 +32,7 @@ impl SubscriptionStore for SqliteStore {
 
     async fn upsert_subscription(&self, sub: Subscription) -> Result<bool, Error> {
         sqlx::query!(
-            r#"INSERT OR REPLACE INTO subscriptions (id, topic, expiration, push_resource) VALUES (?, ?, ?, ?)"#,
+            r#"INSERT OR REPLACE INTO davpush_subscriptions (id, topic, expiration, push_resource) VALUES (?, ?, ?, ?)"#,
             sub.id,
             sub.topic,
             sub.expiration,
@@ -42,7 +42,7 @@ impl SubscriptionStore for SqliteStore {
         Ok(false)
     }
     async fn delete_subscription(&self, id: &str) -> Result<(), Error> {
-        sqlx::query!(r#"DELETE FROM subscriptions WHERE id = ? "#, id)
+        sqlx::query!(r#"DELETE FROM davpush_subscriptions WHERE id = ? "#, id)
             .execute(&self.db)
             .await
             .map_err(crate::Error::from)?;

@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, topic, expiration, push_resource\n                FROM subscriptions\n                WHERE (id) = (?)",
+  "query": "SELECT id, topic, expiration, push_resource\n                FROM davpush_subscriptions\n                WHERE (topic) = (?)",
   "describe": {
     "columns": [
       {
@@ -34,5 +34,5 @@
       false
     ]
   },
-  "hash": "4d89c9973ea3318085749b5982c544c2a337305491ff410ed6e72f0c609af423"
+  "hash": "851fdb63dfffde80b8793c08fa6c81ecae1d70b33dd63c8bd5b296eae330b522"
 }
