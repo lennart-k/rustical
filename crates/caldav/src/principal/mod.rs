@@ -77,16 +77,23 @@ impl Resource for PrincipalResource {
         prop: &PrincipalPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
         let principal_url = Self::get_url(rmap, vec![&self.principal]).unwrap();
+
         let home_set = CalendarHomeSet(
-            self.home_set
-                .iter()
-                .map(|&(home_name, _read_only)| format!("{}/{}", principal_url, home_name).into())
+            user.memberships()
+                .into_iter()
+                .map(|principal| Self::get_url(rmap, vec![principal]).unwrap())
+                .flat_map(|principal_url| {
+                    self.home_set.iter().map(move |&(home_name, _read_only)| {
+                        HrefElement::new(format!("{}/{}", &principal_url, home_name))
+                    })
+                })
                 .collect(),
         );
 
         Ok(match prop {
             PrincipalPropWrapperName::Principal(prop) => {
                 PrincipalPropWrapper::Principal(match prop {
+                    // TODO: principal types
                     PrincipalPropName::CalendarUserType => {
                         PrincipalProp::CalendarUserType("INDIVIDUAL")
                     }

@@ -15,6 +15,8 @@ pub struct User {
     pub password: Option<String>,
     #[serde(default)]
     pub app_tokens: Vec<String>,
+    #[serde(default)]
+    pub memberships: Vec<String>,
 }
 
 impl User {
@@ -25,7 +27,16 @@ impl User {
         if self.id == principal {
             return true;
         }
-        false
+        self.memberships
+            .iter()
+            .any(|membership| membership == principal)
+    }
+
+    /// Returns all principals the user implements
+    pub fn memberships(&self) -> Vec<&str> {
+        let mut memberships: Vec<_> = self.memberships.iter().map(String::as_ref).collect();
+        memberships.push(self.id.as_str());
+        memberships
     }
 }
 

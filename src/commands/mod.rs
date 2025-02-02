@@ -35,6 +35,10 @@ pub fn cmd_gen_config(_args: GenConfigArgs) -> anyhow::Result<()> {
                 app_tokens: vec![
                     "generate an app token hash with rustical pwhash --algorithm pbkdf2".to_owned(),
                 ],
+                memberships: vec![
+                    "Here you can specify other principals this principal should be a member of"
+                        .to_owned(),
+                ],
             }],
         }),
         data_store: DataStoreConfig::Sqlite(SqliteDataStoreConfig {
