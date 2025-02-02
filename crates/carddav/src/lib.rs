@@ -56,7 +56,7 @@ pub fn carddav_service<AP: AuthenticationProvider, A: AddressbookStore, S: Subsc
         .app_data(Data::from(subscription_store))
         .service(RootResourceService::<PrincipalResource>::default().actix_resource())
         .service(
-            web::scope("/user").service(
+            web::scope("/principal").service(
                 web::scope("/{principal}")
                     .service(
                         PrincipalResourceService::new(store.clone())

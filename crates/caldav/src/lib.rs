@@ -64,7 +64,7 @@ pub fn caldav_service<
             .app_data(Data::from(subscription_store))
             .service(RootResourceService::<PrincipalResource>::default().actix_resource())
             .service(
-                web::scope("/user").service(
+                web::scope("/principal").service(
                     web::scope("/{principal}")
                         .service(PrincipalResourceService(&[
                             ("calendar", false), ("birthdays", true)
