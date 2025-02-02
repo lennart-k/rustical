@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::calendar_set::CalendarSetResource;
 use crate::Error;
 use actix_web::dev::ResourceMap;
@@ -7,12 +9,12 @@ use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{NamedRoute, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::user::PrincipalType;
-use rustical_store::auth::User;
+use rustical_store::auth::{User, UserStore};
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 
 #[derive(Clone)]
 pub struct PrincipalResource {
-    principal: String,
+    principal: User,
     home_set: &'static [(&'static str, bool)],
 }
 
@@ -77,9 +79,8 @@ impl Resource for PrincipalResource {
         user: &User,
         prop: &PrincipalPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
-        let principal_url = Self::get_url(rmap, vec![&self.principal]).unwrap();
+        let principal_url = Self::get_url(rmap, vec![&self.principal.id]).unwrap();
 
-        // BUG: We need to read the properties of the principal, not the requesting user
         let home_set = CalendarHomeSet(
             user.memberships()
                 .into_iter()
@@ -96,10 +97,10 @@ impl Resource for PrincipalResource {
             PrincipalPropWrapperName::Principal(prop) => {
                 PrincipalPropWrapper::Principal(match prop {
                     PrincipalPropName::CalendarUserType => {
-                        PrincipalProp::CalendarUserType(user.user_type.to_owned())
+                        PrincipalProp::CalendarUserType(self.principal.user_type.to_owned())
                     }
                     PrincipalPropName::Displayname => {
-                        PrincipalProp::Displayname(self.principal.to_owned())
+                        PrincipalProp::Displayname(self.principal.id.to_owned())
                     }
                     PrincipalPropName::PrincipalUrl => {
                         PrincipalProp::PrincipalUrl(principal_url.into())
@@ -117,20 +118,23 @@ impl Resource for PrincipalResource {
     }
 
     fn get_owner(&self) -> Option<&str> {
-        Some(&self.principal)
+        Some(&self.principal.id)
     }
 
     fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
         Ok(UserPrivilegeSet::owner_read(
-            user.is_principal(&self.principal),
+            user.is_principal(&self.principal.id),
         ))
     }
 }
 
-pub struct PrincipalResourceService(pub &'static [(&'static str, bool)]);
+pub struct PrincipalResourceService<US: UserStore> {
+    pub store: Arc<US>,
+    pub home_set: &'static [(&'static str, bool)],
+}
 
 #[async_trait(?Send)]
-impl ResourceService for PrincipalResourceService {
+impl<US: UserStore> ResourceService for PrincipalResourceService<US> {
     type PathComponents = (String,);
     type MemberType = CalendarSetResource;
     type Resource = PrincipalResource;
@@ -140,9 +144,14 @@ impl ResourceService for PrincipalResourceService {
         &self,
         (principal,): &Self::PathComponents,
     ) -> Result<Self::Resource, Self::Error> {
+        let user = self
+            .store
+            .get_user(principal)
+            .await?
+            .ok_or(crate::Error::NotFound)?;
         Ok(PrincipalResource {
-            principal: principal.to_owned(),
-            home_set: self.0,
+            principal: user,
+            home_set: self.home_set,
         })
     }
 
@@ -151,7 +160,7 @@ impl ResourceService for PrincipalResourceService {
         (principal,): &Self::PathComponents,
     ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
         Ok(self
-            .0
+            .home_set
             .iter()
             .map(|&(set_name, read_only)| {
                 (

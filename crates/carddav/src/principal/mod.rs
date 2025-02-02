@@ -6,24 +6,28 @@ use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{NamedRoute, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
-use rustical_store::auth::User;
+use rustical_store::auth::{User, UserStore};
 use rustical_store::AddressbookStore;
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 use std::sync::Arc;
 
-pub struct PrincipalResourceService<A: AddressbookStore> {
+pub struct PrincipalResourceService<A: AddressbookStore, US: UserStore> {
     addr_store: Arc<A>,
+    user_store: Arc<US>,
 }
 
-impl<A: AddressbookStore> PrincipalResourceService<A> {
-    pub fn new(addr_store: Arc<A>) -> Self {
-        Self { addr_store }
+impl<A: AddressbookStore, US: UserStore> PrincipalResourceService<A, US> {
+    pub fn new(addr_store: Arc<A>, user_store: Arc<US>) -> Self {
+        Self {
+            addr_store,
+            user_store,
+        }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct PrincipalResource {
-    principal: String,
+    principal: User,
 }
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
@@ -84,7 +88,7 @@ impl Resource for PrincipalResource {
         user: &User,
         prop: &PrincipalPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
-        let principal_href = HrefElement::new(Self::get_principal_url(rmap, &self.principal));
+        let principal_href = HrefElement::new(Self::get_principal_url(rmap, &self.principal.id));
 
         let home_set = AddressbookHomeSet(
             user.memberships()
@@ -98,7 +102,7 @@ impl Resource for PrincipalResource {
             PrincipalPropWrapperName::Principal(prop) => {
                 PrincipalPropWrapper::Principal(match prop {
                     PrincipalPropName::Displayname => {
-                        PrincipalProp::Displayname(self.principal.to_owned())
+                        PrincipalProp::Displayname(self.principal.id.to_owned())
                     }
                     PrincipalPropName::PrincipalUrl => PrincipalProp::PrincipalUrl(principal_href),
                     PrincipalPropName::AddressbookHomeSet => {
@@ -115,18 +119,18 @@ impl Resource for PrincipalResource {
     }
 
     fn get_owner(&self) -> Option<&str> {
-        Some(&self.principal)
+        Some(&self.principal.id)
     }
 
     fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
         Ok(UserPrivilegeSet::owner_only(
-            user.is_principal(&self.principal),
+            user.is_principal(&self.principal.id),
         ))
     }
 }
 
 #[async_trait(?Send)]
-impl<A: AddressbookStore> ResourceService for PrincipalResourceService<A> {
+impl<A: AddressbookStore, US: UserStore> ResourceService for PrincipalResourceService<A, US> {
     type PathComponents = (String,);
     type MemberType = AddressbookResource;
     type Resource = PrincipalResource;
@@ -136,9 +140,12 @@ impl<A: AddressbookStore> ResourceService for PrincipalResourceService<A> {
         &self,
         (principal,): &Self::PathComponents,
     ) -> Result<Self::Resource, Self::Error> {
-        Ok(PrincipalResource {
-            principal: principal.to_owned(),
-        })
+        let user = self
+            .user_store
+            .get_user(principal)
+            .await?
+            .ok_or(crate::Error::NotFound)?;
+        Ok(PrincipalResource { principal: user })
     }
 
     async fn get_members(

@@ -1,6 +1,7 @@
 pub mod middleware;
 pub mod static_user_store;
 pub mod user;
+mod user_store;
 use crate::error::Error;
 use async_trait::async_trait;
 
@@ -12,3 +13,4 @@ pub trait AuthenticationProvider: 'static {
 pub use middleware::AuthenticationMiddleware;
 pub use static_user_store::{StaticUserStore, StaticUserStoreConfig};
 pub use user::User;
+pub use user_store::UserStore;

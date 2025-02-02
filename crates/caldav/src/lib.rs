@@ -10,7 +10,7 @@ use calendar_set::CalendarSetResourceService;
 use principal::{PrincipalResource, PrincipalResourceService};
 use rustical_dav::resource::{NamedRoute, ResourceService, ResourceServiceRoute};
 use rustical_dav::resources::RootResourceService;
-use rustical_store::auth::{AuthenticationMiddleware, AuthenticationProvider};
+use rustical_store::auth::{AuthenticationMiddleware, AuthenticationProvider, UserStore};
 use rustical_store::{AddressbookStore, CalendarStore, ContactBirthdayStore, SubscriptionStore};
 use std::sync::Arc;
 use subscription::subscription_resource;
@@ -25,11 +25,13 @@ mod subscription;
 pub use error::Error;
 
 pub fn caldav_service<
+    US: UserStore,
     AP: AuthenticationProvider,
     AS: AddressbookStore,
     C: CalendarStore,
     S: SubscriptionStore,
 >(
+    user_store: Arc<US>,
     auth_provider: Arc<AP>,
     store: Arc<C>,
     addr_store: Arc<AS>,
@@ -66,9 +68,9 @@ pub fn caldav_service<
             .service(
                 web::scope("/principal").service(
                     web::scope("/{principal}")
-                        .service(PrincipalResourceService(&[
+                        .service(PrincipalResourceService{store: user_store, home_set: &[
                             ("calendar", false), ("birthdays", true)
-                        ]).actix_resource().name(PrincipalResource::route_name()))
+                        ]}.actix_resource().name(PrincipalResource::route_name()))
                         .service(web::scope("/calendar")
                             .service(CalendarSetResourceService::new(store.clone()).actix_resource())
                             .service(

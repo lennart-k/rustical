@@ -100,6 +100,7 @@ async fn main() -> Result<()> {
                     cal_store.clone(),
                     subscription_store.clone(),
                     user_store.clone(),
+                    user_store.clone(),
                     config.frontend.clone(),
                 )
             })

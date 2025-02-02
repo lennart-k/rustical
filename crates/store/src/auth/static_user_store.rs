@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use super::AuthenticationProvider;
+use super::{AuthenticationProvider, UserStore};
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct StaticUserStoreConfig {
@@ -24,10 +24,17 @@ impl StaticUserStore {
 }
 
 #[async_trait]
+impl UserStore for StaticUserStore {
+    async fn get_user(&self, id: &str) -> Result<Option<User>, crate::Error> {
+        Ok(self.users.get(id).cloned())
+    }
+}
+
+#[async_trait]
 impl AuthenticationProvider for StaticUserStore {
     async fn validate_user_token(&self, user_id: &str, token: &str) -> Result<Option<User>, Error> {
-        let user: User = match self.users.get(user_id) {
-            Some(user) => user.clone(),
+        let user: User = match self.get_user(user_id).await? {
+            Some(user) => user,
             None => return Ok(None),
         };
 
