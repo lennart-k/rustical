@@ -12,7 +12,7 @@ a CalDAV/CardDAV server
 - easy to backup, everything saved in one SQLite database
 - [WebDAV Push](https://github.com/bitfireAT/webdav-push/) support, so near-instant synchronisation to DAVx5
 - lightweight (the container image contains only one binary)
-- adequately fast
+- adequately fast (I'd say blazingly fast™ :fire: if I did the benchmarks to back that claim up)
 - deleted calendars are recoverable
 
 ## Installation
