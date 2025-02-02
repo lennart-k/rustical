@@ -29,6 +29,7 @@ pub fn cmd_gen_config(_args: GenConfigArgs) -> anyhow::Result<()> {
             users: vec![User {
                 id: "default".to_owned(),
                 displayname: Some("Default user".to_owned()),
+                user_type: Default::default(),
                 password: Some(
                     "generate a password hash with rustical pwhash --algorithm argon2".to_owned(),
                 ),

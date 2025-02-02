@@ -4,14 +4,44 @@ use actix_web::{
     FromRequest, HttpMessage, HttpResponse, ResponseError,
 };
 use derive_more::Display;
+use rustical_xml::ValueSerialize;
 use serde::{Deserialize, Serialize};
 use std::future::{ready, Ready};
 
+/// https://datatracker.ietf.org/doc/html/rfc5545#section-3.2.3
+#[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum PrincipalType {
+    #[default]
+    Individual,
+    Group,
+    Resource,
+    Room,
+    Unknown,
+    // TODO: X-Name, IANA-token
+}
+
+impl ValueSerialize for PrincipalType {
+    fn serialize(&self) -> String {
+        match self {
+            PrincipalType::Individual => "INDIVIDUAL",
+            PrincipalType::Group => "GROUP",
+            PrincipalType::Resource => "RESOURCE",
+            PrincipalType::Room => "ROOM",
+            PrincipalType::Unknown => "UNKNOWN",
+        }
+        .to_owned()
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
+// TODO: Rename this to Principal
 pub struct User {
     pub id: String,
     pub displayname: Option<String>,
+    #[serde(default)]
+    pub user_type: PrincipalType,
     pub password: Option<String>,
     #[serde(default)]
     pub app_tokens: Vec<String>,

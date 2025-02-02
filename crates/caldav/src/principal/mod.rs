@@ -6,6 +6,7 @@ use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{NamedRoute, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
+use rustical_store::auth::user::PrincipalType;
 use rustical_store::auth::User;
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 
@@ -26,7 +27,7 @@ pub enum PrincipalProp {
 
     // Scheduling Extensions to CalDAV (RFC 6638)
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV", skip_deserializing)]
-    CalendarUserType(&'static str),
+    CalendarUserType(PrincipalType),
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     CalendarUserAddressSet(HrefElement),
 
@@ -78,6 +79,7 @@ impl Resource for PrincipalResource {
     ) -> Result<Self::Prop, Self::Error> {
         let principal_url = Self::get_url(rmap, vec![&self.principal]).unwrap();
 
+        // BUG: We need to read the properties of the principal, not the requesting user
         let home_set = CalendarHomeSet(
             user.memberships()
                 .into_iter()
@@ -93,9 +95,8 @@ impl Resource for PrincipalResource {
         Ok(match prop {
             PrincipalPropWrapperName::Principal(prop) => {
                 PrincipalPropWrapper::Principal(match prop {
-                    // TODO: principal types
                     PrincipalPropName::CalendarUserType => {
-                        PrincipalProp::CalendarUserType("INDIVIDUAL")
+                        PrincipalProp::CalendarUserType(user.user_type.to_owned())
                     }
                     PrincipalPropName::Displayname => {
                         PrincipalProp::Displayname(self.principal.to_owned())
