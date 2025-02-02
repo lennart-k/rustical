@@ -34,7 +34,7 @@ pub async fn route_report_calendar<C: CalendarStore>(
     cal_store: Data<C>,
 ) -> Result<impl Responder, Error> {
     let (principal, cal_id) = path.into_inner();
-    if principal != user.id {
+    if !user.is_principal(&principal) {
         return Err(Error::Unauthorized);
     }
 

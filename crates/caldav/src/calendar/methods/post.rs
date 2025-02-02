@@ -23,7 +23,7 @@ pub async fn route_post<C: CalendarStore, S: SubscriptionStore>(
     req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
     let (principal, cal_id) = path.into_inner();
-    if principal != user.id {
+    if !user.is_principal(&principal) {
         return Err(Error::Unauthorized);
     }
 

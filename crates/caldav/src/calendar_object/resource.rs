@@ -91,7 +91,9 @@ impl Resource for CalendarObjectResource {
     }
 
     fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
-        Ok(UserPrivilegeSet::owner_only(self.principal == user.id))
+        Ok(UserPrivilegeSet::owner_only(
+            user.is_principal(&self.principal),
+        ))
     }
 }
 

@@ -30,7 +30,7 @@ pub async fn route_report_addressbook<AS: AddressbookStore>(
     addr_store: Data<AS>,
 ) -> Result<impl Responder, Error> {
     let (principal, addressbook_id) = path.into_inner();
-    if principal != user.id {
+    if !user.is_principal(&principal) {
         return Err(Error::Unauthorized);
     }
 

@@ -55,9 +55,9 @@ impl Resource for CalendarSetResource {
 
     fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
         Ok(if self.read_only {
-            UserPrivilegeSet::owner_read(self.principal == user.id)
+            UserPrivilegeSet::owner_read(user.is_principal(&self.principal))
         } else {
-            UserPrivilegeSet::owner_only(self.principal == user.id)
+            UserPrivilegeSet::owner_only(user.is_principal(&self.principal))
         })
     }
 }

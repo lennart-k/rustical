@@ -8,12 +8,25 @@ use serde::{Deserialize, Serialize};
 use std::future::{ready, Ready};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct User {
     pub id: String,
     pub displayname: Option<String>,
     pub password: Option<String>,
     #[serde(default)]
     pub app_tokens: Vec<String>,
+}
+
+impl User {
+    /// Returns true if the user is either
+    /// - the principal itself
+    /// - has full access to the prinicpal (is member)
+    pub fn is_principal(&self, principal: &str) -> bool {
+        if self.id == principal {
+            return true;
+        }
+        false
+    }
 }
 
 #[derive(Clone, Debug, Display)]

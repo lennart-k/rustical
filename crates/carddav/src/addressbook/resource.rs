@@ -185,7 +185,9 @@ impl Resource for AddressbookResource {
     }
 
     fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
-        Ok(UserPrivilegeSet::owner_only(self.0.principal == user.id))
+        Ok(UserPrivilegeSet::owner_only(
+            user.is_principal(&self.0.principal),
+        ))
     }
 }
 

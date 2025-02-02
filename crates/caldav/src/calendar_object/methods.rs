@@ -24,12 +24,12 @@ pub async fn get_event<C: CalendarStore>(
         object_id,
     } = path.into_inner();
 
-    if user.id != principal {
+    if !user.is_principal(&principal) {
         return Ok(HttpResponse::Unauthorized().body(""));
     }
 
     let calendar = store.get_calendar(&principal, &cal_id).await?;
-    if user.id != calendar.principal {
+    if !user.is_principal(&calendar.principal) {
         return Ok(HttpResponse::Unauthorized().body(""));
     }
 
@@ -56,7 +56,7 @@ pub async fn put_event<C: CalendarStore>(
         object_id,
     } = path.into_inner();
 
-    if user.id != principal {
+    if !user.is_principal(&principal) {
         return Ok(HttpResponse::Unauthorized().body(""));
     }
 

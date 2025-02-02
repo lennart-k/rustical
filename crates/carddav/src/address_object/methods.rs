@@ -26,8 +26,8 @@ pub async fn get_object<AS: AddressbookStore>(
         object_id,
     } = path.into_inner();
 
-    if user.id != principal {
-        return Ok(HttpResponse::Unauthorized().body(""));
+    if !user.is_principal(&principal) {
+        return Err(Error::Unauthorized);
     }
 
     let addressbook = store.get_addressbook(&principal, &addressbook_id).await?;
@@ -64,8 +64,8 @@ pub async fn put_object<AS: AddressbookStore>(
         object_id,
     } = path.into_inner();
 
-    if user.id != principal {
-        return Ok(HttpResponse::Unauthorized().body(""));
+    if !user.is_principal(&principal) {
+        return Err(Error::Unauthorized);
     }
 
     // TODO: implement If-Match
@@ -79,5 +79,5 @@ pub async fn put_object<AS: AddressbookStore>(
         .put_object(principal, addressbook_id, object, overwrite)
         .await?;
 
-    Ok(HttpResponse::Created().body(""))
+    Ok(HttpResponse::Created().finish())
 }
