@@ -99,9 +99,12 @@ impl Resource for PrincipalResource {
                     PrincipalPropName::CalendarUserType => {
                         PrincipalProp::CalendarUserType(self.principal.user_type.to_owned())
                     }
-                    PrincipalPropName::Displayname => {
-                        PrincipalProp::Displayname(self.principal.id.to_owned())
-                    }
+                    PrincipalPropName::Displayname => PrincipalProp::Displayname(
+                        self.principal
+                            .displayname
+                            .to_owned()
+                            .unwrap_or(self.principal.id.to_owned()),
+                    ),
                     PrincipalPropName::PrincipalUrl => {
                         PrincipalProp::PrincipalUrl(principal_url.into())
                     }
