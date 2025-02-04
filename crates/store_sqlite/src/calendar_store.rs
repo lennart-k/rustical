@@ -82,7 +82,6 @@ pub struct SqliteCalendarStore {
 }
 
 impl SqliteCalendarStore {
-    #[instrument]
     async fn _get_calendar<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
@@ -102,7 +101,6 @@ impl SqliteCalendarStore {
         Ok(cal.into())
     }
 
-    #[instrument]
     async fn _get_calendars<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
@@ -120,7 +118,6 @@ impl SqliteCalendarStore {
         Ok(cals.into_iter().map(Calendar::from).collect())
     }
 
-    #[instrument]
     async fn _get_deleted_calendars<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
@@ -138,7 +135,6 @@ impl SqliteCalendarStore {
         Ok(cals.into_iter().map(Calendar::from).collect())
     }
 
-    #[instrument]
     async fn _insert_calendar<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         calendar: Calendar,
@@ -167,7 +163,6 @@ impl SqliteCalendarStore {
         Ok(())
     }
 
-    #[instrument]
     async fn _update_calendar<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: String,
@@ -227,7 +222,6 @@ impl SqliteCalendarStore {
         Ok(())
     }
 
-    #[instrument]
     async fn _restore_calendar<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
@@ -244,7 +238,6 @@ impl SqliteCalendarStore {
         Ok(())
     }
 
-    #[instrument]
     async fn _get_objects<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
@@ -263,7 +256,6 @@ impl SqliteCalendarStore {
         .collect()
     }
 
-    #[instrument]
     async fn _calendar_query<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
@@ -298,7 +290,6 @@ impl SqliteCalendarStore {
         .collect()
     }
 
-    #[instrument]
     async fn _get_object<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
@@ -428,7 +419,6 @@ impl SqliteCalendarStore {
         Ok(())
     }
 
-    #[instrument]
     async fn _sync_changes<'a, A: Acquire<'a, Database = Sqlite>>(
         acquire: A,
         principal: &str,
