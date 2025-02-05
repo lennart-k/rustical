@@ -1,3 +1,5 @@
+use std::string::FromUtf8Error;
+
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -6,6 +8,8 @@ pub enum XmlError {
     QuickXmlError(#[from] quick_xml::Error),
     #[error(transparent)]
     QuickXmlAttrError(#[from] quick_xml::events::attributes::AttrError),
+    #[error(transparent)]
+    FromUtf8Error(#[from] FromUtf8Error),
     #[error("Invalid tag [{0}]{1}. Expected [{2}]{3}")]
     InvalidTag(String, String, String, String),
     #[error("Missing field {0}")]

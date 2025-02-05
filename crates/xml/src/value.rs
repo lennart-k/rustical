@@ -81,6 +81,14 @@ impl<T: ValueDeserialize> XmlDeserialize for T {
                         }
                         string = String::from_utf8_lossy(text.as_ref()).to_string();
                     }
+                    Event::CData(cdata) => {
+                        let text = String::from_utf8(cdata.to_vec())?;
+                        if !string.is_empty() {
+                            // Content already written
+                            return Err(XmlError::UnsupportedEvent("content already written"));
+                        }
+                        string = text;
+                    }
                     Event::End(_) => break,
                     Event::Eof => return Err(XmlError::Eof),
                     _ => return Err(XmlError::UnsupportedEvent("todo")),

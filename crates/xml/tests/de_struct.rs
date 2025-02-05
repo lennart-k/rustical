@@ -258,6 +258,34 @@ fn test_xml_values() {
 }
 
 #[test]
+fn test_xml_cdata() {
+    #[derive(XmlDeserialize, XmlRootTag, PartialEq, Debug)]
+    #[xml(root = b"document")]
+    struct Document {
+        #[xml(ty = "text")]
+        hello: String,
+        href: String,
+    }
+
+    let doc = Document::parse_str(
+        r#"
+        <document>
+            <![CDATA[some text]]>
+            <href><![CDATA[some stuff]]></href>
+        </document>
+    "#,
+    )
+    .unwrap();
+    assert_eq!(
+        doc,
+        Document {
+            hello: "some text".to_owned(),
+            href: "some stuff".to_owned()
+        }
+    );
+}
+
+#[test]
 fn test_struct_xml_decl() {
     #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
     #[xml(root = b"document")]

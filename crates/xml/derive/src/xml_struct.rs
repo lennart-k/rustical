@@ -111,7 +111,8 @@ impl NamedStruct {
         if untagged_field_branches.len() > 1 {
             panic!("Currently only one untagged field supported!");
         }
-        let text_field_branches = self.fields.iter().filter_map(Field::text_branch);
+        let text_field_branches: Vec<_> =
+            self.fields.iter().filter_map(Field::text_branch).collect();
         let attr_field_branches = self.fields.iter().filter_map(Field::attr_branch);
         let tagname_field_branches = self.fields.iter().filter_map(Field::tagname_branch);
 
@@ -175,7 +176,8 @@ impl NamedStruct {
                                     #(#text_field_branches)*
                                 }
                                 Event::CData(cdata) => {
-                                    return Err(XmlError::UnsupportedEvent("CDATA"));
+                                    let text = String::from_utf8(cdata.to_vec())?;
+                                    #(#text_field_branches)*
                                 }
                                 Event::Comment(_) => { /* ignore */ }
                                 Event::Decl(_) => {
@@ -191,7 +193,7 @@ impl NamedStruct {
                                     return Err(XmlError::UnsupportedEvent("Doctype in the middle of the document"));
                                 }
                                 Event::End(end) => {
-                                    // Error: premature end
+                                    // This should actually be unreachable
                                     return Err(XmlError::Other("Unexpected closing tag for wrong element".to_owned()));
                                 }
                             }
