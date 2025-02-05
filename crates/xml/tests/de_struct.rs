@@ -265,6 +265,7 @@ fn test_xml_cdata() {
         #[xml(ty = "text")]
         hello: String,
         href: String,
+        okay: String,
     }
 
     let doc = Document::parse_str(
@@ -272,6 +273,7 @@ fn test_xml_cdata() {
         <document>
             <![CDATA[some text]]>
             <href><![CDATA[some stuff]]></href>
+            <okay>&gt;</okay>
         </document>
     "#,
     )
@@ -280,7 +282,8 @@ fn test_xml_cdata() {
         doc,
         Document {
             hello: "some text".to_owned(),
-            href: "some stuff".to_owned()
+            href: "some stuff".to_owned(),
+            okay: ">".to_owned()
         }
     );
 }

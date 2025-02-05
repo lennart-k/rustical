@@ -74,12 +74,13 @@ impl<T: ValueDeserialize> XmlDeserialize for T {
             let mut buf = Vec::new();
             loop {
                 match reader.read_event_into(&mut buf)? {
-                    Event::Text(text) => {
+                    Event::Text(bytes_text) => {
+                        let text = bytes_text.unescape()?;
                         if !string.is_empty() {
                             // Content already written
                             return Err(XmlError::UnsupportedEvent("content already written"));
                         }
-                        string = String::from_utf8_lossy(text.as_ref()).to_string();
+                        string = text.to_string();
                     }
                     Event::CData(cdata) => {
                         let text = String::from_utf8(cdata.to_vec())?;
