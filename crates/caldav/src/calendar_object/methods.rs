@@ -60,9 +60,6 @@ pub async fn put_event<C: CalendarStore>(
         return Ok(HttpResponse::Unauthorized().body(""));
     }
 
-    // TODO: implement If-Match
-    //
-
     let overwrite =
         Some(&HeaderValue::from_static("*")) != req.headers().get(header::IF_NONE_MATCH);
 

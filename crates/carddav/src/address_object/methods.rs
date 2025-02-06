@@ -68,9 +68,6 @@ pub async fn put_object<AS: AddressbookStore>(
         return Err(Error::Unauthorized);
     }
 
-    // TODO: implement If-Match
-    //
-
     let overwrite =
         Some(&HeaderValue::from_static("*")) != req.headers().get(header::IF_NONE_MATCH);
 

@@ -2,6 +2,9 @@ use crate::privileges::UserPrivilege;
 use crate::resource::Resource;
 use crate::resource::ResourceService;
 use crate::Error;
+use actix_web::http::header::IfMatch;
+use actix_web::http::header::IfNoneMatch;
+use actix_web::web;
 use actix_web::web::Data;
 use actix_web::web::Path;
 use actix_web::HttpRequest;
@@ -18,6 +21,8 @@ pub async fn route_delete<R: ResourceService>(
     user: User,
     resource_service: Data<R>,
     root_span: RootSpan,
+    if_match: web::Header<IfMatch>,
+    if_none_match: web::Header<IfNoneMatch>,
 ) -> Result<impl Responder, R::Error> {
     let no_trash = req
         .headers()
@@ -26,12 +31,21 @@ pub async fn route_delete<R: ResourceService>(
         .unwrap_or(false);
 
     let resource = resource_service.get_resource(&path).await?;
+
     let privileges = resource.get_user_privileges(&user)?;
     if !privileges.has(&UserPrivilege::Write) {
-        // TODO: Actually the spec wants us to look whether we have unbind access in the parent
-        // collection
         return Err(Error::Unauthorized.into());
     }
+
+    if !resource.satisfies_if_match(&if_match) {
+        // Precondition failed
+        return Ok(HttpResponse::PreconditionFailed().finish());
+    }
+    if resource.satisfies_if_none_match(&if_none_match) {
+        // Precondition failed
+        return Ok(HttpResponse::PreconditionFailed().finish());
+    }
+
     resource_service.delete_resource(&path, !no_trash).await?;
 
     Ok(HttpResponse::Ok().body(""))

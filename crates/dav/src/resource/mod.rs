@@ -4,6 +4,7 @@ use crate::xml::Resourcetype;
 use crate::xml::{multistatus::ResponseElement, TagList};
 use crate::Error;
 use actix_web::dev::ResourceMap;
+use actix_web::http::header::{EntityTag, IfMatch, IfNoneMatch};
 use actix_web::{http::StatusCode, ResponseError};
 use itertools::Itertools;
 use quick_xml::name::Namespace;
@@ -54,6 +55,42 @@ pub trait Resource: Clone + 'static {
 
     fn get_owner(&self) -> Option<&str> {
         None
+    }
+
+    fn get_etag(&self) -> Option<String> {
+        None
+    }
+
+    fn satisfies_if_match(&self, if_match: &IfMatch) -> bool {
+        match if_match {
+            IfMatch::Any => true,
+            // This is not nice but if the header doesn't exist, actix just gives us an empty
+            // IfMatch::Items header
+            IfMatch::Items(items) if items.is_empty() => true,
+            IfMatch::Items(items) => {
+                if let Some(etag) = self.get_etag() {
+                    let etag = EntityTag::new_strong(etag.to_owned());
+                    return items.iter().any(|item| item.strong_eq(&etag));
+                }
+                false
+            }
+        }
+    }
+
+    fn satisfies_if_none_match(&self, if_none_match: &IfNoneMatch) -> bool {
+        match if_none_match {
+            IfNoneMatch::Any => false,
+            // This is not nice but if the header doesn't exist, actix just gives us an empty
+            // IfNoneMatch::Items header
+            IfNoneMatch::Items(items) if items.is_empty() => false,
+            IfNoneMatch::Items(items) => {
+                if let Some(etag) = self.get_etag() {
+                    let etag = EntityTag::new_strong(etag.to_owned());
+                    return items.iter().all(|item| item.strong_ne(&etag));
+                }
+                true
+            }
+        }
     }
 
     fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error>;

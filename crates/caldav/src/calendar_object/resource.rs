@@ -90,6 +90,10 @@ impl Resource for CalendarObjectResource {
         Some(&self.principal)
     }
 
+    fn get_etag(&self) -> Option<String> {
+        Some(self.object.get_etag())
+    }
+
     fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
         Ok(UserPrivilegeSet::owner_only(
             user.is_principal(&self.principal),
