@@ -22,6 +22,8 @@ pub enum ParseValueError {
     ParseIntError(#[from] ParseIntError),
     #[error(transparent)]
     ParseFloatError(#[from] ParseFloatError),
+    #[error("{0}")]
+    Other(String),
 }
 
 macro_rules! impl_value_parse {

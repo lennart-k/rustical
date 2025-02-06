@@ -30,7 +30,9 @@ impl ValueDeserialize for UtcDateTime {
         Ok(Self(
             NaiveDateTime::parse_from_str(&input, UTC_DATE_TIME)
                 .map_err(|_| {
-                    rustical_xml::XmlError::Other("Could not parse as UTC timestamp".to_owned())
+                    rustical_xml::XmlError::InvalidValue(rustical_xml::ParseValueError::Other(
+                        "Could not parse as UTC timestamp".to_owned(),
+                    ))
                 })?
                 .and_utc(),
         ))

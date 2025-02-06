@@ -67,6 +67,7 @@ impl<T: XmlRootTag + XmlDeserialize> XmlDocument for T {
 
                     return Self::deserialize(&mut reader, &start, empty);
                 }
+                Event::Eof => return Err(XmlError::Eof),
                 _ => return Err(XmlError::UnsupportedEvent("unknown, todo")),
             };
         }

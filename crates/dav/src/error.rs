@@ -1,4 +1,5 @@
 use actix_web::{http::StatusCode, HttpResponse};
+use rustical_xml::XmlError;
 use thiserror::Error;
 use tracing::error;
 
@@ -33,7 +34,15 @@ impl actix_web::error::ResponseError for Error {
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::BadRequest(_) => StatusCode::BAD_REQUEST,
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
-            Self::XmlError(_) => StatusCode::BAD_REQUEST,
+            Self::XmlError(error) => match &error {
+                XmlError::InvalidTag(..)
+                | XmlError::MissingField(_)
+                | XmlError::UnsupportedEvent(_)
+                | XmlError::InvalidVariant(_)
+                | XmlError::InvalidFieldName(_, _)
+                | XmlError::InvalidValue(_) => StatusCode::UNPROCESSABLE_ENTITY,
+                _ => StatusCode::BAD_REQUEST,
+            },
             Error::PropReadOnly => StatusCode::CONFLICT,
             Self::IOError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }

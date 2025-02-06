@@ -30,10 +30,12 @@ impl rustical_xml::ValueDeserialize for CalendarObjectType {
             "VEVENT" => Ok(Self::Event),
             "VTODO" => Ok(Self::Todo),
             "VJOURNAL" => Ok(Self::Journal),
-            _ => Err(rustical_xml::XmlError::Other(format!(
-                "Invalid value '{}', must be VEVENT, VTODO, or VJOURNAL",
-                val
-            ))),
+            _ => Err(rustical_xml::XmlError::InvalidValue(
+                rustical_xml::ParseValueError::Other(format!(
+                    "Invalid value '{}', must be VEVENT, VTODO, or VJOURNAL",
+                    val
+                )),
+            )),
         }
     }
 }

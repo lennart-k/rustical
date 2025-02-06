@@ -165,7 +165,6 @@ impl Enum {
                             Event::Start(start) | Event::Empty(start) => {
                                 return <Self as ::rustical_xml::XmlDeserialize>::deserialize(&mut reader, &start, empty);
                             }
-
                             Event::Eof => return Err(::rustical_xml::XmlError::Eof),
                             Event::Text(bytes_text) => {
                                 return Err(::rustical_xml::XmlError::UnsupportedEvent("Text"));
@@ -173,19 +172,14 @@ impl Enum {
                             Event::CData(cdata) => {
                                 return Err(::rustical_xml::XmlError::UnsupportedEvent("CDATA"));
                             }
+                            Event::Decl(_) => { /* <?xml ... ?> ignore this */ }
                             Event::Comment(_) => { /* ignore */ }
-                            Event::Decl(_) => {
-                                /* ignore */
-                                // return Err(::rustical_xml::XmlError::UnsupportedEvent("Declaration"));
-                            }
+                            Event::DocType(_) => { /* ignore */ }
                             Event::PI(_) => {
                                 return Err(::rustical_xml::XmlError::UnsupportedEvent("Processing instruction"));
                             }
-                            Event::DocType(doctype) => {
-                                return Err(::rustical_xml::XmlError::UnsupportedEvent("Doctype in the middle of the document"));
-                            }
                             Event::End(end) => {
-                                return Err(::rustical_xml::XmlError::UnsupportedEvent("Premature end"));
+                                unreachable!("Premature end of xml document, should be handled by quick_xml");
                             }
                         };
                     }

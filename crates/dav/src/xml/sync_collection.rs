@@ -14,8 +14,8 @@ impl ValueDeserialize for SyncLevel {
             "1" => Self::One,
             "Infinity" => Self::Infinity,
             _ => {
-                return Err(rustical_xml::XmlError::Other(
-                    "Invalid sync-level".to_owned(),
+                return Err(rustical_xml::XmlError::InvalidValue(
+                    rustical_xml::ParseValueError::Other("Invalid sync-level".to_owned()),
                 ))
             }
         })

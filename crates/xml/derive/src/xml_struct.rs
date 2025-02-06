@@ -179,22 +179,15 @@ impl NamedStruct {
                                     let text = String::from_utf8(cdata.to_vec())?;
                                     #(#text_field_branches)*
                                 }
+                                Event::Decl(_) => { /* <?xml ... ?> ignore this */ }
                                 Event::Comment(_) => { /* ignore */ }
-                                Event::Decl(_) => {
-                                    // Error: not supported
-                                    return Err(XmlError::UnsupportedEvent("Declaration"));
-                                }
+                                Event::DocType(_) => { /* ignore */ }
                                 Event::PI(_) => {
                                     // Error: not supported
                                     return Err(XmlError::UnsupportedEvent("Processing instruction"));
                                 }
-                                Event::DocType(doctype) => {
-                                    // Error: start of new document
-                                    return Err(XmlError::UnsupportedEvent("Doctype in the middle of the document"));
-                                }
                                 Event::End(end) => {
-                                    // This should actually be unreachable
-                                    return Err(XmlError::Other("Unexpected closing tag for wrong element".to_owned()));
+                                    unreachable!("Unexpected closing tag for wrong element, should be handled by quick_xml");
                                 }
                             }
                         }
