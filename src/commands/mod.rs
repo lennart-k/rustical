@@ -14,7 +14,7 @@ use crate::config::{
 #[derive(Debug, Parser)]
 pub struct GenConfigArgs {}
 
-fn generate_frontend_secret() -> [u8; 64] {
+pub fn generate_frontend_secret() -> [u8; 64] {
     let mut rng = rand::thread_rng();
 
     let mut secret = [0u8; 64];

@@ -115,3 +115,67 @@ async fn main() -> Result<()> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{app::make_app, commands::generate_frontend_secret, get_data_stores};
+    use actix_web::{http::StatusCode, test::TestRequest};
+    use async_trait::async_trait;
+    use rustical_frontend::FrontendConfig;
+    use rustical_store::auth::{AuthenticationProvider, UserStore};
+    use std::sync::Arc;
+
+    #[derive(Debug, Clone)]
+    struct MockUserStore;
+
+    #[async_trait]
+    impl UserStore for MockUserStore {
+        async fn get_user(
+            &self,
+            id: &str,
+        ) -> Result<Option<rustical_store::auth::User>, rustical_store::Error> {
+            Err(rustical_store::Error::NotFound)
+        }
+    }
+
+    #[async_trait]
+    impl AuthenticationProvider for MockUserStore {
+        async fn validate_user_token(
+            &self,
+            user_id: &str,
+            token: &str,
+        ) -> Result<Option<rustical_store::auth::User>, rustical_store::Error> {
+            Err(rustical_store::Error::NotFound)
+        }
+    }
+
+    #[tokio::test]
+    async fn test_main() {
+        let (addr_store, cal_store, subscription_store, update_recv) = get_data_stores(
+            true,
+            &crate::config::DataStoreConfig::Sqlite(crate::config::SqliteDataStoreConfig {
+                db_url: "".to_owned(),
+            }),
+        )
+        .await
+        .unwrap();
+
+        let user_store = Arc::new(MockUserStore);
+
+        let app = make_app(
+            addr_store,
+            cal_store,
+            subscription_store,
+            user_store.clone(),
+            user_store,
+            FrontendConfig {
+                enabled: false,
+                secret_key: generate_frontend_secret(),
+            },
+        );
+        let app = actix_web::test::init_service(app).await;
+        let req = TestRequest::get().uri("/").to_request();
+        let resp = actix_web::test::call_service(&app, req).await;
+        assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+    }
+}
