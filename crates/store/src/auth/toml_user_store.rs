@@ -1,8 +1,14 @@
-use super::AuthenticationProvider;
+use super::{user::AppToken, AuthenticationProvider};
 use crate::{auth::User, error::Error};
+use anyhow::anyhow;
 use async_trait::async_trait;
+use password_hash::PasswordHasher;
+use pbkdf2::{
+    password_hash::{self, rand_core::OsRng, SaltString},
+    Params,
+};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, fs, io};
+use std::{collections::HashMap, fs, io, ops::Deref};
 use tokio::sync::RwLock;
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
@@ -18,6 +24,7 @@ pub struct TomlUserStoreConfig {
 #[derive(Debug)]
 pub struct TomlPrincipalStore {
     pub principals: RwLock<HashMap<String, User>>,
+    config: TomlUserStoreConfig,
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -35,7 +42,20 @@ impl TomlPrincipalStore {
             principals: RwLock::new(HashMap::from_iter(
                 principals.into_iter().map(|user| (user.id.clone(), user)),
             )),
+            config,
         })
+    }
+
+    fn save(&self, principals: &HashMap<String, User>) -> Result<(), Error> {
+        let out = toml::to_string_pretty(&TomlDataModel {
+            principals: principals
+                .iter()
+                .map(|(_, value)| value.to_owned())
+                .collect(),
+        })
+        .map_err(|_| anyhow!("Error saving principal database"))?;
+        fs::write(&self.config.path, out)?;
+        Ok(())
     }
 }
 
@@ -69,5 +89,33 @@ impl AuthenticationProvider for TomlPrincipalStore {
         }
 
         Ok(None)
+    }
+
+    async fn add_app_token(&self, user_id: &str, name: String, token: String) -> Result<(), Error> {
+        let mut principals = self.principals.write().await;
+        if let Some(principal) = principals.get_mut(user_id) {
+            let salt = SaltString::generate(OsRng);
+            let token_hash = pbkdf2::Pbkdf2
+                .hash_password_customized(
+                    token.as_bytes(),
+                    None,
+                    None,
+                    Params {
+                        rounds: 1000,
+                        ..Default::default()
+                    },
+                    &salt,
+                )
+                .map_err(|_| Error::PasswordHash)?
+                .to_string();
+            principal.app_tokens.push(AppToken {
+                name,
+                token: token_hash,
+            });
+            self.save(principals.deref())?;
+            Ok(())
+        } else {
+            Err(Error::NotFound)
+        }
     }
 }

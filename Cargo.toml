@@ -114,6 +114,7 @@ reqwest = { version = "0.12", features = [
   "charset",
   "http2",
 ], default-features = false }
+dashmap = "6.1"
 
 [dependencies]
 rustical_store = { workspace = true }
@@ -131,6 +132,8 @@ clap = { version = "4.5", features = ["derive", "env"] }
 sqlx = { workspace = true }
 async-trait = { workspace = true }
 tracing-actix-web = { workspace = true }
+uuid.workspace = true
+dashmap.workspace = true
 
 opentelemetry = { version = "0.27", optional = true }
 opentelemetry-otlp = { version = "0.27", optional = true }
@@ -139,7 +142,6 @@ opentelemetry_sdk = { version = "0.27", features = [
 ], optional = true }
 opentelemetry-semantic-conventions = { version = "0.27", optional = true }
 tracing-opentelemetry = { version = "0.28", optional = true }
-
 tracing-subscriber = { version = "0.3", features = [
   "env-filter",
   "fmt",

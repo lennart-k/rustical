@@ -14,6 +14,7 @@ a CalDAV/CardDAV server
 - lightweight (the container image contains only one binary)
 - adequately fast (I'd say blazingly fast™ :fire: if I did the benchmarks to back that claim up)
 - deleted calendars are recoverable
+- Nextcloud login flow (In DAVx5 you can login through the Nextcloud flow and automatically generate an app token)
 
 ## Installation
 

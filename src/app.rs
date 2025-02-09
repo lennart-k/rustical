@@ -10,12 +10,17 @@ use rustical_store::{AddressbookStore, CalendarStore, SubscriptionStore};
 use std::sync::Arc;
 use tracing_actix_web::TracingLogger;
 
+use crate::config::NextcloudLoginConfig;
+use crate::nextcloud_login::{configure_nextcloud_login, NextcloudFlows};
+
 pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
     addr_store: Arc<AS>,
     cal_store: Arc<CS>,
     subscription_store: Arc<S>,
     auth_provider: Arc<impl AuthenticationProvider>,
     frontend_config: FrontendConfig,
+    nextcloud_login_config: NextcloudLoginConfig,
+    nextcloud_flows_state: Arc<NextcloudFlows>,
 ) -> App<
     impl ServiceFactory<
         ServiceRequest,
@@ -58,6 +63,11 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
                 )
             }))
             .service(web::redirect("/", "/frontend").see_other());
+    }
+    if nextcloud_login_config.enabled {
+        app = app.configure(|cfg| {
+            configure_nextcloud_login(cfg, nextcloud_flows_state, auth_provider.clone())
+        });
     }
     app
 }

@@ -63,6 +63,18 @@ impl Default for DavPushConfig {
     }
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, default)]
+pub struct NextcloudLoginConfig {
+    pub enabled: bool,
+}
+
+impl Default for NextcloudLoginConfig {
+    fn default() -> Self {
+        Self { enabled: true }
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
@@ -75,4 +87,6 @@ pub struct Config {
     pub tracing: TracingConfig,
     #[serde(default)]
     pub dav_push: DavPushConfig,
+    #[serde(default)]
+    pub nextcloud_login: NextcloudLoginConfig,
 }

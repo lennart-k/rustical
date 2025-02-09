@@ -37,6 +37,7 @@ pub fn cmd_gen_config(_args: GenConfigArgs) -> anyhow::Result<()> {
             enabled: true,
         },
         dav_push: DavPushConfig::default(),
+        nextcloud_login: Default::default(),
     };
     let generated_config = toml::to_string(&config)?;
     println!("{generated_config}");

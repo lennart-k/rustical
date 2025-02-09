@@ -1,7 +1,6 @@
 use actix_web::{http::StatusCode, ResponseError};
 
 #[derive(Debug, thiserror::Error)]
-
 pub enum Error {
     #[error("Not found")]
     NotFound,
@@ -14,6 +13,12 @@ pub enum Error {
 
     #[error("Read-only")]
     ReadOnly,
+
+    #[error("Error generating password hash")]
+    PasswordHash,
+
+    #[error(transparent)]
+    IO(#[from] std::io::Error),
 
     #[error(transparent)]
     ParserError(#[from] ical::parser::ParserError),

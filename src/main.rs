@@ -6,6 +6,7 @@ use app::make_app;
 use clap::{Parser, Subcommand};
 use commands::{cmd_gen_config, cmd_pwhash};
 use config::{DataStoreConfig, SqliteDataStoreConfig};
+use nextcloud_login::NextcloudFlows;
 use rustical_dav::push::push_notifier;
 use rustical_store::auth::TomlPrincipalStore;
 use rustical_store::{AddressbookStore, CalendarStore, CollectionOperation, SubscriptionStore};
@@ -20,6 +21,7 @@ use tokio::sync::mpsc::Receiver;
 mod app;
 mod commands;
 mod config;
+mod nextcloud_login;
 mod setup_tracing;
 
 #[derive(Parser, Debug)]
@@ -94,6 +96,8 @@ async fn main() -> Result<()> {
                 config::AuthConfig::Toml(config) => Arc::new(TomlPrincipalStore::new(config)?),
             };
 
+            let nextcloud_flows = Arc::new(NextcloudFlows::default());
+
             HttpServer::new(move || {
                 make_app(
                     addr_store.clone(),
@@ -101,6 +105,8 @@ async fn main() -> Result<()> {
                     subscription_store.clone(),
                     user_store.clone(),
                     config.frontend.clone(),
+                    config.nextcloud_login.clone(),
+                    nextcloud_flows.clone(),
                 )
             })
             .bind((config.http.host, config.http.port))?
@@ -117,8 +123,12 @@ async fn main() -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{app::make_app, commands::generate_frontend_secret, get_data_stores};
+    use crate::{
+        app::make_app, commands::generate_frontend_secret, config::NextcloudLoginConfig,
+        get_data_stores, nextcloud_login::NextcloudFlows,
+    };
     use actix_web::{http::StatusCode, test::TestRequest};
+    use anyhow::anyhow;
     use async_trait::async_trait;
     use rustical_frontend::FrontendConfig;
     use rustical_store::auth::AuthenticationProvider;
@@ -142,6 +152,15 @@ mod tests {
             token: &str,
         ) -> Result<Option<rustical_store::auth::User>, rustical_store::Error> {
             Err(rustical_store::Error::NotFound)
+        }
+
+        async fn add_app_token(
+            &self,
+            user_id: &str,
+            name: String,
+            token: String,
+        ) -> Result<(), rustical_store::Error> {
+            Err(rustical_store::Error::Other(anyhow!("Not implemented")))
         }
     }
 
@@ -167,6 +186,8 @@ mod tests {
                 enabled: false,
                 secret_key: generate_frontend_secret(),
             },
+            NextcloudLoginConfig { enabled: false },
+            Arc::new(NextcloudFlows::default()),
         );
         let app = actix_web::test::init_service(app).await;
         let req = TestRequest::get().uri("/").to_request();
