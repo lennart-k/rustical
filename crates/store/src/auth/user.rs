@@ -35,6 +35,12 @@ impl ValueSerialize for PrincipalType {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct AppToken {
+    pub name: String,
+    pub token: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 // TODO: Rename this to Principal
 pub struct User {
@@ -44,7 +50,7 @@ pub struct User {
     pub principal_type: PrincipalType,
     pub password: Option<String>,
     #[serde(default)]
-    pub app_tokens: Vec<String>,
+    pub app_tokens: Vec<AppToken>,
     #[serde(default)]
     pub memberships: Vec<String>,
 }

@@ -54,7 +54,7 @@ impl AuthenticationProvider for TomlPrincipalStore {
         // Try app tokens first since they are cheaper to calculate
         // They can afford less iterations since they can be generated with high entropy
         for app_token in &user.app_tokens {
-            if password_auth::verify_password(token, app_token).is_ok() {
+            if password_auth::verify_password(token, &app_token.token).is_ok() {
                 return Ok(Some(user));
             }
         }

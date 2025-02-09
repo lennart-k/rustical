@@ -55,7 +55,7 @@ id = "user"
 displayname = "User"
 password = "$argon2id$......."
 app_tokens = [
-  "$pbkdf2-sha256$........"
+  {name = "Token", token = "$pbkdf2-sha256$........"},
 ]
 memberships = ["group:amazing_group"]
 
