@@ -41,7 +41,7 @@ pub struct User {
     pub id: String,
     pub displayname: Option<String>,
     #[serde(default)]
-    pub user_type: PrincipalType,
+    pub principal_type: PrincipalType,
     pub password: Option<String>,
     #[serde(default)]
     pub app_tokens: Vec<String>,

@@ -97,7 +97,7 @@ impl Resource for PrincipalResource {
             PrincipalPropWrapperName::Principal(prop) => {
                 PrincipalPropWrapper::Principal(match prop {
                     PrincipalPropName::CalendarUserType => {
-                        PrincipalProp::CalendarUserType(self.principal.user_type.to_owned())
+                        PrincipalProp::CalendarUserType(self.principal.principal_type.to_owned())
                     }
                     PrincipalPropName::Displayname => PrincipalProp::Displayname(
                         self.principal
