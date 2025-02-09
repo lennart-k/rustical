@@ -5,7 +5,7 @@ use actix_web::{web, App};
 use rustical_caldav::caldav_service;
 use rustical_carddav::carddav_service;
 use rustical_frontend::{configure_frontend, FrontendConfig};
-use rustical_store::auth::{AuthenticationProvider, UserStore};
+use rustical_store::auth::AuthenticationProvider;
 use rustical_store::{AddressbookStore, CalendarStore, SubscriptionStore};
 use std::sync::Arc;
 use tracing_actix_web::TracingLogger;
@@ -15,7 +15,6 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
     cal_store: Arc<CS>,
     subscription_store: Arc<S>,
     auth_provider: Arc<impl AuthenticationProvider>,
-    user_store: Arc<impl UserStore>,
     frontend_config: FrontendConfig,
 ) -> App<
     impl ServiceFactory<
@@ -31,7 +30,6 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
         .wrap(TracingLogger::default())
         .wrap(NormalizePath::trim())
         .service(web::scope("/caldav").service(caldav_service(
-            user_store.clone(),
             auth_provider.clone(),
             cal_store.clone(),
             addr_store.clone(),
@@ -39,7 +37,6 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
         )))
         .service(web::scope("/carddav").service(carddav_service(
             auth_provider.clone(),
-            user_store.clone(),
             addr_store.clone(),
             subscription_store,
         )))

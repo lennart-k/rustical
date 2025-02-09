@@ -6,21 +6,21 @@ use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{NamedRoute, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
-use rustical_store::auth::{User, UserStore};
+use rustical_store::auth::{AuthenticationProvider, User};
 use rustical_store::AddressbookStore;
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 use std::sync::Arc;
 
-pub struct PrincipalResourceService<A: AddressbookStore, US: UserStore> {
+pub struct PrincipalResourceService<A: AddressbookStore, AP: AuthenticationProvider> {
     addr_store: Arc<A>,
-    user_store: Arc<US>,
+    auth_provider: Arc<AP>,
 }
 
-impl<A: AddressbookStore, US: UserStore> PrincipalResourceService<A, US> {
-    pub fn new(addr_store: Arc<A>, user_store: Arc<US>) -> Self {
+impl<A: AddressbookStore, AP: AuthenticationProvider> PrincipalResourceService<A, AP> {
+    pub fn new(addr_store: Arc<A>, auth_provider: Arc<AP>) -> Self {
         Self {
             addr_store,
-            user_store,
+            auth_provider,
         }
     }
 }
@@ -133,7 +133,9 @@ impl Resource for PrincipalResource {
 }
 
 #[async_trait(?Send)]
-impl<A: AddressbookStore, US: UserStore> ResourceService for PrincipalResourceService<A, US> {
+impl<A: AddressbookStore, AP: AuthenticationProvider> ResourceService
+    for PrincipalResourceService<A, AP>
+{
     type PathComponents = (String,);
     type MemberType = AddressbookResource;
     type Resource = PrincipalResource;
@@ -144,8 +146,8 @@ impl<A: AddressbookStore, US: UserStore> ResourceService for PrincipalResourceSe
         (principal,): &Self::PathComponents,
     ) -> Result<Self::Resource, Self::Error> {
         let user = self
-            .user_store
-            .get_user(principal)
+            .auth_provider
+            .get_principal(principal)
             .await?
             .ok_or(crate::Error::NotFound)?;
         Ok(PrincipalResource { principal: user })

@@ -9,7 +9,7 @@ use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{NamedRoute, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::user::PrincipalType;
-use rustical_store::auth::{User, UserStore};
+use rustical_store::auth::{AuthenticationProvider, User};
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 
 #[derive(Clone)]
@@ -131,13 +131,13 @@ impl Resource for PrincipalResource {
     }
 }
 
-pub struct PrincipalResourceService<US: UserStore> {
-    pub store: Arc<US>,
+pub struct PrincipalResourceService<AP: AuthenticationProvider> {
+    pub auth_provider: Arc<AP>,
     pub home_set: &'static [(&'static str, bool)],
 }
 
 #[async_trait(?Send)]
-impl<US: UserStore> ResourceService for PrincipalResourceService<US> {
+impl<AP: AuthenticationProvider> ResourceService for PrincipalResourceService<AP> {
     type PathComponents = (String,);
     type MemberType = CalendarSetResource;
     type Resource = PrincipalResource;
@@ -148,8 +148,8 @@ impl<US: UserStore> ResourceService for PrincipalResourceService<US> {
         (principal,): &Self::PathComponents,
     ) -> Result<Self::Resource, Self::Error> {
         let user = self
-            .store
-            .get_user(principal)
+            .auth_provider
+            .get_principal(principal)
             .await?
             .ok_or(crate::Error::NotFound)?;
         Ok(PrincipalResource {

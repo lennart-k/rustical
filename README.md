@@ -42,11 +42,29 @@ rustical gen-config
 ```
 
 > [!WARNING]
-> `rustical gen-config` generates a random `frontend.secret_key`.
+> The `rustical gen-config` command generates a random `frontend.secret_key`.
 > This secret is used to generate session cookies so if it is leaked an attacker could use it to authenticate to against any endpoint (also when the frontend is disabled).
 
 You'll have to set your database path to something like `/var/lib/rustical/db.sqlite3`.
-There you also set your username, password, and app tokens.
+
+Next, configure the principals by creating a file specified in `auth.path` (by default `/etc/rustical/principals.toml`) and inserting your principals:
+
+```toml
+[[principals]]
+id = "user"
+displayname = "User"
+password = "$argon2id$......."
+app_tokens = [
+  "$pbkdf2-sha256$........"
+]
+memberships = ["group:amazing_group"]
+
+[[principals]]
+id = "group:amazing_group"
+user_type = "group"
+displayname = "Amazing group"
+```
+
 Password hashes can be generated with
 
 ```sh

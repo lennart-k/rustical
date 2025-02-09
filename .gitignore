@@ -5,6 +5,7 @@ crates/*/Cargo.lock
 
 db.sqlite3*
 config.toml
+principals.toml
 
 /.idea
 

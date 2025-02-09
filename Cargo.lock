@@ -2885,6 +2885,7 @@ dependencies = [
  "sha2",
  "thiserror 2.0.11",
  "tokio",
+ "toml",
  "tracing",
 ]
 

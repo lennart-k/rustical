@@ -1,5 +1,5 @@
 use rustical_frontend::FrontendConfig;
-use rustical_store::auth::StaticUserStoreConfig;
+use rustical_store::auth::TomlUserStoreConfig;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -35,7 +35,7 @@ pub enum DataStoreConfig {
 #[serde(tag = "backend", rename_all = "snake_case")]
 #[serde(deny_unknown_fields)]
 pub enum AuthConfig {
-    Static(StaticUserStoreConfig),
+    Toml(TomlUserStoreConfig),
 }
 
 #[derive(Debug, Deserialize, Serialize, Default)]

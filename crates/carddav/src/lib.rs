@@ -15,7 +15,7 @@ use principal::{PrincipalResource, PrincipalResourceService};
 use rustical_dav::resource::{NamedRoute, ResourceService};
 use rustical_dav::resources::RootResourceService;
 use rustical_store::{
-    auth::{AuthenticationMiddleware, AuthenticationProvider, UserStore},
+    auth::{AuthenticationMiddleware, AuthenticationProvider},
     AddressbookStore, SubscriptionStore,
 };
 use std::sync::Arc;
@@ -27,12 +27,11 @@ pub mod principal;
 
 pub fn carddav_service<AP: AuthenticationProvider, A: AddressbookStore, S: SubscriptionStore>(
     auth_provider: Arc<AP>,
-    user_store: Arc<impl UserStore>,
     store: Arc<A>,
     subscription_store: Arc<S>,
 ) -> impl HttpServiceFactory {
     web::scope("")
-        .wrap(AuthenticationMiddleware::new(auth_provider))
+        .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
         .wrap(
             ErrorHandlers::new().handler(StatusCode::METHOD_NOT_ALLOWED, |res| {
                 Ok(ErrorHandlerResponse::Response(
@@ -60,7 +59,7 @@ pub fn carddav_service<AP: AuthenticationProvider, A: AddressbookStore, S: Subsc
             web::scope("/principal").service(
                 web::scope("/{principal}")
                     .service(
-                        PrincipalResourceService::new(store.clone(), user_store)
+                        PrincipalResourceService::new(store.clone(), auth_provider)
                             .actix_resource()
                             .name(PrincipalResource::route_name()),
                     )

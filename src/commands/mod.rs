@@ -4,7 +4,7 @@ use password_hash::PasswordHasher;
 use pbkdf2::Params;
 use rand::{rngs::OsRng, RngCore};
 use rustical_frontend::FrontendConfig;
-use rustical_store::auth::{StaticUserStoreConfig, User};
+use rustical_store::auth::TomlUserStoreConfig;
 
 use crate::config::{
     AuthConfig, Config, DataStoreConfig, DavPushConfig, HttpConfig, SqliteDataStoreConfig,
@@ -25,22 +25,8 @@ pub fn generate_frontend_secret() -> [u8; 64] {
 pub fn cmd_gen_config(_args: GenConfigArgs) -> anyhow::Result<()> {
     let config = Config {
         http: HttpConfig::default(),
-        auth: AuthConfig::Static(StaticUserStoreConfig {
-            users: vec![User {
-                id: "default".to_owned(),
-                displayname: Some("Default user".to_owned()),
-                user_type: Default::default(),
-                password: Some(
-                    "generate a password hash with rustical pwhash --algorithm argon2".to_owned(),
-                ),
-                app_tokens: vec![
-                    "generate an app token hash with rustical pwhash --algorithm pbkdf2".to_owned(),
-                ],
-                memberships: vec![
-                    "Here you can specify other principals this principal should be a member of"
-                        .to_owned(),
-                ],
-            }],
+        auth: AuthConfig::Toml(TomlUserStoreConfig {
+            path: "/etc/rustical/principals.toml".to_owned(),
         }),
         data_store: DataStoreConfig::Sqlite(SqliteDataStoreConfig {
             db_url: "".to_owned(),

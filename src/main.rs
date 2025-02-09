@@ -7,7 +7,7 @@ use clap::{Parser, Subcommand};
 use commands::{cmd_gen_config, cmd_pwhash};
 use config::{DataStoreConfig, SqliteDataStoreConfig};
 use rustical_dav::push::push_notifier;
-use rustical_store::auth::StaticUserStore;
+use rustical_store::auth::TomlPrincipalStore;
 use rustical_store::{AddressbookStore, CalendarStore, CollectionOperation, SubscriptionStore};
 use rustical_store_sqlite::addressbook_store::SqliteAddressbookStore;
 use rustical_store_sqlite::calendar_store::SqliteCalendarStore;
@@ -90,16 +90,15 @@ async fn main() -> Result<()> {
                 ));
             }
 
-            let user_store = Arc::new(match config.auth {
-                config::AuthConfig::Static(config) => StaticUserStore::new(config),
-            });
+            let user_store = match config.auth {
+                config::AuthConfig::Toml(config) => Arc::new(TomlPrincipalStore::new(config)?),
+            };
 
             HttpServer::new(move || {
                 make_app(
                     addr_store.clone(),
                     cal_store.clone(),
                     subscription_store.clone(),
-                    user_store.clone(),
                     user_store.clone(),
                     config.frontend.clone(),
                 )
@@ -122,24 +121,21 @@ mod tests {
     use actix_web::{http::StatusCode, test::TestRequest};
     use async_trait::async_trait;
     use rustical_frontend::FrontendConfig;
-    use rustical_store::auth::{AuthenticationProvider, UserStore};
+    use rustical_store::auth::AuthenticationProvider;
     use std::sync::Arc;
 
     #[derive(Debug, Clone)]
     struct MockUserStore;
 
     #[async_trait]
-    impl UserStore for MockUserStore {
-        async fn get_user(
+    impl AuthenticationProvider for MockUserStore {
+        async fn get_principal(
             &self,
             id: &str,
         ) -> Result<Option<rustical_store::auth::User>, rustical_store::Error> {
             Err(rustical_store::Error::NotFound)
         }
-    }
 
-    #[async_trait]
-    impl AuthenticationProvider for MockUserStore {
         async fn validate_user_token(
             &self,
             user_id: &str,
@@ -151,7 +147,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_main() {
-        let (addr_store, cal_store, subscription_store, update_recv) = get_data_stores(
+        let (addr_store, cal_store, subscription_store, _update_recv) = get_data_stores(
             true,
             &crate::config::DataStoreConfig::Sqlite(crate::config::SqliteDataStoreConfig {
                 db_url: "".to_owned(),
@@ -166,7 +162,6 @@ mod tests {
             addr_store,
             cal_store,
             subscription_store,
-            user_store.clone(),
             user_store,
             FrontendConfig {
                 enabled: false,
