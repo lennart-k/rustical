@@ -1,0 +1,13 @@
+{% extends "layouts/default.html" %}
+
+{% block imports %}
+{% endblock %}
+
+{% block content %}
+<p>Authorize application to act on your behalf, {{ username }}?</p>
+<form method="POST">
+  <label for="app_name">App name</label>
+  <input type="text" value="{{ app_name }}" name="app_name"/>
+  <button type="submit">Authorize</button>
+</form>
+{% endblock %}

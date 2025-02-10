@@ -5,13 +5,13 @@ use actix_web::{web, App};
 use rustical_caldav::caldav_service;
 use rustical_carddav::carddav_service;
 use rustical_frontend::{configure_frontend, FrontendConfig};
+use rustical_nextcloud_login::{configure_nextcloud_login, NextcloudFlows};
 use rustical_store::auth::AuthenticationProvider;
 use rustical_store::{AddressbookStore, CalendarStore, SubscriptionStore};
 use std::sync::Arc;
 use tracing_actix_web::TracingLogger;
 
 use crate::config::NextcloudLoginConfig;
-use crate::nextcloud_login::{configure_nextcloud_login, NextcloudFlows};
 
 pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
     addr_store: Arc<AS>,

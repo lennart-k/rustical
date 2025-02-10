@@ -6,8 +6,8 @@ use app::make_app;
 use clap::{Parser, Subcommand};
 use commands::{cmd_gen_config, cmd_pwhash};
 use config::{DataStoreConfig, SqliteDataStoreConfig};
-use nextcloud_login::NextcloudFlows;
 use rustical_dav::push::push_notifier;
+use rustical_nextcloud_login::NextcloudFlows;
 use rustical_store::auth::TomlPrincipalStore;
 use rustical_store::{AddressbookStore, CalendarStore, CollectionOperation, SubscriptionStore};
 use rustical_store_sqlite::addressbook_store::SqliteAddressbookStore;
@@ -21,7 +21,6 @@ use tokio::sync::mpsc::Receiver;
 mod app;
 mod commands;
 mod config;
-mod nextcloud_login;
 mod setup_tracing;
 
 #[derive(Parser, Debug)]
@@ -125,12 +124,13 @@ async fn main() -> Result<()> {
 mod tests {
     use crate::{
         app::make_app, commands::generate_frontend_secret, config::NextcloudLoginConfig,
-        get_data_stores, nextcloud_login::NextcloudFlows,
+        get_data_stores,
     };
     use actix_web::{http::StatusCode, test::TestRequest};
     use anyhow::anyhow;
     use async_trait::async_trait;
     use rustical_frontend::FrontendConfig;
+    use rustical_nextcloud_login::NextcloudFlows;
     use rustical_store::auth::AuthenticationProvider;
     use std::sync::Arc;
 
