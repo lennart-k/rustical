@@ -3,6 +3,7 @@ use actix_web::{
     http::{header, StatusCode},
     FromRequest, HttpMessage, HttpResponse, ResponseError,
 };
+use chrono::{DateTime, Utc};
 use derive_more::Display;
 use rustical_xml::ValueSerialize;
 use serde::{Deserialize, Serialize};
@@ -38,6 +39,7 @@ impl ValueSerialize for PrincipalType {
 pub struct AppToken {
     pub name: String,
     pub token: String,
+    pub created_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

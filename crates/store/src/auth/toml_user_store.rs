@@ -111,6 +111,7 @@ impl AuthenticationProvider for TomlPrincipalStore {
             principal.app_tokens.push(AppToken {
                 name,
                 token: token_hash,
+                created_at: Some(chrono::Utc::now()),
             });
             self.save(principals.deref())?;
             Ok(())
