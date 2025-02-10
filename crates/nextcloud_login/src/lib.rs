@@ -4,14 +4,12 @@ use actix_web::{
     HttpRequest, HttpResponse, Responder,
 };
 use askama::Template;
-use assets::{Assets, EmbedService};
 use chrono::{DateTime, Duration, Utc};
 use rand::{distributions::Alphanumeric, Rng};
 use rustical_store::auth::{AuthenticationMiddleware, AuthenticationProvider, User};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::RwLock;
-mod assets;
 
 #[derive(Debug, Clone)]
 struct NextcloudFlow {
@@ -212,7 +210,6 @@ pub fn configure_nextcloud_login<AP: AuthenticationProvider>(
             .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
             .app_data(Data::from(nextcloud_flows_state))
             .app_data(Data::from(auth_provider.clone()))
-            .service(EmbedService::<Assets>::new("/assets".to_owned()))
             .service(web::resource("/index.php/login/v2").post(post_nextcloud_login))
             .service(
                 web::resource("/login/v2/poll/{flow}")
