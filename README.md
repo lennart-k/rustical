@@ -36,6 +36,8 @@ docker run \
 
 ## Configuration
 
+RustiCal can either be configured using a TOML file or using environment variables.
+
 You can generate a default `config.toml` with
 
 ```sh
@@ -47,6 +49,24 @@ rustical gen-config
 > This secret is used to generate session cookies so if it is leaked an attacker could use it to authenticate to against any endpoint (also when the frontend is disabled).
 
 You'll have to set your database path to something like `/var/lib/rustical/db.sqlite3`.
+
+### Environment variables
+
+The options in `config.toml` can also be configured using environment variables. Names translate the following:
+
+```toml
+[data_store.toml]
+path = "asd"
+```
+
+becomes `RUSTICAL_DATA_STORE__TOML__PATH`.
+Every variable is
+
+- uppercase
+- prefixed by `RUSTICAL_`
+- Dots become `__`
+
+### Users and groups
 
 Next, configure the principals by creating a file specified in `auth.toml.path` (by default `/etc/rustical/principals.toml`) and inserting your principals:
 
