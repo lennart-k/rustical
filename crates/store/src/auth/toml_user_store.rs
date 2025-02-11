@@ -16,7 +16,7 @@ struct TomlDataModel {
     principals: Vec<User>,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct TomlUserStoreConfig {
     pub path: String,
 }
