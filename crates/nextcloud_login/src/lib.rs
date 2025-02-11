@@ -206,18 +206,18 @@ pub fn configure_nextcloud_login<AP: AuthenticationProvider>(
     auth_provider: Arc<AP>,
 ) {
     cfg.service(
-        web::scope("")
+        web::scope("/index.php/login/v2")
             .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
             .app_data(Data::from(nextcloud_flows_state))
             .app_data(Data::from(auth_provider.clone()))
-            .service(web::resource("/index.php/login/v2").post(post_nextcloud_login))
+            .service(web::resource("").post(post_nextcloud_login))
             .service(
-                web::resource("/login/v2/poll/{flow}")
+                web::resource("/poll/{flow}")
                     .name("nc_login_poll")
                     .post(post_nextcloud_poll::<AP>),
             )
             .service(
-                web::resource("/login/v2/flow/{flow}")
+                web::resource("/flow/{flow}")
                     .name("nc_login_flow")
                     .get(get_nextcloud_flow)
                     .post(post_nextcloud_flow),
