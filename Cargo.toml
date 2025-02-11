@@ -149,6 +149,8 @@ tracing-subscriber = { version = "0.3", features = [
   "registry",
 ] }
 
+figment = { version = "0.10", features = ["env", "toml"] }
+
 rand.workspace = true
 rpassword.workspace = true
 argon2.workspace = true

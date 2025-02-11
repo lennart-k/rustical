@@ -48,7 +48,7 @@ rustical gen-config
 
 You'll have to set your database path to something like `/var/lib/rustical/db.sqlite3`.
 
-Next, configure the principals by creating a file specified in `auth.path` (by default `/etc/rustical/principals.toml`) and inserting your principals:
+Next, configure the principals by creating a file specified in `auth.toml.path` (by default `/etc/rustical/principals.toml`) and inserting your principals:
 
 ```toml
 [[principals]]

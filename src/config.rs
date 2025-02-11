@@ -25,14 +25,14 @@ pub struct SqliteDataStoreConfig {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-#[serde(tag = "backend", rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
 #[serde(deny_unknown_fields)]
 pub enum DataStoreConfig {
     Sqlite(SqliteDataStoreConfig),
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-#[serde(tag = "backend", rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
 #[serde(deny_unknown_fields)]
 pub enum AuthConfig {
     Toml(TomlUserStoreConfig),

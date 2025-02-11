@@ -6,6 +6,8 @@ use app::make_app;
 use clap::{Parser, Subcommand};
 use commands::{cmd_gen_config, cmd_pwhash};
 use config::{DataStoreConfig, SqliteDataStoreConfig};
+use figment::providers::{Env, Format, Toml};
+use figment::Figment;
 use rustical_dav::push::push_notifier;
 use rustical_nextcloud_login::NextcloudFlows;
 use rustical_store::auth::TomlPrincipalStore;
@@ -14,7 +16,6 @@ use rustical_store_sqlite::addressbook_store::SqliteAddressbookStore;
 use rustical_store_sqlite::calendar_store::SqliteCalendarStore;
 use rustical_store_sqlite::{create_db_pool, SqliteStore};
 use setup_tracing::setup_tracing;
-use std::fs;
 use std::sync::Arc;
 use tokio::sync::mpsc::Receiver;
 
@@ -72,11 +73,11 @@ async fn main() -> Result<()> {
         Some(Command::GenConfig(gen_config_args)) => cmd_gen_config(gen_config_args)?,
         Some(Command::Pwhash(pwhash_args)) => cmd_pwhash(pwhash_args)?,
         None => {
-            let config: Config = toml::from_str(
-                &fs::read_to_string(&args.config_file).unwrap_or_else(|err| {
-                    panic!("Could not open file at {}: {}", &args.config_file, err)
-                }),
-            )?;
+            let config: Config = Figment::new()
+                // TODO: What to do when config file does not exist?
+                .merge(Toml::file(&args.config_file))
+                .merge(Env::prefixed("RUSTICAL_").split("__"))
+                .extract()?;
 
             setup_tracing(&config.tracing);
 
