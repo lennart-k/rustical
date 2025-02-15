@@ -6,6 +6,7 @@ use actix_web::{
     http::{header::ContentType, StatusCode},
     HttpRequest, HttpResponse, Responder, ResponseError,
 };
+use axum::{http::Response, response::IntoResponse};
 use quick_xml::name::Namespace;
 use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
 
@@ -122,5 +123,20 @@ impl<T1: XmlSerialize, T2: XmlSerialize> Responder for MultistatusElement<T1, T2
         HttpResponse::MultiStatus()
             .content_type(ContentType::xml())
             .body(String::from_utf8(output).unwrap())
+    }
+}
+
+impl<T1: XmlSerialize, T2: XmlSerialize> IntoResponse for MultistatusElement<T1, T2> {
+    fn into_response(self) -> axum::response::Response {
+        let mut output: Vec<_> = b"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".into();
+        let mut writer = quick_xml::Writer::new_with_indent(&mut output, b' ', 4);
+        if let Err(err) = self.serialize_root(&mut writer) {
+            return crate::Error::from(err).into_response();
+        }
+        Response::builder()
+            .header("Content-Type", "application/xml")
+            .status(axum::http::StatusCode::MULTI_STATUS)
+            .body(String::from_utf8(output).unwrap().into())
+            .unwrap()
     }
 }

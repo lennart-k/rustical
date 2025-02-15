@@ -11,6 +11,7 @@ use actix_web::web;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use derive_more::derive::{From, Into};
+use educe::Educe;
 use rustical_dav::extensions::{
     CommonPropertiesExtension, CommonPropertiesProp, DavPushExtension, DavPushExtensionProp,
     SyncTokenExtension, SyncTokenExtensionProp,
@@ -124,7 +125,6 @@ impl Resource for CalendarResource {
 
     fn get_prop(
         &self,
-        rmap: &ResourceMap,
         user: &User,
         prop: &CalendarPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
@@ -178,9 +178,9 @@ impl Resource for CalendarResource {
             CalendarPropWrapperName::DavPush(prop) => {
                 CalendarPropWrapper::DavPush(DavPushExtension::get_prop(self, prop)?)
             }
-            CalendarPropWrapperName::Common(prop) => CalendarPropWrapper::Common(
-                CommonPropertiesExtension::get_prop(self, rmap, user, prop)?,
-            ),
+            CalendarPropWrapperName::Common(prop) => {
+                CalendarPropWrapper::Common(CommonPropertiesExtension::get_prop(self, user, prop)?)
+            }
         })
     }
 
@@ -311,6 +311,8 @@ impl Resource for CalendarResource {
     }
 }
 
+#[derive(Educe)]
+#[educe(Clone)]
 pub struct CalendarResourceService<C: CalendarStore, S: SubscriptionStore> {
     cal_store: Arc<C>,
     __phantom_sub: PhantomData<S>,
@@ -325,7 +327,7 @@ impl<C: CalendarStore, S: SubscriptionStore> CalendarResourceService<C, S> {
     }
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourceService<C, S> {
     type MemberType = CalendarObjectResource;
     type PathComponents = (String, String); // principal, calendar_id

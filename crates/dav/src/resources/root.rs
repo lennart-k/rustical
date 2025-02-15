@@ -4,7 +4,6 @@ use crate::extensions::{
 use crate::privileges::UserPrivilegeSet;
 use crate::resource::{NamedRoute, Resource, ResourceService};
 use crate::xml::{Resourcetype, ResourcetypeInner};
-use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
 use rustical_store::auth::User;
 use std::marker::PhantomData;
@@ -18,7 +17,7 @@ impl<PR: Resource> Default for RootResource<PR> {
     }
 }
 
-impl<PR: Resource + NamedRoute> Resource for RootResource<PR> {
+impl<PR: Resource + NamedRoute + Clone> Resource for RootResource<PR> {
     type Prop = CommonPropertiesProp;
     type Error = PR::Error;
     type PrincipalResource = PR;
@@ -32,11 +31,10 @@ impl<PR: Resource + NamedRoute> Resource for RootResource<PR> {
 
     fn get_prop(
         &self,
-        rmap: &ResourceMap,
         user: &User,
         prop: &CommonPropertiesPropName,
     ) -> Result<Self::Prop, Self::Error> {
-        CommonPropertiesExtension::get_prop(self, rmap, user, prop)
+        CommonPropertiesExtension::get_prop(self, user, prop)
     }
 
     fn get_user_privileges(&self, _user: &User) -> Result<UserPrivilegeSet, Self::Error> {
@@ -53,8 +51,8 @@ impl<PR: Resource> Default for RootResourceService<PR> {
     }
 }
 
-#[async_trait(?Send)]
-impl<PR: Resource + NamedRoute> ResourceService for RootResourceService<PR> {
+#[async_trait]
+impl<PR: Resource + NamedRoute + Clone> ResourceService for RootResourceService<PR> {
     type PathComponents = ();
     type MemberType = PR;
     type Resource = RootResource<PR>;

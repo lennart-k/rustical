@@ -10,6 +10,7 @@ use actix_web::http::Method;
 use actix_web::web;
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
+use educe::Educe;
 use rustical_dav::extensions::{
     CommonPropertiesExtension, CommonPropertiesProp, DavPushExtension, DavPushExtensionProp,
     SyncTokenExtension, SyncTokenExtensionProp,
@@ -24,6 +25,8 @@ use std::marker::PhantomData;
 use std::str::FromStr;
 use std::sync::Arc;
 
+#[derive(Educe)]
+#[educe(Clone)]
 pub struct AddressbookResourceService<AS: AddressbookStore, S: SubscriptionStore> {
     addr_store: Arc<AS>,
     __phantom_sub: PhantomData<S>,
@@ -94,7 +97,6 @@ impl Resource for AddressbookResource {
 
     fn get_prop(
         &self,
-        rmap: &ResourceMap,
         user: &User,
         prop: &AddressbookPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
@@ -126,7 +128,7 @@ impl Resource for AddressbookResource {
                 AddressbookPropWrapper::DavPush(<Self as DavPushExtension>::get_prop(self, prop)?)
             }
             AddressbookPropWrapperName::Common(prop) => AddressbookPropWrapper::Common(
-                CommonPropertiesExtension::get_prop(self, rmap, user, prop)?,
+                CommonPropertiesExtension::get_prop(self, user, prop)?,
             ),
         })
     }
@@ -191,7 +193,7 @@ impl Resource for AddressbookResource {
     }
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
     for AddressbookResourceService<AS, S>
 {

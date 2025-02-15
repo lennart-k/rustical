@@ -22,3 +22,6 @@ tracing = { workspace = true }
 tracing-actix-web = { workspace = true }
 reqwest.workspace = true
 tokio.workspace = true
+axum.workspace = true
+tower.workspace = true
+tower-service.workspace = true

@@ -1,7 +1,8 @@
+use super::methods::{get_object, put_object};
 use crate::{principal::PrincipalResource, Error};
-use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
 use derive_more::derive::{Constructor, From, Into};
+use educe::Educe;
 use rustical_dav::{
     extensions::{CommonPropertiesExtension, CommonPropertiesProp},
     privileges::UserPrivilegeSet,
@@ -13,9 +14,8 @@ use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize}
 use serde::Deserialize;
 use std::sync::Arc;
 
-use super::methods::{get_object, put_object};
-
-#[derive(Constructor)]
+#[derive(Constructor, Educe)]
+#[educe(Clone)]
 pub struct AddressObjectResourceService<AS: AddressbookStore> {
     addr_store: Arc<AS>,
 }
@@ -58,7 +58,6 @@ impl Resource for AddressObjectResource {
 
     fn get_prop(
         &self,
-        rmap: &ResourceMap,
         user: &User,
         prop: &AddressObjectPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
@@ -77,7 +76,7 @@ impl Resource for AddressObjectResource {
                 })
             }
             AddressObjectPropWrapperName::Common(prop) => AddressObjectPropWrapper::Common(
-                CommonPropertiesExtension::get_prop(self, rmap, user, prop)?,
+                CommonPropertiesExtension::get_prop(self, user, prop)?,
             ),
         })
     }
@@ -122,7 +121,7 @@ impl<'de> Deserialize<'de> for AddressObjectPathComponents {
     }
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl<AS: AddressbookStore> ResourceService for AddressObjectResourceService<AS> {
     type PathComponents = AddressObjectPathComponents;
     type Resource = AddressObjectResource;

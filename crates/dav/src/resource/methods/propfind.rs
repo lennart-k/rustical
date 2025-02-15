@@ -7,33 +7,41 @@ use crate::xml::PropElement;
 use crate::xml::PropfindElement;
 use crate::xml::PropfindType;
 use crate::Error;
-use actix_web::web::Data;
-use actix_web::web::Path;
-use actix_web::HttpRequest;
+use axum::extract::Path;
+use axum::extract::State;
+use axum::http::Uri;
 use rustical_store::auth::User;
 use rustical_xml::XmlDocument;
-use tracing::instrument;
-use tracing_actix_web::RootSpan;
+use std::ops::Deref;
+use std::sync::Arc;
 
-#[instrument(parent = root_span.id(), skip(path, req, root_span, resource_service))]
-#[allow(clippy::type_complexity)]
-pub(crate) async fn route_propfind<R: ResourceService>(
-    path: Path<R::PathComponents>,
-    body: String,
-    req: HttpRequest,
-    user: User,
+pub(crate) async fn handle_propfind<RS: ResourceService>(
+    Path(path): Path<RS::PathComponents>,
+    // body: String,
+    // req: Request,
+    // user: User,
     depth: Depth,
-    root_span: RootSpan,
-    resource_service: Data<R>,
+    State(resource_service): State<Arc<RS>>,
+    uri: Uri,
 ) -> Result<
-    MultistatusElement<<R::Resource as Resource>::Prop, <R::MemberType as Resource>::Prop>,
-    R::Error,
+    MultistatusElement<<RS::Resource as Resource>::Prop, <RS::MemberType as Resource>::Prop>,
+    RS::Error,
 > {
+    let user = User {
+        id: "asd".to_owned(),
+        displayname: None,
+        principal_type: rustical_store::auth::user::PrincipalType::Unknown,
+        password: None,
+        app_tokens: vec![],
+        memberships: vec![],
+    };
+
     let resource = resource_service.get_resource(&path).await?;
     let privileges = resource.get_user_privileges(&user)?;
     if !privileges.has(&UserPrivilege::Read) {
         return Err(Error::Unauthorized.into());
     }
+    let body = String::new();
 
     // A request body is optional. If empty we MUST return all props
     let propfind: PropfindElement = if !body.is_empty() {
@@ -54,19 +62,18 @@ pub(crate) async fn route_propfind<R: ResourceService>(
             .collect(),
     };
 
+    let members = resource_service.get_members(&path).await?;
     let mut member_responses = Vec::new();
     if depth != Depth::Zero {
-        for (subpath, member) in resource_service.get_members(&path).await? {
+        for (subpath, member) in members {
             member_responses.push(member.propfind(
-                &format!("{}/{}", req.path().trim_end_matches('/'), subpath),
+                &format!("{}/{}", uri.path().trim_end_matches('/'), subpath),
                 &props,
                 &user,
-                req.resource_map(),
             )?);
         }
     }
-
-    let response = resource.propfind(req.path(), &props, &user, req.resource_map())?;
+    let response = resource.propfind(uri.path(), &props, &user)?;
 
     Ok(MultistatusElement {
         responses: vec![response],

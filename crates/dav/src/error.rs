@@ -1,4 +1,8 @@
 use actix_web::{http::StatusCode, HttpResponse};
+use axum::{
+    http::Response,
+    response::{ErrorResponse, IntoResponse, IntoResponseParts},
+};
 use rustical_xml::XmlError;
 use thiserror::Error;
 use tracing::error;
@@ -56,5 +60,16 @@ impl actix_web::error::ResponseError for Error {
                 .body(self.to_string()),
             _ => HttpResponse::build(self.status_code()).body(self.to_string()),
         }
+    }
+}
+
+impl IntoResponse for Error {
+    fn into_response(self) -> axum::response::Response {
+        // TODO: status codes
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            self.to_string(),
+        )
+            .into_response()
     }
 }

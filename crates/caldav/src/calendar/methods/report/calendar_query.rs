@@ -244,7 +244,7 @@ pub async fn handle_calendar_query<C: CalendarStore>(
                 object,
                 principal: principal.to_owned(),
             }
-            .propfind(&path, &props, user, req.resource_map())?,
+            .propfind(&path, &props, user)?,
         );
     }
 

@@ -3,9 +3,9 @@ use crate::xml::multistatus::{PropTagWrapper, PropstatElement, PropstatWrapper};
 use crate::xml::Resourcetype;
 use crate::xml::{multistatus::ResponseElement, TagList};
 use crate::Error;
-use actix_web::dev::ResourceMap;
 use actix_web::http::header::{EntityTag, IfMatch, IfNoneMatch};
 use actix_web::{http::StatusCode, ResponseError};
+use axum::response::IntoResponse;
 use itertools::Itertools;
 use quick_xml::name::Namespace;
 pub use resource_service::ResourceService;
@@ -24,10 +24,10 @@ impl<T: XmlSerialize + XmlDeserialize> ResourceProp for T {}
 pub trait ResourcePropName: FromStr {}
 impl<T: FromStr> ResourcePropName for T {}
 
-pub trait Resource: Clone + 'static {
+pub trait Resource: Send + Sync + 'static {
     type Prop: ResourceProp + PartialEq + Clone + EnumVariants + EnumUnitVariants;
-    type Error: ResponseError + From<crate::Error>;
-    type PrincipalResource: Resource + NamedRoute;
+    type Error: ResponseError + From<crate::Error> + IntoResponse;
+    type PrincipalResource: Resource + NamedRoute + Clone;
 
     fn get_resourcetype(&self) -> Resourcetype;
 
@@ -37,7 +37,6 @@ pub trait Resource: Clone + 'static {
 
     fn get_prop(
         &self,
-        rmap: &ResourceMap,
         user: &User,
         prop: &<Self::Prop as EnumUnitVariants>::UnitVariants,
     ) -> Result<Self::Prop, Self::Error>;
@@ -100,7 +99,6 @@ pub trait Resource: Clone + 'static {
         path: &str,
         props: &[&str],
         user: &User,
-        rmap: &ResourceMap,
     ) -> Result<ResponseElement<Self::Prop>, Self::Error> {
         let mut props = props.to_vec();
 
@@ -152,7 +150,7 @@ pub trait Resource: Clone + 'static {
 
         let prop_responses = valid_props
             .into_iter()
-            .map(|prop| self.get_prop(rmap, user, &prop))
+            .map(|prop| self.get_prop(user, &prop))
             .collect::<Result<Vec<_>, Self::Error>>()?;
 
         let mut propstats = vec![PropstatWrapper::Normal(PropstatElement {

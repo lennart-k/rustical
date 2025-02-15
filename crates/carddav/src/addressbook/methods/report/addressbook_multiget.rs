@@ -86,7 +86,7 @@ pub async fn handle_addressbook_multiget<AS: AddressbookStore>(
                 object,
                 principal: principal.to_owned(),
             }
-            .propfind(&path, &props, user, req.resource_map())?,
+            .propfind(&path, &props, user)?,
         );
     }
 

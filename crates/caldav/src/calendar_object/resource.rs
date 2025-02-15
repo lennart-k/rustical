@@ -3,6 +3,7 @@ use crate::{principal::PrincipalResource, Error};
 use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
+use educe::Educe;
 use rustical_dav::{
     extensions::{CommonPropertiesExtension, CommonPropertiesProp},
     privileges::UserPrivilegeSet,
@@ -14,6 +15,8 @@ use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize}
 use serde::Deserialize;
 use std::sync::Arc;
 
+#[derive(Educe)]
+#[educe(Clone)]
 pub struct CalendarObjectResourceService<C: CalendarStore> {
     cal_store: Arc<C>,
 }
@@ -62,7 +65,6 @@ impl Resource for CalendarObjectResource {
 
     fn get_prop(
         &self,
-        rmap: &ResourceMap,
         user: &User,
         prop: &CalendarObjectPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
@@ -81,7 +83,7 @@ impl Resource for CalendarObjectResource {
                 })
             }
             CalendarObjectPropWrapperName::Common(prop) => CalendarObjectPropWrapper::Common(
-                CommonPropertiesExtension::get_prop(self, rmap, user, prop)?,
+                CommonPropertiesExtension::get_prop(self, user, prop)?,
             ),
         })
     }
@@ -126,7 +128,7 @@ impl<'de> Deserialize<'de> for CalendarObjectPathComponents {
     }
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl<C: CalendarStore> ResourceService for CalendarObjectResourceService<C> {
     type PathComponents = CalendarObjectPathComponents;
     type Resource = CalendarObjectResource;

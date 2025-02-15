@@ -3,6 +3,7 @@ use crate::principal::PrincipalResource;
 use crate::Error;
 use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
+use educe::Educe;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{Resource, ResourceService};
@@ -38,13 +39,12 @@ impl Resource for CalendarSetResource {
 
     fn get_prop(
         &self,
-        rmap: &ResourceMap,
         user: &User,
         prop: &PrincipalPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
             PrincipalPropWrapperName::Common(prop) => PrincipalPropWrapper::Common(
-                <Self as CommonPropertiesExtension>::get_prop(self, rmap, user, prop)?,
+                <Self as CommonPropertiesExtension>::get_prop(self, user, prop)?,
             ),
         })
     }
@@ -62,6 +62,8 @@ impl Resource for CalendarSetResource {
     }
 }
 
+#[derive(Educe)]
+#[educe(Clone)]
 pub struct CalendarSetResourceService<C: CalendarStore> {
     cal_store: Arc<C>,
 }
@@ -72,7 +74,7 @@ impl<C: CalendarStore> CalendarSetResourceService<C> {
     }
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl<C: CalendarStore> ResourceService for CalendarSetResourceService<C> {
     type PathComponents = (String,);
     type MemberType = CalendarResource;

@@ -4,6 +4,7 @@ use crate::calendar_set::CalendarSetResource;
 use crate::Error;
 use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
+use educe::Educe;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{NamedRoute, Resource, ResourceService};
@@ -30,16 +31,16 @@ pub enum PrincipalProp {
     // Scheduling Extensions to CalDAV (RFC 6638)
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV", skip_deserializing)]
     CalendarUserType(PrincipalType),
-    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
-    CalendarUserAddressSet(HrefElement),
+    // #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
+    // CalendarUserAddressSet(HrefElement),
 
     // WebDAV Access Control (RFC 3744)
-    #[xml(ns = "rustical_dav::namespace::NS_DAV", rename = b"principal-URL")]
-    PrincipalUrl(HrefElement),
+    // #[xml(ns = "rustical_dav::namespace::NS_DAV", rename = b"principal-URL")]
+    // PrincipalUrl(HrefElement),
 
     // CalDAV (RFC 4791)
-    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
-    CalendarHomeSet(CalendarHomeSet),
+    // #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
+    // CalendarHomeSet(CalendarHomeSet),
 }
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
@@ -75,23 +76,23 @@ impl Resource for PrincipalResource {
 
     fn get_prop(
         &self,
-        rmap: &ResourceMap,
         user: &User,
         prop: &PrincipalPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
-        let principal_url = Self::get_url(rmap, vec![&self.principal.id]).unwrap();
+        // TODO: Reimplement
+        // let principal_url = Self::get_url(rmap, vec![&self.principal.id]).unwrap();
 
-        let home_set = CalendarHomeSet(
-            user.memberships()
-                .into_iter()
-                .map(|principal| Self::get_url(rmap, vec![principal]).unwrap())
-                .flat_map(|principal_url| {
-                    self.home_set.iter().map(move |&(home_name, _read_only)| {
-                        HrefElement::new(format!("{}/{}", &principal_url, home_name))
-                    })
-                })
-                .collect(),
-        );
+        // let home_set = CalendarHomeSet(
+        //     user.memberships()
+        //         .into_iter()
+        //         .map(|principal| Self::get_url(rmap, vec![principal]).unwrap())
+        //         .flat_map(|principal_url| {
+        //             self.home_set.iter().map(move |&(home_name, _read_only)| {
+        //                 HrefElement::new(format!("{}/{}", &principal_url, home_name))
+        //             })
+        //         })
+        //         .collect(),
+        // );
 
         Ok(match prop {
             PrincipalPropWrapperName::Principal(prop) => {
@@ -105,17 +106,17 @@ impl Resource for PrincipalResource {
                             .to_owned()
                             .unwrap_or(self.principal.id.to_owned()),
                     ),
-                    PrincipalPropName::PrincipalUrl => {
-                        PrincipalProp::PrincipalUrl(principal_url.into())
-                    }
-                    PrincipalPropName::CalendarHomeSet => PrincipalProp::CalendarHomeSet(home_set),
-                    PrincipalPropName::CalendarUserAddressSet => {
-                        PrincipalProp::CalendarUserAddressSet(principal_url.into())
-                    }
+                    // PrincipalPropName::PrincipalUrl => {
+                    //     PrincipalProp::PrincipalUrl(principal_url.into())
+                    // }
+                    // PrincipalPropName::CalendarHomeSet => PrincipalProp::CalendarHomeSet(home_set),
+                    // PrincipalPropName::CalendarUserAddressSet => {
+                    //     PrincipalProp::CalendarUserAddressSet(principal_url.into())
+                    // }
                 })
             }
             PrincipalPropWrapperName::Common(prop) => PrincipalPropWrapper::Common(
-                <Self as CommonPropertiesExtension>::get_prop(self, rmap, user, prop)?,
+                <Self as CommonPropertiesExtension>::get_prop(self, user, prop)?,
             ),
         })
     }
@@ -131,12 +132,14 @@ impl Resource for PrincipalResource {
     }
 }
 
+#[derive(Educe)]
+#[educe(Clone)]
 pub struct PrincipalResourceService<AP: AuthenticationProvider> {
     pub auth_provider: Arc<AP>,
     pub home_set: &'static [(&'static str, bool)],
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl<AP: AuthenticationProvider> ResourceService for PrincipalResourceService<AP> {
     type PathComponents = (String,);
     type MemberType = CalendarSetResource;

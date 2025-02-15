@@ -50,7 +50,7 @@ pub async fn handle_sync_collection<AS: AddressbookStore>(
                 object,
                 principal: principal.to_owned(),
             }
-            .propfind(&path, &props, user, req.resource_map())?,
+            .propfind(&path, &props, user)?,
         );
     }
 
