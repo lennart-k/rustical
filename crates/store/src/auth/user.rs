@@ -3,11 +3,19 @@ use actix_web::{
     http::{header, StatusCode},
     FromRequest, HttpMessage, HttpResponse, ResponseError,
 };
+use axum::{
+    extract::{FromRequestParts, OptionalFromRequestParts},
+    http::HeaderName,
+    response::{IntoResponse, IntoResponseParts},
+};
+use base64::Engine;
 use chrono::{DateTime, Utc};
 use derive_more::Display;
 use rustical_xml::ValueSerialize;
 use serde::{Deserialize, Serialize};
 use std::future::{ready, Ready};
+
+use super::AuthenticationProvider;
 
 /// https://datatracker.ietf.org/doc/html/rfc5545#section-3.2.3
 #[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq)]
@@ -81,6 +89,12 @@ impl User {
 #[derive(Clone, Debug, Display)]
 pub struct UnauthorizedError;
 
+impl IntoResponse for UnauthorizedError {
+    fn into_response(self) -> axum::response::Response {
+        (axum::http::StatusCode::UNAUTHORIZED, "Unauthorized").into_response()
+    }
+}
+
 impl ResponseError for UnauthorizedError {
     fn status_code(&self) -> actix_web::http::StatusCode {
         StatusCode::UNAUTHORIZED
@@ -93,6 +107,10 @@ impl ResponseError for UnauthorizedError {
             ))
             .finish()
     }
+}
+
+pub trait ToAuthenticationProvider {
+    fn auth_provider(&self) -> &impl AuthenticationProvider;
 }
 
 impl FromRequest for User {
@@ -109,5 +127,42 @@ impl FromRequest for User {
                 .cloned()
                 .ok_or(UnauthorizedError),
         )
+    }
+}
+
+// Just a MVP with code stolen from https://github.com/Owez/axum-auth/blob/master/src/auth_basic.rs
+impl<S> FromRequestParts<S> for User
+where
+    S: Send + Sync + ToAuthenticationProvider,
+{
+    type Rejection = UnauthorizedError;
+
+    async fn from_request_parts(
+        parts: &mut axum::http::request::Parts,
+        state: &S,
+    ) -> Result<Self, Self::Rejection> {
+        if let Some(Ok(auth_header)) = parts
+            .headers
+            .get(axum::http::header::AUTHORIZATION)
+            .map(|val| val.to_str())
+        {
+            if let Some(("Basic", contents)) = auth_header.split_once(' ') {
+                if let Ok(decoded) = base64::engine::general_purpose::STANDARD.decode(contents) {
+                    if let Ok(decoded) = String::from_utf8(decoded) {
+                        // Return depending on if password is present
+                        if let Some((id, password)) = decoded.split_once(':') {
+                            if let Ok(Some(user)) = state
+                                .auth_provider()
+                                .validate_user_token(id, password)
+                                .await
+                            {
+                                return Ok(user);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Err(UnauthorizedError)
     }
 }

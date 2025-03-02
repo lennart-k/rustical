@@ -3085,6 +3085,8 @@ dependencies = [
  "actix-web-httpauth",
  "anyhow",
  "async-trait",
+ "axum 0.8.1",
+ "base64 0.22.1",
  "chrono",
  "chrono-tz",
  "derive_more 1.0.0",

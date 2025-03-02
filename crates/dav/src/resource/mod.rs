@@ -15,8 +15,10 @@ use std::str::FromStr;
 
 mod methods;
 mod resource_service;
+mod router;
 
 pub use resource_service::*;
+pub use router::*;
 
 pub trait ResourceProp: XmlSerialize + XmlDeserialize {}
 impl<T: XmlSerialize + XmlDeserialize> ResourceProp for T {}

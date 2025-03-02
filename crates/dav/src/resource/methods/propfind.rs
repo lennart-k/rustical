@@ -2,6 +2,7 @@ use crate::depth_header::Depth;
 use crate::privileges::UserPrivilege;
 use crate::resource::Resource;
 use crate::resource::ResourceService;
+use crate::resource::ResourceServiceRouterState;
 use crate::xml::MultistatusElement;
 use crate::xml::PropElement;
 use crate::xml::PropfindElement;
@@ -10,32 +11,26 @@ use crate::Error;
 use axum::extract::Path;
 use axum::extract::State;
 use axum::http::Uri;
+use rustical_store::auth::user::PrincipalType::Individual;
+use rustical_store::auth::AuthenticationProvider;
 use rustical_store::auth::User;
 use rustical_xml::XmlDocument;
-use std::ops::Deref;
 use std::sync::Arc;
 
-pub(crate) async fn handle_propfind<RS: ResourceService>(
+pub(crate) async fn handle_propfind<AP: AuthenticationProvider, RS: ResourceService>(
     Path(path): Path<RS::PathComponents>,
     // body: String,
     // req: Request,
-    // user: User,
+    user: User,
     depth: Depth,
-    State(resource_service): State<Arc<RS>>,
+    State(ResourceServiceRouterState {
+        resource_service, ..
+    }): State<ResourceServiceRouterState<AP, RS>>,
     uri: Uri,
 ) -> Result<
     MultistatusElement<<RS::Resource as Resource>::Prop, <RS::MemberType as Resource>::Prop>,
     RS::Error,
 > {
-    let user = User {
-        id: "asd".to_owned(),
-        displayname: None,
-        principal_type: rustical_store::auth::user::PrincipalType::Unknown,
-        password: None,
-        app_tokens: vec![],
-        memberships: vec![],
-    };
-
     let resource = resource_service.get_resource(&path).await?;
     let privileges = resource.get_user_privileges(&user)?;
     if !privileges.has(&UserPrivilege::Read) {

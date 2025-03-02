@@ -1,21 +1,13 @@
-use super::methods::handle_propfind;
-use super::Resource;
+use std::sync::Arc;
+
+use super::{Resource, ResourceServiceRouter};
 use actix_web::error::UrlGenerationError;
 use actix_web::test::TestRequest;
 use actix_web::{dev::ResourceMap, ResponseError};
 use async_trait::async_trait;
-use axum::body::Body;
-use axum::extract::{OptionalFromRequestParts, Path};
-use axum::handler::Handler;
-use axum::http::Request;
 use axum::response::{IntoResponse, Response};
+use rustical_store::auth::AuthenticationProvider;
 use serde::de::DeserializeOwned;
-use std::convert::Infallible;
-use std::pin::Pin;
-use std::sync::Arc;
-use std::task::Poll;
-use tower::util::BoxCloneSyncService;
-use tower::Service;
 
 #[async_trait]
 pub trait ResourceService: Sized + Send + Sync + Clone + 'static {
@@ -57,74 +49,12 @@ pub trait ResourceService: Sized + Send + Sync + Clone + 'static {
     }
 
     #[inline]
-    fn axum_service(self) -> ResourceServiceRouter<Self>
-    where
-        Self: Send + Sync + Clone,
-    {
-        self.into()
+    fn axum_service<AP: AuthenticationProvider>(
+        self,
+        auth_provider: Arc<AP>,
+    ) -> ResourceServiceRouter {
+        ResourceServiceRouter::new(self, auth_provider)
     }
-}
-
-#[derive(Clone)]
-pub struct ResourceServiceRouter<RS: ResourceService> {
-    state: Arc<RS>,
-    propfind_srv: BoxCloneSyncService<Request<Body>, Response, Infallible>,
-    // proppatch_srv: BoxCloneSyncService<Request<Body>, Response, Infallible>,
-    // delete_srv: BoxCloneSyncService<Request<Body>, Response, Infallible>,
-    fallback_srv: BoxCloneSyncService<Request<Body>, Response, Infallible>,
-}
-
-impl<RS: ResourceService + Clone> From<RS> for ResourceServiceRouter<RS> {
-    fn from(state: RS) -> Self {
-        let state = Arc::new(state);
-        let propfind_srv =
-            BoxCloneSyncService::new(Handler::with_state(handle_propfind::<RS>, state.clone()));
-        let fallback_srv =
-            BoxCloneSyncService::new(Handler::with_state(handle_fallback, state.clone()));
-        ResourceServiceRouter {
-            state,
-            propfind_srv,
-            fallback_srv,
-        }
-    }
-}
-
-impl<RS: ResourceService> Service<Request<Body>> for ResourceServiceRouter<RS>
-where
-    RS: Send + Sync + Clone,
-{
-    type Response = Response;
-    type Error = Infallible;
-    type Future = Pin<
-        Box<
-            (dyn futures_util::Future<Output = Result<Response<axum::body::Body>, Infallible>>
-                 + std::marker::Send
-                 + 'static),
-        >,
-    >;
-
-    #[inline]
-    fn poll_ready(&mut self, _cx: &mut std::task::Context<'_>) -> Poll<Result<(), Self::Error>> {
-        Poll::Ready(Ok(()))
-    }
-
-    #[inline]
-    fn call(&mut self, req: Request<Body>) -> Self::Future {
-        // let propfind_srv = BoxCloneSyncService::new(Handler::with_state(
-        //     handle_propfind::<RS>,
-        //     self.state.clone(),
-        // ));
-        // let fallback_srv =
-        //     BoxCloneSyncService::new(Handler::with_state(handle_fallback, self.state.clone()));
-        match req.method().as_str() {
-            "PROPFIND" => Service::call(&mut self.propfind_srv.clone(), req),
-            _ => Service::call(&mut self.fallback_srv.clone(), req),
-        }
-    }
-}
-
-async fn handle_fallback() -> impl IntoResponse {
-    "FALLBACK"
 }
 
 pub trait NamedRoute {

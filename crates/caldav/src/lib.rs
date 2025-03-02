@@ -38,7 +38,7 @@ pub fn caldav_app<
 ) -> Router {
     Router::new().route_service(
         "/",
-        RootResourceService::<PrincipalResource>::default().axum_service(),
+        RootResourceService::<PrincipalResource>::default().axum_service(auth_provider),
     )
 }
 
