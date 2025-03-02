@@ -1,8 +1,8 @@
-use actix_web::{http::StatusCode, HttpResponse};
-use axum::{
-    http::Response,
-    response::{ErrorResponse, IntoResponse, IntoResponseParts},
-};
+use axum::body::Body;
+use axum::http::header::WWW_AUTHENTICATE;
+use axum::http::StatusCode;
+use axum::response::AppendHeaders;
+use axum::{http::Response, response::IntoResponse};
 use rustical_xml::XmlError;
 use thiserror::Error;
 use tracing::error;
@@ -31,9 +31,17 @@ pub enum Error {
     IOError(#[from] std::io::Error),
 }
 
-impl actix_web::error::ResponseError for Error {
-    fn status_code(&self) -> StatusCode {
-        match self {
+impl IntoResponse for Error {
+    fn into_response(self) -> Response<Body> {
+        if matches!(&self, Error::Unauthorized) {
+            return (
+                StatusCode::UNAUTHORIZED,
+                AppendHeaders([(WWW_AUTHENTICATE, "Basic")]),
+                self.to_string(),
+            )
+                .into_response();
+        }
+        let status_code = match &self {
             Self::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::BadRequest(_) => StatusCode::BAD_REQUEST,
@@ -49,27 +57,8 @@ impl actix_web::error::ResponseError for Error {
             },
             Error::PropReadOnly => StatusCode::CONFLICT,
             Self::IOError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
+        };
 
-    fn error_response(&self) -> HttpResponse {
-        error!("Error: {self}");
-        match self {
-            Error::Unauthorized => HttpResponse::build(self.status_code())
-                .append_header(("WWW-Authenticate", "Basic"))
-                .body(self.to_string()),
-            _ => HttpResponse::build(self.status_code()).body(self.to_string()),
-        }
-    }
-}
-
-impl IntoResponse for Error {
-    fn into_response(self) -> axum::response::Response {
-        // TODO: status codes
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            self.to_string(),
-        )
-            .into_response()
+        (status_code, self.to_string()).into_response()
     }
 }

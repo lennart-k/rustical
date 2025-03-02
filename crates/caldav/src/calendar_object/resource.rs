@@ -1,6 +1,5 @@
-use super::methods::{get_event, put_event};
+// use super::methods::{get_event, put_event};
 use crate::{principal::PrincipalResource, Error};
-use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use educe::Educe;
@@ -168,8 +167,8 @@ impl<C: CalendarStore> ResourceService for CalendarObjectResourceService<C> {
         Ok(())
     }
 
-    #[inline]
-    fn actix_additional_routes(res: actix_web::Resource) -> actix_web::Resource {
-        res.get(get_event::<C>).put(put_event::<C>)
-    }
+    // #[inline]
+    // fn actix_additional_routes(res: actix_web::Resource) -> actix_web::Resource {
+    //     res.get(get_event::<C>).put(put_event::<C>)
+    // }
 }

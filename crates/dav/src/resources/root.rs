@@ -2,7 +2,7 @@ use crate::extensions::{
     CommonPropertiesExtension, CommonPropertiesProp, CommonPropertiesPropName,
 };
 use crate::privileges::UserPrivilegeSet;
-use crate::resource::{NamedRoute, Resource, ResourceService};
+use crate::resource::{Resource, ResourceService};
 use crate::xml::{Resourcetype, ResourcetypeInner};
 use async_trait::async_trait;
 use rustical_store::auth::User;
@@ -17,7 +17,7 @@ impl<PR: Resource> Default for RootResource<PR> {
     }
 }
 
-impl<PR: Resource + NamedRoute + Clone> Resource for RootResource<PR> {
+impl<PR: Resource + Clone> Resource for RootResource<PR> {
     type Prop = CommonPropertiesProp;
     type Error = PR::Error;
     type PrincipalResource = PR;
@@ -52,7 +52,7 @@ impl<PR: Resource> Default for RootResourceService<PR> {
 }
 
 #[async_trait]
-impl<PR: Resource + NamedRoute + Clone> ResourceService for RootResourceService<PR> {
+impl<PR: Resource + Clone> ResourceService for RootResourceService<PR> {
     type PathComponents = ();
     type MemberType = PR;
     type Resource = RootResource<PR>;

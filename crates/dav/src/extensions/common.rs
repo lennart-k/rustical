@@ -1,9 +1,4 @@
-use crate::{
-    privileges::UserPrivilegeSet,
-    resource::{NamedRoute, Resource},
-    xml::{HrefElement, Resourcetype},
-};
-use actix_web::dev::ResourceMap;
+use crate::{privileges::UserPrivilegeSet, resource::Resource, xml::Resourcetype};
 use rustical_store::auth::User;
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 

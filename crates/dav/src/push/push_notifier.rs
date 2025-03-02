@@ -1,5 +1,5 @@
 use crate::xml::multistatus::PropstatElement;
-use actix_web::http::StatusCode;
+use axum::http::StatusCode;
 use rustical_store::{CollectionOperation, CollectionOperationType, SubscriptionStore};
 use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
 use std::sync::Arc;

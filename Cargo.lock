@@ -2963,7 +2963,6 @@ dependencies = [
 name = "rustical_caldav"
 version = "0.1.0"
 dependencies = [
- "actix-web",
  "actix-web-httpauth",
  "async-trait",
  "axum 0.8.1",
@@ -2991,7 +2990,6 @@ dependencies = [
 name = "rustical_carddav"
 version = "0.1.0"
 dependencies = [
- "actix-web",
  "actix-web-httpauth",
  "async-trait",
  "axum 0.8.1",
@@ -3017,7 +3015,6 @@ dependencies = [
 name = "rustical_dav"
 version = "0.1.0"
 dependencies = [
- "actix-web",
  "async-trait",
  "axum 0.8.1",
  "derive_more 1.0.0",

@@ -1,13 +1,10 @@
-use super::methods::mkcalendar::route_mkcalendar;
-use super::methods::post::route_post;
-use super::methods::report::route_report_calendar;
+// use super::methods::mkcalendar::route_mkcalendar;
+// use super::methods::post::route_post;
+// use super::methods::report::route_report_calendar;
 use super::prop::{SupportedCalendarComponentSet, SupportedCalendarData, SupportedReportSet};
 use crate::calendar_object::resource::CalendarObjectResource;
 use crate::principal::PrincipalResource;
 use crate::Error;
-use actix_web::dev::ResourceMap;
-use actix_web::http::Method;
-use actix_web::web;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use derive_more::derive::{From, Into};
@@ -388,13 +385,13 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
         Ok(())
     }
 
-    #[inline]
-    fn actix_additional_routes(res: actix_web::Resource) -> actix_web::Resource {
-        let report_method = web::method(Method::from_str("REPORT").unwrap());
-        let mkcalendar_method = web::method(Method::from_str("MKCALENDAR").unwrap());
-
-        res.route(report_method.to(route_report_calendar::<C>))
-            .route(mkcalendar_method.to(route_mkcalendar::<C>))
-            .post(route_post::<C, S>)
-    }
+    // #[inline]
+    // fn actix_additional_routes(res: actix_web::Resource) -> actix_web::Resource {
+    //     let report_method = web::method(Method::from_str("REPORT").unwrap());
+    //     let mkcalendar_method = web::method(Method::from_str("MKCALENDAR").unwrap());
+    //
+    //     res.route(report_method.to(route_report_calendar::<C>))
+    //         .route(mkcalendar_method.to(route_mkcalendar::<C>))
+    //         .post(route_post::<C, S>)
+    // }
 }

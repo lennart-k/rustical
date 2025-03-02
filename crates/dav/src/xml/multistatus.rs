@@ -1,14 +1,9 @@
-use std::collections::HashMap;
-
 use crate::xml::TagList;
-use actix_web::{
-    body::BoxBody,
-    http::{header::ContentType, StatusCode},
-    HttpRequest, HttpResponse, Responder, ResponseError,
-};
+use axum::http::StatusCode;
 use axum::{http::Response, response::IntoResponse};
 use quick_xml::name::Namespace;
 use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
+use std::collections::HashMap;
 
 #[derive(XmlSerialize)]
 pub struct PropTagWrapper<T: XmlSerialize>(#[xml(flatten, ty = "untagged")] pub Vec<T>);
@@ -107,22 +102,6 @@ impl<T1: XmlSerialize, T2: XmlSerialize> Default for MultistatusElement<T1, T2> 
             member_responses: vec![],
             sync_token: None,
         }
-    }
-}
-
-impl<T1: XmlSerialize, T2: XmlSerialize> Responder for MultistatusElement<T1, T2> {
-    type Body = BoxBody;
-
-    fn respond_to(self, _req: &HttpRequest) -> HttpResponse<Self::Body> {
-        let mut output: Vec<_> = b"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".into();
-        let mut writer = quick_xml::Writer::new_with_indent(&mut output, b' ', 4);
-        if let Err(err) = self.serialize_root(&mut writer) {
-            return crate::Error::from(err).error_response();
-        }
-
-        HttpResponse::MultiStatus()
-            .content_type(ContentType::xml())
-            .body(String::from_utf8(output).unwrap())
     }
 }
 

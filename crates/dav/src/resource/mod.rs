@@ -3,8 +3,7 @@ use crate::xml::multistatus::{PropTagWrapper, PropstatElement, PropstatWrapper};
 use crate::xml::Resourcetype;
 use crate::xml::{multistatus::ResponseElement, TagList};
 use crate::Error;
-use actix_web::http::header::{EntityTag, IfMatch, IfNoneMatch};
-use actix_web::{http::StatusCode, ResponseError};
+use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use itertools::Itertools;
 use quick_xml::name::Namespace;
@@ -17,7 +16,6 @@ mod methods;
 mod resource_service;
 mod router;
 
-pub use resource_service::*;
 pub use router::*;
 
 pub trait ResourceProp: XmlSerialize + XmlDeserialize {}
@@ -28,8 +26,8 @@ impl<T: FromStr> ResourcePropName for T {}
 
 pub trait Resource: Send + Sync + 'static {
     type Prop: ResourceProp + PartialEq + Clone + EnumVariants + EnumUnitVariants;
-    type Error: ResponseError + From<crate::Error> + IntoResponse;
-    type PrincipalResource: Resource + NamedRoute + Clone;
+    type Error: From<crate::Error> + IntoResponse;
+    type PrincipalResource: Resource + Clone;
 
     fn get_resourcetype(&self) -> Resourcetype;
 
@@ -62,37 +60,37 @@ pub trait Resource: Send + Sync + 'static {
         None
     }
 
-    fn satisfies_if_match(&self, if_match: &IfMatch) -> bool {
-        match if_match {
-            IfMatch::Any => true,
-            // This is not nice but if the header doesn't exist, actix just gives us an empty
-            // IfMatch::Items header
-            IfMatch::Items(items) if items.is_empty() => true,
-            IfMatch::Items(items) => {
-                if let Some(etag) = self.get_etag() {
-                    let etag = EntityTag::new_strong(etag.to_owned());
-                    return items.iter().any(|item| item.strong_eq(&etag));
-                }
-                false
-            }
-        }
-    }
+    // fn satisfies_if_match(&self, if_match: &IfMatch) -> bool {
+    //     match if_match {
+    //         IfMatch::Any => true,
+    //         // This is not nice but if the header doesn't exist, actix just gives us an empty
+    //         // IfMatch::Items header
+    //         IfMatch::Items(items) if items.is_empty() => true,
+    //         IfMatch::Items(items) => {
+    //             if let Some(etag) = self.get_etag() {
+    //                 let etag = EntityTag::new_strong(etag.to_owned());
+    //                 return items.iter().any(|item| item.strong_eq(&etag));
+    //             }
+    //             false
+    //         }
+    //     }
+    // }
 
-    fn satisfies_if_none_match(&self, if_none_match: &IfNoneMatch) -> bool {
-        match if_none_match {
-            IfNoneMatch::Any => false,
-            // This is not nice but if the header doesn't exist, actix just gives us an empty
-            // IfNoneMatch::Items header
-            IfNoneMatch::Items(items) if items.is_empty() => false,
-            IfNoneMatch::Items(items) => {
-                if let Some(etag) = self.get_etag() {
-                    let etag = EntityTag::new_strong(etag.to_owned());
-                    return items.iter().all(|item| item.strong_ne(&etag));
-                }
-                true
-            }
-        }
-    }
+    // fn satisfies_if_none_match(&self, if_none_match: &IfNoneMatch) -> bool {
+    //     match if_none_match {
+    //         IfNoneMatch::Any => false,
+    //         // This is not nice but if the header doesn't exist, actix just gives us an empty
+    //         // IfNoneMatch::Items header
+    //         IfNoneMatch::Items(items) if items.is_empty() => false,
+    //         IfNoneMatch::Items(items) => {
+    //             if let Some(etag) = self.get_etag() {
+    //                 let etag = EntityTag::new_strong(etag.to_owned());
+    //                 return items.iter().all(|item| item.strong_ne(&etag));
+    //             }
+    //             true
+    //         }
+    //     }
+    // }
 
     fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error>;
 

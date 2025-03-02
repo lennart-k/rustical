@@ -8,7 +8,6 @@ publish = false
 
 [dependencies]
 axum.workspace = true
-actix-web = { workspace = true }
 async-trait = { workspace = true }
 thiserror = { workspace = true }
 quick-xml = { workspace = true }

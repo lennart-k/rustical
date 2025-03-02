@@ -5,9 +5,7 @@ use crate::xml::multistatus::{PropstatElement, PropstatWrapper, ResponseElement}
 use crate::xml::MultistatusElement;
 use crate::xml::TagList;
 use crate::Error;
-use actix_web::http::StatusCode;
-use actix_web::web::Data;
-use actix_web::{web::Path, HttpRequest};
+use axum::http::StatusCode;
 use quick_xml::name::Namespace;
 use rustical_store::auth::User;
 use rustical_xml::EnumUnitVariants;

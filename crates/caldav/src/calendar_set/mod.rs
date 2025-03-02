@@ -1,7 +1,6 @@
 use crate::calendar::resource::CalendarResource;
 use crate::principal::PrincipalResource;
 use crate::Error;
-use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
 use educe::Educe;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};

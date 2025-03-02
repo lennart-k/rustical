@@ -1,7 +1,7 @@
-mod delete;
+// mod delete;
 mod propfind;
-mod proppatch;
+// mod proppatch;
 
-pub(crate) use delete::route_delete;
+// pub(crate) use delete::route_delete;
 pub(crate) use propfind::handle_propfind;
-pub(crate) use proppatch::route_proppatch;
+// pub(crate) use proppatch::route_proppatch;

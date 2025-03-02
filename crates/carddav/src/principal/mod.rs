@@ -1,11 +1,10 @@
 use crate::addressbook::resource::AddressbookResource;
 use crate::Error;
-use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
 use educe::Educe;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
-use rustical_dav::resource::{NamedRoute, Resource, ResourceService};
+use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::{AuthenticationProvider, User};
 use rustical_store::AddressbookStore;
@@ -58,18 +57,6 @@ pub enum PrincipalProp {
 pub enum PrincipalPropWrapper {
     Principal(PrincipalProp),
     Common(CommonPropertiesProp),
-}
-
-impl PrincipalResource {
-    pub fn get_principal_url(rmap: &ResourceMap, principal: &str) -> String {
-        Self::get_url(rmap, vec![principal]).unwrap()
-    }
-}
-
-impl NamedRoute for PrincipalResource {
-    fn route_name() -> &'static str {
-        "carddav_principal"
-    }
 }
 
 impl Resource for PrincipalResource {

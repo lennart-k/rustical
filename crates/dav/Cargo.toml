@@ -8,7 +8,6 @@ publish = false
 
 [dependencies]
 rustical_xml.workspace = true
-actix-web = { workspace = true }
 async-trait = { workspace = true }
 futures-util = { workspace = true }
 quick-xml = { workspace = true }
