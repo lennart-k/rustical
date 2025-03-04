@@ -1,9 +1,6 @@
 use crate::config::Config;
-use actix_web::http::KeepAlive;
-use actix_web::HttpServer;
 use anyhow::Result;
 use app::make_app;
-use axum::Router;
 use clap::{Parser, Subcommand};
 use commands::{cmd_gen_config, cmd_pwhash};
 use config::{DataStoreConfig, SqliteDataStoreConfig};

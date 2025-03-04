@@ -1,17 +1,11 @@
-use actix_session::{
-    config::CookieContentSecurity, storage::CookieSessionStore, SessionMiddleware,
-};
 use actix_web::{
-    cookie::{Key, SameSite},
     dev::ServiceResponse,
-    http::{Method, StatusCode},
-    middleware::{ErrorHandlerResponse, ErrorHandlers},
+    middleware::ErrorHandlerResponse,
     web::{self, Data, Path},
     HttpRequest, HttpResponse, Responder,
 };
 use askama::Template;
 use askama_actix::TemplateToResponse;
-use assets::{Assets, EmbedService};
 use routes::{
     addressbook::{route_addressbook, route_addressbook_restore},
     calendar::{route_calendar, route_calendar_restore},
@@ -106,51 +100,51 @@ pub fn configure_frontend<AP: AuthenticationProvider, CS: CalendarStore, AS: Add
     addr_store: Arc<AS>,
     frontend_config: FrontendConfig,
 ) {
-    cfg.service(
-        web::scope("")
-            .wrap(ErrorHandlers::new().handler(StatusCode::UNAUTHORIZED, unauthorized_handler))
-            .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
-            .wrap(
-                SessionMiddleware::builder(
-                    CookieSessionStore::default(),
-                    Key::from(&frontend_config.secret_key),
-                )
-                .cookie_secure(true)
-                .cookie_same_site(SameSite::Strict)
-                .cookie_content_security(CookieContentSecurity::Private)
-                .build(),
-            )
-            .app_data(Data::from(auth_provider))
-            .app_data(Data::from(cal_store.clone()))
-            .app_data(Data::from(addr_store.clone()))
-            .service(EmbedService::<Assets>::new("/assets".to_owned()))
-            .service(web::resource("").route(web::method(Method::GET).to(route_root)))
-            .service(
-                web::resource("/user/{user}")
-                    .route(web::method(Method::GET).to(route_user::<CS, AS>))
-                    .name("frontend_user"),
-            )
-            .service(
-                web::resource("/user/{user}/calendar/{calendar}")
-                    .route(web::method(Method::GET).to(route_calendar::<CS>)),
-            )
-            .service(
-                web::resource("/user/{user}/calendar/{calendar}/restore")
-                    .route(web::method(Method::POST).to(route_calendar_restore::<CS>)),
-            )
-            .service(
-                web::resource("/user/{user}/addressbook/{addressbook}")
-                    .route(web::method(Method::GET).to(route_addressbook::<AS>)),
-            )
-            .service(
-                web::resource("/user/{user}/addressbook/{addressbook}/restore")
-                    .route(web::method(Method::POST).to(route_addressbook_restore::<AS>)),
-            )
-            .service(
-                web::resource("/login")
-                    .name("frontend_login")
-                    .route(web::method(Method::GET).to(route_get_login))
-                    .route(web::method(Method::POST).to(route_post_login::<AP>)),
-            ),
-    );
+    // cfg.service(
+    //     web::scope("")
+    //         .wrap(ErrorHandlers::new().handler(StatusCode::UNAUTHORIZED, unauthorized_handler))
+    //         .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
+    //         .wrap(
+    //             SessionMiddleware::builder(
+    //                 CookieSessionStore::default(),
+    //                 Key::from(&frontend_config.secret_key),
+    //             )
+    //             .cookie_secure(true)
+    //             .cookie_same_site(SameSite::Strict)
+    //             .cookie_content_security(CookieContentSecurity::Private)
+    //             .build(),
+    //         )
+    //         .app_data(Data::from(auth_provider))
+    //         .app_data(Data::from(cal_store.clone()))
+    //         .app_data(Data::from(addr_store.clone()))
+    //         .service(EmbedService::<Assets>::new("/assets".to_owned()))
+    //         .service(web::resource("").route(web::method(Method::GET).to(route_root)))
+    //         .service(
+    //             web::resource("/user/{user}")
+    //                 .route(web::method(Method::GET).to(route_user::<CS, AS>))
+    //                 .name("frontend_user"),
+    //         )
+    //         .service(
+    //             web::resource("/user/{user}/calendar/{calendar}")
+    //                 .route(web::method(Method::GET).to(route_calendar::<CS>)),
+    //         )
+    //         .service(
+    //             web::resource("/user/{user}/calendar/{calendar}/restore")
+    //                 .route(web::method(Method::POST).to(route_calendar_restore::<CS>)),
+    //         )
+    //         .service(
+    //             web::resource("/user/{user}/addressbook/{addressbook}")
+    //                 .route(web::method(Method::GET).to(route_addressbook::<AS>)),
+    //         )
+    //         .service(
+    //             web::resource("/user/{user}/addressbook/{addressbook}/restore")
+    //                 .route(web::method(Method::POST).to(route_addressbook_restore::<AS>)),
+    //         )
+    //         .service(
+    //             web::resource("/login")
+    //                 .name("frontend_login")
+    //                 .route(web::method(Method::GET).to(route_get_login))
+    //                 .route(web::method(Method::POST).to(route_post_login::<AP>)),
+    //         ),
+    // );
 }

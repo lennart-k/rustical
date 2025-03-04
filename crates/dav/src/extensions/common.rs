@@ -1,4 +1,9 @@
-use crate::{privileges::UserPrivilegeSet, resource::Resource, xml::Resourcetype};
+use crate::{
+    privileges::UserPrivilegeSet,
+    resource::Resource,
+    xml::{HrefElement, Resourcetype},
+};
+use axum_extra::routing::TypedPath;
 use rustical_store::auth::User;
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 
@@ -11,20 +16,21 @@ pub enum CommonPropertiesProp {
     Resourcetype(Resourcetype),
 
     // WebDAV Current Principal Extension (RFC 5397)
-    // #[xml(ns = "crate::namespace::NS_DAV")]
-    // CurrentUserPrincipal(HrefElement),
+    #[xml(ns = "crate::namespace::NS_DAV")]
+    CurrentUserPrincipal(HrefElement),
 
     // WebDAV Access Control Protocol (RFC 3477)
     #[xml(skip_deserializing)]
     #[xml(ns = "crate::namespace::NS_DAV")]
     CurrentUserPrivilegeSet(UserPrivilegeSet),
-    // #[xml(ns = "crate::namespace::NS_DAV")]
-    // Owner(Option<HrefElement>),
+    #[xml(ns = "crate::namespace::NS_DAV")]
+    Owner(Option<HrefElement>),
 }
 
 pub trait CommonPropertiesExtension: Resource {
     fn get_prop(
         &self,
+        prefix: &str,
         user: &User,
         prop: &CommonPropertiesPropName,
     ) -> Result<CommonPropertiesProp, <Self as Resource>::Error> {
@@ -32,22 +38,29 @@ pub trait CommonPropertiesExtension: Resource {
             CommonPropertiesPropName::Resourcetype => {
                 CommonPropertiesProp::Resourcetype(self.get_resourcetype())
             }
-            // CommonPropertiesPropName::CurrentUserPrincipal => {
-            //     CommonPropertiesProp::CurrentUserPrincipal(
-            //         Self::PrincipalResource::get_url(rmap, [&user.id])
-            //             .unwrap()
-            //             .into(),
-            //     )
-            // }
+            CommonPropertiesPropName::CurrentUserPrincipal => {
+                CommonPropertiesProp::CurrentUserPrincipal(
+                    format!(
+                        "{prefix}{path}",
+                        path = Self::PrincipalPath::from(user.id.to_owned())
+                            .to_uri()
+                            .path()
+                    )
+                    .into(),
+                )
+            }
             CommonPropertiesPropName::CurrentUserPrivilegeSet => {
                 CommonPropertiesProp::CurrentUserPrivilegeSet(self.get_user_privileges(user)?)
-            } // CommonPropertiesPropName::Owner => {
-              //     CommonPropertiesProp::Owner(self.get_owner().map(|owner| {
-              //         Self::PrincipalResource::get_url(rmap, [owner])
-              //             .unwrap()
-              //             .into()
-              //     }))
-              // }
+            }
+            CommonPropertiesPropName::Owner => {
+                CommonPropertiesProp::Owner(self.get_owner().map(|owner| {
+                    format!(
+                        "{prefix}{path}",
+                        path = Self::PrincipalPath::from(owner.to_string()).to_uri().path()
+                    )
+                    .into()
+                }))
+            }
         })
     }
 

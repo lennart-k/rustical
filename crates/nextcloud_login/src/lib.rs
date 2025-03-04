@@ -1,12 +1,12 @@
 use actix_web::{
     http::header::{self},
-    web::{self, Data, Form, Json, Path, ServiceConfig},
+    web::{Data, Form, Json, Path, ServiceConfig},
     HttpRequest, HttpResponse, Responder,
 };
 use askama::Template;
 use chrono::{DateTime, Duration, Utc};
 use rand::{distributions::Alphanumeric, Rng};
-use rustical_store::auth::{AuthenticationMiddleware, AuthenticationProvider, User};
+use rustical_store::auth::{AuthenticationProvider, User};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::RwLock;
@@ -205,22 +205,22 @@ pub fn configure_nextcloud_login<AP: AuthenticationProvider>(
     nextcloud_flows_state: Arc<NextcloudFlows>,
     auth_provider: Arc<AP>,
 ) {
-    cfg.service(
-        web::scope("/index.php/login/v2")
-            .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
-            .app_data(Data::from(nextcloud_flows_state))
-            .app_data(Data::from(auth_provider.clone()))
-            .service(web::resource("").post(post_nextcloud_login))
-            .service(
-                web::resource("/poll/{flow}")
-                    .name("nc_login_poll")
-                    .post(post_nextcloud_poll::<AP>),
-            )
-            .service(
-                web::resource("/flow/{flow}")
-                    .name("nc_login_flow")
-                    .get(get_nextcloud_flow)
-                    .post(post_nextcloud_flow),
-            ),
-    );
+    // cfg.service(
+    //     web::scope("/index.php/login/v2")
+    //         .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
+    //         .app_data(Data::from(nextcloud_flows_state))
+    //         .app_data(Data::from(auth_provider.clone()))
+    //         .service(web::resource("").post(post_nextcloud_login))
+    //         .service(
+    //             web::resource("/poll/{flow}")
+    //                 .name("nc_login_poll")
+    //                 .post(post_nextcloud_poll::<AP>),
+    //         )
+    //         .service(
+    //             web::resource("/flow/{flow}")
+    //                 .name("nc_login_flow")
+    //                 .get(get_nextcloud_flow)
+    //                 .post(post_nextcloud_flow),
+    //         ),
+    // );
 }

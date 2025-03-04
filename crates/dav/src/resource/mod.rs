@@ -5,6 +5,7 @@ use crate::xml::{multistatus::ResponseElement, TagList};
 use crate::Error;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
+use axum_extra::routing::TypedPath;
 use itertools::Itertools;
 use quick_xml::name::Namespace;
 pub use resource_service::ResourceService;
@@ -27,7 +28,7 @@ impl<T: FromStr> ResourcePropName for T {}
 pub trait Resource: Send + Sync + 'static {
     type Prop: ResourceProp + PartialEq + Clone + EnumVariants + EnumUnitVariants;
     type Error: From<crate::Error> + IntoResponse;
-    type PrincipalResource: Resource + Clone;
+    type PrincipalPath: From<String> + TypedPath;
 
     fn get_resourcetype(&self) -> Resourcetype;
 
@@ -37,6 +38,7 @@ pub trait Resource: Send + Sync + 'static {
 
     fn get_prop(
         &self,
+        prefix: &str,
         user: &User,
         prop: &<Self::Prop as EnumUnitVariants>::UnitVariants,
     ) -> Result<Self::Prop, Self::Error>;
@@ -96,6 +98,7 @@ pub trait Resource: Send + Sync + 'static {
 
     fn propfind(
         &self,
+        prefix: &str,
         path: &str,
         props: &[&str],
         user: &User,
@@ -150,7 +153,7 @@ pub trait Resource: Send + Sync + 'static {
 
         let prop_responses = valid_props
             .into_iter()
-            .map(|prop| self.get_prop(user, &prop))
+            .map(|prop| self.get_prop(prefix, user, &prop))
             .collect::<Result<Vec<_>, Self::Error>>()?;
 
         let mut propstats = vec![PropstatWrapper::Normal(PropstatElement {

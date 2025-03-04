@@ -1,5 +1,6 @@
 use axum::Router;
-use principal::PrincipalResource;
+use axum_extra::routing::TypedPath;
+use principal::{PrincipalResource, PrincipalResourcePath, PrincipalResourceService};
 use rustical_dav::resource::ResourceService;
 use rustical_dav::resources::RootResourceService;
 use rustical_store::auth::AuthenticationProvider;
@@ -26,10 +27,19 @@ pub fn caldav_app<
     addr_store: Arc<AS>,
     subscription_store: Arc<S>,
 ) -> Router {
-    Router::new().route_service(
-        "/",
-        RootResourceService::<PrincipalResource>::default().axum_service(auth_provider),
-    )
+    Router::new()
+        .route_service(
+            "/",
+            RootResourceService::<PrincipalResource>::default().axum_service(auth_provider.clone()),
+        )
+        .route_service(
+            PrincipalResourcePath::PATH,
+            PrincipalResourceService {
+                auth_provider: auth_provider.clone(),
+                home_set: &[("calendar", false), ("birthdays", true)],
+            }
+            .axum_service(auth_provider.clone()),
+        )
 }
 
 // pub fn caldav_service<

@@ -117,6 +117,7 @@ reqwest = { version = "0.12", features = [
 ], default-features = false }
 dashmap = "6.1"
 axum = { version = "0.8", features = ["http2"] }
+axum-extra = { version = "0.10", features = ["typed-routing"] }
 tower = { version = "0.5" }
 tower-service = { version = "0.3" }
 educe = { version = "0.6", features = ["Clone"] }

@@ -1,21 +1,14 @@
-use actix_web::{
-    body::BoxBody,
-    http::{header, StatusCode},
-    FromRequest, HttpMessage, HttpResponse, ResponseError,
-};
+use super::AuthenticationProvider;
 use axum::{
-    extract::{FromRequestParts, OptionalFromRequestParts},
-    http::HeaderName,
-    response::{IntoResponse, IntoResponseParts},
+    extract::FromRequestParts,
+    http::header::WWW_AUTHENTICATE,
+    response::{AppendHeaders, IntoResponse},
 };
 use base64::Engine;
 use chrono::{DateTime, Utc};
 use derive_more::Display;
 use rustical_xml::ValueSerialize;
 use serde::{Deserialize, Serialize};
-use std::future::{ready, Ready};
-
-use super::AuthenticationProvider;
 
 /// https://datatracker.ietf.org/doc/html/rfc5545#section-3.2.3
 #[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq)]
@@ -91,43 +84,17 @@ pub struct UnauthorizedError;
 
 impl IntoResponse for UnauthorizedError {
     fn into_response(self) -> axum::response::Response {
-        (axum::http::StatusCode::UNAUTHORIZED, "Unauthorized").into_response()
-    }
-}
-
-impl ResponseError for UnauthorizedError {
-    fn status_code(&self) -> actix_web::http::StatusCode {
-        StatusCode::UNAUTHORIZED
-    }
-    fn error_response(&self) -> HttpResponse<BoxBody> {
-        HttpResponse::build(StatusCode::UNAUTHORIZED)
-            .insert_header((
-                header::WWW_AUTHENTICATE,
-                r#"Basic realm="RustiCal", charset="UTF-8""#,
-            ))
-            .finish()
+        (
+            axum::http::StatusCode::UNAUTHORIZED,
+            AppendHeaders([(WWW_AUTHENTICATE, "Basic")]),
+            "Unauthorized",
+        )
+            .into_response()
     }
 }
 
 pub trait ToAuthenticationProvider {
     fn auth_provider(&self) -> &impl AuthenticationProvider;
-}
-
-impl FromRequest for User {
-    type Error = UnauthorizedError;
-    type Future = Ready<Result<Self, Self::Error>>;
-
-    fn from_request(
-        req: &actix_web::HttpRequest,
-        _payload: &mut actix_web::dev::Payload,
-    ) -> Self::Future {
-        ready(
-            req.extensions()
-                .get::<Self>()
-                .cloned()
-                .ok_or(UnauthorizedError),
-        )
-    }
 }
 
 // Just a MVP with code stolen from https://github.com/Owez/axum-auth/blob/master/src/auth_basic.rs

@@ -1,5 +1,5 @@
 // use super::methods::{get_event, put_event};
-use crate::{principal::PrincipalResource, Error};
+use crate::{principal::PrincipalResourcePath, Error};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use educe::Educe;
@@ -56,7 +56,7 @@ pub struct CalendarObjectResource {
 impl Resource for CalendarObjectResource {
     type Prop = CalendarObjectPropWrapper;
     type Error = Error;
-    type PrincipalResource = PrincipalResource;
+    type PrincipalPath = PrincipalResourcePath;
 
     fn get_resourcetype(&self) -> Resourcetype {
         Resourcetype(&[])
@@ -64,6 +64,7 @@ impl Resource for CalendarObjectResource {
 
     fn get_prop(
         &self,
+        prefix: &str,
         user: &User,
         prop: &CalendarObjectPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
@@ -82,7 +83,7 @@ impl Resource for CalendarObjectResource {
                 })
             }
             CalendarObjectPropWrapperName::Common(prop) => CalendarObjectPropWrapper::Common(
-                CommonPropertiesExtension::get_prop(self, user, prop)?,
+                CommonPropertiesExtension::get_prop(self, prefix, user, prop)?,
             ),
         })
     }

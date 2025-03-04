@@ -31,6 +31,7 @@ impl<AP: AuthenticationProvider, RS: ResourceService> Clone for ResourceServiceR
 impl<AP: AuthenticationProvider, RS: ResourceService> ToAuthenticationProvider
     for ResourceServiceRouterState<AP, RS>
 {
+    #[allow(refining_impl_trait)]
     fn auth_provider(&self) -> &AP {
         &self.auth_provider
     }

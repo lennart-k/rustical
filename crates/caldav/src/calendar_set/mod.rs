@@ -1,7 +1,8 @@
 use crate::calendar::resource::CalendarResource;
-use crate::principal::PrincipalResource;
+use crate::principal::PrincipalResourcePath;
 use crate::Error;
 use async_trait::async_trait;
+use axum_extra::routing::TypedPath;
 use educe::Educe;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
@@ -10,6 +11,7 @@ use rustical_dav::xml::{Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
 use rustical_store::CalendarStore;
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
+use serde::Deserialize;
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -26,8 +28,8 @@ pub enum PrincipalPropWrapper {
 
 impl Resource for CalendarSetResource {
     type Prop = PrincipalPropWrapper;
+    type PrincipalPath = PrincipalResourcePath;
     type Error = Error;
-    type PrincipalResource = PrincipalResource;
 
     fn get_resourcetype(&self) -> Resourcetype {
         Resourcetype(&[ResourcetypeInner(
@@ -38,12 +40,13 @@ impl Resource for CalendarSetResource {
 
     fn get_prop(
         &self,
+        prefix: &str,
         user: &User,
         prop: &PrincipalPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
             PrincipalPropWrapperName::Common(prop) => PrincipalPropWrapper::Common(
-                <Self as CommonPropertiesExtension>::get_prop(self, user, prop)?,
+                <Self as CommonPropertiesExtension>::get_prop(self, prefix, user, prop)?,
             ),
         })
     }
@@ -72,6 +75,10 @@ impl<C: CalendarStore> CalendarSetResourceService<C> {
         Self { cal_store }
     }
 }
+
+#[derive(Debug, Clone, TypedPath, Deserialize)]
+#[typed_path("/{principal}/")]
+pub struct CalendarSetPath(String);
 
 #[async_trait]
 impl<C: CalendarStore> ResourceService for CalendarSetResourceService<C> {

@@ -3,7 +3,7 @@
 // use super::methods::report::route_report_calendar;
 use super::prop::{SupportedCalendarComponentSet, SupportedCalendarData, SupportedReportSet};
 use crate::calendar_object::resource::CalendarObjectResource;
-use crate::principal::PrincipalResource;
+use crate::principal::PrincipalResourcePath;
 use crate::Error;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -101,7 +101,7 @@ impl DavPushExtension for CalendarResource {
 impl Resource for CalendarResource {
     type Prop = CalendarPropWrapper;
     type Error = Error;
-    type PrincipalResource = PrincipalResource;
+    type PrincipalPath = PrincipalResourcePath;
 
     fn get_resourcetype(&self) -> Resourcetype {
         if self.cal.subscription_url.is_none() {
@@ -122,6 +122,7 @@ impl Resource for CalendarResource {
 
     fn get_prop(
         &self,
+        prefix: &str,
         user: &User,
         prop: &CalendarPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
@@ -175,9 +176,9 @@ impl Resource for CalendarResource {
             CalendarPropWrapperName::DavPush(prop) => {
                 CalendarPropWrapper::DavPush(DavPushExtension::get_prop(self, prop)?)
             }
-            CalendarPropWrapperName::Common(prop) => {
-                CalendarPropWrapper::Common(CommonPropertiesExtension::get_prop(self, user, prop)?)
-            }
+            CalendarPropWrapperName::Common(prop) => CalendarPropWrapper::Common(
+                CommonPropertiesExtension::get_prop(self, prefix, user, prop)?,
+            ),
         })
     }
 

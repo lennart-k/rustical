@@ -8,35 +8,35 @@ use crate::xml::PropElement;
 use crate::xml::PropfindElement;
 use crate::xml::PropfindType;
 use crate::Error;
+use axum::extract::OriginalUri;
 use axum::extract::Path;
 use axum::extract::State;
 use axum::http::Uri;
-use rustical_store::auth::user::PrincipalType::Individual;
 use rustical_store::auth::AuthenticationProvider;
 use rustical_store::auth::User;
 use rustical_xml::XmlDocument;
-use std::sync::Arc;
 
 pub(crate) async fn handle_propfind<AP: AuthenticationProvider, RS: ResourceService>(
     Path(path): Path<RS::PathComponents>,
-    // body: String,
-    // req: Request,
     user: User,
     depth: Depth,
     State(ResourceServiceRouterState {
         resource_service, ..
     }): State<ResourceServiceRouterState<AP, RS>>,
     uri: Uri,
+    orig_uri: OriginalUri,
+    body: String,
 ) -> Result<
     MultistatusElement<<RS::Resource as Resource>::Prop, <RS::MemberType as Resource>::Prop>,
     RS::Error,
 > {
+    let prefix = orig_uri.path().trim_end_matches(uri.path());
+
     let resource = resource_service.get_resource(&path).await?;
     let privileges = resource.get_user_privileges(&user)?;
     if !privileges.has(&UserPrivilege::Read) {
         return Err(Error::Unauthorized.into());
     }
-    let body = String::new();
 
     // A request body is optional. If empty we MUST return all props
     let propfind: PropfindElement = if !body.is_empty() {
@@ -62,13 +62,14 @@ pub(crate) async fn handle_propfind<AP: AuthenticationProvider, RS: ResourceServ
     if depth != Depth::Zero {
         for (subpath, member) in members {
             member_responses.push(member.propfind(
+                prefix,
                 &format!("{}/{}", uri.path().trim_end_matches('/'), subpath),
                 &props,
                 &user,
             )?);
         }
     }
-    let response = resource.propfind(uri.path(), &props, &user)?;
+    let response = resource.propfind(prefix, uri.path(), &props, &user)?;
 
     Ok(MultistatusElement {
         responses: vec![response],

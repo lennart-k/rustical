@@ -1,6 +1,8 @@
 use crate::calendar_set::CalendarSetResource;
 use crate::Error;
 use async_trait::async_trait;
+use axum_extra::routing::TypedPath;
+use derive_more::derive::From;
 use educe::Educe;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
@@ -9,6 +11,7 @@ use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::user::PrincipalType;
 use rustical_store::auth::{AuthenticationProvider, User};
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
+use serde::Deserialize;
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -51,7 +54,7 @@ pub enum PrincipalPropWrapper {
 impl Resource for PrincipalResource {
     type Prop = PrincipalPropWrapper;
     type Error = Error;
-    type PrincipalResource = PrincipalResource;
+    type PrincipalPath = PrincipalResourcePath;
 
     fn get_resourcetype(&self) -> Resourcetype {
         Resourcetype(&[
@@ -62,6 +65,7 @@ impl Resource for PrincipalResource {
 
     fn get_prop(
         &self,
+        prefix: &str,
         user: &User,
         prop: &PrincipalPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
@@ -102,7 +106,7 @@ impl Resource for PrincipalResource {
                 })
             }
             PrincipalPropWrapperName::Common(prop) => PrincipalPropWrapper::Common(
-                <Self as CommonPropertiesExtension>::get_prop(self, user, prop)?,
+                <Self as CommonPropertiesExtension>::get_prop(self, prefix, user, prop)?,
             ),
         })
     }
@@ -118,6 +122,10 @@ impl Resource for PrincipalResource {
     }
 }
 
+#[derive(Debug, Clone, Deserialize, TypedPath, From)]
+#[typed_path("/principal/{principal}")]
+pub struct PrincipalResourcePath(String);
+
 #[derive(Educe)]
 #[educe(Clone)]
 pub struct PrincipalResourceService<AP: AuthenticationProvider> {
@@ -127,14 +135,14 @@ pub struct PrincipalResourceService<AP: AuthenticationProvider> {
 
 #[async_trait]
 impl<AP: AuthenticationProvider> ResourceService for PrincipalResourceService<AP> {
-    type PathComponents = (String,);
+    type PathComponents = PrincipalResourcePath;
     type MemberType = CalendarSetResource;
     type Resource = PrincipalResource;
     type Error = Error;
 
     async fn get_resource(
         &self,
-        (principal,): &Self::PathComponents,
+        PrincipalResourcePath(principal): &PrincipalResourcePath,
     ) -> Result<Self::Resource, Self::Error> {
         let user = self
             .auth_provider
@@ -149,7 +157,7 @@ impl<AP: AuthenticationProvider> ResourceService for PrincipalResourceService<AP
 
     async fn get_members(
         &self,
-        (principal,): &Self::PathComponents,
+        PrincipalResourcePath(principal): &PrincipalResourcePath,
     ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
         Ok(self
             .home_set

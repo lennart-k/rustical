@@ -8,6 +8,7 @@ publish = false
 
 [dependencies]
 axum.workspace = true
+axum-extra.workspace = true
 async-trait = { workspace = true }
 thiserror = { workspace = true }
 quick-xml = { workspace = true }
