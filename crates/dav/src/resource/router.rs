@@ -43,6 +43,9 @@ pub struct ResourceServiceRouter {
     // proppatch_srv: BoxCloneSyncService<Request<Body>, Response, Infallible>,
     // delete_srv: BoxCloneSyncService<Request<Body>, Response, Infallible>,
     fallback_srv: BoxCloneSyncService<Request<Body>, Response, Infallible>,
+    mkcalendar_srv: Option<BoxCloneSyncService<Request<Body>, Response, Infallible>>,
+    mkcol_srv: Option<BoxCloneSyncService<Request<Body>, Response, Infallible>>,
+    report_srv: Option<BoxCloneSyncService<Request<Body>, Response, Infallible>>,
 }
 
 impl ResourceServiceRouter {
@@ -62,6 +65,9 @@ impl ResourceServiceRouter {
         ResourceServiceRouter {
             propfind_srv,
             fallback_srv,
+            mkcalendar_srv: None,
+            mkcol_srv: None,
+            report_srv: None,
         }
     }
 }

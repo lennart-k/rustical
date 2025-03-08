@@ -76,10 +76,6 @@ impl<C: CalendarStore> CalendarSetResourceService<C> {
     }
 }
 
-#[derive(Debug, Clone, TypedPath, Deserialize)]
-#[typed_path("/{principal}/")]
-pub struct CalendarSetPath(String);
-
 #[async_trait]
 impl<C: CalendarStore> ResourceService for CalendarSetResourceService<C> {
     type PathComponents = (String,);

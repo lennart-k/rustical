@@ -311,22 +311,18 @@ impl Resource for CalendarResource {
 
 #[derive(Educe)]
 #[educe(Clone)]
-pub struct CalendarResourceService<C: CalendarStore, S: SubscriptionStore> {
+pub struct CalendarResourceService<C: CalendarStore> {
     cal_store: Arc<C>,
-    __phantom_sub: PhantomData<S>,
 }
 
-impl<C: CalendarStore, S: SubscriptionStore> CalendarResourceService<C, S> {
+impl<C: CalendarStore> CalendarResourceService<C> {
     pub fn new(cal_store: Arc<C>) -> Self {
-        Self {
-            cal_store,
-            __phantom_sub: PhantomData,
-        }
+        Self { cal_store }
     }
 }
 
 #[async_trait]
-impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourceService<C, S> {
+impl<C: CalendarStore> ResourceService for CalendarResourceService<C> {
     type MemberType = CalendarObjectResource;
     type PathComponents = (String, String); // principal, calendar_id
     type Resource = CalendarResource;

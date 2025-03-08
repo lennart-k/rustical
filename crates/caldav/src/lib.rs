@@ -1,10 +1,13 @@
 use axum::Router;
 use axum_extra::routing::TypedPath;
+use calendar::resource::CalendarResourceService;
+use calendar_object::resource::CalendarObjectResourceService;
+use calendar_set::CalendarSetResourceService;
 use principal::{PrincipalResource, PrincipalResourcePath, PrincipalResourceService};
 use rustical_dav::resource::ResourceService;
 use rustical_dav::resources::RootResourceService;
 use rustical_store::auth::AuthenticationProvider;
-use rustical_store::{AddressbookStore, CalendarStore, SubscriptionStore};
+use rustical_store::{AddressbookStore, CalendarStore, ContactBirthdayStore, SubscriptionStore};
 use std::sync::Arc;
 
 pub mod calendar;
@@ -27,6 +30,8 @@ pub fn caldav_app<
     addr_store: Arc<AS>,
     subscription_store: Arc<S>,
 ) -> Router {
+    let birthday_store = Arc::new(ContactBirthdayStore::new(addr_store));
+
     Router::new()
         .route_service(
             "/",
@@ -39,6 +44,33 @@ pub fn caldav_app<
                 home_set: &[("calendar", false), ("birthdays", true)],
             }
             .axum_service(auth_provider.clone()),
+        )
+        .route_service(
+            "/principal/{principal}/calendar",
+            CalendarSetResourceService::new(store.clone()).axum_service(auth_provider.clone()),
+        )
+        .route_service(
+            "/principal/{principal}/calendar/{calendar}",
+            CalendarResourceService::new(store.clone()).axum_service(auth_provider.clone()),
+        )
+        .route_service(
+            "/principal/{principal}/calendar/{calendar}/{object}",
+            CalendarObjectResourceService::new(store.clone()).axum_service(auth_provider.clone()),
+        )
+        .route_service(
+            "/principal/{principal}/birthdays",
+            CalendarSetResourceService::new(birthday_store.clone())
+                .axum_service(auth_provider.clone()),
+        )
+        .route_service(
+            "/principal/{principal}/birthdays/{calendar}",
+            CalendarResourceService::new(birthday_store.clone())
+                .axum_service(auth_provider.clone()),
+        )
+        .route_service(
+            "/principal/{principal}/birthdays/{calendar}/{object}",
+            CalendarObjectResourceService::new(birthday_store.clone())
+                .axum_service(auth_provider.clone()),
         )
 }
 

@@ -37,7 +37,7 @@ impl IntoResponse for Error {
                 },
                 Error::ChronoParseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
                 // TODO: change
-                Error::DavError(err) => StatusCode::INTERNAL_SERVER_ERROR,
+                Error::DavError(_err) => StatusCode::INTERNAL_SERVER_ERROR,
                 Error::Unauthorized => StatusCode::UNAUTHORIZED,
                 Error::XmlDecodeError(_) => StatusCode::BAD_REQUEST,
                 Error::NotImplemented => StatusCode::INTERNAL_SERVER_ERROR,
