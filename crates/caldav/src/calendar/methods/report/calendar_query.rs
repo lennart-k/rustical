@@ -214,8 +214,8 @@ pub async fn get_objects_calendar_query<C: CalendarStore>(
 }
 
 pub async fn handle_calendar_query<C: CalendarStore>(
+    prefix: &str,
     cal_query: CalendarQueryRequest,
-    req: HttpRequest,
     user: &User,
     principal: &str,
     cal_id: &str,
@@ -238,13 +238,13 @@ pub async fn handle_calendar_query<C: CalendarStore>(
 
     let mut responses = Vec::new();
     for object in objects {
-        let path = format!("{}/{}", req.path().trim_end_matches('/'), object.get_id());
+        let path = format!("{}/{}", prefix, object.get_id());
         responses.push(
             CalendarObjectResource {
                 object,
                 principal: principal.to_owned(),
             }
-            .propfind(&path, &props, user)?,
+            .propfind(prefix, &path, &props, user)?,
         );
     }
 

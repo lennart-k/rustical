@@ -43,7 +43,7 @@ pub trait ResourceService: Sized + Send + Sync + Clone + 'static {
     fn axum_service<AP: AuthenticationProvider>(
         self,
         auth_provider: Arc<AP>,
-    ) -> ResourceServiceRouter {
+    ) -> ResourceServiceRouter<Self, AP> {
         ResourceServiceRouter::new(self, auth_provider)
     }
 }

@@ -1,4 +1,4 @@
-use actix_web::{http::StatusCode, HttpRequest};
+use axum::http::StatusCode;
 use rustical_dav::{
     resource::Resource,
     xml::{
@@ -18,8 +18,8 @@ use crate::{
 };
 
 pub async fn handle_sync_collection<C: CalendarStore>(
+    prefix: &str,
     sync_collection: SyncCollectionRequest,
-    req: HttpRequest,
     user: &User,
     principal: &str,
     cal_id: &str,
@@ -45,18 +45,18 @@ pub async fn handle_sync_collection<C: CalendarStore>(
 
     let mut responses = Vec::new();
     for object in new_objects {
-        let path = format!("{}/{}", req.path().trim_end_matches('/'), object.get_id());
+        let path = format!("{}/{}", prefix, object.get_id());
         responses.push(
             CalendarObjectResource {
                 object,
                 principal: principal.to_owned(),
             }
-            .propfind(&path, &props, user)?,
+            .propfind(prefix, &path, &props, user)?,
         );
     }
 
     for object_id in deleted_objects {
-        let path = format!("{}/{}", req.path().trim_end_matches('/'), object_id);
+        let path = format!("{}/{}", prefix, object_id);
         responses.push(ResponseElement {
             href: path,
             status: Some(StatusCode::NOT_FOUND),

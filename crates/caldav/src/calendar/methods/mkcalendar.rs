@@ -1,13 +1,16 @@
 use crate::calendar::prop::SupportedCalendarComponentSet;
+use crate::calendar::resource::CalendarResourceService;
 use crate::Error;
-use actix_web::web::{Data, Path};
-use actix_web::HttpResponse;
-use rustical_store::auth::User;
+use axum::extract::{Path, State};
+use axum::http::header::CACHE_CONTROL;
+use axum::http::StatusCode;
+use axum::response::{AppendHeaders, IntoResponse, Response};
+use rustical_dav::resource::ResourceServiceRouterState;
+use rustical_store::auth::{AuthenticationProvider, User};
 use rustical_store::calendar::CalendarObjectType;
 use rustical_store::{Calendar, CalendarStore};
 use rustical_xml::{Unparsed, XmlDeserialize, XmlDocument, XmlRootTag};
 use tracing::instrument;
-use tracing_actix_web::RootSpan;
 
 #[derive(XmlDeserialize, Clone, Debug)]
 pub struct MkcolCalendarProp {
@@ -48,15 +51,17 @@ struct MkcalendarRequest {
     set: PropElement,
 }
 
-#[instrument(parent = root_span.id(), skip(store, root_span))]
-pub async fn route_mkcalendar<C: CalendarStore>(
-    path: Path<(String, String)>,
-    body: String,
+#[instrument(skip(resource_service))]
+pub async fn route_mkcalendar<C: CalendarStore, AP: AuthenticationProvider>(
+    // Path((principal, cal_id)): Path<(String, String)>,
     user: User,
-    store: Data<C>,
-    root_span: RootSpan,
-) -> Result<HttpResponse, Error> {
-    let (principal, cal_id) = path.into_inner();
+    // State(CalendarResourceService { cal_store }): State<CalendarResourceService<C>>,
+    State(ResourceServiceRouterState {
+        resource_service, ..
+    }): State<ResourceServiceRouterState<AP, CalendarResourceService<C>>>,
+    body: String,
+) -> Result<Response, Error> {
+    let (principal, cal_id) = ("asd".to_owned(), "asd".to_owned());
     if !user.is_principal(&principal) {
         return Err(Error::Unauthorized);
     }
@@ -87,12 +92,14 @@ pub async fn route_mkcalendar<C: CalendarStore>(
             ]),
     };
 
-    match store.insert_calendar(calendar).await {
+    match resource_service.cal_store.insert_calendar(calendar).await {
         // The spec says we should return a mkcalendar-response but I don't know what goes into it.
         // However, it works without one but breaks on iPadOS when using an empty one :)
-        Ok(()) => Ok(HttpResponse::Created()
-            .insert_header(("Cache-Control", "no-cache"))
-            .body("")),
+        Ok(()) => Ok((
+            StatusCode::CREATED,
+            AppendHeaders([(CACHE_CONTROL, "no-cache")]),
+        )
+            .into_response()),
         Err(err) => {
             dbg!(err.to_string());
             Err(err.into())

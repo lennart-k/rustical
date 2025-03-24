@@ -3056,6 +3056,7 @@ dependencies = [
  "axum 0.8.1",
  "axum-extra",
  "derive_more 1.0.0",
+ "educe",
  "futures-util",
  "itertools 0.14.0",
  "log",

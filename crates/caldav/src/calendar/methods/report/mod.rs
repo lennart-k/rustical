@@ -1,7 +1,8 @@
-use crate::Error;
-use actix_web::{
-    web::{Data, Path},
-    HttpRequest, Responder,
+use crate::{calendar::resource::CalendarResourceService, Error};
+use axum::{
+    extract::{OriginalUri, Path, State},
+    http::Uri,
+    response::IntoResponse,
 };
 use calendar_multiget::{handle_calendar_multiget, CalendarMultigetRequest};
 use calendar_query::{handle_calendar_query, CalendarQueryRequest};
@@ -25,26 +26,27 @@ pub(crate) enum ReportRequest {
     SyncCollection(SyncCollectionRequest),
 }
 
-#[instrument(skip(req, cal_store))]
+#[instrument(skip(cal_store))]
 pub async fn route_report_calendar<C: CalendarStore>(
-    path: Path<(String, String)>,
+    Path((principal, cal_id)): Path<(String, String)>,
     body: String,
     user: User,
-    req: HttpRequest,
-    cal_store: Data<C>,
-) -> Result<impl Responder, Error> {
-    let (principal, cal_id) = path.into_inner();
+    State(CalendarResourceService { cal_store }): State<CalendarResourceService<C>>,
+    uri: Uri,
+    orig_uri: OriginalUri,
+) -> Result<impl IntoResponse, Error> {
     if !user.is_principal(&principal) {
         return Err(Error::Unauthorized);
     }
 
+    let prefix = orig_uri.path().trim_end_matches(uri.path());
     let request = ReportRequest::parse_str(&body)?;
 
     Ok(match request.clone() {
         ReportRequest::CalendarQuery(cal_query) => {
             handle_calendar_query(
+                prefix,
                 cal_query,
-                req,
                 &user,
                 &principal,
                 &cal_id,
@@ -54,8 +56,8 @@ pub async fn route_report_calendar<C: CalendarStore>(
         }
         ReportRequest::CalendarMultiget(cal_multiget) => {
             handle_calendar_multiget(
+                prefix,
                 cal_multiget,
-                req,
                 &user,
                 &principal,
                 &cal_id,
@@ -65,8 +67,8 @@ pub async fn route_report_calendar<C: CalendarStore>(
         }
         ReportRequest::SyncCollection(sync_collection) => {
             handle_sync_collection(
+                prefix,
                 sync_collection,
-                req,
                 &user,
                 &principal,
                 &cal_id,

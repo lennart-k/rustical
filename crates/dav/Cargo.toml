@@ -24,3 +24,4 @@ axum.workspace = true
 tower.workspace = true
 tower-service.workspace = true
 axum-extra.workspace = true
+educe.workspace = true

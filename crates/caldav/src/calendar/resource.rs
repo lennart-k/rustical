@@ -1,3 +1,4 @@
+use super::methods::mkcalendar::route_mkcalendar;
 // use super::methods::mkcalendar::route_mkcalendar;
 // use super::methods::post::route_post;
 // use super::methods::report::route_report_calendar;
@@ -14,9 +15,9 @@ use rustical_dav::extensions::{
     SyncTokenExtension, SyncTokenExtensionProp,
 };
 use rustical_dav::privileges::UserPrivilegeSet;
-use rustical_dav::resource::{Resource, ResourceService};
+use rustical_dav::resource::{Resource, ResourceService, ResourceServiceRouter};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
-use rustical_store::auth::User;
+use rustical_store::auth::{AuthenticationProvider, User};
 use rustical_store::calendar::CalDateTime;
 use rustical_store::{Calendar, CalendarStore, SubscriptionStore};
 use rustical_xml::{EnumUnitVariants, EnumVariants};
@@ -312,7 +313,7 @@ impl Resource for CalendarResource {
 #[derive(Educe)]
 #[educe(Clone)]
 pub struct CalendarResourceService<C: CalendarStore> {
-    cal_store: Arc<C>,
+    pub(crate) cal_store: Arc<C>,
 }
 
 impl<C: CalendarStore> CalendarResourceService<C> {
@@ -380,6 +381,13 @@ impl<C: CalendarStore> ResourceService for CalendarResourceService<C> {
             .delete_calendar(principal, cal_id, use_trashbin)
             .await?;
         Ok(())
+    }
+
+    fn axum_service<AP: AuthenticationProvider>(
+        self,
+        auth_provider: Arc<AP>,
+    ) -> ResourceServiceRouter<Self, AP> {
+        ResourceServiceRouter::new(self, auth_provider).mkcalendar(route_mkcalendar::<C, AP>)
     }
 
     // #[inline]
