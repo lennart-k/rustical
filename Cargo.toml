@@ -136,13 +136,13 @@ tracing-actix-web = { workspace = true }
 uuid.workspace = true
 dashmap.workspace = true
 
-opentelemetry = { version = "0.27", optional = true }
-opentelemetry-otlp = { version = "0.27", optional = true }
-opentelemetry_sdk = { version = "0.27", features = [
+opentelemetry = { version = "0.29", optional = true }
+opentelemetry-otlp = { version = "0.29", optional = true }
+opentelemetry_sdk = { version = "0.29", features = [
   "rt-tokio",
 ], optional = true }
-opentelemetry-semantic-conventions = { version = "0.27", optional = true }
-tracing-opentelemetry = { version = "0.28", optional = true }
+opentelemetry-semantic-conventions = { version = "0.29", optional = true }
+tracing-opentelemetry = { version = "0.30", optional = true }
 tracing-subscriber = { version = "0.3", features = [
   "env-filter",
   "fmt",
