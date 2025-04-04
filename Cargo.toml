@@ -46,7 +46,7 @@ rand_core = { version = "0.9", features = ["std"] }
 chrono = { version = "0.4", features = ["serde"] }
 regex = "1.10"
 lazy_static = "1.5"
-rstest = "0.24"
+rstest = "0.25"
 rstest_reuse = "0.7"
 sha2 = "0.10"
 tokio = { version = "1", features = [
@@ -66,7 +66,7 @@ hex = { version = "0.4.3", features = ["serde"] }
 mime_guess = "2.0.5"
 itertools = "0.14"
 log = "0.4"
-derive_more = { version = "1.0", features = [
+derive_more = { version = "2.0", features = [
   "from",
   "try_into",
   "into",
