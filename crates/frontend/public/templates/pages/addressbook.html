@@ -8,7 +8,7 @@
 <h1>{{ name }}</h1>
 {% if let Some(description) = addressbook.description %}<p>{{ description }}</p>{% endif%}
 
-<pre>{{ addressbook|yaml }}</pre>
+<pre>{{ addressbook|json }}</pre>
 
 <a href="/frontend/user/{{ addressbook.principal }}">Back</a>
 {% endblock %}

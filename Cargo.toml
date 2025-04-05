@@ -73,13 +73,7 @@ derive_more = { version = "2.0", features = [
   "deref",
   "constructor",
 ] }
-askama = { version = "0.12", features = [
-  "serde",
-  "with-actix-web",
-  "serde-json",
-  "serde-yaml",
-] }
-askama_actix = "0.14"
+askama = { version = "0.13", features = ["serde_json"] }
 sqlx = { version = "0.8", default-features = false, features = [
   "sqlx-sqlite",
   "uuid",

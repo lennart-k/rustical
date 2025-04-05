@@ -6,11 +6,10 @@ use actix_web::{
     dev::ServiceResponse,
     http::{Method, StatusCode},
     middleware::{ErrorHandlerResponse, ErrorHandlers},
-    web::{self, Data, Path},
+    web::{self, Data, Html, Path},
     HttpRequest, HttpResponse, Responder,
 };
 use askama::Template;
-use askama_actix::TemplateToResponse;
 use assets::{Assets, EmbedService};
 use routes::{
     addressbook::{route_addressbook, route_addressbook_restore},
@@ -44,6 +43,7 @@ async fn route_user<CS: CalendarStore, AS: AddressbookStore>(
     cal_store: Data<CS>,
     addr_store: Data<AS>,
     user: User,
+    req: HttpRequest,
 ) -> impl Responder {
     // TODO: Check for authorization
     let user_id = path.into_inner();
@@ -51,14 +51,19 @@ async fn route_user<CS: CalendarStore, AS: AddressbookStore>(
         return actix_web::HttpResponse::Unauthorized().body("Unauthorized");
     }
 
-    UserPage {
-        calendars: cal_store.get_calendars(&user.id).await.unwrap(),
-        deleted_calendars: cal_store.get_deleted_calendars(&user.id).await.unwrap(),
-        addressbooks: addr_store.get_addressbooks(&user.id).await.unwrap(),
-        deleted_addressbooks: addr_store.get_deleted_addressbooks(&user.id).await.unwrap(),
-        user_id: user.id,
-    }
-    .to_response()
+    Html::new(
+        UserPage {
+            calendars: cal_store.get_calendars(&user.id).await.unwrap(),
+            deleted_calendars: cal_store.get_deleted_calendars(&user.id).await.unwrap(),
+            addressbooks: addr_store.get_addressbooks(&user.id).await.unwrap(),
+            deleted_addressbooks: addr_store.get_deleted_addressbooks(&user.id).await.unwrap(),
+            user_id: user.id,
+        }
+        .render()
+        .unwrap(),
+    )
+    .respond_to(&req)
+    .map_into_boxed_body()
 }
 
 async fn route_root(user: Option<User>, req: HttpRequest) -> impl Responder {

@@ -1,7 +1,7 @@
 use actix_session::Session;
 use actix_web::{
     error::ErrorUnauthorized,
-    web::{Data, Form, Redirect},
+    web::{Data, Form, Html, Redirect},
     HttpRequest, HttpResponse, Responder,
 };
 use askama::Template;
@@ -12,8 +12,10 @@ use serde::Deserialize;
 #[template(path = "pages/login.html")]
 struct LoginPage;
 
-pub async fn route_get_login() -> impl Responder {
-    LoginPage
+pub async fn route_get_login(req: HttpRequest) -> impl Responder {
+    Html::new(LoginPage.render().unwrap())
+        .respond_to(&req)
+        .map_into_boxed_body()
 }
 
 #[derive(Deserialize)]

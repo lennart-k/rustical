@@ -1,6 +1,6 @@
 use actix_web::{
     http::header::{self},
-    web::{self, Data, Form, Json, Path, ServiceConfig},
+    web::{self, Data, Form, Html, Json, Path, ServiceConfig},
     HttpRequest, HttpResponse, Responder,
 };
 use askama::Template;
@@ -155,11 +155,16 @@ async fn get_nextcloud_flow(
 ) -> Result<impl Responder, rustical_store::Error> {
     let flow_id = path.into_inner();
     if let Some(flow) = state.flows.read().await.get(&flow_id) {
-        Ok(NextcloudLoginPage {
-            username: user.displayname.unwrap_or(user.id),
-            app_name: flow.app_name.to_owned(),
-        }
-        .respond_to(&req))
+        Ok(Html::new(
+            NextcloudLoginPage {
+                username: user.displayname.unwrap_or(user.id),
+                app_name: flow.app_name.to_owned(),
+            }
+            .render()
+            .unwrap(),
+        )
+        .respond_to(&req)
+        .map_into_boxed_body())
     } else {
         Ok(HttpResponse::NotFound().body("Login flow not found"))
     }
@@ -191,10 +196,15 @@ async fn post_nextcloud_flow(
             login_name: user.id.to_owned(),
             app_password: generate_app_token(),
         });
-        Ok(NextcloudLoginSuccessPage {
-            app_name: flow.app_name.to_owned(),
-        }
-        .respond_to(&req))
+        Ok(Html::new(
+            NextcloudLoginSuccessPage {
+                app_name: flow.app_name.to_owned(),
+            }
+            .render()
+            .unwrap(),
+        )
+        .respond_to(&req)
+        .map_into_boxed_body())
     } else {
         Ok(HttpResponse::NotFound().body("Login flow not found"))
     }

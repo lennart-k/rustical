@@ -8,7 +8,6 @@ publish = false
 
 [dependencies]
 askama.workspace = true
-askama_actix = { workspace = true }
 actix-session = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
