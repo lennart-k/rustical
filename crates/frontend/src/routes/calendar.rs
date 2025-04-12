@@ -1,12 +1,13 @@
 use actix_web::{
-    http::{header, StatusCode},
-    web::{self, Data, Html, Path},
     HttpRequest, HttpResponse, Responder,
+    http::{StatusCode, header},
+    web::{self, Data, Path},
 };
 use askama::Template;
-use rustical_store::{auth::User, Calendar, CalendarStore};
+use askama_web::WebTemplate;
+use rustical_store::{Calendar, CalendarStore, auth::User};
 
-#[derive(Template)]
+#[derive(Template, WebTemplate)]
 #[template(path = "pages/calendar.html")]
 struct CalendarPage {
     calendar: Calendar,
@@ -22,15 +23,10 @@ pub async fn route_calendar<C: CalendarStore>(
     if !user.is_principal(&owner) {
         return Ok(HttpResponse::Unauthorized().body("Unauthorized"));
     }
-    Ok(Html::new(
-        CalendarPage {
-            calendar: store.get_calendar(&owner, &cal_id).await?,
-        }
-        .render()
-        .unwrap(),
-    )
-    .respond_to(&req)
-    .map_into_boxed_body())
+    Ok(CalendarPage {
+        calendar: store.get_calendar(&owner, &cal_id).await?,
+    }
+    .respond_to(&req))
 }
 
 pub async fn route_calendar_restore<CS: CalendarStore>(

@@ -426,6 +426,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "askama_web"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b939333ab32b63d49be3a84492eefacff005ed369ac331e1597d1839e3c62f11"
+dependencies = [
+ "actix-web",
+ "askama",
+ "askama_web_derive",
+]
+
+[[package]]
+name = "askama_web_derive"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "34921de3d57974069bad483fdfe0ec65d88c4ff892edd1ab4d8b03be0dda1b9b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "async-trait"
 version = "0.1.88"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2828,6 +2850,7 @@ dependencies = [
  "actix-session",
  "actix-web",
  "askama",
+ "askama_web",
  "futures-core",
  "hex",
  "mime_guess",

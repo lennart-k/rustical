@@ -1,21 +1,20 @@
 use actix_session::Session;
 use actix_web::{
-    error::ErrorUnauthorized,
-    web::{Data, Form, Html, Redirect},
     HttpRequest, HttpResponse, Responder,
+    error::ErrorUnauthorized,
+    web::{Data, Form, Redirect},
 };
 use askama::Template;
+use askama_web::WebTemplate;
 use rustical_store::auth::AuthenticationProvider;
 use serde::Deserialize;
 
-#[derive(Template)]
+#[derive(Template, WebTemplate)]
 #[template(path = "pages/login.html")]
 struct LoginPage;
 
-pub async fn route_get_login(req: HttpRequest) -> impl Responder {
-    Html::new(LoginPage.render().unwrap())
-        .respond_to(&req)
-        .map_into_boxed_body()
+pub async fn route_get_login() -> impl Responder {
+    LoginPage
 }
 
 #[derive(Deserialize)]

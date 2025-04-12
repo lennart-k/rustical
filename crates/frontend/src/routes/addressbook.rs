@@ -1,12 +1,13 @@
 use actix_web::{
-    http::{header, StatusCode},
-    web::{self, Data, Html, Path},
     HttpRequest, HttpResponse, Responder,
+    http::{StatusCode, header},
+    web::{self, Data, Path},
 };
 use askama::Template;
-use rustical_store::{auth::User, Addressbook, AddressbookStore};
+use askama_web::WebTemplate;
+use rustical_store::{Addressbook, AddressbookStore, auth::User};
 
-#[derive(Template)]
+#[derive(Template, WebTemplate)]
 #[template(path = "pages/addressbook.html")]
 struct AddressbookPage {
     addressbook: Addressbook,
@@ -22,15 +23,10 @@ pub async fn route_addressbook<AS: AddressbookStore>(
     if !user.is_principal(&owner) {
         return Ok(HttpResponse::Unauthorized().body("Unauthorized"));
     }
-    Ok(Html::new(
-        AddressbookPage {
-            addressbook: store.get_addressbook(&owner, &addrbook_id).await?,
-        }
-        .render()
-        .unwrap(),
-    )
-    .respond_to(&req)
-    .map_into_boxed_body())
+    Ok(AddressbookPage {
+        addressbook: store.get_addressbook(&owner, &addrbook_id).await?,
+    }
+    .respond_to(&req))
 }
 
 pub async fn route_addressbook_restore<AS: AddressbookStore>(

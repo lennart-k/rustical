@@ -1,15 +1,16 @@
 use actix_session::{
-    config::CookieContentSecurity, storage::CookieSessionStore, SessionMiddleware,
+    SessionMiddleware, config::CookieContentSecurity, storage::CookieSessionStore,
 };
 use actix_web::{
+    HttpRequest, HttpResponse, Responder,
     cookie::{Key, SameSite},
     dev::ServiceResponse,
     http::{Method, StatusCode},
     middleware::{ErrorHandlerResponse, ErrorHandlers},
-    web::{self, Data, Html, Path},
-    HttpRequest, HttpResponse, Responder,
+    web::{self, Data, Path},
 };
 use askama::Template;
+use askama_web::WebTemplate;
 use assets::{Assets, EmbedService};
 use routes::{
     addressbook::{route_addressbook, route_addressbook_restore},
@@ -17,8 +18,8 @@ use routes::{
     login::{route_get_login, route_post_login},
 };
 use rustical_store::{
-    auth::{AuthenticationMiddleware, AuthenticationProvider, User},
     Addressbook, AddressbookStore, Calendar, CalendarStore,
+    auth::{AuthenticationMiddleware, AuthenticationProvider, User},
 };
 use std::sync::Arc;
 
@@ -28,7 +29,7 @@ mod routes;
 
 pub use config::FrontendConfig;
 
-#[derive(Template)]
+#[derive(Template, WebTemplate)]
 #[template(path = "pages/user.html")]
 struct UserPage {
     pub user_id: String,
@@ -51,19 +52,14 @@ async fn route_user<CS: CalendarStore, AS: AddressbookStore>(
         return actix_web::HttpResponse::Unauthorized().body("Unauthorized");
     }
 
-    Html::new(
-        UserPage {
-            calendars: cal_store.get_calendars(&user.id).await.unwrap(),
-            deleted_calendars: cal_store.get_deleted_calendars(&user.id).await.unwrap(),
-            addressbooks: addr_store.get_addressbooks(&user.id).await.unwrap(),
-            deleted_addressbooks: addr_store.get_deleted_addressbooks(&user.id).await.unwrap(),
-            user_id: user.id,
-        }
-        .render()
-        .unwrap(),
-    )
+    UserPage {
+        calendars: cal_store.get_calendars(&user.id).await.unwrap(),
+        deleted_calendars: cal_store.get_deleted_calendars(&user.id).await.unwrap(),
+        addressbooks: addr_store.get_addressbooks(&user.id).await.unwrap(),
+        deleted_addressbooks: addr_store.get_deleted_addressbooks(&user.id).await.unwrap(),
+        user_id: user.id,
+    }
     .respond_to(&req)
-    .map_into_boxed_body()
 }
 
 async fn route_root(user: Option<User>, req: HttpRequest) -> impl Responder {
