@@ -33,7 +33,7 @@ pub async fn route_post_login<AP: AuthenticationProvider>(
         .validate_user_token(&form.username, &form.password)
         .await
     {
-        session.insert("user", user).unwrap();
+        session.insert("user", user.id).unwrap();
         Redirect::to(format!("/frontend/user/{}", &form.username))
             .see_other()
             .respond_to(&req)

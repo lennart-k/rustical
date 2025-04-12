@@ -1,17 +1,17 @@
 use super::{AuthenticationProvider, User};
 use actix_session::Session;
 use actix_web::{
-    dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
-    http::header::Header,
     FromRequest, HttpMessage,
+    dev::{Service, ServiceRequest, ServiceResponse, Transform, forward_ready},
+    http::header::Header,
 };
 use actix_web_httpauth::headers::authorization::{Authorization, Basic};
 use std::{
-    future::{ready, Future, Ready},
+    future::{Future, Ready, ready},
     pin::Pin,
     sync::Arc,
 };
-use tracing::{info_span, Instrument};
+use tracing::{Instrument, info_span};
 
 pub struct AuthenticationMiddleware<AP: AuthenticationProvider> {
     auth_provider: Arc<AP>,
@@ -81,10 +81,16 @@ where
 
             // Extract user from session cookie
             if let Ok(session) = Session::extract(req.request()).await {
-                match session.get::<User>("user") {
-                    Ok(Some(user)) => {
-                        req.extensions_mut().insert(user);
-                    }
+                match session.get::<String>("user") {
+                    Ok(Some(user_id)) => match auth_provider.get_principal(&user_id).await {
+                        Ok(Some(user)) => {
+                            req.extensions_mut().insert(user);
+                        }
+                        Ok(None) => {}
+                        Err(err) => {
+                            dbg!(err);
+                        }
+                    },
                     Ok(None) => {}
                     Err(err) => {
                         dbg!(err);
