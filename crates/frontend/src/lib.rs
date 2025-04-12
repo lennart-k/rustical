@@ -51,9 +51,15 @@ async fn route_user<CS: CalendarStore, AS: AddressbookStore>(
     if user_id != user.id {
         return actix_web::HttpResponse::Unauthorized().body("Unauthorized");
     }
+    dbg!(&user);
+
+    let mut calendars = vec![];
+    for group in user.memberships() {
+        calendars.extend(cal_store.get_calendars(group).await.unwrap());
+    }
 
     UserPage {
-        calendars: cal_store.get_calendars(&user.id).await.unwrap(),
+        calendars,
         deleted_calendars: cal_store.get_deleted_calendars(&user.id).await.unwrap(),
         addressbooks: addr_store.get_addressbooks(&user.id).await.unwrap(),
         deleted_addressbooks: addr_store.get_deleted_addressbooks(&user.id).await.unwrap(),

@@ -1,13 +1,13 @@
 use actix_web::{
-    body::BoxBody,
-    http::{header, StatusCode},
     FromRequest, HttpMessage, HttpResponse, ResponseError,
+    body::BoxBody,
+    http::{StatusCode, header},
 };
 use chrono::{DateTime, Utc};
 use derive_more::Display;
 use rustical_xml::ValueSerialize;
 use serde::{Deserialize, Serialize};
-use std::future::{ready, Ready};
+use std::future::{Ready, ready};
 
 /// https://datatracker.ietf.org/doc/html/rfc5545#section-3.2.3
 #[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq)]
@@ -54,7 +54,7 @@ pub struct User {
     #[serde(default)]
     pub app_tokens: Vec<AppToken>,
     #[serde(default)]
-    pub memberships: Vec<String>,
+    memberships: Vec<String>,
 }
 
 impl User {
