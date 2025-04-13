@@ -9,4 +9,9 @@
   <input type="password" name="password" placeholder="password">
   <button type="submit">Login</button>
 </form>
+
+{% if let Some(OidcProviderData {name, redirect_url}) = oidc_data %}
+<a href="{{ redirect_url }}">Login with {{ name }}</a>
+{% endif %}
+
 {% endblock %}

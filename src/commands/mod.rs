@@ -2,7 +2,7 @@ use argon2::password_hash::SaltString;
 use clap::{Parser, ValueEnum};
 use password_hash::PasswordHasher;
 use pbkdf2::Params;
-use rand::{rngs::OsRng, RngCore};
+use rand::{RngCore, rngs::OsRng};
 use rustical_frontend::FrontendConfig;
 use rustical_store::auth::TomlUserStoreConfig;
 
@@ -35,6 +35,7 @@ pub fn cmd_gen_config(_args: GenConfigArgs) -> anyhow::Result<()> {
         frontend: FrontendConfig {
             secret_key: generate_frontend_secret(),
             enabled: true,
+            oidc: None,
         },
         dav_push: DavPushConfig::default(),
         nextcloud_login: Default::default(),

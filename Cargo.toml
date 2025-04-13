@@ -110,6 +110,7 @@ reqwest = { version = "0.12", features = [
   "charset",
   "http2",
 ], default-features = false }
+openidconnect = "4.0"
 
 [dependencies]
 rustical_store = { workspace = true }

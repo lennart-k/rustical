@@ -1,3 +1,4 @@
+use crate::{FrontendConfig, oidc::OidcProviderData};
 use actix_session::Session;
 use actix_web::{
     HttpRequest, HttpResponse, Responder,
@@ -11,10 +12,21 @@ use serde::Deserialize;
 
 #[derive(Template, WebTemplate)]
 #[template(path = "pages/login.html")]
-struct LoginPage;
+struct LoginPage<'a> {
+    oidc_data: Option<OidcProviderData<'a>>,
+}
 
-pub async fn route_get_login() -> impl Responder {
-    LoginPage
+pub async fn route_get_login(req: HttpRequest, config: Data<FrontendConfig>) -> impl Responder {
+    LoginPage {
+        oidc_data: config.oidc.as_ref().map(|oidc| OidcProviderData {
+            name: &oidc.name,
+            redirect_url: req
+                .url_for_static("frontend_login_oidc")
+                .unwrap()
+                .to_string(),
+        }),
+    }
+    .respond_to(&req)
 }
 
 #[derive(Deserialize)]

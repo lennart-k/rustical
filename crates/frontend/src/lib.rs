@@ -12,6 +12,7 @@ use actix_web::{
 use askama::Template;
 use askama_web::WebTemplate;
 use assets::{Assets, EmbedService};
+use oidc::{route_get_oidc, route_get_oidc_callback};
 use routes::{
     addressbook::{route_addressbook, route_addressbook_restore},
     calendar::{route_calendar, route_calendar_restore},
@@ -25,6 +26,7 @@ use std::sync::Arc;
 
 mod assets;
 mod config;
+mod oidc;
 mod routes;
 
 pub use config::FrontendConfig;
@@ -130,6 +132,7 @@ pub fn configure_frontend<AP: AuthenticationProvider, CS: CalendarStore, AS: Add
             .app_data(Data::from(auth_provider))
             .app_data(Data::from(cal_store.clone()))
             .app_data(Data::from(addr_store.clone()))
+            .app_data(Data::new(frontend_config.clone()))
             .service(EmbedService::<Assets>::new("/assets".to_owned()))
             .service(web::resource("").route(web::method(Method::GET).to(route_root)))
             .service(
@@ -158,6 +161,16 @@ pub fn configure_frontend<AP: AuthenticationProvider, CS: CalendarStore, AS: Add
                     .name("frontend_login")
                     .route(web::method(Method::GET).to(route_get_login))
                     .route(web::method(Method::POST).to(route_post_login::<AP>)),
+            )
+            .service(
+                web::resource("/login/oidc")
+                    .name("frontend_login_oidc")
+                    .route(web::method(Method::GET).to(route_get_oidc)),
+            )
+            .service(
+                web::resource("/login/oidc/callback")
+                    .name("frontend_oidc_callback")
+                    .route(web::method(Method::GET).to(route_get_oidc_callback::<AP>)),
             ),
     );
 }

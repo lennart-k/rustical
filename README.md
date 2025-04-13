@@ -15,6 +15,7 @@ a CalDAV/CardDAV server
 - adequately fast (I'd say blazingly fast™ :fire: if I did the benchmarks to back that claim up)
 - deleted calendars are recoverable
 - Nextcloud login flow (In DAVx5 you can login through the Nextcloud flow and automatically generate an app token)
+- experimental OpenID Connect support
 
 ## Installation
 
@@ -121,6 +122,23 @@ Since push messages are currently not encrypted you might potentially want to en
 allowed_push_servers = ["https://your-instance-ntfy.sh"]
 ```
 
+### OpenID Connect
+
+There's experimental support to log in through an OIDC IdP.
+Currently, the `preferred_username` is used as a user id (which is suboptimal, so you should be aware of that) and cannot be configured.
+
+```toml
+[frontend.oidc]
+name = "e.g. Authelia"
+issuer = "https://auth.your.domain"
+client_id = "rustical"
+client_secret = "secret"
+scopes = ["openid", "profile"]
+allow_sign_up = false
+```
+
+On the IdP side you have to create a client with the redirect uri `/frontend/login/oidc/callback` (subject to change).
+
 ## Debugging
 
 Set the log level with following environment variables:
@@ -144,7 +162,7 @@ opentelemetry = true
   - provides the REPORT method
 - Calendaring Extensions to WebDAV (CalDAV): [RFC 4791](https://datatracker.ietf.org/doc/html/rfc4791)
 - Scheduling Extensions to CalDAV: [RFC 6638](https://datatracker.ietf.org/doc/html/rfc6638)
-  - not sure yet whether to implement this
+  - not sur`e yet whether to implement this
 - Collection Synchronization WebDAV [RFC 6578](https://datatracker.ietf.org/doc/html/rfc6578)
   - We need to implement sync-token, etc.
   - This is important for more efficient synchronisation
