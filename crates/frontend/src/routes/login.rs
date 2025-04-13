@@ -9,6 +9,7 @@ use askama::Template;
 use askama_web::WebTemplate;
 use rustical_store::auth::AuthenticationProvider;
 use serde::Deserialize;
+use tracing::instrument;
 
 #[derive(Template, WebTemplate)]
 #[template(path = "pages/login.html")]
@@ -22,6 +23,7 @@ pub struct GetLoginQuery {
     redirect_uri: Option<String>,
 }
 
+#[instrument(skip(req))]
 pub async fn route_get_login(
     Query(GetLoginQuery { redirect_uri }): Query<GetLoginQuery>,
     req: HttpRequest,
@@ -47,6 +49,7 @@ pub struct PostLoginForm {
     redirect_uri: Option<String>,
 }
 
+#[instrument(skip(req, password, auth_provider, session))]
 pub async fn route_post_login<AP: AuthenticationProvider>(
     req: HttpRequest,
     Form(PostLoginForm {

@@ -25,3 +25,4 @@ rand.workspace = true
 chrono.workspace = true
 uuid.workspace = true
 url.workspace = true
+tracing.workspace = true

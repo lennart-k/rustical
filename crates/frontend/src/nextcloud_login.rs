@@ -1,5 +1,9 @@
+use actix_session::{
+    SessionMiddleware, config::CookieContentSecurity, storage::CookieSessionStore,
+};
 use actix_web::{
     HttpRequest, HttpResponse, Responder,
+    cookie::{Key, SameSite},
     http::{
         StatusCode,
         header::{self},
@@ -14,6 +18,7 @@ use rustical_store::auth::{AuthenticationMiddleware, AuthenticationProvider, Use
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::RwLock;
+use tracing::instrument;
 
 use crate::unauthorized_handler;
 
@@ -153,6 +158,7 @@ struct NextcloudLoginPage {
     app_name: String,
 }
 
+#[instrument(skip(state, req))]
 async fn get_nextcloud_flow(
     user: User,
     state: Data<NextcloudFlows>,
@@ -187,6 +193,7 @@ struct NextcloudLoginSuccessPage {
     app_name: String,
 }
 
+#[instrument(skip(state, req))]
 async fn post_nextcloud_flow(
     user: User,
     state: Data<NextcloudFlows>,
@@ -220,11 +227,22 @@ pub fn configure_nextcloud_login<AP: AuthenticationProvider>(
     cfg: &mut ServiceConfig,
     nextcloud_flows_state: Arc<NextcloudFlows>,
     auth_provider: Arc<AP>,
+    frontend_secret: [u8; 64],
 ) {
     cfg.service(
         web::scope("/index.php/login/v2")
             .wrap(ErrorHandlers::new().handler(StatusCode::UNAUTHORIZED, unauthorized_handler))
             .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
+            .wrap(
+                SessionMiddleware::builder(
+                    CookieSessionStore::default(),
+                    Key::from(&frontend_secret),
+                )
+                .cookie_secure(true)
+                .cookie_same_site(SameSite::Strict)
+                .cookie_content_security(CookieContentSecurity::Private)
+                .build(),
+            )
             .app_data(Data::from(nextcloud_flows_state))
             .app_data(Data::from(auth_provider.clone()))
             .service(web::resource("").post(post_nextcloud_login))

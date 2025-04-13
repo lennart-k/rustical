@@ -51,6 +51,16 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
                 .service(web::redirect("/carddav", "/carddav")),
         );
 
+    if nextcloud_login_config.enabled {
+        app = app.configure(|cfg| {
+            configure_nextcloud_login(
+                cfg,
+                nextcloud_flows_state,
+                auth_provider.clone(),
+                frontend_config.secret_key,
+            )
+        });
+    }
     if frontend_config.enabled {
         app = app
             .service(web::scope("/frontend").configure(|cfg| {
@@ -63,11 +73,6 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
                 )
             }))
             .service(web::redirect("/", "/frontend").see_other());
-    }
-    if nextcloud_login_config.enabled {
-        app = app.configure(|cfg| {
-            configure_nextcloud_login(cfg, nextcloud_flows_state, auth_provider.clone())
-        });
     }
     app
 }
