@@ -54,7 +54,7 @@ pub struct User {
     #[serde(default)]
     pub app_tokens: Vec<AppToken>,
     #[serde(default)]
-    memberships: Vec<String>,
+    pub memberships: Vec<String>,
 }
 
 impl User {

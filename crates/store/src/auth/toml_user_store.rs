@@ -1,11 +1,11 @@
-use super::{user::AppToken, AuthenticationProvider};
+use super::{AuthenticationProvider, user::AppToken};
 use crate::{auth::User, error::Error};
 use anyhow::anyhow;
 use async_trait::async_trait;
 use password_hash::PasswordHasher;
 use pbkdf2::{
-    password_hash::{self, rand_core::OsRng, SaltString},
     Params,
+    password_hash::{self, SaltString, rand_core::OsRng},
 };
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, fs, io, ops::Deref};
@@ -63,6 +63,16 @@ impl TomlPrincipalStore {
 impl AuthenticationProvider for TomlPrincipalStore {
     async fn get_principal(&self, id: &str) -> Result<Option<User>, crate::Error> {
         Ok(self.principals.read().await.get(id).cloned())
+    }
+
+    async fn insert_principal(&self, user: User) -> Result<(), crate::Error> {
+        let mut principals = self.principals.write().await;
+        if principals.contains_key(&user.id) {
+            return Err(Error::AlreadyExists);
+        }
+        principals.insert(user.id.clone(), user);
+        self.save(principals.deref())?;
+        Ok(())
     }
 
     async fn validate_user_token(&self, user_id: &str, token: &str) -> Result<Option<User>, Error> {
