@@ -1,14 +1,14 @@
 use crate::config::TracingConfig;
 #[cfg(feature = "opentelemetry")]
-use opentelemetry::{global, trace::TracerProvider, KeyValue};
+use opentelemetry::{KeyValue, global, trace::TracerProvider};
 #[cfg(feature = "opentelemetry")]
 use opentelemetry_otlp::WithExportConfig;
 #[cfg(feature = "opentelemetry")]
-use opentelemetry_sdk::{propagation::TraceContextPropagator, trace::Tracer, Resource};
+use opentelemetry_sdk::{Resource, propagation::TraceContextPropagator, trace::Tracer};
 #[cfg(feature = "opentelemetry")]
 use opentelemetry_semantic_conventions::{
-    resource::{SERVICE_NAME, SERVICE_VERSION},
     SCHEMA_URL,
+    resource::{SERVICE_NAME, SERVICE_VERSION},
 };
 #[cfg(feature = "opentelemetry")]
 use std::time::Duration;
@@ -17,9 +17,9 @@ use tracing::level_filters::LevelFilter;
 use tracing::warn;
 #[cfg(feature = "opentelemetry")]
 use tracing_opentelemetry::OpenTelemetryLayer;
+use tracing_subscriber::EnvFilter;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
-use tracing_subscriber::EnvFilter;
 
 #[cfg(feature = "opentelemetry")]
 pub fn init_otel() -> Tracer {
@@ -29,15 +29,19 @@ pub fn init_otel() -> Tracer {
         .build()
         .unwrap();
 
-    let tracer_provider = opentelemetry_sdk::trace::TracerProvider::builder()
-        .with_batch_exporter(otel_exporter, opentelemetry_sdk::runtime::Tokio)
-        .with_resource(Resource::from_schema_url(
-            [
-                KeyValue::new(SERVICE_NAME, env!("CARGO_PKG_NAME")),
-                KeyValue::new(SERVICE_VERSION, env!("CARGO_PKG_VERSION")),
-            ],
-            SCHEMA_URL,
-        ))
+    let tracer_provider = opentelemetry_sdk::trace::SdkTracerProvider::builder()
+        .with_batch_exporter(otel_exporter)
+        .with_resource(
+            Resource::builder_empty()
+                .with_schema_url(
+                    [
+                        KeyValue::new(SERVICE_NAME, env!("CARGO_PKG_NAME")),
+                        KeyValue::new(SERVICE_VERSION, env!("CARGO_PKG_VERSION")),
+                    ],
+                    SCHEMA_URL,
+                )
+                .build(),
+        )
         .build();
 
     global::set_tracer_provider(tracer_provider.clone());
@@ -66,7 +70,9 @@ pub fn setup_tracing(config: &TracingConfig) {
         #[cfg(not(feature = "opentelemetry"))]
         {
             registry.init();
-            warn!("This version of RustiCal is compiled without the opentelemetry feature. tracing.opentelemtry = true has no effect");
+            warn!(
+                "This version of RustiCal is compiled without the opentelemetry feature. tracing.opentelemtry = true has no effect"
+            );
         }
     } else {
         registry.init();
