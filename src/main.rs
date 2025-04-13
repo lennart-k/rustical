@@ -1,20 +1,20 @@
 use crate::config::Config;
-use actix_web::http::KeepAlive;
 use actix_web::HttpServer;
+use actix_web::http::KeepAlive;
 use anyhow::Result;
 use app::make_app;
 use clap::{Parser, Subcommand};
 use commands::{cmd_gen_config, cmd_pwhash};
 use config::{DataStoreConfig, SqliteDataStoreConfig};
-use figment::providers::{Env, Format, Toml};
 use figment::Figment;
+use figment::providers::{Env, Format, Toml};
 use rustical_dav::push::push_notifier;
 use rustical_nextcloud_login::NextcloudFlows;
 use rustical_store::auth::TomlPrincipalStore;
 use rustical_store::{AddressbookStore, CalendarStore, CollectionOperation, SubscriptionStore};
 use rustical_store_sqlite::addressbook_store::SqliteAddressbookStore;
 use rustical_store_sqlite::calendar_store::SqliteCalendarStore;
-use rustical_store_sqlite::{create_db_pool, SqliteStore};
+use rustical_store_sqlite::{SqliteStore, create_db_pool};
 use setup_tracing::setup_tracing;
 use std::sync::Arc;
 use tokio::sync::mpsc::Receiver;
@@ -163,6 +163,13 @@ mod tests {
         ) -> Result<(), rustical_store::Error> {
             Err(rustical_store::Error::Other(anyhow!("Not implemented")))
         }
+
+        async fn insert_principal(
+            &self,
+            user: rustical_store::auth::User,
+        ) -> Result<(), rustical_store::Error> {
+            Err(rustical_store::Error::Other(anyhow!("Not implemented")))
+        }
     }
 
     #[tokio::test]
@@ -186,6 +193,7 @@ mod tests {
             FrontendConfig {
                 enabled: false,
                 secret_key: generate_frontend_secret(),
+                oidc: None,
             },
             NextcloudLoginConfig { enabled: false },
             Arc::new(NextcloudFlows::default()),
