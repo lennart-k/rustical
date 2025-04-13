@@ -17,6 +17,6 @@
   {% if let Some(OidcProviderData {name, redirect_url}) = oidc_data %}
   <a href="{{ redirect_url }}">Login with {{ name }}</a>
   {% endif %}
-
-  {% endblock %}
 </div>
+
+{% endblock %}

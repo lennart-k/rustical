@@ -1,11 +1,11 @@
 use actix_web::{
+    HttpRequest, HttpResponse, Responder,
     http::header::{self},
     web::{self, Data, Form, Html, Json, Path, ServiceConfig},
-    HttpRequest, HttpResponse, Responder,
 };
 use askama::Template;
 use chrono::{DateTime, Duration, Utc};
-use rand::{distributions::Alphanumeric, Rng};
+use rand::{Rng, distributions::Alphanumeric};
 use rustical_store::auth::{AuthenticationMiddleware, AuthenticationProvider, User};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
@@ -141,7 +141,7 @@ fn generate_app_token() -> String {
 }
 
 #[derive(Template)]
-#[template(path = "pages/nextcloud_login_form.html")]
+#[template(path = "pages/nextcloud_login/form.html")]
 struct NextcloudLoginPage {
     username: String,
     app_name: String,
@@ -176,7 +176,7 @@ struct NextcloudAuthorizeForm {
 }
 
 #[derive(Template)]
-#[template(path = "pages/nextcloud_login_success.html")]
+#[template(path = "pages/nextcloud_login/success.html")]
 struct NextcloudLoginSuccessPage {
     app_name: String,
 }

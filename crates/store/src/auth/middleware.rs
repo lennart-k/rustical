@@ -1,4 +1,4 @@
-use super::{AuthenticationProvider, User};
+use super::AuthenticationProvider;
 use actix_session::Session;
 use actix_web::{
     FromRequest, HttpMessage,

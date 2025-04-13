@@ -1,11 +1,11 @@
 use actix_web::body::MessageBody;
 use actix_web::dev::{ServiceFactory, ServiceRequest, ServiceResponse};
 use actix_web::middleware::NormalizePath;
-use actix_web::{web, App};
+use actix_web::{App, web};
 use rustical_caldav::caldav_service;
 use rustical_carddav::carddav_service;
-use rustical_frontend::{configure_frontend, FrontendConfig};
-use rustical_nextcloud_login::{configure_nextcloud_login, NextcloudFlows};
+use rustical_frontend::nextcloud_login::{NextcloudFlows, configure_nextcloud_login};
+use rustical_frontend::{FrontendConfig, configure_frontend};
 use rustical_store::auth::AuthenticationProvider;
 use rustical_store::{AddressbookStore, CalendarStore, SubscriptionStore};
 use std::sync::Arc;

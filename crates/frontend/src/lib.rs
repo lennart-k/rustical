@@ -26,6 +26,7 @@ use std::sync::Arc;
 
 mod assets;
 mod config;
+pub mod nextcloud_login;
 mod oidc;
 mod routes;
 

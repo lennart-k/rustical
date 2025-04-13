@@ -9,7 +9,7 @@ use config::{DataStoreConfig, SqliteDataStoreConfig};
 use figment::Figment;
 use figment::providers::{Env, Format, Toml};
 use rustical_dav::push::push_notifier;
-use rustical_nextcloud_login::NextcloudFlows;
+use rustical_frontend::nextcloud_login::NextcloudFlows;
 use rustical_store::auth::TomlPrincipalStore;
 use rustical_store::{AddressbookStore, CalendarStore, CollectionOperation, SubscriptionStore};
 use rustical_store_sqlite::addressbook_store::SqliteAddressbookStore;
@@ -131,7 +131,7 @@ mod tests {
     use anyhow::anyhow;
     use async_trait::async_trait;
     use rustical_frontend::FrontendConfig;
-    use rustical_nextcloud_login::NextcloudFlows;
+    use rustical_frontend::nextcloud_login::NextcloudFlows;
     use rustical_store::auth::AuthenticationProvider;
     use std::sync::Arc;
 

@@ -3012,7 +3012,6 @@ dependencies = [
  "rustical_carddav",
  "rustical_dav",
  "rustical_frontend",
- "rustical_nextcloud_login",
  "rustical_store",
  "rustical_store_sqlite",
  "serde",
@@ -3105,30 +3104,13 @@ dependencies = [
  "actix-web",
  "askama",
  "askama_web",
- "futures-core",
- "hex",
- "mime_guess",
- "openidconnect",
- "reqwest",
- "rust-embed",
- "rustical_store",
- "serde",
- "thiserror 2.0.12",
- "tokio",
-]
-
-[[package]]
-name = "rustical_nextcloud_login"
-version = "0.1.0"
-dependencies = [
- "actix-session",
- "actix-web",
- "askama",
  "chrono",
  "futures-core",
  "hex",
  "mime_guess",
+ "openidconnect",
  "rand 0.8.5",
+ "reqwest",
  "rust-embed",
  "rustical_store",
  "serde",

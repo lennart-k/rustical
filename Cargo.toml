@@ -94,7 +94,6 @@ rustical_caldav = { path = "./crates/caldav/" }
 rustical_carddav = { path = "./crates/carddav/" }
 rustical_frontend = { path = "./crates/frontend/" }
 rustical_xml = { path = "./crates/xml/" }
-rustical_nextcloud_login = { path = "./crates/nextcloud_login/" }
 chrono-tz = "0.10"
 rand = "0.8"
 argon2 = "0.5"
@@ -152,5 +151,4 @@ pbkdf2.workspace = true
 password-hash.workspace = true
 reqwest.workspace = true
 rustical_dav.workspace = true
-rustical_nextcloud_login.workspace = true
 quick-xml.workspace = true

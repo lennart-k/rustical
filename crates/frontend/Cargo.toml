@@ -21,3 +21,6 @@ futures-core.workspace = true
 hex.workspace = true
 mime_guess.workspace = true
 reqwest.workspace = true
+rand.workspace = true
+chrono.workspace = true
+uuid.workspace = true
