@@ -4,6 +4,9 @@
 
 <div class="login_window">
   <h1>Login</h1>
+  {% if let Some(redirect_uri) = redirect_uri %}
+  <p>and redirect to {{redirect_uri}}</p>
+  {% endif %}
   <form action="login" method="post" id="form_login">
     <label for="username">Username</label>
     <input type="text" id="username" name="username" placeholder="username">
@@ -11,11 +14,19 @@
     <label for="password">Password</label>
     <input type="password" id="password" name="password" placeholder="password">
     <br>
+    {% if let Some(redirect_uri) = redirect_uri %}
+    <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
+    {% endif %}
     <button type="submit">Login</button>
   </form>
 
   {% if let Some(OidcProviderData {name, redirect_url}) = oidc_data %}
-  <a href="{{ redirect_url }}">Login with {{ name }}</a>
+  <form action="{{ redirect_url }}" method="post" id="form_login">
+    {% if let Some(redirect_uri) = redirect_uri %}
+    <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
+    {% endif %}
+    <button type="submit">Login with {{ name }}</button>
+  </form>
   {% endif %}
 </div>
 

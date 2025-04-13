@@ -12,7 +12,7 @@ use actix_web::{
 use askama::Template;
 use askama_web::WebTemplate;
 use assets::{Assets, EmbedService};
-use oidc::{route_get_oidc, route_get_oidc_callback};
+use oidc::{route_get_oidc_callback, route_post_oidc};
 use routes::{
     addressbook::{route_addressbook, route_addressbook_restore},
     calendar::{route_calendar, route_calendar_restore},
@@ -44,7 +44,7 @@ struct UserPage {
 
 async fn route_user(user: User, req: HttpRequest) -> Redirect {
     Redirect::to(
-        req.url_for("frontend_user_named", &[&user.id])
+        req.url_for("frontend_user_named", &[user.id])
             .unwrap()
             .to_string(),
     )
@@ -105,15 +105,22 @@ async fn route_root(user: Option<User>, req: HttpRequest) -> impl Responder {
     web::Redirect::to(redirect_url.to_string()).permanent()
 }
 
-fn unauthorized_handler<B>(res: ServiceResponse<B>) -> actix_web::Result<ErrorHandlerResponse<B>> {
+pub(crate) fn unauthorized_handler<B>(
+    res: ServiceResponse<B>,
+) -> actix_web::Result<ErrorHandlerResponse<B>> {
     let (req, _) = res.into_parts();
-    let login_url = req.url_for_static("frontend_login").unwrap().to_string();
+    let redirect_uri = req.uri().to_string();
+    let mut login_url = req.url_for_static("frontend_login").unwrap();
+    login_url
+        .query_pairs_mut()
+        .append_pair("redirect_uri", &redirect_uri);
+    let login_url = login_url.to_string();
 
     let response = HttpResponse::Unauthorized().body(format!(
         r#"<!Doctype html>
         <html>
             <head>
-                <meta http-equiv="refresh" content="2; url={login_url}" />
+                <meta http-equiv="refresh" content="1; url={login_url}" />
             </head>
             <body>
                 Unauthorized, redirecting to <a href="{login_url}">login page</a>
@@ -196,7 +203,7 @@ pub fn configure_frontend<AP: AuthenticationProvider, CS: CalendarStore, AS: Add
             .service(
                 web::resource("/login/oidc")
                     .name("frontend_login_oidc")
-                    .route(web::method(Method::GET).to(route_get_oidc)),
+                    .route(web::method(Method::POST).to(route_post_oidc)),
             )
             .service(
                 web::resource("/login/oidc/callback")

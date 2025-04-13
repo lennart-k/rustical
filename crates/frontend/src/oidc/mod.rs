@@ -5,7 +5,7 @@ use actix_web::{
     body::BoxBody,
     error::UrlGenerationError,
     http::StatusCode,
-    web::{Data, Query, Redirect},
+    web::{Data, Form, Query, Redirect},
 };
 use openidconnect::{
     AuthenticationFlow, AuthorizationCode, ClaimsVerificationError, ConfigurationError, CsrfToken,
@@ -67,6 +67,7 @@ struct OidcState {
     state: CsrfToken,
     nonce: Nonce,
     pkce_verifier: PkceCodeVerifier,
+    redirect_uri: Option<String>,
 }
 
 fn get_http_client() -> reqwest::Client {
@@ -109,9 +110,15 @@ async fn get_oidc_client(
     .set_redirect_uri(redirect_uri))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct GetOidcForm {
+    redirect_uri: Option<String>,
+}
+
 /// Endpoint that redirects to the authorize endpoint of the OIDC service
-pub async fn route_get_oidc(
+pub async fn route_post_oidc(
     req: HttpRequest,
+    Form(GetOidcForm { redirect_uri }): Form<GetOidcForm>,
     config: Data<FrontendConfig>,
     session: Session,
 ) -> Result<impl Responder, OidcError> {
@@ -146,6 +153,7 @@ pub async fn route_get_oidc(
             state: csrf_token,
             nonce,
             pkce_verifier,
+            redirect_uri,
         },
     )?;
 
@@ -225,16 +233,23 @@ pub async fn route_get_oidc_callback<AP: AuthenticationProvider>(
         user = Some(new_user);
     }
 
+    let default_redirect = req.url_for_static("frontend_user")?.to_string();
+    let redirect_uri = oidc_state.redirect_uri.unwrap_or(default_redirect.clone());
+    let redirect_uri = req
+        .full_url()
+        .join(&redirect_uri)
+        .ok()
+        .and_then(|uri| req.full_url().make_relative(&uri))
+        .unwrap_or(default_redirect);
+
     // Complete login flow
     if let Some(user) = user {
         session.insert("user", user.id.clone())?;
 
-        Ok(
-            Redirect::to(req.url_for_static("frontend_user")?.to_string())
-                .temporary()
-                .respond_to(&req)
-                .map_into_boxed_body(),
-        )
+        Ok(Redirect::to(redirect_uri)
+            .temporary()
+            .respond_to(&req)
+            .map_into_boxed_body())
     } else {
         // Add user provisioning
         Ok(HttpResponse::build(StatusCode::UNAUTHORIZED).body("User does not exist"))

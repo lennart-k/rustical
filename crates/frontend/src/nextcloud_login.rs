@@ -1,6 +1,10 @@
 use actix_web::{
     HttpRequest, HttpResponse, Responder,
-    http::header::{self},
+    http::{
+        StatusCode,
+        header::{self},
+    },
+    middleware::ErrorHandlers,
     web::{self, Data, Form, Html, Json, Path, ServiceConfig},
 };
 use askama::Template;
@@ -10,6 +14,8 @@ use rustical_store::auth::{AuthenticationMiddleware, AuthenticationProvider, Use
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::RwLock;
+
+use crate::unauthorized_handler;
 
 #[derive(Debug, Clone)]
 struct NextcloudFlow {
@@ -217,6 +223,7 @@ pub fn configure_nextcloud_login<AP: AuthenticationProvider>(
 ) {
     cfg.service(
         web::scope("/index.php/login/v2")
+            .wrap(ErrorHandlers::new().handler(StatusCode::UNAUTHORIZED, unauthorized_handler))
             .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
             .app_data(Data::from(nextcloud_flows_state))
             .app_data(Data::from(auth_provider.clone()))
