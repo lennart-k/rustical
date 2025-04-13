@@ -9,6 +9,4 @@
 {% if let Some(description) = calendar.description %}<p>{{ description }}</p>{% endif%}
 
 <pre>{{ calendar|json }}</pre>
-
-<a href="/frontend/user/{{ calendar.principal }}">Back</a>
 {% endblock %}

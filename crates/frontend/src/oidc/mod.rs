@@ -230,7 +230,7 @@ pub async fn route_get_oidc_callback<AP: AuthenticationProvider>(
         session.insert("user", user.id.clone())?;
 
         Ok(
-            Redirect::to(req.url_for("frontend_user", &[user.id])?.to_string())
+            Redirect::to(req.url_for_static("frontend_user")?.to_string())
                 .temporary()
                 .respond_to(&req)
                 .map_into_boxed_body(),

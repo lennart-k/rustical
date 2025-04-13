@@ -54,11 +54,21 @@ li.collection-list-item {
 }
 </style>
 <h1>Welcome {{ user.id }}!</h1>
-  <form method="POST" action="/frontend/logout">
-    <button type="submit">Log out</button>
-  </form>
 
 <h2>Profile</h2>
+
+<form>
+  <label for="user_displayname">Displayname</label>
+  <input type="text" value="{{ user.displayname.clone().unwrap_or(String::new()) }}" id="user_displayname" />
+</form>
+
+<h3>Groups</h3>
+
+<ul>
+  {% for group in user.memberships %}
+    <li>{{ group }}</li>
+  {% endfor %}
+</ul>
 
 <h3>App tokens</h3>
 

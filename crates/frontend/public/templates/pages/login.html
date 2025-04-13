@@ -1,17 +1,22 @@
 {% extends "layouts/default.html" %}
 
 {% block content %}
-<h1>Login</h1>
-<form action="login" method="post">
-  <label for="username">Username</label>
-  <input type="text" name="username" placeholder="username">
-  <label for="password">Password</label>
-  <input type="password" name="password" placeholder="password">
-  <button type="submit">Login</button>
-</form>
 
-{% if let Some(OidcProviderData {name, redirect_url}) = oidc_data %}
-<a href="{{ redirect_url }}">Login with {{ name }}</a>
-{% endif %}
+<div class="login_window">
+  <h1>Login</h1>
+  <form action="login" method="post" id="form_login">
+    <label for="username">Username</label>
+    <input type="text" id="username" name="username" placeholder="username">
+    <br>
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" placeholder="password">
+    <br>
+    <button type="submit">Login</button>
+  </form>
 
-{% endblock %}
+  {% if let Some(OidcProviderData {name, redirect_url}) = oidc_data %}
+  <a href="{{ redirect_url }}">Login with {{ name }}</a>
+  {% endif %}
+
+  {% endblock %}
+</div>

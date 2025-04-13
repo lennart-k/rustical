@@ -10,7 +10,15 @@
 </head>
 
 <body>
-  <div id="app" hx-boost="true">
+  {% block header %}
+  <header>
+      <a href="/frontend/user">RustiCal</a>
+      <form method="POST" action="/frontend/logout" class="logout_form">
+        <button type="submit">Log out</button>
+      </form>
+  </header>
+  {% endblock %}
+  <div id="app">
     {% block content %}<p>Placeholder</p>{% endblock %}
   </div>
 </body>

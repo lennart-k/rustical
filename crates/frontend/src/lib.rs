@@ -7,7 +7,7 @@ use actix_web::{
     dev::ServiceResponse,
     http::{Method, StatusCode},
     middleware::{ErrorHandlerResponse, ErrorHandlers},
-    web::{self, Data, Path},
+    web::{self, Data, Path, Redirect},
 };
 use askama::Template;
 use askama_web::WebTemplate;
@@ -41,7 +41,16 @@ struct UserPage {
     pub deleted_addressbooks: Vec<Addressbook>,
 }
 
-async fn route_user<CS: CalendarStore, AS: AddressbookStore>(
+async fn route_user(user: User, req: HttpRequest) -> Redirect {
+    Redirect::to(
+        req.url_for("frontend_user_named", &[&user.id])
+            .unwrap()
+            .to_string(),
+    )
+    .see_other()
+}
+
+async fn route_user_named<CS: CalendarStore, AS: AddressbookStore>(
     path: Path<String>,
     cal_store: Data<CS>,
     addr_store: Data<AS>,
@@ -79,17 +88,14 @@ async fn route_user<CS: CalendarStore, AS: AddressbookStore>(
         deleted_calendars,
         addressbooks,
         deleted_addressbooks,
-        user: user,
+        user,
     }
     .respond_to(&req)
 }
 
 async fn route_root(user: Option<User>, req: HttpRequest) -> impl Responder {
     let redirect_url = match user {
-        Some(user) => req
-            .resource_map()
-            .url_for(&req, "frontend_user", &[user.id])
-            .unwrap(),
+        Some(_) => req.url_for_static("frontend_user").unwrap(),
         None => req
             .resource_map()
             .url_for::<[_; 0], String>(&req, "frontend_login", [])
@@ -150,9 +156,14 @@ pub fn configure_frontend<AP: AuthenticationProvider, CS: CalendarStore, AS: Add
             .service(EmbedService::<Assets>::new("/assets".to_owned()))
             .service(web::resource("").route(web::method(Method::GET).to(route_root)))
             .service(
-                web::resource("/user/{user}")
-                    .route(web::method(Method::GET).to(route_user::<CS, AS>))
+                web::resource("/user")
+                    .route(web::method(Method::GET).to(route_user))
                     .name("frontend_user"),
+            )
+            .service(
+                web::resource("/user/{user}")
+                    .route(web::method(Method::GET).to(route_user_named::<CS, AS>))
+                    .name("frontend_user_named"),
             )
             .service(
                 web::resource("/user/{user}/calendar/{calendar}")

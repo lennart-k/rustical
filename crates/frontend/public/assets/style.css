@@ -1,7 +1,39 @@
 body {
   font-family: sans-serif;
+  margin: 0;
 }
 
 * {
   box-sizing: border-box;
+}
+
+#app {
+  padding: 12px;
+}
+
+header {
+  background: #EEE;
+  height: 80px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  font-size: 2em;
+
+  a {
+    text-decoration: none;
+    color: black;
+  }
+
+
+  .logout_form {
+    margin-left: auto;
+  }
+}
+
+.login_window {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
