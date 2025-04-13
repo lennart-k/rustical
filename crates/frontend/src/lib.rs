@@ -34,7 +34,7 @@ pub use config::FrontendConfig;
 #[derive(Template, WebTemplate)]
 #[template(path = "pages/user.html")]
 struct UserPage {
-    pub user_id: String,
+    pub user: User,
     pub calendars: Vec<Calendar>,
     pub deleted_calendars: Vec<Calendar>,
     pub addressbooks: Vec<Addressbook>,
@@ -53,19 +53,33 @@ async fn route_user<CS: CalendarStore, AS: AddressbookStore>(
     if user_id != user.id {
         return actix_web::HttpResponse::Unauthorized().body("Unauthorized");
     }
-    dbg!(&user);
 
     let mut calendars = vec![];
     for group in user.memberships() {
         calendars.extend(cal_store.get_calendars(group).await.unwrap());
     }
 
+    let mut deleted_calendars = vec![];
+    for group in user.memberships() {
+        deleted_calendars.extend(cal_store.get_deleted_calendars(group).await.unwrap());
+    }
+
+    let mut addressbooks = vec![];
+    for group in user.memberships() {
+        addressbooks.extend(addr_store.get_addressbooks(group).await.unwrap());
+    }
+
+    let mut deleted_addressbooks = vec![];
+    for group in user.memberships() {
+        deleted_addressbooks.extend(addr_store.get_deleted_addressbooks(group).await.unwrap());
+    }
+
     UserPage {
         calendars,
-        deleted_calendars: cal_store.get_deleted_calendars(&user.id).await.unwrap(),
-        addressbooks: addr_store.get_addressbooks(&user.id).await.unwrap(),
-        deleted_addressbooks: addr_store.get_deleted_addressbooks(&user.id).await.unwrap(),
-        user_id: user.id,
+        deleted_calendars,
+        addressbooks,
+        deleted_addressbooks,
+        user: user,
     }
     .respond_to(&req)
 }

@@ -53,10 +53,26 @@ li.collection-list-item {
   }
 }
 </style>
-<h1>Welcome {{ user_id }}!</h1>
+<h1>Welcome {{ user.id }}!</h1>
   <form method="POST" action="/frontend/logout">
     <button type="submit">Log out</button>
   </form>
+
+<h2>Profile</h2>
+
+<h3>App tokens</h3>
+
+<ul>
+  {% for app_token in user.app_tokens %}
+  <li>
+    {{ app_token.name }}
+    {% if let Some(created_at) = app_token.created_at %}
+      {{ created_at.to_rfc3339() }}
+    {% endif %}
+  </li>
+  {% endfor %}
+</ul>
+
 
 <h2>Calendars</h2>
 <ul>
@@ -89,7 +105,7 @@ li.collection-list-item {
       <span class="description">
       {% if let Some(description) = calendar.description %}{{ description }}{% endif %}
       </span>
-      <form action="/frontend/user/{{ user_id }}/calendar/{{ calendar.id}}/restore" method="POST" class="restore-form">
+      <form action="/frontend/user/{{ calendar.principal }}/calendar/{{ calendar.id}}/restore" method="POST" class="restore-form">
         <button type="submit">Restore</button>
       </form>
       <div class="color-chip"></div>
@@ -124,7 +140,7 @@ li.collection-list-item {
       <span class="description">
       {% if let Some(description) = addressbook.description %}{{ description }}{% endif %}
       </span>
-      <form action="/frontend/user/{{ user_id }}/addressbook/{{ addressbook.id}}/restore" method="POST" class="restore-form">
+      <form action="/frontend/user/{{ addressbook.principal }}/addressbook/{{ addressbook.id}}/restore" method="POST" class="restore-form">
         <button type="submit">Restore</button>
       </form>
     </a>
