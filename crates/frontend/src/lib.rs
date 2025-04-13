@@ -16,7 +16,7 @@ use oidc::{route_get_oidc, route_get_oidc_callback};
 use routes::{
     addressbook::{route_addressbook, route_addressbook_restore},
     calendar::{route_calendar, route_calendar_restore},
-    login::{route_get_login, route_post_login},
+    login::{route_get_login, route_post_login, route_post_logout},
 };
 use rustical_store::{
     Addressbook, AddressbookStore, Calendar, CalendarStore,
@@ -161,6 +161,11 @@ pub fn configure_frontend<AP: AuthenticationProvider, CS: CalendarStore, AS: Add
                     .name("frontend_login")
                     .route(web::method(Method::GET).to(route_get_login))
                     .route(web::method(Method::POST).to(route_post_login::<AP>)),
+            )
+            .service(
+                web::resource("/logout")
+                    .name("frontend_logout")
+                    .route(web::method(Method::POST).to(route_post_logout)),
             )
             .service(
                 web::resource("/login/oidc")

@@ -54,3 +54,8 @@ pub async fn route_post_login<AP: AuthenticationProvider>(
         ErrorUnauthorized("Unauthorized").error_response()
     }
 }
+
+pub async fn route_post_logout(req: HttpRequest, session: Session) -> Redirect {
+    session.remove("user");
+    Redirect::to(req.url_for_static("frontend_login").unwrap().to_string()).see_other()
+}

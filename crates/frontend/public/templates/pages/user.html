@@ -54,6 +54,9 @@ li.collection-list-item {
 }
 </style>
 <h1>Welcome {{ user_id }}!</h1>
+  <form method="POST" action="/frontend/logout">
+    <button type="submit">Log out</button>
+  </form>
 
 <h2>Calendars</h2>
 <ul>
