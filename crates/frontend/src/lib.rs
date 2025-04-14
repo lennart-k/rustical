@@ -128,6 +128,7 @@ async fn route_post_app_token<AP: AuthenticationProvider>(
     path: Path<String>,
     Form(PostAppTokenForm { name }): Form<PostAppTokenForm>,
 ) -> Result<impl Responder, rustical_store::Error> {
+    assert!(!name.is_empty());
     assert_eq!(path.into_inner(), user.id);
     let token = generate_app_token();
     auth_provider
