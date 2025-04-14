@@ -15,7 +15,7 @@ a CalDAV/CardDAV server
 - adequately fast (I'd say blazingly fast™ :fire: if I did the benchmarks to back that claim up)
 - deleted calendars are recoverable
 - Nextcloud login flow (In DAVx5 you can login through the Nextcloud flow and automatically generate an app token)
-- experimental OpenID Connect support
+- experimental OpenID Connect support (with option to disable password login)
 
 ## Installation
 
