@@ -164,6 +164,14 @@ mod tests {
             Err(rustical_store::Error::Other(anyhow!("Not implemented")))
         }
 
+        async fn remove_app_token(
+            &self,
+            user_id: &str,
+            token_id: &str,
+        ) -> Result<(), rustical_store::Error> {
+            Err(rustical_store::Error::Other(anyhow!("Not implemented")))
+        }
+
         async fn insert_principal(
             &self,
             user: rustical_store::auth::User,
