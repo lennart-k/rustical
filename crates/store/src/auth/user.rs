@@ -37,6 +37,7 @@ impl ValueSerialize for PrincipalType {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AppToken {
+    pub id: String,
     pub name: String,
     pub token: String,
     pub created_at: Option<DateTime<Utc>>,

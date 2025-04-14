@@ -72,24 +72,47 @@ li.collection-list-item {
 
 <h3>App tokens</h3>
 
-<ul>
+<table>
+  <tr>
+    <th>Name</th>
+    <th>Created at</th>
+    <th></th>
+  </tr>
   {% for app_token in user.app_tokens %}
-  <li>
-    {{ app_token.name }}
-    {% if let Some(created_at) = app_token.created_at %}
-      {{ created_at.to_rfc3339() }}
-    {% endif %}
-  </li>
+  <tr>
+    <td>{{ app_token.name }}</td>
+    <td>
+      {% if let Some(created_at) = app_token.created_at %}
+        {{ created_at.to_rfc3339() }}
+      {% endif %}
+    </td>
+    <td>
+      <form action="/frontend/user/{{ user.id }}/app_token/{{ app_token.id }}/delete" method="POST">
+        <button type="submit">Delete</button>
+      </form>
+    </td>
+  </tr>
   {% endfor %}
-</ul>
-
+  <tr>
+    <form action="/frontend/user/{{ user.id }}/app_token" method="POST">
+      <td>
+        <label for="generate_app_token_name">App name</label>
+        <input type="text" name="name" id="generate_app_token_name" />
+      </td>
+      <td></td>
+      <td>
+        <button type="submit">Generate</button>
+      </td>
+    </form>
+  </tr>
+</table>
 
 <h2>Calendars</h2>
 <ul>
   {% for calendar in calendars %}
   {% let color = calendar.color.to_owned().unwrap_or("red".to_owned()) %}
   <li class="collection-list-item" style="--color: {{ color }}">
-    <a href="/frontend/user/{{ calendar.principal }}/calendar/{{ calendar.id}}">
+    <a href="/frontend/user/{{ calendar.principal }}/calendar/{{ calendar.id }}">
       <span class="title">{{ calendar.displayname.to_owned().unwrap_or(calendar.id.to_owned()) }}</span>
       <span class="description">
       {% if let Some(description) = calendar.description %}{{ description }}{% endif %}

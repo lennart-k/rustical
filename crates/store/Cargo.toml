@@ -28,6 +28,7 @@ rustical_xml.workspace = true
 toml.workspace = true
 tokio.workspace = true
 rand.workspace = true
+uuid.workspace = true
 
 [dev-dependencies]
 rstest = { workspace = true }

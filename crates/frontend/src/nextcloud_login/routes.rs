@@ -1,55 +1,21 @@
-use actix_session::{
-    SessionMiddleware, config::CookieContentSecurity, storage::CookieSessionStore,
+use crate::generate_app_token;
+
+use super::{
+    NextcloudFlow, NextcloudFlows, NextcloudLoginPoll, NextcloudLoginResponse,
+    NextcloudSuccessResponse,
 };
 use actix_web::{
     HttpRequest, HttpResponse, Responder,
-    cookie::{Key, SameSite},
-    http::{
-        StatusCode,
-        header::{self},
-    },
-    middleware::ErrorHandlers,
-    web::{self, Data, Form, Html, Json, Path, ServiceConfig},
+    http::header::{self},
+    web::{Data, Form, Html, Json, Path},
 };
 use askama::Template;
-use chrono::{DateTime, Duration, Utc};
-use rand::{Rng, distributions::Alphanumeric};
-use rustical_store::auth::{AuthenticationMiddleware, AuthenticationProvider, User};
+use chrono::{Duration, Utc};
+use rustical_store::auth::{AuthenticationProvider, User};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, sync::Arc};
-use tokio::sync::RwLock;
 use tracing::instrument;
 
-use crate::unauthorized_handler;
-
-#[derive(Debug, Clone)]
-struct NextcloudFlow {
-    app_name: String,
-    created_at: DateTime<Utc>,
-    token: String,
-    response: Option<NextcloudSuccessResponse>,
-}
-
-#[derive(Debug, Default)]
-pub struct NextcloudFlows {
-    flows: RwLock<HashMap<String, NextcloudFlow>>,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct NextcloudLoginPoll {
-    token: String,
-    endpoint: String,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct NextcloudLoginResponse {
-    poll: NextcloudLoginPoll,
-    login: String,
-}
-
-async fn post_nextcloud_login(
+pub(crate) async fn post_nextcloud_login(
     req: HttpRequest,
     state: Data<NextcloudFlows>,
 ) -> Json<NextcloudLoginResponse> {
@@ -95,19 +61,11 @@ async fn post_nextcloud_login(
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct NextcloudSuccessResponse {
-    server: String,
-    login_name: String,
-    app_password: String,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct NextcloudPollForm {
+pub(crate) struct NextcloudPollForm {
     token: String,
 }
 
-async fn post_nextcloud_poll<AP: AuthenticationProvider>(
+pub(crate) async fn post_nextcloud_poll<AP: AuthenticationProvider>(
     state: Data<NextcloudFlows>,
     form: Form<NextcloudPollForm>,
     path: Path<String>,
@@ -143,14 +101,6 @@ async fn post_nextcloud_poll<AP: AuthenticationProvider>(
     }
 }
 
-fn generate_app_token() -> String {
-    rand::thread_rng()
-        .sample_iter(Alphanumeric)
-        .map(char::from)
-        .take(64)
-        .collect()
-}
-
 #[derive(Template)]
 #[template(path = "pages/nextcloud_login/form.html")]
 struct NextcloudLoginPage {
@@ -159,7 +109,7 @@ struct NextcloudLoginPage {
 }
 
 #[instrument(skip(state, req))]
-async fn get_nextcloud_flow(
+pub(crate) async fn get_nextcloud_flow(
     user: User,
     state: Data<NextcloudFlows>,
     path: Path<String>,
@@ -183,7 +133,7 @@ async fn get_nextcloud_flow(
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-struct NextcloudAuthorizeForm {
+pub(crate) struct NextcloudAuthorizeForm {
     app_name: String,
 }
 
@@ -194,7 +144,7 @@ struct NextcloudLoginSuccessPage {
 }
 
 #[instrument(skip(state, req))]
-async fn post_nextcloud_flow(
+pub(crate) async fn post_nextcloud_flow(
     user: User,
     state: Data<NextcloudFlows>,
     path: Path<String>,
@@ -221,41 +171,4 @@ async fn post_nextcloud_flow(
     } else {
         Ok(HttpResponse::NotFound().body("Login flow not found"))
     }
-}
-
-pub fn configure_nextcloud_login<AP: AuthenticationProvider>(
-    cfg: &mut ServiceConfig,
-    nextcloud_flows_state: Arc<NextcloudFlows>,
-    auth_provider: Arc<AP>,
-    frontend_secret: [u8; 64],
-) {
-    cfg.service(
-        web::scope("/index.php/login/v2")
-            .wrap(ErrorHandlers::new().handler(StatusCode::UNAUTHORIZED, unauthorized_handler))
-            .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
-            .wrap(
-                SessionMiddleware::builder(
-                    CookieSessionStore::default(),
-                    Key::from(&frontend_secret),
-                )
-                .cookie_secure(true)
-                .cookie_same_site(SameSite::Strict)
-                .cookie_content_security(CookieContentSecurity::Private)
-                .build(),
-            )
-            .app_data(Data::from(nextcloud_flows_state))
-            .app_data(Data::from(auth_provider.clone()))
-            .service(web::resource("").post(post_nextcloud_login))
-            .service(
-                web::resource("/poll/{flow}")
-                    .name("nc_login_poll")
-                    .post(post_nextcloud_poll::<AP>),
-            )
-            .service(
-                web::resource("/flow/{flow}")
-                    .name("nc_login_flow")
-                    .get(get_nextcloud_flow)
-                    .post(post_nextcloud_flow),
-            ),
-    );
 }

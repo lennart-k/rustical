@@ -1,5 +1,7 @@
 use actix_session::{
-    SessionMiddleware, config::CookieContentSecurity, storage::CookieSessionStore,
+    SessionMiddleware,
+    config::CookieContentSecurity,
+    storage::{CookieSessionStore, SessionStore},
 };
 use actix_web::{
     HttpRequest, HttpResponse, Responder,
@@ -7,12 +9,13 @@ use actix_web::{
     dev::ServiceResponse,
     http::{Method, StatusCode},
     middleware::{ErrorHandlerResponse, ErrorHandlers},
-    web::{self, Data, Path, Redirect},
+    web::{self, Data, Form, Path, Redirect},
 };
 use askama::Template;
 use askama_web::WebTemplate;
 use assets::{Assets, EmbedService};
 use oidc::{route_get_oidc_callback, route_post_oidc};
+use rand::{Rng, distributions::Alphanumeric};
 use routes::{
     addressbook::{route_addressbook, route_addressbook_restore},
     calendar::{route_calendar, route_calendar_restore},
@@ -22,6 +25,7 @@ use rustical_store::{
     Addressbook, AddressbookStore, Calendar, CalendarStore,
     auth::{AuthenticationMiddleware, AuthenticationProvider, User},
 };
+use serde::Deserialize;
 use std::sync::Arc;
 
 mod assets;
@@ -31,6 +35,14 @@ mod oidc;
 mod routes;
 
 pub use config::FrontendConfig;
+
+pub fn generate_app_token() -> String {
+    rand::thread_rng()
+        .sample_iter(Alphanumeric)
+        .map(char::from)
+        .take(64)
+        .collect()
+}
 
 #[derive(Template, WebTemplate)]
 #[template(path = "pages/user.html")]
@@ -105,6 +117,36 @@ async fn route_root(user: Option<User>, req: HttpRequest) -> impl Responder {
     web::Redirect::to(redirect_url.to_string()).permanent()
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub(crate) struct PostAppTokenForm {
+    name: String,
+}
+
+async fn route_post_app_token<AP: AuthenticationProvider>(
+    user: User,
+    auth_provider: Data<AP>,
+    path: Path<String>,
+    Form(PostAppTokenForm { name }): Form<PostAppTokenForm>,
+) -> Result<impl Responder, rustical_store::Error> {
+    assert_eq!(path.into_inner(), user.id);
+    let token = generate_app_token();
+    auth_provider
+        .add_app_token(&user.id, name, token.clone())
+        .await?;
+    Ok(token)
+}
+
+async fn route_delete_app_token<AP: AuthenticationProvider>(
+    user: User,
+    auth_provider: Data<AP>,
+    path: Path<(String, String)>,
+) -> Result<Redirect, rustical_store::Error> {
+    let (path_user, token_id) = path.into_inner();
+    assert_eq!(path_user, user.id);
+    auth_provider.remove_app_token(&user.id, &token_id).await?;
+    Ok(Redirect::to("/frontend/user").see_other())
+}
+
 pub(crate) fn unauthorized_handler<B>(
     res: ServiceResponse<B>,
 ) -> actix_web::Result<ErrorHandlerResponse<B>> {
@@ -136,6 +178,14 @@ pub(crate) fn unauthorized_handler<B>(
     Ok(ErrorHandlerResponse::Response(res))
 }
 
+pub fn session_middleware(frontend_secret: [u8; 64]) -> SessionMiddleware<impl SessionStore> {
+    SessionMiddleware::builder(CookieSessionStore::default(), Key::from(&frontend_secret))
+        .cookie_secure(true)
+        .cookie_same_site(SameSite::Strict)
+        .cookie_content_security(CookieContentSecurity::Private)
+        .build()
+}
+
 pub fn configure_frontend<AP: AuthenticationProvider, CS: CalendarStore, AS: AddressbookStore>(
     cfg: &mut web::ServiceConfig,
     auth_provider: Arc<AP>,
@@ -147,16 +197,7 @@ pub fn configure_frontend<AP: AuthenticationProvider, CS: CalendarStore, AS: Add
         web::scope("")
             .wrap(ErrorHandlers::new().handler(StatusCode::UNAUTHORIZED, unauthorized_handler))
             .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
-            .wrap(
-                SessionMiddleware::builder(
-                    CookieSessionStore::default(),
-                    Key::from(&frontend_config.secret_key),
-                )
-                .cookie_secure(true)
-                .cookie_same_site(SameSite::Strict)
-                .cookie_content_security(CookieContentSecurity::Private)
-                .build(),
-            )
+            .wrap(session_middleware(frontend_config.secret_key))
             .app_data(Data::from(auth_provider))
             .app_data(Data::from(cal_store.clone()))
             .app_data(Data::from(addr_store.clone()))
@@ -172,6 +213,14 @@ pub fn configure_frontend<AP: AuthenticationProvider, CS: CalendarStore, AS: Add
                 web::resource("/user/{user}")
                     .route(web::method(Method::GET).to(route_user_named::<CS, AS>))
                     .name("frontend_user_named"),
+            )
+            .service(
+                web::resource("/user/{user}/app_token")
+                    .route(web::method(Method::POST).to(route_post_app_token::<AP>)),
+            )
+            .service(
+                web::resource("/user/{user}/app_token/{id}/delete")
+                    .route(web::method(Method::POST).to(route_delete_app_token::<AP>)),
             )
             .service(
                 web::resource("/user/{user}/calendar/{calendar}")

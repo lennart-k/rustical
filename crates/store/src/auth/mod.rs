@@ -9,7 +9,14 @@ pub trait AuthenticationProvider: 'static {
     async fn get_principal(&self, id: &str) -> Result<Option<User>, crate::Error>;
     async fn insert_principal(&self, user: User) -> Result<(), crate::Error>;
     async fn validate_user_token(&self, user_id: &str, token: &str) -> Result<Option<User>, Error>;
-    async fn add_app_token(&self, user_id: &str, name: String, token: String) -> Result<(), Error>;
+    /// Returns a token identifier
+    async fn add_app_token(
+        &self,
+        user_id: &str,
+        name: String,
+        token: String,
+    ) -> Result<String, Error>;
+    async fn remove_app_token(&self, user_id: &str, token_id: &str) -> Result<(), Error>;
 }
 
 pub use middleware::AuthenticationMiddleware;

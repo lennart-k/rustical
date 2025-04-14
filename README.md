@@ -32,6 +32,7 @@ docker run \
   -p 4000:4000 \
   -v YOUR_DATA_DIR:/var/lib/rustical/ \
   -v YOUR_CONFIG_TOML:/etc/rustical/config.toml \
+  -v YOUR_PRINCIPALS_TOML:/etc/rustical/principals.toml \
   ghcr.io/lennart-k/rustical
 ```
 
@@ -77,7 +78,7 @@ id = "user"
 displayname = "User"
 password = "$argon2id$......."
 app_tokens = [
-  {name = "Token", token = "$pbkdf2-sha256$........"},
+  {id = "1", name = "Token", token = "$pbkdf2-sha256$........"},
 ]
 memberships = ["group:amazing_group"]
 
@@ -107,8 +108,9 @@ docker run -it --rm ghcr.io/lennart-k/rustical rustical pwhash
 The password is meant as a password you use to log in to the frontend.
 Since it's sensitive information,
 the secure but slow hash algorithm `argon2` is chosen.
+If you've configured OpenID Connect you can also completely omit the password.
 
-I recommend to generate random app tokens for each CalDAV/CardDAV client.
+I recommend to generate random app tokens for each CalDAV/CardDAV client (which can also be done through the frontend).
 These can use the faster `pbkdf2` algorithm.
 
 ### WebDAV Push

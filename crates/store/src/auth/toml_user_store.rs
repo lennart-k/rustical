@@ -101,9 +101,16 @@ impl AuthenticationProvider for TomlPrincipalStore {
         Ok(None)
     }
 
-    async fn add_app_token(&self, user_id: &str, name: String, token: String) -> Result<(), Error> {
+    /// Returns an identifier for the new app token
+    async fn add_app_token(
+        &self,
+        user_id: &str,
+        name: String,
+        token: String,
+    ) -> Result<String, Error> {
         let mut principals = self.principals.write().await;
         if let Some(principal) = principals.get_mut(user_id) {
+            let id = uuid::Uuid::new_v4().to_string();
             let salt = SaltString::generate(OsRng);
             let token_hash = pbkdf2::Pbkdf2
                 .hash_password_customized(
@@ -122,11 +129,23 @@ impl AuthenticationProvider for TomlPrincipalStore {
                 name,
                 token: token_hash,
                 created_at: Some(chrono::Utc::now()),
+                id: id.clone(),
             });
             self.save(principals.deref())?;
-            Ok(())
+            Ok(id)
         } else {
             Err(Error::NotFound)
         }
+    }
+
+    async fn remove_app_token(&self, user_id: &str, token_id: &str) -> Result<(), Error> {
+        let mut principals = self.principals.write().await;
+        if let Some(principal) = principals.get_mut(user_id) {
+            principal
+                .app_tokens
+                .retain(|AppToken { id, .. }| token_id != id);
+            self.save(principals.deref())?;
+        }
+        Ok(())
     }
 }

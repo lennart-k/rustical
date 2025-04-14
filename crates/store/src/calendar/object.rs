@@ -1,6 +1,6 @@
 use super::{CalDateTime, EventObject, JournalObject, TodoObject};
 use crate::Error;
-use ical::parser::{ical::component::IcalTimeZone, Component};
+use ical::parser::{Component, ical::component::IcalTimeZone};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::{collections::HashMap, io::BufReader};
@@ -13,14 +13,19 @@ pub enum CalendarObjectType {
     Journal = 2,
 }
 
-impl rustical_xml::ValueSerialize for CalendarObjectType {
-    fn serialize(&self) -> String {
+impl CalendarObjectType {
+    pub fn as_str(&self) -> &'static str {
         match self {
             CalendarObjectType::Event => "VEVENT",
             CalendarObjectType::Todo => "VTODO",
             CalendarObjectType::Journal => "VJOURNAL",
         }
-        .to_owned()
+    }
+}
+
+impl rustical_xml::ValueSerialize for CalendarObjectType {
+    fn serialize(&self) -> String {
+        self.as_str().to_owned()
     }
 }
 
