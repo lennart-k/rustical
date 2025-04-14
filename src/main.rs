@@ -210,6 +210,7 @@ mod tests {
                 enabled: false,
                 secret_key: generate_frontend_secret(),
                 oidc: None,
+                allow_password_login: false,
             },
             NextcloudLoginConfig { enabled: false },
             Arc::new(NextcloudFlows::default()),
