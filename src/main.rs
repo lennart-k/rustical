@@ -147,7 +147,15 @@ mod tests {
             Err(rustical_store::Error::NotFound)
         }
 
-        async fn validate_user_token(
+        async fn validate_password(
+            &self,
+            user_id: &str,
+            password: &str,
+        ) -> Result<Option<rustical_store::auth::User>, rustical_store::Error> {
+            Err(rustical_store::Error::NotFound)
+        }
+
+        async fn validate_app_token(
             &self,
             user_id: &str,
             token: &str,

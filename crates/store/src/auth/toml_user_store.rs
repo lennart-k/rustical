@@ -75,29 +75,37 @@ impl AuthenticationProvider for TomlPrincipalStore {
         Ok(())
     }
 
-    async fn validate_user_token(&self, user_id: &str, token: &str) -> Result<Option<User>, Error> {
+    async fn validate_password(
+        &self,
+        user_id: &str,
+        password_input: &str,
+    ) -> Result<Option<User>, Error> {
         let user: User = match self.get_principal(user_id).await? {
             Some(user) => user,
             None => return Ok(None),
         };
-
-        // Try app tokens first since they are cheaper to calculate
-        // They can afford less iterations since they can be generated with high entropy
-        for app_token in &user.app_tokens {
-            if password_auth::verify_password(token, &app_token.token).is_ok() {
-                return Ok(Some(user));
-            }
-        }
-
         let password = match &user.password {
             Some(password) => password,
             None => return Ok(None),
         };
 
-        if password_auth::verify_password(token, password).is_ok() {
+        if password_auth::verify_password(password_input, password).is_ok() {
             return Ok(Some(user));
         }
+        Ok(None)
+    }
 
+    async fn validate_app_token(&self, user_id: &str, token: &str) -> Result<Option<User>, Error> {
+        let user: User = match self.get_principal(user_id).await? {
+            Some(user) => user,
+            None => return Ok(None),
+        };
+
+        for app_token in &user.app_tokens {
+            if password_auth::verify_password(token, &app_token.token).is_ok() {
+                return Ok(Some(user));
+            }
+        }
         Ok(None)
     }
 

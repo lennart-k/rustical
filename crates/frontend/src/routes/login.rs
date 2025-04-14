@@ -70,10 +70,7 @@ pub async fn route_post_login<AP: AuthenticationProvider>(
         .and_then(|uri| req.full_url().make_relative(&uri))
         .unwrap_or(default_redirect);
 
-    if let Ok(Some(user)) = auth_provider
-        .validate_user_token(&username, &password)
-        .await
-    {
+    if let Ok(Some(user)) = auth_provider.validate_password(&username, &password).await {
         session.insert("user", user.id).unwrap();
         Redirect::to(redirect_uri)
             .see_other()

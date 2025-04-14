@@ -105,13 +105,13 @@ docker run -it --rm ghcr.io/lennart-k/rustical rustical pwhash
 
 ### Password vs app tokens
 
-The password is meant as a password you use to log in to the frontend.
+The password is optional (if you have configured OpenID Connect) and is only used to log in to the frontend.
 Since it's sensitive information,
 the secure but slow hash algorithm `argon2` is chosen.
-If you've configured OpenID Connect you can also completely omit the password.
 
-I recommend to generate random app tokens for each CalDAV/CardDAV client (which can also be done through the frontend).
-These can use the faster `pbkdf2` algorithm.
+App tokens are used by your CalDAV/CardDAV client (which can be managed through the frontend).
+I recommend to generate random app tokens for each CalDAV/CardDAV client.
+Since the app tokens are random they use the faster `pbkdf2` algorithm.
 
 ### WebDAV Push
 
