@@ -160,7 +160,7 @@ mod tests {
             user_id: &str,
             name: String,
             token: String,
-        ) -> Result<(), rustical_store::Error> {
+        ) -> Result<String, rustical_store::Error> {
             Err(rustical_store::Error::Other(anyhow!("Not implemented")))
         }
 
