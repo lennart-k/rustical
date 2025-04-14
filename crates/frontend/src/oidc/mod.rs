@@ -1,59 +1,21 @@
 use crate::{FrontendConfig, config::OidcConfig};
-use actix_session::{Session, SessionInsertError};
+use actix_session::Session;
 use actix_web::{
-    HttpRequest, HttpResponse, Responder, ResponseError,
-    body::BoxBody,
-    error::UrlGenerationError,
+    HttpRequest, HttpResponse, Responder,
     http::StatusCode,
     web::{Data, Form, Query, Redirect},
 };
+use error::OidcError;
 use openidconnect::{
-    AuthenticationFlow, AuthorizationCode, ClaimsVerificationError, ConfigurationError, CsrfToken,
-    EmptyAdditionalClaims, EndpointMaybeSet, EndpointNotSet, EndpointSet, IssuerUrl, Nonce,
-    OAuth2TokenResponse, PkceCodeChallenge, PkceCodeVerifier, RedirectUrl, TokenResponse,
-    UserInfoClaims,
+    AuthenticationFlow, AuthorizationCode, CsrfToken, EmptyAdditionalClaims, EndpointMaybeSet,
+    EndpointNotSet, EndpointSet, IssuerUrl, Nonce, OAuth2TokenResponse, PkceCodeChallenge,
+    PkceCodeVerifier, RedirectUrl, TokenResponse, UserInfoClaims,
     core::{CoreClient, CoreGenderClaim, CoreProviderMetadata, CoreResponseType},
-    url::ParseError,
 };
 use rustical_store::auth::{AuthenticationProvider, User, user::PrincipalType::Individual};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, thiserror::Error)]
-pub enum OidcError {
-    #[error("Cannot generate redirect url, something's not configured correctly")]
-    OidcParseError(#[from] ParseError),
-
-    #[error("Cannot generate redirect url, something's not configured correctly")]
-    ActixUrlGenerationError(#[from] UrlGenerationError),
-
-    #[error("RustiCal is not configured correctly for OIDC")]
-    IncorrectConfiguration,
-
-    #[error(transparent)]
-    OidcConfigurationError(#[from] ConfigurationError),
-
-    #[error(transparent)]
-    OidcClaimsVerificationError(#[from] ClaimsVerificationError),
-
-    #[error(transparent)]
-    SessionInsertError(#[from] SessionInsertError),
-
-    #[error(transparent)]
-    StoreError(#[from] rustical_store::Error),
-
-    #[error("{0}")]
-    Other(&'static str),
-}
-
-impl ResponseError for OidcError {
-    fn status_code(&self) -> StatusCode {
-        StatusCode::INTERNAL_SERVER_ERROR
-    }
-
-    fn error_response(&self) -> HttpResponse<BoxBody> {
-        HttpResponse::build(self.status_code()).body(self.to_string())
-    }
-}
+mod error;
 
 pub(crate) struct OidcProviderData<'a> {
     pub name: &'a str,

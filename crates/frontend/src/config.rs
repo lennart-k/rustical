@@ -5,7 +5,7 @@ fn default_enabled() -> bool {
     true
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct OidcConfig {
     pub name: String,
     pub issuer: IssuerUrl,
@@ -15,7 +15,7 @@ pub struct OidcConfig {
     pub allow_sign_up: bool,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct FrontendConfig {
     #[serde(serialize_with = "hex::serde::serialize")]

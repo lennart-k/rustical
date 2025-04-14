@@ -23,7 +23,7 @@ pub struct GetLoginQuery {
     redirect_uri: Option<String>,
 }
 
-#[instrument(skip(req))]
+#[instrument(skip(req, config))]
 pub async fn route_get_login(
     Query(GetLoginQuery { redirect_uri }): Query<GetLoginQuery>,
     req: HttpRequest,
