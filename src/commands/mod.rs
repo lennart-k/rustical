@@ -36,6 +36,7 @@ pub fn cmd_gen_config(_args: GenConfigArgs) -> anyhow::Result<()> {
             secret_key: generate_frontend_secret(),
             enabled: true,
             oidc: None,
+            allow_password_login: true,
         },
         dav_push: DavPushConfig::default(),
         nextcloud_login: Default::default(),

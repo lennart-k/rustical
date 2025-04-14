@@ -7,6 +7,8 @@
   {% if let Some(redirect_uri) = redirect_uri %}
   <p>and redirect to {{redirect_uri}}</p>
   {% endif %}
+
+  {% if allow_password_login %}
   <form action="login" method="post" id="form_login">
     <label for="username">Username</label>
     <input type="text" id="username" name="username" placeholder="username">
@@ -19,6 +21,7 @@
     {% endif %}
     <button type="submit">Login</button>
   </form>
+  {% endif %}
 
   {% if let Some(OidcProviderData {name, redirect_url}) = oidc_data %}
   <form action="{{ redirect_url }}" method="post" id="form_login">
@@ -27,6 +30,12 @@
     {% endif %}
     <button type="submit">Login with {{ name }}</button>
   </form>
+  {% endif %}
+
+  {% if !allow_password_login && oidc_data.is_none() %}
+  <p>
+  No login method available
+  </p>
   {% endif %}
 </div>
 

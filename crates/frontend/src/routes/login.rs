@@ -2,7 +2,7 @@ use crate::{FrontendConfig, oidc::OidcProviderData};
 use actix_session::Session;
 use actix_web::{
     HttpRequest, HttpResponse, Responder,
-    error::ErrorUnauthorized,
+    error::{ErrorNotFound, ErrorUnauthorized},
     web::{Data, Form, Query, Redirect},
 };
 use askama::Template;
@@ -16,6 +16,7 @@ use tracing::instrument;
 struct LoginPage<'a> {
     redirect_uri: Option<String>,
     oidc_data: Option<OidcProviderData<'a>>,
+    allow_password_login: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -31,6 +32,7 @@ pub async fn route_get_login(
 ) -> impl Responder {
     LoginPage {
         redirect_uri,
+        allow_password_login: config.allow_password_login,
         oidc_data: config.oidc.as_ref().map(|oidc| OidcProviderData {
             name: &oidc.name,
             redirect_url: req
@@ -49,7 +51,7 @@ pub struct PostLoginForm {
     redirect_uri: Option<String>,
 }
 
-#[instrument(skip(req, password, auth_provider, session))]
+#[instrument(skip(req, password, auth_provider, session, config))]
 pub async fn route_post_login<AP: AuthenticationProvider>(
     req: HttpRequest,
     Form(PostLoginForm {
@@ -59,7 +61,11 @@ pub async fn route_post_login<AP: AuthenticationProvider>(
     }): Form<PostLoginForm>,
     session: Session,
     auth_provider: Data<AP>,
+    config: Data<FrontendConfig>,
 ) -> HttpResponse {
+    if !config.allow_password_login {
+        return ErrorNotFound("Password authentication disabled").error_response();
+    }
     // Ensure that redirect_uri never goes cross-origin
     let default_redirect = "/frontend/user".to_string();
     let redirect_uri = redirect_uri.unwrap_or(default_redirect.clone());

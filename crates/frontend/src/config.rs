@@ -1,7 +1,7 @@
 use openidconnect::{ClientId, ClientSecret, IssuerUrl, Scope};
 use serde::{Deserialize, Serialize};
 
-fn default_enabled() -> bool {
+fn default_true() -> bool {
     true
 }
 
@@ -21,8 +21,10 @@ pub struct FrontendConfig {
     #[serde(serialize_with = "hex::serde::serialize")]
     #[serde(deserialize_with = "hex::serde::deserialize")]
     pub secret_key: [u8; 64],
-    #[serde(default = "default_enabled")]
+    #[serde(default = "default_true")]
     pub enabled: bool,
     #[serde(default)]
     pub oidc: Option<OidcConfig>,
+    #[serde(default = "default_true")]
+    pub allow_password_login: bool,
 }
