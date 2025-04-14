@@ -94,16 +94,16 @@ li.collection-list-item {
   </tr>
   {% endfor %}
   <tr>
-    <form action="/frontend/user/{{ user.id }}/app_token" method="POST">
       <td>
-        <label for="generate_app_token_name">App name</label>
-        <input type="text" name="name" id="generate_app_token_name" />
+        <form action="/frontend/user/{{ user.id }}/app_token" method="POST" id="form_generate_app_token">
+          <label for="generate_app_token_name">App name</label>
+          <input type="text" name="name" id="generate_app_token_name" />
+        </form>
       </td>
       <td></td>
       <td>
-        <button type="submit">Generate</button>
+        <button type="submit" form="form_generate_app_token">Generate</button>
       </td>
-    </form>
   </tr>
 </table>
 
