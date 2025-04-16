@@ -5,6 +5,16 @@ fn default_true() -> bool {
     true
 }
 
+#[derive(Deserialize, Serialize, Clone, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum UserIdClaim {
+    // The correct option
+    Sub,
+    // The more ergonomic option if you know what you're doing
+    #[default]
+    PreferredUsername,
+}
+
 #[derive(Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct OidcConfig {
@@ -15,6 +25,8 @@ pub struct OidcConfig {
     pub scopes: Vec<Scope>,
     pub allow_sign_up: bool,
     pub require_group: Option<String>,
+    #[serde(default)]
+    pub userid_claim: UserIdClaim,
 }
 
 #[derive(Deserialize, Serialize, Clone)]

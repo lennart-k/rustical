@@ -1,4 +1,7 @@
-use crate::{FrontendConfig, config::OidcConfig};
+use crate::{
+    FrontendConfig,
+    config::{OidcConfig, UserIdClaim},
+};
 use actix_session::Session;
 use actix_web::{
     HttpRequest, HttpResponse, Responder,
@@ -194,10 +197,13 @@ pub async fn route_get_oidc_callback<AP: AuthenticationProvider>(
         }
     }
 
-    let user_id = user_info_claims
-        .preferred_username()
-        .ok_or(OidcError::Other("Missing preferred_username claim"))?
-        .to_string();
+    let user_id = match oidc_config.userid_claim {
+        UserIdClaim::Sub => user_info_claims.subject().to_string(),
+        UserIdClaim::PreferredUsername => user_info_claims
+            .preferred_username()
+            .ok_or(OidcError::Other("Missing preferred_username claim"))?
+            .to_string(),
+    };
 
     let mut user = auth_provider.get_principal(&user_id).await?;
     if user.is_none() {
