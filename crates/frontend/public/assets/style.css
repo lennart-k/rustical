@@ -90,9 +90,9 @@ input[type="text"] {
 }
 
 section {
-  border: 2px solid black;
+  border: 1px solid black;
   border-radius: 12px;
-  box-shadow: 4px 2px 12px -5px black;
+  box-shadow: 4px 2px 12px -8px black;
   border-collapse: collapse;
   padding: 8px 24px 12px;
   margin: 18px 12px;
