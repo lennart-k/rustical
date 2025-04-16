@@ -15,7 +15,7 @@ a CalDAV/CardDAV server
 - adequately fast (I'd say blazingly fast™ :fire: if I did the benchmarks to back that claim up)
 - deleted calendars are recoverable
 - Nextcloud login flow (In DAVx5 you can login through the Nextcloud flow and automatically generate an app token)
-- experimental OpenID Connect support (with option to disable password login)
+- OpenID Connect support (with option to disable password login)
 
 ## Installation
 
@@ -137,6 +137,8 @@ client_id = "rustical"
 client_secret = "secret"
 scopes = ["openid", "profile"]
 allow_sign_up = false
+# claim_userid = "sub" or "preferred_username"
+# require_group = "app/rustical"
 ```
 
 On the IdP side you have to create a client with the redirect uri `/frontend/login/oidc/callback` (subject to change).

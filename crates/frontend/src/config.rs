@@ -26,7 +26,7 @@ pub struct OidcConfig {
     pub allow_sign_up: bool,
     pub require_group: Option<String>,
     #[serde(default)]
-    pub userid_claim: UserIdClaim,
+    pub claim_userid: UserIdClaim,
 }
 
 #[derive(Deserialize, Serialize, Clone)]

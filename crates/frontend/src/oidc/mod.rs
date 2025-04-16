@@ -197,7 +197,7 @@ pub async fn route_get_oidc_callback<AP: AuthenticationProvider>(
         }
     }
 
-    let user_id = match oidc_config.userid_claim {
+    let user_id = match oidc_config.claim_userid {
         UserIdClaim::Sub => user_info_claims.subject().to_string(),
         UserIdClaim::PreferredUsername => user_info_claims
             .preferred_username()
