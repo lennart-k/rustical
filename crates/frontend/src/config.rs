@@ -23,6 +23,7 @@ pub struct OidcConfig {
     pub client_id: ClientId,
     pub client_secret: Option<ClientSecret>,
     pub scopes: Vec<Scope>,
+    #[serde(default)]
     pub allow_sign_up: bool,
     pub require_group: Option<String>,
     #[serde(default)]
