@@ -23,6 +23,7 @@ mime_guess.workspace = true
 reqwest.workspace = true
 rand.workspace = true
 chrono.workspace = true
+chrono-humanize.workspace = true
 uuid.workspace = true
 url.workspace = true
 tracing.workspace = true

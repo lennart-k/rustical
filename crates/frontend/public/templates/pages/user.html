@@ -22,8 +22,7 @@
   </ul>
 
   <h3>App tokens</h3>
-
-  <table>
+  <table id="app-tokens">
     <tr>
       <th>Name</th>
       <th>Created at</th>
@@ -34,7 +33,8 @@
       <td>{{ app_token.name }}</td>
       <td>
         {% if let Some(created_at) = app_token.created_at %}
-          {{ created_at.to_rfc3339() }}
+          {{ chrono_humanize::HumanTime::from(created_at.to_owned()) }}
+          <!-- {{ created_at.to_rfc3339() }} -->
         {% endif %}
       </td>
       <td>
@@ -44,7 +44,7 @@
       </td>
     </tr>
     {% endfor %}
-    <tr>
+    <tr class="generate">
         <td>
           <form action="/frontend/user/{{ user.id }}/app_token" method="POST" id="form_generate_app_token">
             <label class="font_bold" for="generate_app_token_name">App name</label>
