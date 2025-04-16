@@ -89,7 +89,7 @@ impl AuthenticationProvider for TomlPrincipalStore {
             None => return Ok(None),
         };
 
-        if password_auth::verify_password(password_input, password).is_ok() {
+        if password_auth::verify_password(password_input, password.as_ref()).is_ok() {
             return Ok(Some(user));
         }
         Ok(None)
@@ -102,7 +102,7 @@ impl AuthenticationProvider for TomlPrincipalStore {
         };
 
         for app_token in &user.app_tokens {
-            if password_auth::verify_password(token, &app_token.token).is_ok() {
+            if password_auth::verify_password(token, app_token.token.as_ref()).is_ok() {
                 return Ok(Some(user));
             }
         }
@@ -135,7 +135,7 @@ impl AuthenticationProvider for TomlPrincipalStore {
                 .to_string();
             principal.app_tokens.push(AppToken {
                 name,
-                token: token_hash,
+                token: token_hash.into(),
                 created_at: Some(chrono::Utc::now()),
                 id: id.clone(),
             });

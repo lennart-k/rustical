@@ -9,6 +9,8 @@ use rustical_xml::ValueSerialize;
 use serde::{Deserialize, Serialize};
 use std::future::{Ready, ready};
 
+use crate::Secret;
+
 /// https://datatracker.ietf.org/doc/html/rfc5545#section-3.2.3
 #[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq)]
 #[serde(rename_all = "lowercase")]
@@ -39,7 +41,7 @@ impl ValueSerialize for PrincipalType {
 pub struct AppToken {
     pub id: String,
     pub name: String,
-    pub token: String,
+    pub token: Secret<String>,
     pub created_at: Option<DateTime<Utc>>,
 }
 
@@ -51,7 +53,7 @@ pub struct User {
     pub displayname: Option<String>,
     #[serde(default)]
     pub principal_type: PrincipalType,
-    pub password: Option<String>,
+    pub password: Option<Secret<String>>,
     #[serde(default)]
     pub app_tokens: Vec<AppToken>,
     #[serde(default)]
