@@ -32,6 +32,14 @@ struct OidcState {
     redirect_uri: Option<String>,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+struct GroupAdditionalClaims {
+    #[serde(default)]
+    pub groups: Vec<String>,
+}
+
+impl openidconnect::AdditionalClaims for GroupAdditionalClaims {}
+
 fn get_http_client() -> reqwest::Client {
     reqwest::ClientBuilder::new()
         // Following redirects opens the client up to SSRF vulnerabilities.
@@ -166,7 +174,7 @@ pub async fn route_get_oidc_callback<AP: AuthenticationProvider>(
         .ok_or(OidcError::Other("OIDC provider did not return an ID token"))?
         .claims(&oidc_client.id_token_verifier(), &oidc_state.nonce)?;
 
-    let user_info_claims: UserInfoClaims<EmptyAdditionalClaims, CoreGenderClaim> = oidc_client
+    let user_info_claims: UserInfoClaims<GroupAdditionalClaims, CoreGenderClaim> = oidc_client
         .user_info(
             token_response.access_token().clone(),
             Some(id_claims.subject().clone()),
@@ -174,6 +182,17 @@ pub async fn route_get_oidc_callback<AP: AuthenticationProvider>(
         .request_async(&http_client)
         .await
         .map_err(|_| OidcError::Other("Error fetching user info"))?;
+
+    if let Some(require_group) = oidc_config.require_group {
+        if !user_info_claims
+            .additional_claims()
+            .groups
+            .contains(&require_group)
+        {
+            return Ok(HttpResponse::build(StatusCode::UNAUTHORIZED)
+                .body("User is not in an authorized group to use RustiCal"));
+        }
+    }
 
     let user_id = user_info_claims
         .preferred_username()

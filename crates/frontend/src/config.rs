@@ -6,6 +6,7 @@ fn default_true() -> bool {
 }
 
 #[derive(Deserialize, Serialize, Clone)]
+#[serde(deny_unknown_fields)]
 pub struct OidcConfig {
     pub name: String,
     pub issuer: IssuerUrl,
@@ -13,6 +14,7 @@ pub struct OidcConfig {
     pub client_secret: Option<ClientSecret>,
     pub scopes: Vec<Scope>,
     pub allow_sign_up: bool,
+    pub require_group: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
