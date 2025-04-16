@@ -12,22 +12,31 @@ body {
 }
 
 header {
-  background: #EEE;
-  height: 80px;
+  background: var(--background-darker);
+  height: 60px;
   font-weight: bold;
   display: flex;
   align-items: center;
   padding: 12px;
-  font-size: 2em;
+
+  border: 2px solid black;
+  border-radius: 12px;
+  margin: 12px;
+  box-shadow: 4px 2px 12px -5px black;
 
   a {
+    font-size: 2em;
     text-decoration: none;
     color: black;
   }
 
 
   .logout_form {
-    margin-left: auto;
+    display: contents;
+
+    button {
+      margin-left: auto;
+    }
   }
 }
 
@@ -36,4 +45,142 @@ header {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+}
+
+:root {
+  --background-color: #FFF;
+  --background-darker: #EEE;
+  --primary-color: #2F2FE1;
+  --primary-color-dark: color-mix(in srgb, var(--primary-color), #000000 80%);
+  --text-on-primary-color: #FFF;
+  /* --color-red: #FE2060; */
+  --color-red: #EE1D59;
+}
+
+html {
+  background-color: var(--background-color);
+}
+
+button {
+  border: none;
+  background: var(--primary-color);
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: var(--text-on-primary-color);
+  font-size: 0.9em;
+
+  &:hover {
+    filter: brightness(90%);
+  }
+
+  &.delete {
+    background: var(--color-red);
+  }
+}
+
+input[type="text"] {
+  border: 1px solid black;
+  border-radius: 8px;
+  padding: 4px 8px;
+}
+
+
+.font_bold {
+  font-weight: bold;
+}
+
+section {
+  border: 2px solid black;
+  border-radius: 12px;
+  box-shadow: 4px 2px 12px -5px black;
+  border-collapse: collapse;
+  padding: 8px 24px 12px;
+  margin: 18px 12px;
+}
+
+table {
+  border: 2px solid black;
+  border-radius: 12px;
+  box-shadow: 4px 2px 12px -5px black;
+  border-collapse: collapse;
+
+  td,
+  th {
+    padding: 8px;
+    border: 1px solid black;
+  }
+
+  th {
+    height: 40px;
+  }
+
+  tr:nth-of-type(2n+1) {
+    background: var(--background-darker);
+  }
+
+  tr:hover {
+    background: #DDD;
+  }
+}
+
+
+#page-user {
+  ul {
+    padding-left: 0;
+
+    li.collection-list-item {
+      list-style: none;
+      display: contents;
+
+      a {
+        background: #EEE;
+        display: grid;
+        min-height: 80px;
+        grid-template-areas:
+          ". color-chip"
+          "title color-chip"
+          "description color-chip"
+          "subscription-url color-chip"
+          "restore color-chip"
+          ". color-chip";
+        grid-template-rows: 12px auto auto auto 12px;
+        grid-template-columns: auto 50px;
+        color: inherit;
+        text-decoration: none;
+        padding-left: 12px;
+
+        border: 2px solid black;
+        border-radius: 12px;
+        margin: 12px;
+        box-shadow: 4px 2px 12px -5px black;
+
+        .title {
+          font-weight: bold;
+          grid-area: title;
+        }
+
+        .description {
+          grid-area: description;
+        }
+
+        .subscription-url {
+          grid-area: subscription-url;
+        }
+
+        .color-chip {
+          background: var(--color);
+          grid-area: color-chip;
+          border-radius: 0 12px 12px 0;
+        }
+
+        .restore-form {
+          grid-area: restore;
+        }
+
+        &:hover {
+          background: #DDD;
+        }
+      }
+    }
+  }
 }

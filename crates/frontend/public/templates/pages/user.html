@@ -1,112 +1,65 @@
 {% extends "layouts/default.html" %}
 
 {% block content %}
-<style>
-li.collection-list-item {
-  list-style: none;
-  display: contents;
+<div id="page-user">
 
-  a {
-    background: #EEE;
-    display: grid;
-    margin: 12px;
-    min-height: 80px;
-    border-radius: 12px;
-    grid-template-areas:
-      ". color-chip"
-      "title color-chip"
-      "description color-chip"
-      "subscription-url color-chip"
-      "restore color-chip"
-      ". color-chip";
-    grid-template-rows: 12px auto auto auto 12px;
-    grid-template-columns: auto 50px;
-    color: inherit;
-    text-decoration: none;
-    padding-left: 12px;
-
-    .title {
-      grid-area: title;
-    }
-
-    .description {
-      grid-area: description;
-    }
-
-    .subscription-url {
-      grid-area: subscription-url;
-    }
-
-    .color-chip {
-      background: var(--color);
-      grid-area: color-chip;
-      border-radius: 0 12px 12px 0;
-    }
-
-    .restore-form {
-      grid-area: restore;
-    }
-
-    &:hover {
-      background: #DDD;
-    }
-  }
-}
-</style>
 <h1>Welcome {{ user.id }}!</h1>
 
-<h2>Profile</h2>
+<section>
+  <h2>Profile</h2>
 
-<form>
-  <label for="user_displayname">Displayname</label>
-  <input type="text" value="{{ user.displayname.clone().unwrap_or(String::new()) }}" id="user_displayname" />
-</form>
+  <form>
+    <label for="user_displayname">Displayname</label>
+    <input type="text" value="{{ user.displayname.clone().unwrap_or(String::new()) }}" id="user_displayname" />
+  </form>
 
-<h3>Groups</h3>
+  <h3>Groups</h3>
 
-<ul>
-  {% for group in user.memberships %}
-    <li>{{ group }}</li>
-  {% endfor %}
-</ul>
+  <ul>
+    {% for group in user.memberships %}
+      <li>{{ group }}</li>
+    {% endfor %}
+  </ul>
 
-<h3>App tokens</h3>
+  <h3>App tokens</h3>
 
-<table>
-  <tr>
-    <th>Name</th>
-    <th>Created at</th>
-    <th></th>
-  </tr>
-  {% for app_token in user.app_tokens %}
-  <tr>
-    <td>{{ app_token.name }}</td>
-    <td>
-      {% if let Some(created_at) = app_token.created_at %}
-        {{ created_at.to_rfc3339() }}
-      {% endif %}
-    </td>
-    <td>
-      <form action="/frontend/user/{{ user.id }}/app_token/{{ app_token.id }}/delete" method="POST">
-        <button type="submit">Delete</button>
-      </form>
-    </td>
-  </tr>
-  {% endfor %}
-  <tr>
+  <table>
+    <tr>
+      <th>Name</th>
+      <th>Created at</th>
+      <th></th>
+    </tr>
+    {% for app_token in user.app_tokens %}
+    <tr>
+      <td>{{ app_token.name }}</td>
       <td>
-        <form action="/frontend/user/{{ user.id }}/app_token" method="POST" id="form_generate_app_token">
-          <label for="generate_app_token_name">App name</label>
-          <input type="text" name="name" id="generate_app_token_name" />
+        {% if let Some(created_at) = app_token.created_at %}
+          {{ created_at.to_rfc3339() }}
+        {% endif %}
+      </td>
+      <td>
+        <form action="/frontend/user/{{ user.id }}/app_token/{{ app_token.id }}/delete" method="POST">
+          <button type="submit" class="delete">Delete</button>
         </form>
       </td>
-      <td></td>
-      <td>
-        <button type="submit" form="form_generate_app_token">Generate</button>
-      </td>
-  </tr>
-</table>
+    </tr>
+    {% endfor %}
+    <tr>
+        <td>
+          <form action="/frontend/user/{{ user.id }}/app_token" method="POST" id="form_generate_app_token">
+            <label class="font_bold" for="generate_app_token_name">App name</label>
+            <input type="text" name="name" id="generate_app_token_name" />
+          </form>
+        </td>
+        <td></td>
+        <td>
+          <button type="submit" form="form_generate_app_token">Generate</button>
+        </td>
+    </tr>
+  </table>
+</section>
 
+<section>
 <h2>Calendars</h2>
 <ul>
   {% for calendar in calendars %}
@@ -147,7 +100,9 @@ li.collection-list-item {
   {% endfor %}
 </ul>
 {% endif %}
+</section>
 
+<section>
 <h2>Addressbooks</h2>
 <ul>
   {% for addressbook in addressbooks %}
@@ -181,5 +136,6 @@ li.collection-list-item {
   {% endfor %}
 </ul>
 {% endif %}
+</section>
 {% endblock %}
 
