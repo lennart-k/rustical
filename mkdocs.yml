@@ -59,4 +59,7 @@ nav:
   - Home: index.md
   - Installation: installation.md
   - OpenID Connect: setup/oidc.md
-  - RFCs: rfcs.md
+  - Developers:
+      - developers/index.md
+      - Relevant RFCs: developers/rfcs.md
+      - Debugging: developers/debugging.md

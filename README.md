@@ -17,6 +17,10 @@ a CalDAV/CardDAV server
 - Nextcloud login flow (In DAVx5 you can login through the Nextcloud flow and automatically generate an app token)
 - OpenID Connect support (with option to disable password login)
 
+## Getting Started
+
+- Check out the [documentation](https://github.com)
+
 ## Installation
 
 ### Manual
@@ -123,51 +127,3 @@ Since push messages are currently not encrypted you might potentially want to en
 # Must strictly be the URL origin (so no trailing slashes)
 allowed_push_servers = ["https://your-instance-ntfy.sh"]
 ```
-
-### OpenID Connect
-
-There's experimental support to log in through an OIDC IdP.
-Currently, the `preferred_username` is used as a user id (which is suboptimal, so you should be aware of that) and cannot be configured.
-
-```toml
-[frontend.oidc]
-name = "e.g. Authelia"
-issuer = "https://auth.your.domain"
-client_id = "rustical"
-client_secret = "secret"
-scopes = ["openid", "profile"]
-allow_sign_up = false
-# claim_userid = "sub" or "preferred_username"
-# require_group = "app/rustical"
-```
-
-On the IdP side you have to create a client with the redirect uri `/frontend/login/oidc/callback` (subject to change).
-
-## Debugging
-
-Set the log level with following environment variables:
-
-```sh
-RUST_LOG="debug"
-RUST_BACKTRACE=1
-```
-
-RustiCal also supports exporting opentelemetry traces to inspect with tools like [Jaeger](https://www.jaegertracing.io/).
-To enable you need to compile with the `opentelemtry` (or `debug`) feature and enable opentelemetry in the config with
-
-```toml
-[tracing]
-opentelemetry = true
-```
-
-## Relevant RFCs
-
-- Versioning Extensions to WebDAV: [RFC 3253](https://datatracker.ietf.org/doc/html/rfc3253)
-  - provides the REPORT method
-- Calendaring Extensions to WebDAV (CalDAV): [RFC 4791](https://datatracker.ietf.org/doc/html/rfc4791)
-- Scheduling Extensions to CalDAV: [RFC 6638](https://datatracker.ietf.org/doc/html/rfc6638)
-  - not sur`e yet whether to implement this
-- Collection Synchronization WebDAV [RFC 6578](https://datatracker.ietf.org/doc/html/rfc6578)
-  - We need to implement sync-token, etc.
-  - This is important for more efficient synchronisation
-- iCalendar [RFC 2445](https://datatracker.ietf.org/doc/html/rfc2445#section-3.10)
