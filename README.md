@@ -19,4 +19,4 @@ a CalDAV/CardDAV server
 
 ## Getting Started
 
-- Check out the [documentation](https://github.com)
+- Check out the [documentation](https://lennart-k.github.io/rustical/installation/)
