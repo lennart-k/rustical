@@ -29,6 +29,15 @@ jobs:
       - run: pip install mkdocs-material
       - run: mkdocs build --clean
 
+      - name: Save build cache
+        uses: actions/cache/save@v4
+        with:
+          key: mkdocs-material-${{ hashfiles('.cache/**') }}
+          path: .cache
+
+      - name: Build crate docs
+        run: cargo doc --no-deps --workspace --target-dir site/crate
+
       - name: Upload to GitHub Pages
         uses: actions/upload-pages-artifact@v3
         with:
@@ -36,9 +45,3 @@ jobs:
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
-
-      - name: Save build cache
-        uses: actions/cache/save@v4
-        with:
-          key: mkdocs-material-${{ hashfiles('.cache/**') }}
-          path: .cache
