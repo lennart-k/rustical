@@ -63,4 +63,4 @@ nav:
       - developers/index.md
       - Relevant RFCs: developers/rfcs.md
       - Debugging: developers/debugging.md
-  - Cargo docs: _cargo/rustical/
+  - Cargo docs: /rustical/_crate/rustical/
