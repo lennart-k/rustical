@@ -111,6 +111,7 @@ reqwest = { version = "0.12", features = [
   "http2",
 ], default-features = false }
 openidconnect = "4.0"
+clap = { version = "4.5", features = ["derive", "env"] }
 
 [dependencies]
 rustical_store = { workspace = true }
@@ -124,7 +125,7 @@ serde = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
 anyhow = { workspace = true }
-clap = { version = "4.5", features = ["derive", "env"] }
+clap.workspace = true
 sqlx = { workspace = true }
 async-trait = { workspace = true }
 tracing-actix-web = { workspace = true }

@@ -61,6 +61,10 @@ impl TomlPrincipalStore {
 
 #[async_trait]
 impl AuthenticationProvider for TomlPrincipalStore {
+    async fn get_principals(&self) -> Result<Vec<User>, crate::Error> {
+        Ok(self.principals.read().await.values().cloned().collect())
+    }
+
     async fn get_principal(&self, id: &str) -> Result<Option<User>, crate::Error> {
         Ok(self.principals.read().await.get(id).cloned())
     }
@@ -71,6 +75,13 @@ impl AuthenticationProvider for TomlPrincipalStore {
             return Err(Error::AlreadyExists);
         }
         principals.insert(user.id.clone(), user);
+        self.save(principals.deref())?;
+        Ok(())
+    }
+
+    async fn remove_principal(&self, id: &str) -> Result<(), crate::Error> {
+        let mut principals = self.principals.write().await;
+        principals.remove(id);
         self.save(principals.deref())?;
         Ok(())
     }

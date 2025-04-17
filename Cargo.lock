@@ -3157,6 +3157,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "chrono-tz",
+ "clap",
  "derive_more 2.0.1",
  "ical",
  "lazy_static",

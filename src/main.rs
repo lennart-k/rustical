@@ -4,6 +4,7 @@ use actix_web::http::KeepAlive;
 use anyhow::Result;
 use app::make_app;
 use clap::{Parser, Subcommand};
+use commands::principals::{PrincipalsArgs, cmd_principals};
 use commands::{cmd_gen_config, cmd_pwhash};
 use config::{DataStoreConfig, SqliteDataStoreConfig};
 use figment::Figment;
@@ -40,6 +41,7 @@ struct Args {
 enum Command {
     GenConfig(commands::GenConfigArgs),
     Pwhash(commands::PwhashArgs),
+    Principals(PrincipalsArgs),
 }
 
 async fn get_data_stores(
@@ -72,6 +74,7 @@ async fn main() -> Result<()> {
     match args.command {
         Some(Command::GenConfig(gen_config_args)) => cmd_gen_config(gen_config_args)?,
         Some(Command::Pwhash(pwhash_args)) => cmd_pwhash(pwhash_args)?,
+        Some(Command::Principals(principals_args)) => cmd_principals(principals_args).await?,
         None => {
             let config: Config = Figment::new()
                 // TODO: What to do when config file does not exist?
@@ -140,11 +143,20 @@ mod tests {
 
     #[async_trait]
     impl AuthenticationProvider for MockUserStore {
+        async fn get_principals(
+            &self,
+        ) -> Result<Vec<rustical_store::auth::User>, rustical_store::Error> {
+            Err(rustical_store::Error::Other(anyhow!("Not implemented")))
+        }
         async fn get_principal(
             &self,
             id: &str,
         ) -> Result<Option<rustical_store::auth::User>, rustical_store::Error> {
-            Err(rustical_store::Error::NotFound)
+            Err(rustical_store::Error::Other(anyhow!("Not implemented")))
+        }
+
+        async fn remove_principal(&self, id: &str) -> Result<(), rustical_store::Error> {
+            Err(rustical_store::Error::Other(anyhow!("Not implemented")))
         }
 
         async fn validate_password(
@@ -152,7 +164,7 @@ mod tests {
             user_id: &str,
             password: &str,
         ) -> Result<Option<rustical_store::auth::User>, rustical_store::Error> {
-            Err(rustical_store::Error::NotFound)
+            Err(rustical_store::Error::Other(anyhow!("Not implemented")))
         }
 
         async fn validate_app_token(
@@ -160,7 +172,7 @@ mod tests {
             user_id: &str,
             token: &str,
         ) -> Result<Option<rustical_store::auth::User>, rustical_store::Error> {
-            Err(rustical_store::Error::NotFound)
+            Err(rustical_store::Error::Other(anyhow!("Not implemented")))
         }
 
         async fn add_app_token(

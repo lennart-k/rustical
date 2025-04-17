@@ -12,7 +12,7 @@ use std::future::{Ready, ready};
 use crate::Secret;
 
 /// https://datatracker.ietf.org/doc/html/rfc5545#section-3.2.3
-#[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq, Display, clap::ValueEnum)]
 #[serde(rename_all = "lowercase")]
 pub enum PrincipalType {
     #[default]

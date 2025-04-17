@@ -11,6 +11,8 @@ use crate::config::{
     TracingConfig,
 };
 
+pub mod principals;
+
 #[derive(Debug, Parser)]
 pub struct GenConfigArgs {}
 
