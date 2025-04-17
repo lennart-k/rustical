@@ -36,7 +36,9 @@ jobs:
           path: .cache
 
       - name: Build crate docs
-        run: cargo doc --no-deps --workspace --target-dir site/crate
+        run: |
+          cargo doc --no-deps --workspace
+          cp -r target/doc/ site/_crate
 
       - name: Upload to GitHub Pages
         uses: actions/upload-pages-artifact@v3
