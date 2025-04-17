@@ -1,0 +1,62 @@
+site_name: RustiCal Documentation
+site_url: https://lennart-k.github.io/rustical/
+site_description: a CalDAV/CardDAV server
+
+repo_name: lennart-k/rustical
+repo_url: https://github.com/lennart-k/rustical
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/link
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/toggle-switch-off
+        name: Switch to system preference
+  font:
+    text: Roboto
+    code: Roboto Mono
+  favicon: assets/favicon.png
+  icon:
+    logo: logo
+  features:
+    - content.code.copy
+    - content.code.annotate
+    - content.tooltips
+    - navigation.indices
+    - navigation.tabs
+
+markdown_extensions:
+  - fenced_code
+  - smarty
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - admonition
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - OpenID Connect: setup/oidc.md
+  - RFCs: rfcs.md
