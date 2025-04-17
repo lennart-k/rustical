@@ -79,7 +79,8 @@ button {
   }
 }
 
-input[type="text"] {
+input[type="text"],
+input[type="password"] {
   border: 1px solid black;
   border-radius: 8px;
   padding: 4px 8px;
