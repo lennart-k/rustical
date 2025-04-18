@@ -1,13 +1,13 @@
-use crate::addressbook::resource::AddressbookResource;
 use crate::Error;
+use crate::addressbook::resource::AddressbookResource;
 use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{NamedRoute, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
-use rustical_store::auth::{AuthenticationProvider, User};
 use rustical_store::AddressbookStore;
+use rustical_store::auth::{AuthenticationProvider, User};
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 use std::sync::Arc;
 
@@ -74,6 +74,7 @@ impl Resource for PrincipalResource {
     type Prop = PrincipalPropWrapper;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
+    type Principal = User;
 
     fn get_resourcetype(&self) -> Resourcetype {
         Resourcetype(&[
@@ -140,6 +141,7 @@ impl<A: AddressbookStore, AP: AuthenticationProvider> ResourceService
     type MemberType = AddressbookResource;
     type Resource = PrincipalResource;
     type Error = Error;
+    type Principal = User;
 
     async fn get_resource(
         &self,

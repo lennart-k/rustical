@@ -81,6 +81,12 @@ impl User {
     }
 }
 
+impl rustical_dav::Principal for User {
+    fn get_id(&self) -> &str {
+        &self.id
+    }
+}
+
 #[derive(Clone, Debug, Display)]
 pub struct UnauthorizedError;
 

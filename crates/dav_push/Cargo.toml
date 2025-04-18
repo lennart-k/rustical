@@ -1,5 +1,5 @@
 [package]
-name = "rustical_dav"
+name = "rustical_dav_push"
 version.workspace = true
 edition.workspace = true
 description.workspace = true
@@ -21,3 +21,5 @@ tracing = { workspace = true }
 tracing-actix-web = { workspace = true }
 reqwest.workspace = true
 tokio.workspace = true
+rustical_dav.workspace = true
+rustical_store.workspace = true

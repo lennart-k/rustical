@@ -1,5 +1,5 @@
-use crate::xml::multistatus::PropstatElement;
 use actix_web::http::StatusCode;
+use rustical_dav::xml::multistatus::PropstatElement;
 use rustical_store::{CollectionOperation, CollectionOperationType, SubscriptionStore};
 use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
 use std::sync::Arc;
@@ -8,17 +8,20 @@ use tracing::{error, info, warn};
 
 #[derive(XmlSerialize, Debug)]
 struct PushMessageProp {
-    #[xml(ns = "crate::namespace::NS_DAV")]
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     topic: String,
-    #[xml(ns = "crate::namespace::NS_DAV")]
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     sync_token: Option<String>,
 }
 
 #[derive(XmlSerialize, XmlRootTag, Debug)]
-#[xml(root = b"push-message", ns = "crate::namespace::NS_DAVPUSH")]
-#[xml(ns_prefix(crate::namespace::NS_DAVPUSH = b"", crate::namespace::NS_DAV = b"D",))]
+#[xml(root = b"push-message", ns = "rustical_dav::namespace::NS_DAVPUSH")]
+#[xml(ns_prefix(
+    rustical_dav::namespace::NS_DAVPUSH = b"",
+    rustical_dav::namespace::NS_DAV = b"D",
+))]
 struct PushMessage {
-    #[xml(ns = "crate::namespace::NS_DAV")]
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     propstat: PropstatElement<PushMessageProp>,
 }
 
@@ -87,7 +90,10 @@ pub async fn push_notifier(
                     error!("{err}");
                 }
             } else {
-                warn!("Not sending a push notification to {} since it's not allowed in dav_push::allowed_push_servers", push_resource);
+                warn!(
+                    "Not sending a push notification to {} since it's not allowed in dav_push::allowed_push_servers",
+                    push_resource
+                );
             }
         }
     }

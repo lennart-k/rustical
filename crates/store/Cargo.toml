@@ -30,6 +30,7 @@ tokio.workspace = true
 rand.workspace = true
 uuid.workspace = true
 clap.workspace = true
+rustical_dav.workspace = true
 
 [dev-dependencies]
 rstest = { workspace = true }

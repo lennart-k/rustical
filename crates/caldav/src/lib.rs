@@ -1,16 +1,16 @@
+use actix_web::HttpResponse;
 use actix_web::dev::{HttpServiceFactory, ServiceResponse};
 use actix_web::http::header::{HeaderName, HeaderValue};
 use actix_web::http::{Method, StatusCode};
 use actix_web::middleware::{ErrorHandlerResponse, ErrorHandlers};
 use actix_web::web::{self, Data};
-use actix_web::HttpResponse;
 use calendar::resource::CalendarResourceService;
 use calendar_object::resource::CalendarObjectResourceService;
 use calendar_set::CalendarSetResourceService;
 use principal::{PrincipalResource, PrincipalResourceService};
 use rustical_dav::resource::{NamedRoute, ResourceService, ResourceServiceRoute};
 use rustical_dav::resources::RootResourceService;
-use rustical_store::auth::{AuthenticationMiddleware, AuthenticationProvider};
+use rustical_store::auth::{AuthenticationMiddleware, AuthenticationProvider, User};
 use rustical_store::{AddressbookStore, CalendarStore, ContactBirthdayStore, SubscriptionStore};
 use std::sync::Arc;
 use subscription::subscription_resource;
@@ -62,7 +62,7 @@ pub fn caldav_service<
             .app_data(Data::from(store.clone()))
             .app_data(Data::from(birthday_store.clone()))
             .app_data(Data::from(subscription_store))
-            .service(RootResourceService::<PrincipalResource>::default().actix_resource())
+            .service(RootResourceService::<PrincipalResource, User>::default().actix_resource())
             .service(
                 web::scope("/principal").service(
                     web::scope("/{principal}")

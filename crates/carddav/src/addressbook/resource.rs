@@ -2,21 +2,21 @@ use super::methods::mkcol::route_mkcol;
 use super::methods::post::route_post;
 use super::methods::report::route_report_addressbook;
 use super::prop::{SupportedAddressData, SupportedReportSet};
+use crate::Error;
 use crate::address_object::resource::AddressObjectResource;
 use crate::principal::PrincipalResource;
-use crate::Error;
 use actix_web::dev::ResourceMap;
 use actix_web::http::Method;
 use actix_web::web;
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::extensions::{
-    CommonPropertiesExtension, CommonPropertiesProp, DavPushExtension, DavPushExtensionProp,
-    SyncTokenExtension, SyncTokenExtensionProp,
+    CommonPropertiesExtension, CommonPropertiesProp, SyncTokenExtension, SyncTokenExtensionProp,
 };
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml::{Resourcetype, ResourcetypeInner};
+use rustical_dav_push::{DavPushExtension, DavPushExtensionProp};
 use rustical_store::auth::User;
 use rustical_store::{Addressbook, AddressbookStore, SubscriptionStore};
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
@@ -84,6 +84,7 @@ impl Resource for AddressbookResource {
     type Prop = AddressbookPropWrapper;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
+    type Principal = User;
 
     fn get_resourcetype(&self) -> Resourcetype {
         Resourcetype(&[
@@ -199,6 +200,7 @@ impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
     type PathComponents = (String, String); // principal, addressbook_id
     type Resource = AddressbookResource;
     type Error = Error;
+    type Principal = User;
 
     async fn get_resource(
         &self,

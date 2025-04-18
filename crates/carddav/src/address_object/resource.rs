@@ -1,4 +1,4 @@
-use crate::{principal::PrincipalResource, Error};
+use crate::{Error, principal::PrincipalResource};
 use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
 use derive_more::derive::{Constructor, From, Into};
@@ -8,7 +8,7 @@ use rustical_dav::{
     resource::{Resource, ResourceService},
     xml::Resourcetype,
 };
-use rustical_store::{auth::User, AddressObject, AddressbookStore};
+use rustical_store::{AddressObject, AddressbookStore, auth::User};
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 use serde::Deserialize;
 use std::sync::Arc;
@@ -51,6 +51,7 @@ impl Resource for AddressObjectResource {
     type Prop = AddressObjectPropWrapper;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
+    type Principal = User;
 
     fn get_resourcetype(&self) -> Resourcetype {
         Resourcetype(&[])
@@ -128,6 +129,7 @@ impl<AS: AddressbookStore> ResourceService for AddressObjectResourceService<AS> 
     type Resource = AddressObjectResource;
     type MemberType = AddressObjectResource;
     type Error = Error;
+    type Principal = User;
 
     async fn get_resource(
         &self,

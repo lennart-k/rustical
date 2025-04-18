@@ -10,9 +10,9 @@ use actix_web::{
 };
 use error::OidcError;
 use openidconnect::{
-    AuthenticationFlow, AuthorizationCode, CsrfToken, EmptyAdditionalClaims, EndpointMaybeSet,
-    EndpointNotSet, EndpointSet, IssuerUrl, Nonce, OAuth2TokenResponse, PkceCodeChallenge,
-    PkceCodeVerifier, RedirectUrl, TokenResponse, UserInfoClaims,
+    AuthenticationFlow, AuthorizationCode, CsrfToken, EndpointMaybeSet, EndpointNotSet,
+    EndpointSet, IssuerUrl, Nonce, OAuth2TokenResponse, PkceCodeChallenge, PkceCodeVerifier,
+    RedirectUrl, TokenResponse, UserInfoClaims,
     core::{CoreClient, CoreGenderClaim, CoreProviderMetadata, CoreResponseType},
 };
 use rustical_store::auth::{AuthenticationProvider, User, user::PrincipalType::Individual};

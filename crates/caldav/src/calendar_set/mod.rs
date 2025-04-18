@@ -1,14 +1,14 @@
+use crate::Error;
 use crate::calendar::resource::CalendarResource;
 use crate::principal::PrincipalResource;
-use crate::Error;
 use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml::{Resourcetype, ResourcetypeInner};
-use rustical_store::auth::User;
 use rustical_store::CalendarStore;
+use rustical_store::auth::User;
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 use std::sync::Arc;
 
@@ -28,6 +28,7 @@ impl Resource for CalendarSetResource {
     type Prop = PrincipalPropWrapper;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
+    type Principal = User;
 
     fn get_resourcetype(&self) -> Resourcetype {
         Resourcetype(&[ResourcetypeInner(
@@ -78,6 +79,7 @@ impl<C: CalendarStore> ResourceService for CalendarSetResourceService<C> {
     type MemberType = CalendarResource;
     type Resource = CalendarSetResource;
     type Error = Error;
+    type Principal = User;
 
     async fn get_resource(
         &self,

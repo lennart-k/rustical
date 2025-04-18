@@ -1,12 +1,12 @@
 use actix_web::{
+    HttpResponse,
     dev::{HttpServiceFactory, ServiceResponse},
     http::{
-        header::{HeaderName, HeaderValue},
         Method, StatusCode,
+        header::{HeaderName, HeaderValue},
     },
     middleware::{ErrorHandlerResponse, ErrorHandlers},
     web::{self, Data},
-    HttpResponse,
 };
 use address_object::resource::AddressObjectResourceService;
 use addressbook::resource::AddressbookResourceService;
@@ -15,8 +15,8 @@ use principal::{PrincipalResource, PrincipalResourceService};
 use rustical_dav::resource::{NamedRoute, ResourceService};
 use rustical_dav::resources::RootResourceService;
 use rustical_store::{
-    auth::{AuthenticationMiddleware, AuthenticationProvider},
     AddressbookStore, SubscriptionStore,
+    auth::{AuthenticationMiddleware, AuthenticationProvider, User},
 };
 use std::sync::Arc;
 
@@ -54,7 +54,7 @@ pub fn carddav_service<AP: AuthenticationProvider, A: AddressbookStore, S: Subsc
         )
         .app_data(Data::from(store.clone()))
         .app_data(Data::from(subscription_store))
-        .service(RootResourceService::<PrincipalResource>::default().actix_resource())
+        .service(RootResourceService::<PrincipalResource, User>::default().actix_resource())
         .service(
             web::scope("/principal").service(
                 web::scope("/{principal}")

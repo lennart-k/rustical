@@ -1,3 +1,4 @@
+use crate::Error;
 use crate::depth_header::Depth;
 use crate::privileges::UserPrivilege;
 use crate::resource::Resource;
@@ -6,11 +7,9 @@ use crate::xml::MultistatusElement;
 use crate::xml::PropElement;
 use crate::xml::PropfindElement;
 use crate::xml::PropfindType;
-use crate::Error;
+use actix_web::HttpRequest;
 use actix_web::web::Data;
 use actix_web::web::Path;
-use actix_web::HttpRequest;
-use rustical_store::auth::User;
 use rustical_xml::XmlDocument;
 use tracing::instrument;
 use tracing_actix_web::RootSpan;
@@ -21,7 +20,7 @@ pub(crate) async fn route_propfind<R: ResourceService>(
     path: Path<R::PathComponents>,
     body: String,
     req: HttpRequest,
-    user: User,
+    user: R::Principal,
     depth: Depth,
     root_span: RootSpan,
     resource_service: Data<R>,

@@ -2,20 +2,23 @@ use actix_web::dev::{AppService, HttpServiceFactory};
 use actix_web::error::UrlGenerationError;
 use actix_web::test::TestRequest;
 use actix_web::web::Data;
-use actix_web::{dev::ResourceMap, http::Method, web, ResponseError};
+use actix_web::{ResponseError, dev::ResourceMap, http::Method, web};
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::str::FromStr;
 
-use super::methods::{route_delete, route_propfind, route_proppatch};
+use crate::Principal;
+
 use super::Resource;
+use super::methods::{route_delete, route_propfind, route_proppatch};
 
 #[async_trait(?Send)]
 pub trait ResourceService: Sized + 'static {
-    type MemberType: Resource<Error = Self::Error>;
+    type MemberType: Resource<Error = Self::Error, Principal = Self::Principal>;
     type PathComponents: for<'de> Deserialize<'de> + Sized + Clone + 'static; // defines how the resource URI maps to parameters, i.e. /{principal}/{calendar} -> (String, String)
-    type Resource: Resource<Error = Self::Error>;
+    type Resource: Resource<Error = Self::Error, Principal = Self::Principal>;
     type Error: ResponseError + From<crate::Error>;
+    type Principal: Principal;
 
     async fn get_members(
         &self,

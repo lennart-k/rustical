@@ -1,15 +1,14 @@
+use crate::Error;
 use crate::privileges::UserPrivilege;
 use crate::resource::Resource;
 use crate::resource::ResourceService;
-use crate::xml::multistatus::{PropstatElement, PropstatWrapper, ResponseElement};
 use crate::xml::MultistatusElement;
 use crate::xml::TagList;
-use crate::Error;
+use crate::xml::multistatus::{PropstatElement, PropstatWrapper, ResponseElement};
 use actix_web::http::StatusCode;
 use actix_web::web::Data;
-use actix_web::{web::Path, HttpRequest};
+use actix_web::{HttpRequest, web::Path};
 use quick_xml::name::Namespace;
-use rustical_store::auth::User;
 use rustical_xml::EnumUnitVariants;
 use rustical_xml::Unparsed;
 use rustical_xml::XmlDeserialize;
@@ -69,7 +68,7 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
     path: Path<R::PathComponents>,
     body: String,
     req: HttpRequest,
-    user: User,
+    principal: R::Principal,
     root_span: RootSpan,
     resource_service: Data<R>,
 ) -> Result<MultistatusElement<String, String>, R::Error> {
@@ -81,7 +80,7 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
     ) = XmlDocument::parse_str(&body).map_err(Error::XmlError)?;
 
     let mut resource = resource_service.get_resource(&path).await?;
-    let privileges = resource.get_user_privileges(&user)?;
+    let privileges = resource.get_user_privileges(&principal)?;
     if !privileges.has(&UserPrivilege::Write) {
         return Err(Error::Unauthorized.into());
     }
@@ -131,7 +130,7 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
                 }
             }
             Operation::Remove(remove_el) => {
-                let propname = remove_el.prop.0 .0;
+                let propname = remove_el.prop.0.0;
                 match <<R::Resource as Resource>::Prop as EnumUnitVariants>::UnitVariants::from_str(
                     &propname,
                 ) {

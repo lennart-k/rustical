@@ -3,23 +3,23 @@ use rustical_xml::{XmlDeserialize, XmlRootTag};
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 #[xml(ns = "crate::namespace::NS_DAVPUSH")]
 pub struct WebPushSubscription {
-    #[xml(ns = "crate::namespace::NS_DAVPUSH")]
+    #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
     pub push_resource: String,
 }
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 pub struct SubscriptionElement {
-    #[xml(ns = "crate::namespace::NS_DAVPUSH")]
+    #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
     pub web_push_subscription: WebPushSubscription,
 }
 
 #[derive(XmlDeserialize, XmlRootTag, Clone, Debug, PartialEq)]
 #[xml(root = b"push-register")]
-#[xml(ns = "crate::namespace::NS_DAVPUSH")]
+#[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
 pub struct PushRegister {
-    #[xml(ns = "crate::namespace::NS_DAVPUSH")]
+    #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
     pub subscription: SubscriptionElement,
-    #[xml(ns = "crate::namespace::NS_DAVPUSH")]
+    #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
     pub expires: Option<String>,
 }
 

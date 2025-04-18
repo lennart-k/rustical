@@ -1,5 +1,5 @@
 use super::methods::{get_event, put_event};
-use crate::{principal::PrincipalResource, Error};
+use crate::{Error, principal::PrincipalResource};
 use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
@@ -9,7 +9,7 @@ use rustical_dav::{
     resource::{Resource, ResourceService},
     xml::Resourcetype,
 };
-use rustical_store::{auth::User, CalendarObject, CalendarStore};
+use rustical_store::{CalendarObject, CalendarStore, auth::User};
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 use serde::Deserialize;
 use std::sync::Arc;
@@ -55,6 +55,7 @@ impl Resource for CalendarObjectResource {
     type Prop = CalendarObjectPropWrapper;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
+    type Principal = User;
 
     fn get_resourcetype(&self) -> Resourcetype {
         Resourcetype(&[])
@@ -132,6 +133,7 @@ impl<C: CalendarStore> ResourceService for CalendarObjectResourceService<C> {
     type Resource = CalendarObjectResource;
     type MemberType = CalendarObjectResource;
     type Error = Error;
+    type Principal = User;
 
     async fn get_resource(
         &self,

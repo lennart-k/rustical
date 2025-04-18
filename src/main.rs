@@ -9,7 +9,7 @@ use commands::{cmd_gen_config, cmd_pwhash};
 use config::{DataStoreConfig, SqliteDataStoreConfig};
 use figment::Figment;
 use figment::providers::{Env, Format, Toml};
-use rustical_dav::push::push_notifier;
+use rustical_dav_push::notifier::push_notifier;
 use rustical_frontend::nextcloud_login::NextcloudFlows;
 use rustical_store::auth::TomlPrincipalStore;
 use rustical_store::{AddressbookStore, CalendarStore, CollectionOperation, SubscriptionStore};
@@ -150,51 +150,51 @@ mod tests {
         }
         async fn get_principal(
             &self,
-            id: &str,
+            _id: &str,
         ) -> Result<Option<rustical_store::auth::User>, rustical_store::Error> {
             Err(rustical_store::Error::Other(anyhow!("Not implemented")))
         }
 
-        async fn remove_principal(&self, id: &str) -> Result<(), rustical_store::Error> {
+        async fn remove_principal(&self, _id: &str) -> Result<(), rustical_store::Error> {
             Err(rustical_store::Error::Other(anyhow!("Not implemented")))
         }
 
         async fn validate_password(
             &self,
-            user_id: &str,
-            password: &str,
+            _user_id: &str,
+            _password: &str,
         ) -> Result<Option<rustical_store::auth::User>, rustical_store::Error> {
             Err(rustical_store::Error::Other(anyhow!("Not implemented")))
         }
 
         async fn validate_app_token(
             &self,
-            user_id: &str,
-            token: &str,
+            _user_id: &str,
+            _token: &str,
         ) -> Result<Option<rustical_store::auth::User>, rustical_store::Error> {
             Err(rustical_store::Error::Other(anyhow!("Not implemented")))
         }
 
         async fn add_app_token(
             &self,
-            user_id: &str,
-            name: String,
-            token: String,
+            _user_id: &str,
+            _name: String,
+            _token: String,
         ) -> Result<String, rustical_store::Error> {
             Err(rustical_store::Error::Other(anyhow!("Not implemented")))
         }
 
         async fn remove_app_token(
             &self,
-            user_id: &str,
-            token_id: &str,
+            _user_id: &str,
+            _token_id: &str,
         ) -> Result<(), rustical_store::Error> {
             Err(rustical_store::Error::Other(anyhow!("Not implemented")))
         }
 
         async fn insert_principal(
             &self,
-            user: rustical_store::auth::User,
+            _user: rustical_store::auth::User,
         ) -> Result<(), rustical_store::Error> {
             Err(rustical_store::Error::Other(anyhow!("Not implemented")))
         }

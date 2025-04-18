@@ -25,3 +25,4 @@ rustical_store = { workspace = true }
 chrono = { workspace = true }
 rustical_xml.workspace = true
 uuid.workspace = true
+rustical_dav_push.workspace = true

@@ -1,10 +1,10 @@
 use crate::{
+    Principal,
     privileges::UserPrivilegeSet,
     resource::{NamedRoute, Resource},
     xml::{HrefElement, Resourcetype},
 };
 use actix_web::dev::ResourceMap;
-use rustical_store::auth::User;
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumUnitVariants, EnumVariants)]
@@ -31,7 +31,7 @@ pub trait CommonPropertiesExtension: Resource {
     fn get_prop(
         &self,
         rmap: &ResourceMap,
-        user: &User,
+        principal: &Self::Principal,
         prop: &CommonPropertiesPropName,
     ) -> Result<CommonPropertiesProp, <Self as Resource>::Error> {
         Ok(match prop {
@@ -40,13 +40,13 @@ pub trait CommonPropertiesExtension: Resource {
             }
             CommonPropertiesPropName::CurrentUserPrincipal => {
                 CommonPropertiesProp::CurrentUserPrincipal(
-                    Self::PrincipalResource::get_url(rmap, [&user.id])
+                    Self::PrincipalResource::get_url(rmap, [&principal.get_id()])
                         .unwrap()
                         .into(),
                 )
             }
             CommonPropertiesPropName::CurrentUserPrivilegeSet => {
-                CommonPropertiesProp::CurrentUserPrivilegeSet(self.get_user_privileges(user)?)
+                CommonPropertiesProp::CurrentUserPrivilegeSet(self.get_user_privileges(principal)?)
             }
             CommonPropertiesPropName::Owner => {
                 CommonPropertiesProp::Owner(self.get_owner().map(|owner| {

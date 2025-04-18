@@ -1,11 +1,11 @@
-use crate::calendar::resource::CalendarResource;
 use crate::Error;
+use crate::calendar::resource::CalendarResource;
 use actix_web::http::header;
 use actix_web::web::{Data, Path};
 use actix_web::{HttpRequest, HttpResponse};
 use rustical_dav::privileges::UserPrivilege;
-use rustical_dav::push::PushRegister;
 use rustical_dav::resource::Resource;
+use rustical_dav_push::register::PushRegister;
 use rustical_store::auth::User;
 use rustical_store::{CalendarStore, Subscription, SubscriptionStore};
 use rustical_xml::XmlDocument;

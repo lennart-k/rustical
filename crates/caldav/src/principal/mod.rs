@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use crate::calendar_set::CalendarSetResource;
 use crate::Error;
+use crate::calendar_set::CalendarSetResource;
 use actix_web::dev::ResourceMap;
 use async_trait::async_trait;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
@@ -65,6 +65,7 @@ impl Resource for PrincipalResource {
     type Prop = PrincipalPropWrapper;
     type Error = Error;
     type PrincipalResource = PrincipalResource;
+    type Principal = User;
 
     fn get_resourcetype(&self) -> Resourcetype {
         Resourcetype(&[
@@ -142,6 +143,7 @@ impl<AP: AuthenticationProvider> ResourceService for PrincipalResourceService<AP
     type MemberType = CalendarSetResource;
     type Resource = PrincipalResource;
     type Error = Error;
+    type Principal = User;
 
     async fn get_resource(
         &self,

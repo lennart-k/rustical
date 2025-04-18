@@ -1,4 +1,4 @@
-use crate::push::Transports;
+use crate::Transports;
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumUnitVariants, EnumVariants)]
@@ -6,9 +6,9 @@ use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize}
 pub enum DavPushExtensionProp {
     // WebDav Push
     #[xml(skip_deserializing)]
-    #[xml(ns = "crate::namespace::NS_DAVPUSH")]
+    #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
     Transports(Transports),
-    #[xml(ns = "crate::namespace::NS_DAVPUSH")]
+    #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
     Topic(String),
 }
 
@@ -18,7 +18,7 @@ pub trait DavPushExtension {
     fn get_prop(
         &self,
         prop: &DavPushExtensionPropName,
-    ) -> Result<DavPushExtensionProp, crate::Error> {
+    ) -> Result<DavPushExtensionProp, rustical_dav::Error> {
         Ok(match &prop {
             DavPushExtensionPropName::Transports => {
                 DavPushExtensionProp::Transports(Default::default())
@@ -27,11 +27,11 @@ pub trait DavPushExtension {
         })
     }
 
-    fn set_prop(&self, _prop: DavPushExtensionProp) -> Result<(), crate::Error> {
-        Err(crate::Error::PropReadOnly)
+    fn set_prop(&self, _prop: DavPushExtensionProp) -> Result<(), rustical_dav::Error> {
+        Err(rustical_dav::Error::PropReadOnly)
     }
 
-    fn remove_prop(&self, _prop: &DavPushExtensionPropName) -> Result<(), crate::Error> {
-        Err(crate::Error::PropReadOnly)
+    fn remove_prop(&self, _prop: &DavPushExtensionPropName) -> Result<(), rustical_dav::Error> {
+        Err(rustical_dav::Error::PropReadOnly)
     }
 }

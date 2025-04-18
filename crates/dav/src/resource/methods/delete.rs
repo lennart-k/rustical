@@ -1,16 +1,15 @@
+use crate::Error;
 use crate::privileges::UserPrivilege;
 use crate::resource::Resource;
 use crate::resource::ResourceService;
-use crate::Error;
+use actix_web::HttpRequest;
+use actix_web::HttpResponse;
+use actix_web::Responder;
 use actix_web::http::header::IfMatch;
 use actix_web::http::header::IfNoneMatch;
 use actix_web::web;
 use actix_web::web::Data;
 use actix_web::web::Path;
-use actix_web::HttpRequest;
-use actix_web::HttpResponse;
-use actix_web::Responder;
-use rustical_store::auth::User;
 use tracing::instrument;
 use tracing_actix_web::RootSpan;
 
@@ -18,7 +17,7 @@ use tracing_actix_web::RootSpan;
 pub async fn route_delete<R: ResourceService>(
     path: Path<R::PathComponents>,
     req: HttpRequest,
-    user: User,
+    principal: R::Principal,
     resource_service: Data<R>,
     root_span: RootSpan,
     if_match: web::Header<IfMatch>,
@@ -32,7 +31,7 @@ pub async fn route_delete<R: ResourceService>(
 
     let resource = resource_service.get_resource(&path).await?;
 
-    let privileges = resource.get_user_privileges(&user)?;
+    let privileges = resource.get_user_privileges(&principal)?;
     if !privileges.has(&UserPrivilege::Write) {
         return Err(Error::Unauthorized.into());
     }
