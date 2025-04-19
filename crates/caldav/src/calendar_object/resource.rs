@@ -51,10 +51,13 @@ pub struct CalendarObjectResource {
     pub principal: String,
 }
 
+impl CommonPropertiesExtension for CalendarObjectResource {
+    type PrincipalResource = PrincipalResource;
+}
+
 impl Resource for CalendarObjectResource {
     type Prop = CalendarObjectPropWrapper;
     type Error = Error;
-    type PrincipalResource = PrincipalResource;
     type Principal = User;
 
     fn get_resourcetype(&self) -> Resourcetype {

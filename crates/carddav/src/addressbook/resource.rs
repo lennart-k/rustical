@@ -80,10 +80,13 @@ impl DavPushExtension for AddressbookResource {
     }
 }
 
+impl CommonPropertiesExtension for AddressbookResource {
+    type PrincipalResource = PrincipalResource;
+}
+
 impl Resource for AddressbookResource {
     type Prop = AddressbookPropWrapper;
     type Error = Error;
-    type PrincipalResource = PrincipalResource;
     type Principal = User;
 
     fn get_resourcetype(&self) -> Resourcetype {

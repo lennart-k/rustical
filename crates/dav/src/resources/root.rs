@@ -18,10 +18,13 @@ impl<PR: Resource, P: Principal> Default for RootResource<PR, P> {
     }
 }
 
+impl<PR: Resource + NamedRoute, P: Principal> CommonPropertiesExtension for RootResource<PR, P> {
+    type PrincipalResource = PR;
+}
+
 impl<PR: Resource + NamedRoute, P: Principal> Resource for RootResource<PR, P> {
     type Prop = CommonPropertiesProp;
     type Error = PR::Error;
-    type PrincipalResource = PR;
     type Principal = P;
 
     fn get_resourcetype(&self) -> Resourcetype {

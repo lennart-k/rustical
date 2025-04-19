@@ -24,10 +24,13 @@ pub enum PrincipalPropWrapper {
     Common(CommonPropertiesProp),
 }
 
+impl CommonPropertiesExtension for CalendarSetResource {
+    type PrincipalResource = PrincipalResource;
+}
+
 impl Resource for CalendarSetResource {
     type Prop = PrincipalPropWrapper;
     type Error = Error;
-    type PrincipalResource = PrincipalResource;
     type Principal = User;
 
     fn get_resourcetype(&self) -> Resourcetype {

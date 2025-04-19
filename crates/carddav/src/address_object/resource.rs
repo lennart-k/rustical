@@ -47,10 +47,13 @@ pub struct AddressObjectResource {
     pub principal: String,
 }
 
+impl CommonPropertiesExtension for AddressObjectResource {
+    type PrincipalResource = PrincipalResource;
+}
+
 impl Resource for AddressObjectResource {
     type Prop = AddressObjectPropWrapper;
     type Error = Error;
-    type PrincipalResource = PrincipalResource;
     type Principal = User;
 
     fn get_resourcetype(&self) -> Resourcetype {

@@ -100,10 +100,13 @@ impl DavPushExtension for CalendarResource {
     }
 }
 
+impl CommonPropertiesExtension for CalendarResource {
+    type PrincipalResource = PrincipalResource;
+}
+
 impl Resource for CalendarResource {
     type Prop = CalendarPropWrapper;
     type Error = Error;
-    type PrincipalResource = PrincipalResource;
     type Principal = User;
 
     fn get_resourcetype(&self) -> Resourcetype {

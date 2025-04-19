@@ -26,7 +26,6 @@ impl<T: FromStr> ResourcePropName for T {}
 pub trait Resource: Clone + 'static {
     type Prop: ResourceProp + PartialEq + Clone + EnumVariants + EnumUnitVariants;
     type Error: ResponseError + From<crate::Error>;
-    type PrincipalResource: Resource + NamedRoute;
     type Principal: Principal;
 
     fn get_resourcetype(&self) -> Resourcetype;

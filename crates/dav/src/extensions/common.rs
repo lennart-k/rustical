@@ -28,6 +28,8 @@ pub enum CommonPropertiesProp {
 }
 
 pub trait CommonPropertiesExtension: Resource {
+    type PrincipalResource: NamedRoute;
+
     fn get_prop(
         &self,
         rmap: &ResourceMap,
@@ -66,5 +68,3 @@ pub trait CommonPropertiesExtension: Resource {
         Err(crate::Error::PropReadOnly)
     }
 }
-
-impl<T: Resource> CommonPropertiesExtension for T {}

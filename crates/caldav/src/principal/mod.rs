@@ -61,10 +61,13 @@ impl NamedRoute for PrincipalResource {
     }
 }
 
+impl CommonPropertiesExtension for PrincipalResource {
+    type PrincipalResource = Self;
+}
+
 impl Resource for PrincipalResource {
     type Prop = PrincipalPropWrapper;
     type Error = Error;
-    type PrincipalResource = PrincipalResource;
     type Principal = User;
 
     fn get_resourcetype(&self) -> Resourcetype {
