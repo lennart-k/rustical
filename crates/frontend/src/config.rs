@@ -38,8 +38,6 @@ pub struct FrontendConfig {
     pub secret_key: [u8; 64],
     #[serde(default = "default_true")]
     pub enabled: bool,
-    #[serde(default)]
-    pub oidc: Option<OidcConfig>,
     #[serde(default = "default_true")]
     pub allow_password_login: bool,
 }

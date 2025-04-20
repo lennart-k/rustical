@@ -34,7 +34,7 @@ pub mod nextcloud_login;
 mod oidc;
 mod routes;
 
-pub use config::FrontendConfig;
+pub use config::{FrontendConfig, OidcConfig};
 
 pub fn generate_app_token() -> String {
     rand::thread_rng()
@@ -193,63 +193,68 @@ pub fn configure_frontend<AP: AuthenticationProvider, CS: CalendarStore, AS: Add
     cal_store: Arc<CS>,
     addr_store: Arc<AS>,
     frontend_config: FrontendConfig,
+    oidc_config: Option<OidcConfig>,
 ) {
-    cfg.service(
-        web::scope("")
-            .wrap(ErrorHandlers::new().handler(StatusCode::UNAUTHORIZED, unauthorized_handler))
-            .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
-            .wrap(session_middleware(frontend_config.secret_key))
-            .app_data(Data::from(auth_provider))
-            .app_data(Data::from(cal_store.clone()))
-            .app_data(Data::from(addr_store.clone()))
-            .app_data(Data::new(frontend_config.clone()))
-            .service(EmbedService::<Assets>::new("/assets".to_owned()))
-            .service(web::resource("").route(web::method(Method::GET).to(route_root)))
-            .service(
-                web::resource("/user")
-                    .route(web::method(Method::GET).to(route_user))
-                    .name("frontend_user"),
-            )
-            .service(
-                web::resource("/user/{user}")
-                    .route(web::method(Method::GET).to(route_user_named::<CS, AS>))
-                    .name("frontend_user_named"),
-            )
-            .service(
-                web::resource("/user/{user}/app_token")
-                    .route(web::method(Method::POST).to(route_post_app_token::<AP>)),
-            )
-            .service(
-                web::resource("/user/{user}/app_token/{id}/delete")
-                    .route(web::method(Method::POST).to(route_delete_app_token::<AP>)),
-            )
-            .service(
-                web::resource("/user/{user}/calendar/{calendar}")
-                    .route(web::method(Method::GET).to(route_calendar::<CS>)),
-            )
-            .service(
-                web::resource("/user/{user}/calendar/{calendar}/restore")
-                    .route(web::method(Method::POST).to(route_calendar_restore::<CS>)),
-            )
-            .service(
-                web::resource("/user/{user}/addressbook/{addressbook}")
-                    .route(web::method(Method::GET).to(route_addressbook::<AS>)),
-            )
-            .service(
-                web::resource("/user/{user}/addressbook/{addressbook}/restore")
-                    .route(web::method(Method::POST).to(route_addressbook_restore::<AS>)),
-            )
-            .service(
-                web::resource("/login")
-                    .name("frontend_login")
-                    .route(web::method(Method::GET).to(route_get_login))
-                    .route(web::method(Method::POST).to(route_post_login::<AP>)),
-            )
-            .service(
-                web::resource("/logout")
-                    .name("frontend_logout")
-                    .route(web::method(Method::POST).to(route_post_logout)),
-            )
+    let mut scope = web::scope("")
+        .wrap(ErrorHandlers::new().handler(StatusCode::UNAUTHORIZED, unauthorized_handler))
+        .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
+        .wrap(session_middleware(frontend_config.secret_key))
+        .app_data(Data::from(auth_provider))
+        .app_data(Data::from(cal_store.clone()))
+        .app_data(Data::from(addr_store.clone()))
+        .app_data(Data::new(frontend_config.clone()))
+        .app_data(Data::new(oidc_config.clone()))
+        .service(EmbedService::<Assets>::new("/assets".to_owned()))
+        .service(web::resource("").route(web::method(Method::GET).to(route_root)))
+        .service(
+            web::resource("/user")
+                .route(web::method(Method::GET).to(route_user))
+                .name("frontend_user"),
+        )
+        .service(
+            web::resource("/user/{user}")
+                .route(web::method(Method::GET).to(route_user_named::<CS, AS>))
+                .name("frontend_user_named"),
+        )
+        .service(
+            web::resource("/user/{user}/app_token")
+                .route(web::method(Method::POST).to(route_post_app_token::<AP>)),
+        )
+        .service(
+            web::resource("/user/{user}/app_token/{id}/delete")
+                .route(web::method(Method::POST).to(route_delete_app_token::<AP>)),
+        )
+        .service(
+            web::resource("/user/{user}/calendar/{calendar}")
+                .route(web::method(Method::GET).to(route_calendar::<CS>)),
+        )
+        .service(
+            web::resource("/user/{user}/calendar/{calendar}/restore")
+                .route(web::method(Method::POST).to(route_calendar_restore::<CS>)),
+        )
+        .service(
+            web::resource("/user/{user}/addressbook/{addressbook}")
+                .route(web::method(Method::GET).to(route_addressbook::<AS>)),
+        )
+        .service(
+            web::resource("/user/{user}/addressbook/{addressbook}/restore")
+                .route(web::method(Method::POST).to(route_addressbook_restore::<AS>)),
+        )
+        .service(
+            web::resource("/login")
+                .name("frontend_login")
+                .route(web::method(Method::GET).to(route_get_login))
+                .route(web::method(Method::POST).to(route_post_login::<AP>)),
+        )
+        .service(
+            web::resource("/logout")
+                .name("frontend_logout")
+                .route(web::method(Method::POST).to(route_post_logout)),
+        );
+
+    if let Some(oidc_config) = oidc_config {
+        scope = scope
+            .app_data(Data::new(oidc_config))
             .service(
                 web::resource("/login/oidc")
                     .name("frontend_login_oidc")
@@ -259,6 +264,8 @@ pub fn configure_frontend<AP: AuthenticationProvider, CS: CalendarStore, AS: Add
                 web::resource("/login/oidc/callback")
                     .name("frontend_oidc_callback")
                     .route(web::method(Method::GET).to(route_get_oidc_callback::<AP>)),
-            ),
-    );
+            );
+    }
+
+    cfg.service(scope);
 }

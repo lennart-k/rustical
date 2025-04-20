@@ -1,4 +1,4 @@
-use rustical_frontend::FrontendConfig;
+use rustical_frontend::{FrontendConfig, OidcConfig};
 use rustical_store::auth::TomlUserStoreConfig;
 use serde::{Deserialize, Serialize};
 
@@ -83,6 +83,8 @@ pub struct Config {
     #[serde(default)]
     pub http: HttpConfig,
     pub frontend: FrontendConfig,
+    #[serde(default)]
+    pub oidc: Option<OidcConfig>,
     #[serde(default)]
     pub tracing: TracingConfig,
     #[serde(default)]

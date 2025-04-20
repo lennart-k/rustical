@@ -5,7 +5,7 @@ You can set up RustiCal with an OpenID Connect identity provider
 ## Example: Authelia
 
 ```toml title="RustiCal configuration"
-[frontend.oidc]
+[oidc]
 name = "Authelia"
 issuer = "https://auth.example.com"
 client_id = "rustical"

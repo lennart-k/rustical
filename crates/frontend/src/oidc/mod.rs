@@ -1,7 +1,4 @@
-use crate::{
-    FrontendConfig,
-    config::{OidcConfig, UserIdClaim},
-};
+use crate::config::{OidcConfig, UserIdClaim};
 use actix_session::Session;
 use actix_web::{
     HttpRequest, HttpResponse, Responder,
@@ -92,17 +89,12 @@ pub struct GetOidcForm {
 pub async fn route_post_oidc(
     req: HttpRequest,
     Form(GetOidcForm { redirect_uri }): Form<GetOidcForm>,
-    config: Data<FrontendConfig>,
+    oidc_config: Data<OidcConfig>,
     session: Session,
 ) -> Result<impl Responder, OidcError> {
-    let oidc_config = config
-        .oidc
-        .clone()
-        .ok_or(OidcError::IncorrectConfiguration)?;
-
     let http_client = get_http_client();
     let oidc_client = get_oidc_client(
-        oidc_config.clone(),
+        oidc_config.as_ref().clone(),
         &http_client,
         RedirectUrl::new(req.url_for_static("frontend_oidc_callback")?.to_string())?,
     )
@@ -137,21 +129,16 @@ pub async fn route_post_oidc(
 pub struct AuthCallbackQuery {
     code: AuthorizationCode,
     iss: IssuerUrl,
-    // scope: String,
-    // state: String,
 }
 
+/// Handle callback from IdP page
 pub async fn route_get_oidc_callback<AP: AuthenticationProvider>(
     req: HttpRequest,
-    config: Data<FrontendConfig>,
+    oidc_config: Data<OidcConfig>,
     session: Session,
     auth_provider: Data<AP>,
     Query(AuthCallbackQuery { code, iss }): Query<AuthCallbackQuery>,
 ) -> Result<impl Responder, OidcError> {
-    let oidc_config = config
-        .oidc
-        .clone()
-        .ok_or(OidcError::IncorrectConfiguration)?;
     assert_eq!(iss, oidc_config.issuer);
     let oidc_state = session
         .remove_as::<OidcState>(SESSION_KEY_OIDC_STATE)
@@ -160,7 +147,7 @@ pub async fn route_get_oidc_callback<AP: AuthenticationProvider>(
 
     let http_client = get_http_client();
     let oidc_client = get_oidc_client(
-        oidc_config.clone(),
+        oidc_config.get_ref().clone(),
         &http_client,
         RedirectUrl::new(req.url_for_static("frontend_oidc_callback")?.to_string())?,
     )
@@ -186,11 +173,11 @@ pub async fn route_get_oidc_callback<AP: AuthenticationProvider>(
         .await
         .map_err(|_| OidcError::Other("Error fetching user info"))?;
 
-    if let Some(require_group) = oidc_config.require_group {
+    if let Some(require_group) = &oidc_config.require_group {
         if !user_info_claims
             .additional_claims()
             .groups
-            .contains(&require_group)
+            .contains(require_group)
         {
             return Ok(HttpResponse::build(StatusCode::UNAUTHORIZED)
                 .body("User is not in an authorized group to use RustiCal"));

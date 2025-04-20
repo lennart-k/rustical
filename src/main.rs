@@ -108,6 +108,7 @@ async fn main() -> Result<()> {
                     subscription_store.clone(),
                     user_store.clone(),
                     config.frontend.clone(),
+                    config.oidc.clone(),
                     config.nextcloud_login.clone(),
                     nextcloud_flows.clone(),
                 )
@@ -221,9 +222,9 @@ mod tests {
             FrontendConfig {
                 enabled: false,
                 secret_key: generate_frontend_secret(),
-                oidc: None,
                 allow_password_login: false,
             },
+            None,
             NextcloudLoginConfig { enabled: false },
             Arc::new(NextcloudFlows::default()),
         );

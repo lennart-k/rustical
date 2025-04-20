@@ -1,4 +1,4 @@
-use crate::{FrontendConfig, oidc::OidcProviderData};
+use crate::{FrontendConfig, OidcConfig, oidc::OidcProviderData};
 use actix_session::Session;
 use actix_web::{
     HttpRequest, HttpResponse, Responder,
@@ -24,22 +24,27 @@ pub struct GetLoginQuery {
     redirect_uri: Option<String>,
 }
 
-#[instrument(skip(req, config))]
+#[instrument(skip(req, config, oidc_config))]
 pub async fn route_get_login(
     Query(GetLoginQuery { redirect_uri }): Query<GetLoginQuery>,
     req: HttpRequest,
     config: Data<FrontendConfig>,
+    oidc_config: Data<Option<OidcConfig>>,
 ) -> impl Responder {
-    LoginPage {
-        redirect_uri,
-        allow_password_login: config.allow_password_login,
-        oidc_data: config.oidc.as_ref().map(|oidc| OidcProviderData {
-            name: &oidc.name,
+    let oidc_data = oidc_config
+        .as_ref()
+        .as_ref()
+        .map(|oidc_config| OidcProviderData {
+            name: &oidc_config.name,
             redirect_url: req
                 .url_for_static("frontend_login_oidc")
                 .unwrap()
                 .to_string(),
-        }),
+        });
+    LoginPage {
+        redirect_uri,
+        allow_password_login: config.allow_password_login,
+        oidc_data,
     }
     .respond_to(&req)
 }

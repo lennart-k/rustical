@@ -5,7 +5,7 @@ use actix_web::{App, web};
 use rustical_caldav::caldav_service;
 use rustical_carddav::carddav_service;
 use rustical_frontend::nextcloud_login::{NextcloudFlows, configure_nextcloud_login};
-use rustical_frontend::{FrontendConfig, configure_frontend};
+use rustical_frontend::{FrontendConfig, OidcConfig, configure_frontend};
 use rustical_store::auth::AuthenticationProvider;
 use rustical_store::{AddressbookStore, CalendarStore, SubscriptionStore};
 use std::sync::Arc;
@@ -13,12 +13,14 @@ use tracing_actix_web::TracingLogger;
 
 use crate::config::NextcloudLoginConfig;
 
+#[allow(clippy::too_many_arguments)]
 pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
     addr_store: Arc<AS>,
     cal_store: Arc<CS>,
     subscription_store: Arc<S>,
     auth_provider: Arc<impl AuthenticationProvider>,
     frontend_config: FrontendConfig,
+    oidc_config: Option<OidcConfig>,
     nextcloud_login_config: NextcloudLoginConfig,
     nextcloud_flows_state: Arc<NextcloudFlows>,
 ) -> App<
@@ -70,6 +72,7 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
                     cal_store.clone(),
                     addr_store.clone(),
                     frontend_config,
+                    oidc_config,
                 )
             }))
             .service(web::redirect("/", "/frontend").see_other());

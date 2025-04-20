@@ -12,9 +12,6 @@ pub enum OidcError {
     #[error("Cannot generate redirect url, something's not configured correctly")]
     ActixUrlGenerationError(#[from] UrlGenerationError),
 
-    #[error("RustiCal is not configured correctly for OIDC")]
-    IncorrectConfiguration,
-
     #[error(transparent)]
     OidcConfigurationError(#[from] ConfigurationError),
 
