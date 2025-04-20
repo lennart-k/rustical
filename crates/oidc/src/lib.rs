@@ -1,6 +1,6 @@
 use actix_session::Session;
 use actix_web::{
-    HttpRequest, HttpResponse, Responder,
+    HttpRequest, HttpResponse, Responder, ResponseError,
     http::StatusCode,
     web::{self, Data, Form, Query, Redirect, ServiceConfig},
 };
@@ -13,18 +13,23 @@ use openidconnect::{
     RedirectUrl, TokenResponse, UserInfoClaims,
     core::{CoreClient, CoreGenderClaim, CoreProviderMetadata, CoreResponseType},
 };
-use rustical_store::auth::{AuthenticationProvider, User, user::PrincipalType::Individual};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+pub use user_store::UserStore;
 
 mod config;
 mod error;
+mod user_store;
 
 pub const ROUTE_NAME_OIDC_LOGIN: &str = "oidc_login";
 const ROUTE_NAME_OIDC_CALLBACK: &str = "oidc_callback";
 const SESSION_KEY_OIDC_STATE: &str = "oidc_state";
 
-#[derive(Debug)]
-pub struct DefaultRedirectRouteName(pub &'static str);
+#[derive(Debug, Clone)]
+pub struct OidcServiceConfig {
+    pub default_redirect_route_name: &'static str,
+    pub session_key_user_id: &'static str,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
 struct OidcState {
@@ -93,7 +98,7 @@ pub async fn route_post_oidc(
     Form(GetOidcForm { redirect_uri }): Form<GetOidcForm>,
     oidc_config: Data<OidcConfig>,
     session: Session,
-) -> Result<impl Responder, OidcError> {
+) -> Result<HttpResponse, OidcError> {
     let http_client = get_http_client();
     let oidc_client = get_oidc_client(
         oidc_config.as_ref().clone(),
@@ -124,7 +129,10 @@ pub async fn route_post_oidc(
         },
     )?;
 
-    Ok(Redirect::to(auth_url.to_string()).see_other())
+    Ok(Redirect::to(auth_url.to_string())
+        .see_other()
+        .respond_to(&req)
+        .map_into_boxed_body())
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -135,14 +143,14 @@ pub struct AuthCallbackQuery {
 }
 
 /// Handle callback from IdP page
-pub async fn route_get_oidc_callback<AP: AuthenticationProvider>(
+pub async fn route_get_oidc_callback<US: UserStore>(
     req: HttpRequest,
     oidc_config: Data<OidcConfig>,
     session: Session,
-    auth_provider: Data<AP>,
+    user_store: Data<US>,
     Query(AuthCallbackQuery { code, iss, state }): Query<AuthCallbackQuery>,
-    default_redirect_name: Data<DefaultRedirectRouteName>,
-) -> Result<impl Responder, OidcError> {
+    service_config: Data<OidcServiceConfig>,
+) -> Result<HttpResponse, OidcError> {
     assert_eq!(iss, oidc_config.issuer);
     let oidc_state = session
         .remove_as::<OidcState>(SESSION_KEY_OIDC_STATE)
@@ -198,23 +206,25 @@ pub async fn route_get_oidc_callback<AP: AuthenticationProvider>(
             .to_string(),
     };
 
-    let mut user = auth_provider.get_principal(&user_id).await?;
-    if user.is_none() {
-        let new_user = User {
-            id: user_id,
-            displayname: None,
-            app_tokens: vec![],
-            password: None,
-            principal_type: Individual,
-            memberships: vec![],
-        };
-
-        auth_provider.insert_principal(new_user.clone()).await?;
-        user = Some(new_user);
+    match user_store.user_exists(&user_id).await {
+        Ok(false) => {
+            // User does not exist
+            if !oidc_config.allow_sign_up {
+                return Ok(HttpResponse::Unauthorized().body("User sign up disabled"));
+            }
+            // Create new user
+            if let Err(err) = user_store.insert_user(&user_id).await {
+                return Ok(err.error_response());
+            }
+        }
+        Ok(true) => {}
+        Err(err) => {
+            return Ok(err.error_response());
+        }
     }
 
     let default_redirect = req
-        .url_for_static(default_redirect_name.as_ref().0)?
+        .url_for_static(service_config.default_redirect_route_name)?
         .to_string();
     let redirect_uri = oidc_state.redirect_uri.unwrap_or(default_redirect.clone());
     let redirect_uri = req
@@ -225,25 +235,23 @@ pub async fn route_get_oidc_callback<AP: AuthenticationProvider>(
         .unwrap_or(default_redirect);
 
     // Complete login flow
-    if let Some(user) = user {
-        session.insert("user", user.id.clone())?;
+    session.insert(service_config.session_key_user_id, user_id.clone())?;
 
-        Ok(Redirect::to(redirect_uri)
-            .temporary()
-            .respond_to(&req)
-            .map_into_boxed_body())
-    } else {
-        Ok(HttpResponse::build(StatusCode::UNAUTHORIZED).body("User does not exist"))
-    }
+    Ok(Redirect::to(redirect_uri)
+        .temporary()
+        .respond_to(&req)
+        .map_into_boxed_body())
 }
 
-pub fn configure_oidc<AP: AuthenticationProvider>(
+pub fn configure_oidc<US: UserStore>(
     cfg: &mut ServiceConfig,
     oidc_config: OidcConfig,
-    default_redirect_name: &'static str,
+    service_config: OidcServiceConfig,
+    user_store: Arc<US>,
 ) {
     cfg.app_data(Data::new(oidc_config))
-        .app_data(Data::new(DefaultRedirectRouteName(default_redirect_name)))
+        .app_data(Data::new(service_config))
+        .app_data(Data::from(user_store))
         .service(
             web::resource("")
                 .name(ROUTE_NAME_OIDC_LOGIN)
@@ -252,6 +260,6 @@ pub fn configure_oidc<AP: AuthenticationProvider>(
         .service(
             web::resource("/callback")
                 .name(ROUTE_NAME_OIDC_CALLBACK)
-                .get(route_get_oidc_callback::<AP>),
+                .get(route_get_oidc_callback::<US>),
         );
 }

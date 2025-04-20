@@ -3153,6 +3153,7 @@ dependencies = [
  "actix-web",
  "askama",
  "askama_web",
+ "async-trait",
  "chrono",
  "chrono-humanize",
  "futures-core",
@@ -3176,9 +3177,9 @@ version = "0.1.0"
 dependencies = [
  "actix-session",
  "actix-web",
+ "async-trait",
  "openidconnect",
  "reqwest",
- "rustical_store",
  "serde",
  "thiserror 2.0.12",
 ]

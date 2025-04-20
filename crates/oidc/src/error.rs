@@ -21,9 +21,6 @@ pub enum OidcError {
     #[error(transparent)]
     SessionInsertError(#[from] SessionInsertError),
 
-    #[error(transparent)]
-    StoreError(#[from] rustical_store::Error),
-
     #[error("{0}")]
     Other(&'static str),
 }

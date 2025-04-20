@@ -7,10 +7,9 @@ repository.workspace = true
 
 [dependencies]
 openidconnect.workspace = true
-serde = { workspace = true }
+serde.workspace = true
 reqwest.workspace = true
-# TODO: Remove this dependency
-rustical_store = { workspace = true }
-actix-web = { workspace = true }
-actix-session = { workspace = true }
-thiserror = { workspace = true }
+actix-web.workspace = true
+actix-session.workspace = true
+thiserror.workspace = true
+async-trait.workspace = true

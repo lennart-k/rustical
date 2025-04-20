@@ -14,13 +14,14 @@ use actix_web::{
 use askama::Template;
 use askama_web::WebTemplate;
 use assets::{Assets, EmbedService};
+use async_trait::async_trait;
 use rand::{Rng, distributions::Alphanumeric};
 use routes::{
     addressbook::{route_addressbook, route_addressbook_restore},
     calendar::{route_calendar, route_calendar_restore},
     login::{route_get_login, route_post_login, route_post_logout},
 };
-use rustical_oidc::{OidcConfig, configure_oidc};
+use rustical_oidc::{OidcConfig, OidcServiceConfig, UserStore, configure_oidc};
 use rustical_store::{
     Addressbook, AddressbookStore, Calendar, CalendarStore,
     auth::{AuthenticationMiddleware, AuthenticationProvider, User},
@@ -201,7 +202,7 @@ pub fn configure_frontend<AP: AuthenticationProvider, CS: CalendarStore, AS: Add
         .wrap(ErrorHandlers::new().handler(StatusCode::UNAUTHORIZED, unauthorized_handler))
         .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
         .wrap(session_middleware(frontend_config.secret_key))
-        .app_data(Data::from(auth_provider))
+        .app_data(Data::from(auth_provider.clone()))
         .app_data(Data::from(cal_store.clone()))
         .app_data(Data::from(addr_store.clone()))
         .app_data(Data::new(frontend_config.clone()))
@@ -252,11 +253,42 @@ pub fn configure_frontend<AP: AuthenticationProvider, CS: CalendarStore, AS: Add
         );
 
     if let Some(oidc_config) = oidc_config {
-        scope = scope.service(
-            web::scope("/login/oidc")
-                .configure(|cfg| configure_oidc::<AP>(cfg, oidc_config, ROUTE_NAME_HOME)),
-        );
+        scope = scope.service(web::scope("/login/oidc").configure(|cfg| {
+            configure_oidc(
+                cfg,
+                oidc_config,
+                OidcServiceConfig {
+                    default_redirect_route_name: ROUTE_NAME_HOME,
+                    session_key_user_id: "user",
+                },
+                Arc::new(OidcUserStore(auth_provider.clone())),
+            )
+        }));
     }
 
     cfg.service(scope);
+}
+
+struct OidcUserStore<AP: AuthenticationProvider>(Arc<AP>);
+
+#[async_trait(?Send)]
+impl<AP: AuthenticationProvider> UserStore for OidcUserStore<AP> {
+    type Error = rustical_store::Error;
+
+    async fn user_exists(&self, id: &str) -> Result<bool, Self::Error> {
+        Ok(self.0.get_principal(id).await?.is_some())
+    }
+
+    async fn insert_user(&self, id: &str) -> Result<(), Self::Error> {
+        self.0
+            .insert_principal(User {
+                id: id.to_owned(),
+                displayname: None,
+                principal_type: Default::default(),
+                password: None,
+                app_tokens: vec![],
+                memberships: vec![],
+            })
+            .await
+    }
 }

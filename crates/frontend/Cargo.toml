@@ -8,13 +8,14 @@ publish = false
 
 [dependencies]
 askama.workspace = true
+async-trait.workspace = true
 askama_web.workspace = true
-actix-session = { workspace = true }
-serde = { workspace = true }
-thiserror = { workspace = true }
-tokio = { workspace = true }
-actix-web = { workspace = true }
-rustical_store = { workspace = true }
+actix-session.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+actix-web.workspace = true
+rustical_store.workspace = true
 rust-embed.workspace = true
 futures-core.workspace = true
 hex.workspace = true
