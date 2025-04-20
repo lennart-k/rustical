@@ -18,7 +18,7 @@ pub async fn route_calendar<C: CalendarStore>(
     store: Data<C>,
     user: User,
     req: HttpRequest,
-) -> Result<impl Responder, rustical_store::Error> {
+) -> Result<HttpResponse, rustical_store::Error> {
     let (owner, cal_id) = path.into_inner();
     if !user.is_principal(&owner) {
         return Ok(HttpResponse::Unauthorized().body("Unauthorized"));
@@ -34,7 +34,7 @@ pub async fn route_calendar_restore<CS: CalendarStore>(
     req: HttpRequest,
     store: Data<CS>,
     user: User,
-) -> Result<impl Responder, rustical_store::Error> {
+) -> Result<HttpResponse, rustical_store::Error> {
     let (owner, cal_id) = path.into_inner();
     if !user.is_principal(&owner) {
         return Ok(HttpResponse::Unauthorized().body("Unauthorized"));
@@ -45,6 +45,6 @@ pub async fn route_calendar_restore<CS: CalendarStore>(
             .using_status_code(StatusCode::FOUND)
             .respond_to(&req)
             .map_into_boxed_body(),
-        None => HttpResponse::Ok().body("Restored"),
+        None => HttpResponse::Created().body("Restored"),
     })
 }

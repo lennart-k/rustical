@@ -14,7 +14,7 @@ use actix_web::{
 use askama::Template;
 use askama_web::WebTemplate;
 use assets::{Assets, EmbedService};
-use oidc::{route_get_oidc_callback, route_post_oidc};
+use oidc::configure_oidc;
 use rand::{Rng, distributions::Alphanumeric};
 use routes::{
     addressbook::{route_addressbook, route_addressbook_restore},
@@ -34,6 +34,9 @@ pub mod nextcloud_login;
 mod oidc;
 mod routes;
 
+pub const ROUTE_NAME_HOME: &str = "frontend_home";
+pub const ROUTE_USER_NAMED: &str = "frontend_user_named";
+
 pub use config::{FrontendConfig, OidcConfig};
 
 pub fn generate_app_token() -> String {
@@ -52,15 +55,6 @@ struct UserPage {
     pub deleted_calendars: Vec<Calendar>,
     pub addressbooks: Vec<Addressbook>,
     pub deleted_addressbooks: Vec<Addressbook>,
-}
-
-async fn route_user(user: User, req: HttpRequest) -> Redirect {
-    Redirect::to(
-        req.url_for("frontend_user_named", &[user.id])
-            .unwrap()
-            .to_string(),
-    )
-    .see_other()
 }
 
 async fn route_user_named<CS: CalendarStore, AS: AddressbookStore>(
@@ -106,9 +100,18 @@ async fn route_user_named<CS: CalendarStore, AS: AddressbookStore>(
     .respond_to(&req)
 }
 
+async fn route_get_home(user: User, req: HttpRequest) -> Redirect {
+    Redirect::to(
+        req.url_for(ROUTE_USER_NAMED, &[user.id])
+            .unwrap()
+            .to_string(),
+    )
+    .see_other()
+}
+
 async fn route_root(user: Option<User>, req: HttpRequest) -> impl Responder {
     let redirect_url = match user {
-        Some(_) => req.url_for_static("frontend_user").unwrap(),
+        Some(_) => req.url_for_static(ROUTE_NAME_HOME).unwrap(),
         None => req
             .resource_map()
             .url_for::<[_; 0], String>(&req, "frontend_login", [])
@@ -208,63 +211,52 @@ pub fn configure_frontend<AP: AuthenticationProvider, CS: CalendarStore, AS: Add
         .service(web::resource("").route(web::method(Method::GET).to(route_root)))
         .service(
             web::resource("/user")
-                .route(web::method(Method::GET).to(route_user))
-                .name("frontend_user"),
+                .get(route_get_home)
+                .name(ROUTE_NAME_HOME),
         )
         .service(
             web::resource("/user/{user}")
-                .route(web::method(Method::GET).to(route_user_named::<CS, AS>))
-                .name("frontend_user_named"),
+                .get(route_user_named::<CS, AS>)
+                .name(ROUTE_USER_NAMED),
         )
+        // App token management
+        .service(web::resource("/user/{user}/app_token").post(route_post_app_token::<AP>))
         .service(
-            web::resource("/user/{user}/app_token")
-                .route(web::method(Method::POST).to(route_post_app_token::<AP>)),
+            // POST because HTML5 forms don't support DELETE method
+            web::resource("/user/{user}/app_token/{id}/delete").post(route_delete_app_token::<AP>),
         )
-        .service(
-            web::resource("/user/{user}/app_token/{id}/delete")
-                .route(web::method(Method::POST).to(route_delete_app_token::<AP>)),
-        )
-        .service(
-            web::resource("/user/{user}/calendar/{calendar}")
-                .route(web::method(Method::GET).to(route_calendar::<CS>)),
-        )
+        // Calendar
+        .service(web::resource("/user/{user}/calendar/{calendar}").get(route_calendar::<CS>))
         .service(
             web::resource("/user/{user}/calendar/{calendar}/restore")
-                .route(web::method(Method::POST).to(route_calendar_restore::<CS>)),
+                .post(route_calendar_restore::<CS>),
         )
+        // Addressbook
         .service(
-            web::resource("/user/{user}/addressbook/{addressbook}")
-                .route(web::method(Method::GET).to(route_addressbook::<AS>)),
+            web::resource("/user/{user}/addressbook/{addressbook}").get(route_addressbook::<AS>),
         )
         .service(
             web::resource("/user/{user}/addressbook/{addressbook}/restore")
-                .route(web::method(Method::POST).to(route_addressbook_restore::<AS>)),
+                .post(route_addressbook_restore::<AS>),
         )
+        // Login
         .service(
             web::resource("/login")
                 .name("frontend_login")
-                .route(web::method(Method::GET).to(route_get_login))
-                .route(web::method(Method::POST).to(route_post_login::<AP>)),
+                .get(route_get_login)
+                .post(route_post_login::<AP>),
         )
         .service(
             web::resource("/logout")
                 .name("frontend_logout")
-                .route(web::method(Method::POST).to(route_post_logout)),
+                .post(route_post_logout),
         );
 
     if let Some(oidc_config) = oidc_config {
-        scope = scope
-            .app_data(Data::new(oidc_config))
-            .service(
-                web::resource("/login/oidc")
-                    .name("frontend_login_oidc")
-                    .route(web::method(Method::POST).to(route_post_oidc)),
-            )
-            .service(
-                web::resource("/login/oidc/callback")
-                    .name("frontend_oidc_callback")
-                    .route(web::method(Method::GET).to(route_get_oidc_callback::<AP>)),
-            );
+        scope = scope.service(
+            web::scope("/login/oidc")
+                .configure(|cfg| configure_oidc::<AP>(cfg, oidc_config, ROUTE_NAME_HOME)),
+        );
     }
 
     cfg.service(scope);

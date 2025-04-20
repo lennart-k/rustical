@@ -1,10 +1,11 @@
-use crate::config::{OidcConfig, UserIdClaim};
 use actix_session::Session;
 use actix_web::{
     HttpRequest, HttpResponse, Responder,
     http::StatusCode,
-    web::{Data, Form, Query, Redirect},
+    web::{self, Data, Form, Query, Redirect, ServiceConfig},
 };
+pub use config::OidcConfig;
+use config::UserIdClaim;
 use error::OidcError;
 use openidconnect::{
     AuthenticationFlow, AuthorizationCode, CsrfToken, EndpointMaybeSet, EndpointNotSet,
@@ -15,14 +16,15 @@ use openidconnect::{
 use rustical_store::auth::{AuthenticationProvider, User, user::PrincipalType::Individual};
 use serde::{Deserialize, Serialize};
 
+mod config;
 mod error;
 
-pub(crate) struct OidcProviderData<'a> {
-    pub name: &'a str,
-    pub redirect_url: String,
-}
-
+pub const ROUTE_NAME_OIDC_LOGIN: &str = "oidc_login";
+const ROUTE_NAME_OIDC_CALLBACK: &str = "oidc_callback";
 const SESSION_KEY_OIDC_STATE: &str = "oidc_state";
+
+#[derive(Debug)]
+pub struct DefaultRedirectRouteName(pub &'static str);
 
 #[derive(Debug, Deserialize, Serialize)]
 struct OidcState {
@@ -96,7 +98,7 @@ pub async fn route_post_oidc(
     let oidc_client = get_oidc_client(
         oidc_config.as_ref().clone(),
         &http_client,
-        RedirectUrl::new(req.url_for_static("frontend_oidc_callback")?.to_string())?,
+        RedirectUrl::new(req.url_for_static(ROUTE_NAME_OIDC_CALLBACK)?.to_string())?,
     )
     .await?;
 
@@ -138,6 +140,7 @@ pub async fn route_get_oidc_callback<AP: AuthenticationProvider>(
     session: Session,
     auth_provider: Data<AP>,
     Query(AuthCallbackQuery { code, iss }): Query<AuthCallbackQuery>,
+    default_redirect_name: Data<DefaultRedirectRouteName>,
 ) -> Result<impl Responder, OidcError> {
     assert_eq!(iss, oidc_config.issuer);
     let oidc_state = session
@@ -149,7 +152,7 @@ pub async fn route_get_oidc_callback<AP: AuthenticationProvider>(
     let oidc_client = get_oidc_client(
         oidc_config.get_ref().clone(),
         &http_client,
-        RedirectUrl::new(req.url_for_static("frontend_oidc_callback")?.to_string())?,
+        RedirectUrl::new(req.url_for_static(ROUTE_NAME_OIDC_CALLBACK)?.to_string())?,
     )
     .await?;
 
@@ -207,7 +210,9 @@ pub async fn route_get_oidc_callback<AP: AuthenticationProvider>(
         user = Some(new_user);
     }
 
-    let default_redirect = req.url_for_static("frontend_user")?.to_string();
+    let default_redirect = req
+        .url_for_static(default_redirect_name.as_ref().0)?
+        .to_string();
     let redirect_uri = oidc_state.redirect_uri.unwrap_or(default_redirect.clone());
     let redirect_uri = req
         .full_url()
@@ -225,7 +230,25 @@ pub async fn route_get_oidc_callback<AP: AuthenticationProvider>(
             .respond_to(&req)
             .map_into_boxed_body())
     } else {
-        // Add user provisioning
         Ok(HttpResponse::build(StatusCode::UNAUTHORIZED).body("User does not exist"))
     }
+}
+
+pub fn configure_oidc<AP: AuthenticationProvider>(
+    cfg: &mut ServiceConfig,
+    oidc_config: OidcConfig,
+    default_redirect_name: &'static str,
+) {
+    cfg.app_data(Data::new(oidc_config))
+        .app_data(Data::new(DefaultRedirectRouteName(default_redirect_name)))
+        .service(
+            web::resource("")
+                .name(ROUTE_NAME_OIDC_LOGIN)
+                .post(route_post_oidc),
+        )
+        .service(
+            web::resource("/callback")
+                .name(ROUTE_NAME_OIDC_CALLBACK)
+                .get(route_get_oidc_callback::<AP>),
+        );
 }
