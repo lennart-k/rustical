@@ -131,6 +131,7 @@ pub async fn route_post_oidc(
 pub struct AuthCallbackQuery {
     code: AuthorizationCode,
     iss: IssuerUrl,
+    state: String,
 }
 
 /// Handle callback from IdP page
@@ -139,7 +140,7 @@ pub async fn route_get_oidc_callback<AP: AuthenticationProvider>(
     oidc_config: Data<OidcConfig>,
     session: Session,
     auth_provider: Data<AP>,
-    Query(AuthCallbackQuery { code, iss }): Query<AuthCallbackQuery>,
+    Query(AuthCallbackQuery { code, iss, state }): Query<AuthCallbackQuery>,
     default_redirect_name: Data<DefaultRedirectRouteName>,
 ) -> Result<impl Responder, OidcError> {
     assert_eq!(iss, oidc_config.issuer);
@@ -147,6 +148,8 @@ pub async fn route_get_oidc_callback<AP: AuthenticationProvider>(
         .remove_as::<OidcState>(SESSION_KEY_OIDC_STATE)
         .ok_or(OidcError::Other("No local OIDC state"))?
         .map_err(|_| OidcError::Other("Error parsing OIDC state"))?;
+
+    assert_eq!(oidc_state.state.secret(), &state);
 
     let http_client = get_http_client();
     let oidc_client = get_oidc_client(
