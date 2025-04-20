@@ -7,7 +7,6 @@ repository.workspace = true
 publish = false
 
 [dependencies]
-openidconnect.workspace = true
 askama.workspace = true
 askama_web.workspace = true
 actix-session = { workspace = true }
@@ -20,10 +19,10 @@ rust-embed.workspace = true
 futures-core.workspace = true
 hex.workspace = true
 mime_guess.workspace = true
-reqwest.workspace = true
 rand.workspace = true
 chrono.workspace = true
 chrono-humanize.workspace = true
 uuid.workspace = true
 url.workspace = true
 tracing.workspace = true
+rustical_oidc.workspace = true

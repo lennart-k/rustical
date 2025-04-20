@@ -3037,6 +3037,7 @@ dependencies = [
  "rustical_dav",
  "rustical_dav_push",
  "rustical_frontend",
+ "rustical_oidc",
  "rustical_store",
  "rustical_store_sqlite",
  "serde",
@@ -3157,10 +3158,9 @@ dependencies = [
  "futures-core",
  "hex",
  "mime_guess",
- "openidconnect",
  "rand 0.8.5",
- "reqwest",
  "rust-embed",
+ "rustical_oidc",
  "rustical_store",
  "serde",
  "thiserror 2.0.12",
@@ -3168,6 +3168,19 @@ dependencies = [
  "tracing",
  "url",
  "uuid",
+]
+
+[[package]]
+name = "rustical_oidc"
+version = "0.1.0"
+dependencies = [
+ "actix-session",
+ "actix-web",
+ "openidconnect",
+ "reqwest",
+ "rustical_store",
+ "serde",
+ "thiserror 2.0.12",
 ]
 
 [[package]]

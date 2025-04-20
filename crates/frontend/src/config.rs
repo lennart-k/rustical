@@ -1,4 +1,3 @@
-pub use crate::oidc::OidcConfig;
 use serde::{Deserialize, Serialize};
 
 fn default_true() -> bool {

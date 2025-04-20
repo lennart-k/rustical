@@ -95,6 +95,7 @@ rustical_caldav = { path = "./crates/caldav/" }
 rustical_carddav = { path = "./crates/carddav/" }
 rustical_frontend = { path = "./crates/frontend/" }
 rustical_xml = { path = "./crates/xml/" }
+rustical_oidc = { path = "./crates/oidc/" }
 chrono-tz = "0.10"
 chrono-humanize = "0.2"
 rand = "0.8"
@@ -157,4 +158,5 @@ password-hash.workspace = true
 reqwest.workspace = true
 rustical_dav.workspace = true
 rustical_dav_push.workspace = true
+rustical_oidc.workspace = true
 quick-xml.workspace = true

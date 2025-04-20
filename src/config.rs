@@ -1,4 +1,5 @@
-use rustical_frontend::{FrontendConfig, OidcConfig};
+use rustical_frontend::FrontendConfig;
+use rustical_oidc::OidcConfig;
 use rustical_store::auth::TomlUserStoreConfig;
 use serde::{Deserialize, Serialize};
 

@@ -14,13 +14,13 @@ use actix_web::{
 use askama::Template;
 use askama_web::WebTemplate;
 use assets::{Assets, EmbedService};
-use oidc::configure_oidc;
 use rand::{Rng, distributions::Alphanumeric};
 use routes::{
     addressbook::{route_addressbook, route_addressbook_restore},
     calendar::{route_calendar, route_calendar_restore},
     login::{route_get_login, route_post_login, route_post_logout},
 };
+use rustical_oidc::{OidcConfig, configure_oidc};
 use rustical_store::{
     Addressbook, AddressbookStore, Calendar, CalendarStore,
     auth::{AuthenticationMiddleware, AuthenticationProvider, User},
@@ -31,13 +31,12 @@ use std::sync::Arc;
 mod assets;
 mod config;
 pub mod nextcloud_login;
-mod oidc;
 mod routes;
 
 pub const ROUTE_NAME_HOME: &str = "frontend_home";
 pub const ROUTE_USER_NAMED: &str = "frontend_user_named";
 
-pub use config::{FrontendConfig, OidcConfig};
+pub use config::FrontendConfig;
 
 pub fn generate_app_token() -> String {
     rand::thread_rng()
