@@ -1,5 +1,5 @@
 use crate::Error;
-use crate::depth_header::Depth;
+use crate::header::Depth;
 use crate::privileges::UserPrivilege;
 use crate::resource::Resource;
 use crate::resource::ResourceService;
