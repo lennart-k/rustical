@@ -8,16 +8,15 @@ publish = false
 
 [dependencies]
 rustical_xml.workspace = true
-actix-web = { workspace = true }
-async-trait = { workspace = true }
-futures-util = { workspace = true }
-quick-xml = { workspace = true }
-serde = { workspace = true }
-thiserror = { workspace = true }
-itertools = { workspace = true }
-log = { workspace = true }
-derive_more = { workspace = true }
-tracing = { workspace = true }
-tracing-actix-web = { workspace = true }
-reqwest.workspace = true
+actix-web.workspace = true
+async-trait.workspace = true
+futures-util.workspace = true
+quick-xml.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+itertools.workspace = true
+log.workspace = true
+derive_more.workspace = true
+tracing.workspace = true
+tracing-actix-web.workspace = true
 tokio.workspace = true
