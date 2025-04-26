@@ -11,6 +11,7 @@ use crate::config::{
     TracingConfig,
 };
 
+mod membership;
 pub mod principals;
 
 #[derive(Debug, Parser)]

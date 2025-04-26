@@ -1,3 +1,5 @@
+use super::membership::{MembershipArgs, handle_membership_command};
+use crate::config::{self, Config};
 use clap::{Parser, Subcommand};
 use figment::{
     Figment,
@@ -7,8 +9,6 @@ use password_hash::PasswordHasher;
 use password_hash::SaltString;
 use rand::rngs::OsRng;
 use rustical_store::auth::{AuthenticationProvider, TomlPrincipalStore, User, user::PrincipalType};
-
-use crate::config::{self, Config};
 
 #[derive(Parser, Debug)]
 pub struct PrincipalsArgs {
@@ -57,6 +57,7 @@ enum Command {
     Create(CreateArgs),
     Remove(RemoveArgs),
     Edit(EditArgs),
+    Membership(MembershipArgs),
 }
 
 pub async fn cmd_principals(args: PrincipalsArgs) -> anyhow::Result<()> {
@@ -155,6 +156,7 @@ pub async fn cmd_principals(args: PrincipalsArgs) -> anyhow::Result<()> {
             user_store.insert_principal(principal, true).await?;
             println!("Principal {id} updated");
         }
+        Command::Membership(args) => handle_membership_command(user_store, args).await?,
     }
     Ok(())
 }
