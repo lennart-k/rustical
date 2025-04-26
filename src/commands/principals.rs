@@ -45,6 +45,8 @@ struct EditArgs {
         help = "Remove password (If you only want to use OIDC for example)"
     )]
     remove_password: bool,
+    #[arg(short, long, help = "Change principal displayname")]
+    name: Option<String>,
 }
 
 #[derive(Debug, Subcommand)]
@@ -119,6 +121,7 @@ pub async fn cmd_principals(args: PrincipalsArgs) -> anyhow::Result<()> {
             id,
             remove_password,
             password,
+            name,
         }) => {
             let mut principal = user_store
                 .get_principal(&id)
@@ -139,6 +142,9 @@ pub async fn cmd_principals(args: PrincipalsArgs) -> anyhow::Result<()> {
                         .to_string()
                         .into(),
                 )
+            }
+            if name.is_some() {
+                principal.displayname = name;
             }
             user_store.insert_principal(principal, true).await?;
             println!("Principal {id} updated");
