@@ -35,16 +35,28 @@ struct RemoveArgs {
     id: String,
 }
 
+#[derive(Parser, Debug)]
+struct EditArgs {
+    id: String,
+    #[arg(long, help = "Ask for password input")]
+    password: bool,
+    #[arg(
+        long,
+        help = "Remove password (If you only want to use OIDC for example)"
+    )]
+    remove_password: bool,
+}
+
 #[derive(Debug, Subcommand)]
 enum Command {
     List,
     Create(CreateArgs),
     Remove(RemoveArgs),
+    Edit(EditArgs),
 }
 
 pub async fn cmd_principals(args: PrincipalsArgs) -> anyhow::Result<()> {
     let config: Config = Figment::new()
-        // TODO: What to do when config file does not exist?
         .merge(Toml::file(&args.config_file))
         .merge(Env::prefixed("RUSTICAL_").split("__"))
         .extract()?;
@@ -85,20 +97,51 @@ pub async fn cmd_principals(args: PrincipalsArgs) -> anyhow::Result<()> {
                 None
             };
             user_store
-                .insert_principal(User {
-                    id,
-                    displayname: name,
-                    principal_type: principal_type.unwrap_or_default(),
-                    app_tokens: vec![],
-                    password,
-                    memberships: vec![],
-                })
+                .insert_principal(
+                    User {
+                        id,
+                        displayname: name,
+                        principal_type: principal_type.unwrap_or_default(),
+                        app_tokens: vec![],
+                        password,
+                        memberships: vec![],
+                    },
+                    false,
+                )
                 .await?;
             println!("Principal created");
         }
         Command::Remove(RemoveArgs { id }) => {
             user_store.remove_principal(&id).await?;
             println!("Principal {id} removed");
+        }
+        Command::Edit(EditArgs {
+            id,
+            remove_password,
+            password,
+        }) => {
+            let mut principal = user_store
+                .get_principal(&id)
+                .await?
+                .unwrap_or_else(|| panic!("Principal {id} does not exist"));
+
+            if remove_password {
+                principal.password = None;
+            }
+            if password {
+                let salt = SaltString::generate(OsRng);
+                println!("Enter your password:");
+                let password = rpassword::read_password()?;
+                principal.password = Some(
+                    argon2::Argon2::default()
+                        .hash_password(password.as_bytes(), &salt)
+                        .unwrap()
+                        .to_string()
+                        .into(),
+                )
+            }
+            user_store.insert_principal(principal, true).await?;
+            println!("Principal {id} updated");
         }
     }
     Ok(())

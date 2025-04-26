@@ -9,7 +9,7 @@ pub trait AuthenticationProvider: 'static {
     async fn get_principals(&self) -> Result<Vec<User>, crate::Error>;
     async fn get_principal(&self, id: &str) -> Result<Option<User>, crate::Error>;
     async fn remove_principal(&self, id: &str) -> Result<(), crate::Error>;
-    async fn insert_principal(&self, user: User) -> Result<(), crate::Error>;
+    async fn insert_principal(&self, user: User, overwrite: bool) -> Result<(), crate::Error>;
     async fn validate_password(&self, user_id: &str, password: &str)
     -> Result<Option<User>, Error>;
     async fn validate_app_token(&self, user_id: &str, token: &str) -> Result<Option<User>, Error>;

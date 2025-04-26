@@ -281,14 +281,17 @@ impl<AP: AuthenticationProvider> UserStore for OidcUserStore<AP> {
 
     async fn insert_user(&self, id: &str) -> Result<(), Self::Error> {
         self.0
-            .insert_principal(User {
-                id: id.to_owned(),
-                displayname: None,
-                principal_type: Default::default(),
-                password: None,
-                app_tokens: vec![],
-                memberships: vec![],
-            })
+            .insert_principal(
+                User {
+                    id: id.to_owned(),
+                    displayname: None,
+                    principal_type: Default::default(),
+                    password: None,
+                    app_tokens: vec![],
+                    memberships: vec![],
+                },
+                false,
+            )
             .await
     }
 }

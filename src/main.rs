@@ -77,7 +77,6 @@ async fn main() -> Result<()> {
         Some(Command::Principals(principals_args)) => cmd_principals(principals_args).await?,
         None => {
             let config: Config = Figment::new()
-                // TODO: What to do when config file does not exist?
                 .merge(Toml::file(&args.config_file))
                 .merge(Env::prefixed("RUSTICAL_").split("__"))
                 .extract()?;
@@ -196,6 +195,7 @@ mod tests {
         async fn insert_principal(
             &self,
             _user: rustical_store::auth::User,
+            _overwrite: bool,
         ) -> Result<(), rustical_store::Error> {
             Err(rustical_store::Error::Other(anyhow!("Not implemented")))
         }

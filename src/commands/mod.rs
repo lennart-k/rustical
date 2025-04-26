@@ -31,7 +31,7 @@ pub fn cmd_gen_config(_args: GenConfigArgs) -> anyhow::Result<()> {
             path: "/etc/rustical/principals.toml".to_owned(),
         }),
         data_store: DataStoreConfig::Sqlite(SqliteDataStoreConfig {
-            db_url: "".to_owned(),
+            db_url: "/var/lib/rustical/db.sqlite3".to_owned(),
         }),
         tracing: TracingConfig::default(),
         frontend: FrontendConfig {

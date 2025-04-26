@@ -69,9 +69,9 @@ impl AuthenticationProvider for TomlPrincipalStore {
         Ok(self.principals.read().await.get(id).cloned())
     }
 
-    async fn insert_principal(&self, user: User) -> Result<(), crate::Error> {
+    async fn insert_principal(&self, user: User, overwrite: bool) -> Result<(), crate::Error> {
         let mut principals = self.principals.write().await;
-        if principals.contains_key(&user.id) {
+        if !overwrite && principals.contains_key(&user.id) {
             return Err(Error::AlreadyExists);
         }
         principals.insert(user.id.clone(), user);
