@@ -1,6 +1,6 @@
 use actix_web::HttpResponse;
 use actix_web::dev::{HttpServiceFactory, ServiceResponse};
-use actix_web::http::header::{HeaderName, HeaderValue};
+use actix_web::http::header::{self, HeaderName, HeaderValue};
 use actix_web::http::{Method, StatusCode};
 use actix_web::middleware::{ErrorHandlerResponse, ErrorHandlers};
 use actix_web::web::{self, Data};
@@ -43,16 +43,19 @@ pub fn caldav_service<
                 ErrorHandlers::new().handler(StatusCode::METHOD_NOT_ALLOWED, |res| {
                     Ok(ErrorHandlerResponse::Response(
                         if res.request().method() == Method::OPTIONS {
-                            let response = HttpResponse::Ok()
-                                .insert_header((
-                                    HeaderName::from_static("dav"),
-                                    // https://datatracker.ietf.org/doc/html/rfc4918#section-18
-                                    HeaderValue::from_static(
-                                        "1, 3, access-control, calendar-access, extended-mkcol, calendar-no-timezone",
-                                    ),
-                                ))
-                                .finish();
-                            ServiceResponse::new(res.into_parts().0, response).map_into_right_body()
+                            let mut response = HttpResponse::Ok();
+                            response.insert_header((
+                                HeaderName::from_static("dav"),
+                                // https://datatracker.ietf.org/doc/html/rfc4918#section-18
+                                HeaderValue::from_static(
+                                    "1, 3, access-control, calendar-access, extended-mkcol, calendar-no-timezone",
+                                ),
+                            ));
+
+                            if let Some(allow) = res.headers().get(header::ALLOW) {
+                                response.insert_header((header::ALLOW, allow.to_owned()));
+                            }
+                            ServiceResponse::new(res.into_parts().0, response.finish()).map_into_right_body()
                         } else {
                             res.map_into_left_body()
                         },
