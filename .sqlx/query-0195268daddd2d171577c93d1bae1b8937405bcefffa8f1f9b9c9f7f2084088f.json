@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM app_tokens WHERE (principal, id) = (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "0195268daddd2d171577c93d1bae1b8937405bcefffa8f1f9b9c9f7f2084088f"
+}

@@ -5,6 +5,12 @@ use serde::{Deserialize, Serialize};
 #[derive(From, Clone, Deserialize, Serialize, AsRef)]
 pub struct Secret<T>(pub T);
 
+impl<T> Secret<T> {
+    pub fn into_inner(self) -> T {
+        self.0
+    }
+}
+
 impl<T> std::fmt::Debug for Secret<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str("Secret")

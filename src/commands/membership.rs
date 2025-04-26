@@ -34,7 +34,7 @@ pub struct MembershipArgs {
 }
 
 pub async fn handle_membership_command(
-    user_store: impl AuthenticationProvider,
+    user_store: &impl AuthenticationProvider,
     MembershipArgs { command }: MembershipArgs,
 ) -> anyhow::Result<()> {
     let id = match &command {
@@ -42,28 +42,22 @@ pub async fn handle_membership_command(
         MembershipCommand::Remove(RemoveArgs { id, .. }) => id,
         MembershipCommand::List(ListArgs { id }) => id,
     };
-    let mut principal = user_store
-        .get_principal(id)
-        .await?
-        .unwrap_or_else(|| panic!("Principal {id} does not exist"));
 
-    match command {
+    match &command {
         MembershipCommand::Assign(AssignArgs { to, .. }) => {
-            if principal.memberships.contains(&to) {
-                println!("Principal is already member of {to}");
-                return Ok(());
-            }
-            principal.memberships.push(to);
-            user_store.insert_principal(principal, true).await?;
+            user_store.add_membership(id, to).await?;
             println!("Membership assigned");
         }
         MembershipCommand::Remove(RemoveArgs { to, .. }) => {
-            principal.memberships.retain(|principal| principal != &to);
-            user_store.insert_principal(principal, true).await?;
+            user_store.remove_membership(id, to).await?;
             println!("Membership removed");
         }
         MembershipCommand::List(ListArgs { .. }) => {
-            for membership in principal.memberships {
+            let principal = user_store
+                .get_principal(id)
+                .await?
+                .unwrap_or_else(|| panic!("Principal {id} does not exist"));
+            for membership in principal.memberships() {
                 println!("{membership}");
             }
         }

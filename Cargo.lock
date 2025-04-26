@@ -3197,8 +3197,6 @@ dependencies = [
  "derive_more 2.0.1",
  "ical",
  "lazy_static",
- "password-auth",
- "pbkdf2",
  "rand 0.8.5",
  "regex",
  "rstest",
@@ -3210,7 +3208,6 @@ dependencies = [
  "sha2",
  "thiserror 2.0.12",
  "tokio",
- "toml",
  "tracing",
  "uuid",
 ]
@@ -3222,12 +3219,17 @@ dependencies = [
  "async-trait",
  "chrono",
  "derive_more 2.0.1",
+ "password-auth",
+ "password-hash",
+ "pbkdf2",
+ "rand 0.8.5",
  "rustical_store",
  "serde",
  "sqlx",
  "thiserror 2.0.12",
  "tokio",
  "tracing",
+ "uuid",
 ]
 
 [[package]]

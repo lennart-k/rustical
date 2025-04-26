@@ -11,10 +11,11 @@ use figment::Figment;
 use figment::providers::{Env, Format, Toml};
 use rustical_dav_push::notifier::push_notifier;
 use rustical_frontend::nextcloud_login::NextcloudFlows;
-use rustical_store::auth::TomlPrincipalStore;
+use rustical_store::auth::AuthenticationProvider;
 use rustical_store::{AddressbookStore, CalendarStore, CollectionOperation, SubscriptionStore};
 use rustical_store_sqlite::addressbook_store::SqliteAddressbookStore;
 use rustical_store_sqlite::calendar_store::SqliteCalendarStore;
+use rustical_store_sqlite::principal_store::SqlitePrincipalStore;
 use rustical_store_sqlite::{SqliteStore, create_db_pool};
 use setup_tracing::setup_tracing;
 use std::sync::Arc;
@@ -51,6 +52,7 @@ async fn get_data_stores(
     Arc<impl AddressbookStore>,
     Arc<impl CalendarStore>,
     Arc<impl SubscriptionStore>,
+    Arc<impl AuthenticationProvider>,
     Receiver<CollectionOperation>,
 )> {
     Ok(match &config {
@@ -62,7 +64,14 @@ async fn get_data_stores(
             let addressbook_store = Arc::new(SqliteAddressbookStore::new(db.clone(), send.clone()));
             let cal_store = Arc::new(SqliteCalendarStore::new(db.clone(), send));
             let subscription_store = Arc::new(SqliteStore::new(db.clone()));
-            (addressbook_store, cal_store, subscription_store, recv)
+            let principal_store = Arc::new(SqlitePrincipalStore::new(db.clone()));
+            (
+                addressbook_store,
+                cal_store,
+                subscription_store,
+                principal_store,
+                recv,
+            )
         }
     })
 }
@@ -83,7 +92,7 @@ async fn main() -> Result<()> {
 
             setup_tracing(&config.tracing);
 
-            let (addr_store, cal_store, subscription_store, update_recv) =
+            let (addr_store, cal_store, subscription_store, principal_store, update_recv) =
                 get_data_stores(!args.no_migrations, &config.data_store).await?;
 
             if config.dav_push.enabled {
@@ -94,10 +103,6 @@ async fn main() -> Result<()> {
                 ));
             }
 
-            let user_store = match config.auth {
-                config::AuthConfig::Toml(config) => Arc::new(TomlPrincipalStore::new(config)?),
-            };
-
             let nextcloud_flows = Arc::new(NextcloudFlows::default());
 
             HttpServer::new(move || {
@@ -105,7 +110,7 @@ async fn main() -> Result<()> {
                     addr_store.clone(),
                     cal_store.clone(),
                     subscription_store.clone(),
-                    user_store.clone(),
+                    principal_store.clone(),
                     config.frontend.clone(),
                     config.oidc.clone(),
                     config.nextcloud_login.clone(),
@@ -131,94 +136,27 @@ mod tests {
         get_data_stores,
     };
     use actix_web::{http::StatusCode, test::TestRequest};
-    use anyhow::anyhow;
-    use async_trait::async_trait;
     use rustical_frontend::FrontendConfig;
     use rustical_frontend::nextcloud_login::NextcloudFlows;
-    use rustical_store::auth::AuthenticationProvider;
     use std::sync::Arc;
-
-    #[derive(Debug, Clone)]
-    struct MockUserStore;
-
-    #[async_trait]
-    impl AuthenticationProvider for MockUserStore {
-        async fn get_principals(
-            &self,
-        ) -> Result<Vec<rustical_store::auth::User>, rustical_store::Error> {
-            Err(rustical_store::Error::Other(anyhow!("Not implemented")))
-        }
-        async fn get_principal(
-            &self,
-            _id: &str,
-        ) -> Result<Option<rustical_store::auth::User>, rustical_store::Error> {
-            Err(rustical_store::Error::Other(anyhow!("Not implemented")))
-        }
-
-        async fn remove_principal(&self, _id: &str) -> Result<(), rustical_store::Error> {
-            Err(rustical_store::Error::Other(anyhow!("Not implemented")))
-        }
-
-        async fn validate_password(
-            &self,
-            _user_id: &str,
-            _password: &str,
-        ) -> Result<Option<rustical_store::auth::User>, rustical_store::Error> {
-            Err(rustical_store::Error::Other(anyhow!("Not implemented")))
-        }
-
-        async fn validate_app_token(
-            &self,
-            _user_id: &str,
-            _token: &str,
-        ) -> Result<Option<rustical_store::auth::User>, rustical_store::Error> {
-            Err(rustical_store::Error::Other(anyhow!("Not implemented")))
-        }
-
-        async fn add_app_token(
-            &self,
-            _user_id: &str,
-            _name: String,
-            _token: String,
-        ) -> Result<String, rustical_store::Error> {
-            Err(rustical_store::Error::Other(anyhow!("Not implemented")))
-        }
-
-        async fn remove_app_token(
-            &self,
-            _user_id: &str,
-            _token_id: &str,
-        ) -> Result<(), rustical_store::Error> {
-            Err(rustical_store::Error::Other(anyhow!("Not implemented")))
-        }
-
-        async fn insert_principal(
-            &self,
-            _user: rustical_store::auth::User,
-            _overwrite: bool,
-        ) -> Result<(), rustical_store::Error> {
-            Err(rustical_store::Error::Other(anyhow!("Not implemented")))
-        }
-    }
 
     #[tokio::test]
     async fn test_main() {
-        let (addr_store, cal_store, subscription_store, _update_recv) = get_data_stores(
-            true,
-            &crate::config::DataStoreConfig::Sqlite(crate::config::SqliteDataStoreConfig {
-                db_url: "".to_owned(),
-            }),
-        )
-        .await
-        .unwrap();
-
-        let user_store = Arc::new(MockUserStore);
+        let (addr_store, cal_store, subscription_store, principal_store, _update_recv) =
+            get_data_stores(
+                true,
+                &crate::config::DataStoreConfig::Sqlite(crate::config::SqliteDataStoreConfig {
+                    db_url: "".to_owned(),
+                }),
+            )
+            .await
+            .unwrap();
 
         let app = make_app(
             addr_store,
             cal_store,
             subscription_store,
-            user_store,
+            principal_store,
             FrontendConfig {
                 enabled: false,
                 secret_key: generate_frontend_secret(),

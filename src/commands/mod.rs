@@ -4,11 +4,9 @@ use password_hash::PasswordHasher;
 use pbkdf2::Params;
 use rand::{RngCore, rngs::OsRng};
 use rustical_frontend::FrontendConfig;
-use rustical_store::auth::TomlUserStoreConfig;
 
 use crate::config::{
-    AuthConfig, Config, DataStoreConfig, DavPushConfig, HttpConfig, SqliteDataStoreConfig,
-    TracingConfig,
+    Config, DataStoreConfig, DavPushConfig, HttpConfig, SqliteDataStoreConfig, TracingConfig,
 };
 
 mod membership;
@@ -28,9 +26,6 @@ pub fn generate_frontend_secret() -> [u8; 64] {
 pub fn cmd_gen_config(_args: GenConfigArgs) -> anyhow::Result<()> {
     let config = Config {
         http: HttpConfig::default(),
-        auth: AuthConfig::Toml(TomlUserStoreConfig {
-            path: "/etc/rustical/principals.toml".to_owned(),
-        }),
         data_store: DataStoreConfig::Sqlite(SqliteDataStoreConfig {
             db_url: "/var/lib/rustical/db.sqlite3".to_owned(),
         }),

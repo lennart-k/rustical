@@ -16,7 +16,7 @@
   <h3>Groups</h3>
 
   <ul>
-    {% for group in user.memberships %}
+    {% for group in user.memberships() %}
       <li>{{ group }}</li>
     {% endfor %}
   </ul>
@@ -28,7 +28,7 @@
       <th>Created at</th>
       <th></th>
     </tr>
-    {% for app_token in user.app_tokens %}
+    {% for app_token in app_tokens %}
     <tr>
       <td>{{ app_token.name }}</td>
       <td>

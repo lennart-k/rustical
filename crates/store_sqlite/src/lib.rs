@@ -1,9 +1,10 @@
 use serde::Serialize;
-use sqlx::{sqlite::SqliteConnectOptions, Pool, Sqlite, SqlitePool};
+use sqlx::{Pool, Sqlite, SqlitePool, sqlite::SqliteConnectOptions};
 
 pub mod addressbook_store;
 pub mod calendar_store;
 pub mod error;
+pub mod principal_store;
 pub mod subscription_store;
 
 pub use error::Error;

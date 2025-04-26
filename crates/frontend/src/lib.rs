@@ -24,7 +24,7 @@ use routes::{
 use rustical_oidc::{OidcConfig, OidcServiceConfig, UserStore, configure_oidc};
 use rustical_store::{
     Addressbook, AddressbookStore, Calendar, CalendarStore,
-    auth::{AuthenticationMiddleware, AuthenticationProvider, User},
+    auth::{AuthenticationMiddleware, AuthenticationProvider, User, user::AppToken},
 };
 use serde::Deserialize;
 use std::sync::Arc;
@@ -51,16 +51,18 @@ pub fn generate_app_token() -> String {
 #[template(path = "pages/user.html")]
 struct UserPage {
     pub user: User,
+    pub app_tokens: Vec<AppToken>,
     pub calendars: Vec<Calendar>,
     pub deleted_calendars: Vec<Calendar>,
     pub addressbooks: Vec<Addressbook>,
     pub deleted_addressbooks: Vec<Addressbook>,
 }
 
-async fn route_user_named<CS: CalendarStore, AS: AddressbookStore>(
+async fn route_user_named<CS: CalendarStore, AS: AddressbookStore, AP: AuthenticationProvider>(
     path: Path<String>,
     cal_store: Data<CS>,
     addr_store: Data<AS>,
+    auth_provider: Data<AP>,
     user: User,
     req: HttpRequest,
 ) -> impl Responder {
@@ -91,6 +93,7 @@ async fn route_user_named<CS: CalendarStore, AS: AddressbookStore>(
     }
 
     UserPage {
+        app_tokens: auth_provider.get_app_tokens(&user.id).await.unwrap(),
         calendars,
         deleted_calendars,
         addressbooks,
@@ -216,7 +219,7 @@ pub fn configure_frontend<AP: AuthenticationProvider, CS: CalendarStore, AS: Add
         )
         .service(
             web::resource("/user/{user}")
-                .get(route_user_named::<CS, AS>)
+                .get(route_user_named::<CS, AS, AP>)
                 .name(ROUTE_USER_NAMED),
         )
         // App token management
@@ -287,7 +290,6 @@ impl<AP: AuthenticationProvider> UserStore for OidcUserStore<AP> {
                     displayname: None,
                     principal_type: Default::default(),
                     password: None,
-                    app_tokens: vec![],
                     memberships: vec![],
                 },
                 false,

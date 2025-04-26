@@ -16,16 +16,13 @@ chrono = { workspace = true }
 regex = { workspace = true }
 lazy_static = { workspace = true }
 thiserror = { workspace = true }
-password-auth = { workspace = true }
 actix-web = { workspace = true }
 actix-session = { workspace = true }
 actix-web-httpauth = { workspace = true }
 tracing = { workspace = true }
-pbkdf2 = { workspace = true }
 chrono-tz = { workspace = true }
 derive_more = { workspace = true }
 rustical_xml.workspace = true
-toml.workspace = true
 tokio.workspace = true
 rand.workspace = true
 uuid.workspace = true

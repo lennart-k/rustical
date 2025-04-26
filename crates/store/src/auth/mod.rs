@@ -1,5 +1,4 @@
 pub mod middleware;
-pub mod toml_user_store;
 pub mod user;
 use crate::error::Error;
 use async_trait::async_trait;
@@ -21,8 +20,12 @@ pub trait AuthenticationProvider: 'static {
         token: String,
     ) -> Result<String, Error>;
     async fn remove_app_token(&self, user_id: &str, token_id: &str) -> Result<(), Error>;
+    async fn get_app_tokens(&self, principal: &str) -> Result<Vec<AppToken>, Error>;
+
+    async fn add_membership(&self, principal: &str, member_of: &str) -> Result<(), Error>;
+    async fn remove_membership(&self, principal: &str, member_of: &str) -> Result<(), Error>;
 }
 
 pub use middleware::AuthenticationMiddleware;
-pub use toml_user_store::{TomlPrincipalStore, TomlUserStoreConfig};
+use user::AppToken;
 pub use user::User;

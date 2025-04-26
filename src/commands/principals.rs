@@ -1,5 +1,5 @@
 use super::membership::{MembershipArgs, handle_membership_command};
-use crate::config::{self, Config};
+use crate::{config::Config, get_data_stores};
 use clap::{Parser, Subcommand};
 use figment::{
     Figment,
@@ -8,7 +8,7 @@ use figment::{
 use password_hash::PasswordHasher;
 use password_hash::SaltString;
 use rand::rngs::OsRng;
-use rustical_store::auth::{AuthenticationProvider, TomlPrincipalStore, User, user::PrincipalType};
+use rustical_store::auth::{AuthenticationProvider, User, user::PrincipalType};
 
 #[derive(Parser, Debug)]
 pub struct PrincipalsArgs {
@@ -66,13 +66,11 @@ pub async fn cmd_principals(args: PrincipalsArgs) -> anyhow::Result<()> {
         .merge(Env::prefixed("RUSTICAL_").split("__"))
         .extract()?;
 
-    let user_store = match config.auth {
-        config::AuthConfig::Toml(config) => TomlPrincipalStore::new(config)?,
-    };
+    let (_, _, _, principal_store, _) = get_data_stores(true, &config.data_store).await?;
 
     match args.command {
         Command::List => {
-            for principal in user_store.get_principals().await? {
+            for principal in principal_store.get_principals().await? {
                 println!(
                     "{} (displayname={}) [{}]",
                     principal.id,
@@ -101,13 +99,12 @@ pub async fn cmd_principals(args: PrincipalsArgs) -> anyhow::Result<()> {
             } else {
                 None
             };
-            user_store
+            principal_store
                 .insert_principal(
                     User {
                         id,
                         displayname: name,
                         principal_type: principal_type.unwrap_or_default(),
-                        app_tokens: vec![],
                         password,
                         memberships: vec![],
                     },
@@ -117,7 +114,7 @@ pub async fn cmd_principals(args: PrincipalsArgs) -> anyhow::Result<()> {
             println!("Principal created");
         }
         Command::Remove(RemoveArgs { id }) => {
-            user_store.remove_principal(&id).await?;
+            principal_store.remove_principal(&id).await?;
             println!("Principal {id} removed");
         }
         Command::Edit(EditArgs {
@@ -127,7 +124,7 @@ pub async fn cmd_principals(args: PrincipalsArgs) -> anyhow::Result<()> {
             name,
             principal_type,
         }) => {
-            let mut principal = user_store
+            let mut principal = principal_store
                 .get_principal(&id)
                 .await?
                 .unwrap_or_else(|| panic!("Principal {id} does not exist"));
@@ -153,10 +150,12 @@ pub async fn cmd_principals(args: PrincipalsArgs) -> anyhow::Result<()> {
             if let Some(principal_type) = principal_type {
                 principal.principal_type = principal_type;
             }
-            user_store.insert_principal(principal, true).await?;
+            principal_store.insert_principal(principal, true).await?;
             println!("Principal {id} updated");
         }
-        Command::Membership(args) => handle_membership_command(user_store, args).await?,
+        Command::Membership(args) => {
+            handle_membership_command(principal_store.as_ref(), args).await?
+        }
     }
     Ok(())
 }

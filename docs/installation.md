@@ -12,7 +12,6 @@ cargo install --locked --git https://github.com/lennart-k/rustical
 docker run \
   -p 4000:4000 \
   -v YOUR_DATA_DIR:/var/lib/rustical/ \
-  -v YOUR_PRINCIPALS_TOML:/etc/rustical/principals.toml \
   -v YOUR_CONFIG_TOML:/etc/rustical/config.toml \ # (1)!
   -e RUSTICAL__CONFIG_OPTION="asd" \  # (2)!
   ghcr.io/lennart-k/rustical
@@ -55,41 +54,16 @@ Every variable is
 - Dots become `__`
 - Arrays are JSON-encoded
 
-
 ## Users and groups
 
-Next, configure the principals by creating a file specified in `auth.toml.path` (by default `/etc/rustical/principals.toml`) and inserting your principals:
+Next, you will want to set up your principals.
+Using the `rustical principals` command you can manage principals and passwords.
 
-```toml
-[[principals]]
-id = "user"
-displayname = "User"
-password = "$argon2id$......."
-app_tokens = [
-  {id = "1", name = "Token", token = "$pbkdf2-sha256$........"},
-]
-memberships = ["group:amazing_group"]
+Groups and rooms are also just principals and you can specify them as such using the `--principal-type` parameter.
+To assign a user to a group you can use the `rustical membership` command. Being a member to a principal means that you can completely act on their behalf and see their collections.
 
-[[principals]]
-id = "group:amazing_group"
-user_type = "group"
-displayname = "Amazing group"
-```
-
-Password hashes can be generated with
-
-```sh
-rustical pwhash
-```
-
-## Docker
-
-You can also run the upper commands in Docker with
-
-```sh
-docker run --rm ghcr.io/lennart-k/rustical rustical gen-config
-docker run -it --rm ghcr.io/lennart-k/rustical rustical pwhash
-```
+You can also completely skip this and instead configure OpenID Connect.
+In that case your user will automatically be created when logging in through the frontend.
 
 ## Password vs app tokens
 

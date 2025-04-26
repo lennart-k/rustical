@@ -16,3 +16,8 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 derive_more.workspace = true
 chrono.workspace = true
+password-auth.workspace = true
+password-hash.workspace = true
+uuid.workspace = true
+rand.workspace = true
+pbkdf2.workspace = true

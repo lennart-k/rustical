@@ -1,6 +1,5 @@
 use rustical_frontend::FrontendConfig;
 use rustical_oidc::OidcConfig;
-use rustical_store::auth::TomlUserStoreConfig;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -30,13 +29,6 @@ pub struct SqliteDataStoreConfig {
 #[serde(deny_unknown_fields)]
 pub enum DataStoreConfig {
     Sqlite(SqliteDataStoreConfig),
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "snake_case")]
-#[serde(deny_unknown_fields)]
-pub enum AuthConfig {
-    Toml(TomlUserStoreConfig),
 }
 
 #[derive(Debug, Deserialize, Serialize, Default)]
@@ -80,7 +72,6 @@ impl Default for NextcloudLoginConfig {
 #[serde(deny_unknown_fields)]
 pub struct Config {
     pub data_store: DataStoreConfig,
-    pub auth: AuthConfig,
     #[serde(default)]
     pub http: HttpConfig,
     pub frontend: FrontendConfig,
