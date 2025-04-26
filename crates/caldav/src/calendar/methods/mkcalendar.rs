@@ -1,7 +1,7 @@
-use crate::calendar::prop::SupportedCalendarComponentSet;
 use crate::Error;
-use actix_web::web::{Data, Path};
+use crate::calendar::prop::SupportedCalendarComponentSet;
 use actix_web::HttpResponse;
+use actix_web::web::{Data, Path};
 use rustical_store::auth::User;
 use rustical_store::calendar::CalendarObjectType;
 use rustical_store::{Calendar, CalendarStore};
@@ -25,7 +25,7 @@ pub struct MkcolCalendarProp {
     calendar_timezone_id: Option<String>,
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     #[allow(dead_code)]
-    resourcetype: Unparsed,
+    resourcetype: Option<Unparsed>,
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     supported_calendar_component_set: Option<SupportedCalendarComponentSet>,
     // Ignore that property, we don't support it but also don't want to throw an error
