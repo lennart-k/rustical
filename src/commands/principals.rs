@@ -47,6 +47,8 @@ struct EditArgs {
     remove_password: bool,
     #[arg(short, long, help = "Change principal displayname")]
     name: Option<String>,
+    #[arg(value_enum, short, long, help = "Change the principal type")]
+    principal_type: Option<PrincipalType>,
 }
 
 #[derive(Debug, Subcommand)]
@@ -122,6 +124,7 @@ pub async fn cmd_principals(args: PrincipalsArgs) -> anyhow::Result<()> {
             remove_password,
             password,
             name,
+            principal_type,
         }) => {
             let mut principal = user_store
                 .get_principal(&id)
@@ -145,6 +148,9 @@ pub async fn cmd_principals(args: PrincipalsArgs) -> anyhow::Result<()> {
             }
             if name.is_some() {
                 principal.displayname = name;
+            }
+            if let Some(principal_type) = principal_type {
+                principal.principal_type = principal_type;
             }
             user_store.insert_principal(principal, true).await?;
             println!("Principal {id} updated");
