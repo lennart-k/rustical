@@ -189,3 +189,7 @@ table {
     }
   }
 }
+
+textarea {
+  width: 100%;
+}

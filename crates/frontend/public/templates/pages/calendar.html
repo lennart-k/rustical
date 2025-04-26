@@ -26,7 +26,7 @@
 <p>{{ timezone_id }}</p>
 {% endif %}
 {% if let Some(timezone) = calendar.timezone %}
-<pre>{{ timezone }}</pre>
+<textarea rows="16" readonly>{{ timezone }}</textarea>
 {% endif %}
 
 
