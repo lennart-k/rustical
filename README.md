@@ -2,17 +2,18 @@
 
 a CalDAV/CardDAV server
 
-> [!CAUTION]
+> [!WARNING]
 > RustiCal is **not production-ready!**
-> There can be changes to the database without migrations and there's no guarantee that all endpoints are secured yet.
-> If you still want to play around with it in its current state, absolutely feel free to do so but know that not even I use it productively yet.
+> I'm just starting to use it myself so I cannot guarantee that everything will be working smoothly just yet.
+> I hope there won't be any manual migrations anymore but if you want to be an early adopter some SQL knowledge might be useful just in case.
+> If you still want to play around with it in its current state, absolutely feel free to do so and to open up an issue if something is not working. :)
 
 ## Features
 
 - easy to backup, everything saved in one SQLite database
 - [WebDAV Push](https://github.com/bitfireAT/webdav-push/) support, so near-instant synchronisation to DAVx5
 - lightweight (the container image contains only one binary)
-- adequately fast (I'd say blazingly fast™ :fire: if I did the benchmarks to back that claim up)
+- adequately fast (I'd love to say blazingly fast™ :fire: but I don't have any benchmarks)
 - deleted calendars are recoverable
 - Nextcloud login flow (In DAVx5 you can login through the Nextcloud flow and automatically generate an app token)
 - OpenID Connect support (with option to disable password login)
