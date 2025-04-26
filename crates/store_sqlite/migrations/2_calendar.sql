@@ -14,7 +14,9 @@ CREATE TABLE calendars (
     comp_event BOOLEAN NOT NULL,
     comp_todo BOOLEAN NOT NULL,
     comp_journal BOOLEAN NOT NULL,
-    PRIMARY KEY (principal, id)
+    PRIMARY KEY (principal, id),
+    CONSTRAINT fk_calendar_principal FOREIGN KEY (principal)
+    REFERENCES principals (id) ON DELETE RESTRICT
 );
 
 CREATE TABLE calendarobjects (

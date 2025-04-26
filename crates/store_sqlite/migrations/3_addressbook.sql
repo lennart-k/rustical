@@ -6,7 +6,9 @@ CREATE TABLE addressbooks (
     description TEXT,
     deleted_at DATETIME,
     push_topic TEXT UNIQUE NOT NULL,
-    PRIMARY KEY (principal, id)
+    PRIMARY KEY (principal, id),
+    CONSTRAINT fk_addressbook_principal FOREIGN KEY (principal)
+    REFERENCES principals (id) ON DELETE RESTRICT
 );
 
 CREATE TABLE addressobjects (
