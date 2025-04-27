@@ -4,15 +4,17 @@ use rustical_dav::{
     xml::{MultistatusElement, PropElement, PropfindType},
 };
 use rustical_store::{
-    auth::User, calendar::UtcDateTime, calendar_store::CalendarQuery, CalendarObject, CalendarStore,
+    CalendarObject, CalendarStore, auth::User, calendar::UtcDateTime, calendar_store::CalendarQuery,
 };
 use rustical_xml::XmlDeserialize;
 use std::ops::Deref;
 
 use crate::{
-    calendar_object::resource::{CalendarObjectPropWrapper, CalendarObjectResource},
     Error,
+    calendar_object::resource::{CalendarObjectPropWrapper, CalendarObjectResource},
 };
+
+use super::ReportPropName;
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
@@ -179,7 +181,7 @@ impl From<&FilterElement> for CalendarQuery {
 // <!ELEMENT calendar-query ((DAV:allprop | DAV:propname | DAV:prop)?, filter, timezone?)>
 pub struct CalendarQueryRequest {
     #[xml(ty = "untagged")]
-    pub prop: PropfindType,
+    pub prop: PropfindType<ReportPropName>,
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     pub(crate) filter: Option<FilterElement>,
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
@@ -230,9 +232,16 @@ pub async fn handle_calendar_query<C: CalendarStore>(
         PropfindType::Propname => {
             vec!["propname".to_owned()]
         }
-        PropfindType::Prop(PropElement(prop_tags)) => {
-            prop_tags.into_iter().map(|propname| propname.0).collect()
-        }
+        PropfindType::Prop(PropElement(prop_tags)) => prop_tags
+            .into_iter()
+            .filter_map(|propname| {
+                if let ReportPropName::Propname(propname) = propname {
+                    Some(propname.0)
+                } else {
+                    None
+                }
+            })
+            .collect(),
     };
     let props: Vec<&str> = props.iter().map(String::as_str).collect();
 

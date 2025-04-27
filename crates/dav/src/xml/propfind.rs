@@ -9,17 +9,17 @@ pub struct PropfindElement {
 }
 
 #[derive(Debug, Clone, XmlDeserialize, PartialEq)]
-pub struct PropElement(#[xml(ty = "untagged", flatten)] pub Vec<Propname>);
+pub struct PropElement<PN: XmlDeserialize = Propname>(#[xml(ty = "untagged", flatten)] pub Vec<PN>);
 
 #[derive(Debug, Clone, XmlDeserialize, PartialEq)]
 pub struct Propname(#[xml(ty = "tag_name")] pub String);
 
 #[derive(Debug, Clone, XmlDeserialize, PartialEq)]
-pub enum PropfindType {
+pub enum PropfindType<PN: XmlDeserialize = Propname> {
     #[xml(ns = "crate::namespace::NS_DAV")]
     Propname,
     #[xml(ns = "crate::namespace::NS_DAV")]
     Allprop,
     #[xml(ns = "crate::namespace::NS_DAV")]
-    Prop(PropElement),
+    Prop(PropElement<PN>),
 }

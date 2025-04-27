@@ -1,24 +1,24 @@
-use actix_web::{http::StatusCode, HttpRequest};
+use super::ReportPropName;
+use crate::{
+    Error,
+    calendar_object::resource::{CalendarObjectPropWrapper, CalendarObjectResource},
+};
+use actix_web::{HttpRequest, http::StatusCode};
 use rustical_dav::{
     resource::Resource,
     xml::{
-        multistatus::ResponseElement, sync_collection::SyncCollectionRequest, MultistatusElement,
-        PropElement, PropfindType,
+        MultistatusElement, PropElement, PropfindType, multistatus::ResponseElement,
+        sync_collection::SyncCollectionRequest,
     },
 };
 use rustical_store::{
+    CalendarStore,
     auth::User,
     synctoken::{format_synctoken, parse_synctoken},
-    CalendarStore,
-};
-
-use crate::{
-    calendar_object::resource::{CalendarObjectPropWrapper, CalendarObjectResource},
-    Error,
 };
 
 pub async fn handle_sync_collection<C: CalendarStore>(
-    sync_collection: SyncCollectionRequest,
+    sync_collection: SyncCollectionRequest<ReportPropName>,
     req: HttpRequest,
     user: &User,
     principal: &str,
@@ -32,9 +32,16 @@ pub async fn handle_sync_collection<C: CalendarStore>(
         PropfindType::Propname => {
             vec!["propname".to_owned()]
         }
-        PropfindType::Prop(PropElement(prop_tags)) => {
-            prop_tags.into_iter().map(|propname| propname.0).collect()
-        }
+        PropfindType::Prop(PropElement(prop_tags)) => prop_tags
+            .into_iter()
+            .filter_map(|propname| {
+                if let ReportPropName::Propname(propname) = propname {
+                    Some(propname.0)
+                } else {
+                    None
+                }
+            })
+            .collect(),
     };
     let props: Vec<&str> = props.iter().map(String::as_str).collect();
 

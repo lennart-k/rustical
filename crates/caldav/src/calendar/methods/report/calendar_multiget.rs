@@ -1,17 +1,18 @@
+use super::ReportPropName;
 use crate::{
-    calendar_object::resource::{CalendarObjectPropWrapper, CalendarObjectResource},
     Error,
+    calendar_object::resource::{CalendarObjectPropWrapper, CalendarObjectResource},
 };
 use actix_web::{
+    HttpRequest,
     dev::{Path, ResourceDef},
     http::StatusCode,
-    HttpRequest,
 };
 use rustical_dav::{
     resource::Resource,
-    xml::{multistatus::ResponseElement, MultistatusElement, PropElement, PropfindType},
+    xml::{MultistatusElement, PropElement, PropfindType, multistatus::ResponseElement},
 };
-use rustical_store::{auth::User, CalendarObject, CalendarStore};
+use rustical_store::{CalendarObject, CalendarStore, auth::User};
 use rustical_xml::XmlDeserialize;
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
@@ -19,7 +20,7 @@ use rustical_xml::XmlDeserialize;
 // <!ELEMENT calendar-query ((DAV:allprop | DAV:propname | DAV:prop)?, href+)>
 pub(crate) struct CalendarMultigetRequest {
     #[xml(ty = "untagged")]
-    pub(crate) prop: PropfindType,
+    pub(crate) prop: PropfindType<ReportPropName>,
     #[xml(flatten)]
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     pub(crate) href: Vec<String>,
@@ -72,9 +73,16 @@ pub async fn handle_calendar_multiget<C: CalendarStore>(
         PropfindType::Propname => {
             vec!["propname".to_owned()]
         }
-        PropfindType::Prop(PropElement(prop_tags)) => {
-            prop_tags.into_iter().map(|propname| propname.0).collect()
-        }
+        PropfindType::Prop(PropElement(prop_tags)) => prop_tags
+            .into_iter()
+            .filter_map(|propname| {
+                if let ReportPropName::Propname(propname) = propname {
+                    Some(propname.0)
+                } else {
+                    None
+                }
+            })
+            .collect(),
     };
     let props: Vec<&str> = props.iter().map(String::as_str).collect();
 
