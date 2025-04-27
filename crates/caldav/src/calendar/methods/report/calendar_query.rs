@@ -234,12 +234,9 @@ pub async fn handle_calendar_query<C: CalendarStore>(
         }
         PropfindType::Prop(PropElement(prop_tags)) => prop_tags
             .into_iter()
-            .filter_map(|propname| {
-                if let ReportPropName::Propname(propname) = propname {
-                    Some(propname.0)
-                } else {
-                    None
-                }
+            .map(|propname| match propname {
+                ReportPropName::Propname(propname) => propname.0,
+                ReportPropName::CalendarData(_) => "calendar-data".to_owned(),
             })
             .collect(),
     };
