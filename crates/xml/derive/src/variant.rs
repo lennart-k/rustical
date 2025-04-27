@@ -119,8 +119,16 @@ impl Variant {
                         }
                     }
                 }
-                (true, Fields::Unnamed(_), _) => {
-                    panic!("other for tuple enums not implemented yet")
+                (true, Fields::Unnamed(FieldsUnnamed { unnamed, .. }), _) => {
+                    if unnamed.len() != 1 {
+                        panic!("tuple variants should contain exactly one element");
+                    }
+                    quote! {
+                        _ => {
+                            let val = <#deserializer_type as ::rustical_xml::XmlDeserialize>::deserialize(reader, start, empty)?;
+                            Ok(Self::#ident(val))
+                        }
+                    }
                 }
                 (true, Fields::Unit, _) => {
                     quote! {
