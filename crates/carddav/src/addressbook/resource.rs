@@ -211,7 +211,7 @@ impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
     ) -> Result<Self::Resource, Error> {
         let addressbook = self
             .addr_store
-            .get_addressbook(principal, addressbook_id)
+            .get_addressbook(principal, addressbook_id, false)
             .await
             .map_err(|_e| Error::NotFound)?;
         Ok(addressbook.into())

@@ -1,7 +1,7 @@
 use crate::Error;
 use actix_web::web::Path;
-use actix_web::{web::Data, HttpResponse};
-use rustical_store::{auth::User, Addressbook, AddressbookStore};
+use actix_web::{HttpResponse, web::Data};
+use rustical_store::{Addressbook, AddressbookStore, auth::User};
 use rustical_xml::{XmlDeserialize, XmlDocument, XmlRootTag};
 use tracing::instrument;
 use tracing_actix_web::RootSpan;
@@ -65,7 +65,10 @@ pub async fn route_mkcol<AS: AddressbookStore>(
         push_topic: uuid::Uuid::new_v4().to_string(),
     };
 
-    match store.get_addressbook(&principal, &addressbook_id).await {
+    match store
+        .get_addressbook(&principal, &addressbook_id, true)
+        .await
+    {
         Err(rustical_store::Error::NotFound) => {
             // No conflict, no worries
         }

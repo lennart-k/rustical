@@ -24,7 +24,7 @@ pub async fn route_addressbook<AS: AddressbookStore>(
         return Ok(HttpResponse::Unauthorized().body("Unauthorized"));
     }
     Ok(AddressbookPage {
-        addressbook: store.get_addressbook(&owner, &addrbook_id).await?,
+        addressbook: store.get_addressbook(&owner, &addrbook_id, true).await?,
     }
     .respond_to(&req))
 }

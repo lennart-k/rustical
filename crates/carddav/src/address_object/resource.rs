@@ -144,7 +144,7 @@ impl<AS: AddressbookStore> ResourceService for AddressObjectResourceService<AS> 
     ) -> Result<Self::Resource, Self::Error> {
         let object = self
             .addr_store
-            .get_object(principal, addressbook_id, object_id)
+            .get_object(principal, addressbook_id, object_id, false)
             .await?;
         Ok(AddressObjectResource {
             object,

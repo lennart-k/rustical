@@ -1,17 +1,17 @@
 use crate::{
-    address_object::resource::{AddressObjectPropWrapper, AddressObjectResource},
     Error,
+    address_object::resource::{AddressObjectPropWrapper, AddressObjectResource},
 };
 use actix_web::{
+    HttpRequest,
     dev::{Path, ResourceDef},
     http::StatusCode,
-    HttpRequest,
 };
 use rustical_dav::{
     resource::Resource,
-    xml::{multistatus::ResponseElement, MultistatusElement, PropElement, PropfindType},
+    xml::{MultistatusElement, PropElement, PropfindType, multistatus::ResponseElement},
 };
-use rustical_store::{auth::User, AddressObject, AddressbookStore};
+use rustical_store::{AddressObject, AddressbookStore, auth::User};
 use rustical_xml::XmlDeserialize;
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
@@ -42,7 +42,10 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
             not_found.push(href.to_owned());
         };
         let object_id = path.get("object_id").unwrap();
-        match store.get_object(principal, addressbook_id, object_id).await {
+        match store
+            .get_object(principal, addressbook_id, object_id, false)
+            .await
+        {
             Ok(object) => result.push(object),
             Err(rustical_store::Error::NotFound) => not_found.push(href.to_owned()),
             // TODO: Maybe add error handling on a per-object basis

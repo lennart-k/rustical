@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, vcf FROM addressobjects WHERE (principal, addressbook_id, id) = (?, ?, ?)",
+  "query": "SELECT id, vcf FROM addressobjects WHERE (principal, addressbook_id, id) = (?, ?, ?) AND ((deleted_at IS NULL) or ?)",
   "describe": {
     "columns": [
       {
@@ -15,12 +15,12 @@
       }
     ],
     "parameters": {
-      "Right": 3
+      "Right": 4
     },
     "nullable": [
       false,
       false
     ]
   },
-  "hash": "f757da416f4db119ce88e964c44adf0227cc6e7130a1572e36cf2f4795d46284"
+  "hash": "395e40a7b3333b79bc2ad50a123d99f74bc2712a16257ee2119dd211fdb61f7e"
 }

@@ -1,12 +1,17 @@
 use crate::{
-    addressbook::{AddressObject, Addressbook},
     Error,
+    addressbook::{AddressObject, Addressbook},
 };
 use async_trait::async_trait;
 
 #[async_trait]
 pub trait AddressbookStore: Send + Sync + 'static {
-    async fn get_addressbook(&self, principal: &str, id: &str) -> Result<Addressbook, Error>;
+    async fn get_addressbook(
+        &self,
+        principal: &str,
+        id: &str,
+        show_deleted: bool,
+    ) -> Result<Addressbook, Error>;
     async fn get_addressbooks(&self, principal: &str) -> Result<Vec<Addressbook>, Error>;
     async fn get_deleted_addressbooks(&self, principal: &str) -> Result<Vec<Addressbook>, Error>;
 
@@ -42,6 +47,7 @@ pub trait AddressbookStore: Send + Sync + 'static {
         principal: &str,
         addressbook_id: &str,
         object_id: &str,
+        show_deleted: bool,
     ) -> Result<AddressObject, Error>;
     async fn put_object(
         &self,

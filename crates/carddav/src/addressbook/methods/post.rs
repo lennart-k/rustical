@@ -24,7 +24,9 @@ pub async fn route_post<A: AddressbookStore, S: SubscriptionStore>(
         return Err(Error::Unauthorized);
     }
 
-    let addressbook = store.get_addressbook(&principal, &addressbook_id).await?;
+    let addressbook = store
+        .get_addressbook(&principal, &addressbook_id, false)
+        .await?;
     let request = PushRegister::parse_str(&body)?;
     let sub_id = uuid::Uuid::new_v4().to_string();
 

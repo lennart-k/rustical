@@ -1,8 +1,8 @@
 use std::{collections::HashMap, sync::Arc};
 
 use crate::{
-    calendar::CalendarObjectType, AddressObject, Addressbook, AddressbookStore, Calendar,
-    CalendarObject, CalendarStore, Error,
+    AddressObject, Addressbook, AddressbookStore, Calendar, CalendarObject, CalendarStore, Error,
+    calendar::CalendarObjectType,
 };
 use async_trait::async_trait;
 use derive_more::derive::Constructor;
@@ -39,7 +39,7 @@ fn birthday_calendar(addressbook: Addressbook) -> Calendar {
 #[async_trait]
 impl<AS: AddressbookStore> CalendarStore for ContactBirthdayStore<AS> {
     async fn get_calendar(&self, principal: &str, id: &str) -> Result<Calendar, Error> {
-        let addressbook = self.0.get_addressbook(principal, id).await?;
+        let addressbook = self.0.get_addressbook(principal, id, false).await?;
         Ok(birthday_calendar(addressbook))
     }
     async fn get_calendars(&self, principal: &str) -> Result<Vec<Calendar>, Error> {
@@ -122,7 +122,7 @@ impl<AS: AddressbookStore> CalendarStore for ContactBirthdayStore<AS> {
     ) -> Result<CalendarObject, Error> {
         let (addressobject_id, date_type) = object_id.rsplit_once("-").ok_or(Error::NotFound)?;
         self.0
-            .get_object(principal, cal_id, addressobject_id)
+            .get_object(principal, cal_id, addressobject_id, false)
             .await?
             .get_significant_dates()?
             .remove(date_type)

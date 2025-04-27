@@ -2,8 +2,8 @@ use super::ChangeOperation;
 use async_trait::async_trait;
 use derive_more::derive::Constructor;
 use rustical_store::{
-    synctoken::format_synctoken, AddressObject, Addressbook, AddressbookStore, CollectionOperation,
-    CollectionOperationDomain, CollectionOperationType, Error,
+    AddressObject, Addressbook, AddressbookStore, CollectionOperation, CollectionOperationDomain,
+    CollectionOperationType, Error, synctoken::format_synctoken,
 };
 use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};
 use tokio::sync::mpsc::Sender;
@@ -34,14 +34,17 @@ impl SqliteAddressbookStore {
         executor: E,
         principal: &str,
         id: &str,
+        show_deleted: bool,
     ) -> Result<Addressbook, rustical_store::Error> {
         let addressbook = sqlx::query_as!(
             Addressbook,
             r#"SELECT principal, id, synctoken, displayname, description, deleted_at, push_topic
                 FROM addressbooks
-                WHERE (principal, id) = (?, ?)"#,
+                WHERE (principal, id) = (?, ?)
+                AND ((deleted_at IS NULL) OR ?) "#,
             principal,
-            id
+            id,
+            show_deleted
         )
         .fetch_one(executor)
         .await
@@ -208,7 +211,8 @@ impl SqliteAddressbookStore {
             .unwrap_or(0);
 
         for Row { object_id, .. } in changes {
-            match Self::_get_object(&mut *conn, principal, addressbook_id, &object_id).await {
+            match Self::_get_object(&mut *conn, principal, addressbook_id, &object_id, false).await
+            {
                 Ok(object) => objects.push(object),
                 Err(rustical_store::Error::NotFound) => deleted_objects.push(object_id),
                 Err(err) => return Err(err),
@@ -241,13 +245,15 @@ impl SqliteAddressbookStore {
         principal: &str,
         addressbook_id: &str,
         object_id: &str,
+        show_deleted: bool,
     ) -> Result<AddressObject, rustical_store::Error> {
         Ok(sqlx::query_as!(
             AddressObjectRow,
-            "SELECT id, vcf FROM addressobjects WHERE (principal, addressbook_id, id) = (?, ?, ?)",
+            "SELECT id, vcf FROM addressobjects WHERE (principal, addressbook_id, id) = (?, ?, ?) AND ((deleted_at IS NULL) or ?)",
             principal,
             addressbook_id,
-            object_id
+            object_id,
+            show_deleted
         )
         .fetch_one(executor)
         .await
@@ -346,8 +352,9 @@ impl AddressbookStore for SqliteAddressbookStore {
         &self,
         principal: &str,
         id: &str,
+        show_deleted: bool,
     ) -> Result<Addressbook, rustical_store::Error> {
-        Self::_get_addressbook(&self.db, principal, id).await
+        Self::_get_addressbook(&self.db, principal, id, show_deleted).await
     }
 
     #[instrument]
@@ -393,11 +400,12 @@ impl AddressbookStore for SqliteAddressbookStore {
     ) -> Result<(), rustical_store::Error> {
         let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
 
-        let addressbook = match Self::_get_addressbook(&mut *tx, principal, addressbook_id).await {
-            Ok(addressbook) => Some(addressbook),
-            Err(Error::NotFound) => None,
-            Err(err) => return Err(err),
-        };
+        let addressbook =
+            match Self::_get_addressbook(&mut *tx, principal, addressbook_id, use_trashbin).await {
+                Ok(addressbook) => Some(addressbook),
+                Err(Error::NotFound) => None,
+                Err(err) => return Err(err),
+            };
 
         Self::_delete_addressbook(&mut *tx, principal, addressbook_id, use_trashbin).await?;
         tx.commit().await.map_err(crate::Error::from)?;
@@ -450,8 +458,9 @@ impl AddressbookStore for SqliteAddressbookStore {
         principal: &str,
         addressbook_id: &str,
         object_id: &str,
+        show_deleted: bool,
     ) -> Result<AddressObject, rustical_store::Error> {
-        Self::_get_object(&self.db, principal, addressbook_id, object_id).await
+        Self::_get_object(&self.db, principal, addressbook_id, object_id, show_deleted).await
     }
 
     #[instrument]
@@ -491,7 +500,7 @@ impl AddressbookStore for SqliteAddressbookStore {
             r#type: CollectionOperationType::Object,
             domain: CollectionOperationDomain::Addressbook,
             topic: self
-                .get_addressbook(&principal, &addressbook_id)
+                .get_addressbook(&principal, &addressbook_id, false)
                 .await?
                 .push_topic,
             sync_token: Some(synctoken),
@@ -531,7 +540,7 @@ impl AddressbookStore for SqliteAddressbookStore {
             r#type: CollectionOperationType::Object,
             domain: CollectionOperationDomain::Addressbook,
             topic: self
-                .get_addressbook(principal, addressbook_id)
+                .get_addressbook(principal, addressbook_id, false)
                 .await?
                 .push_topic,
             sync_token: Some(synctoken),
@@ -566,7 +575,7 @@ impl AddressbookStore for SqliteAddressbookStore {
             r#type: CollectionOperationType::Object,
             domain: CollectionOperationDomain::Addressbook,
             topic: self
-                .get_addressbook(principal, addressbook_id)
+                .get_addressbook(principal, addressbook_id, false)
                 .await?
                 .push_topic,
             sync_token: Some(synctoken),
