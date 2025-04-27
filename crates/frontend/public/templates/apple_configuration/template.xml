@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>PayloadContent</key>
+  <array>
+    <dict>
+      <key>CalDAVAccountDescription</key>
+      <string>{{ account_description }}</string>
+
+      <key>CalDAVHostName</key>
+      <string>{{ hostname }}</string>
+
+      <key>CalDAVPrincipalURL</key>
+      <string>{{ caldav_principal_url }}</string>
+
+      <key>CalDAVUseSSL</key>
+      <true/>
+
+      <key>CalDAVUsername</key>
+      <string>{{ user }}</string>
+
+      <key>CalDAVPassword</key>
+      <string>{{ token }}</string>
+
+      <key>PayloadDescription</key>
+      <string>{{ user }} RustiCal CalDAV profile</string>
+
+      <key>PayloadDisplayName</key>
+      <string>{{ user }} RustiCal CalDAV profile</string>
+
+      <key>PayloadIdentifier</key>
+      <string>com.github.lennart-k.rustical.cal.{{ user }}</string>
+
+      <key>PayloadOrganization</key>
+      <string>RustiCal</string>
+
+      <key>PayloadType</key>
+      <string>com.apple.caldav.account</string>
+
+      <key>PayloadUUID</key>
+      <string>{{ caldav_profile_uuid }}</string>
+
+      <key>PayloadVersion</key>
+      <integer>1</integer>
+    </dict>
+
+    <dict>
+      <key>CardDAVAccountDescription</key>
+      <string>{{ account_description }}</string>
+
+      <key>CardDAVHostName</key>
+      <string>{{ hostname }}</string>
+
+      <key>CardDAVPrincipalURL</key>
+      <string>{{ carddav_principal_url }}</string>
+
+      <key>CardDAVUseSSL</key>
+      <true/>
+
+      <key>CardDAVUsername</key>
+      <string>{{ user }}</string>
+
+      <key>CardDAVPassword</key>
+      <string>{{ token }}</string>
+
+      <key>PayloadDescription</key>
+      <string>{{ user }} RustiCal CardDAV profile</string>
+
+      <key>PayloadDisplayName</key>
+      <string>{{ user }} RustiCal CardDAV profile</string>
+
+      <key>PayloadIdentifier</key>
+      <string>com.github.lennart-k.rustical.card.{{ user }}</string>
+
+      <key>PayloadOrganization</key>
+      <string>RustiCal</string>
+
+      <key>PayloadType</key>
+      <string>com.apple.carddav.account</string>
+
+      <key>PayloadUUID</key>
+      <string>{{ carddav_profile_uuid }}</string>
+
+      <key>PayloadVersion</key>
+      <integer>1</integer>
+
+    </dict>
+  </array>
+
+  <key>PayloadDescription</key>
+  <string>Set up your RustiCal CalDAV/CardDAV account for {{ user }}@{{ hostname }} with app token {{ token_name }}</string>
+
+  <key>PayloadDisplayName</key>
+  <string>RustiCal CalDAV/CardDAV</string>
+
+  <key>PayloadIdentifier</key>
+  <string>com.github.lennart-k.rustical.{{ user }}</string>
+
+  <key>PayloadOrganization</key>
+  <string>{{ hostname }}</string>
+
+  <key>PayloadRemovalDisallowed</key>
+  <false/>
+
+  <key>PayloadType</key>
+  <string>Configuration</string>
+
+  <key>PayloadUUID</key>
+  <string>{{ plist_uuid }}</string>
+
+  <key>PayloadVersion</key>
+  <integer>1</integer>
+</dict>
+</plist>

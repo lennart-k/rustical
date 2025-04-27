@@ -7,7 +7,7 @@ use actix_web::{
     HttpRequest, HttpResponse, Responder,
     cookie::{Key, SameSite},
     dev::ServiceResponse,
-    http::{Method, StatusCode},
+    http::{Method, StatusCode, header},
     middleware::{ErrorHandlerResponse, ErrorHandlers},
     web::{self, Data, Form, Path, Redirect},
 };
@@ -28,6 +28,7 @@ use rustical_store::{
 };
 use serde::Deserialize;
 use std::sync::Arc;
+use uuid::Uuid;
 
 mod assets;
 mod config;
@@ -56,6 +57,7 @@ struct UserPage {
     pub deleted_calendars: Vec<Calendar>,
     pub addressbooks: Vec<Addressbook>,
     pub deleted_addressbooks: Vec<Addressbook>,
+    pub is_apple: bool,
 }
 
 async fn route_user_named<CS: CalendarStore, AS: AddressbookStore, AP: AuthenticationProvider>(
@@ -66,7 +68,6 @@ async fn route_user_named<CS: CalendarStore, AS: AddressbookStore, AP: Authentic
     user: User,
     req: HttpRequest,
 ) -> impl Responder {
-    // TODO: Check for authorization
     let user_id = path.into_inner();
     if user_id != user.id {
         return actix_web::HttpResponse::Unauthorized().body("Unauthorized");
@@ -92,6 +93,13 @@ async fn route_user_named<CS: CalendarStore, AS: AddressbookStore, AP: Authentic
         deleted_addressbooks.extend(addr_store.get_deleted_addressbooks(group).await.unwrap());
     }
 
+    let is_apple = req
+        .headers()
+        .get(header::USER_AGENT)
+        .and_then(|user_agent| user_agent.to_str().ok())
+        .map(|ua| ua.contains("Apple") || ua.contains("Mac OS"))
+        .unwrap_or_default();
+
     UserPage {
         app_tokens: auth_provider.get_app_tokens(&user.id).await.unwrap(),
         calendars,
@@ -99,6 +107,7 @@ async fn route_user_named<CS: CalendarStore, AS: AddressbookStore, AP: Authentic
         addressbooks,
         deleted_addressbooks,
         user,
+        is_apple,
     }
     .respond_to(&req)
 }
@@ -123,24 +132,76 @@ async fn route_root(user: Option<User>, req: HttpRequest) -> impl Responder {
     web::Redirect::to(redirect_url.to_string()).permanent()
 }
 
+#[derive(Template)]
+#[template(path = "apple_configuration/template.xml")]
+pub struct AppleConfig {
+    token_name: String,
+    account_description: String,
+    hostname: String,
+    caldav_principal_url: String,
+    carddav_principal_url: String,
+    user: String,
+    token: String,
+    caldav_profile_uuid: Uuid,
+    carddav_profile_uuid: Uuid,
+    plist_uuid: Uuid,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub(crate) struct PostAppTokenForm {
     name: String,
+    #[serde(default)]
+    apple: bool,
 }
 
 async fn route_post_app_token<AP: AuthenticationProvider>(
     user: User,
     auth_provider: Data<AP>,
     path: Path<String>,
-    Form(PostAppTokenForm { name }): Form<PostAppTokenForm>,
-) -> Result<impl Responder, rustical_store::Error> {
+    Form(PostAppTokenForm { apple, name }): Form<PostAppTokenForm>,
+    req: HttpRequest,
+) -> Result<HttpResponse, rustical_store::Error> {
     assert!(!name.is_empty());
     assert_eq!(path.into_inner(), user.id);
     let token = generate_app_token();
     auth_provider
-        .add_app_token(&user.id, name, token.clone())
+        .add_app_token(&user.id, name.to_owned(), token.clone())
         .await?;
-    Ok(token)
+    if apple {
+        let hostname = req.full_url().host_str().unwrap().to_owned();
+        let profile = AppleConfig {
+            token_name: name,
+            account_description: format!("{}@{}", &user.id, &hostname),
+            hostname,
+            caldav_principal_url: req
+                .url_for("caldav_principal", [&user.id])
+                .unwrap()
+                .to_string(),
+            carddav_principal_url: req
+                .url_for("carddav_principal", [&user.id])
+                .unwrap()
+                .to_string(),
+            user: user.id.to_owned(),
+            token,
+            caldav_profile_uuid: Uuid::new_v4(),
+            carddav_profile_uuid: Uuid::new_v4(),
+            plist_uuid: Uuid::new_v4(),
+        }
+        .render()
+        .unwrap();
+        Ok(HttpResponse::Ok()
+            .insert_header(header::ContentDisposition::attachment(format!(
+                "rustical-{}.mobileconfig",
+                user.id
+            )))
+            .insert_header((
+                header::CONTENT_TYPE,
+                "application/x-apple-aspen-config; charset=utf-8",
+            ))
+            .body(profile))
+    } else {
+        Ok(HttpResponse::Ok().body(token))
+    }
 }
 
 async fn route_delete_app_token<AP: AuthenticationProvider>(

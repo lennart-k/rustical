@@ -29,7 +29,6 @@
       <td>
         {% if let Some(created_at) = app_token.created_at %}
           {{ chrono_humanize::HumanTime::from(created_at.to_owned()) }}
-          <!-- {{ created_at.to_rfc3339() }} -->
         {% endif %}
       </td>
       <td>
@@ -49,6 +48,9 @@
         <td></td>
         <td>
           <button type="submit" form="form_generate_app_token">Generate</button>
+          {% if is_apple %}
+          <button type="submit" form="form_generate_app_token" name="apple" value="true">Apple Configuration Profile (contains token)</button>
+          {% endif %}
         </td>
     </tr>
   </table>
