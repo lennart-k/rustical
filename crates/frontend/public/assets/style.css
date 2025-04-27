@@ -103,12 +103,13 @@ section {
 }
 
 table {
-  border: 2px solid black;
+  border: 1px solid black;
   border-radius: 12px;
   box-shadow: 4px 2px 12px -6px black;
   border-collapse: collapse;
   overflow-x: scroll;
   display: block;
+  width: fit-content;
 
   td,
   th {
@@ -126,6 +127,22 @@ table {
 
   tr:hover {
     background: #DDD;
+  }
+
+  tr:first-child th {
+    border-top: 0;
+  }
+
+  tr:last-child td {
+    border-bottom: 0;
+  }
+
+  tr :first-child {
+    border-left: 0;
+  }
+
+  tr :last-child {
+    border-right: 0;
   }
 }
 
