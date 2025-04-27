@@ -30,7 +30,7 @@
       <string>{{ user }} RustiCal CalDAV profile</string>
 
       <key>PayloadIdentifier</key>
-      <string>com.github.lennart-k.rustical.cal.{{ user }}</string>
+      <string>{{ hostname }}.cal.{{ user }}</string>
 
       <key>PayloadOrganization</key>
       <string>RustiCal</string>
@@ -71,7 +71,7 @@
       <string>{{ user }} RustiCal CardDAV profile</string>
 
       <key>PayloadIdentifier</key>
-      <string>com.github.lennart-k.rustical.card.{{ user }}</string>
+      <string>{{ hostname }}.card.{{ user }}</string>
 
       <key>PayloadOrganization</key>
       <string>RustiCal</string>
@@ -95,7 +95,7 @@
   <string>RustiCal CalDAV/CardDAV</string>
 
   <key>PayloadIdentifier</key>
-  <string>com.github.lennart-k.rustical.{{ user }}</string>
+  <string>{{ hostname }}.{{ user }}</string>
 
   <key>PayloadOrganization</key>
   <string>{{ hostname }}</string>

@@ -175,6 +175,7 @@ table {
         border-radius: 12px;
         margin: 12px;
         box-shadow: 4px 2px 12px -6px black;
+        overflow: hidden;
 
         .title {
           font-weight: bold;
@@ -192,7 +193,6 @@ table {
         .color-chip {
           background: var(--color);
           grid-area: color-chip;
-          border-radius: 0 12px 12px 0;
         }
 
         .restore-form {
