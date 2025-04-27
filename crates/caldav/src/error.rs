@@ -1,4 +1,4 @@
-use actix_web::{http::StatusCode, HttpResponse};
+use actix_web::{HttpResponse, http::StatusCode};
 use tracing::error;
 
 #[derive(Debug, thiserror::Error)]
@@ -31,6 +31,9 @@ impl actix_web::ResponseError for Error {
             Error::StoreError(err) => match err {
                 rustical_store::Error::NotFound => StatusCode::NOT_FOUND,
                 rustical_store::Error::InvalidData(_) => StatusCode::BAD_REQUEST,
+                rustical_store::Error::AlreadyExists => StatusCode::CONFLICT,
+                rustical_store::Error::ParserError(_) => StatusCode::BAD_REQUEST,
+                rustical_store::Error::ReadOnly => StatusCode::FORBIDDEN,
                 _ => StatusCode::INTERNAL_SERVER_ERROR,
             },
             Error::ChronoParseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
