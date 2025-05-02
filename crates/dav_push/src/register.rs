@@ -7,7 +7,8 @@ pub struct WebPushSubscription {
     #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
     pub push_resource: String,
     #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
-    pub content_encoding: String,
+    // DAVx5 4.4.9 does not seem to use it yet
+    pub content_encoding: Option<String>,
     #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
     pub subscription_public_key: SubscriptionPublicKey,
     #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
@@ -88,7 +89,7 @@ mod tests {
                 subscription: SubscriptionElement {
                     web_push_subscription: WebPushSubscription {
                         push_resource: "https://up.example.net/yohd4yai5Phiz1wi".to_owned(),
-                        content_encoding: "aes128gcm".to_owned(),
+                        content_encoding: Some("aes128gcm".to_owned()),
                         subscription_public_key: SubscriptionPublicKey { ty: "p256dh".to_owned(), key: "BCVxsr7N_eNgVRqvHtD0zTZsEc6-VV-JvLexhqUzORcxaOzi6-AYWXvTBHm4bjyPjs7Vd8pZGH6SRpkNtoIAiw4".to_owned() },
                         auth_secret: "BTBZMqHH6r4Tts7J_aSIgg".to_owned()
                     }
