@@ -1,6 +1,6 @@
-use crate::{ContentUpdate, PropertyUpdate, SupportedTrigger, SupportedTriggers, Transports};
+use crate::{ContentUpdate, PropertyUpdate, SupportedTriggers, Transports, Trigger};
 use rustical_dav::header::Depth;
-use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
+use rustical_xml::{EnumUnitVariants, EnumVariants, Unparsed, XmlDeserialize, XmlSerialize};
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumUnitVariants, EnumVariants)]
 #[xml(unit_variants_ident = "DavPushExtensionPropName")]
@@ -21,8 +21,8 @@ pub trait DavPushExtension {
 
     fn supported_triggers(&self) -> SupportedTriggers {
         SupportedTriggers(vec![
-            SupportedTrigger::ContentUpdate(ContentUpdate(Depth::One)),
-            SupportedTrigger::PropertyUpdate(PropertyUpdate(Depth::One)),
+            Trigger::ContentUpdate(ContentUpdate(Depth::One)),
+            Trigger::PropertyUpdate(PropertyUpdate(Depth::One)),
         ])
     }
 

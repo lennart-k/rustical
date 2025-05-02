@@ -1,6 +1,6 @@
 use actix_web::{FromRequest, HttpRequest, ResponseError, http::StatusCode};
 use futures_util::future::{Ready, err, ok};
-use rustical_xml::ValueSerialize;
+use rustical_xml::{ValueDeserialize, ValueSerialize, XmlError};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -25,9 +25,22 @@ impl ValueSerialize for Depth {
         match self {
             Depth::Zero => "0",
             Depth::One => "1",
-            Depth::Infinity => "Infinity",
+            Depth::Infinity => "infinity",
         }
         .to_owned()
+    }
+}
+
+impl ValueDeserialize for Depth {
+    fn deserialize(val: &str) -> Result<Self, XmlError> {
+        match val {
+            "0" => Ok(Self::Zero),
+            "1" => Ok(Self::One),
+            "infinity" | "Infinity" => Ok(Self::Infinity),
+            _ => Err(XmlError::InvalidVariant(
+                "Invalid value for depth".to_owned(),
+            )),
+        }
     }
 }
 
