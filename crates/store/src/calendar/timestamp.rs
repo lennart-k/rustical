@@ -1,3 +1,4 @@
+use super::IcalProperty;
 use crate::Error;
 use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use chrono_tz::Tz;
@@ -9,8 +10,6 @@ use ical::{
 use lazy_static::lazy_static;
 use rustical_xml::{ValueDeserialize, ValueSerialize};
 use std::{collections::HashMap, ops::Add};
-
-use super::IcalProperty;
 
 lazy_static! {
     static ref RE_DURATION: regex::Regex = regex::Regex::new(r"^(?<sign>[+-])?P((?P<W>\d+)W)?((?P<D>\d+)D)?(T((?P<H>\d+)H)?((?P<M>\d+)M)?((?P<S>\d+)S)?)?$").unwrap();
@@ -40,6 +39,7 @@ impl ValueDeserialize for UtcDateTime {
         ))
     }
 }
+
 impl ValueSerialize for UtcDateTime {
     fn serialize(&self) -> String {
         format!("{}", self.0.format(UTC_DATE_TIME))
@@ -96,7 +96,7 @@ impl CalDateTime {
                         Some(tz)
                     } else {
                         return Err(Error::InvalidData(format!(
-                            "Timezone has X-LIC-LOCATION property to specify a timezone from the Olson database, however it's value {olson_name} is invalid"
+                            "Timezone has X-LIC-LOCATION property to specify a timezone from the Olson database, however its value {olson_name} is invalid"
                         )));
                     }
                 } else {
@@ -109,7 +109,7 @@ impl CalDateTime {
             } else {
                 // TZID refers to timezone that does not exist
                 return Err(Error::InvalidData(format!(
-                    "No timezone specified with TZID={tzid}"
+                    "Timezone {tzid} does not exist"
                 )));
             }
         } else {

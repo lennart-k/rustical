@@ -10,7 +10,7 @@ use actix_web::{
 };
 use rustical_dav::{
     resource::Resource,
-    xml::{MultistatusElement, PropElement, PropfindType, multistatus::ResponseElement},
+    xml::{MultistatusElement, PropfindType, multistatus::ResponseElement},
 };
 use rustical_store::{CalendarObject, CalendarStore, auth::User};
 use rustical_xml::XmlDeserialize;
@@ -56,7 +56,8 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore>(
 }
 
 pub async fn handle_calendar_multiget<C: CalendarStore>(
-    cal_multiget: CalendarMultigetRequest,
+    cal_multiget: &CalendarMultigetRequest,
+    props: &[&str],
     req: HttpRequest,
     user: &User,
     principal: &str,
@@ -64,25 +65,8 @@ pub async fn handle_calendar_multiget<C: CalendarStore>(
     cal_store: &C,
 ) -> Result<MultistatusElement<CalendarObjectPropWrapper, String>, Error> {
     let (objects, not_found) =
-        get_objects_calendar_multiget(&cal_multiget, req.path(), principal, cal_id, cal_store)
+        get_objects_calendar_multiget(cal_multiget, req.path(), principal, cal_id, cal_store)
             .await?;
-
-    let props = match cal_multiget.prop {
-        PropfindType::Allprop => {
-            vec!["allprop".to_owned()]
-        }
-        PropfindType::Propname => {
-            vec!["propname".to_owned()]
-        }
-        PropfindType::Prop(PropElement(prop_tags)) => prop_tags
-            .into_iter()
-            .map(|propname| match propname {
-                ReportPropName::Propname(propname) => propname.0,
-                ReportPropName::CalendarData(_) => "calendar-data".to_owned(),
-            })
-            .collect(),
-    };
-    let props: Vec<&str> = props.iter().map(String::as_str).collect();
 
     let mut responses = Vec::new();
     for object in objects {
@@ -92,7 +76,7 @@ pub async fn handle_calendar_multiget<C: CalendarStore>(
                 object,
                 principal: principal.to_owned(),
             }
-            .propfind(&path, &props, user, req.resource_map())?,
+            .propfind(&path, props, user, req.resource_map())?,
         );
     }
 

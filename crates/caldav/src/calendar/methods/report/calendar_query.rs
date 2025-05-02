@@ -1,7 +1,7 @@
 use actix_web::HttpRequest;
 use rustical_dav::{
     resource::Resource,
-    xml::{MultistatusElement, PropElement, PropfindType},
+    xml::{MultistatusElement, PropfindType},
 };
 use rustical_store::{
     CalendarObject, CalendarStore, auth::User, calendar::UtcDateTime, calendar_store::CalendarQuery,
@@ -216,31 +216,15 @@ pub async fn get_objects_calendar_query<C: CalendarStore>(
 }
 
 pub async fn handle_calendar_query<C: CalendarStore>(
-    cal_query: CalendarQueryRequest,
+    cal_query: &CalendarQueryRequest,
+    props: &[&str],
     req: HttpRequest,
     user: &User,
     principal: &str,
     cal_id: &str,
     cal_store: &C,
 ) -> Result<MultistatusElement<CalendarObjectPropWrapper, String>, Error> {
-    let objects = get_objects_calendar_query(&cal_query, principal, cal_id, cal_store).await?;
-
-    let props = match cal_query.prop {
-        PropfindType::Allprop => {
-            vec!["allprop".to_owned()]
-        }
-        PropfindType::Propname => {
-            vec!["propname".to_owned()]
-        }
-        PropfindType::Prop(PropElement(prop_tags)) => prop_tags
-            .into_iter()
-            .map(|propname| match propname {
-                ReportPropName::Propname(propname) => propname.0,
-                ReportPropName::CalendarData(_) => "calendar-data".to_owned(),
-            })
-            .collect(),
-    };
-    let props: Vec<&str> = props.iter().map(String::as_str).collect();
+    let objects = get_objects_calendar_query(cal_query, principal, cal_id, cal_store).await?;
 
     let mut responses = Vec::new();
     for object in objects {
@@ -254,7 +238,7 @@ pub async fn handle_calendar_query<C: CalendarStore>(
                 object,
                 principal: principal.to_owned(),
             }
-            .propfind(&path, &props, user, req.resource_map())?,
+            .propfind(&path, props, user, req.resource_map())?,
         );
     }
 

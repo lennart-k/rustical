@@ -9,7 +9,7 @@ use actix_web::{
 };
 use rustical_dav::{
     resource::Resource,
-    xml::{MultistatusElement, PropElement, PropfindType, multistatus::ResponseElement},
+    xml::{MultistatusElement, PropfindType, multistatus::ResponseElement},
 };
 use rustical_store::{AddressObject, AddressbookStore, auth::User};
 use rustical_xml::XmlDeserialize;
@@ -58,7 +58,8 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
 }
 
 pub async fn handle_addressbook_multiget<AS: AddressbookStore>(
-    addr_multiget: AddressbookMultigetRequest,
+    addr_multiget: &AddressbookMultigetRequest,
+    props: &[&str],
     req: HttpRequest,
     user: &User,
     principal: &str,
@@ -66,21 +67,8 @@ pub async fn handle_addressbook_multiget<AS: AddressbookStore>(
     addr_store: &AS,
 ) -> Result<MultistatusElement<AddressObjectPropWrapper, String>, Error> {
     let (objects, not_found) =
-        get_objects_addressbook_multiget(&addr_multiget, req.path(), principal, cal_id, addr_store)
+        get_objects_addressbook_multiget(addr_multiget, req.path(), principal, cal_id, addr_store)
             .await?;
-
-    let props = match addr_multiget.prop {
-        PropfindType::Allprop => {
-            vec!["allprop".to_owned()]
-        }
-        PropfindType::Propname => {
-            vec!["propname".to_owned()]
-        }
-        PropfindType::Prop(PropElement(prop_tags)) => {
-            prop_tags.into_iter().map(|propname| propname.0).collect()
-        }
-    };
-    let props: Vec<&str> = props.iter().map(String::as_str).collect();
 
     let mut responses = Vec::new();
     for object in objects {
@@ -90,7 +78,7 @@ pub async fn handle_addressbook_multiget<AS: AddressbookStore>(
                 object,
                 principal: principal.to_owned(),
             }
-            .propfind(&path, &props, user, req.resource_map())?,
+            .propfind(&path, props, user, req.resource_map())?,
         );
     }
 

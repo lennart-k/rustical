@@ -5,7 +5,9 @@ use actix_web::{
 };
 use calendar_multiget::{CalendarMultigetRequest, handle_calendar_multiget};
 use calendar_query::{CalendarQueryRequest, handle_calendar_query};
-use rustical_dav::xml::{Propname, sync_collection::SyncCollectionRequest};
+use rustical_dav::xml::{
+    PropElement, PropfindType, Propname, sync_collection::SyncCollectionRequest,
+};
 use rustical_store::{CalendarStore, auth::User};
 use rustical_xml::{XmlDeserialize, XmlDocument};
 use sync_collection::handle_sync_collection;
@@ -53,6 +55,34 @@ pub(crate) enum ReportRequest {
     SyncCollection(SyncCollectionRequest<ReportPropName>),
 }
 
+impl ReportRequest {
+    fn props(&self) -> Vec<&str> {
+        let prop_element = match self {
+            ReportRequest::CalendarMultiget(CalendarMultigetRequest { prop, .. }) => prop,
+            ReportRequest::CalendarQuery(CalendarQueryRequest { prop, .. }) => prop,
+            ReportRequest::SyncCollection(SyncCollectionRequest { prop, .. }) => prop,
+        };
+
+        let props = match prop_element {
+            PropfindType::Allprop => {
+                vec!["allprop"]
+            }
+            PropfindType::Propname => {
+                vec!["propname"]
+            }
+            PropfindType::Prop(PropElement(prop_tags)) => prop_tags
+                .iter()
+                .map(|propname| match propname {
+                    ReportPropName::Propname(propname) => propname.0.as_str(),
+                    ReportPropName::CalendarData(_) => "calendar-data",
+                })
+                .collect(),
+        };
+        // let props: Vec<&str> = props.iter().map(String::as_str).collect();
+        props
+    }
+}
+
 #[instrument(skip(req, cal_store))]
 pub async fn route_report_calendar<C: CalendarStore>(
     path: Path<(String, String)>,
@@ -67,11 +97,13 @@ pub async fn route_report_calendar<C: CalendarStore>(
     }
 
     let request = ReportRequest::parse_str(&body)?;
+    let props = request.props();
 
-    Ok(match request.clone() {
+    Ok(match &request {
         ReportRequest::CalendarQuery(cal_query) => {
             handle_calendar_query(
                 cal_query,
+                &props,
                 req,
                 &user,
                 &principal,
@@ -83,6 +115,7 @@ pub async fn route_report_calendar<C: CalendarStore>(
         ReportRequest::CalendarMultiget(cal_multiget) => {
             handle_calendar_multiget(
                 cal_multiget,
+                &props,
                 req,
                 &user,
                 &principal,
@@ -94,6 +127,7 @@ pub async fn route_report_calendar<C: CalendarStore>(
         ReportRequest::SyncCollection(sync_collection) => {
             handle_sync_collection(
                 sync_collection,
+                &props,
                 req,
                 &user,
                 &principal,

@@ -1,11 +1,11 @@
 use crate::Error;
 use actix_web::{
-    web::{Data, Path},
     HttpRequest, Responder,
+    web::{Data, Path},
 };
-use addressbook_multiget::{handle_addressbook_multiget, AddressbookMultigetRequest};
-use rustical_dav::xml::sync_collection::SyncCollectionRequest;
-use rustical_store::{auth::User, AddressbookStore};
+use addressbook_multiget::{AddressbookMultigetRequest, handle_addressbook_multiget};
+use rustical_dav::xml::{PropElement, PropfindType, sync_collection::SyncCollectionRequest};
+use rustical_store::{AddressbookStore, auth::User};
 use rustical_xml::{XmlDeserialize, XmlDocument};
 use sync_collection::handle_sync_collection;
 use tracing::instrument;
@@ -19,6 +19,28 @@ pub(crate) enum ReportRequest {
     AddressbookMultiget(AddressbookMultigetRequest),
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     SyncCollection(SyncCollectionRequest),
+}
+
+impl ReportRequest {
+    fn props(&self) -> Vec<&str> {
+        let prop_element = match self {
+            ReportRequest::AddressbookMultiget(AddressbookMultigetRequest { prop, .. }) => prop,
+            ReportRequest::SyncCollection(SyncCollectionRequest { prop, .. }) => prop,
+        };
+
+        match prop_element {
+            PropfindType::Allprop => {
+                vec!["allprop"]
+            }
+            PropfindType::Propname => {
+                vec!["propname"]
+            }
+            PropfindType::Prop(PropElement(prop_tags)) => prop_tags
+                .iter()
+                .map(|propname| propname.0.as_str())
+                .collect(),
+        }
+    }
 }
 
 #[instrument(skip(req, addr_store))]
@@ -35,11 +57,13 @@ pub async fn route_report_addressbook<AS: AddressbookStore>(
     }
 
     let request = ReportRequest::parse_str(&body)?;
+    let props = request.props();
 
-    Ok(match request.clone() {
+    Ok(match &request {
         ReportRequest::AddressbookMultiget(addr_multiget) => {
             handle_addressbook_multiget(
                 addr_multiget,
+                &props,
                 req,
                 &user,
                 &principal,
@@ -51,6 +75,7 @@ pub async fn route_report_addressbook<AS: AddressbookStore>(
         ReportRequest::SyncCollection(sync_collection) => {
             handle_sync_collection(
                 sync_collection,
+                &props,
                 req,
                 &user,
                 &principal,
@@ -64,7 +89,7 @@ pub async fn route_report_addressbook<AS: AddressbookStore>(
 
 #[cfg(test)]
 mod tests {
-    use rustical_dav::xml::{sync_collection::SyncLevel, PropElement, Propname};
+    use rustical_dav::xml::{PropElement, Propname, sync_collection::SyncLevel};
 
     use super::*;
 
