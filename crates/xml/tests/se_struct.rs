@@ -3,8 +3,8 @@ use std::{
     collections::HashMap,
 };
 
-use quick_xml::name::Namespace;
 use quick_xml::Writer;
+use quick_xml::name::Namespace;
 use rustical_xml::{XmlDocument, XmlRootTag, XmlSerialize, XmlSerializeRoot};
 use xml_derive::XmlDeserialize;
 
@@ -196,7 +196,6 @@ fn test_struct_tag_list() {
 
 #[test]
 fn test_struct_ns() {
-    // const NS: Namespace = Namespace(b"TEST", quick_xml::name::Namespace(b"NS:TEST:"));
     const NS: Namespace = quick_xml::name::Namespace(b"NS:TEST:");
 
     #[derive(Debug, XmlRootTag, XmlSerialize)]
@@ -236,6 +235,23 @@ fn test_struct_tuple() {
     }
     .serialize_root(&mut writer)
     .unwrap();
+    let out = String::from_utf8(buf).unwrap();
+    dbg!(out);
+}
+
+#[test]
+fn test_tuple_struct() {
+    const NS: Namespace = quick_xml::name::Namespace(b"NS:TEST:");
+
+    #[derive(Debug, XmlRootTag, XmlSerialize)]
+    #[xml(root = b"document")]
+    struct Document(#[xml(ns = "NS", rename = b"okay")] String);
+
+    let mut buf = Vec::new();
+    let mut writer = quick_xml::Writer::new(&mut buf);
+    Document("hello!".to_string())
+        .serialize_root(&mut writer)
+        .unwrap();
     let out = String::from_utf8(buf).unwrap();
     dbg!(out);
 }

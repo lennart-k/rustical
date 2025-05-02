@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use darling::{util::Flag, FromDeriveInput, FromField, FromMeta, FromVariant};
+use darling::{FromDeriveInput, FromField, FromMeta, FromVariant, util::Flag};
 use syn::LitByteStr;
 
-#[derive(Default, FromMeta, Clone)]
+#[derive(Debug, Default, FromMeta, Clone)]
 pub struct TagAttrs {
     pub rename: Option<LitByteStr>,
     pub ns: Option<syn::Path>,
@@ -35,7 +35,7 @@ pub struct StructAttrs {
     pub allow_invalid: Flag,
 }
 
-#[derive(Default, FromMeta, PartialEq)]
+#[derive(Debug, Default, FromMeta, PartialEq)]
 pub enum FieldType {
     #[default]
     Tag,
@@ -46,7 +46,7 @@ pub enum FieldType {
     Namespace,
 }
 
-#[derive(Default, FromField)]
+#[derive(Debug, Default, FromField)]
 #[darling(attributes(xml))]
 pub struct FieldAttrs {
     #[darling(flatten)]

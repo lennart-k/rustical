@@ -4,8 +4,8 @@ use super::{
 };
 use darling::FromField;
 use heck::ToKebabCase;
-use quote::quote;
 use quote::ToTokens;
+use quote::quote;
 use syn::spanned::Spanned;
 
 fn wrap_option_if_no_default(
@@ -36,13 +36,15 @@ impl Field {
 
     /// Field name in XML
     pub fn xml_name(&self) -> syn::LitByteStr {
-        self.attrs.common.rename.to_owned().unwrap_or({
+        if let Some(rename) = self.attrs.common.rename.to_owned() {
+            rename
+        } else {
             let ident = self
                 .field_ident()
                 .as_ref()
                 .expect("unnamed tag fields need a rename attribute");
             syn::LitByteStr::new(ident.to_string().to_kebab_case().as_bytes(), ident.span())
-        })
+        }
     }
 
     /// Field identifier
