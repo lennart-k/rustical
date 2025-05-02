@@ -41,7 +41,7 @@ pub struct PushRegister {
     #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
     pub expires: Option<String>,
     #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
-    pub trigger: TriggerElement,
+    pub trigger: Option<TriggerElement>,
 }
 
 #[cfg(test)]
@@ -95,10 +95,10 @@ mod tests {
                     }
                 },
                 expires: Some("Wed, 20 Dec 2023 10:03:31 GMT".to_owned()),
-                trigger: TriggerElement(vec![
+                trigger: Some(TriggerElement(vec![
                     Trigger::ContentUpdate(ContentUpdate(Depth::Infinity)),
                     Trigger::PropertyUpdate(PropertyUpdate(Depth::Zero)),
-                ])
+                ]))
             }
         )
     }
