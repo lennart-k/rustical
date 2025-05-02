@@ -3,12 +3,14 @@ use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use chrono_tz::Tz;
 use derive_more::derive::Deref;
 use ical::{
-    parser::{ical::component::IcalTimeZone, Component},
+    parser::{Component, ical::component::IcalTimeZone},
     property::Property,
 };
 use lazy_static::lazy_static;
 use rustical_xml::{ValueDeserialize, ValueSerialize};
 use std::{collections::HashMap, ops::Add};
+
+use super::IcalProperty;
 
 lazy_static! {
     static ref RE_DURATION: regex::Regex = regex::Regex::new(r"^(?<sign>[+-])?P((?P<W>\d+)W)?((?P<D>\d+)D)?(T((?P<H>\d+)H)?((?P<M>\d+)M)?((?P<S>\d+)S)?)?$").unwrap();
@@ -74,24 +76,15 @@ impl CalDateTime {
         prop: &Property,
         timezones: &HashMap<String, IcalTimeZone>,
     ) -> Result<Option<Self>, Error> {
-        let prop_value = if let Some(value) = &prop.value {
-            value.to_owned()
+        let prop_value = if let Some(value) = prop.value.as_ref() {
+            value
         } else {
             return Ok(None);
         };
 
         // Use the TZID parameter from the property
-        let timezone = if let Some(tzid) = &prop
-            .params
-            .clone()
-            .unwrap_or_default()
-            .iter()
-            .filter(|(name, _values)| name == "TZID")
-            .map(|(_name, values)| values.first())
-            .next()
-            .unwrap_or_default()
-        {
-            if let Some(timezone) = timezones.get(tzid.to_owned()) {
+        let timezone = if let Some(tzid) = prop.get_tzid() {
+            if let Some(timezone) = timezones.get(tzid) {
                 // X-LIC-LOCATION is often used to refer to a standardised timezone from the Olson
                 // database
                 if let Some(olson_name) = timezone
@@ -109,13 +102,9 @@ impl CalDateTime {
                 } else {
                     // If the TZID matches a name from the Olson database (e.g. Europe/Berlin) we
                     // guess that we can just use it
-                    if let Ok(tz) = tzid.parse::<Tz>() {
-                        Some(tz)
-                    } else {
-                        // TODO: Too bad, we need to manually parse it
-                        // For now it's just treated as localtime
-                        None
-                    }
+                    tzid.parse::<Tz>().ok()
+                    // TODO: If None: Too bad, we need to manually parse it
+                    // For now it's just treated as localtime
                 }
             } else {
                 // TZID refers to timezone that does not exist
@@ -129,7 +118,7 @@ impl CalDateTime {
             None
         };
 
-        Self::parse(&prop_value, timezone).map(Some)
+        Self::parse(prop_value, timezone).map(Some)
     }
 
     pub fn format(&self) -> String {
