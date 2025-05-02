@@ -1,9 +1,12 @@
-use super::{parse_duration, CalDateTime};
+use super::{
+    CalDateTime, parse_duration,
+    rrule::{ParserError, RecurrenceRule},
+};
 use crate::Error;
 use chrono::Duration;
 use ical::{
     generator::IcalEvent,
-    parser::{ical::component::IcalTimeZone, Component},
+    parser::{Component, ical::component::IcalTimeZone},
     property::Property,
 };
 use std::collections::HashMap;
@@ -46,4 +49,23 @@ impl EventObject {
         let first_occurence = self.get_first_occurence()?;
         Ok(first_occurence.map(|first_occurence| first_occurence + duration))
     }
+
+    pub fn recurrence_rule(&self) -> Result<Option<RecurrenceRule>, ParserError> {
+        let rrule = if let Some(&Property {
+            value: Some(rrule), ..
+        }) = self.event.get_property("RRULE").as_ref()
+        {
+            rrule
+        } else {
+            return Ok(None);
+        };
+        RecurrenceRule::parse(rrule).map(Some)
+    }
+
+    pub fn expand_recurrence(&self) -> Result<(), Error> {
+        let rrule = self.event.get_property("RRULE").unwrap();
+        dbg!(rrule);
+        Ok(())
+    }
 }
+
