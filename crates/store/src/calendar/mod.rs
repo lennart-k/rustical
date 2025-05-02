@@ -2,6 +2,7 @@ mod calendar;
 mod event;
 mod journal;
 mod object;
+mod rrule;
 mod timestamp;
 mod todo;
 
