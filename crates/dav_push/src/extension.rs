@@ -1,4 +1,5 @@
-use crate::Transports;
+use crate::{ContentUpdate, PropertyUpdate, SupportedTrigger, SupportedTriggers, Transports};
+use rustical_dav::header::Depth;
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumUnitVariants, EnumVariants)]
@@ -10,10 +11,20 @@ pub enum DavPushExtensionProp {
     Transports(Transports),
     #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
     Topic(String),
+    #[xml(skip_deserializing)]
+    #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
+    SupportedTriggers(SupportedTriggers),
 }
 
 pub trait DavPushExtension {
     fn get_topic(&self) -> String;
+
+    fn supported_triggers(&self) -> SupportedTriggers {
+        SupportedTriggers(vec![
+            SupportedTrigger::ContentUpdate(ContentUpdate(Depth::One)),
+            SupportedTrigger::PropertyUpdate(PropertyUpdate(Depth::One)),
+        ])
+    }
 
     fn get_prop(
         &self,
@@ -24,6 +35,9 @@ pub trait DavPushExtension {
                 DavPushExtensionProp::Transports(Default::default())
             }
             DavPushExtensionPropName::Topic => DavPushExtensionProp::Topic(self.get_topic()),
+            DavPushExtensionPropName::SupportedTriggers => {
+                DavPushExtensionProp::SupportedTriggers(self.supported_triggers())
+            }
         })
     }
 

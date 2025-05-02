@@ -1,3 +1,4 @@
+use rustical_dav::header::Depth;
 use rustical_xml::XmlSerialize;
 
 #[derive(Debug, Clone, XmlSerialize, PartialEq)]
@@ -20,3 +21,24 @@ impl Default for Transports {
         }
     }
 }
+
+#[derive(XmlSerialize, PartialEq, Clone)]
+pub struct SupportedTriggers(#[xml(flatten, ty = "untagged")] pub Vec<SupportedTrigger>);
+
+#[derive(XmlSerialize, PartialEq, Clone)]
+pub enum SupportedTrigger {
+    #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
+    ContentUpdate(ContentUpdate),
+    #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
+    PropertyUpdate(PropertyUpdate),
+}
+
+#[derive(XmlSerialize, PartialEq, Clone)]
+pub struct ContentUpdate(
+    #[xml(rename = b"depth", ns = "rustical_dav::namespace::NS_DAV")] pub Depth,
+);
+
+#[derive(XmlSerialize, PartialEq, Clone)]
+pub struct PropertyUpdate(
+    #[xml(rename = b"depth", ns = "rustical_dav::namespace::NS_DAV")] pub Depth,
+);

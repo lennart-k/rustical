@@ -1,5 +1,6 @@
-use actix_web::{http::StatusCode, FromRequest, HttpRequest, ResponseError};
-use futures_util::future::{err, ok, Ready};
+use actix_web::{FromRequest, HttpRequest, ResponseError, http::StatusCode};
+use futures_util::future::{Ready, err, ok};
+use rustical_xml::ValueSerialize;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -12,11 +13,22 @@ impl ResponseError for InvalidDepthHeader {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Depth {
     Zero,
     One,
     Infinity,
+}
+
+impl ValueSerialize for Depth {
+    fn serialize(&self) -> String {
+        match self {
+            Depth::Zero => "0",
+            Depth::One => "1",
+            Depth::Infinity => "Infinity",
+        }
+        .to_owned()
+    }
 }
 
 impl TryFrom<&[u8]> for Depth {

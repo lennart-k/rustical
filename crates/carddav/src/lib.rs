@@ -41,7 +41,7 @@ pub fn carddav_service<AP: AuthenticationProvider, A: AddressbookStore, S: Subsc
                             HeaderName::from_static("dav"),
                             // https://datatracker.ietf.org/doc/html/rfc4918#section-18
                             HeaderValue::from_static(
-                                "1, 3, access-control, addressbook, extended-mkcol",
+                                "1, 3, access-control, addressbook, extended-mkcol, webdav-push",
                             ),
                         ));
 

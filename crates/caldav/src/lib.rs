@@ -48,7 +48,7 @@ pub fn caldav_service<
                                 HeaderName::from_static("dav"),
                                 // https://datatracker.ietf.org/doc/html/rfc4918#section-18
                                 HeaderValue::from_static(
-                                    "1, 3, access-control, calendar-access, extended-mkcol, calendar-no-timezone",
+                                    "1, 3, access-control, calendar-access, extended-mkcol, calendar-no-timezone, webdav-push",
                                 ),
                             ));
 
