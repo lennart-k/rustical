@@ -105,29 +105,11 @@ impl Resource for CalendarObjectResource {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct CalendarObjectPathComponents {
     pub principal: String,
-    pub cal_id: String,
+    pub calendar_id: String,
     pub object_id: String,
-}
-
-impl<'de> Deserialize<'de> for CalendarObjectPathComponents {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        type Inner = (String, String, String);
-        let (principal, calendar, mut object) = Inner::deserialize(deserializer)?;
-        if object.ends_with(".ics") {
-            object.truncate(object.len() - 4);
-        }
-        Ok(Self {
-            principal,
-            cal_id: calendar,
-            object_id: object,
-        })
-    }
 }
 
 #[async_trait(?Send)]
@@ -142,13 +124,13 @@ impl<C: CalendarStore> ResourceService for CalendarObjectResourceService<C> {
         &self,
         CalendarObjectPathComponents {
             principal,
-            cal_id,
+            calendar_id,
             object_id,
         }: &Self::PathComponents,
     ) -> Result<Self::Resource, Self::Error> {
         let object = self
             .cal_store
-            .get_object(principal, cal_id, object_id)
+            .get_object(principal, calendar_id, object_id)
             .await?;
         Ok(CalendarObjectResource {
             object,
@@ -160,13 +142,13 @@ impl<C: CalendarStore> ResourceService for CalendarObjectResourceService<C> {
         &self,
         CalendarObjectPathComponents {
             principal,
-            cal_id,
+            calendar_id,
             object_id,
         }: &Self::PathComponents,
         use_trashbin: bool,
     ) -> Result<(), Self::Error> {
         self.cal_store
-            .delete_object(principal, cal_id, object_id, use_trashbin)
+            .delete_object(principal, calendar_id, object_id, use_trashbin)
             .await?;
         Ok(())
     }

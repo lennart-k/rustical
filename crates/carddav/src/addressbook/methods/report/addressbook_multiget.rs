@@ -31,7 +31,7 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
     addressbook_id: &str,
     store: &AS,
 ) -> Result<(Vec<AddressObject>, Vec<String>), Error> {
-    let resource_def = ResourceDef::prefix(path).join(&ResourceDef::new("/{object_id}"));
+    let resource_def = ResourceDef::prefix(path).join(&ResourceDef::new("/{object_id}.vcf"));
 
     let mut result = vec![];
     let mut not_found = vec![];
@@ -83,7 +83,7 @@ pub async fn handle_addressbook_multiget<AS: AddressbookStore>(
 
     let mut responses = Vec::new();
     for object in objects {
-        let path = format!("{}/{}", req.path(), object.get_id());
+        let path = format!("{}/{}.vcf", req.path(), object.get_id());
         responses.push(
             AddressObjectResource {
                 object,

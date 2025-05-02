@@ -33,7 +33,7 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore>(
     cal_id: &str,
     store: &C,
 ) -> Result<(Vec<CalendarObject>, Vec<String>), Error> {
-    let resource_def = ResourceDef::prefix(path).join(&ResourceDef::new("/{object_id}"));
+    let resource_def = ResourceDef::prefix(path).join(&ResourceDef::new("/{object_id}.ics"));
 
     let mut result = vec![];
     let mut not_found = vec![];
@@ -42,6 +42,7 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore>(
         let mut path = Path::new(href.as_str());
         if !resource_def.capture_match_info(&mut path) {
             not_found.push(href.to_owned());
+            continue;
         };
         let object_id = path.get("object_id").unwrap();
         match store.get_object(principal, cal_id, object_id).await {
@@ -85,7 +86,7 @@ pub async fn handle_calendar_multiget<C: CalendarStore>(
 
     let mut responses = Vec::new();
     for object in objects {
-        let path = format!("{}/{}", req.path(), object.get_id());
+        let path = format!("{}/{}.ics", req.path(), object.get_id());
         responses.push(
             CalendarObjectResource {
                 object,

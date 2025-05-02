@@ -75,22 +75,22 @@ pub fn caldav_service<
                         .service(web::scope("/calendar")
                             .service(CalendarSetResourceService::new(store.clone()).actix_resource())
                             .service(
-                                web::scope("/{calendar}")
+                                web::scope("/{calendar_id}")
                                     .service(
                                         ResourceServiceRoute(CalendarResourceService::<_, S>::new(store.clone()))
                                     )
-                                        .service(web::scope("/{object}").service(CalendarObjectResourceService::new(store.clone()).actix_resource()
+                                        .service(web::scope("/{object_id}.ics").service(CalendarObjectResourceService::new(store.clone()).actix_resource()
                                     ))
                             )
                         )
                         .service(web::scope("/birthdays")
                             .service(CalendarSetResourceService::new(birthday_store.clone()).actix_resource())
                             .service(
-                                web::scope("/{calendar}")
+                                web::scope("/{calendar_id}")
                                     .service(
                                         ResourceServiceRoute(CalendarResourceService::<_, S>::new(birthday_store.clone()))
                                     )
-                                        .service(web::scope("/{object}").service(CalendarObjectResourceService::new(birthday_store.clone()).actix_resource()
+                                        .service(web::scope("/{object_id}.ics").service(CalendarObjectResourceService::new(birthday_store.clone()).actix_resource()
                                     ))
                             )
                         )

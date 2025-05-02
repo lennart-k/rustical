@@ -1,19 +1,19 @@
 use crate::{
-    address_object::resource::{AddressObjectPropWrapper, AddressObjectResource},
     Error,
+    address_object::resource::{AddressObjectPropWrapper, AddressObjectResource},
 };
-use actix_web::{http::StatusCode, HttpRequest};
+use actix_web::{HttpRequest, http::StatusCode};
 use rustical_dav::{
     resource::Resource,
     xml::{
-        multistatus::ResponseElement, sync_collection::SyncCollectionRequest, MultistatusElement,
-        PropElement, PropfindType,
+        MultistatusElement, PropElement, PropfindType, multistatus::ResponseElement,
+        sync_collection::SyncCollectionRequest,
     },
 };
 use rustical_store::{
+    AddressbookStore,
     auth::User,
     synctoken::{format_synctoken, parse_synctoken},
-    AddressbookStore,
 };
 
 pub async fn handle_sync_collection<AS: AddressbookStore>(
@@ -44,7 +44,11 @@ pub async fn handle_sync_collection<AS: AddressbookStore>(
 
     let mut responses = Vec::new();
     for object in new_objects {
-        let path = format!("{}/{}", req.path().trim_end_matches('/'), object.get_id());
+        let path = format!(
+            "{}/{}.vcf",
+            req.path().trim_end_matches('/'),
+            object.get_id()
+        );
         responses.push(
             AddressObjectResource {
                 object,
@@ -55,7 +59,7 @@ pub async fn handle_sync_collection<AS: AddressbookStore>(
     }
 
     for object_id in deleted_objects {
-        let path = format!("{}/{}", req.path().trim_end_matches('/'), object_id);
+        let path = format!("{}/{}.vcf", req.path().trim_end_matches('/'), object_id);
         responses.push(ResponseElement {
             href: path,
             status: Some(StatusCode::NOT_FOUND),

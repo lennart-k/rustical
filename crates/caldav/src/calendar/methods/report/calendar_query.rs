@@ -244,7 +244,11 @@ pub async fn handle_calendar_query<C: CalendarStore>(
 
     let mut responses = Vec::new();
     for object in objects {
-        let path = format!("{}/{}", req.path().trim_end_matches('/'), object.get_id());
+        let path = format!(
+            "{}/{}.ics",
+            req.path().trim_end_matches('/'),
+            object.get_id()
+        );
         responses.push(
             CalendarObjectResource {
                 object,

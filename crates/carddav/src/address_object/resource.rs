@@ -101,29 +101,11 @@ impl Resource for AddressObjectResource {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct AddressObjectPathComponents {
     pub principal: String,
     pub addressbook_id: String,
     pub object_id: String,
-}
-
-impl<'de> Deserialize<'de> for AddressObjectPathComponents {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        type Inner = (String, String, String);
-        let (principal, addressbook_id, mut object) = Inner::deserialize(deserializer)?;
-        if object.ends_with(".vcf") {
-            object.truncate(object.len() - 4);
-        }
-        Ok(Self {
-            principal,
-            addressbook_id,
-            object_id: object,
-        })
-    }
 }
 
 #[async_trait(?Send)]

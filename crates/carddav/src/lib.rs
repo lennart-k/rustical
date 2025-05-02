@@ -68,13 +68,13 @@ pub fn carddav_service<AP: AuthenticationProvider, A: AddressbookStore, S: Subsc
                             .name(PrincipalResource::route_name()),
                     )
                     .service(
-                        web::scope("/{addressbook}")
+                        web::scope("/{addressbook_id}")
                             .service(
                                 AddressbookResourceService::<A, S>::new(store.clone())
                                     .actix_resource(),
                             )
                             .service(
-                                web::scope("/{object}").service(
+                                web::scope("/{object_id}.vcf").service(
                                     AddressObjectResourceService::<A>::new(store.clone())
                                         .actix_resource(),
                                 ),
