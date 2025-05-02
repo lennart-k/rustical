@@ -228,7 +228,7 @@ impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
             .into_iter()
             .map(|object| {
                 (
-                    object.get_id().to_string(),
+                    format!("{}.vcf", object.get_id()),
                     AddressObjectResource {
                         object,
                         principal: principal.to_owned(),

@@ -359,7 +359,7 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
             .into_iter()
             .map(|object| {
                 (
-                    object.get_id().to_string(),
+                    format!("{}.ics", object.get_id()),
                     CalendarObjectResource {
                         object,
                         principal: principal.to_owned(),
