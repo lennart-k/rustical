@@ -63,7 +63,7 @@ impl ReportRequest {
             ReportRequest::SyncCollection(SyncCollectionRequest { prop, .. }) => prop,
         };
 
-        let props = match prop_element {
+        match prop_element {
             PropfindType::Allprop => {
                 vec!["allprop"]
             }
@@ -77,9 +77,7 @@ impl ReportRequest {
                     ReportPropName::CalendarData(_) => "calendar-data",
                 })
                 .collect(),
-        };
-        // let props: Vec<&str> = props.iter().map(String::as_str).collect();
-        props
+        }
     }
 }
 
