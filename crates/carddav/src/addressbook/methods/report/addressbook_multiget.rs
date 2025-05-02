@@ -40,6 +40,7 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
         let mut path = Path::new(href.as_str());
         if !resource_def.capture_match_info(&mut path) {
             not_found.push(href.to_owned());
+            continue;
         };
         let object_id = path.get("object_id").unwrap();
         match store
