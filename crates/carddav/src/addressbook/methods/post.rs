@@ -45,6 +45,17 @@ pub async fn route_post<A: AddressbookStore, S: SubscriptionStore>(
             .to_owned(),
         topic: addressbook.push_topic,
         expiration: expires.naive_local(),
+        public_key: request
+            .subscription
+            .web_push_subscription
+            .subscription_public_key
+            .key,
+        public_key_type: request
+            .subscription
+            .web_push_subscription
+            .subscription_public_key
+            .ty,
+        auth_secret: request.subscription.web_push_subscription.auth_secret,
     };
     subscription_store.upsert_subscription(subscription).await?;
 

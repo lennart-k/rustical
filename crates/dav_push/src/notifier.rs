@@ -1,10 +1,15 @@
 use actix_web::http::StatusCode;
+use reqwest::{
+    Method, Request,
+    header::{self, HeaderName, HeaderValue},
+};
 use rustical_dav::xml::multistatus::PropstatElement;
 use rustical_store::{CollectionOperation, CollectionOperationType, SubscriptionStore};
 use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
-use std::sync::Arc;
+use std::{str::FromStr, sync::Arc};
 use tokio::sync::mpsc::Receiver;
 use tracing::{error, info, warn};
+use web_push::{SubscriptionInfo, WebPushMessage, WebPushMessageBuilder};
 
 #[derive(XmlSerialize, Debug)]
 struct PushMessageProp {
@@ -23,6 +28,40 @@ struct PushMessageProp {
 struct PushMessage {
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     propstat: PropstatElement<PushMessageProp>,
+}
+
+pub fn build_request(message: WebPushMessage) -> Request {
+    // A little janky :)
+    let url = reqwest::Url::from_str(&message.endpoint.to_string()).unwrap();
+    let mut builder = Request::new(Method::POST, url);
+
+    if let Some(topic) = message.topic {
+        builder
+            .headers_mut()
+            .insert("Topic", HeaderValue::from_str(topic.as_str()).unwrap());
+    }
+
+    if let Some(payload) = message.payload {
+        builder.headers_mut().insert(
+            header::CONTENT_ENCODING,
+            HeaderValue::from_static(payload.content_encoding.to_str()),
+        );
+        builder.headers_mut().insert(
+            header::CONTENT_TYPE,
+            HeaderValue::from_static("application/octet-stream"),
+        );
+
+        for (k, v) in payload.crypto_headers.into_iter() {
+            let v: &str = v.as_ref();
+            builder.headers_mut().insert(
+                HeaderName::from_static(k),
+                HeaderValue::from_str(&v).unwrap(),
+            );
+        }
+
+        *builder.body_mut() = Some(reqwest::Body::from(payload.content));
+    }
+    builder
 }
 
 pub async fn push_notifier(
@@ -65,6 +104,19 @@ pub async fn push_notifier(
         let payload = String::from_utf8(output).unwrap();
         for subscriber in subscribers {
             let push_resource = subscriber.push_resource;
+
+            let sub_info = SubscriptionInfo {
+                endpoint: push_resource.to_owned(),
+                keys: web_push::SubscriptionKeys {
+                    p256dh: subscriber.public_key,
+                    auth: subscriber.auth_secret,
+                },
+            };
+            let mut builder = WebPushMessageBuilder::new(&sub_info);
+            builder.set_payload(web_push::ContentEncoding::Aes128Gcm, payload.as_bytes());
+            let push_message = builder.build().unwrap();
+            let request = build_request(push_message);
+
             let allowed = if let Some(allowed_push_servers) = &allowed_push_servers {
                 if let Ok(resource_url) = reqwest::Url::parse(&push_resource) {
                     let origin = resource_url.origin().ascii_serialization();
@@ -81,12 +133,7 @@ pub async fn push_notifier(
 
             if allowed {
                 info!("Sending a push message to {}: {}", push_resource, payload);
-                if let Err(err) = client
-                    .post(push_resource)
-                    .body(payload.to_owned())
-                    .send()
-                    .await
-                {
+                if let Err(err) = client.execute(request).await {
                     error!("{err}");
                 }
             } else {
