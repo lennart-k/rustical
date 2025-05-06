@@ -11,7 +11,7 @@ If you still want to play around with it in its current state, absolutely feel f
 ## Features
 
 - easy to backup, everything saved in one SQLite database
-- [WebDAV Push](https://github.com/bitfireAT/webdav-push/) support, so near-instant synchronisation to DAVx5
+- ~~[WebDAV Push](https://github.com/bitfireAT/webdav-push/) support, so near-instant synchronisation to DAVx5~~ (currently broken)
 - lightweight (the container image contains only one binary)
 - adequately fast (I'd love to say blazingly fast™ :fire: but I don't have any benchmarks)
 - deleted calendars are recoverable
