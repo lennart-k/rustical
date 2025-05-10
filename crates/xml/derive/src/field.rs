@@ -246,6 +246,25 @@ impl Field {
         })
     }
 
+    pub fn namespace_branch(&self) -> Option<proc_macro2::TokenStream> {
+        if self.attrs.xml_ty != FieldType::Namespace {
+            return None;
+        }
+        let builder_field_ident = self.builder_field_ident();
+
+        let value = quote! {
+            if let ::quick_xml::name::ResolveResult::Bound(ns) = &ns {
+                Some(rustical_xml::ValueDeserialize::deserialize(&String::from_utf8_lossy(ns.0.as_ref()))?)
+            } else {
+                None
+            }
+        };
+
+        Some(quote! {
+            builder.#builder_field_ident = #value;
+        })
+    }
+
     pub fn tagname_branch(&self) -> Option<proc_macro2::TokenStream> {
         if self.attrs.xml_ty != FieldType::TagName {
             return None;

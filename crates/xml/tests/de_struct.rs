@@ -342,3 +342,32 @@ fn test_struct_tuple() {
         }
     );
 }
+
+#[test]
+fn test_struct_untagged_ns() {
+    #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
+    #[xml(root = b"document")]
+    struct Document {
+        #[xml(ty = "untagged")]
+        child: Child,
+    }
+
+    #[derive(Debug, XmlDeserialize, PartialEq, Default)]
+    struct Child(
+        #[xml(ty = "tag_name")] String,
+        #[xml(ty = "namespace")] Option<String>,
+    );
+
+    let doc = Document::parse_str(
+        r#"
+    <?xml version="1.0" encoding="utf-8"?>
+    <document><test xmlns="hello" /></document>"#,
+    )
+    .unwrap();
+    assert_eq!(
+        doc,
+        Document {
+            child: Child("test".to_owned(), Some("hello".to_string()))
+        }
+    );
+}

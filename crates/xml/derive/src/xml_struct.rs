@@ -1,5 +1,5 @@
-use crate::attrs::{FieldType, StructAttrs};
 use crate::Field;
+use crate::attrs::{FieldType, StructAttrs};
 use core::panic;
 use darling::FromDeriveInput;
 use quote::quote;
@@ -115,6 +115,7 @@ impl NamedStruct {
             self.fields.iter().filter_map(Field::text_branch).collect();
         let attr_field_branches = self.fields.iter().filter_map(Field::attr_branch);
         let tagname_field_branches = self.fields.iter().filter_map(Field::tagname_branch);
+        let namespace_field_branches = self.fields.iter().filter_map(Field::namespace_branch);
 
         let builder_field_builds = self.fields.iter().map(Field::builder_field_build);
 
@@ -144,6 +145,7 @@ impl NamedStruct {
 
                     let (ns, name) = reader.resolve_element(start.name());
                     #(#tagname_field_branches);*
+                    #(#namespace_field_branches);*
 
                     for attr in start.attributes() {
                         let attr = attr?;
