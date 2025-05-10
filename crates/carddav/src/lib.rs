@@ -1,5 +1,6 @@
 use actix_web::{
     HttpResponse,
+    body::BoxBody,
     dev::{HttpServiceFactory, ServiceResponse},
     http::{
         Method, StatusCode,
@@ -25,6 +26,32 @@ pub mod addressbook;
 pub mod error;
 pub mod principal;
 
+/// Quite a janky implementation but the default METHOD_NOT_ALLOWED response gives us the allowed
+/// methods of a resource
+fn options_handler() -> ErrorHandlers<BoxBody> {
+    ErrorHandlers::new().handler(StatusCode::METHOD_NOT_ALLOWED, |res| {
+        Ok(ErrorHandlerResponse::Response(
+            if res.request().method() == Method::OPTIONS {
+                let mut response = HttpResponse::Ok();
+                response.insert_header((
+                    HeaderName::from_static("dav"),
+                    // https://datatracker.ietf.org/doc/html/rfc4918#section-18
+                    HeaderValue::from_static(
+                        "1, 3, access-control, addressbook, extended-mkcol, webdav-push",
+                    ),
+                ));
+
+                if let Some(allow) = res.headers().get(header::ALLOW) {
+                    response.insert_header((header::ALLOW, allow.to_owned()));
+                }
+                ServiceResponse::new(res.into_parts().0, response.finish()).map_into_right_body()
+            } else {
+                res.map_into_left_body()
+            },
+        ))
+    })
+}
+
 pub fn carddav_service<AP: AuthenticationProvider, A: AddressbookStore, S: SubscriptionStore>(
     auth_provider: Arc<AP>,
     store: Arc<A>,
@@ -32,30 +59,7 @@ pub fn carddav_service<AP: AuthenticationProvider, A: AddressbookStore, S: Subsc
 ) -> impl HttpServiceFactory {
     web::scope("")
         .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
-        .wrap(
-            ErrorHandlers::new().handler(StatusCode::METHOD_NOT_ALLOWED, |res| {
-                Ok(ErrorHandlerResponse::Response(
-                    if res.request().method() == Method::OPTIONS {
-                        let mut response = HttpResponse::Ok();
-                        response.insert_header((
-                            HeaderName::from_static("dav"),
-                            // https://datatracker.ietf.org/doc/html/rfc4918#section-18
-                            HeaderValue::from_static(
-                                "1, 3, access-control, addressbook, extended-mkcol, webdav-push",
-                            ),
-                        ));
-
-                        if let Some(allow) = res.headers().get(header::ALLOW) {
-                            response.insert_header((header::ALLOW, allow.to_owned()));
-                        }
-                        ServiceResponse::new(res.into_parts().0, response.finish())
-                            .map_into_right_body()
-                    } else {
-                        res.map_into_left_body()
-                    },
-                ))
-            }),
-        )
+        .wrap(options_handler())
         .app_data(Data::from(store.clone()))
         .app_data(Data::from(subscription_store))
         .service(RootResourceService::<PrincipalResource, User>::default().actix_resource())
