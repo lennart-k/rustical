@@ -73,7 +73,7 @@ impl ReportRequest {
             PropfindType::Prop(PropElement(prop_tags)) => prop_tags
                 .iter()
                 .map(|propname| match propname {
-                    ReportPropName::Propname(propname) => propname.0.as_str(),
+                    ReportPropName::Propname(propname) => propname.name.as_str(),
                     ReportPropName::CalendarData(_) => "calendar-data",
                 })
                 .collect(),
@@ -165,8 +165,8 @@ mod tests {
             report_request,
             ReportRequest::CalendarMultiget(CalendarMultigetRequest {
                 prop: rustical_dav::xml::PropfindType::Prop(PropElement(vec![
-                    ReportPropName::Propname(Propname("getetag".to_owned())),
-                    ReportPropName::Propname(Propname("displayname".to_owned())),
+                    ReportPropName::Propname(Propname{name: "getetag".to_owned(), ns: Some("DAV:".to_owned())}),
+                    ReportPropName::Propname(Propname{name: "displayname".to_owned(), ns: Some("DAV:".to_owned())}),
                     ReportPropName::CalendarData(CalendarData { comp: None, expand: Some(ExpandElement { start: "20250426T220000Z".to_owned(), end: "20250503T220000Z".to_owned() }), limit_recurrence_set: None, limit_freebusy_set: None })
                 ])),
                 href: vec![
@@ -198,9 +198,10 @@ mod tests {
         assert_eq!(
             report_request,
             ReportRequest::CalendarQuery(CalendarQueryRequest {
-                prop: PropfindType::Prop(PropElement(vec![ReportPropName::Propname(Propname(
-                    "getetag".to_owned()
-                ))])),
+                prop: PropfindType::Prop(PropElement(vec![ReportPropName::Propname(Propname {
+                    name: "getetag".to_owned(),
+                    ns: Some("DAV:".to_owned())
+                })])),
                 filter: Some(FilterElement {
                     comp_filter: CompFilterElement {
                         is_not_defined: None,
@@ -247,8 +248,8 @@ mod tests {
             report_request,
             ReportRequest::CalendarMultiget(CalendarMultigetRequest {
                 prop: rustical_dav::xml::PropfindType::Prop(PropElement(vec![
-                    ReportPropName::Propname(Propname("getetag".to_owned())),
-                    ReportPropName::Propname(Propname("displayname".to_owned()))
+                    ReportPropName::Propname(Propname{name: "getetag".to_owned(), ns: Some("DAV:".to_owned())}),
+                    ReportPropName::Propname(Propname{name: "displayname".to_owned(), ns: Some("DAV:".to_owned())})
                 ])),
                 href: vec![
                     "/caldav/user/user/6f787542-5256-401a-8db97003260da/ae7a998fdfd1d84a20391168962c62b".to_owned()

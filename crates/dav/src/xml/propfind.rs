@@ -12,7 +12,12 @@ pub struct PropfindElement {
 pub struct PropElement<PN: XmlDeserialize = Propname>(#[xml(ty = "untagged", flatten)] pub Vec<PN>);
 
 #[derive(Debug, Clone, XmlDeserialize, PartialEq)]
-pub struct Propname(#[xml(ty = "tag_name")] pub String);
+pub struct Propname {
+    #[xml(ty = "namespace")]
+    pub ns: Option<String>,
+    #[xml(ty = "tag_name")]
+    pub name: String,
+}
 
 #[derive(Debug, Clone, XmlDeserialize, PartialEq)]
 pub enum PropfindType<PN: XmlDeserialize = Propname> {

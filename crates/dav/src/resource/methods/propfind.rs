@@ -43,13 +43,15 @@ pub(crate) async fn route_propfind<R: ResourceService>(
         }
     };
 
+    dbg!(&propfind);
+
     // TODO: respect namespaces?
     let props = match &propfind.prop {
         PropfindType::Allprop => vec!["allprop"],
         PropfindType::Propname => vec!["propname"],
         PropfindType::Prop(PropElement(prop_tags)) => prop_tags
             .iter()
-            .map(|propname| propname.0.as_str())
+            .map(|propname| propname.name.as_str())
             .collect(),
     };
 
