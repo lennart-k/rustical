@@ -60,7 +60,7 @@ pub struct PwhashArgs {
         long,
         short = 'r',
         help = "ONLY for pbkdf2: Number of rounds to calculate",
-        default_value_t = 1000
+        default_value_t = 100
     )]
     rounds: u32,
 }
