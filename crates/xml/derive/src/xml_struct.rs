@@ -19,36 +19,27 @@ impl NamedStruct {
     pub fn parse(input: &DeriveInput, data: &DataStruct) -> Self {
         let attrs = StructAttrs::from_derive_input(input).unwrap();
 
-        match &data.fields {
-            syn::Fields::Named(named) => NamedStruct {
-                fields: named
-                    .named
-                    .iter()
-                    .enumerate()
-                    .map(|(i, field)| Field::from_syn_field(field.to_owned(), i))
-                    .collect(),
-                attrs,
-                ident: input.ident.to_owned(),
-                generics: input.generics.to_owned(),
-            },
-            syn::Fields::Unnamed(unnamed) => NamedStruct {
-                fields: unnamed
-                    .unnamed
-                    .iter()
-                    .enumerate()
-                    .map(|(i, field)| Field::from_syn_field(field.to_owned(), i))
-                    .collect(),
-                attrs,
-                ident: input.ident.to_owned(),
-                generics: input.generics.to_owned(),
-            },
+        let fields = match &data.fields {
+            syn::Fields::Named(named) => named
+                .named
+                .iter()
+                .enumerate()
+                .map(|(i, field)| Field::from_syn_field(field.to_owned(), i))
+                .collect(),
+            syn::Fields::Unnamed(unnamed) => unnamed
+                .unnamed
+                .iter()
+                .enumerate()
+                .map(|(i, field)| Field::from_syn_field(field.to_owned(), i))
+                .collect(),
+            syn::Fields::Unit => vec![],
+        };
 
-            syn::Fields::Unit => NamedStruct {
-                fields: vec![],
-                attrs,
-                ident: input.ident.to_owned(),
-                generics: input.generics.to_owned(),
-            },
+        NamedStruct {
+            fields,
+            attrs,
+            ident: input.ident.to_owned(),
+            generics: input.generics.to_owned(),
         }
     }
 }
@@ -184,10 +175,7 @@ impl NamedStruct {
                                 Event::Decl(_) => { /* <?xml ... ?> ignore this */ }
                                 Event::Comment(_) => { /* ignore */ }
                                 Event::DocType(_) => { /* ignore */ }
-                                Event::PI(_) => {
-                                    // Error: not supported
-                                    return Err(XmlError::UnsupportedEvent("Processing instruction"));
-                                }
+                                Event::PI(_) => { /* ignore */ }
                                 Event::End(end) => {
                                     unreachable!("Unexpected closing tag for wrong element, should be handled by quick_xml");
                                 }

@@ -1,15 +1,15 @@
 use core::panic;
-use syn::{parse_macro_input, DeriveInput};
+use syn::{DeriveInput, parse_macro_input};
 
 pub(crate) mod attrs;
-mod common;
 mod field;
+mod generic;
 mod variant;
 mod xml_enum;
 mod xml_struct;
 
-pub(crate) use common::*;
 pub(crate) use field::Field;
+pub(crate) use generic::*;
 pub(crate) use variant::Variant;
 pub(crate) use xml_enum::Enum;
 pub(crate) use xml_struct::NamedStruct;
