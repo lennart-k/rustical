@@ -165,8 +165,8 @@ mod tests {
             report_request,
             ReportRequest::CalendarMultiget(CalendarMultigetRequest {
                 prop: rustical_dav::xml::PropfindType::Prop(PropElement(vec![
-                    ReportPropName::Propname(Propname{name: "getetag".to_owned(), ns: Some("DAV:".to_owned())}),
-                    ReportPropName::Propname(Propname{name: "displayname".to_owned(), ns: Some("DAV:".to_owned())}),
+                    ReportPropName::Propname(Propname{name: "getetag".to_owned(), ns: Some("DAV:".into())}),
+                    ReportPropName::Propname(Propname{name: "displayname".to_owned(), ns: Some("DAV:".into())}),
                     ReportPropName::CalendarData(CalendarData { comp: None, expand: Some(ExpandElement { start: "20250426T220000Z".to_owned(), end: "20250503T220000Z".to_owned() }), limit_recurrence_set: None, limit_freebusy_set: None })
                 ])),
                 href: vec![
@@ -200,7 +200,7 @@ mod tests {
             ReportRequest::CalendarQuery(CalendarQueryRequest {
                 prop: PropfindType::Prop(PropElement(vec![ReportPropName::Propname(Propname {
                     name: "getetag".to_owned(),
-                    ns: Some("DAV:".to_owned())
+                    ns: Some("DAV:".into())
                 })])),
                 filter: Some(FilterElement {
                     comp_filter: CompFilterElement {
@@ -248,8 +248,8 @@ mod tests {
             report_request,
             ReportRequest::CalendarMultiget(CalendarMultigetRequest {
                 prop: rustical_dav::xml::PropfindType::Prop(PropElement(vec![
-                    ReportPropName::Propname(Propname{name: "getetag".to_owned(), ns: Some("DAV:".to_owned())}),
-                    ReportPropName::Propname(Propname{name: "displayname".to_owned(), ns: Some("DAV:".to_owned())})
+                    ReportPropName::Propname(Propname{name: "getetag".to_owned(), ns: Some("DAV:".into())}),
+                    ReportPropName::Propname(Propname{name: "displayname".to_owned(), ns: Some("DAV:".into())})
                 ])),
                 href: vec![
                     "/caldav/user/user/6f787542-5256-401a-8db97003260da/ae7a998fdfd1d84a20391168962c62b".to_owned()

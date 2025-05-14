@@ -56,11 +56,11 @@ fn propfind_prop() {
             prop: PropfindType::Prop(PropElement(vec![
                 Propname {
                     name: "displayname".to_owned(),
-                    ns: Some("DAV:".to_owned())
+                    ns: Some("DAV:".to_owned().into())
                 },
                 Propname {
                     name: "color".to_owned(),
-                    ns: Some("DAV:".to_owned())
+                    ns: Some("DAV:".to_owned().into())
                 },
             ]))
         }

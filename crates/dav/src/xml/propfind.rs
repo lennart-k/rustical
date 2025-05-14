@@ -1,3 +1,4 @@
+use rustical_xml::NamespaceOwned;
 use rustical_xml::XmlDeserialize;
 use rustical_xml::XmlRootTag;
 
@@ -14,7 +15,7 @@ pub struct PropElement<PN: XmlDeserialize = Propname>(#[xml(ty = "untagged", fla
 #[derive(Debug, Clone, XmlDeserialize, PartialEq)]
 pub struct Propname {
     #[xml(ty = "namespace")]
-    pub ns: Option<String>,
+    pub ns: Option<NamespaceOwned>,
     #[xml(ty = "tag_name")]
     pub name: String,
 }

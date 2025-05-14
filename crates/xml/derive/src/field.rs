@@ -254,7 +254,8 @@ impl Field {
 
         let value = quote! {
             if let ::quick_xml::name::ResolveResult::Bound(ns) = &ns {
-                Some(rustical_xml::ValueDeserialize::deserialize(&String::from_utf8_lossy(ns.0.as_ref()))?)
+                Some(ns.into())
+                // Some(rustical_xml::ValueDeserialize::deserialize(&String::from_utf8_lossy(ns.0.as_ref()))?)
             } else {
                 None
             }

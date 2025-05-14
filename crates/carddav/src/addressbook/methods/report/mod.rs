@@ -114,7 +114,7 @@ mod tests {
                 sync_level: SyncLevel::One,
                 prop: rustical_dav::xml::PropfindType::Prop(PropElement(vec![Propname {
                     name: "getetag".to_owned(),
-                    ns: Some("DAV:".to_owned())
+                    ns: Some("DAV:".into())
                 }])),
                 limit: None
             })
@@ -138,8 +138,8 @@ mod tests {
             report_request,
             ReportRequest::AddressbookMultiget(AddressbookMultigetRequest {
                 prop: rustical_dav::xml::PropfindType::Prop(PropElement(vec![
-                    Propname{name: "getetag".to_owned(), ns: Some("DAV:".to_owned())},
-                    Propname{name: "address-data".to_owned(), ns: Some("urn:ietf:params:xml:ns:carddav".to_owned())}
+                    Propname{name: "getetag".to_owned(), ns: Some("DAV:".into())},
+                    Propname{name: "address-data".to_owned(), ns: Some("urn:ietf:params:xml:ns:carddav".into())}
                 ])),
                 href: vec![
                     "/carddav/user/user/6f787542-5256-401a-8db97003260da/ae7a998fdfd1d84a20391168962c62b".to_owned()

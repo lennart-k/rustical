@@ -1,6 +1,6 @@
 use quick_xml::name::Namespace;
 use rustical_xml::de::XmlDocument;
-use rustical_xml::{Unparsed, XmlDeserialize, XmlRootTag};
+use rustical_xml::{NamespaceOwned, Unparsed, XmlDeserialize, XmlRootTag};
 use std::collections::HashSet;
 
 #[test]
@@ -355,7 +355,7 @@ fn test_struct_untagged_ns() {
     #[derive(Debug, XmlDeserialize, PartialEq, Default)]
     struct Child(
         #[xml(ty = "tag_name")] String,
-        #[xml(ty = "namespace")] Option<String>,
+        #[xml(ty = "namespace")] Option<NamespaceOwned>,
     );
 
     let doc = Document::parse_str(
@@ -367,7 +367,7 @@ fn test_struct_untagged_ns() {
     assert_eq!(
         doc,
         Document {
-            child: Child("test".to_owned(), Some("hello".to_string()))
+            child: Child("test".to_owned(), Some("hello".to_string().into()))
         }
     );
 }

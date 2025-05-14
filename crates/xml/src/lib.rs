@@ -4,6 +4,7 @@ use std::str::FromStr;
 
 pub mod de;
 mod error;
+mod namespace;
 pub mod se;
 mod unparsed;
 mod value;
@@ -11,6 +12,7 @@ mod value;
 pub use de::XmlDeserialize;
 pub use de::XmlDocument;
 pub use error::XmlError;
+pub use namespace::NamespaceOwned;
 pub use se::XmlSerialize;
 pub use se::XmlSerializeRoot;
 pub use unparsed::Unparsed;
