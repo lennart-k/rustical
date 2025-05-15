@@ -131,13 +131,10 @@ async fn main() -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        app::make_app, commands::generate_frontend_secret, config::NextcloudLoginConfig,
-        get_data_stores,
-    };
+    use crate::{app::make_app, config::NextcloudLoginConfig, get_data_stores};
     use actix_web::{http::StatusCode, test::TestRequest};
-    use rustical_frontend::FrontendConfig;
     use rustical_frontend::nextcloud_login::NextcloudFlows;
+    use rustical_frontend::{FrontendConfig, generate_frontend_secret};
     use std::sync::Arc;
 
     #[tokio::test]

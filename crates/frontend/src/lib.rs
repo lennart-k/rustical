@@ -38,7 +38,7 @@ mod routes;
 pub const ROUTE_NAME_HOME: &str = "frontend_home";
 pub const ROUTE_USER_NAMED: &str = "frontend_user_named";
 
-pub use config::FrontendConfig;
+pub use config::{FrontendConfig, generate_frontend_secret};
 
 pub fn generate_app_token() -> String {
     rand::thread_rng()

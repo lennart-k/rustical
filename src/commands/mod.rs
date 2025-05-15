@@ -2,8 +2,8 @@ use argon2::password_hash::SaltString;
 use clap::{Parser, ValueEnum};
 use password_hash::PasswordHasher;
 use pbkdf2::Params;
-use rand::{RngCore, rngs::OsRng};
-use rustical_frontend::FrontendConfig;
+use rand::rngs::OsRng;
+use rustical_frontend::{FrontendConfig, generate_frontend_secret};
 
 use crate::config::{
     Config, DataStoreConfig, DavPushConfig, HttpConfig, SqliteDataStoreConfig, TracingConfig,
@@ -14,14 +14,6 @@ pub mod principals;
 
 #[derive(Debug, Parser)]
 pub struct GenConfigArgs {}
-
-pub fn generate_frontend_secret() -> [u8; 64] {
-    let mut rng = rand::thread_rng();
-
-    let mut secret = [0u8; 64];
-    rng.fill_bytes(&mut secret);
-    secret
-}
 
 pub fn cmd_gen_config(_args: GenConfigArgs) -> anyhow::Result<()> {
     let config = Config {
