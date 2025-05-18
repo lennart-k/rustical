@@ -30,6 +30,7 @@ clap.workspace = true
 rustical_dav.workspace = true
 strum.workspace = true
 strum_macros.workspace = true
+rustical_ical.workspace = true
 
 [dev-dependencies]
 rstest = { workspace = true }

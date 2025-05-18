@@ -18,8 +18,8 @@ use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_dav_push::{DavPushExtension, DavPushExtensionProp};
+use rustical_ical::CalDateTime;
 use rustical_store::auth::User;
-use rustical_store::calendar::CalDateTime;
 use rustical_store::{Calendar, CalendarStore, SubscriptionStore};
 use rustical_xml::{EnumUnitVariants, EnumVariants};
 use rustical_xml::{XmlDeserialize, XmlSerialize};
@@ -170,10 +170,10 @@ impl Resource for CalendarResource {
                     self.cal.subscription_url.to_owned().map(HrefElement::from),
                 ),
                 CalendarPropName::MinDateTime => {
-                    CalendarProp::MinDateTime(CalDateTime::Utc(DateTime::<Utc>::MIN_UTC).format())
+                    CalendarProp::MinDateTime(CalDateTime::from(DateTime::<Utc>::MIN_UTC).format())
                 }
                 CalendarPropName::MaxDateTime => {
-                    CalendarProp::MaxDateTime(CalDateTime::Utc(DateTime::<Utc>::MAX_UTC).format())
+                    CalendarProp::MaxDateTime(CalDateTime::from(DateTime::<Utc>::MAX_UTC).format())
                 }
             }),
             CalendarPropWrapperName::SyncToken(prop) => {

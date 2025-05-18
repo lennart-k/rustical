@@ -1,15 +1,12 @@
-use std::{collections::HashMap, io::BufReader};
-
-use crate::{
-    calendar::{CalDateTime, LOCAL_DATE},
-    CalendarObject, Error,
-};
+use crate::{CalendarObject, Error};
 use chrono::Datelike;
 use ical::parser::{
-    vcard::{self, component::VcardContact},
     Component,
+    vcard::{self, component::VcardContact},
 };
+use rustical_ical::{CalDateTime, LOCAL_DATE};
 use sha2::{Digest, Sha256};
+use std::{collections::HashMap, io::BufReader};
 
 #[derive(Debug, Clone)]
 pub struct AddressObject {

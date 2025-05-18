@@ -1,6 +1,5 @@
 use actix_web::{ResponseError, http::StatusCode};
-
-use crate::calendar::CalDateTimeError;
+use rustical_ical::CalDateTimeError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -14,7 +13,7 @@ pub enum Error {
     InvalidData(String),
 
     #[error(transparent)]
-    RRuleParserError(#[from] crate::calendar::rrule::ParserError),
+    RRuleParserError(#[from] rustical_ical::rrule::ParserError),
 
     #[error("Read-only")]
     ReadOnly,

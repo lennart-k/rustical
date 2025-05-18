@@ -1,4 +1,6 @@
-use super::IcalProperty;
+use crate::IcalProperty;
+
+use super::timezone::CalTimezone;
 use chrono::{DateTime, Duration, Local, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use chrono_tz::Tz;
 use derive_more::derive::Deref;
@@ -65,14 +67,24 @@ impl ValueSerialize for UtcDateTime {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum CalDateTime {
-    // Form 1, example: 19980118T230000
-    Local(DateTime<Local>),
-    // Form 2, example: 19980119T070000Z
-    Utc(DateTime<Utc>),
-    // Form 3, example: TZID=America/New_York:19980119T020000
+    // Form 1, example: 19980118T230000 -> Local
+    // Form 2, example: 19980119T070000Z -> UTC
+    // Form 3, example: TZID=America/New_York:19980119T020000 -> Olson
     // https://en.wikipedia.org/wiki/Tz_database
-    OlsonTZ(DateTime<Tz>),
+    DateTime(DateTime<CalTimezone>),
     Date(NaiveDate),
+}
+
+impl From<DateTime<Local>> for CalDateTime {
+    fn from(value: DateTime<Local>) -> Self {
+        CalDateTime::DateTime(value.with_timezone(&CalTimezone::Local))
+    }
+}
+
+impl From<DateTime<Utc>> for CalDateTime {
+    fn from(value: DateTime<Utc>) -> Self {
+        CalDateTime::DateTime(value.with_timezone(&CalTimezone::Utc))
+    }
 }
 
 impl Add<Duration> for CalDateTime {
@@ -80,12 +92,10 @@ impl Add<Duration> for CalDateTime {
 
     fn add(self, duration: Duration) -> Self::Output {
         match self {
-            Self::Local(datetime) => Self::Local(datetime + duration),
-            Self::Utc(datetime) => Self::Utc(datetime + duration),
-            Self::OlsonTZ(datetime) => Self::OlsonTZ(datetime + duration),
-            Self::Date(date) => Self::Local(
+            Self::DateTime(datetime) => Self::DateTime(datetime + duration),
+            Self::Date(date) => Self::DateTime(
                 date.and_time(NaiveTime::default())
-                    .and_local_timezone(Local)
+                    .and_local_timezone(CalTimezone::Local)
                     .earliest()
                     .expect("Local timezone has constant offset")
                     + duration,
@@ -142,42 +152,41 @@ impl CalDateTime {
 
     pub fn format(&self) -> String {
         match self {
-            Self::Utc(utc) => utc.format(UTC_DATE_TIME).to_string(),
+            Self::DateTime(datetime) => match datetime.timezone() {
+                CalTimezone::Utc => datetime.format(UTC_DATE_TIME).to_string(),
+                _ => datetime.format(LOCAL_DATE_TIME).to_string(),
+            },
             Self::Date(date) => date.format(LOCAL_DATE).to_string(),
-            Self::Local(datetime) => datetime.format(LOCAL_DATE_TIME).to_string(),
-            Self::OlsonTZ(datetime) => datetime.format(LOCAL_DATE_TIME).to_string(),
         }
     }
 
     pub fn date(&self) -> NaiveDate {
         match self {
-            Self::Utc(utc) => utc.date_naive(),
+            Self::DateTime(datetime) => datetime.date_naive(),
             Self::Date(date) => date.to_owned(),
-            Self::Local(datetime) => datetime.date_naive(),
-            Self::OlsonTZ(datetime) => datetime.date_naive(),
         }
     }
 
     pub fn parse(value: &str, timezone: Option<Tz>) -> Result<Self, CalDateTimeError> {
         if let Ok(datetime) = NaiveDateTime::parse_from_str(value, LOCAL_DATE_TIME) {
             if let Some(timezone) = timezone {
-                return Ok(CalDateTime::OlsonTZ(
+                return Ok(CalDateTime::DateTime(
                     datetime
-                        .and_local_timezone(timezone)
+                        .and_local_timezone(timezone.into())
                         .earliest()
                         .ok_or(CalDateTimeError::LocalTimeGap)?,
                 ));
             }
-            return Ok(CalDateTime::Local(
+            return Ok(CalDateTime::DateTime(
                 datetime
-                    .and_local_timezone(chrono::Local)
+                    .and_local_timezone(CalTimezone::Local)
                     .earliest()
                     .ok_or(CalDateTimeError::LocalTimeGap)?,
             ));
         }
 
         if let Ok(datetime) = NaiveDateTime::parse_from_str(value, UTC_DATE_TIME) {
-            return Ok(CalDateTime::Utc(datetime.and_utc()));
+            return Ok(datetime.and_utc().into());
         }
         if let Ok(date) = NaiveDate::parse_from_str(value, LOCAL_DATE) {
             return Ok(CalDateTime::Date(date));
@@ -207,15 +216,9 @@ impl CalDateTime {
 
     pub fn utc(&self) -> DateTime<Utc> {
         match &self {
-            CalDateTime::Local(local_datetime) => local_datetime.to_utc(),
-            CalDateTime::Utc(utc_datetime) => utc_datetime.to_owned(),
-            CalDateTime::OlsonTZ(datetime) => datetime.to_utc(),
+            CalDateTime::DateTime(datetime) => datetime.to_utc(),
             CalDateTime::Date(date) => date.and_time(NaiveTime::default()).and_utc(),
         }
-    }
-
-    pub fn cal_utc(&self) -> Self {
-        Self::Utc(self.utc())
     }
 }
 
@@ -255,27 +258,33 @@ pub fn parse_duration(string: &str) -> Result<Duration, CalDateTimeError> {
     Ok(duration)
 }
 
-#[test]
-fn test_parse_duration() {
-    assert_eq!(parse_duration("P12W").unwrap(), Duration::weeks(12));
-    assert_eq!(parse_duration("P12D").unwrap(), Duration::days(12));
-    assert_eq!(parse_duration("PT12H").unwrap(), Duration::hours(12));
-    assert_eq!(parse_duration("PT12M").unwrap(), Duration::minutes(12));
-    assert_eq!(parse_duration("PT12S").unwrap(), Duration::seconds(12));
-}
+#[cfg(test)]
+mod tests {
+    use crate::{CalDateTime, parse_duration};
+    use chrono::{Duration, NaiveDate};
 
-#[test]
-fn test_vcard_date() {
-    assert_eq!(
-        CalDateTime::parse("19850412", None).unwrap(),
-        CalDateTime::Date(NaiveDate::from_ymd_opt(1985, 4, 12).unwrap())
-    );
-    assert_eq!(
-        CalDateTime::parse("1985-04-12", None).unwrap(),
-        CalDateTime::Date(NaiveDate::from_ymd_opt(1985, 4, 12).unwrap())
-    );
-    assert_eq!(
-        CalDateTime::parse("--0412", None).unwrap(),
-        CalDateTime::Date(NaiveDate::from_ymd_opt(1972, 4, 12).unwrap())
-    );
+    #[test]
+    fn test_parse_duration() {
+        assert_eq!(parse_duration("P12W").unwrap(), Duration::weeks(12));
+        assert_eq!(parse_duration("P12D").unwrap(), Duration::days(12));
+        assert_eq!(parse_duration("PT12H").unwrap(), Duration::hours(12));
+        assert_eq!(parse_duration("PT12M").unwrap(), Duration::minutes(12));
+        assert_eq!(parse_duration("PT12S").unwrap(), Duration::seconds(12));
+    }
+
+    #[test]
+    fn test_vcard_date() {
+        assert_eq!(
+            CalDateTime::parse("19850412", None).unwrap(),
+            CalDateTime::Date(NaiveDate::from_ymd_opt(1985, 4, 12).unwrap())
+        );
+        assert_eq!(
+            CalDateTime::parse("1985-04-12", None).unwrap(),
+            CalDateTime::Date(NaiveDate::from_ymd_opt(1985, 4, 12).unwrap())
+        );
+        assert_eq!(
+            CalDateTime::parse("--0412", None).unwrap(),
+            CalDateTime::Date(NaiveDate::from_ymd_opt(1972, 4, 12).unwrap())
+        );
+    }
 }

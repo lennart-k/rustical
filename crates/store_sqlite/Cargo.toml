@@ -21,3 +21,4 @@ password-hash.workspace = true
 uuid.workspace = true
 rand.workspace = true
 pbkdf2.workspace = true
+rustical_ical.workspace = true

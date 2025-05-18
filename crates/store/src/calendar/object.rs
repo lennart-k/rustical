@@ -1,9 +1,10 @@
-use super::{CalDateTime, EventObject, JournalObject, TodoObject};
+use super::{EventObject, JournalObject, TodoObject};
 use crate::Error;
 use ical::{
     generator::{Emitter, IcalCalendar},
     parser::{Component, ical::component::IcalTimeZone},
 };
+use rustical_ical::CalDateTime;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::{collections::HashMap, io::BufReader};

@@ -55,7 +55,7 @@ pub struct RecurrenceRule {
     pub frequency: RecurrenceFrequency,
     pub limit: Option<RecurrenceLimit>,
     // Repeat every n-th time
-    pub interval: Option<usize>,
+    pub interval: usize,
 
     pub bysecond: Option<Vec<usize>>,
     pub byminute: Option<Vec<usize>>,
@@ -74,7 +74,7 @@ impl RecurrenceRule {
     pub fn parse(rule: &str) -> Result<Self, ParserError> {
         let mut frequency = None;
         let mut limit = None;
-        let mut interval = None;
+        let mut interval = 1;
         let mut bysecond = None;
         let mut byminute = None;
         let mut byhour = None;
@@ -98,7 +98,7 @@ impl RecurrenceRule {
                 ("UNTIL", val) => {
                     limit = Some(RecurrenceLimit::Until(CalDateTime::parse(val, None)?))
                 }
-                ("INTERVAL", val) => interval = Some(val.parse()?),
+                ("INTERVAL", val) => interval = val.parse()?,
                 ("BYSECOND", val) => {
                     bysecond = Some(
                         val.split(',')
@@ -196,7 +196,7 @@ impl RecurrenceRule {
 
 #[cfg(test)]
 mod tests {
-    use crate::calendar::{
+    use crate::{
         CalDateTime,
         rrule::{RecurrenceFrequency, RecurrenceLimit, Weekday},
     };
@@ -212,7 +212,7 @@ mod tests {
                 limit: Some(RecurrenceLimit::Until(
                     CalDateTime::parse("20250516T133000Z", None).unwrap()
                 )),
-                interval: Some(3),
+                interval: 3,
                 ..Default::default()
             }
         );
@@ -221,7 +221,7 @@ mod tests {
             RecurrenceRule {
                 frequency: RecurrenceFrequency::Weekly,
                 limit: Some(RecurrenceLimit::Count(4)),
-                interval: Some(2),
+                interval: 2,
                 byday: Some(vec![
                     (None, Weekday::Tu),
                     (None, Weekday::Th),

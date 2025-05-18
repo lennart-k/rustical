@@ -3050,6 +3050,7 @@ dependencies = [
  "quick-xml",
  "rustical_dav",
  "rustical_dav_push",
+ "rustical_ical",
  "rustical_store",
  "rustical_xml",
  "serde",
@@ -3155,6 +3156,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "rustical_ical"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "chrono-tz",
+ "derive_more 2.0.1",
+ "ical",
+ "lazy_static",
+ "regex",
+ "rustical_xml",
+ "strum",
+ "strum_macros",
+ "thiserror 2.0.12",
+]
+
+[[package]]
 name = "rustical_oidc"
 version = "0.1.0"
 dependencies = [
@@ -3187,6 +3204,7 @@ dependencies = [
  "rstest",
  "rstest_reuse",
  "rustical_dav",
+ "rustical_ical",
  "rustical_store_sqlite",
  "rustical_xml",
  "serde",
@@ -3210,6 +3228,7 @@ dependencies = [
  "password-hash",
  "pbkdf2",
  "rand 0.8.5",
+ "rustical_ical",
  "rustical_store",
  "serde",
  "sqlx",

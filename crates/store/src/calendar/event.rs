@@ -1,13 +1,13 @@
-use super::{
-    CalDateTime, parse_duration,
-    rrule::{ParserError, RecurrenceRule},
-};
-use crate::{Error, calendar::ComponentMut};
+use crate::Error;
 use chrono::Duration;
 use ical::{
     generator::IcalEvent,
     parser::{Component, ical::component::IcalTimeZone},
     property::Property,
+};
+use rustical_ical::{
+    CalDateTime, ComponentMut, parse_duration,
+    rrule::{ParserError, RecurrenceRule},
 };
 use std::collections::HashMap;
 
@@ -71,10 +71,10 @@ impl EventObject {
         if let Some(rrule) = self.recurrence_rule()? {
             let mut events = vec![];
             let first_occurence = self.get_first_occurence()?.unwrap();
-            let dates = rrule.between(first_occurence, None);
+            let dates = rrule.between(first_occurence, None, None);
 
             for date in dates {
-                let dtstart_utc = date.cal_utc();
+                let dtstart_utc = date;
                 let mut ev = self.event.clone();
                 ev.remove_property("RRULE");
                 ev.set_property(Property {

@@ -100,6 +100,7 @@ rustical_carddav = { path = "./crates/carddav/" }
 rustical_frontend = { path = "./crates/frontend/" }
 rustical_xml = { path = "./crates/xml/" }
 rustical_oidc = { path = "./crates/oidc/" }
+rustical_ical = { path = "./crates/ical/" }
 chrono-tz = "0.10"
 chrono-humanize = "0.2"
 rand = "0.8"

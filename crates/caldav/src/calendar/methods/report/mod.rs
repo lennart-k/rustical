@@ -142,7 +142,7 @@ mod tests {
     use super::*;
     use calendar_query::{CompFilterElement, FilterElement, TimeRangeElement};
     use rustical_dav::xml::{PropElement, PropfindType, Propname};
-    use rustical_store::calendar::UtcDateTime;
+    use rustical_ical::UtcDateTime;
     use rustical_xml::ValueDeserialize;
 
     #[test]
