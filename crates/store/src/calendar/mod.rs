@@ -3,7 +3,7 @@ mod event;
 mod ical;
 mod journal;
 mod object;
-mod rrule;
+pub mod rrule;
 mod timestamp;
 mod todo;
 

@@ -2,7 +2,7 @@ use super::{
     CalDateTime, parse_duration,
     rrule::{ParserError, RecurrenceRule},
 };
-use crate::Error;
+use crate::{Error, calendar::ComponentMut};
 use chrono::Duration;
 use ical::{
     generator::IcalEvent,
@@ -15,12 +15,13 @@ use std::collections::HashMap;
 pub struct EventObject {
     pub(crate) event: IcalEvent,
     pub(crate) timezones: HashMap<String, IcalTimeZone>,
+    pub(crate) ics: String,
 }
 
 impl EventObject {
     pub fn get_first_occurence(&self) -> Result<Option<CalDateTime>, Error> {
         if let Some(dtstart) = self.event.get_property("DTSTART") {
-            CalDateTime::parse_prop(dtstart, &self.timezones)
+            Ok(CalDateTime::parse_prop(dtstart, &self.timezones)?)
         } else {
             Ok(None)
         }
@@ -33,21 +34,25 @@ impl EventObject {
         }
 
         if let Some(dtend) = self.event.get_property("DTEND") {
-            return CalDateTime::parse_prop(dtend, &self.timezones);
+            return Ok(CalDateTime::parse_prop(dtend, &self.timezones)?);
         };
 
-        let duration = if let Some(Property {
+        let duration = self.get_duration()?.unwrap_or(Duration::days(1));
+
+        let first_occurence = self.get_first_occurence()?;
+        Ok(first_occurence.map(|first_occurence| first_occurence + duration))
+    }
+
+    pub fn get_duration(&self) -> Result<Option<Duration>, Error> {
+        if let Some(Property {
             value: Some(duration),
             ..
         }) = self.event.get_property("DURATION")
         {
-            parse_duration(duration)?
+            Ok(Some(parse_duration(duration)?))
         } else {
-            Duration::days(1)
-        };
-
-        let first_occurence = self.get_first_occurence()?;
-        Ok(first_occurence.map(|first_occurence| first_occurence + duration))
+            Ok(None)
+        }
     }
 
     pub fn recurrence_rule(&self) -> Result<Option<RecurrenceRule>, ParserError> {
@@ -62,10 +67,73 @@ impl EventObject {
         RecurrenceRule::parse(rrule).map(Some)
     }
 
-    pub fn expand_recurrence(&self) -> Result<(), Error> {
-        let rrule = self.event.get_property("RRULE").unwrap();
-        dbg!(rrule);
-        Ok(())
+    pub fn expand_recurrence(&self) -> Result<Vec<IcalEvent>, Error> {
+        if let Some(rrule) = self.recurrence_rule()? {
+            let mut events = vec![];
+            let first_occurence = self.get_first_occurence()?.unwrap();
+            let dates = rrule.between(first_occurence, None);
+
+            for date in dates {
+                let dtstart_utc = date.cal_utc();
+                let mut ev = self.event.clone();
+                ev.remove_property("RRULE");
+                ev.set_property(Property {
+                    name: "RECURRENCE-ID".to_string(),
+                    value: Some(dtstart_utc.format()),
+                    params: None,
+                });
+                ev.set_property(Property {
+                    name: "DTSTART".to_string(),
+                    value: Some(dtstart_utc.format()),
+                    params: None,
+                });
+                if let Some(duration) = self.get_duration()? {
+                    ev.set_property(Property {
+                        name: "DTEND".to_string(),
+                        value: Some((dtstart_utc + duration).format()),
+                        params: None,
+                    });
+                }
+                events.push(ev);
+            }
+            Ok(events)
+        } else {
+            Ok(vec![self.event.clone()])
+        }
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use crate::CalendarObject;
+
+    const ICS: &str = r#"BEGIN:VCALENDAR
+CALSCALE:GREGORIAN
+VERSION:2.0
+BEGIN:VTIMEZONE
+TZID:Europe/Berlin
+X-LIC-LOCATION:Europe/Berlin
+END:VTIMEZONE
+
+BEGIN:VEVENT
+UID:318ec6503573d9576818daf93dac07317058d95c
+DTSTAMP:20250502T132758Z
+DTSTART;TZID=Europe/Berlin:20250506T090000
+DTEND;TZID=Europe/Berlin:20250506T092500
+SEQUENCE:2
+SUMMARY:weekly stuff
+TRANSP:OPAQUE
+RRULE:FREQ=WEEKLY;COUNT=4;INTERVAL=2;BYDAY=TU,TH,SU
+END:VEVENT
+END:VCALENDAR"#;
+
+    #[test]
+    fn test_expand_recurrence() {
+        let event = CalendarObject::from_ics(
+            "318ec6503573d9576818daf93dac07317058d95c".to_string(),
+            ICS.to_string(),
+        )
+        .unwrap();
+        assert_eq!(event.expand_recurrence().unwrap(), "asd".to_string());
+    }
+}

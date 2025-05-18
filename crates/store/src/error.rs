@@ -1,4 +1,6 @@
-use actix_web::{http::StatusCode, ResponseError};
+use actix_web::{ResponseError, http::StatusCode};
+
+use crate::calendar::CalDateTimeError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -10,6 +12,9 @@ pub enum Error {
 
     #[error("Invalid ics/vcf input: {0}")]
     InvalidData(String),
+
+    #[error(transparent)]
+    RRuleParserError(#[from] crate::calendar::rrule::ParserError),
 
     #[error("Read-only")]
     ReadOnly,
@@ -25,6 +30,9 @@ pub enum Error {
 
     #[error(transparent)]
     Other(#[from] anyhow::Error),
+
+    #[error(transparent)]
+    CalDateTimeError(#[from] CalDateTimeError),
 }
 
 impl ResponseError for Error {

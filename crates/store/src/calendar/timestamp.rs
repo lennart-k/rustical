@@ -1,6 +1,5 @@
 use super::IcalProperty;
-use crate::Error;
-use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, NaiveTime, Utc};
+use chrono::{DateTime, Duration, Local, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use chrono_tz::Tz;
 use derive_more::derive::Deref;
 use ical::{
@@ -21,6 +20,24 @@ lazy_static! {
 const LOCAL_DATE_TIME: &str = "%Y%m%dT%H%M%S";
 const UTC_DATE_TIME: &str = "%Y%m%dT%H%M%SZ";
 pub const LOCAL_DATE: &str = "%Y%m%d";
+
+#[derive(Debug, thiserror::Error)]
+pub enum CalDateTimeError {
+    #[error(
+        "Timezone has X-LIC-LOCATION property to specify a timezone from the Olson database, however its value {0} is invalid"
+    )]
+    InvalidOlson(String),
+    #[error("TZID {0} does not refer to a valid timezone")]
+    InvalidTZID(String),
+    #[error("Timestamp doesn't exist because of gap in local time")]
+    LocalTimeGap,
+    #[error("Datetime string {0} has an invalid format")]
+    InvalidDatetimeFormat(String),
+    #[error("Could not parse datetime {0}")]
+    ParseError(String),
+    #[error("Duration string {0} has an invalid format")]
+    InvalidDurationFormat(String),
+}
 
 #[derive(Debug, Clone, Deref, PartialEq)]
 pub struct UtcDateTime(DateTime<Utc>);
@@ -49,7 +66,7 @@ impl ValueSerialize for UtcDateTime {
 #[derive(Debug, Clone, PartialEq)]
 pub enum CalDateTime {
     // Form 1, example: 19980118T230000
-    Local(NaiveDateTime),
+    Local(DateTime<Local>),
     // Form 2, example: 19980119T070000Z
     Utc(DateTime<Utc>),
     // Form 3, example: TZID=America/New_York:19980119T020000
@@ -66,7 +83,13 @@ impl Add<Duration> for CalDateTime {
             Self::Local(datetime) => Self::Local(datetime + duration),
             Self::Utc(datetime) => Self::Utc(datetime + duration),
             Self::OlsonTZ(datetime) => Self::OlsonTZ(datetime + duration),
-            Self::Date(date) => Self::Local(date.and_time(NaiveTime::default()) + duration),
+            Self::Date(date) => Self::Local(
+                date.and_time(NaiveTime::default())
+                    .and_local_timezone(Local)
+                    .earliest()
+                    .expect("Local timezone has constant offset")
+                    + duration,
+            ),
         }
     }
 }
@@ -75,7 +98,7 @@ impl CalDateTime {
     pub fn parse_prop(
         prop: &Property,
         timezones: &HashMap<String, IcalTimeZone>,
-    ) -> Result<Option<Self>, Error> {
+    ) -> Result<Option<Self>, CalDateTimeError> {
         let prop_value = if let Some(value) = prop.value.as_ref() {
             value
         } else {
@@ -95,9 +118,7 @@ impl CalDateTime {
                     if let Ok(tz) = olson_name.parse::<Tz>() {
                         Some(tz)
                     } else {
-                        return Err(Error::InvalidData(format!(
-                            "Timezone has X-LIC-LOCATION property to specify a timezone from the Olson database, however its value {olson_name} is invalid"
-                        )));
+                        return Err(CalDateTimeError::InvalidOlson(olson_name));
                     }
                 } else {
                     // If the TZID matches a name from the Olson database (e.g. Europe/Berlin) we
@@ -108,9 +129,7 @@ impl CalDateTime {
                 }
             } else {
                 // TZID refers to timezone that does not exist
-                return Err(Error::InvalidData(format!(
-                    "Timezone {tzid} does not exist"
-                )));
+                return Err(CalDateTimeError::InvalidTZID(tzid.to_string()));
             }
         } else {
             // No explicit timezone specified.
@@ -134,25 +153,27 @@ impl CalDateTime {
         match self {
             Self::Utc(utc) => utc.date_naive(),
             Self::Date(date) => date.to_owned(),
-            Self::Local(datetime) => datetime.date(),
+            Self::Local(datetime) => datetime.date_naive(),
             Self::OlsonTZ(datetime) => datetime.date_naive(),
         }
     }
 
-    pub fn parse(value: &str, timezone: Option<Tz>) -> Result<Self, Error> {
+    pub fn parse(value: &str, timezone: Option<Tz>) -> Result<Self, CalDateTimeError> {
         if let Ok(datetime) = NaiveDateTime::parse_from_str(value, LOCAL_DATE_TIME) {
             if let Some(timezone) = timezone {
-                let result = datetime.and_local_timezone(timezone);
-                if let Some(datetime) = result.earliest() {
-                    return Ok(CalDateTime::OlsonTZ(datetime));
-                } else {
-                    // This time does not exist because there's a gap in local time
-                    return Err(Error::InvalidData(
-                        "Timestamp doesn't exist because of gap in local time".to_owned(),
-                    ));
-                }
+                return Ok(CalDateTime::OlsonTZ(
+                    datetime
+                        .and_local_timezone(timezone)
+                        .earliest()
+                        .ok_or(CalDateTimeError::LocalTimeGap)?,
+                ));
             }
-            return Ok(CalDateTime::Local(datetime));
+            return Ok(CalDateTime::Local(
+                datetime
+                    .and_local_timezone(chrono::Local)
+                    .earliest()
+                    .ok_or(CalDateTimeError::LocalTimeGap)?,
+            ));
         }
 
         if let Ok(datetime) = NaiveDateTime::parse_from_str(value, UTC_DATE_TIME) {
@@ -177,20 +198,24 @@ impl CalDateTime {
 
             return Ok(CalDateTime::Date(
                 NaiveDate::from_ymd_opt(year, month, day)
-                    .ok_or(Error::InvalidData(format!("Could not parse date {value}")))?,
+                    .ok_or(CalDateTimeError::ParseError(value.to_string()))?,
             ));
         }
 
-        Err(Error::InvalidData("Invalid datetime format".to_owned()))
+        Err(CalDateTimeError::InvalidDatetimeFormat(value.to_string()))
     }
 
     pub fn utc(&self) -> DateTime<Utc> {
         match &self {
-            CalDateTime::Local(local_datetime) => local_datetime.and_utc(),
+            CalDateTime::Local(local_datetime) => local_datetime.to_utc(),
             CalDateTime::Utc(utc_datetime) => utc_datetime.to_owned(),
             CalDateTime::OlsonTZ(datetime) => datetime.to_utc(),
             CalDateTime::Date(date) => date.and_time(NaiveTime::default()).and_utc(),
         }
+    }
+
+    pub fn cal_utc(&self) -> Self {
+        Self::Utc(self.utc())
     }
 }
 
@@ -200,10 +225,10 @@ impl From<CalDateTime> for DateTime<Utc> {
     }
 }
 
-pub fn parse_duration(string: &str) -> Result<Duration, Error> {
+pub fn parse_duration(string: &str) -> Result<Duration, CalDateTimeError> {
     let captures = RE_DURATION
         .captures(string)
-        .ok_or(Error::InvalidData("Invalid duration format".to_owned()))?;
+        .ok_or(CalDateTimeError::InvalidDurationFormat(string.to_string()))?;
 
     let mut duration = Duration::zero();
     if let Some(weeks) = captures.name("W") {

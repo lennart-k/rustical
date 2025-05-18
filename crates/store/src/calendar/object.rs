@@ -1,6 +1,9 @@
 use super::{CalDateTime, EventObject, JournalObject, TodoObject};
 use crate::Error;
-use ical::parser::{Component, ical::component::IcalTimeZone};
+use ical::{
+    generator::{Emitter, IcalCalendar},
+    parser::{Component, ical::component::IcalTimeZone},
+};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::{collections::HashMap, io::BufReader};
@@ -55,8 +58,8 @@ pub enum CalendarObjectComponent {
 #[derive(Debug, Clone)]
 pub struct CalendarObject {
     id: String,
-    ics: String,
     data: CalendarObjectComponent,
+    cal: IcalCalendar,
 }
 
 impl CalendarObject {
@@ -95,26 +98,31 @@ impl CalendarObject {
         if let Some(event) = cal.events.first() {
             return Ok(CalendarObject {
                 id: object_id,
-                ics,
+                cal: cal.clone(),
                 data: CalendarObjectComponent::Event(EventObject {
                     event: event.clone(),
                     timezones,
+                    ics,
                 }),
             });
         }
         if let Some(todo) = cal.todos.first() {
             return Ok(CalendarObject {
                 id: object_id,
-                ics,
-                data: CalendarObjectComponent::Todo(TodoObject { todo: todo.clone() }),
+                cal: cal.clone(),
+                data: CalendarObjectComponent::Todo(TodoObject {
+                    todo: todo.clone(),
+                    ics,
+                }),
             });
         }
         if let Some(journal) = cal.journals.first() {
             return Ok(CalendarObject {
                 id: object_id,
-                ics,
+                cal: cal.clone(),
                 data: CalendarObjectComponent::Journal(JournalObject {
                     journal: journal.clone(),
+                    ics,
                 }),
             });
         }
@@ -135,7 +143,11 @@ impl CalendarObject {
     }
 
     pub fn get_ics(&self) -> &str {
-        &self.ics
+        match &self.data {
+            CalendarObjectComponent::Todo(todo) => &todo.ics,
+            CalendarObjectComponent::Event(event) => &event.ics,
+            CalendarObjectComponent::Journal(journal) => &journal.ics,
+        }
     }
 
     pub fn get_component_name(&self) -> &str {
@@ -165,6 +177,18 @@ impl CalendarObject {
         match &self.data {
             CalendarObjectComponent::Event(event) => event.get_last_occurence(),
             _ => Ok(None),
+        }
+    }
+
+    pub fn expand_recurrence(&self) -> Result<String, Error> {
+        // Only events can be expanded
+        match &self.data {
+            CalendarObjectComponent::Event(event) => {
+                let mut cal = self.cal.clone();
+                cal.events = event.expand_recurrence()?;
+                Ok(cal.generate())
+            }
+            _ => Ok(self.get_ics().to_string()),
         }
     }
 }

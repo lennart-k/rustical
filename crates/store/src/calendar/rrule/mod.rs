@@ -1,6 +1,8 @@
-use super::CalDateTime;
+use super::{CalDateTime, CalDateTimeError};
 use std::{num::ParseIntError, str::FromStr};
 use strum_macros::EnumString;
+
+mod iter;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ParserError {
@@ -12,9 +14,8 @@ pub enum ParserError {
     StrumError(#[from] strum::ParseError),
     #[error(transparent)]
     ParseIntError(#[from] ParseIntError),
-    // A little dumb :(
     #[error(transparent)]
-    StoreError(#[from] crate::Error),
+    CalDateTimeError(#[from] CalDateTimeError),
 }
 
 #[derive(Debug, Clone, EnumString, Default, PartialEq)]
