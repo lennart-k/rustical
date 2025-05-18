@@ -1,7 +1,6 @@
-use crate::IcalProperty;
-
 use super::timezone::CalTimezone;
-use chrono::{DateTime, Duration, Local, NaiveDate, NaiveDateTime, NaiveTime, Utc};
+use crate::IcalProperty;
+use chrono::{DateTime, Datelike, Duration, Local, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use chrono_tz::Tz;
 use derive_more::derive::Deref;
 use ical::{
@@ -13,8 +12,6 @@ use rustical_xml::{ValueDeserialize, ValueSerialize};
 use std::{collections::HashMap, ops::Add};
 
 lazy_static! {
-    static ref RE_DURATION: regex::Regex = regex::Regex::new(r"^(?<sign>[+-])?P((?P<W>\d+)W)?((?P<D>\d+)D)?(T((?P<H>\d+)H)?((?P<M>\d+)M)?((?P<S>\d+)S)?)?$").unwrap();
-
     static ref RE_VCARD_DATE_MM_DD: regex::Regex =
         regex::Regex::new(r"^--(?<m>\d{2})(?<d>\d{2})$").unwrap();
 }
@@ -167,6 +164,17 @@ impl CalDateTime {
         }
     }
 
+    pub fn into_datetime(self) -> DateTime<CalTimezone> {
+        match self {
+            Self::DateTime(datetime) => datetime,
+            Self::Date(date) => date
+                .and_time(NaiveTime::default())
+                .and_local_timezone(CalTimezone::Local)
+                .earliest()
+                .expect("Midnight always exists"),
+        }
+    }
+
     pub fn parse(value: &str, timezone: Option<Tz>) -> Result<Self, CalDateTimeError> {
         if let Ok(datetime) = NaiveDateTime::parse_from_str(value, LOCAL_DATE_TIME) {
             if let Some(timezone) = timezone {
@@ -228,49 +236,127 @@ impl From<CalDateTime> for DateTime<Utc> {
     }
 }
 
-pub fn parse_duration(string: &str) -> Result<Duration, CalDateTimeError> {
-    let captures = RE_DURATION
-        .captures(string)
-        .ok_or(CalDateTimeError::InvalidDurationFormat(string.to_string()))?;
-
-    let mut duration = Duration::zero();
-    if let Some(weeks) = captures.name("W") {
-        duration += Duration::weeks(weeks.as_str().parse().unwrap());
+impl Datelike for CalDateTime {
+    fn year(&self) -> i32 {
+        match &self {
+            CalDateTime::DateTime(datetime) => datetime.year(),
+            CalDateTime::Date(date) => date.year(),
+        }
     }
-    if let Some(days) = captures.name("D") {
-        duration += Duration::days(days.as_str().parse().unwrap());
-    }
-    if let Some(hours) = captures.name("H") {
-        duration += Duration::hours(hours.as_str().parse().unwrap());
-    }
-    if let Some(minutes) = captures.name("M") {
-        duration += Duration::minutes(minutes.as_str().parse().unwrap());
-    }
-    if let Some(seconds) = captures.name("S") {
-        duration += Duration::seconds(seconds.as_str().parse().unwrap());
-    }
-    if let Some(sign) = captures.name("sign") {
-        if sign.as_str() == "-" {
-            duration = -duration;
+    fn month(&self) -> u32 {
+        match &self {
+            CalDateTime::DateTime(datetime) => datetime.month(),
+            CalDateTime::Date(date) => date.month(),
         }
     }
 
-    Ok(duration)
+    fn month0(&self) -> u32 {
+        match &self {
+            CalDateTime::DateTime(datetime) => datetime.month0(),
+            CalDateTime::Date(date) => date.month0(),
+        }
+    }
+
+    fn day(&self) -> u32 {
+        match &self {
+            CalDateTime::DateTime(datetime) => datetime.day(),
+            CalDateTime::Date(date) => date.day(),
+        }
+    }
+
+    fn day0(&self) -> u32 {
+        match &self {
+            CalDateTime::DateTime(datetime) => datetime.day0(),
+            CalDateTime::Date(date) => date.day0(),
+        }
+    }
+
+    fn ordinal(&self) -> u32 {
+        match &self {
+            CalDateTime::DateTime(datetime) => datetime.ordinal(),
+            CalDateTime::Date(date) => date.ordinal(),
+        }
+    }
+
+    fn ordinal0(&self) -> u32 {
+        match &self {
+            CalDateTime::DateTime(datetime) => datetime.ordinal0(),
+            CalDateTime::Date(date) => date.ordinal0(),
+        }
+    }
+
+    fn weekday(&self) -> chrono::Weekday {
+        match &self {
+            CalDateTime::DateTime(datetime) => datetime.weekday(),
+            CalDateTime::Date(date) => date.weekday(),
+        }
+    }
+
+    fn iso_week(&self) -> chrono::IsoWeek {
+        match &self {
+            CalDateTime::DateTime(datetime) => datetime.iso_week(),
+            CalDateTime::Date(date) => date.iso_week(),
+        }
+    }
+
+    fn with_year(&self, year: i32) -> Option<Self> {
+        match &self {
+            CalDateTime::DateTime(datetime) => Some(Self::DateTime(datetime.with_year(year)?)),
+            CalDateTime::Date(date) => Some(Self::Date(date.with_year(year)?)),
+        }
+    }
+
+    fn with_month(&self, month: u32) -> Option<Self> {
+        match &self {
+            CalDateTime::DateTime(datetime) => Some(Self::DateTime(datetime.with_month(month)?)),
+            CalDateTime::Date(date) => Some(Self::Date(date.with_month(month)?)),
+        }
+    }
+
+    fn with_month0(&self, month0: u32) -> Option<Self> {
+        match &self {
+            CalDateTime::DateTime(datetime) => Some(Self::DateTime(datetime.with_month0(month0)?)),
+            CalDateTime::Date(date) => Some(Self::Date(date.with_month0(month0)?)),
+        }
+    }
+
+    fn with_day(&self, day: u32) -> Option<Self> {
+        match &self {
+            CalDateTime::DateTime(datetime) => Some(Self::DateTime(datetime.with_day(day)?)),
+            CalDateTime::Date(date) => Some(Self::Date(date.with_day(day)?)),
+        }
+    }
+
+    fn with_day0(&self, day0: u32) -> Option<Self> {
+        match &self {
+            CalDateTime::DateTime(datetime) => Some(Self::DateTime(datetime.with_day0(day0)?)),
+            CalDateTime::Date(date) => Some(Self::Date(date.with_day0(day0)?)),
+        }
+    }
+
+    fn with_ordinal(&self, ordinal: u32) -> Option<Self> {
+        match &self {
+            CalDateTime::DateTime(datetime) => {
+                Some(Self::DateTime(datetime.with_ordinal(ordinal)?))
+            }
+            CalDateTime::Date(date) => Some(Self::Date(date.with_ordinal(ordinal)?)),
+        }
+    }
+
+    fn with_ordinal0(&self, ordinal0: u32) -> Option<Self> {
+        match &self {
+            CalDateTime::DateTime(datetime) => {
+                Some(Self::DateTime(datetime.with_ordinal0(ordinal0)?))
+            }
+            CalDateTime::Date(date) => Some(Self::Date(date.with_ordinal0(ordinal0)?)),
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{CalDateTime, parse_duration};
-    use chrono::{Duration, NaiveDate};
-
-    #[test]
-    fn test_parse_duration() {
-        assert_eq!(parse_duration("P12W").unwrap(), Duration::weeks(12));
-        assert_eq!(parse_duration("P12D").unwrap(), Duration::days(12));
-        assert_eq!(parse_duration("PT12H").unwrap(), Duration::hours(12));
-        assert_eq!(parse_duration("PT12M").unwrap(), Duration::minutes(12));
-        assert_eq!(parse_duration("PT12S").unwrap(), Duration::seconds(12));
-    }
+    use crate::CalDateTime;
+    use chrono::NaiveDate;
 
     #[test]
     fn test_vcard_date() {
