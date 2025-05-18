@@ -62,7 +62,7 @@ impl ValueSerialize for UtcDateTime {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
 pub enum CalDateTime {
     // Form 1, example: 19980118T230000 -> Local
     // Form 2, example: 19980119T070000Z -> UTC
@@ -256,84 +256,72 @@ impl Datelike for CalDateTime {
             CalDateTime::Date(date) => date.month0(),
         }
     }
-
     fn day(&self) -> u32 {
         match &self {
             CalDateTime::DateTime(datetime) => datetime.day(),
             CalDateTime::Date(date) => date.day(),
         }
     }
-
     fn day0(&self) -> u32 {
         match &self {
             CalDateTime::DateTime(datetime) => datetime.day0(),
             CalDateTime::Date(date) => date.day0(),
         }
     }
-
     fn ordinal(&self) -> u32 {
         match &self {
             CalDateTime::DateTime(datetime) => datetime.ordinal(),
             CalDateTime::Date(date) => date.ordinal(),
         }
     }
-
     fn ordinal0(&self) -> u32 {
         match &self {
             CalDateTime::DateTime(datetime) => datetime.ordinal0(),
             CalDateTime::Date(date) => date.ordinal0(),
         }
     }
-
     fn weekday(&self) -> chrono::Weekday {
         match &self {
             CalDateTime::DateTime(datetime) => datetime.weekday(),
             CalDateTime::Date(date) => date.weekday(),
         }
     }
-
     fn iso_week(&self) -> chrono::IsoWeek {
         match &self {
             CalDateTime::DateTime(datetime) => datetime.iso_week(),
             CalDateTime::Date(date) => date.iso_week(),
         }
     }
-
     fn with_year(&self, year: i32) -> Option<Self> {
         match &self {
             CalDateTime::DateTime(datetime) => Some(Self::DateTime(datetime.with_year(year)?)),
             CalDateTime::Date(date) => Some(Self::Date(date.with_year(year)?)),
         }
     }
-
     fn with_month(&self, month: u32) -> Option<Self> {
         match &self {
             CalDateTime::DateTime(datetime) => Some(Self::DateTime(datetime.with_month(month)?)),
             CalDateTime::Date(date) => Some(Self::Date(date.with_month(month)?)),
         }
     }
-
     fn with_month0(&self, month0: u32) -> Option<Self> {
         match &self {
             CalDateTime::DateTime(datetime) => Some(Self::DateTime(datetime.with_month0(month0)?)),
             CalDateTime::Date(date) => Some(Self::Date(date.with_month0(month0)?)),
         }
     }
-
     fn with_day(&self, day: u32) -> Option<Self> {
         match &self {
             CalDateTime::DateTime(datetime) => Some(Self::DateTime(datetime.with_day(day)?)),
             CalDateTime::Date(date) => Some(Self::Date(date.with_day(day)?)),
         }
     }
-
     fn with_day0(&self, day0: u32) -> Option<Self> {
         match &self {
             CalDateTime::DateTime(datetime) => Some(Self::DateTime(datetime.with_day0(day0)?)),
             CalDateTime::Date(date) => Some(Self::Date(date.with_day0(day0)?)),
         }
     }
-
     fn with_ordinal(&self, ordinal: u32) -> Option<Self> {
         match &self {
             CalDateTime::DateTime(datetime) => {
@@ -342,7 +330,6 @@ impl Datelike for CalDateTime {
             CalDateTime::Date(date) => Some(Self::Date(date.with_ordinal(ordinal)?)),
         }
     }
-
     fn with_ordinal0(&self, ordinal0: u32) -> Option<Self> {
         match &self {
             CalDateTime::DateTime(datetime) => {

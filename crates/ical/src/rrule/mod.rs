@@ -1,4 +1,5 @@
 use super::{CalDateTime, CalDateTimeError};
+use chrono::Weekday;
 use std::{num::ParseIntError, str::FromStr};
 use strum_macros::EnumString;
 
@@ -33,7 +34,7 @@ pub enum RecurrenceFrequency {
 
 #[derive(Debug, Clone, EnumString, PartialEq)]
 #[strum(serialize_all = "UPPERCASE")]
-pub enum Weekday {
+pub enum IcalWeekday {
     Mo,
     Tu,
     We,
@@ -41,6 +42,20 @@ pub enum Weekday {
     Fr,
     Sa,
     Su,
+}
+
+impl From<IcalWeekday> for Weekday {
+    fn from(value: IcalWeekday) -> Self {
+        match value {
+            IcalWeekday::Mo => Self::Mon,
+            IcalWeekday::Tu => Self::Tue,
+            IcalWeekday::We => Self::Wed,
+            IcalWeekday::Th => Self::Thu,
+            IcalWeekday::Fr => Self::Fri,
+            IcalWeekday::Sa => Self::Sat,
+            IcalWeekday::Su => Self::Sun,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -126,7 +141,8 @@ impl RecurrenceRule {
                             .map(|val| {
                                 assert!(val.len() >= 2);
                                 let weekday =
-                                    Weekday::from_str(val.get((val.len() - 2)..).unwrap())?;
+                                    IcalWeekday::from_str(val.get((val.len() - 2)..).unwrap())?
+                                        .into();
                                 let prefix = if val.len() > 2 {
                                     Some(val.get(..(val.len() - 2)).unwrap().parse()?)
                                 } else {
@@ -165,7 +181,7 @@ impl RecurrenceRule {
                             .collect::<Result<Vec<_>, _>>()?,
                     );
                 }
-                ("WKST", val) => week_start = Some(Weekday::from_str(val)?),
+                ("WKST", val) => week_start = Some(IcalWeekday::from_str(val)?.into()),
                 ("BYSETPOS", val) => {
                     bysetpos = Some(
                         val.split(',')
@@ -196,12 +212,12 @@ impl RecurrenceRule {
 
 #[cfg(test)]
 mod tests {
+    use super::{ParserError, RecurrenceRule};
     use crate::{
         CalDateTime,
-        rrule::{RecurrenceFrequency, RecurrenceLimit, Weekday},
+        rrule::{RecurrenceFrequency, RecurrenceLimit},
     };
-
-    use super::{ParserError, RecurrenceRule};
+    use chrono::Weekday;
 
     #[test]
     fn parse_recurrence_rule() -> Result<(), ParserError> {
@@ -223,9 +239,9 @@ mod tests {
                 limit: Some(RecurrenceLimit::Count(4)),
                 interval: 2,
                 byday: Some(vec![
-                    (None, Weekday::Tu),
-                    (None, Weekday::Th),
-                    (None, Weekday::Su),
+                    (None, Weekday::Tue),
+                    (None, Weekday::Thu),
+                    (None, Weekday::Sun),
                 ]),
                 ..Default::default()
             }
@@ -236,11 +252,11 @@ mod tests {
             RecurrenceRule {
                 frequency: RecurrenceFrequency::Monthly,
                 byday: Some(vec![
-                    (None, Weekday::Mo),
-                    (None, Weekday::Tu),
-                    (None, Weekday::We),
-                    (None, Weekday::Th),
-                    (None, Weekday::Fr),
+                    (None, Weekday::Mon),
+                    (None, Weekday::Tue),
+                    (None, Weekday::Wed),
+                    (None, Weekday::Thu),
+                    (None, Weekday::Fri),
                 ]),
                 bysetpos: Some(vec![-1]),
                 ..Default::default()
@@ -255,7 +271,7 @@ mod tests {
                 limit: Some(RecurrenceLimit::Until(
                     CalDateTime::parse("20370329T010000Z", None).unwrap()
                 )),
-                byday: Some(vec![(Some(-1), Weekday::Su)]),
+                byday: Some(vec![(Some(-1), Weekday::Sun)]),
                 bymonth: Some(vec![3]),
                 ..Default::default()
             }
