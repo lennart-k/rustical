@@ -1,5 +1,5 @@
 use crate::Error;
-use crate::calendar::resource::CalendarResource;
+use crate::calendar::resource::{CalendarResource, CalendarResourceService};
 use actix_web::http::header;
 use actix_web::web::{Data, Path};
 use actix_web::{HttpRequest, HttpResponse};
@@ -12,13 +12,12 @@ use rustical_xml::XmlDocument;
 use tracing::instrument;
 use tracing_actix_web::RootSpan;
 
-#[instrument(parent = root_span.id(), skip(store, subscription_store, root_span, req))]
+#[instrument(parent = root_span.id(), skip(resource_service, root_span, req))]
 pub async fn route_post<C: CalendarStore, S: SubscriptionStore>(
     path: Path<(String, String)>,
     body: String,
     user: User,
-    store: Data<C>,
-    subscription_store: Data<S>,
+    resource_service: Data<CalendarResourceService<C, S>>,
     root_span: RootSpan,
     req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
@@ -27,7 +26,10 @@ pub async fn route_post<C: CalendarStore, S: SubscriptionStore>(
         return Err(Error::Unauthorized);
     }
 
-    let calendar = store.get_calendar(&principal, &cal_id).await?;
+    let calendar = resource_service
+        .cal_store
+        .get_calendar(&principal, &cal_id)
+        .await?;
     let calendar_resource = CalendarResource {
         cal: calendar,
         read_only: true,
@@ -70,7 +72,10 @@ pub async fn route_post<C: CalendarStore, S: SubscriptionStore>(
             .ty,
         auth_secret: request.subscription.web_push_subscription.auth_secret,
     };
-    subscription_store.upsert_subscription(subscription).await?;
+    resource_service
+        .sub_store
+        .upsert_subscription(subscription)
+        .await?;
 
     let location = req
         .resource_map()

@@ -5,7 +5,7 @@ use super::prop::{SupportedAddressData, SupportedReportSet};
 use crate::address_object::resource::{AddressObjectResource, AddressObjectResourceService};
 use crate::{CardDavPrincipalUri, Error};
 use actix_web::http::Method;
-use actix_web::web::{self, Data};
+use actix_web::web;
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::extensions::{
@@ -22,8 +22,8 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 pub struct AddressbookResourceService<AS: AddressbookStore, S: SubscriptionStore> {
-    addr_store: Arc<AS>,
-    sub_store: Arc<S>,
+    pub(crate) addr_store: Arc<AS>,
+    pub(crate) sub_store: Arc<S>,
 }
 
 impl<A: AddressbookStore, S: SubscriptionStore> AddressbookResourceService<A, S> {
@@ -259,7 +259,6 @@ impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
         let mkcol_method = web::method(Method::from_str("MKCOL").unwrap());
         let report_method = web::method(Method::from_str("REPORT").unwrap());
         web::scope("/{addressbook_id}")
-            .app_data(Data::from(self.sub_store.clone()))
             .service(AddressObjectResourceService::<AS>::new(self.addr_store.clone()).actix_scope())
             .service(
                 self.actix_resource()

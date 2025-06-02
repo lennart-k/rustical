@@ -1,4 +1,5 @@
 use crate::Error;
+use crate::addressbook::resource::AddressbookResourceService;
 use actix_web::http::header;
 use actix_web::web::{Data, Path};
 use actix_web::{HttpRequest, HttpResponse};
@@ -9,13 +10,12 @@ use rustical_xml::XmlDocument;
 use tracing::instrument;
 use tracing_actix_web::RootSpan;
 
-#[instrument(parent = root_span.id(), skip(store, subscription_store, root_span, req))]
+#[instrument(parent = root_span.id(), skip(resource_service, root_span, req))]
 pub async fn route_post<A: AddressbookStore, S: SubscriptionStore>(
     path: Path<(String, String)>,
     body: String,
     user: User,
-    store: Data<A>,
-    subscription_store: Data<S>,
+    resource_service: Data<AddressbookResourceService<A, S>>,
     root_span: RootSpan,
     req: HttpRequest,
 ) -> Result<HttpResponse, Error> {
@@ -24,7 +24,8 @@ pub async fn route_post<A: AddressbookStore, S: SubscriptionStore>(
         return Err(Error::Unauthorized);
     }
 
-    let addressbook = store
+    let addressbook = resource_service
+        .addr_store
         .get_addressbook(&principal, &addressbook_id, false)
         .await?;
     let request = PushRegister::parse_str(&body)?;
@@ -57,7 +58,10 @@ pub async fn route_post<A: AddressbookStore, S: SubscriptionStore>(
             .ty,
         auth_secret: request.subscription.web_push_subscription.auth_secret,
     };
-    subscription_store.upsert_subscription(subscription).await?;
+    resource_service
+        .sub_store
+        .upsert_subscription(subscription)
+        .await?;
 
     let location = req
         .resource_map()

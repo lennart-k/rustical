@@ -5,7 +5,7 @@ use super::prop::{SupportedCalendarComponentSet, SupportedCalendarData, Supporte
 use crate::calendar_object::resource::{CalendarObjectResource, CalendarObjectResourceService};
 use crate::{CalDavPrincipalUri, Error};
 use actix_web::http::Method;
-use actix_web::web::{self, Data};
+use actix_web::web::{self};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use derive_more::derive::{From, Into};
@@ -309,8 +309,8 @@ impl Resource for CalendarResource {
 }
 
 pub struct CalendarResourceService<C: CalendarStore, S: SubscriptionStore> {
-    cal_store: Arc<C>,
-    sub_store: Arc<S>,
+    pub(crate) cal_store: Arc<C>,
+    pub(crate) sub_store: Arc<S>,
 }
 
 impl<C: CalendarStore, S: SubscriptionStore> CalendarResourceService<C, S> {
@@ -389,7 +389,6 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
         let report_method = web::method(Method::from_str("REPORT").unwrap());
         let mkcalendar_method = web::method(Method::from_str("MKCALENDAR").unwrap());
         web::scope("/{calendar_id}")
-            .app_data(Data::from(self.sub_store.clone()))
             .service(CalendarObjectResourceService::new(self.cal_store.clone()).actix_scope())
             .service(
                 self.actix_resource()
