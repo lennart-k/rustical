@@ -1,12 +1,13 @@
-use crate::calendar::resource::CalendarResource;
+use crate::calendar::resource::{CalendarResource, CalendarResourceService};
 use crate::{CalDavPrincipalUri, Error};
+use actix_web::web;
 use async_trait::async_trait;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceService};
 use rustical_dav::xml::{Resourcetype, ResourcetypeInner};
-use rustical_store::CalendarStore;
 use rustical_store::auth::User;
+use rustical_store::{CalendarStore, SubscriptionStore};
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 use std::sync::Arc;
 
@@ -60,18 +61,24 @@ impl Resource for CalendarSetResource {
     }
 }
 
-pub struct CalendarSetResourceService<C: CalendarStore> {
+pub struct CalendarSetResourceService<C: CalendarStore, S: SubscriptionStore> {
+    name: &'static str,
     cal_store: Arc<C>,
+    sub_store: Arc<S>,
 }
 
-impl<C: CalendarStore> CalendarSetResourceService<C> {
-    pub fn new(cal_store: Arc<C>) -> Self {
-        Self { cal_store }
+impl<C: CalendarStore, S: SubscriptionStore> CalendarSetResourceService<C, S> {
+    pub fn new(name: &'static str, cal_store: Arc<C>, sub_store: Arc<S>) -> Self {
+        Self {
+            name,
+            cal_store,
+            sub_store,
+        }
     }
 }
 
 #[async_trait(?Send)]
-impl<C: CalendarStore> ResourceService for CalendarSetResourceService<C> {
+impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarSetResourceService<C, S> {
     type PathComponents = (String,);
     type MemberType = CalendarResource;
     type Resource = CalendarSetResource;
@@ -106,5 +113,17 @@ impl<C: CalendarStore> ResourceService for CalendarSetResourceService<C> {
                 )
             })
             .collect())
+    }
+
+    fn actix_scope(self) -> actix_web::Scope {
+        web::scope(&format!("/{}", self.name))
+            .service(
+                CalendarResourceService::<_, S>::new(
+                    self.cal_store.clone(),
+                    self.sub_store.clone(),
+                )
+                .actix_scope(),
+            )
+            .service(self.actix_resource())
     }
 }

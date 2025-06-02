@@ -2,10 +2,10 @@ use super::methods::mkcalendar::route_mkcalendar;
 use super::methods::post::route_post;
 use super::methods::report::route_report_calendar;
 use super::prop::{SupportedCalendarComponentSet, SupportedCalendarData, SupportedReportSet};
-use crate::calendar_object::resource::CalendarObjectResource;
+use crate::calendar_object::resource::{CalendarObjectResource, CalendarObjectResourceService};
 use crate::{CalDavPrincipalUri, Error};
 use actix_web::http::Method;
-use actix_web::web;
+use actix_web::web::{self, Data};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use derive_more::derive::{From, Into};
@@ -21,7 +21,6 @@ use rustical_store::auth::User;
 use rustical_store::{Calendar, CalendarStore, SubscriptionStore};
 use rustical_xml::{EnumUnitVariants, EnumVariants};
 use rustical_xml::{XmlDeserialize, XmlSerialize};
-use std::marker::PhantomData;
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -311,14 +310,14 @@ impl Resource for CalendarResource {
 
 pub struct CalendarResourceService<C: CalendarStore, S: SubscriptionStore> {
     cal_store: Arc<C>,
-    __phantom_sub: PhantomData<S>,
+    sub_store: Arc<S>,
 }
 
 impl<C: CalendarStore, S: SubscriptionStore> CalendarResourceService<C, S> {
-    pub fn new(cal_store: Arc<C>) -> Self {
+    pub fn new(cal_store: Arc<C>, sub_store: Arc<S>) -> Self {
         Self {
             cal_store,
-            __phantom_sub: PhantomData,
+            sub_store,
         }
     }
 }
@@ -386,13 +385,17 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
         Ok(())
     }
 
-    #[inline]
-    fn actix_additional_routes(res: actix_web::Resource) -> actix_web::Resource {
+    fn actix_scope(self) -> actix_web::Scope {
         let report_method = web::method(Method::from_str("REPORT").unwrap());
         let mkcalendar_method = web::method(Method::from_str("MKCALENDAR").unwrap());
-
-        res.route(report_method.to(route_report_calendar::<C>))
-            .route(mkcalendar_method.to(route_mkcalendar::<C>))
-            .post(route_post::<C, S>)
+        web::scope("/{calendar_id}")
+            .app_data(Data::from(self.sub_store.clone()))
+            .service(CalendarObjectResourceService::new(self.cal_store.clone()).actix_scope())
+            .service(
+                self.actix_resource()
+                    .route(report_method.to(route_report_calendar::<C>))
+                    .route(mkcalendar_method.to(route_mkcalendar::<C>))
+                    .post(route_post::<C, S>),
+            )
     }
 }

@@ -2,10 +2,10 @@ use super::methods::mkcol::route_mkcol;
 use super::methods::post::route_post;
 use super::methods::report::route_report_addressbook;
 use super::prop::{SupportedAddressData, SupportedReportSet};
-use crate::address_object::resource::AddressObjectResource;
+use crate::address_object::resource::{AddressObjectResource, AddressObjectResourceService};
 use crate::{CardDavPrincipalUri, Error};
 use actix_web::http::Method;
-use actix_web::web;
+use actix_web::web::{self, Data};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::extensions::{
@@ -18,20 +18,19 @@ use rustical_dav_push::{DavPushExtension, DavPushExtensionProp};
 use rustical_store::auth::User;
 use rustical_store::{Addressbook, AddressbookStore, SubscriptionStore};
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
-use std::marker::PhantomData;
 use std::str::FromStr;
 use std::sync::Arc;
 
 pub struct AddressbookResourceService<AS: AddressbookStore, S: SubscriptionStore> {
     addr_store: Arc<AS>,
-    __phantom_sub: PhantomData<S>,
+    sub_store: Arc<S>,
 }
 
 impl<A: AddressbookStore, S: SubscriptionStore> AddressbookResourceService<A, S> {
-    pub fn new(addr_store: Arc<A>) -> Self {
+    pub fn new(addr_store: Arc<A>, sub_store: Arc<S>) -> Self {
         Self {
             addr_store,
-            __phantom_sub: PhantomData,
+            sub_store,
         }
     }
 }
@@ -256,11 +255,17 @@ impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
     }
 
     #[inline]
-    fn actix_additional_routes(res: actix_web::Resource) -> actix_web::Resource {
+    fn actix_scope(self) -> actix_web::Scope {
         let mkcol_method = web::method(Method::from_str("MKCOL").unwrap());
         let report_method = web::method(Method::from_str("REPORT").unwrap());
-        res.route(mkcol_method.to(route_mkcol::<AS>))
-            .route(report_method.to(route_report_addressbook::<AS>))
-            .post(route_post::<AS, S>)
+        web::scope("/{addressbook_id}")
+            .app_data(Data::from(self.sub_store.clone()))
+            .service(AddressObjectResourceService::<AS>::new(self.addr_store.clone()).actix_scope())
+            .service(
+                self.actix_resource()
+                    .route(mkcol_method.to(route_mkcol::<AS>))
+                    .route(report_method.to(route_report_addressbook::<AS>))
+                    .post(route_post::<AS, S>),
+            )
     }
 }

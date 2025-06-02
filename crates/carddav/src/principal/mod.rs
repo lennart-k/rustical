@@ -1,25 +1,46 @@
-use crate::addressbook::resource::AddressbookResource;
+use crate::addressbook::resource::{AddressbookResource, AddressbookResourceService};
 use crate::{CardDavPrincipalUri, Error};
+use actix_web::web;
 use async_trait::async_trait;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
-use rustical_store::AddressbookStore;
 use rustical_store::auth::{AuthenticationProvider, User};
+use rustical_store::{AddressbookStore, SubscriptionStore};
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 use std::sync::Arc;
 
-pub struct PrincipalResourceService<A: AddressbookStore, AP: AuthenticationProvider> {
+pub struct PrincipalResourceService<
+    A: AddressbookStore,
+    AP: AuthenticationProvider,
+    S: SubscriptionStore,
+> {
     addr_store: Arc<A>,
     auth_provider: Arc<AP>,
+    sub_store: Arc<S>,
 }
 
-impl<A: AddressbookStore, AP: AuthenticationProvider> PrincipalResourceService<A, AP> {
-    pub fn new(addr_store: Arc<A>, auth_provider: Arc<AP>) -> Self {
+impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> Clone
+    for PrincipalResourceService<A, AP, S>
+{
+    fn clone(&self) -> Self {
+        Self {
+            addr_store: self.addr_store.clone(),
+            auth_provider: self.auth_provider.clone(),
+            sub_store: self.sub_store.clone(),
+        }
+    }
+}
+
+impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore>
+    PrincipalResourceService<A, AP, S>
+{
+    pub fn new(addr_store: Arc<A>, auth_provider: Arc<AP>, sub_store: Arc<S>) -> Self {
         Self {
             addr_store,
             auth_provider,
+            sub_store,
         }
     }
 }
@@ -120,8 +141,8 @@ impl Resource for PrincipalResource {
 }
 
 #[async_trait(?Send)]
-impl<A: AddressbookStore, AP: AuthenticationProvider> ResourceService
-    for PrincipalResourceService<A, AP>
+impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> ResourceService
+    for PrincipalResourceService<A, AP, S>
 {
     type PathComponents = (String,);
     type MemberType = AddressbookResource;
@@ -151,5 +172,17 @@ impl<A: AddressbookStore, AP: AuthenticationProvider> ResourceService
             .into_iter()
             .map(|addressbook| (addressbook.id.to_owned(), addressbook.into()))
             .collect())
+    }
+
+    fn actix_scope(self) -> actix_web::Scope {
+        web::scope("/principal/{principal}")
+            .service(
+                AddressbookResourceService::<_, S>::new(
+                    self.addr_store.clone(),
+                    self.sub_store.clone(),
+                )
+                .actix_scope(),
+            )
+            .service(self.actix_resource())
     }
 }

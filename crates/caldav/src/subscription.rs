@@ -1,6 +1,8 @@
+use std::sync::Arc;
+
 use actix_web::{
-    web::{self, Data, Path},
     HttpResponse,
+    web::{self, Data, Path},
 };
 use rustical_dav::xml::multistatus::PropstatElement;
 use rustical_store::SubscriptionStore;
@@ -17,8 +19,9 @@ async fn handle_delete<S: SubscriptionStore>(
     Ok(HttpResponse::NoContent().body("Unregistered"))
 }
 
-pub fn subscription_resource<S: SubscriptionStore>() -> actix_web::Resource {
+pub fn subscription_resource<S: SubscriptionStore>(sub_store: Arc<S>) -> actix_web::Resource {
     web::resource("/subscription/{id}")
+        .app_data(Data::from(sub_store))
         .name("subscription")
         .delete(handle_delete::<S>)
 }

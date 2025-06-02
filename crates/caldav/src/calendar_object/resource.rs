@@ -1,5 +1,6 @@
 use super::methods::{get_event, put_event};
 use crate::{CalDavPrincipalUri, Error};
+use actix_web::web;
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::{
@@ -149,8 +150,11 @@ impl<C: CalendarStore> ResourceService for CalendarObjectResourceService<C> {
         Ok(())
     }
 
-    #[inline]
-    fn actix_additional_routes(res: actix_web::Resource) -> actix_web::Resource {
-        res.get(get_event::<C>).put(put_event::<C>)
+    fn actix_scope(self) -> actix_web::Scope {
+        web::scope("/{object_id}.ics").service(
+            self.actix_resource()
+                .get(get_event::<C>)
+                .put(put_event::<C>),
+        )
     }
 }

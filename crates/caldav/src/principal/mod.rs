@@ -1,5 +1,6 @@
-use crate::calendar_set::CalendarSetResource;
+use crate::calendar_set::{CalendarSetResource, CalendarSetResourceService};
 use crate::{CalDavPrincipalUri, Error};
+use actix_web::web;
 use async_trait::async_trait;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
@@ -7,13 +8,14 @@ use rustical_dav::resource::{PrincipalUri, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::user::PrincipalType;
 use rustical_store::auth::{AuthenticationProvider, User};
+use rustical_store::{CalendarStore, SubscriptionStore};
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct PrincipalResource {
     principal: User,
-    home_set: &'static [(&'static str, bool)],
+    home_set: &'static [&'static str],
 }
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
@@ -72,7 +74,7 @@ impl Resource for PrincipalResource {
                 .into_iter()
                 .map(|principal| puri.principal_uri(principal))
                 .flat_map(|principal_url| {
-                    self.home_set.iter().map(move |&(home_name, _read_only)| {
+                    self.home_set.iter().map(move |&home_name| {
                         HrefElement::new(format!("{}/{}", &principal_url, home_name))
                     })
                 })
@@ -117,13 +119,36 @@ impl Resource for PrincipalResource {
     }
 }
 
-pub struct PrincipalResourceService<AP: AuthenticationProvider> {
-    pub auth_provider: Arc<AP>,
-    pub home_set: &'static [(&'static str, bool)],
+#[derive(Debug)]
+pub struct PrincipalResourceService<
+    AP: AuthenticationProvider,
+    S: SubscriptionStore,
+    CS: CalendarStore,
+    BS: CalendarStore,
+> {
+    pub(crate) auth_provider: Arc<AP>,
+    pub(crate) sub_store: Arc<S>,
+    pub(crate) cal_store: Arc<CS>,
+    pub(crate) birthday_store: Arc<BS>,
+}
+
+impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore, BS: CalendarStore> Clone
+    for PrincipalResourceService<AP, S, CS, BS>
+{
+    fn clone(&self) -> Self {
+        Self {
+            auth_provider: self.auth_provider.clone(),
+            sub_store: self.sub_store.clone(),
+            cal_store: self.cal_store.clone(),
+            birthday_store: self.birthday_store.clone(),
+        }
+    }
 }
 
 #[async_trait(?Send)]
-impl<AP: AuthenticationProvider> ResourceService for PrincipalResourceService<AP> {
+impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore, BS: CalendarStore>
+    ResourceService for PrincipalResourceService<AP, S, CS, BS>
+{
     type PathComponents = (String,);
     type MemberType = CalendarSetResource;
     type Resource = PrincipalResource;
@@ -142,7 +167,7 @@ impl<AP: AuthenticationProvider> ResourceService for PrincipalResourceService<AP
             .ok_or(crate::Error::NotFound)?;
         Ok(PrincipalResource {
             principal: user,
-            home_set: self.home_set,
+            home_set: &["calendar", "birthdays"],
         })
     }
 
@@ -150,18 +175,42 @@ impl<AP: AuthenticationProvider> ResourceService for PrincipalResourceService<AP
         &self,
         (principal,): &Self::PathComponents,
     ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
-        Ok(self
-            .home_set
-            .iter()
-            .map(|&(set_name, read_only)| {
-                (
-                    set_name.to_string(),
-                    CalendarSetResource {
-                        principal: principal.to_owned(),
-                        read_only,
-                    },
+        Ok(vec![
+            (
+                "calendar".to_owned(),
+                CalendarSetResource {
+                    principal: principal.to_owned(),
+                    read_only: false,
+                },
+            ),
+            (
+                "birthdays".to_owned(),
+                CalendarSetResource {
+                    principal: principal.to_owned(),
+                    read_only: true,
+                },
+            ),
+        ])
+    }
+
+    fn actix_scope(self) -> actix_web::Scope {
+        web::scope("/principal/{principal}")
+            .service(
+                CalendarSetResourceService::<_, S>::new(
+                    "calendar",
+                    self.cal_store.clone(),
+                    self.sub_store.clone(),
                 )
-            })
-            .collect())
+                .actix_scope(),
+            )
+            .service(
+                CalendarSetResourceService::<_, S>::new(
+                    "birthdays",
+                    self.birthday_store.clone(),
+                    self.sub_store.clone(),
+                )
+                .actix_scope(),
+            )
+            .service(self.actix_resource())
     }
 }

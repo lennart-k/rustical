@@ -7,13 +7,11 @@ use actix_web::{
         header::{self, HeaderName, HeaderValue},
     },
     middleware::{ErrorHandlerResponse, ErrorHandlers},
-    web::{self, Data},
+    web::Data,
 };
-use address_object::resource::AddressObjectResourceService;
-use addressbook::resource::AddressbookResourceService;
 use derive_more::Constructor;
 pub use error::Error;
-use principal::{PrincipalResource, PrincipalResourceService};
+use principal::PrincipalResourceService;
 use rustical_dav::resource::{PrincipalUri, ResourceService};
 use rustical_dav::resources::RootResourceService;
 use rustical_store::{
@@ -68,38 +66,19 @@ pub fn carddav_service<AP: AuthenticationProvider, A: AddressbookStore, S: Subsc
     store: Arc<A>,
     subscription_store: Arc<S>,
 ) -> impl HttpServiceFactory {
-    web::scope("")
-        .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
-        .wrap(options_handler())
-        .app_data(Data::from(store.clone()))
-        .app_data(Data::from(subscription_store))
-        .app_data(Data::new(CardDavPrincipalUri::new(
-            format!("{prefix}/principal").leak(),
-        )))
-        .service(
-            RootResourceService::<PrincipalResource, User, CardDavPrincipalUri>::default()
-                .actix_resource(),
-        )
-        .service(
-            web::scope("/principal").service(
-                web::scope("/{principal}")
-                    .service(
-                        PrincipalResourceService::new(store.clone(), auth_provider)
-                            .actix_resource(),
-                    )
-                    .service(
-                        web::scope("/{addressbook_id}")
-                            .service(
-                                AddressbookResourceService::<A, S>::new(store.clone())
-                                    .actix_resource(),
-                            )
-                            .service(
-                                web::scope("/{object_id}.vcf").service(
-                                    AddressObjectResourceService::<A>::new(store.clone())
-                                        .actix_resource(),
-                                ),
-                            ),
-                    ),
-            ),
-        )
+    RootResourceService::<_, User, CardDavPrincipalUri>::new(
+        PrincipalResourceService::<_, _, S>::new(
+            store.clone(),
+            auth_provider.clone(),
+            subscription_store.clone(),
+        ),
+    )
+    .actix_scope()
+    .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
+    .wrap(options_handler())
+    .app_data(Data::from(store.clone()))
+    .app_data(Data::new(CardDavPrincipalUri::new(
+        format!("{prefix}/principal").leak(),
+    )))
+    // TODO: Add endpoint to delete subscriptions
 }

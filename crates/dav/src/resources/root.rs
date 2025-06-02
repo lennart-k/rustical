@@ -5,6 +5,7 @@ use crate::extensions::{
 use crate::privileges::UserPrivilegeSet;
 use crate::resource::{PrincipalUri, Resource, ResourceService};
 use crate::xml::{Resourcetype, ResourcetypeInner};
+use actix_web::web;
 use async_trait::async_trait;
 use std::marker::PhantomData;
 
@@ -44,30 +45,38 @@ impl<PR: Resource, P: Principal> Resource for RootResource<PR, P> {
 }
 
 #[derive(Clone)]
-pub struct RootResourceService<PR: Resource, P: Principal, PURI: PrincipalUri>(
-    PhantomData<PR>,
+pub struct RootResourceService<PRS: ResourceService + Clone, P: Principal, PURI: PrincipalUri>(
+    PRS,
     PhantomData<P>,
     PhantomData<PURI>,
 );
 
-impl<PR: Resource, P: Principal, PURI: PrincipalUri> Default for RootResourceService<PR, P, PURI> {
-    fn default() -> Self {
-        Self(PhantomData, PhantomData, PhantomData)
+impl<PRS: ResourceService + Clone, P: Principal, PURI: PrincipalUri>
+    RootResourceService<PRS, P, PURI>
+{
+    pub fn new(principal_resource_service: PRS) -> Self {
+        Self(principal_resource_service, PhantomData, PhantomData)
     }
 }
 
 #[async_trait(?Send)]
-impl<PR: Resource<Principal = P>, P: Principal, PURI: PrincipalUri> ResourceService
-    for RootResourceService<PR, P, PURI>
+impl<PRS: ResourceService<Principal = P> + Clone, P: Principal, PURI: PrincipalUri> ResourceService
+    for RootResourceService<PRS, P, PURI>
 {
     type PathComponents = ();
-    type MemberType = PR;
-    type Resource = RootResource<PR, P>;
-    type Error = PR::Error;
+    type MemberType = PRS::Resource;
+    type Resource = RootResource<PRS::Resource, P>;
+    type Error = PRS::Error;
     type Principal = P;
     type PrincipalUri = PURI;
 
     async fn get_resource(&self, _: &()) -> Result<Self::Resource, Self::Error> {
-        Ok(RootResource::<PR, P>::default())
+        Ok(RootResource::<PRS::Resource, P>::default())
+    }
+
+    fn actix_scope(self) -> actix_web::Scope {
+        web::scope("")
+            .service(self.0.clone().actix_scope())
+            .service(self.actix_resource())
     }
 }

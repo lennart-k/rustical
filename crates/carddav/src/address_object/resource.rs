@@ -1,4 +1,5 @@
 use crate::{CardDavPrincipalUri, Error};
+use actix_web::web;
 use async_trait::async_trait;
 use derive_more::derive::{Constructor, From, Into};
 use rustical_dav::{
@@ -146,7 +147,11 @@ impl<AS: AddressbookStore> ResourceService for AddressObjectResourceService<AS> 
     }
 
     #[inline]
-    fn actix_additional_routes(res: actix_web::Resource) -> actix_web::Resource {
-        res.get(get_object::<AS>).put(put_object::<AS>)
+    fn actix_scope(self) -> actix_web::Scope {
+        web::scope("/{object_id}.vcf").service(
+            self.actix_resource()
+                .get(get_object::<AS>)
+                .put(put_object::<AS>),
+        )
     }
 }

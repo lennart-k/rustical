@@ -4,13 +4,10 @@ use actix_web::dev::{HttpServiceFactory, ServiceResponse};
 use actix_web::http::header::{self, HeaderName, HeaderValue};
 use actix_web::http::{Method, StatusCode};
 use actix_web::middleware::{ErrorHandlerResponse, ErrorHandlers};
-use actix_web::web::{self, Data};
-use calendar::resource::CalendarResourceService;
-use calendar_object::resource::CalendarObjectResourceService;
-use calendar_set::CalendarSetResourceService;
+use actix_web::web::Data;
 use derive_more::Constructor;
-use principal::{PrincipalResource, PrincipalResourceService};
-use rustical_dav::resource::{PrincipalUri, ResourceService, ResourceServiceRoute};
+use principal::PrincipalResourceService;
+use rustical_dav::resource::{PrincipalUri, ResourceService};
 use rustical_dav::resources::RootResourceService;
 use rustical_store::auth::{AuthenticationMiddleware, AuthenticationProvider, User};
 use rustical_store::{AddressbookStore, CalendarStore, ContactBirthdayStore, SubscriptionStore};
@@ -75,71 +72,19 @@ pub fn caldav_service<
 ) -> impl HttpServiceFactory {
     let birthday_store = Arc::new(ContactBirthdayStore::new(addr_store));
 
-    web::scope("")
-        .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
-        .wrap(options_handler())
-        .app_data(Data::from(store.clone()))
-        .app_data(Data::from(birthday_store.clone()))
-        .app_data(Data::from(subscription_store))
-        .app_data(Data::new(CalDavPrincipalUri::new(
-            format!("{prefix}/principal").leak(),
-        )))
-        .service(
-            RootResourceService::<PrincipalResource, User, CalDavPrincipalUri>::default()
-                .actix_resource(),
-        )
-        .service(
-            web::scope("/principal").service(
-                web::scope("/{principal}")
-                    .service(
-                        PrincipalResourceService {
-                            auth_provider,
-                            home_set: &[("calendar", false), ("birthdays", true)],
-                        }
-                        .actix_resource(),
-                    )
-                    .service(
-                        web::scope("/calendar")
-                            .service(
-                                CalendarSetResourceService::new(store.clone()).actix_resource(),
-                            )
-                            .service(
-                                web::scope("/{calendar_id}")
-                                    .service(ResourceServiceRoute(
-                                        CalendarResourceService::<_, S>::new(store.clone()),
-                                    ))
-                                    .service(
-                                        web::scope("/{object_id}.ics").service(
-                                            CalendarObjectResourceService::new(store.clone())
-                                                .actix_resource(),
-                                        ),
-                                    ),
-                            ),
-                    )
-                    .service(
-                        web::scope("/birthdays")
-                            .service(
-                                CalendarSetResourceService::new(birthday_store.clone())
-                                    .actix_resource(),
-                            )
-                            .service(
-                                web::scope("/{calendar_id}")
-                                    .service(ResourceServiceRoute(
-                                        CalendarResourceService::<_, S>::new(
-                                            birthday_store.clone(),
-                                        ),
-                                    ))
-                                    .service(
-                                        web::scope("/{object_id}.ics").service(
-                                            CalendarObjectResourceService::new(
-                                                birthday_store.clone(),
-                                            )
-                                            .actix_resource(),
-                                        ),
-                                    ),
-                            ),
-                    ),
-            ),
-        )
-        .service(subscription_resource::<S>())
+    RootResourceService::<_, User, CalDavPrincipalUri>::new(PrincipalResourceService {
+        auth_provider: auth_provider.clone(),
+        sub_store: subscription_store.clone(),
+        birthday_store: birthday_store.clone(),
+        cal_store: store.clone(),
+    })
+    .actix_scope()
+    .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
+    .wrap(options_handler())
+    .app_data(Data::from(store.clone()))
+    .app_data(Data::from(birthday_store.clone()))
+    .app_data(Data::new(CalDavPrincipalUri::new(
+        format!("{prefix}/principal").leak(),
+    )))
+    .service(subscription_resource(subscription_store))
 }
