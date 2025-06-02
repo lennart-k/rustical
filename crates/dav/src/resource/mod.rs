@@ -9,6 +9,7 @@ use itertools::Itertools;
 use quick_xml::name::Namespace;
 pub use resource_service::ResourceService;
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
+use std::collections::HashSet;
 use std::str::FromStr;
 
 mod methods;
@@ -105,7 +106,7 @@ pub trait Resource: Clone + 'static {
         principal_uri: &impl PrincipalUri,
         principal: &Self::Principal,
     ) -> Result<ResponseElement<Self::Prop>, Self::Error> {
-        let mut props = props.to_vec();
+        let mut props: HashSet<&str> = props.iter().cloned().collect();
 
         if props.contains(&"propname") {
             if props.len() != 1 {
