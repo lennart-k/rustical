@@ -32,7 +32,7 @@ debug = 0
 [workspace.dependencies]
 uuid = { version = "1.11", features = ["v4", "fast-rng"] }
 async-trait = "0.1"
-actix-web = "4.9"
+actix-web = "4.11"
 tracing = { version = "0.1", features = ["async-await"] }
 tracing-actix-web = "0.7"
 actix-session = { version = "0.10", features = ["cookie-session"] }
@@ -86,13 +86,15 @@ sqlx = { version = "0.8", default-features = false, features = [
   "migrate",
   "json",
 ] }
+http = "0.2" # This version is used by actix-web
+headers = "0.4"
 strum = "0.27"
 strum_macros = "0.27"
 serde_json = { version = "1.0", features = ["raw_value"] }
 sqlx-sqlite = { version = "0.8", features = ["bundled"] }
 ical = { version = "0.11", features = ["generator", "serde"] }
 toml = "0.8"
-rustical_dav = { path = "./crates/dav/" }
+rustical_dav = { path = "./crates/dav/", features = ["actix"] }
 rustical_dav_push = { path = "./crates/dav_push/" }
 rustical_store = { path = "./crates/store/" }
 rustical_store_sqlite = { path = "./crates/store_sqlite/" }

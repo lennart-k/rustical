@@ -1,35 +1,58 @@
 use crate::Error;
 use crate::header::Depth;
 use crate::privileges::UserPrivilege;
+use crate::resource::PrincipalUri;
 use crate::resource::Resource;
 use crate::resource::ResourceService;
 use crate::xml::MultistatusElement;
 use crate::xml::PropElement;
 use crate::xml::PropfindElement;
 use crate::xml::PropfindType;
-use actix_web::HttpRequest;
-use actix_web::web::Data;
-use actix_web::web::Path;
 use rustical_xml::XmlDocument;
 use tracing::instrument;
 use tracing_actix_web::RootSpan;
 
+#[cfg(feature = "actix")]
 #[instrument(parent = root_span.id(), skip(path, req, root_span, resource_service, puri))]
 #[allow(clippy::type_complexity)]
-pub(crate) async fn route_propfind<R: ResourceService>(
-    path: Path<R::PathComponents>,
+pub(crate) async fn actix_route_propfind<R: ResourceService>(
+    path: ::actix_web::web::Path<R::PathComponents>,
     body: String,
-    req: HttpRequest,
+    req: ::actix_web::HttpRequest,
     user: R::Principal,
     depth: Depth,
     root_span: RootSpan,
-    resource_service: Data<R>,
-    puri: Data<R::PrincipalUri>,
+    resource_service: ::actix_web::web::Data<R>,
+    puri: ::actix_web::web::Data<R::PrincipalUri>,
 ) -> Result<
     MultistatusElement<<R::Resource as Resource>::Prop, <R::MemberType as Resource>::Prop>,
     R::Error,
 > {
-    let resource = resource_service.get_resource(&path).await?;
+    route_propfind(
+        &path.into_inner(),
+        req.path(),
+        body,
+        user,
+        depth,
+        resource_service.as_ref(),
+        puri.as_ref(),
+    )
+    .await
+}
+
+pub(crate) async fn route_propfind<R: ResourceService>(
+    path_components: &R::PathComponents,
+    path: &str,
+    body: String,
+    user: R::Principal,
+    depth: Depth,
+    resource_service: &R,
+    puri: &impl PrincipalUri,
+) -> Result<
+    MultistatusElement<<R::Resource as Resource>::Prop, <R::MemberType as Resource>::Prop>,
+    R::Error,
+> {
+    let resource = resource_service.get_resource(path_components).await?;
     let privileges = resource.get_user_privileges(&user)?;
     if !privileges.has(&UserPrivilege::Read) {
         return Err(Error::Unauthorized.into());
@@ -56,17 +79,17 @@ pub(crate) async fn route_propfind<R: ResourceService>(
 
     let mut member_responses = Vec::new();
     if depth != Depth::Zero {
-        for (subpath, member) in resource_service.get_members(&path).await? {
+        for (subpath, member) in resource_service.get_members(path_components).await? {
             member_responses.push(member.propfind(
-                &format!("{}/{}", req.path().trim_end_matches('/'), subpath),
+                &format!("{}/{}", path.trim_end_matches('/'), subpath),
                 &props,
-                puri.as_ref(),
+                puri,
                 &user,
             )?);
         }
     }
 
-    let response = resource.propfind(req.path(), &props, puri.as_ref(), &user)?;
+    let response = resource.propfind(path, &props, puri, &user)?;
 
     Ok(MultistatusElement {
         responses: vec![response],

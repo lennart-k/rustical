@@ -6,9 +6,11 @@ description.workspace = true
 repository.workspace = true
 publish = false
 
+[features]
+actix = ["dep:actix-web"]
+
 [dependencies]
 rustical_xml.workspace = true
-actix-web.workspace = true
 async-trait.workspace = true
 futures-util.workspace = true
 quick-xml.workspace = true
@@ -20,3 +22,6 @@ derive_more.workspace = true
 tracing.workspace = true
 tracing-actix-web.workspace = true
 tokio.workspace = true
+http.workspace = true
+actix-web = { workspace = true, optional = true }
+headers.workspace = true

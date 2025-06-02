@@ -3,8 +3,8 @@ use crate::xml::Resourcetype;
 use crate::xml::multistatus::{PropTagWrapper, PropstatElement, PropstatWrapper};
 use crate::xml::{TagList, multistatus::ResponseElement};
 use crate::{Error, Principal};
-use actix_web::http::header::{EntityTag, IfMatch, IfNoneMatch};
-use actix_web::{ResponseError, http::StatusCode};
+use headers::{ETag, IfMatch, IfNoneMatch};
+use http::StatusCode;
 use itertools::Itertools;
 use quick_xml::name::Namespace;
 pub use resource_service::ResourceService;
@@ -27,7 +27,7 @@ impl<T: FromStr> ResourcePropName for T {}
 
 pub trait Resource: Clone + 'static {
     type Prop: ResourceProp + PartialEq + Clone + EnumVariants + EnumUnitVariants;
-    type Error: ResponseError + From<crate::Error>;
+    type Error: From<crate::Error>;
     type Principal: Principal;
 
     fn get_resourcetype(&self) -> Resourcetype;
@@ -63,34 +63,26 @@ pub trait Resource: Clone + 'static {
     }
 
     fn satisfies_if_match(&self, if_match: &IfMatch) -> bool {
-        match if_match {
-            IfMatch::Any => true,
-            // This is not nice but if the header doesn't exist, actix just gives us an empty
-            // IfMatch::Items header
-            IfMatch::Items(items) if items.is_empty() => true,
-            IfMatch::Items(items) => {
-                if let Some(etag) = self.get_etag() {
-                    let etag = EntityTag::new_strong(etag.to_owned());
-                    return items.iter().any(|item| item.strong_eq(&etag));
-                }
-                false
+        if let Some(etag) = self.get_etag() {
+            if let Ok(etag) = ETag::from_str(&etag) {
+                if_match.precondition_passes(&etag)
+            } else {
+                if_match.is_any()
             }
+        } else {
+            if_match.is_any()
         }
     }
 
     fn satisfies_if_none_match(&self, if_none_match: &IfNoneMatch) -> bool {
-        match if_none_match {
-            IfNoneMatch::Any => false,
-            // This is not nice but if the header doesn't exist, actix just gives us an empty
-            // IfNoneMatch::Items header
-            IfNoneMatch::Items(items) if items.is_empty() => false,
-            IfNoneMatch::Items(items) => {
-                if let Some(etag) = self.get_etag() {
-                    let etag = EntityTag::new_strong(etag.to_owned());
-                    return items.iter().all(|item| item.strong_ne(&etag));
-                }
-                true
+        if let Some(etag) = self.get_etag() {
+            if let Ok(etag) = ETag::from_str(&etag) {
+                if_none_match.precondition_passes(&etag)
+            } else {
+                if_none_match != &IfNoneMatch::any()
             }
+        } else {
+            if_none_match != &IfNoneMatch::any()
         }
     }
 

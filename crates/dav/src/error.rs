@@ -1,4 +1,4 @@
-use actix_web::{http::StatusCode, HttpResponse};
+use actix_web::{HttpResponse, http::StatusCode};
 use rustical_xml::XmlError;
 use thiserror::Error;
 use tracing::error;
@@ -25,6 +25,9 @@ pub enum Error {
 
     #[error(transparent)]
     IOError(#[from] std::io::Error),
+
+    #[error("Precondition Failed")]
+    PreconditionFailed,
 }
 
 impl actix_web::error::ResponseError for Error {
@@ -44,6 +47,7 @@ impl actix_web::error::ResponseError for Error {
                 _ => StatusCode::BAD_REQUEST,
             },
             Error::PropReadOnly => StatusCode::CONFLICT,
+            Error::PreconditionFailed => StatusCode::PRECONDITION_FAILED,
             Self::IOError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

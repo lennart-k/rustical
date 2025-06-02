@@ -1,4 +1,4 @@
-use super::methods::{route_delete, route_propfind, route_proppatch};
+use super::methods::{actix_route_delete, actix_route_propfind, route_proppatch};
 use super::{PrincipalUri, Resource};
 use crate::Principal;
 use actix_web::web::Data;
@@ -48,9 +48,11 @@ pub trait ResourceService: Sized + 'static {
     fn actix_resource(self) -> actix_web::Resource {
         web::resource("")
             .app_data(Data::new(self))
-            .route(web::method(Method::from_str("PROPFIND").unwrap()).to(route_propfind::<Self>))
+            .route(
+                web::method(Method::from_str("PROPFIND").unwrap()).to(actix_route_propfind::<Self>),
+            )
             .route(web::method(Method::from_str("PROPPATCH").unwrap()).to(route_proppatch::<Self>))
-            .delete(route_delete::<Self>)
+            .delete(actix_route_delete::<Self>)
     }
 
     fn actix_scope(self) -> actix_web::Scope;
