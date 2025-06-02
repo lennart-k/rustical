@@ -5,9 +5,7 @@ use crate::resource::ResourceService;
 use crate::xml::MultistatusElement;
 use crate::xml::TagList;
 use crate::xml::multistatus::{PropstatElement, PropstatWrapper, ResponseElement};
-use actix_web::http::StatusCode;
-use actix_web::web::Data;
-use actix_web::{HttpRequest, web::Path};
+use http::StatusCode;
 use quick_xml::name::Namespace;
 use rustical_xml::EnumUnitVariants;
 use rustical_xml::Unparsed;
@@ -63,23 +61,41 @@ enum Operation<T: XmlDeserialize> {
 #[xml(ns = "crate::namespace::NS_DAV")]
 struct PropertyupdateElement<T: XmlDeserialize>(#[xml(ty = "untagged", flatten)] Vec<Operation<T>>);
 
+#[cfg(feature = "actix")]
 #[instrument(parent = root_span.id(), skip(path, req, root_span, resource_service))]
-pub(crate) async fn route_proppatch<R: ResourceService>(
-    path: Path<R::PathComponents>,
+pub(crate) async fn actix_route_proppatch<R: ResourceService>(
+    path: actix_web::web::Path<R::PathComponents>,
     body: String,
-    req: HttpRequest,
+    req: actix_web::HttpRequest,
     principal: R::Principal,
     root_span: RootSpan,
-    resource_service: Data<R>,
+    resource_service: actix_web::web::Data<R>,
 ) -> Result<MultistatusElement<String, String>, R::Error> {
-    let href = req.path().to_owned();
+    route_proppatch(
+        &path.into_inner(),
+        req.path(),
+        body,
+        principal,
+        resource_service.as_ref(),
+    )
+    .await
+}
+
+pub(crate) async fn route_proppatch<R: ResourceService>(
+    path_components: &R::PathComponents,
+    path: &str,
+    body: String,
+    principal: R::Principal,
+    resource_service: &R,
+) -> Result<MultistatusElement<String, String>, R::Error> {
+    let href = path.to_owned();
 
     // Extract operations
     let PropertyupdateElement::<SetPropertyPropWrapperWrapper<<R::Resource as Resource>::Prop>>(
         operations,
     ) = XmlDocument::parse_str(&body).map_err(Error::XmlError)?;
 
-    let mut resource = resource_service.get_resource(&path).await?;
+    let mut resource = resource_service.get_resource(path_components).await?;
     let privileges = resource.get_user_privileges(&principal)?;
     if !privileges.has(&UserPrivilege::Write) {
         return Err(Error::Unauthorized.into());
@@ -151,7 +167,9 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
 
     if props_not_found.is_empty() && props_conflict.is_empty() {
         // Only save if no errors occured
-        resource_service.save_resource(&path, resource).await?;
+        resource_service
+            .save_resource(path_components, resource)
+            .await?;
     }
 
     Ok(MultistatusElement {

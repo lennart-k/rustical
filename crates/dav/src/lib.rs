@@ -7,9 +7,8 @@ pub mod resource;
 pub mod resources;
 pub mod xml;
 
-use actix_web::FromRequest;
 pub use error::Error;
 
-pub trait Principal: std::fmt::Debug + Clone + FromRequest + 'static {
+pub trait Principal: std::fmt::Debug + Clone + 'static {
     fn get_id(&self) -> &str;
 }

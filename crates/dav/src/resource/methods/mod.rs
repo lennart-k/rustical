@@ -11,3 +11,6 @@ pub(crate) use delete::actix_route_delete;
 
 #[cfg(feature = "actix")]
 pub(crate) use propfind::actix_route_propfind;
+
+#[cfg(feature = "actix")]
+pub(crate) use proppatch::actix_route_proppatch;

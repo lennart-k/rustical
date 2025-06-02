@@ -1,4 +1,4 @@
-use actix_web::{HttpResponse, http::StatusCode};
+use http::StatusCode;
 use rustical_xml::XmlError;
 use thiserror::Error;
 use tracing::error;
@@ -30,8 +30,8 @@ pub enum Error {
     PreconditionFailed,
 }
 
-impl actix_web::error::ResponseError for Error {
-    fn status_code(&self) -> StatusCode {
+impl Error {
+    pub fn status_code(&self) -> StatusCode {
         match self {
             Self::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
             Self::NotFound => StatusCode::NOT_FOUND,
@@ -51,14 +51,21 @@ impl actix_web::error::ResponseError for Error {
             Self::IOError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
+}
 
-    fn error_response(&self) -> HttpResponse {
+#[cfg(feature = "actix")]
+impl actix_web::error::ResponseError for Error {
+    fn status_code(&self) -> StatusCode {
+        self.status_code()
+    }
+
+    fn error_response(&self) -> actix_web::HttpResponse {
         error!("Error: {self}");
         match self {
-            Error::Unauthorized => HttpResponse::build(self.status_code())
+            Error::Unauthorized => actix_web::HttpResponse::build(self.status_code())
                 .append_header(("WWW-Authenticate", "Basic"))
                 .body(self.to_string()),
-            _ => HttpResponse::build(self.status_code()).body(self.to_string()),
+            _ => actix_web::HttpResponse::build(self.status_code()).body(self.to_string()),
         }
     }
 }

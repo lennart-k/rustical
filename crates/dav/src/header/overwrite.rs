@@ -1,3 +1,4 @@
+#[cfg(feature = "actix")]
 use actix_web::{FromRequest, HttpRequest, ResponseError, http::StatusCode};
 use futures_util::future::{Ready, err, ok};
 use thiserror::Error;
@@ -6,6 +7,7 @@ use thiserror::Error;
 #[error("Invalid Overwrite header")]
 pub struct InvalidOverwriteHeader;
 
+#[cfg(feature = "actix")]
 impl ResponseError for InvalidOverwriteHeader {
     fn status_code(&self) -> actix_web::http::StatusCode {
         StatusCode::BAD_REQUEST
@@ -37,6 +39,7 @@ impl TryFrom<&[u8]> for Overwrite {
     }
 }
 
+#[cfg(feature = "actix")]
 impl FromRequest for Overwrite {
     type Error = InvalidOverwriteHeader;
     type Future = Ready<Result<Self, Self::Error>>;

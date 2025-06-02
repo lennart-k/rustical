@@ -1,13 +1,12 @@
-use std::collections::HashMap;
-
 use crate::xml::TagList;
+#[cfg(feature = "actix")]
 use actix_web::{
-    body::BoxBody,
-    http::{header::ContentType, StatusCode},
-    HttpRequest, HttpResponse, Responder, ResponseError,
+    HttpRequest, HttpResponse, Responder, ResponseError, body::BoxBody, http::header::ContentType,
 };
+use http::StatusCode;
 use quick_xml::name::Namespace;
 use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
+use std::collections::HashMap;
 
 #[derive(XmlSerialize)]
 pub struct PropTagWrapper<T: XmlSerialize>(#[xml(flatten, ty = "untagged")] pub Vec<T>);
@@ -109,6 +108,7 @@ impl<T1: XmlSerialize, T2: XmlSerialize> Default for MultistatusElement<T1, T2> 
     }
 }
 
+#[cfg(feature = "actix")]
 impl<T1: XmlSerialize, T2: XmlSerialize> Responder for MultistatusElement<T1, T2> {
     type Body = BoxBody;
 

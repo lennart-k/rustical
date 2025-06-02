@@ -5,7 +5,6 @@ use crate::extensions::{
 use crate::privileges::UserPrivilegeSet;
 use crate::resource::{PrincipalUri, Resource, ResourceService};
 use crate::xml::{Resourcetype, ResourcetypeInner};
-use actix_web::web;
 use async_trait::async_trait;
 use std::marker::PhantomData;
 
@@ -74,8 +73,13 @@ impl<PRS: ResourceService<Principal = P> + Clone, P: Principal, PURI: PrincipalU
         Ok(RootResource::<PRS::Resource, P>::default())
     }
 
-    fn actix_scope(self) -> actix_web::Scope {
-        web::scope("")
+    #[cfg(feature = "actix")]
+    fn actix_scope(self) -> actix_web::Scope
+    where
+        Self::Error: actix_web::ResponseError,
+        Self::Principal: actix_web::FromRequest,
+    {
+        actix_web::web::scope("")
             .service(self.0.clone().actix_scope())
             .service(self.actix_resource())
     }

@@ -1,5 +1,7 @@
-use actix_web::{FromRequest, HttpRequest, ResponseError, http::StatusCode};
+#[cfg(feature = "actix")]
+use actix_web::{HttpRequest, ResponseError};
 use futures_util::future::{Ready, err, ok};
+use http::StatusCode;
 use rustical_xml::{ValueDeserialize, ValueSerialize, XmlError};
 use thiserror::Error;
 
@@ -7,6 +9,7 @@ use thiserror::Error;
 #[error("Invalid Depth header")]
 pub struct InvalidDepthHeader;
 
+#[cfg(feature = "actix")]
 impl ResponseError for InvalidDepthHeader {
     fn status_code(&self) -> actix_web::http::StatusCode {
         StatusCode::BAD_REQUEST
@@ -57,7 +60,8 @@ impl TryFrom<&[u8]> for Depth {
     }
 }
 
-impl FromRequest for Depth {
+#[cfg(feature = "actix")]
+impl actix_web::FromRequest for Depth {
     type Error = InvalidDepthHeader;
     type Future = Ready<Result<Self, Self::Error>>;
 

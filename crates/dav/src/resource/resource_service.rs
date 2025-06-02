@@ -1,8 +1,9 @@
-use super::methods::{actix_route_delete, actix_route_propfind, route_proppatch};
+#[cfg(feature = "actix")]
+use super::methods::{actix_route_delete, actix_route_propfind, actix_route_proppatch};
 use super::{PrincipalUri, Resource};
 use crate::Principal;
-use actix_web::web::Data;
-use actix_web::{ResponseError, http::Method, web};
+#[cfg(feature = "actix")]
+use actix_web::{http::Method, web, web::Data};
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::str::FromStr;
@@ -12,7 +13,7 @@ pub trait ResourceService: Sized + 'static {
     type MemberType: Resource<Error = Self::Error, Principal = Self::Principal>;
     type PathComponents: for<'de> Deserialize<'de> + Sized + Clone + 'static; // defines how the resource URI maps to parameters, i.e. /{principal}/{calendar} -> (String, String)
     type Resource: Resource<Error = Self::Error, Principal = Self::Principal>;
-    type Error: ResponseError + From<crate::Error>;
+    type Error: From<crate::Error>;
     type Principal: Principal;
     type PrincipalUri: PrincipalUri;
 
@@ -44,16 +45,28 @@ pub trait ResourceService: Sized + 'static {
         Err(crate::Error::Unauthorized.into())
     }
 
+    #[cfg(feature = "actix")]
     #[inline]
-    fn actix_resource(self) -> actix_web::Resource {
+    fn actix_resource(self) -> actix_web::Resource
+    where
+        Self::Error: actix_web::ResponseError,
+        Self::Principal: actix_web::FromRequest,
+    {
         web::resource("")
             .app_data(Data::new(self))
             .route(
                 web::method(Method::from_str("PROPFIND").unwrap()).to(actix_route_propfind::<Self>),
             )
-            .route(web::method(Method::from_str("PROPPATCH").unwrap()).to(route_proppatch::<Self>))
+            .route(
+                web::method(Method::from_str("PROPPATCH").unwrap())
+                    .to(actix_route_proppatch::<Self>),
+            )
             .delete(actix_route_delete::<Self>)
     }
 
-    fn actix_scope(self) -> actix_web::Scope;
+    #[cfg(feature = "actix")]
+    fn actix_scope(self) -> actix_web::Scope
+    where
+        Self::Error: actix_web::ResponseError,
+        Self::Principal: actix_web::FromRequest;
 }
