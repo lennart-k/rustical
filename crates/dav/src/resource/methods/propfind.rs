@@ -14,7 +14,7 @@ use rustical_xml::XmlDocument;
 use tracing::instrument;
 use tracing_actix_web::RootSpan;
 
-#[instrument(parent = root_span.id(), skip(path, req, root_span, resource_service))]
+#[instrument(parent = root_span.id(), skip(path, req, root_span, resource_service, puri))]
 #[allow(clippy::type_complexity)]
 pub(crate) async fn route_propfind<R: ResourceService>(
     path: Path<R::PathComponents>,
@@ -24,6 +24,7 @@ pub(crate) async fn route_propfind<R: ResourceService>(
     depth: Depth,
     root_span: RootSpan,
     resource_service: Data<R>,
+    puri: Data<R::PrincipalUri>,
 ) -> Result<
     MultistatusElement<<R::Resource as Resource>::Prop, <R::MemberType as Resource>::Prop>,
     R::Error,
@@ -61,13 +62,13 @@ pub(crate) async fn route_propfind<R: ResourceService>(
             member_responses.push(member.propfind(
                 &format!("{}/{}", req.path().trim_end_matches('/'), subpath),
                 &props,
+                puri.as_ref(),
                 &user,
-                req.resource_map(),
             )?);
         }
     }
 
-    let response = resource.propfind(req.path(), &props, &user, req.resource_map())?;
+    let response = resource.propfind(req.path(), &props, puri.as_ref(), &user)?;
 
     Ok(MultistatusElement {
         responses: vec![response],

@@ -1,16 +1,12 @@
+use super::methods::{route_delete, route_propfind, route_proppatch};
+use super::{PrincipalUri, Resource};
+use crate::Principal;
 use actix_web::dev::{AppService, HttpServiceFactory};
-use actix_web::error::UrlGenerationError;
-use actix_web::test::TestRequest;
 use actix_web::web::Data;
-use actix_web::{ResponseError, dev::ResourceMap, http::Method, web};
+use actix_web::{ResponseError, http::Method, web};
 use async_trait::async_trait;
 use serde::Deserialize;
 use std::str::FromStr;
-
-use crate::Principal;
-
-use super::Resource;
-use super::methods::{route_delete, route_propfind, route_proppatch};
 
 #[async_trait(?Send)]
 pub trait ResourceService: Sized + 'static {
@@ -19,6 +15,7 @@ pub trait ResourceService: Sized + 'static {
     type Resource: Resource<Error = Self::Error, Principal = Self::Principal>;
     type Error: ResponseError + From<crate::Error>;
     type Principal: Principal;
+    type PrincipalUri: PrincipalUri;
 
     async fn get_members(
         &self,
@@ -31,6 +28,7 @@ pub trait ResourceService: Sized + 'static {
         &self,
         _path: &Self::PathComponents,
     ) -> Result<Self::Resource, Self::Error>;
+
     async fn save_resource(
         &self,
         _path: &Self::PathComponents,
@@ -38,6 +36,7 @@ pub trait ResourceService: Sized + 'static {
     ) -> Result<(), Self::Error> {
         Err(crate::Error::Unauthorized.into())
     }
+
     async fn delete_resource(
         &self,
         _path: &Self::PathComponents,
@@ -65,25 +64,6 @@ pub trait ResourceService: Sized + 'static {
     #[inline]
     fn actix_additional_routes(res: actix_web::Resource) -> actix_web::Resource {
         res
-    }
-}
-
-pub trait NamedRoute {
-    fn route_name() -> &'static str;
-
-    fn get_url<U, I>(rmap: &ResourceMap, elements: U) -> Result<String, UrlGenerationError>
-    where
-        U: IntoIterator<Item = I>,
-        I: AsRef<str>,
-    {
-        Ok(rmap
-            .url_for(
-                &TestRequest::default().to_http_request(),
-                Self::route_name(),
-                elements,
-            )?
-            .path()
-            .to_owned())
     }
 }
 

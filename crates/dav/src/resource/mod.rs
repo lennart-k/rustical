@@ -3,7 +3,6 @@ use crate::xml::Resourcetype;
 use crate::xml::multistatus::{PropTagWrapper, PropstatElement, PropstatWrapper};
 use crate::xml::{TagList, multistatus::ResponseElement};
 use crate::{Error, Principal};
-use actix_web::dev::ResourceMap;
 use actix_web::http::header::{EntityTag, IfMatch, IfNoneMatch};
 use actix_web::{ResponseError, http::StatusCode};
 use itertools::Itertools;
@@ -13,8 +12,10 @@ use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize}
 use std::str::FromStr;
 
 mod methods;
+mod principal_uri;
 mod resource_service;
 
+pub use principal_uri::PrincipalUri;
 pub use resource_service::*;
 
 pub trait ResourceProp: XmlSerialize + XmlDeserialize {}
@@ -36,7 +37,7 @@ pub trait Resource: Clone + 'static {
 
     fn get_prop(
         &self,
-        rmap: &ResourceMap,
+        principal_uri: &impl PrincipalUri,
         principal: &Self::Principal,
         prop: &<Self::Prop as EnumUnitVariants>::UnitVariants,
     ) -> Result<Self::Prop, Self::Error>;
@@ -101,8 +102,8 @@ pub trait Resource: Clone + 'static {
         &self,
         path: &str,
         props: &[&str],
+        principal_uri: &impl PrincipalUri,
         principal: &Self::Principal,
-        rmap: &ResourceMap,
     ) -> Result<ResponseElement<Self::Prop>, Self::Error> {
         let mut props = props.to_vec();
 
@@ -154,7 +155,7 @@ pub trait Resource: Clone + 'static {
 
         let prop_responses = valid_props
             .into_iter()
-            .map(|prop| self.get_prop(rmap, principal, &prop))
+            .map(|prop| self.get_prop(principal_uri, principal, &prop))
             .collect::<Result<Vec<_>, Self::Error>>()?;
 
         let mut propstats = vec![PropstatWrapper::Normal(PropstatElement {

@@ -1,10 +1,9 @@
-use crate::Error;
 use crate::addressbook::resource::AddressbookResource;
-use actix_web::dev::ResourceMap;
+use crate::{CardDavPrincipalUri, Error};
 use async_trait::async_trait;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
-use rustical_dav::resource::{NamedRoute, Resource, ResourceService};
+use rustical_dav::resource::{PrincipalUri, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::AddressbookStore;
 use rustical_store::auth::{AuthenticationProvider, User};
@@ -58,22 +57,6 @@ pub enum PrincipalPropWrapper {
     Common(CommonPropertiesProp),
 }
 
-impl PrincipalResource {
-    pub fn get_principal_url(rmap: &ResourceMap, principal: &str) -> String {
-        Self::get_url(rmap, vec![principal]).unwrap()
-    }
-}
-
-impl NamedRoute for PrincipalResource {
-    fn route_name() -> &'static str {
-        "carddav_principal"
-    }
-}
-
-impl CommonPropertiesExtension for PrincipalResource {
-    type PrincipalResource = Self;
-}
-
 impl Resource for PrincipalResource {
     type Prop = PrincipalPropWrapper;
     type Error = Error;
@@ -88,16 +71,16 @@ impl Resource for PrincipalResource {
 
     fn get_prop(
         &self,
-        rmap: &ResourceMap,
+        puri: &impl PrincipalUri,
         user: &User,
         prop: &PrincipalPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
-        let principal_href = HrefElement::new(Self::get_principal_url(rmap, &self.principal.id));
+        let principal_href = HrefElement::new(puri.principal_uri(&user.id));
 
         let home_set = AddressbookHomeSet(
             user.memberships()
                 .into_iter()
-                .map(|principal| Self::get_url(rmap, vec![principal]).unwrap())
+                .map(|principal| puri.principal_uri(principal))
                 .map(HrefElement::new)
                 .collect(),
         );
@@ -120,7 +103,7 @@ impl Resource for PrincipalResource {
             }
 
             PrincipalPropWrapperName::Common(prop) => PrincipalPropWrapper::Common(
-                CommonPropertiesExtension::get_prop(self, rmap, user, prop)?,
+                CommonPropertiesExtension::get_prop(self, puri, user, prop)?,
             ),
         })
     }
@@ -145,6 +128,7 @@ impl<A: AddressbookStore, AP: AuthenticationProvider> ResourceService
     type Resource = PrincipalResource;
     type Error = Error;
     type Principal = User;
+    type PrincipalUri = CardDavPrincipalUri;
 
     async fn get_resource(
         &self,

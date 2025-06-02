@@ -2,10 +2,8 @@ use super::methods::mkcalendar::route_mkcalendar;
 use super::methods::post::route_post;
 use super::methods::report::route_report_calendar;
 use super::prop::{SupportedCalendarComponentSet, SupportedCalendarData, SupportedReportSet};
-use crate::Error;
 use crate::calendar_object::resource::CalendarObjectResource;
-use crate::principal::PrincipalResource;
-use actix_web::dev::ResourceMap;
+use crate::{CalDavPrincipalUri, Error};
 use actix_web::http::Method;
 use actix_web::web;
 use async_trait::async_trait;
@@ -15,7 +13,7 @@ use rustical_dav::extensions::{
     CommonPropertiesExtension, CommonPropertiesProp, SyncTokenExtension, SyncTokenExtensionProp,
 };
 use rustical_dav::privileges::UserPrivilegeSet;
-use rustical_dav::resource::{Resource, ResourceService};
+use rustical_dav::resource::{PrincipalUri, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_dav_push::{DavPushExtension, DavPushExtensionProp};
 use rustical_ical::CalDateTime;
@@ -100,10 +98,6 @@ impl DavPushExtension for CalendarResource {
     }
 }
 
-impl CommonPropertiesExtension for CalendarResource {
-    type PrincipalResource = PrincipalResource;
-}
-
 impl Resource for CalendarResource {
     type Prop = CalendarPropWrapper;
     type Error = Error;
@@ -128,7 +122,7 @@ impl Resource for CalendarResource {
 
     fn get_prop(
         &self,
-        rmap: &ResourceMap,
+        puri: &impl PrincipalUri,
         user: &User,
         prop: &CalendarPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
@@ -183,7 +177,7 @@ impl Resource for CalendarResource {
                 CalendarPropWrapper::DavPush(DavPushExtension::get_prop(self, prop)?)
             }
             CalendarPropWrapperName::Common(prop) => CalendarPropWrapper::Common(
-                CommonPropertiesExtension::get_prop(self, rmap, user, prop)?,
+                CommonPropertiesExtension::get_prop(self, puri, user, prop)?,
             ),
         })
     }
@@ -336,6 +330,7 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
     type Resource = CalendarResource;
     type Error = Error;
     type Principal = User;
+    type PrincipalUri = CalDavPrincipalUri;
 
     async fn get_resource(
         &self,

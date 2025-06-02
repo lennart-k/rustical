@@ -8,8 +8,9 @@ use actix_web::web::{self, Data};
 use calendar::resource::CalendarResourceService;
 use calendar_object::resource::CalendarObjectResourceService;
 use calendar_set::CalendarSetResourceService;
+use derive_more::Constructor;
 use principal::{PrincipalResource, PrincipalResourceService};
-use rustical_dav::resource::{NamedRoute, ResourceService, ResourceServiceRoute};
+use rustical_dav::resource::{PrincipalUri, ResourceService, ResourceServiceRoute};
 use rustical_dav::resources::RootResourceService;
 use rustical_store::auth::{AuthenticationMiddleware, AuthenticationProvider, User};
 use rustical_store::{AddressbookStore, CalendarStore, ContactBirthdayStore, SubscriptionStore};
@@ -24,6 +25,15 @@ pub mod principal;
 mod subscription;
 
 pub use error::Error;
+
+#[derive(Debug, Clone, Constructor)]
+pub struct CalDavPrincipalUri(&'static str);
+
+impl PrincipalUri for CalDavPrincipalUri {
+    fn principal_uri(&self, principal: &str) -> String {
+        format!("{}/{}", self.0, principal)
+    }
+}
 
 /// Quite a janky implementation but the default METHOD_NOT_ALLOWED response gives us the allowed
 /// methods of a resource
@@ -57,6 +67,7 @@ pub fn caldav_service<
     C: CalendarStore,
     S: SubscriptionStore,
 >(
+    prefix: &'static str,
     auth_provider: Arc<AP>,
     store: Arc<C>,
     addr_store: Arc<AS>,
@@ -70,7 +81,13 @@ pub fn caldav_service<
         .app_data(Data::from(store.clone()))
         .app_data(Data::from(birthday_store.clone()))
         .app_data(Data::from(subscription_store))
-        .service(RootResourceService::<PrincipalResource, User>::default().actix_resource())
+        .app_data(Data::new(CalDavPrincipalUri::new(
+            format!("{prefix}/principal").leak(),
+        )))
+        .service(
+            RootResourceService::<PrincipalResource, User, CalDavPrincipalUri>::default()
+                .actix_resource(),
+        )
         .service(
             web::scope("/principal").service(
                 web::scope("/{principal}")
@@ -79,8 +96,7 @@ pub fn caldav_service<
                             auth_provider,
                             home_set: &[("calendar", false), ("birthdays", true)],
                         }
-                        .actix_resource()
-                        .name(PrincipalResource::route_name()),
+                        .actix_resource(),
                     )
                     .service(
                         web::scope("/calendar")

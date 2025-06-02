@@ -1,11 +1,9 @@
-use crate::Error;
 use crate::calendar::resource::CalendarResource;
-use crate::principal::PrincipalResource;
-use actix_web::dev::ResourceMap;
+use crate::{CalDavPrincipalUri, Error};
 use async_trait::async_trait;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
-use rustical_dav::resource::{Resource, ResourceService};
+use rustical_dav::resource::{PrincipalUri, Resource, ResourceService};
 use rustical_dav::xml::{Resourcetype, ResourcetypeInner};
 use rustical_store::CalendarStore;
 use rustical_store::auth::User;
@@ -24,10 +22,6 @@ pub enum PrincipalPropWrapper {
     Common(CommonPropertiesProp),
 }
 
-impl CommonPropertiesExtension for CalendarSetResource {
-    type PrincipalResource = PrincipalResource;
-}
-
 impl Resource for CalendarSetResource {
     type Prop = PrincipalPropWrapper;
     type Error = Error;
@@ -42,13 +36,13 @@ impl Resource for CalendarSetResource {
 
     fn get_prop(
         &self,
-        rmap: &ResourceMap,
+        puri: &impl PrincipalUri,
         user: &User,
         prop: &PrincipalPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
             PrincipalPropWrapperName::Common(prop) => PrincipalPropWrapper::Common(
-                <Self as CommonPropertiesExtension>::get_prop(self, rmap, user, prop)?,
+                <Self as CommonPropertiesExtension>::get_prop(self, puri, user, prop)?,
             ),
         })
     }
@@ -83,6 +77,7 @@ impl<C: CalendarStore> ResourceService for CalendarSetResourceService<C> {
     type Resource = CalendarSetResource;
     type Error = Error;
     type Principal = User;
+    type PrincipalUri = CalDavPrincipalUri;
 
     async fn get_resource(
         &self,

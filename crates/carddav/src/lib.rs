@@ -11,9 +11,10 @@ use actix_web::{
 };
 use address_object::resource::AddressObjectResourceService;
 use addressbook::resource::AddressbookResourceService;
+use derive_more::Constructor;
 pub use error::Error;
 use principal::{PrincipalResource, PrincipalResourceService};
-use rustical_dav::resource::{NamedRoute, ResourceService};
+use rustical_dav::resource::{PrincipalUri, ResourceService};
 use rustical_dav::resources::RootResourceService;
 use rustical_store::{
     AddressbookStore, SubscriptionStore,
@@ -25,6 +26,15 @@ pub mod address_object;
 pub mod addressbook;
 pub mod error;
 pub mod principal;
+
+#[derive(Debug, Clone, Constructor)]
+pub struct CardDavPrincipalUri(&'static str);
+
+impl PrincipalUri for CardDavPrincipalUri {
+    fn principal_uri(&self, principal: &str) -> String {
+        format!("{}/{}", self.0, principal)
+    }
+}
 
 /// Quite a janky implementation but the default METHOD_NOT_ALLOWED response gives us the allowed
 /// methods of a resource
@@ -53,6 +63,7 @@ fn options_handler() -> ErrorHandlers<BoxBody> {
 }
 
 pub fn carddav_service<AP: AuthenticationProvider, A: AddressbookStore, S: SubscriptionStore>(
+    prefix: &'static str,
     auth_provider: Arc<AP>,
     store: Arc<A>,
     subscription_store: Arc<S>,
@@ -62,14 +73,19 @@ pub fn carddav_service<AP: AuthenticationProvider, A: AddressbookStore, S: Subsc
         .wrap(options_handler())
         .app_data(Data::from(store.clone()))
         .app_data(Data::from(subscription_store))
-        .service(RootResourceService::<PrincipalResource, User>::default().actix_resource())
+        .app_data(Data::new(CardDavPrincipalUri::new(
+            format!("{prefix}/principal").leak(),
+        )))
+        .service(
+            RootResourceService::<PrincipalResource, User, CardDavPrincipalUri>::default()
+                .actix_resource(),
+        )
         .service(
             web::scope("/principal").service(
                 web::scope("/{principal}")
                     .service(
                         PrincipalResourceService::new(store.clone(), auth_provider)
-                            .actix_resource()
-                            .name(PrincipalResource::route_name()),
+                            .actix_resource(),
                     )
                     .service(
                         web::scope("/{addressbook_id}")

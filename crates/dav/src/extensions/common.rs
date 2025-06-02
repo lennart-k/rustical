@@ -1,10 +1,9 @@
 use crate::{
     Principal,
     privileges::UserPrivilegeSet,
-    resource::{NamedRoute, Resource},
+    resource::{PrincipalUri, Resource},
     xml::{HrefElement, Resourcetype},
 };
-use actix_web::dev::ResourceMap;
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumUnitVariants, EnumVariants)]
@@ -28,11 +27,9 @@ pub enum CommonPropertiesProp {
 }
 
 pub trait CommonPropertiesExtension: Resource {
-    type PrincipalResource: NamedRoute;
-
     fn get_prop(
         &self,
-        rmap: &ResourceMap,
+        principal_uri: &impl PrincipalUri,
         principal: &Self::Principal,
         prop: &CommonPropertiesPropName,
     ) -> Result<CommonPropertiesProp, <Self as Resource>::Error> {
@@ -42,21 +39,16 @@ pub trait CommonPropertiesExtension: Resource {
             }
             CommonPropertiesPropName::CurrentUserPrincipal => {
                 CommonPropertiesProp::CurrentUserPrincipal(
-                    Self::PrincipalResource::get_url(rmap, [&principal.get_id()])
-                        .unwrap()
-                        .into(),
+                    principal_uri.principal_uri(principal.get_id()).into(),
                 )
             }
             CommonPropertiesPropName::CurrentUserPrivilegeSet => {
                 CommonPropertiesProp::CurrentUserPrivilegeSet(self.get_user_privileges(principal)?)
             }
-            CommonPropertiesPropName::Owner => {
-                CommonPropertiesProp::Owner(self.get_owner().map(|owner| {
-                    Self::PrincipalResource::get_url(rmap, [owner])
-                        .unwrap()
-                        .into()
-                }))
-            }
+            CommonPropertiesPropName::Owner => CommonPropertiesProp::Owner(
+                self.get_owner()
+                    .map(|owner| principal_uri.principal_uri(owner).into()),
+            ),
         })
     }
 
@@ -68,3 +60,5 @@ pub trait CommonPropertiesExtension: Resource {
         Err(crate::Error::PropReadOnly)
     }
 }
+
+impl<R: Resource> CommonPropertiesExtension for R {}

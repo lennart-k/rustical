@@ -1,4 +1,4 @@
-use crate::Error;
+use crate::{CardDavPrincipalUri, Error};
 use actix_web::{
     HttpRequest, Responder,
     web::{Data, Path},
@@ -49,6 +49,7 @@ pub async fn route_report_addressbook<AS: AddressbookStore>(
     body: String,
     user: User,
     req: HttpRequest,
+    puri: Data<CardDavPrincipalUri>,
     addr_store: Data<AS>,
 ) -> Result<impl Responder, Error> {
     let (principal, addressbook_id) = path.into_inner();
@@ -64,7 +65,8 @@ pub async fn route_report_addressbook<AS: AddressbookStore>(
             handle_addressbook_multiget(
                 addr_multiget,
                 &props,
-                req,
+                req.path(),
+                puri.as_ref(),
                 &user,
                 &principal,
                 &addressbook_id,
@@ -76,7 +78,8 @@ pub async fn route_report_addressbook<AS: AddressbookStore>(
             handle_sync_collection(
                 sync_collection,
                 &props,
-                req,
+                req.path(),
+                puri.as_ref(),
                 &user,
                 &principal,
                 &addressbook_id,

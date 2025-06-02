@@ -38,12 +38,14 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
         .wrap(TracingLogger::default())
         .wrap(NormalizePath::trim())
         .service(web::scope("/caldav").service(caldav_service(
+            "/caldav",
             auth_provider.clone(),
             cal_store.clone(),
             addr_store.clone(),
             subscription_store.clone(),
         )))
         .service(web::scope("/carddav").service(carddav_service(
+            "/carddav",
             auth_provider.clone(),
             addr_store.clone(),
             subscription_store,

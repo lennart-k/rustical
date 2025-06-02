@@ -1,12 +1,11 @@
 use super::methods::{get_event, put_event};
-use crate::{Error, principal::PrincipalResource};
-use actix_web::dev::ResourceMap;
+use crate::{CalDavPrincipalUri, Error};
 use async_trait::async_trait;
 use derive_more::derive::{From, Into};
 use rustical_dav::{
     extensions::{CommonPropertiesExtension, CommonPropertiesProp},
     privileges::UserPrivilegeSet,
-    resource::{Resource, ResourceService},
+    resource::{PrincipalUri, Resource, ResourceService},
     xml::Resourcetype,
 };
 use rustical_store::{CalendarObject, CalendarStore, auth::User};
@@ -51,10 +50,6 @@ pub struct CalendarObjectResource {
     pub principal: String,
 }
 
-impl CommonPropertiesExtension for CalendarObjectResource {
-    type PrincipalResource = PrincipalResource;
-}
-
 impl Resource for CalendarObjectResource {
     type Prop = CalendarObjectPropWrapper;
     type Error = Error;
@@ -66,7 +61,7 @@ impl Resource for CalendarObjectResource {
 
     fn get_prop(
         &self,
-        rmap: &ResourceMap,
+        puri: &impl PrincipalUri,
         user: &User,
         prop: &CalendarObjectPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
@@ -85,7 +80,7 @@ impl Resource for CalendarObjectResource {
                 })
             }
             CalendarObjectPropWrapperName::Common(prop) => CalendarObjectPropWrapper::Common(
-                CommonPropertiesExtension::get_prop(self, rmap, user, prop)?,
+                CommonPropertiesExtension::get_prop(self, puri, user, prop)?,
             ),
         })
     }
@@ -119,6 +114,7 @@ impl<C: CalendarStore> ResourceService for CalendarObjectResourceService<C> {
     type MemberType = CalendarObjectResource;
     type Error = Error;
     type Principal = User;
+    type PrincipalUri = CalDavPrincipalUri;
 
     async fn get_resource(
         &self,

@@ -3,12 +3,11 @@ use crate::{
     address_object::resource::{AddressObjectPropWrapper, AddressObjectResource},
 };
 use actix_web::{
-    HttpRequest,
     dev::{Path, ResourceDef},
     http::StatusCode,
 };
 use rustical_dav::{
-    resource::Resource,
+    resource::{PrincipalUri, Resource},
     xml::{MultistatusElement, PropfindType, multistatus::ResponseElement},
 };
 use rustical_store::{AddressObject, AddressbookStore, auth::User};
@@ -60,25 +59,26 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
 pub async fn handle_addressbook_multiget<AS: AddressbookStore>(
     addr_multiget: &AddressbookMultigetRequest,
     props: &[&str],
-    req: HttpRequest,
+    path: &str,
+    puri: &impl PrincipalUri,
     user: &User,
     principal: &str,
     cal_id: &str,
     addr_store: &AS,
 ) -> Result<MultistatusElement<AddressObjectPropWrapper, String>, Error> {
     let (objects, not_found) =
-        get_objects_addressbook_multiget(addr_multiget, req.path(), principal, cal_id, addr_store)
+        get_objects_addressbook_multiget(addr_multiget, path, principal, cal_id, addr_store)
             .await?;
 
     let mut responses = Vec::new();
     for object in objects {
-        let path = format!("{}/{}.vcf", req.path(), object.get_id());
+        let path = format!("{}/{}.vcf", path, object.get_id());
         responses.push(
             AddressObjectResource {
                 object,
                 principal: principal.to_owned(),
             }
-            .propfind(&path, props, user, req.resource_map())?,
+            .propfind(&path, props, puri, user)?,
         );
     }
 

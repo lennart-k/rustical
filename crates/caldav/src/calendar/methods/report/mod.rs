@@ -1,4 +1,4 @@
-use crate::Error;
+use crate::{CalDavPrincipalUri, Error};
 use actix_web::{
     HttpRequest, Responder,
     web::{Data, Path},
@@ -87,6 +87,7 @@ pub async fn route_report_calendar<C: CalendarStore>(
     body: String,
     user: User,
     req: HttpRequest,
+    puri: Data<CalDavPrincipalUri>,
     cal_store: Data<C>,
 ) -> Result<impl Responder, Error> {
     let (principal, cal_id) = path.into_inner();
@@ -102,7 +103,8 @@ pub async fn route_report_calendar<C: CalendarStore>(
             handle_calendar_query(
                 cal_query,
                 &props,
-                req,
+                req.path(),
+                puri.as_ref(),
                 &user,
                 &principal,
                 &cal_id,
@@ -114,7 +116,8 @@ pub async fn route_report_calendar<C: CalendarStore>(
             handle_calendar_multiget(
                 cal_multiget,
                 &props,
-                req,
+                req.path(),
+                puri.as_ref(),
                 &user,
                 &principal,
                 &cal_id,
@@ -126,7 +129,8 @@ pub async fn route_report_calendar<C: CalendarStore>(
             handle_sync_collection(
                 sync_collection,
                 &props,
-                req,
+                req.path(),
+                puri.as_ref(),
                 &user,
                 &principal,
                 &cal_id,

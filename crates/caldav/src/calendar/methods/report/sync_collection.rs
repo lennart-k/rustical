@@ -3,9 +3,9 @@ use crate::{
     Error,
     calendar_object::resource::{CalendarObjectPropWrapper, CalendarObjectResource},
 };
-use actix_web::{HttpRequest, http::StatusCode};
+use actix_web::http::StatusCode;
 use rustical_dav::{
-    resource::Resource,
+    resource::{PrincipalUri, Resource},
     xml::{
         MultistatusElement, multistatus::ResponseElement, sync_collection::SyncCollectionRequest,
     },
@@ -19,7 +19,8 @@ use rustical_store::{
 pub async fn handle_sync_collection<C: CalendarStore>(
     sync_collection: &SyncCollectionRequest<ReportPropName>,
     props: &[&str],
-    req: HttpRequest,
+    path: &str,
+    puri: &impl PrincipalUri,
     user: &User,
     principal: &str,
     cal_id: &str,
@@ -32,22 +33,18 @@ pub async fn handle_sync_collection<C: CalendarStore>(
 
     let mut responses = Vec::new();
     for object in new_objects {
-        let path = format!(
-            "{}/{}.ics",
-            req.path().trim_end_matches('/'),
-            object.get_id()
-        );
+        let path = format!("{}/{}.ics", path, object.get_id());
         responses.push(
             CalendarObjectResource {
                 object,
                 principal: principal.to_owned(),
             }
-            .propfind(&path, props, user, req.resource_map())?,
+            .propfind(&path, props, puri, user)?,
         );
     }
 
     for object_id in deleted_objects {
-        let path = format!("{}/{}.ics", req.path().trim_end_matches('/'), object_id);
+        let path = format!("{path}/{object_id}.ics");
         responses.push(ResponseElement {
             href: path,
             status: Some(StatusCode::NOT_FOUND),

@@ -1,6 +1,5 @@
-use actix_web::HttpRequest;
 use rustical_dav::{
-    resource::Resource,
+    resource::{PrincipalUri, Resource},
     xml::{MultistatusElement, PropfindType},
 };
 use rustical_ical::UtcDateTime;
@@ -217,7 +216,8 @@ pub async fn get_objects_calendar_query<C: CalendarStore>(
 pub async fn handle_calendar_query<C: CalendarStore>(
     cal_query: &CalendarQueryRequest,
     props: &[&str],
-    req: HttpRequest,
+    path: &str,
+    puri: &impl PrincipalUri,
     user: &User,
     principal: &str,
     cal_id: &str,
@@ -227,17 +227,13 @@ pub async fn handle_calendar_query<C: CalendarStore>(
 
     let mut responses = Vec::new();
     for object in objects {
-        let path = format!(
-            "{}/{}.ics",
-            req.path().trim_end_matches('/'),
-            object.get_id()
-        );
+        let path = format!("{}/{}.ics", path, object.get_id());
         responses.push(
             CalendarObjectResource {
                 object,
                 principal: principal.to_owned(),
             }
-            .propfind(&path, props, user, req.resource_map())?,
+            .propfind(&path, props, puri, user)?,
         );
     }
 
