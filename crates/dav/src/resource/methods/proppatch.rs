@@ -14,7 +14,6 @@ use rustical_xml::XmlDocument;
 use rustical_xml::XmlRootTag;
 use std::str::FromStr;
 use tracing::instrument;
-use tracing_actix_web::RootSpan;
 
 #[derive(XmlDeserialize, Clone, Debug)]
 #[xml(untagged)]
@@ -68,7 +67,7 @@ pub(crate) async fn actix_route_proppatch<R: ResourceService>(
     body: String,
     req: actix_web::HttpRequest,
     principal: R::Principal,
-    root_span: RootSpan,
+    root_span: tracing_actix_web::RootSpan,
     resource_service: actix_web::web::Data<R>,
 ) -> Result<MultistatusElement<String, String>, R::Error> {
     route_proppatch(

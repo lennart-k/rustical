@@ -7,7 +7,7 @@ repository.workspace = true
 publish = false
 
 [features]
-actix = ["dep:actix-web"]
+actix = ["dep:actix-web", "dep:tracing-actix-web"]
 
 [dependencies]
 rustical_xml.workspace = true
@@ -20,8 +20,8 @@ itertools.workspace = true
 log.workspace = true
 derive_more.workspace = true
 tracing.workspace = true
-tracing-actix-web.workspace = true
 tokio.workspace = true
 http.workspace = true
 actix-web = { workspace = true, optional = true }
+tracing-actix-web = { workspace = true, optional = true }
 headers.workspace = true

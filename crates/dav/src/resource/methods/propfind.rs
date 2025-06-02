@@ -10,7 +10,6 @@ use crate::xml::PropfindElement;
 use crate::xml::PropfindType;
 use rustical_xml::XmlDocument;
 use tracing::instrument;
-use tracing_actix_web::RootSpan;
 
 #[cfg(feature = "actix")]
 #[instrument(parent = root_span.id(), skip(path, req, root_span, resource_service, puri))]
@@ -21,7 +20,7 @@ pub(crate) async fn actix_route_propfind<R: ResourceService>(
     req: ::actix_web::HttpRequest,
     user: R::Principal,
     depth: Depth,
-    root_span: RootSpan,
+    root_span: tracing_actix_web::RootSpan,
     resource_service: ::actix_web::web::Data<R>,
     puri: ::actix_web::web::Data<R::PrincipalUri>,
 ) -> Result<

@@ -6,7 +6,6 @@ use headers::Header;
 use headers::{HeaderValue, IfMatch, IfNoneMatch};
 use itertools::Itertools;
 use tracing::instrument;
-use tracing_actix_web::RootSpan;
 
 #[cfg(feature = "actix")]
 #[instrument(parent = root_span.id(), skip(path, req, root_span, resource_service))]
@@ -15,7 +14,7 @@ pub async fn actix_route_delete<R: ResourceService>(
     req: actix_web::HttpRequest,
     principal: R::Principal,
     resource_service: actix_web::web::Data<R>,
-    root_span: RootSpan,
+    root_span: tracing_actix_web::RootSpan,
 ) -> Result<actix_web::HttpResponse, R::Error> {
     let no_trash = req
         .headers()
