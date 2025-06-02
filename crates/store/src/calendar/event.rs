@@ -67,40 +67,40 @@ impl EventObject {
         RecurrenceRule::parse(rrule).map(Some)
     }
 
-    pub fn expand_recurrence(&self) -> Result<Vec<IcalEvent>, Error> {
-        if let Some(rrule) = self.recurrence_rule()? {
-            let mut events = vec![];
-            let first_occurence = self.get_first_occurence()?.unwrap();
-            let dates = rrule.between(first_occurence, None, None);
-
-            for date in dates {
-                let dtstart_utc = date;
-                let mut ev = self.event.clone();
-                ev.remove_property("RRULE");
-                ev.set_property(Property {
-                    name: "RECURRENCE-ID".to_string(),
-                    value: Some(dtstart_utc.format()),
-                    params: None,
-                });
-                ev.set_property(Property {
-                    name: "DTSTART".to_string(),
-                    value: Some(dtstart_utc.format()),
-                    params: None,
-                });
-                if let Some(duration) = self.get_duration()? {
-                    ev.set_property(Property {
-                        name: "DTEND".to_string(),
-                        value: Some((dtstart_utc + duration).format()),
-                        params: None,
-                    });
-                }
-                events.push(ev);
-            }
-            Ok(events)
-        } else {
-            Ok(vec![self.event.clone()])
-        }
-    }
+    // pub fn expand_recurrence(&self) -> Result<Vec<IcalEvent>, Error> {
+    //     if let Some(rrule) = self.recurrence_rule()? {
+    //         let mut events = vec![];
+    //         let first_occurence = self.get_first_occurence()?.unwrap();
+    //         let dates = rrule.between(first_occurence, None, None);
+    //
+    //         for date in dates {
+    //             let dtstart_utc = date;
+    //             let mut ev = self.event.clone();
+    //             ev.remove_property("RRULE");
+    //             ev.set_property(Property {
+    //                 name: "RECURRENCE-ID".to_string(),
+    //                 value: Some(dtstart_utc.format()),
+    //                 params: None,
+    //             });
+    //             ev.set_property(Property {
+    //                 name: "DTSTART".to_string(),
+    //                 value: Some(dtstart_utc.format()),
+    //                 params: None,
+    //             });
+    //             if let Some(duration) = self.get_duration()? {
+    //                 ev.set_property(Property {
+    //                     name: "DTEND".to_string(),
+    //                     value: Some((dtstart_utc + duration).format()),
+    //                     params: None,
+    //                 });
+    //             }
+    //             events.push(ev);
+    //         }
+    //         Ok(events)
+    //     } else {
+    //         Ok(vec![self.event.clone()])
+    //     }
+    // }
 }
 
 #[cfg(test)]
