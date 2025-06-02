@@ -1,9 +1,11 @@
 use super::{CalDateTime, CalDateTimeError};
-use chrono::Weekday;
+use chrono::{Weekday, WeekdaySet};
 use std::{num::ParseIntError, str::FromStr};
 use strum_macros::EnumString;
 
 mod iter;
+mod iter_monthly;
+mod iter_yearly;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ParserError {
@@ -70,7 +72,7 @@ pub struct RecurrenceRule {
     pub frequency: RecurrenceFrequency,
     pub limit: Option<RecurrenceLimit>,
     // Repeat every n-th time
-    pub interval: usize,
+    pub interval: u32,
 
     pub bysecond: Option<Vec<usize>>,
     pub byminute: Option<Vec<usize>>,
@@ -79,7 +81,7 @@ pub struct RecurrenceRule {
     pub bymonthday: Option<Vec<i8>>,
     pub byyearday: Option<Vec<i64>>,
     pub byweekno: Option<Vec<i8>>,
-    pub bymonth: Option<Vec<i8>>,
+    pub bymonth0: Option<Vec<u8>>,
     pub week_start: Option<Weekday>,
     // Selects the n-th occurence within an a recurrence rule
     pub bysetpos: Option<Vec<i64>>,
@@ -97,7 +99,7 @@ impl RecurrenceRule {
         let mut bymonthday = None;
         let mut byyearday = None;
         let mut byweekno = None;
-        let mut bymonth = None;
+        let mut bymonth0 = None;
         let mut week_start = None;
         let mut bysetpos = None;
 
@@ -175,10 +177,13 @@ impl RecurrenceRule {
                     );
                 }
                 ("BYMONTH", val) => {
-                    bymonth = Some(
+                    bymonth0 = Some(
                         val.split(',')
                             .map(|val| val.parse())
-                            .collect::<Result<Vec<_>, _>>()?,
+                            .collect::<Result<Vec<u8>, _>>()?
+                            .into_iter()
+                            .map(|month| month - 1)
+                            .collect(),
                     );
                 }
                 ("WKST", val) => week_start = Some(IcalWeekday::from_str(val)?.into()),
@@ -203,10 +208,41 @@ impl RecurrenceRule {
             bymonthday,
             byyearday,
             byweekno,
-            bymonth,
+            bymonth0,
             week_start,
             bysetpos,
         })
+    }
+}
+
+impl RecurrenceRule {
+    fn offset_weekdays(&self) -> Option<Vec<(i64, Weekday)>> {
+        if let Some(byday) = self.byday.as_ref() {
+            Some(
+                byday
+                    .iter()
+                    .filter_map(|(offset, day)| offset.map(|offset| (offset, day.clone())))
+                    .collect(),
+            )
+        } else {
+            None
+        }
+    }
+
+    fn absolute_weekdays(&self) -> Option<WeekdaySet> {
+        if let Some(byday) = self.byday.as_ref() {
+            Some(WeekdaySet::from_iter(byday.iter().filter_map(
+                |(offset, day)| {
+                    if &None == offset {
+                        Some(day.clone())
+                    } else {
+                        None
+                    }
+                },
+            )))
+        } else {
+            None
+        }
     }
 }
 

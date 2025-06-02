@@ -228,6 +228,13 @@ impl CalDateTime {
             CalDateTime::Date(date) => date.and_time(NaiveTime::default()).and_utc(),
         }
     }
+
+    pub fn timezone(&self) -> Option<CalTimezone> {
+        match &self {
+            CalDateTime::DateTime(datetime) => Some(datetime.timezone()),
+            CalDateTime::Date(_) => None,
+        }
+    }
 }
 
 impl From<CalDateTime> for DateTime<Utc> {
@@ -336,6 +343,34 @@ impl Datelike for CalDateTime {
                 Some(Self::DateTime(datetime.with_ordinal0(ordinal0)?))
             }
             CalDateTime::Date(date) => Some(Self::Date(date.with_ordinal0(ordinal0)?)),
+        }
+    }
+}
+
+impl CalDateTime {
+    pub fn inc_year(&self, interval: u32) -> Option<Self> {
+        self.with_year(self.year() + interval as i32)
+    }
+
+    // Increments the year until a valid date is found
+    pub fn inc_find_year(&self, interval: u32) -> Self {
+        let mut year = self.year();
+        loop {
+            year += interval as i32;
+            if let Some(date) = self.with_year(year) {
+                return date;
+            }
+        }
+    }
+
+    pub fn inc_month(&self, interval: u32) -> Self {
+        let mut month0 = self.month0();
+        loop {
+            month0 += interval;
+            if month0 >= 12 {}
+            if let Some(date) = self.with_month0(month0) {
+                return date;
+            }
         }
     }
 }
