@@ -308,7 +308,7 @@ mod tests {
                     CalDateTime::parse("20370329T010000Z", None).unwrap()
                 )),
                 byday: Some(vec![(Some(-1), Weekday::Sun)]),
-                bymonth: Some(vec![3]),
+                bymonth0: Some(vec![3]),
                 ..Default::default()
             }
         );
