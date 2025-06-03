@@ -1,15 +1,13 @@
 use crate::Error;
-use chrono::Duration;
+use chrono::{DateTime, Duration};
 use ical::{
     generator::IcalEvent,
     parser::{Component, ical::component::IcalTimeZone},
     property::Property,
 };
-use rustical_ical::{
-    CalDateTime, ComponentMut, parse_duration,
-    rrule::{ParserError, RecurrenceRule},
-};
-use std::collections::HashMap;
+use rrule::{RRule, RRuleSet};
+use rustical_ical::{CalDateTime, ComponentMut, parse_duration};
+use std::{collections::HashMap, str::FromStr};
 
 #[derive(Debug, Clone)]
 pub struct EventObject {
@@ -21,7 +19,7 @@ pub struct EventObject {
 impl EventObject {
     pub fn get_first_occurence(&self) -> Result<Option<CalDateTime>, Error> {
         if let Some(dtstart) = self.event.get_property("DTSTART") {
-            Ok(CalDateTime::parse_prop(dtstart, &self.timezones)?)
+            Ok(Some(CalDateTime::parse_prop(dtstart, &self.timezones)?))
         } else {
             Ok(None)
         }
@@ -34,7 +32,7 @@ impl EventObject {
         }
 
         if let Some(dtend) = self.event.get_property("DTEND") {
-            return Ok(CalDateTime::parse_prop(dtend, &self.timezones)?);
+            return Ok(Some(CalDateTime::parse_prop(dtend, &self.timezones)?));
         };
 
         let duration = self.get_duration()?.unwrap_or(Duration::days(1));
@@ -55,57 +53,81 @@ impl EventObject {
         }
     }
 
-    pub fn recurrence_rule(&self) -> Result<Option<RecurrenceRule>, ParserError> {
-        let rrule = if let Some(&Property {
-            value: Some(rrule), ..
-        }) = self.event.get_property("RRULE").as_ref()
-        {
-            rrule
+    pub fn recurrence_ruleset(&self) -> Result<Option<rrule::RRuleSet>, Error> {
+        let dtstart: DateTime<rrule::Tz> = if let Some(dtstart) = self.get_first_occurence()? {
+            dtstart
+                .as_datetime()
+                .with_timezone(&dtstart.timezone().into())
         } else {
             return Ok(None);
         };
-        RecurrenceRule::parse(rrule).map(Some)
+
+        let mut rrule_set = RRuleSet::new(dtstart);
+
+        for prop in &self.event.properties {
+            rrule_set = match prop.name.as_str() {
+                "RRULE" => {
+                    let rrule = RRule::from_str(prop.value.as_ref().ok_or(Error::RRuleError(
+                        rrule::ParseError::MissingDateGenerationRules.into(),
+                    ))?)?
+                    .validate(dtstart)
+                    .unwrap();
+                    rrule_set.rrule(rrule)
+                }
+                "RDATE" => {
+                    let rdate = CalDateTime::parse_prop(prop, &self.timezones)?.into();
+                    rrule_set.rdate(rdate)
+                }
+                "EXDATE" => {
+                    let exdate = CalDateTime::parse_prop(prop, &self.timezones)?.into();
+                    rrule_set.exdate(exdate)
+                }
+                _ => rrule_set,
+            }
+        }
+
+        Ok(Some(rrule_set))
     }
 
-    // pub fn expand_recurrence(&self) -> Result<Vec<IcalEvent>, Error> {
-    //     if let Some(rrule) = self.recurrence_rule()? {
-    //         let mut events = vec![];
-    //         let first_occurence = self.get_first_occurence()?.unwrap();
-    //         let dates = rrule.between(first_occurence, None, None);
-    //
-    //         for date in dates {
-    //             let dtstart_utc = date;
-    //             let mut ev = self.event.clone();
-    //             ev.remove_property("RRULE");
-    //             ev.set_property(Property {
-    //                 name: "RECURRENCE-ID".to_string(),
-    //                 value: Some(dtstart_utc.format()),
-    //                 params: None,
-    //             });
-    //             ev.set_property(Property {
-    //                 name: "DTSTART".to_string(),
-    //                 value: Some(dtstart_utc.format()),
-    //                 params: None,
-    //             });
-    //             if let Some(duration) = self.get_duration()? {
-    //                 ev.set_property(Property {
-    //                     name: "DTEND".to_string(),
-    //                     value: Some((dtstart_utc + duration).format()),
-    //                     params: None,
-    //                 });
-    //             }
-    //             events.push(ev);
-    //         }
-    //         Ok(events)
-    //     } else {
-    //         Ok(vec![self.event.clone()])
-    //     }
-    // }
+    pub fn expand_recurrence(&self) -> Result<Vec<IcalEvent>, Error> {
+        if let Some(rrule_set) = self.recurrence_ruleset()? {
+            let mut events = vec![];
+            let dates = rrule_set.all(2048).dates;
+
+            for date in dates {
+                let date = CalDateTime::from(date);
+                let mut ev = self.event.clone();
+                ev.remove_property("RRULE");
+                ev.set_property(Property {
+                    name: "RECURRENCE-ID".to_string(),
+                    value: Some(date.format()),
+                    params: None,
+                });
+                ev.set_property(Property {
+                    name: "DTSTART".to_string(),
+                    value: Some(date.format()),
+                    params: None,
+                });
+                if let Some(duration) = self.get_duration()? {
+                    ev.set_property(Property {
+                        name: "DTEND".to_string(),
+                        value: Some((date + duration).format()),
+                        params: None,
+                    });
+                }
+                events.push(ev);
+            }
+            Ok(events)
+        } else {
+            Ok(vec![self.event.clone()])
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::CalendarObject;
+    use ical::generator::Emitter;
 
     const ICS: &str = r#"BEGIN:VCALENDAR
 CALSCALE:GREGORIAN
@@ -127,6 +149,49 @@ RRULE:FREQ=WEEKLY;COUNT=4;INTERVAL=2;BYDAY=TU,TH,SU
 END:VEVENT
 END:VCALENDAR"#;
 
+    const EXPANDED: [&str; 4] = [
+        "BEGIN:VEVENT\r
+UID:318ec6503573d9576818daf93dac07317058d95c\r
+DTSTAMP:20250502T132758Z\r
+DTEND;TZID=Europe/Berlin:20250506T092500\r
+SEQUENCE:2\r
+SUMMARY:weekly stuff\r
+TRANSP:OPAQUE\r
+RECURRENCE-ID:20250506T090000\r
+DTSTART:20250506T090000\r
+END:VEVENT\r\n",
+        "BEGIN:VEVENT\r
+UID:318ec6503573d9576818daf93dac07317058d95c\r
+DTSTAMP:20250502T132758Z\r
+DTEND;TZID=Europe/Berlin:20250506T092500\r
+SEQUENCE:2\r
+SUMMARY:weekly stuff\r
+TRANSP:OPAQUE\r
+RECURRENCE-ID:20250508T090000\r
+DTSTART:20250508T090000\r
+END:VEVENT\r\n",
+        "BEGIN:VEVENT\r
+UID:318ec6503573d9576818daf93dac07317058d95c\r
+DTSTAMP:20250502T132758Z\r
+DTEND;TZID=Europe/Berlin:20250506T092500\r
+SEQUENCE:2\r
+SUMMARY:weekly stuff\r
+TRANSP:OPAQUE\r
+RECURRENCE-ID:20250511T090000\r
+DTSTART:20250511T090000\r
+END:VEVENT\r\n",
+        "BEGIN:VEVENT\r
+UID:318ec6503573d9576818daf93dac07317058d95c\r
+DTSTAMP:20250502T132758Z\r
+DTEND;TZID=Europe/Berlin:20250506T092500\r
+SEQUENCE:2\r
+SUMMARY:weekly stuff\r
+TRANSP:OPAQUE\r
+RECURRENCE-ID:20250520T090000\r
+DTSTART:20250520T090000\r
+END:VEVENT\r\n",
+    ];
+
     #[test]
     fn test_expand_recurrence() {
         let event = CalendarObject::from_ics(
@@ -134,6 +199,14 @@ END:VCALENDAR"#;
             ICS.to_string(),
         )
         .unwrap();
-        assert_eq!(event.expand_recurrence().unwrap(), "asd".to_string());
+        let event = event.event().unwrap();
+
+        let events: Vec<String> = event
+            .expand_recurrence()
+            .unwrap()
+            .into_iter()
+            .map(|event| Emitter::generate(&event))
+            .collect();
+        assert_eq!(events.as_slice(), &EXPANDED);
     }
 }

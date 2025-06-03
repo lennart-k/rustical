@@ -48,12 +48,12 @@ impl AddressObject {
 
     pub fn get_anniversary(&self) -> Option<CalDateTime> {
         let prop = self.vcard.get_property("ANNIVERSARY")?;
-        CalDateTime::parse_prop(prop, &HashMap::default()).unwrap_or(None)
+        CalDateTime::parse_prop(prop, &HashMap::default()).ok()
     }
 
     pub fn get_birthday(&self) -> Option<CalDateTime> {
         let prop = self.vcard.get_property("BDAY")?;
-        CalDateTime::parse_prop(prop, &HashMap::default()).unwrap_or(None)
+        CalDateTime::parse_prop(prop, &HashMap::default()).ok()
     }
 
     pub fn get_full_name(&self) -> Option<&String> {

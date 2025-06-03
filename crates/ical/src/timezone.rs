@@ -2,11 +2,31 @@ use chrono::{Local, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use chrono_tz::Tz;
 use derive_more::{Display, From};
 
-#[derive(Debug, Clone, From)]
+#[derive(Debug, Clone, From, PartialEq, Eq)]
 pub enum CalTimezone {
     Local,
     Utc,
     Olson(Tz),
+}
+
+impl From<CalTimezone> for rrule::Tz {
+    fn from(value: CalTimezone) -> Self {
+        match value {
+            CalTimezone::Local => Self::LOCAL,
+            CalTimezone::Utc => Self::UTC,
+            CalTimezone::Olson(tz) => Self::Tz(tz),
+        }
+    }
+}
+
+impl From<rrule::Tz> for CalTimezone {
+    fn from(value: rrule::Tz) -> Self {
+        match value {
+            rrule::Tz::Local(_) => Self::Local,
+            rrule::Tz::Tz(chrono_tz::UTC) => Self::Utc,
+            rrule::Tz::Tz(tz) => Self::Olson(tz),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Display)]

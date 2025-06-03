@@ -9,7 +9,7 @@ use ical::{
 };
 use lazy_static::lazy_static;
 use rustical_xml::{ValueDeserialize, ValueSerialize};
-use std::{collections::HashMap, ops::Add};
+use std::{borrow::Cow, collections::HashMap, ops::Add};
 
 lazy_static! {
     static ref RE_VCARD_DATE_MM_DD: regex::Regex =
@@ -62,14 +62,46 @@ impl ValueSerialize for UtcDateTime {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, PartialOrd, Eq, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CalDateTime {
     // Form 1, example: 19980118T230000 -> Local
     // Form 2, example: 19980119T070000Z -> UTC
     // Form 3, example: TZID=America/New_York:19980119T020000 -> Olson
     // https://en.wikipedia.org/wiki/Tz_database
     DateTime(DateTime<CalTimezone>),
-    Date(NaiveDate),
+    Date(NaiveDate, CalTimezone),
+}
+
+impl From<CalDateTime> for DateTime<rrule::Tz> {
+    fn from(value: CalDateTime) -> Self {
+        value
+            .as_datetime()
+            .into_owned()
+            .with_timezone(&value.timezone().to_owned().into())
+    }
+}
+
+impl From<DateTime<rrule::Tz>> for CalDateTime {
+    fn from(value: DateTime<rrule::Tz>) -> Self {
+        Self::DateTime(value.with_timezone(&value.timezone().into()))
+    }
+}
+
+impl PartialOrd for CalDateTime {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for CalDateTime {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        match (&self, &other) {
+            (Self::DateTime(a), Self::DateTime(b)) => a.cmp(b),
+            (Self::DateTime(a), Self::Date(..)) => a.cmp(&other.as_datetime()),
+            (Self::Date(..), Self::DateTime(b)) => self.as_datetime().as_ref().cmp(b),
+            (Self::Date(..), Self::Date(..)) => self.as_datetime().cmp(&other.as_datetime()),
+        }
+    }
 }
 
 impl From<DateTime<Local>> for CalDateTime {
@@ -90,9 +122,9 @@ impl Add<Duration> for CalDateTime {
     fn add(self, duration: Duration) -> Self::Output {
         match self {
             Self::DateTime(datetime) => Self::DateTime(datetime + duration),
-            Self::Date(date) => Self::DateTime(
+            Self::Date(date, tz) => Self::DateTime(
                 date.and_time(NaiveTime::default())
-                    .and_local_timezone(CalTimezone::Local)
+                    .and_local_timezone(tz)
                     .earliest()
                     .expect("Local timezone has constant offset")
                     + duration,
@@ -105,12 +137,13 @@ impl CalDateTime {
     pub fn parse_prop(
         prop: &Property,
         timezones: &HashMap<String, IcalTimeZone>,
-    ) -> Result<Option<Self>, CalDateTimeError> {
-        let prop_value = if let Some(value) = prop.value.as_ref() {
-            value
-        } else {
-            return Ok(None);
-        };
+    ) -> Result<Self, CalDateTimeError> {
+        let prop_value = prop
+            .value
+            .as_ref()
+            .ok_or(CalDateTimeError::InvalidDatetimeFormat(
+                "empty property".to_owned(),
+            ))?;
 
         // Use the TZID parameter from the property
         let timezone = if let Some(tzid) = prop.get_tzid() {
@@ -144,7 +177,7 @@ impl CalDateTime {
             None
         };
 
-        Self::parse(prop_value, timezone).map(Some)
+        Self::parse(prop_value, timezone)
     }
 
     pub fn format(&self) -> String {
@@ -153,25 +186,26 @@ impl CalDateTime {
                 CalTimezone::Utc => datetime.format(UTC_DATE_TIME).to_string(),
                 _ => datetime.format(LOCAL_DATE_TIME).to_string(),
             },
-            Self::Date(date) => date.format(LOCAL_DATE).to_string(),
+            Self::Date(date, _) => date.format(LOCAL_DATE).to_string(),
         }
     }
 
     pub fn date(&self) -> NaiveDate {
         match self {
             Self::DateTime(datetime) => datetime.date_naive(),
-            Self::Date(date) => date.to_owned(),
+            Self::Date(date, _) => date.to_owned(),
         }
     }
 
-    pub fn into_datetime(self) -> DateTime<CalTimezone> {
+    pub fn as_datetime(&self) -> Cow<DateTime<CalTimezone>> {
         match self {
-            Self::DateTime(datetime) => datetime,
-            Self::Date(date) => date
-                .and_time(NaiveTime::default())
-                .and_local_timezone(CalTimezone::Local)
-                .earliest()
-                .expect("Midnight always exists"),
+            Self::DateTime(datetime) => Cow::Borrowed(datetime),
+            Self::Date(date, tz) => Cow::Owned(
+                date.and_time(NaiveTime::default())
+                    .and_local_timezone(tz.to_owned())
+                    .earliest()
+                    .expect("Midnight always exists"),
+            ),
         }
     }
 
@@ -196,15 +230,18 @@ impl CalDateTime {
         if let Ok(datetime) = NaiveDateTime::parse_from_str(value, UTC_DATE_TIME) {
             return Ok(datetime.and_utc().into());
         }
+        let timezone = timezone
+            .map(CalTimezone::Olson)
+            .unwrap_or(CalTimezone::Local);
         if let Ok(date) = NaiveDate::parse_from_str(value, LOCAL_DATE) {
-            return Ok(CalDateTime::Date(date));
+            return Ok(CalDateTime::Date(date, timezone));
         }
 
         if let Ok(date) = NaiveDate::parse_from_str(value, "%Y-%m-%d") {
-            return Ok(CalDateTime::Date(date));
+            return Ok(CalDateTime::Date(date, timezone));
         }
         if let Ok(date) = NaiveDate::parse_from_str(value, "%Y%m%d") {
-            return Ok(CalDateTime::Date(date));
+            return Ok(CalDateTime::Date(date, timezone));
         }
         if let Some(captures) = RE_VCARD_DATE_MM_DD.captures(value) {
             // Because 1972 is a leap year
@@ -216,6 +253,7 @@ impl CalDateTime {
             return Ok(CalDateTime::Date(
                 NaiveDate::from_ymd_opt(year, month, day)
                     .ok_or(CalDateTimeError::ParseError(value.to_string()))?,
+                timezone,
             ));
         }
 
@@ -223,16 +261,13 @@ impl CalDateTime {
     }
 
     pub fn utc(&self) -> DateTime<Utc> {
-        match &self {
-            CalDateTime::DateTime(datetime) => datetime.to_utc(),
-            CalDateTime::Date(date) => date.and_time(NaiveTime::default()).and_utc(),
-        }
+        self.as_datetime().to_utc()
     }
 
-    pub fn timezone(&self) -> Option<CalTimezone> {
+    pub fn timezone(&self) -> CalTimezone {
         match &self {
-            CalDateTime::DateTime(datetime) => Some(datetime.timezone()),
-            CalDateTime::Date(_) => None,
+            CalDateTime::DateTime(datetime) => datetime.timezone(),
+            CalDateTime::Date(_, tz) => tz.to_owned(),
         }
     }
 }
@@ -247,86 +282,88 @@ impl Datelike for CalDateTime {
     fn year(&self) -> i32 {
         match &self {
             CalDateTime::DateTime(datetime) => datetime.year(),
-            CalDateTime::Date(date) => date.year(),
+            CalDateTime::Date(date, _) => date.year(),
         }
     }
     fn month(&self) -> u32 {
         match &self {
             CalDateTime::DateTime(datetime) => datetime.month(),
-            CalDateTime::Date(date) => date.month(),
+            CalDateTime::Date(date, _) => date.month(),
         }
     }
 
     fn month0(&self) -> u32 {
         match &self {
             CalDateTime::DateTime(datetime) => datetime.month0(),
-            CalDateTime::Date(date) => date.month0(),
+            CalDateTime::Date(date, _) => date.month0(),
         }
     }
     fn day(&self) -> u32 {
         match &self {
             CalDateTime::DateTime(datetime) => datetime.day(),
-            CalDateTime::Date(date) => date.day(),
+            CalDateTime::Date(date, _) => date.day(),
         }
     }
     fn day0(&self) -> u32 {
         match &self {
             CalDateTime::DateTime(datetime) => datetime.day0(),
-            CalDateTime::Date(date) => date.day0(),
+            CalDateTime::Date(date, _) => date.day0(),
         }
     }
     fn ordinal(&self) -> u32 {
         match &self {
             CalDateTime::DateTime(datetime) => datetime.ordinal(),
-            CalDateTime::Date(date) => date.ordinal(),
+            CalDateTime::Date(date, _) => date.ordinal(),
         }
     }
     fn ordinal0(&self) -> u32 {
         match &self {
             CalDateTime::DateTime(datetime) => datetime.ordinal0(),
-            CalDateTime::Date(date) => date.ordinal0(),
+            CalDateTime::Date(date, _) => date.ordinal0(),
         }
     }
     fn weekday(&self) -> chrono::Weekday {
         match &self {
             CalDateTime::DateTime(datetime) => datetime.weekday(),
-            CalDateTime::Date(date) => date.weekday(),
+            CalDateTime::Date(date, _) => date.weekday(),
         }
     }
     fn iso_week(&self) -> chrono::IsoWeek {
         match &self {
             CalDateTime::DateTime(datetime) => datetime.iso_week(),
-            CalDateTime::Date(date) => date.iso_week(),
+            CalDateTime::Date(date, _) => date.iso_week(),
         }
     }
     fn with_year(&self, year: i32) -> Option<Self> {
         match &self {
             CalDateTime::DateTime(datetime) => Some(Self::DateTime(datetime.with_year(year)?)),
-            CalDateTime::Date(date) => Some(Self::Date(date.with_year(year)?)),
+            CalDateTime::Date(date, tz) => Some(Self::Date(date.with_year(year)?, tz.to_owned())),
         }
     }
     fn with_month(&self, month: u32) -> Option<Self> {
         match &self {
             CalDateTime::DateTime(datetime) => Some(Self::DateTime(datetime.with_month(month)?)),
-            CalDateTime::Date(date) => Some(Self::Date(date.with_month(month)?)),
+            CalDateTime::Date(date, tz) => Some(Self::Date(date.with_month(month)?, tz.to_owned())),
         }
     }
     fn with_month0(&self, month0: u32) -> Option<Self> {
         match &self {
             CalDateTime::DateTime(datetime) => Some(Self::DateTime(datetime.with_month0(month0)?)),
-            CalDateTime::Date(date) => Some(Self::Date(date.with_month0(month0)?)),
+            CalDateTime::Date(date, tz) => {
+                Some(Self::Date(date.with_month0(month0)?, tz.to_owned()))
+            }
         }
     }
     fn with_day(&self, day: u32) -> Option<Self> {
         match &self {
             CalDateTime::DateTime(datetime) => Some(Self::DateTime(datetime.with_day(day)?)),
-            CalDateTime::Date(date) => Some(Self::Date(date.with_day(day)?)),
+            CalDateTime::Date(date, tz) => Some(Self::Date(date.with_day(day)?, tz.to_owned())),
         }
     }
     fn with_day0(&self, day0: u32) -> Option<Self> {
         match &self {
             CalDateTime::DateTime(datetime) => Some(Self::DateTime(datetime.with_day0(day0)?)),
-            CalDateTime::Date(date) => Some(Self::Date(date.with_day0(day0)?)),
+            CalDateTime::Date(date, tz) => Some(Self::Date(date.with_day0(day0)?, tz.to_owned())),
         }
     }
     fn with_ordinal(&self, ordinal: u32) -> Option<Self> {
@@ -334,7 +371,9 @@ impl Datelike for CalDateTime {
             CalDateTime::DateTime(datetime) => {
                 Some(Self::DateTime(datetime.with_ordinal(ordinal)?))
             }
-            CalDateTime::Date(date) => Some(Self::Date(date.with_ordinal(ordinal)?)),
+            CalDateTime::Date(date, tz) => {
+                Some(Self::Date(date.with_ordinal(ordinal)?, tz.to_owned()))
+            }
         }
     }
     fn with_ordinal0(&self, ordinal0: u32) -> Option<Self> {
@@ -342,7 +381,9 @@ impl Datelike for CalDateTime {
             CalDateTime::DateTime(datetime) => {
                 Some(Self::DateTime(datetime.with_ordinal0(ordinal0)?))
             }
-            CalDateTime::Date(date) => Some(Self::Date(date.with_ordinal0(ordinal0)?)),
+            CalDateTime::Date(date, tz) => {
+                Some(Self::Date(date.with_ordinal0(ordinal0)?, tz.to_owned()))
+            }
         }
     }
 }
@@ -384,15 +425,24 @@ mod tests {
     fn test_vcard_date() {
         assert_eq!(
             CalDateTime::parse("19850412", None).unwrap(),
-            CalDateTime::Date(NaiveDate::from_ymd_opt(1985, 4, 12).unwrap())
+            CalDateTime::Date(
+                NaiveDate::from_ymd_opt(1985, 4, 12).unwrap(),
+                crate::CalTimezone::Local
+            )
         );
         assert_eq!(
             CalDateTime::parse("1985-04-12", None).unwrap(),
-            CalDateTime::Date(NaiveDate::from_ymd_opt(1985, 4, 12).unwrap())
+            CalDateTime::Date(
+                NaiveDate::from_ymd_opt(1985, 4, 12).unwrap(),
+                crate::CalTimezone::Local
+            )
         );
         assert_eq!(
             CalDateTime::parse("--0412", None).unwrap(),
-            CalDateTime::Date(NaiveDate::from_ymd_opt(1972, 4, 12).unwrap())
+            CalDateTime::Date(
+                NaiveDate::from_ymd_opt(1972, 4, 12).unwrap(),
+                crate::CalTimezone::Local
+            )
         );
     }
 }

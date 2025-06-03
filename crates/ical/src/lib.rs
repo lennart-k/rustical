@@ -1,5 +1,3 @@
-pub mod rrule;
-
 mod property_ext;
 pub use property_ext::*;
 

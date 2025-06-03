@@ -16,3 +16,4 @@ lazy_static.workspace = true
 regex.workspace = true
 strum.workspace = true
 strum_macros.workspace = true
+rrule = "0.14"

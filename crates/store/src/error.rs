@@ -12,9 +12,6 @@ pub enum Error {
     #[error("Invalid ics/vcf input: {0}")]
     InvalidData(String),
 
-    #[error(transparent)]
-    RRuleParserError(#[from] rustical_ical::rrule::ParserError),
-
     #[error("Read-only")]
     ReadOnly,
 
@@ -32,6 +29,9 @@ pub enum Error {
 
     #[error(transparent)]
     CalDateTimeError(#[from] CalDateTimeError),
+
+    #[error(transparent)]
+    RRuleError(#[from] rrule::RRuleError),
 }
 
 impl ResponseError for Error {

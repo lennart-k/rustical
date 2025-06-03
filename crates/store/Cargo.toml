@@ -31,6 +31,7 @@ rustical_dav.workspace = true
 strum.workspace = true
 strum_macros.workspace = true
 rustical_ical.workspace = true
+rrule = "0.14"
 
 [dev-dependencies]
 rstest = { workspace = true }

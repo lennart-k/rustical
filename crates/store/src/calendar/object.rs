@@ -181,14 +181,21 @@ impl CalendarObject {
         }
     }
 
+    pub fn event(&self) -> Option<&EventObject> {
+        match &self.data {
+            CalendarObjectComponent::Event(event) => Some(event),
+            _ => None,
+        }
+    }
+
     pub fn expand_recurrence(&self) -> Result<String, Error> {
         // Only events can be expanded
         match &self.data {
-            // CalendarObjectComponent::Event(event) => {
-            //     let mut cal = self.cal.clone();
-            //     cal.events = event.expand_recurrence()?;
-            //     Ok(cal.generate())
-            // }
+            CalendarObjectComponent::Event(event) => {
+                let mut cal = self.cal.clone();
+                cal.events = event.expand_recurrence()?;
+                Ok(cal.generate())
+            }
             _ => Ok(self.get_ics().to_string()),
         }
     }
