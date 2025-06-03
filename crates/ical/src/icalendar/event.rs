@@ -98,6 +98,9 @@ impl EventObject {
                 let date = CalDateTime::from(date);
                 let mut ev = self.event.clone();
                 ev.remove_property("RRULE");
+                ev.remove_property("RDATE");
+                ev.remove_property("EXDATE");
+                ev.remove_property("EXRULE");
                 ev.set_property(Property {
                     name: "RECURRENCE-ID".to_string(),
                     value: Some(date.format()),
