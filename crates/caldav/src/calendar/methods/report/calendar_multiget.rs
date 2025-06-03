@@ -1,18 +1,9 @@
 use super::ReportPropName;
-use crate::{
-    Error,
-    calendar_object::resource::{CalendarObjectPropWrapper, CalendarObjectResource},
-};
-use actix_web::{
-    dev::{Path, ResourceDef},
-    http::StatusCode,
-};
-use rustical_dav::{
-    resource::{PrincipalUri, Resource},
-    xml::{MultistatusElement, PropfindType, multistatus::ResponseElement},
-};
+use crate::Error;
+use actix_web::dev::{Path, ResourceDef};
+use rustical_dav::xml::PropfindType;
 use rustical_ical::CalendarObject;
-use rustical_store::{CalendarStore, auth::User};
+use rustical_store::CalendarStore;
 use rustical_xml::XmlDeserialize;
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
@@ -53,45 +44,4 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore>(
     }
 
     Ok((result, not_found))
-}
-
-pub async fn handle_calendar_multiget<C: CalendarStore>(
-    cal_multiget: &CalendarMultigetRequest,
-    props: &[&str],
-    path: &str,
-    puri: &impl PrincipalUri,
-    user: &User,
-    principal: &str,
-    cal_id: &str,
-    cal_store: &C,
-) -> Result<MultistatusElement<CalendarObjectPropWrapper, String>, Error> {
-    let (objects, not_found) =
-        get_objects_calendar_multiget(cal_multiget, path, principal, cal_id, cal_store).await?;
-
-    let mut responses = Vec::new();
-    for object in objects {
-        let path = format!("{}/{}.ics", path, object.get_id());
-        responses.push(
-            CalendarObjectResource {
-                object,
-                principal: principal.to_owned(),
-            }
-            .propfind(&path, props, puri, user)?,
-        );
-    }
-
-    let not_found_responses = not_found
-        .into_iter()
-        .map(|path| ResponseElement {
-            href: path,
-            status: Some(StatusCode::NOT_FOUND),
-            ..Default::default()
-        })
-        .collect();
-
-    Ok(MultistatusElement {
-        responses,
-        member_responses: not_found_responses,
-        ..Default::default()
-    })
 }

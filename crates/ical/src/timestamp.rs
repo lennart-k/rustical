@@ -39,7 +39,7 @@ pub enum CalDateTimeError {
 }
 
 #[derive(Debug, Clone, Deref, PartialEq)]
-pub struct UtcDateTime(DateTime<Utc>);
+pub struct UtcDateTime(pub DateTime<Utc>);
 
 impl ValueDeserialize for UtcDateTime {
     fn deserialize(val: &str) -> Result<Self, rustical_xml::XmlError> {

@@ -1,18 +1,10 @@
-use rustical_dav::{
-    resource::{PrincipalUri, Resource},
-    xml::{MultistatusElement, PropfindType},
-};
+use super::ReportPropName;
+use crate::Error;
+use rustical_dav::xml::PropfindType;
 use rustical_ical::{CalendarObject, UtcDateTime};
-use rustical_store::{CalendarStore, auth::User, calendar_store::CalendarQuery};
+use rustical_store::{CalendarStore, calendar_store::CalendarQuery};
 use rustical_xml::XmlDeserialize;
 use std::ops::Deref;
-
-use crate::{
-    Error,
-    calendar_object::resource::{CalendarObjectPropWrapper, CalendarObjectResource},
-};
-
-use super::ReportPropName;
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 #[allow(dead_code)]
@@ -211,34 +203,4 @@ pub async fn get_objects_calendar_query<C: CalendarStore>(
         objects.retain(|object| filter.matches(object));
     }
     Ok(objects)
-}
-
-pub async fn handle_calendar_query<C: CalendarStore>(
-    cal_query: &CalendarQueryRequest,
-    props: &[&str],
-    path: &str,
-    puri: &impl PrincipalUri,
-    user: &User,
-    principal: &str,
-    cal_id: &str,
-    cal_store: &C,
-) -> Result<MultistatusElement<CalendarObjectPropWrapper, String>, Error> {
-    let objects = get_objects_calendar_query(cal_query, principal, cal_id, cal_store).await?;
-
-    let mut responses = Vec::new();
-    for object in objects {
-        let path = format!("{}/{}.ics", path, object.get_id());
-        responses.push(
-            CalendarObjectResource {
-                object,
-                principal: principal.to_owned(),
-            }
-            .propfind(&path, props, puri, user)?,
-        );
-    }
-
-    Ok(MultistatusElement {
-        responses,
-        ..Default::default()
-    })
 }

@@ -1,13 +1,22 @@
-use crate::{CalDavPrincipalUri, Error};
+use crate::{
+    CalDavPrincipalUri, Error,
+    calendar_object::resource::{CalendarObjectPropWrapper, CalendarObjectResource},
+};
 use actix_web::{
     HttpRequest, Responder,
+    http::StatusCode,
     web::{Data, Path},
 };
-use calendar_multiget::{CalendarMultigetRequest, handle_calendar_multiget};
-use calendar_query::{CalendarQueryRequest, handle_calendar_query};
-use rustical_dav::xml::{
-    PropElement, PropfindType, Propname, sync_collection::SyncCollectionRequest,
+use calendar_multiget::{CalendarMultigetRequest, get_objects_calendar_multiget};
+use calendar_query::{CalendarQueryRequest, get_objects_calendar_query};
+use rustical_dav::{
+    resource::{PrincipalUri, Resource},
+    xml::{
+        MultistatusElement, PropElement, PropfindType, Propname, multistatus::ResponseElement,
+        sync_collection::SyncCollectionRequest,
+    },
 };
+use rustical_ical::{CalendarObject, UtcDateTime};
 use rustical_store::{CalendarStore, auth::User};
 use rustical_xml::{XmlDeserialize, XmlDocument};
 use sync_collection::handle_sync_collection;
@@ -20,9 +29,9 @@ mod sync_collection;
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 pub(crate) struct ExpandElement {
     #[xml(ty = "attr")]
-    start: String,
+    start: UtcDateTime,
     #[xml(ty = "attr")]
-    end: String,
+    end: UtcDateTime,
 }
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
@@ -81,6 +90,43 @@ impl ReportRequest {
     }
 }
 
+fn objects_response(
+    objects: Vec<CalendarObject>,
+    not_found: Vec<String>,
+    path: &str,
+    principal: &str,
+    puri: &impl PrincipalUri,
+    user: &User,
+    props: &[&str],
+) -> Result<MultistatusElement<CalendarObjectPropWrapper, String>, Error> {
+    let mut responses = Vec::new();
+    for object in objects {
+        let path = format!("{}/{}.ics", path, object.get_id());
+        responses.push(
+            CalendarObjectResource {
+                object,
+                principal: principal.to_owned(),
+            }
+            .propfind(&path, props, puri, user)?,
+        );
+    }
+
+    let not_found_responses = not_found
+        .into_iter()
+        .map(|path| ResponseElement {
+            href: path,
+            status: Some(StatusCode::NOT_FOUND),
+            ..Default::default()
+        })
+        .collect();
+
+    Ok(MultistatusElement {
+        responses,
+        member_responses: not_found_responses,
+        ..Default::default()
+    })
+}
+
 #[instrument(skip(req, cal_store))]
 pub async fn route_report_calendar<C: CalendarStore>(
     path: Path<(String, String)>,
@@ -100,30 +146,37 @@ pub async fn route_report_calendar<C: CalendarStore>(
 
     Ok(match &request {
         ReportRequest::CalendarQuery(cal_query) => {
-            handle_calendar_query(
-                cal_query,
-                &props,
+            let objects =
+                get_objects_calendar_query(cal_query, &principal, &cal_id, cal_store.as_ref())
+                    .await?;
+            objects_response(
+                objects,
+                vec![],
                 req.path(),
+                &principal,
                 puri.as_ref(),
                 &user,
-                &principal,
-                &cal_id,
-                cal_store.as_ref(),
-            )
-            .await?
+                &props,
+            )?
         }
         ReportRequest::CalendarMultiget(cal_multiget) => {
-            handle_calendar_multiget(
+            let (objects, not_found) = get_objects_calendar_multiget(
                 cal_multiget,
-                &props,
                 req.path(),
-                puri.as_ref(),
-                &user,
                 &principal,
                 &cal_id,
                 cal_store.as_ref(),
             )
-            .await?
+            .await?;
+            objects_response(
+                objects,
+                not_found,
+                req.path(),
+                &principal,
+                puri.as_ref(),
+                &user,
+                &props,
+            )?
         }
         ReportRequest::SyncCollection(sync_collection) => {
             handle_sync_collection(
@@ -171,7 +224,10 @@ mod tests {
                 prop: rustical_dav::xml::PropfindType::Prop(PropElement(vec![
                     ReportPropName::Propname(Propname{name: "getetag".to_owned(), ns: Some("DAV:".into())}),
                     ReportPropName::Propname(Propname{name: "displayname".to_owned(), ns: Some("DAV:".into())}),
-                    ReportPropName::CalendarData(CalendarData { comp: None, expand: Some(ExpandElement { start: "20250426T220000Z".to_owned(), end: "20250503T220000Z".to_owned() }), limit_recurrence_set: None, limit_freebusy_set: None })
+                    ReportPropName::CalendarData(CalendarData { comp: None, expand: Some(ExpandElement {
+                        start: <UtcDateTime as ValueDeserialize>::deserialize("20250426T220000Z").unwrap(),
+                        end: <UtcDateTime as ValueDeserialize>::deserialize("20250503T220000Z").unwrap(),
+                    }), limit_recurrence_set: None, limit_freebusy_set: None })
                 ])),
                 href: vec![
                     "/caldav/user/user/6f787542-5256-401a-8db97003260da/ae7a998fdfd1d84a20391168962c62b".to_owned()
