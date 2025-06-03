@@ -1,7 +1,7 @@
-use crate::calendar::{Calendar, CalendarObject};
-use crate::error::Error;
+use crate::{Calendar, error::Error};
 use async_trait::async_trait;
 use chrono::NaiveDate;
+use rustical_ical::CalendarObject;
 
 #[derive(Default, Debug, Clone)]
 pub struct CalendarQuery {

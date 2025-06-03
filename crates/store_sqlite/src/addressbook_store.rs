@@ -1,8 +1,9 @@
 use super::ChangeOperation;
 use async_trait::async_trait;
 use derive_more::derive::Constructor;
+use rustical_ical::AddressObject;
 use rustical_store::{
-    AddressObject, Addressbook, AddressbookStore, CollectionOperation, CollectionOperationDomain,
+    Addressbook, AddressbookStore, CollectionOperation, CollectionOperationDomain,
     CollectionOperationType, Error, synctoken::format_synctoken,
 };
 use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};

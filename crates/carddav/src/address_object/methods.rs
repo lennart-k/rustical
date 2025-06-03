@@ -8,8 +8,9 @@ use actix_web::http::header::HeaderValue;
 use actix_web::web::{Data, Path};
 use rustical_dav::privileges::UserPrivilege;
 use rustical_dav::resource::Resource;
+use rustical_ical::AddressObject;
+use rustical_store::AddressbookStore;
 use rustical_store::auth::User;
-use rustical_store::{AddressObject, AddressbookStore};
 use tracing::instrument;
 use tracing_actix_web::RootSpan;
 

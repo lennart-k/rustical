@@ -2,8 +2,8 @@ use rustical_dav::{
     resource::{PrincipalUri, Resource},
     xml::{MultistatusElement, PropfindType},
 };
-use rustical_ical::UtcDateTime;
-use rustical_store::{CalendarObject, CalendarStore, auth::User, calendar_store::CalendarQuery};
+use rustical_ical::{CalendarObject, UtcDateTime};
+use rustical_store::{CalendarStore, auth::User, calendar_store::CalendarQuery};
 use rustical_xml::XmlDeserialize;
 use std::ops::Deref;
 

@@ -4,7 +4,7 @@ pub mod calendar_store;
 pub mod error;
 pub use error::Error;
 pub mod auth;
-pub mod calendar;
+mod calendar;
 mod contact_birthday_store;
 mod secret;
 mod subscription_store;
@@ -16,8 +16,8 @@ pub use contact_birthday_store::ContactBirthdayStore;
 pub use secret::Secret;
 pub use subscription_store::*;
 
-pub use addressbook::{AddressObject, Addressbook};
-pub use calendar::{Calendar, CalendarObject};
+pub use addressbook::Addressbook;
+pub use calendar::Calendar;
 
 #[derive(Debug, Clone)]
 pub enum CollectionOperationType {

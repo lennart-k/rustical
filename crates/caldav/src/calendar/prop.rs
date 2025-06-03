@@ -1,5 +1,5 @@
 use derive_more::derive::{From, Into};
-use rustical_store::calendar::CalendarObjectType;
+use rustical_ical::CalendarObjectType;
 use rustical_xml::{XmlDeserialize, XmlSerialize};
 
 #[derive(Debug, Clone, XmlSerialize, XmlDeserialize, PartialEq, From, Into)]

@@ -2,11 +2,10 @@ use super::ChangeOperation;
 use async_trait::async_trait;
 use chrono::TimeDelta;
 use derive_more::derive::Constructor;
-use rustical_ical::CalDateTime;
-use rustical_store::calendar::CalendarObjectType;
+use rustical_ical::{CalDateTime, CalendarObject, CalendarObjectType};
 use rustical_store::calendar_store::CalendarQuery;
 use rustical_store::synctoken::format_synctoken;
-use rustical_store::{Calendar, CalendarObject, CalendarStore, Error};
+use rustical_store::{Calendar, CalendarStore, Error};
 use rustical_store::{CollectionOperation, CollectionOperationType};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};
@@ -23,7 +22,7 @@ impl TryFrom<CalendarObjectRow> for CalendarObject {
     type Error = rustical_store::Error;
 
     fn try_from(value: CalendarObjectRow) -> Result<Self, Self::Error> {
-        CalendarObject::from_ics(value.id, value.ics)
+        Ok(CalendarObject::from_ics(value.id, value.ics)?)
     }
 }
 

@@ -3114,6 +3114,7 @@ dependencies = [
  "quick-xml",
  "rustical_dav",
  "rustical_dav_push",
+ "rustical_ical",
  "rustical_store",
  "rustical_xml",
  "serde",
@@ -3198,6 +3199,7 @@ dependencies = [
 name = "rustical_ical"
 version = "0.1.0"
 dependencies = [
+ "actix-web",
  "chrono",
  "chrono-tz",
  "derive_more 2.0.1",
@@ -3206,6 +3208,8 @@ dependencies = [
  "regex",
  "rrule",
  "rustical_xml",
+ "serde",
+ "sha2",
  "strum",
  "strum_macros",
  "thiserror 2.0.12",

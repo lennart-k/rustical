@@ -1,10 +1,10 @@
+use crate::{CalDateTime, LOCAL_DATE};
 use crate::{CalendarObject, Error};
 use chrono::Datelike;
 use ical::parser::{
     Component,
     vcard::{self, component::VcardContact},
 };
-use rustical_ical::{CalDateTime, LOCAL_DATE};
 use sha2::{Digest, Sha256};
 use std::{collections::HashMap, io::BufReader};
 
@@ -18,7 +18,7 @@ pub struct AddressObject {
 impl AddressObject {
     pub fn from_vcf(object_id: String, vcf: String) -> Result<Self, Error> {
         let mut parser = vcard::VcardParser::new(BufReader::new(vcf.as_bytes()));
-        let vcard = parser.next().ok_or(Error::NotFound)??;
+        let vcard = parser.next().ok_or(Error::MissingContact)??;
         if parser.next().is_some() {
             return Err(Error::InvalidData(
                 "multiple vcards, only one allowed".to_owned(),

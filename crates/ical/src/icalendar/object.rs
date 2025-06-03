@@ -1,10 +1,10 @@
 use super::{EventObject, JournalObject, TodoObject};
+use crate::CalDateTime;
 use crate::Error;
 use ical::{
     generator::{Emitter, IcalCalendar},
     parser::{Component, ical::component::IcalTimeZone},
 };
-use rustical_ical::CalDateTime;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::{collections::HashMap, io::BufReader};
@@ -66,7 +66,7 @@ pub struct CalendarObject {
 impl CalendarObject {
     pub fn from_ics(object_id: String, ics: String) -> Result<Self, Error> {
         let mut parser = ical::IcalParser::new(BufReader::new(ics.as_bytes()));
-        let cal = parser.next().ok_or(Error::NotFound)??;
+        let cal = parser.next().ok_or(Error::MissingCalendar)??;
         if parser.next().is_some() {
             return Err(Error::InvalidData(
                 "multiple calendars, only one allowed".to_owned(),

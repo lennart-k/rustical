@@ -1,6 +1,6 @@
-use super::CalendarObjectType;
 use crate::synctoken::format_synctoken;
 use chrono::NaiveDateTime;
+use rustical_ical::CalendarObjectType;
 use serde::Serialize;
 
 #[derive(Debug, Default, Clone, Serialize)]

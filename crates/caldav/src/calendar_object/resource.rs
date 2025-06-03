@@ -9,7 +9,8 @@ use rustical_dav::{
     resource::{PrincipalUri, Resource, ResourceService},
     xml::Resourcetype,
 };
-use rustical_store::{CalendarObject, CalendarStore, auth::User};
+use rustical_ical::CalendarObject;
+use rustical_store::{CalendarStore, auth::User};
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 use serde::Deserialize;
 use std::sync::Arc;

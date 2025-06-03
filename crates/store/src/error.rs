@@ -1,5 +1,4 @@
 use actix_web::{ResponseError, http::StatusCode};
-use rustical_ical::CalDateTimeError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -9,8 +8,8 @@ pub enum Error {
     #[error("Resource already exists and overwrite=false")]
     AlreadyExists,
 
-    #[error("Invalid ics/vcf input: {0}")]
-    InvalidData(String),
+    #[error("Invalid principal type: {0}")]
+    InvalidPrincipalType(String),
 
     #[error("Read-only")]
     ReadOnly,
@@ -22,16 +21,10 @@ pub enum Error {
     IO(#[from] std::io::Error),
 
     #[error(transparent)]
-    ParserError(#[from] ical::parser::ParserError),
-
-    #[error(transparent)]
     Other(#[from] anyhow::Error),
 
     #[error(transparent)]
-    CalDateTimeError(#[from] CalDateTimeError),
-
-    #[error(transparent)]
-    RRuleError(#[from] rrule::RRuleError),
+    IcalError(#[from] rustical_ical::Error),
 }
 
 impl ResponseError for Error {
@@ -39,8 +32,9 @@ impl ResponseError for Error {
         match self {
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::AlreadyExists => StatusCode::CONFLICT,
-            Self::InvalidData(_) => StatusCode::BAD_REQUEST,
             Self::ReadOnly => StatusCode::FORBIDDEN,
+            Self::IcalError(err) => err.status_code(),
+            Self::InvalidPrincipalType(_) => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

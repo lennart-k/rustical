@@ -1,12 +1,9 @@
-use std::{collections::HashMap, sync::Arc};
-
-use crate::{
-    AddressObject, Addressbook, AddressbookStore, Calendar, CalendarObject, CalendarStore, Error,
-    calendar::CalendarObjectType,
-};
+use crate::{Addressbook, AddressbookStore, Calendar, CalendarStore, Error};
 use async_trait::async_trait;
 use derive_more::derive::Constructor;
+use rustical_ical::{AddressObject, CalendarObject, CalendarObjectType};
 use sha2::{Digest, Sha256};
+use std::{collections::HashMap, sync::Arc};
 
 #[derive(Constructor, Clone)]
 pub struct ContactBirthdayStore<AS: AddressbookStore>(Arc<AS>);
@@ -85,7 +82,7 @@ impl<AS: AddressbookStore> CalendarStore for ContactBirthdayStore<AS> {
     ) -> Result<(Vec<CalendarObject>, Vec<String>, i64), Error> {
         let (objects, deleted_objects, new_synctoken) =
             self.0.sync_changes(principal, cal_id, synctoken).await?;
-        let objects: Result<Vec<Option<CalendarObject>>, Error> = objects
+        let objects: Result<Vec<Option<CalendarObject>>, rustical_ical::Error> = objects
             .iter()
             .map(AddressObject::get_birthday_object)
             .collect();
@@ -99,13 +96,13 @@ impl<AS: AddressbookStore> CalendarStore for ContactBirthdayStore<AS> {
         principal: &str,
         cal_id: &str,
     ) -> Result<Vec<CalendarObject>, Error> {
-        let objects: Result<Vec<HashMap<&'static str, CalendarObject>>, Error> = self
-            .0
-            .get_objects(principal, cal_id)
-            .await?
-            .iter()
-            .map(AddressObject::get_significant_dates)
-            .collect();
+        let objects: Result<Vec<HashMap<&'static str, CalendarObject>>, rustical_ical::Error> =
+            self.0
+                .get_objects(principal, cal_id)
+                .await?
+                .iter()
+                .map(AddressObject::get_significant_dates)
+                .collect();
         let objects = objects?
             .into_iter()
             .flat_map(HashMap::into_values)

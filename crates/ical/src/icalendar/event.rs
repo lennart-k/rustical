@@ -1,4 +1,5 @@
 use crate::Error;
+use crate::{CalDateTime, ComponentMut, parse_duration};
 use chrono::{DateTime, Duration};
 use ical::{
     generator::IcalEvent,
@@ -6,7 +7,6 @@ use ical::{
     property::Property,
 };
 use rrule::{RRule, RRuleSet};
-use rustical_ical::{CalDateTime, ComponentMut, parse_duration};
 use std::{collections::HashMap, str::FromStr};
 
 #[derive(Debug, Clone)]

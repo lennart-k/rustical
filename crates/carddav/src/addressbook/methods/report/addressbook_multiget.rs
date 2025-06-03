@@ -10,7 +10,8 @@ use rustical_dav::{
     resource::{PrincipalUri, Resource},
     xml::{MultistatusElement, PropfindType, multistatus::ResponseElement},
 };
-use rustical_store::{AddressObject, AddressbookStore, auth::User};
+use rustical_ical::AddressObject;
+use rustical_store::{AddressbookStore, auth::User};
 use rustical_xml::XmlDeserialize;
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]

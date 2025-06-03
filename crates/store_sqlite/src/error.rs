@@ -5,6 +5,9 @@ pub enum Error {
 
     #[error(transparent)]
     StoreError(rustical_store::Error),
+
+    #[error(transparent)]
+    IcalError(#[from] rustical_ical::Error),
 }
 
 impl From<sqlx::Error> for Error {
@@ -27,6 +30,7 @@ impl From<Error> for rustical_store::Error {
     fn from(value: Error) -> Self {
         match value {
             Error::SqlxError(err) => Self::Other(err.into()),
+            Error::IcalError(err) => Self::Other(err.into()),
             Error::StoreError(err) => err,
         }
     }

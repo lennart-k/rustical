@@ -4,8 +4,9 @@ use actix_web::HttpResponse;
 use actix_web::http::header;
 use actix_web::http::header::HeaderValue;
 use actix_web::web::{Data, Path};
+use rustical_ical::CalendarObject;
+use rustical_store::CalendarStore;
 use rustical_store::auth::User;
-use rustical_store::{CalendarObject, CalendarStore};
 use tracing::instrument;
 use tracing_actix_web::RootSpan;
 

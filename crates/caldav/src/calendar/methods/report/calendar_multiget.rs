@@ -11,7 +11,8 @@ use rustical_dav::{
     resource::{PrincipalUri, Resource},
     xml::{MultistatusElement, PropfindType, multistatus::ResponseElement},
 };
-use rustical_store::{CalendarObject, CalendarStore, auth::User};
+use rustical_ical::CalendarObject;
+use rustical_store::{CalendarStore, auth::User};
 use rustical_xml::XmlDeserialize;
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]

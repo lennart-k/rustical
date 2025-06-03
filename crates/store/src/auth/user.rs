@@ -38,7 +38,7 @@ impl TryFrom<&str> for PrincipalType {
             "ROOM" => Self::Room,
             "UNKNOWN" => Self::Unknown,
             _ => {
-                return Err(crate::Error::InvalidData(
+                return Err(crate::Error::InvalidPrincipalType(
                     "Invalid principal type".to_owned(),
                 ));
             }

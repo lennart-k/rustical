@@ -8,7 +8,8 @@ use rustical_dav::{
     resource::{PrincipalUri, Resource, ResourceService},
     xml::Resourcetype,
 };
-use rustical_store::{AddressObject, AddressbookStore, auth::User};
+use rustical_ical::AddressObject;
+use rustical_store::{AddressbookStore, auth::User};
 use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
 use serde::Deserialize;
 use std::sync::Arc;

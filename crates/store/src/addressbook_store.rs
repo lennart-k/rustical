@@ -1,8 +1,6 @@
-use crate::{
-    Error,
-    addressbook::{AddressObject, Addressbook},
-};
+use crate::{Error, addressbook::Addressbook};
 use async_trait::async_trait;
+use rustical_ical::AddressObject;
 
 #[async_trait]
 pub trait AddressbookStore: Send + Sync + 'static {
