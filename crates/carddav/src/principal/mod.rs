@@ -8,7 +8,7 @@ use rustical_dav::resource::{PrincipalUri, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::{AuthenticationProvider, User};
 use rustical_store::{AddressbookStore, SubscriptionStore};
-use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
+use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 use std::sync::Arc;
 
 pub struct PrincipalResourceService<
@@ -53,7 +53,7 @@ pub struct PrincipalResource {
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
 pub struct AddressbookHomeSet(#[xml(ty = "untagged", flatten)] Vec<HrefElement>);
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "PrincipalPropName")]
 pub enum PrincipalProp {
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
@@ -71,7 +71,7 @@ pub enum PrincipalProp {
     PrincipalAddress(Option<HrefElement>),
 }
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "PrincipalPropWrapperName", untagged)]
 pub enum PrincipalPropWrapper {
     Principal(PrincipalProp),

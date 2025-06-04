@@ -1,6 +1,6 @@
 use rustical_xml::{ValueDeserialize, ValueSerialize, XmlDeserialize};
 
-use super::{PropfindType, Propname};
+use super::PropfindType;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum SyncLevel {
@@ -37,7 +37,7 @@ impl ValueSerialize for SyncLevel {
 //    <!-- DAV:limit defined in RFC 5323, Section 5.17 -->
 //    <!-- DAV:prop defined in RFC 4918, Section 14.18 -->
 #[xml(ns = "crate::namespace::NS_DAV")]
-pub struct SyncCollectionRequest<PN: XmlDeserialize = Propname> {
+pub struct SyncCollectionRequest<PN: XmlDeserialize> {
     #[xml(ns = "crate::namespace::NS_DAV")]
     pub sync_token: String,
     #[xml(ns = "crate::namespace::NS_DAV")]

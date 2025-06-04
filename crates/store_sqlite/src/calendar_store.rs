@@ -252,7 +252,7 @@ impl SqliteCalendarStore {
         .fetch_all(executor)
         .await.map_err(crate::Error::from)?
         .into_iter()
-        .map(|row| row.try_into().map_err(rustical_store::Error::from))
+        .map(|row| row.try_into())
         .collect()
     }
 
@@ -286,7 +286,7 @@ impl SqliteCalendarStore {
         .await
         .map_err(crate::Error::from)?
         .into_iter()
-        .map(|row| row.try_into().map_err(rustical_store::Error::from))
+        .map(|row| row.try_into())
         .collect()
     }
 

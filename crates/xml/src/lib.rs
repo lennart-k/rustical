@@ -1,5 +1,6 @@
 use quick_xml::name::Namespace;
 use std::collections::HashMap;
+use std::hash::Hash;
 use std::str::FromStr;
 
 pub mod de;
@@ -17,8 +18,8 @@ pub use se::XmlSerialize;
 pub use se::XmlSerializeRoot;
 pub use unparsed::Unparsed;
 pub use value::{ParseValueError, ValueDeserialize, ValueSerialize};
-pub use xml_derive::EnumUnitVariants;
 pub use xml_derive::EnumVariants;
+pub use xml_derive::PropName;
 pub use xml_derive::XmlRootTag;
 
 pub trait XmlRootTag {
@@ -37,6 +38,12 @@ pub trait EnumVariants {
     fn variant_names() -> Vec<(Option<Namespace<'static>>, &'static str)>;
 }
 
-pub trait EnumUnitVariants: Sized {
-    type UnitVariants: Into<(Option<Namespace<'static>>, &'static str)> + From<Self> + FromStr;
+pub trait PropName: Sized {
+    type Names: Into<(Option<Namespace<'static>>, &'static str)>
+        + Clone
+        + From<Self>
+        + FromStr<Err: std::fmt::Debug>
+        + Hash
+        + Eq
+        + XmlDeserialize;
 }

@@ -19,12 +19,12 @@ use rustical_dav_push::{DavPushExtension, DavPushExtensionProp};
 use rustical_ical::CalDateTime;
 use rustical_store::auth::User;
 use rustical_store::{Calendar, CalendarStore, SubscriptionStore};
-use rustical_xml::{EnumUnitVariants, EnumVariants};
+use rustical_xml::{EnumVariants, PropName};
 use rustical_xml::{XmlDeserialize, XmlSerialize};
 use std::str::FromStr;
 use std::sync::Arc;
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "CalendarPropName")]
 pub enum CalendarProp {
     // WebDAV (RFC 2518)
@@ -64,7 +64,7 @@ pub enum CalendarProp {
     MaxDateTime(String),
 }
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "CalendarPropWrapperName", untagged)]
 pub enum CalendarPropWrapper {
     Calendar(CalendarProp),

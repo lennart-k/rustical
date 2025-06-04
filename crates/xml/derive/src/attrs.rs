@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use darling::{FromDeriveInput, FromField, FromMeta, FromVariant, util::Flag};
-use syn::LitByteStr;
+use syn::{Ident, LitByteStr};
 
 #[derive(Debug, Default, FromMeta, Clone)]
 pub struct TagAttrs {
@@ -16,6 +16,8 @@ pub struct VariantAttrs {
     pub common: TagAttrs,
     pub other: Flag,
     pub skip_deserializing: Flag,
+    // This is actually only for the PropName trait
+    pub prop: Option<Ident>,
 }
 
 #[derive(Default, FromDeriveInput, Clone)]

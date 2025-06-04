@@ -1,10 +1,13 @@
 use derive_more::derive::From;
-use quick_xml::name::Namespace;
-use rustical_xml::XmlSerialize;
+use quick_xml::{
+    events::{BytesStart, Event},
+    name::Namespace,
+};
+use rustical_xml::{NamespaceOwned, XmlSerialize};
 use std::collections::HashMap;
 
 #[derive(Clone, Debug, PartialEq, From)]
-pub struct TagList(Vec<(Option<Namespace<'static>>, String)>);
+pub struct TagList(Vec<(Option<NamespaceOwned>, String)>);
 
 impl XmlSerialize for TagList {
     fn serialize<W: std::io::Write>(
@@ -14,22 +17,10 @@ impl XmlSerialize for TagList {
         namespaces: &HashMap<Namespace, &[u8]>,
         writer: &mut quick_xml::Writer<W>,
     ) -> std::io::Result<()> {
-        #[derive(Debug, XmlSerialize, PartialEq)]
-        struct Inner(#[xml(ty = "untagged", flatten)] Vec<Tag>);
-
-        #[derive(Debug, XmlSerialize, PartialEq)]
-        struct Tag(
-            #[xml(ty = "namespace")] Option<Namespace<'static>>,
-            #[xml(ty = "tag_name")] String,
-        );
-
-        Inner(
-            self.0
-                .iter()
-                .map(|(ns, tag)| Tag(ns.to_owned(), tag.to_owned()))
-                .collect(),
-        )
-        .serialize(ns, tag, namespaces, writer)
+        for (_ns, tag) in &self.0 {
+            writer.write_event(Event::Empty(BytesStart::new(tag)))?;
+        }
+        Ok(())
     }
 
     #[allow(refining_impl_trait)]

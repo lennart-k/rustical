@@ -1,5 +1,4 @@
-use super::ReportPropName;
-use crate::Error;
+use crate::{Error, calendar_object::resource::CalendarObjectPropWrapperName};
 use actix_web::dev::{Path, ResourceDef};
 use rustical_dav::xml::PropfindType;
 use rustical_ical::CalendarObject;
@@ -11,7 +10,7 @@ use rustical_xml::XmlDeserialize;
 // <!ELEMENT calendar-query ((DAV:allprop | DAV:propname | DAV:prop)?, href+)>
 pub(crate) struct CalendarMultigetRequest {
     #[xml(ty = "untagged")]
-    pub(crate) prop: PropfindType<ReportPropName>,
+    pub(crate) prop: PropfindType<CalendarObjectPropWrapperName>,
     #[xml(flatten)]
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     pub(crate) href: Vec<String>,

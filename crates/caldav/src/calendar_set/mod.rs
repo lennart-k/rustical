@@ -8,7 +8,7 @@ use rustical_dav::resource::{PrincipalUri, Resource, ResourceService};
 use rustical_dav::xml::{Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
 use rustical_store::{CalendarStore, SubscriptionStore};
-use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
+use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -17,7 +17,7 @@ pub struct CalendarSetResource {
     pub(crate) read_only: bool,
 }
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "PrincipalPropWrapperName", untagged)]
 pub enum PrincipalPropWrapper {
     Common(CommonPropertiesProp),

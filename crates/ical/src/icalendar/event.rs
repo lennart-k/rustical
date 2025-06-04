@@ -1,6 +1,6 @@
 use crate::Error;
 use crate::{CalDateTime, ComponentMut, parse_duration};
-use chrono::{DateTime, Duration};
+use chrono::{DateTime, Duration, Utc};
 use ical::{
     generator::IcalEvent,
     parser::{Component, ical::component::IcalTimeZone},
@@ -89,8 +89,18 @@ impl EventObject {
         Ok(Some(rrule_set))
     }
 
-    pub fn expand_recurrence(&self) -> Result<Vec<IcalEvent>, Error> {
-        if let Some(rrule_set) = self.recurrence_ruleset()? {
+    pub fn expand_recurrence(
+        &self,
+        start: Option<DateTime<Utc>>,
+        end: Option<DateTime<Utc>>,
+    ) -> Result<Vec<IcalEvent>, Error> {
+        if let Some(mut rrule_set) = self.recurrence_ruleset()? {
+            if let Some(start) = start {
+                rrule_set = rrule_set.after(start.with_timezone(&rrule::Tz::UTC));
+            }
+            if let Some(end) = end {
+                rrule_set = rrule_set.before(end.with_timezone(&rrule::Tz::UTC));
+            }
             let mut events = vec![];
             let dates = rrule_set.all(2048).dates;
 
@@ -205,7 +215,7 @@ END:VEVENT\r\n",
         let event = event.event().unwrap();
 
         let events: Vec<String> = event
-            .expand_recurrence()
+            .expand_recurrence(None, None)
             .unwrap()
             .into_iter()
             .map(|event| Emitter::generate(&event))

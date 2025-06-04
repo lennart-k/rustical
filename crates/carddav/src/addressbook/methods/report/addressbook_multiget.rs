@@ -1,6 +1,8 @@
 use crate::{
     Error,
-    address_object::resource::{AddressObjectPropWrapper, AddressObjectResource},
+    address_object::resource::{
+        AddressObjectPropWrapper, AddressObjectPropWrapperName, AddressObjectResource,
+    },
 };
 use actix_web::{
     dev::{Path, ResourceDef},
@@ -19,7 +21,7 @@ use rustical_xml::XmlDeserialize;
 #[xml(ns = "rustical_dav::namespace::NS_DAV")]
 pub struct AddressbookMultigetRequest {
     #[xml(ns = "rustical_dav::namespace::NS_DAV", ty = "untagged")]
-    pub(crate) prop: PropfindType,
+    pub(crate) prop: PropfindType<AddressObjectPropWrapperName>,
     #[xml(ns = "rustical_dav::namespace::NS_DAV", flatten)]
     pub(crate) href: Vec<String>,
 }
@@ -59,7 +61,7 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
 
 pub async fn handle_addressbook_multiget<AS: AddressbookStore>(
     addr_multiget: &AddressbookMultigetRequest,
-    props: &[&str],
+    prop: &PropfindType<AddressObjectPropWrapperName>,
     path: &str,
     puri: &impl PrincipalUri,
     user: &User,
@@ -79,7 +81,7 @@ pub async fn handle_addressbook_multiget<AS: AddressbookStore>(
                 object,
                 principal: principal.to_owned(),
             }
-            .propfind(&path, props, puri, user)?,
+            .propfind_typed(&path, prop, puri, user)?,
         );
     }
 

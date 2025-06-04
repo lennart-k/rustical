@@ -17,7 +17,7 @@ use rustical_dav::xml::{Resourcetype, ResourcetypeInner};
 use rustical_dav_push::{DavPushExtension, DavPushExtensionProp};
 use rustical_store::auth::User;
 use rustical_store::{Addressbook, AddressbookStore, SubscriptionStore};
-use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
+use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -35,7 +35,7 @@ impl<A: AddressbookStore, S: SubscriptionStore> AddressbookResourceService<A, S>
     }
 }
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "AddressbookPropName")]
 pub enum AddressbookProp {
     // WebDAV (RFC 2518)
@@ -53,7 +53,7 @@ pub enum AddressbookProp {
     MaxResourceSize(i64),
 }
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "AddressbookPropWrapperName", untagged)]
 pub enum AddressbookPropWrapper {
     Addressbook(AddressbookProp),

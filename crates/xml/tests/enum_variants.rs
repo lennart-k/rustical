@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use quick_xml::name::Namespace;
 use rustical_xml::EnumVariants;
-use xml_derive::EnumUnitVariants;
+use xml_derive::PropName;
 
 pub const NS_DAV: Namespace = Namespace(b"DAV:");
 pub const NS_DAVPUSH: Namespace = Namespace(b"https://bitfire.at/webdav-push");
@@ -12,13 +12,13 @@ pub const NS_ICAL: Namespace = Namespace(b"http://apple.com/ns/ical/");
 pub const NS_CALENDARSERVER: Namespace = Namespace(b"http://calendarserver.org/ns/");
 pub const NS_NEXTCLOUD: Namespace = Namespace(b"http://nextcloud.com/ns");
 
-#[derive(EnumVariants, EnumUnitVariants)]
+#[derive(EnumVariants, PropName)]
 #[xml(unit_variants_ident = "ExtensionsPropName")]
 enum ExtensionProp {
     Hello,
 }
 
-#[derive(EnumVariants, EnumUnitVariants)]
+#[derive(EnumVariants, PropName)]
 #[xml(unit_variants_ident = "CalendarPropName")]
 enum CalendarProp {
     // WebDAV (RFC 2518)
@@ -45,7 +45,7 @@ fn test_enum_tagged_variants() {
     );
 }
 
-#[derive(EnumVariants, EnumUnitVariants)]
+#[derive(EnumVariants, PropName)]
 #[xml(untagged, unit_variants_ident = "UnionPropName")]
 enum UnionProp {
     Calendar(CalendarProp),

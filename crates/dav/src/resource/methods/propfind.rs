@@ -5,9 +5,9 @@ use crate::resource::PrincipalUri;
 use crate::resource::Resource;
 use crate::resource::ResourceService;
 use crate::xml::MultistatusElement;
-use crate::xml::PropElement;
 use crate::xml::PropfindElement;
 use crate::xml::PropfindType;
+use rustical_xml::PropName;
 use rustical_xml::XmlDocument;
 use tracing::instrument;
 
@@ -58,37 +58,36 @@ pub(crate) async fn route_propfind<R: ResourceService>(
     }
 
     // A request body is optional. If empty we MUST return all props
-    let propfind: PropfindElement = if !body.is_empty() {
-        PropfindElement::parse_str(&body).map_err(Error::XmlError)?
-    } else {
-        PropfindElement {
-            prop: PropfindType::Allprop,
-        }
-    };
-
-    // TODO: respect namespaces?
-    let props = match &propfind.prop {
-        PropfindType::Allprop => vec!["allprop"],
-        PropfindType::Propname => vec!["propname"],
-        PropfindType::Prop(PropElement(prop_tags)) => prop_tags
-            .iter()
-            .map(|propname| propname.name.as_str())
-            .collect(),
-    };
+    let propfind_self: PropfindElement<<<R::Resource as Resource>::Prop as PropName>::Names> =
+        if !body.is_empty() {
+            PropfindElement::parse_str(&body).map_err(Error::XmlError)?
+        } else {
+            PropfindElement {
+                prop: PropfindType::Allprop,
+            }
+        };
+    let propfind_member: PropfindElement<<<R::MemberType as Resource>::Prop as PropName>::Names> =
+        if !body.is_empty() {
+            PropfindElement::parse_str(&body).map_err(Error::XmlError)?
+        } else {
+            PropfindElement {
+                prop: PropfindType::Allprop,
+            }
+        };
 
     let mut member_responses = Vec::new();
     if depth != Depth::Zero {
         for (subpath, member) in resource_service.get_members(path_components).await? {
-            member_responses.push(member.propfind(
+            member_responses.push(member.propfind_typed(
                 &format!("{}/{}", path.trim_end_matches('/'), subpath),
-                &props,
+                &propfind_member.prop,
                 puri,
                 &user,
             )?);
         }
     }
 
-    let response = resource.propfind(path, &props, puri, &user)?;
+    let response = resource.propfind_typed(path, &propfind_self.prop, puri, &user)?;
 
     Ok(MultistatusElement {
         responses: vec![response],

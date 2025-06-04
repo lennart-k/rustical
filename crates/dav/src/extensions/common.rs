@@ -4,9 +4,9 @@ use crate::{
     resource::{PrincipalUri, Resource},
     xml::{HrefElement, Resourcetype},
 };
-use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
+use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumUnitVariants, EnumVariants)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, PropName, EnumVariants)]
 #[xml(unit_variants_ident = "CommonPropertiesPropName")]
 pub enum CommonPropertiesProp {
     // WebDAV (RFC 2518)

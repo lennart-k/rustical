@@ -1,14 +1,14 @@
+use crate::Principal;
 use crate::privileges::UserPrivilegeSet;
-use crate::xml::Resourcetype;
 use crate::xml::multistatus::{PropTagWrapper, PropstatElement, PropstatWrapper};
+use crate::xml::{PropElement, PropfindType, Resourcetype};
 use crate::xml::{TagList, multistatus::ResponseElement};
-use crate::{Error, Principal};
 use headers::{ETag, IfMatch, IfNoneMatch};
 use http::StatusCode;
 use itertools::Itertools;
 use quick_xml::name::Namespace;
 pub use resource_service::ResourceService;
-use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
+use rustical_xml::{EnumVariants, NamespaceOwned, PropName, XmlDeserialize, XmlSerialize};
 use std::collections::HashSet;
 use std::str::FromStr;
 
@@ -26,7 +26,7 @@ pub trait ResourcePropName: FromStr {}
 impl<T: FromStr> ResourcePropName for T {}
 
 pub trait Resource: Clone + 'static {
-    type Prop: ResourceProp + PartialEq + Clone + EnumVariants + EnumUnitVariants;
+    type Prop: ResourceProp + PartialEq + Clone + EnumVariants + PropName;
     type Error: From<crate::Error>;
     type Principal: Principal;
 
@@ -40,17 +40,14 @@ pub trait Resource: Clone + 'static {
         &self,
         principal_uri: &impl PrincipalUri,
         principal: &Self::Principal,
-        prop: &<Self::Prop as EnumUnitVariants>::UnitVariants,
+        prop: &<Self::Prop as PropName>::Names,
     ) -> Result<Self::Prop, Self::Error>;
 
     fn set_prop(&mut self, _prop: Self::Prop) -> Result<(), crate::Error> {
         Err(crate::Error::PropReadOnly)
     }
 
-    fn remove_prop(
-        &mut self,
-        _prop: &<Self::Prop as EnumUnitVariants>::UnitVariants,
-    ) -> Result<(), crate::Error> {
+    fn remove_prop(&mut self, _prop: &<Self::Prop as PropName>::Names) -> Result<(), crate::Error> {
         Err(crate::Error::PropReadOnly)
     }
 
@@ -91,62 +88,45 @@ pub trait Resource: Clone + 'static {
         principal: &Self::Principal,
     ) -> Result<UserPrivilegeSet, Self::Error>;
 
-    fn propfind(
+    fn propfind_typed(
         &self,
         path: &str,
-        props: &[&str],
+        prop: &PropfindType<<Self::Prop as PropName>::Names>,
         principal_uri: &impl PrincipalUri,
         principal: &Self::Principal,
     ) -> Result<ResponseElement<Self::Prop>, Self::Error> {
-        let mut props: HashSet<&str> = props.iter().cloned().collect();
+        // TODO: Support include element
+        let (props, invalid_props): (HashSet<<Self::Prop as PropName>::Names>, Vec<_>) = match prop
+        {
+            PropfindType::Propname => {
+                let props = Self::list_props()
+                    .into_iter()
+                    .map(|(ns, tag)| (ns.map(NamespaceOwned::from), tag.to_string()))
+                    .collect_vec();
 
-        if props.contains(&"propname") {
-            if props.len() != 1 {
-                // propname MUST be the only queried prop per spec
-                return Err(
-                    Error::BadRequest("propname MUST be the only queried prop".to_owned()).into(),
-                );
+                return Ok(ResponseElement {
+                    href: path.to_owned(),
+                    propstat: vec![PropstatWrapper::TagList(PropstatElement {
+                        prop: TagList::from(props),
+                        status: StatusCode::OK,
+                    })],
+                    ..Default::default()
+                });
             }
+            PropfindType::Allprop => (
+                Self::list_props()
+                    .iter()
+                    .map(|(_ns, name)| <Self::Prop as PropName>::Names::from_str(name).unwrap())
+                    .collect(),
+                vec![],
+            ),
+            PropfindType::Prop(PropElement(valid_tags, invalid_tags)) => (
+                valid_tags.iter().cloned().collect(),
+                invalid_tags.to_owned(),
+            ),
+        };
 
-            let props = Self::list_props()
-                .into_iter()
-                .map(|(ns, tag)| (ns.to_owned(), tag.to_string()))
-                .collect_vec();
-
-            return Ok(ResponseElement {
-                href: path.to_owned(),
-                propstat: vec![PropstatWrapper::TagList(PropstatElement {
-                    prop: TagList::from(props),
-                    status: StatusCode::OK,
-                })],
-                ..Default::default()
-            });
-        }
-
-        if props.contains(&"allprop") {
-            if props.len() != 1 {
-                // allprop MUST be the only queried prop per spec
-                return Err(
-                    Error::BadRequest("allprop MUST be the only queried prop".to_owned()).into(),
-                );
-            }
-            props = Self::list_props()
-                .into_iter()
-                .map(|(_ns, tag)| tag)
-                .collect();
-        }
-
-        let mut valid_props = vec![];
-        let mut invalid_props = vec![];
-        for prop in props {
-            if let Ok(valid_prop) = <Self::Prop as EnumUnitVariants>::UnitVariants::from_str(prop) {
-                valid_props.push(valid_prop);
-            } else {
-                invalid_props.push(prop.to_string())
-            }
-        }
-
-        let prop_responses = valid_props
+        let prop_responses = props
             .into_iter()
             .map(|prop| self.get_prop(principal_uri, principal, &prop))
             .collect::<Result<Vec<_>, Self::Error>>()?;
@@ -158,11 +138,7 @@ pub trait Resource: Clone + 'static {
         if !invalid_props.is_empty() {
             propstats.push(PropstatWrapper::TagList(PropstatElement {
                 status: StatusCode::NOT_FOUND,
-                prop: invalid_props
-                    .into_iter()
-                    .map(|tag| (None, tag))
-                    .collect_vec()
-                    .into(),
+                prop: invalid_props.into(),
             }));
         }
         Ok(ResponseElement {

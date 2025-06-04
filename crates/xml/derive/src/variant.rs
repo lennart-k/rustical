@@ -85,8 +85,8 @@ impl Variant {
             ) {
                 (_, Fields::Named(_), _) => {
                     panic!(
-                    "struct variants are not supported, please use a tuple variant with a struct"
-                )
+                        "struct variants are not supported, please use a tuple variant with a struct"
+                    )
                 }
                 (false, Fields::Unnamed(FieldsUnnamed { unnamed, .. }), true) => {
                     if unnamed.len() != 1 {
@@ -165,16 +165,20 @@ impl Variant {
                 }
                 let field = unnamed.iter().next().unwrap();
                 quote! {
-                    if let Ok(val) = <#field as ::rustical_xml::XmlDeserialize>::deserialize(reader, start, empty) {
-                        return Ok(Self::#ident(val));
+                    match <#field as ::rustical_xml::XmlDeserialize>::deserialize(reader, start, empty) {
+                        Ok(val) => { return Ok(Self::#ident(val)) }
+                        Err(::rustical_xml::XmlError::InvalidVariant(..)) => {}
+                        Err(err) => { return Err(err) }
                     }
                 }
             }
             Fields::Unit => {
                 quote! {
                     // Make sure that content is still consumed
-                    if let Ok(_) = <() as ::rustical_xml::XmlDeserialize>::deserialize(reader, start, empty) {
-                        return Ok(Self::#ident);
+                    match <() as ::rustical_xml::XmlDeserialize>::deserialize(reader, start, empty) {
+                        Ok(val) => { return Ok(Self::#ident(val)) }
+                        Err(::rustical_xml::XmlError::InvalidVariant(..)) => {}
+                        Err(err) => { return Err(err) }
                     }
                 }
             }

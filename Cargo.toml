@@ -107,6 +107,7 @@ rustical_ical = { path = "./crates/ical/", features = ["actix"] }
 chrono-tz = "0.10"
 chrono-humanize = "0.2"
 rand = "0.8"
+rrule = "0.14"
 argon2 = "0.5"
 rpassword = "7.3"
 password-hash = { version = "0.5" }

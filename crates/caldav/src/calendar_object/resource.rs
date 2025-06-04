@@ -9,9 +9,9 @@ use rustical_dav::{
     resource::{PrincipalUri, Resource, ResourceService},
     xml::Resourcetype,
 };
-use rustical_ical::CalendarObject;
+use rustical_ical::{CalendarObject, UtcDateTime};
 use rustical_store::{CalendarStore, auth::User};
-use rustical_xml::{EnumUnitVariants, EnumVariants, XmlDeserialize, XmlSerialize};
+use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 use serde::Deserialize;
 use std::sync::Arc;
 
@@ -25,7 +25,27 @@ impl<C: CalendarStore> CalendarObjectResourceService<C> {
     }
 }
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq, Hash)]
+pub(crate) struct ExpandElement {
+    #[xml(ty = "attr")]
+    pub(crate) start: UtcDateTime,
+    #[xml(ty = "attr")]
+    pub(crate) end: UtcDateTime,
+}
+
+#[derive(XmlDeserialize, Clone, Debug, PartialEq, Default, Eq, Hash)]
+pub struct CalendarData {
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
+    pub(crate) comp: Option<()>,
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
+    pub(crate) expand: Option<ExpandElement>,
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
+    pub(crate) limit_recurrence_set: Option<()>,
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
+    pub(crate) limit_freebusy_set: Option<()>,
+}
+
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "CalendarObjectPropName")]
 pub enum CalendarObjectProp {
     // WebDAV (RFC 2518)
@@ -36,10 +56,11 @@ pub enum CalendarObjectProp {
 
     // CalDAV (RFC 4791)
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
+    #[xml(prop = "CalendarData")]
     CalendarData(String),
 }
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, EnumUnitVariants)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "CalendarObjectPropWrapperName", untagged)]
 pub enum CalendarObjectPropWrapper {
     CalendarObject(CalendarObjectProp),
@@ -73,8 +94,15 @@ impl Resource for CalendarObjectResource {
                     CalendarObjectPropName::Getetag => {
                         CalendarObjectProp::Getetag(self.object.get_etag())
                     }
-                    CalendarObjectPropName::CalendarData => {
-                        CalendarObjectProp::CalendarData(self.object.get_ics().to_owned())
+                    CalendarObjectPropName::CalendarData(CalendarData { expand, .. }) => {
+                        CalendarObjectProp::CalendarData(if let Some(expand) = expand.as_ref() {
+                            self.object.expand_recurrence(
+                                Some(expand.start.to_utc()),
+                                Some(expand.end.to_utc()),
+                            )?
+                        } else {
+                            self.object.get_ics().to_owned()
+                        })
                     }
                     CalendarObjectPropName::Getcontenttype => {
                         CalendarObjectProp::Getcontenttype("text/calendar;charset=utf-8")

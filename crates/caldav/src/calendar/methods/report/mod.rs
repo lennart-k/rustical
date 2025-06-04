@@ -1,6 +1,8 @@
 use crate::{
     CalDavPrincipalUri, Error,
-    calendar_object::resource::{CalendarObjectPropWrapper, CalendarObjectResource},
+    calendar_object::resource::{
+        CalendarObjectPropWrapper, CalendarObjectPropWrapperName, CalendarObjectResource,
+    },
 };
 use actix_web::{
     HttpRequest, Responder,
@@ -12,11 +14,11 @@ use calendar_query::{CalendarQueryRequest, get_objects_calendar_query};
 use rustical_dav::{
     resource::{PrincipalUri, Resource},
     xml::{
-        MultistatusElement, PropElement, PropfindType, Propname, multistatus::ResponseElement,
+        MultistatusElement, PropfindType, multistatus::ResponseElement,
         sync_collection::SyncCollectionRequest,
     },
 };
-use rustical_ical::{CalendarObject, UtcDateTime};
+use rustical_ical::CalendarObject;
 use rustical_store::{CalendarStore, auth::User};
 use rustical_xml::{XmlDeserialize, XmlDocument};
 use sync_collection::handle_sync_collection;
@@ -26,34 +28,6 @@ mod calendar_multiget;
 mod calendar_query;
 mod sync_collection;
 
-#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
-pub(crate) struct ExpandElement {
-    #[xml(ty = "attr")]
-    start: UtcDateTime,
-    #[xml(ty = "attr")]
-    end: UtcDateTime,
-}
-
-#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
-pub struct CalendarData {
-    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
-    comp: Option<()>,
-    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
-    expand: Option<ExpandElement>,
-    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
-    limit_recurrence_set: Option<()>,
-    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
-    limit_freebusy_set: Option<()>,
-}
-
-#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
-pub enum ReportPropName {
-    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
-    CalendarData(CalendarData),
-    #[xml(other)]
-    Propname(Propname),
-}
-
 #[derive(XmlDeserialize, XmlDocument, Clone, Debug, PartialEq)]
 pub(crate) enum ReportRequest {
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
@@ -61,31 +35,15 @@ pub(crate) enum ReportRequest {
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     CalendarQuery(CalendarQueryRequest),
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
-    SyncCollection(SyncCollectionRequest<ReportPropName>),
+    SyncCollection(SyncCollectionRequest<CalendarObjectPropWrapperName>),
 }
 
 impl ReportRequest {
-    fn props(&self) -> Vec<&str> {
-        let prop_element = match self {
+    fn props(&self) -> &PropfindType<CalendarObjectPropWrapperName> {
+        match &self {
             ReportRequest::CalendarMultiget(CalendarMultigetRequest { prop, .. }) => prop,
             ReportRequest::CalendarQuery(CalendarQueryRequest { prop, .. }) => prop,
             ReportRequest::SyncCollection(SyncCollectionRequest { prop, .. }) => prop,
-        };
-
-        match prop_element {
-            PropfindType::Allprop => {
-                vec!["allprop"]
-            }
-            PropfindType::Propname => {
-                vec!["propname"]
-            }
-            PropfindType::Prop(PropElement(prop_tags)) => prop_tags
-                .iter()
-                .map(|propname| match propname {
-                    ReportPropName::Propname(propname) => propname.name.as_str(),
-                    ReportPropName::CalendarData(_) => "calendar-data",
-                })
-                .collect(),
         }
     }
 }
@@ -97,7 +55,7 @@ fn objects_response(
     principal: &str,
     puri: &impl PrincipalUri,
     user: &User,
-    props: &[&str],
+    prop: &PropfindType<CalendarObjectPropWrapperName>,
 ) -> Result<MultistatusElement<CalendarObjectPropWrapper, String>, Error> {
     let mut responses = Vec::new();
     for object in objects {
@@ -107,7 +65,7 @@ fn objects_response(
                 object,
                 principal: principal.to_owned(),
             }
-            .propfind(&path, props, puri, user)?,
+            .propfind_typed(&path, prop, puri, user)?,
         );
     }
 
@@ -156,7 +114,7 @@ pub async fn route_report_calendar<C: CalendarStore>(
                 &principal,
                 puri.as_ref(),
                 &user,
-                &props,
+                props,
             )?
         }
         ReportRequest::CalendarMultiget(cal_multiget) => {
@@ -175,13 +133,12 @@ pub async fn route_report_calendar<C: CalendarStore>(
                 &principal,
                 puri.as_ref(),
                 &user,
-                &props,
+                props,
             )?
         }
         ReportRequest::SyncCollection(sync_collection) => {
             handle_sync_collection(
                 sync_collection,
-                &props,
                 req.path(),
                 puri.as_ref(),
                 &user,
@@ -197,10 +154,11 @@ pub async fn route_report_calendar<C: CalendarStore>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::calendar_object::resource::{CalendarData, CalendarObjectPropName, ExpandElement};
     use calendar_query::{CompFilterElement, FilterElement, TimeRangeElement};
-    use rustical_dav::xml::{PropElement, PropfindType, Propname};
+    use rustical_dav::xml::PropElement;
     use rustical_ical::UtcDateTime;
-    use rustical_xml::ValueDeserialize;
+    use rustical_xml::{NamespaceOwned, ValueDeserialize};
 
     #[test]
     fn test_xml_calendar_data() {
@@ -222,13 +180,14 @@ mod tests {
             report_request,
             ReportRequest::CalendarMultiget(CalendarMultigetRequest {
                 prop: rustical_dav::xml::PropfindType::Prop(PropElement(vec![
-                    ReportPropName::Propname(Propname{name: "getetag".to_owned(), ns: Some("DAV:".into())}),
-                    ReportPropName::Propname(Propname{name: "displayname".to_owned(), ns: Some("DAV:".into())}),
-                    ReportPropName::CalendarData(CalendarData { comp: None, expand: Some(ExpandElement {
+                    CalendarObjectPropWrapperName::CalendarObject(CalendarObjectPropName::Getetag),
+                    CalendarObjectPropWrapperName::CalendarObject(CalendarObjectPropName::CalendarData(
+                        CalendarData { comp: None, expand: Some(ExpandElement {
                         start: <UtcDateTime as ValueDeserialize>::deserialize("20250426T220000Z").unwrap(),
                         end: <UtcDateTime as ValueDeserialize>::deserialize("20250503T220000Z").unwrap(),
-                    }), limit_recurrence_set: None, limit_freebusy_set: None })
-                ])),
+                    }), limit_recurrence_set: None, limit_freebusy_set: None }
+                    )),
+                ], vec![(Some(NamespaceOwned(Vec::from("DAV:"))), "displayname".to_string())])),
                 href: vec![
                     "/caldav/user/user/6f787542-5256-401a-8db97003260da/ae7a998fdfd1d84a20391168962c62b".to_owned()
                 ]
@@ -258,10 +217,12 @@ mod tests {
         assert_eq!(
             report_request,
             ReportRequest::CalendarQuery(CalendarQueryRequest {
-                prop: PropfindType::Prop(PropElement(vec![ReportPropName::Propname(Propname {
-                    name: "getetag".to_owned(),
-                    ns: Some("DAV:".into())
-                })])),
+                prop: rustical_dav::xml::PropfindType::Prop(PropElement(
+                    vec![CalendarObjectPropWrapperName::CalendarObject(
+                        CalendarObjectPropName::Getetag
+                    ),],
+                    vec![]
+                )),
                 filter: Some(FilterElement {
                     comp_filter: CompFilterElement {
                         is_not_defined: None,
@@ -308,9 +269,8 @@ mod tests {
             report_request,
             ReportRequest::CalendarMultiget(CalendarMultigetRequest {
                 prop: rustical_dav::xml::PropfindType::Prop(PropElement(vec![
-                    ReportPropName::Propname(Propname{name: "getetag".to_owned(), ns: Some("DAV:".into())}),
-                    ReportPropName::Propname(Propname{name: "displayname".to_owned(), ns: Some("DAV:".into())})
-                ])),
+                    CalendarObjectPropWrapperName::CalendarObject(CalendarObjectPropName::Getetag),
+                ], vec![(Some(NamespaceOwned(Vec::from("DAV:"))), "displayname".to_string())])),
                 href: vec![
                     "/caldav/user/user/6f787542-5256-401a-8db97003260da/ae7a998fdfd1d84a20391168962c62b".to_owned()
                 ]

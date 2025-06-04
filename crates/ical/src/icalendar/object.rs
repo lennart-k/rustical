@@ -1,6 +1,8 @@
 use super::{EventObject, JournalObject, TodoObject};
 use crate::CalDateTime;
 use crate::Error;
+use chrono::DateTime;
+use chrono::Utc;
 use ical::{
     generator::{Emitter, IcalCalendar},
     parser::{Component, ical::component::IcalTimeZone},
@@ -188,12 +190,16 @@ impl CalendarObject {
         }
     }
 
-    pub fn expand_recurrence(&self) -> Result<String, Error> {
+    pub fn expand_recurrence(
+        &self,
+        start: Option<DateTime<Utc>>,
+        end: Option<DateTime<Utc>>,
+    ) -> Result<String, Error> {
         // Only events can be expanded
         match &self.data {
             CalendarObjectComponent::Event(event) => {
                 let mut cal = self.cal.clone();
-                cal.events = event.expand_recurrence()?;
+                cal.events = event.expand_recurrence(start, end)?;
                 Ok(cal.generate())
             }
             _ => Ok(self.get_ics().to_string()),

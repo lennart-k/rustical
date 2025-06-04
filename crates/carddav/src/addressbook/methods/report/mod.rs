@@ -1,10 +1,10 @@
-use crate::{CardDavPrincipalUri, Error};
+use crate::{CardDavPrincipalUri, Error, address_object::resource::AddressObjectPropWrapperName};
 use actix_web::{
     HttpRequest, Responder,
     web::{Data, Path},
 };
 use addressbook_multiget::{AddressbookMultigetRequest, handle_addressbook_multiget};
-use rustical_dav::xml::{PropElement, PropfindType, sync_collection::SyncCollectionRequest};
+use rustical_dav::xml::{PropfindType, sync_collection::SyncCollectionRequest};
 use rustical_store::{AddressbookStore, auth::User};
 use rustical_xml::{XmlDeserialize, XmlDocument};
 use sync_collection::handle_sync_collection;
@@ -18,27 +18,14 @@ pub(crate) enum ReportRequest {
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     AddressbookMultiget(AddressbookMultigetRequest),
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
-    SyncCollection(SyncCollectionRequest),
+    SyncCollection(SyncCollectionRequest<AddressObjectPropWrapperName>),
 }
 
 impl ReportRequest {
-    fn props(&self) -> Vec<&str> {
-        let prop_element = match self {
+    fn props(&self) -> &PropfindType<AddressObjectPropWrapperName> {
+        match self {
             ReportRequest::AddressbookMultiget(AddressbookMultigetRequest { prop, .. }) => prop,
             ReportRequest::SyncCollection(SyncCollectionRequest { prop, .. }) => prop,
-        };
-
-        match prop_element {
-            PropfindType::Allprop => {
-                vec!["allprop"]
-            }
-            PropfindType::Propname => {
-                vec!["propname"]
-            }
-            PropfindType::Prop(PropElement(prop_tags)) => prop_tags
-                .iter()
-                .map(|propname| propname.name.as_str())
-                .collect(),
         }
     }
 }
@@ -58,13 +45,12 @@ pub async fn route_report_addressbook<AS: AddressbookStore>(
     }
 
     let request = ReportRequest::parse_str(&body)?;
-    let props = request.props();
 
     Ok(match &request {
         ReportRequest::AddressbookMultiget(addr_multiget) => {
             handle_addressbook_multiget(
                 addr_multiget,
-                &props,
+                request.props(),
                 req.path(),
                 puri.as_ref(),
                 &user,
@@ -77,7 +63,6 @@ pub async fn route_report_addressbook<AS: AddressbookStore>(
         ReportRequest::SyncCollection(sync_collection) => {
             handle_sync_collection(
                 sync_collection,
-                &props,
                 req.path(),
                 puri.as_ref(),
                 &user,
@@ -92,9 +77,9 @@ pub async fn route_report_addressbook<AS: AddressbookStore>(
 
 #[cfg(test)]
 mod tests {
-    use rustical_dav::xml::{PropElement, Propname, sync_collection::SyncLevel};
-
     use super::*;
+    use crate::address_object::resource::AddressObjectPropName;
+    use rustical_dav::xml::{PropElement, sync_collection::SyncLevel};
 
     #[test]
     fn test_xml_sync_collection() {
@@ -115,10 +100,12 @@ mod tests {
             ReportRequest::SyncCollection(SyncCollectionRequest {
                 sync_token: "".to_owned(),
                 sync_level: SyncLevel::One,
-                prop: rustical_dav::xml::PropfindType::Prop(PropElement(vec![Propname {
-                    name: "getetag".to_owned(),
-                    ns: Some("DAV:".into())
-                }])),
+                prop: rustical_dav::xml::PropfindType::Prop(PropElement(
+                    vec![AddressObjectPropWrapperName::AddressObject(
+                        AddressObjectPropName::Getetag
+                    )],
+                    vec![]
+                )),
                 limit: None
             })
         )
@@ -141,9 +128,13 @@ mod tests {
             report_request,
             ReportRequest::AddressbookMultiget(AddressbookMultigetRequest {
                 prop: rustical_dav::xml::PropfindType::Prop(PropElement(vec![
-                    Propname{name: "getetag".to_owned(), ns: Some("DAV:".into())},
-                    Propname{name: "address-data".to_owned(), ns: Some("urn:ietf:params:xml:ns:carddav".into())}
-                ])),
+                        AddressObjectPropWrapperName::AddressObject(
+                        AddressObjectPropName::Getetag
+                    ),
+                        AddressObjectPropWrapperName::AddressObject(
+                        AddressObjectPropName::AddressData
+                    ),
+                ], vec![])),
                 href: vec![
                     "/carddav/user/user/6f787542-5256-401a-8db97003260da/ae7a998fdfd1d84a20391168962c62b".to_owned()
                 ]

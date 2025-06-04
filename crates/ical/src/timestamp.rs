@@ -38,7 +38,7 @@ pub enum CalDateTimeError {
     InvalidDurationFormat(String),
 }
 
-#[derive(Debug, Clone, Deref, PartialEq)]
+#[derive(Debug, Clone, Deref, PartialEq, Eq, Hash)]
 pub struct UtcDateTime(pub DateTime<Utc>);
 
 impl ValueDeserialize for UtcDateTime {

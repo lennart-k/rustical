@@ -28,10 +28,8 @@ rand.workspace = true
 uuid.workspace = true
 clap.workspace = true
 rustical_dav.workspace = true
-strum.workspace = true
-strum_macros.workspace = true
 rustical_ical.workspace = true
-rrule = "0.14"
+rrule.workspace = true
 
 [dev-dependencies]
 rstest = { workspace = true }

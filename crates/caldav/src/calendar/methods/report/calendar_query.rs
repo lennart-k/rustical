@@ -1,5 +1,4 @@
-use super::ReportPropName;
-use crate::Error;
+use crate::{Error, calendar_object::resource::CalendarObjectPropWrapperName};
 use rustical_dav::xml::PropfindType;
 use rustical_ical::{CalendarObject, UtcDateTime};
 use rustical_store::{CalendarStore, calendar_store::CalendarQuery};
@@ -171,7 +170,7 @@ impl From<&FilterElement> for CalendarQuery {
 // <!ELEMENT calendar-query ((DAV:allprop | DAV:propname | DAV:prop)?, filter, timezone?)>
 pub struct CalendarQueryRequest {
     #[xml(ty = "untagged")]
-    pub prop: PropfindType<ReportPropName>,
+    pub prop: PropfindType<CalendarObjectPropWrapperName>,
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     pub(crate) filter: Option<FilterElement>,
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]

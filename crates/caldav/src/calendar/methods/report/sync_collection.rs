@@ -1,7 +1,8 @@
-use super::ReportPropName;
 use crate::{
     Error,
-    calendar_object::resource::{CalendarObjectPropWrapper, CalendarObjectResource},
+    calendar_object::resource::{
+        CalendarObjectPropWrapper, CalendarObjectPropWrapperName, CalendarObjectResource,
+    },
 };
 use actix_web::http::StatusCode;
 use rustical_dav::{
@@ -17,8 +18,7 @@ use rustical_store::{
 };
 
 pub async fn handle_sync_collection<C: CalendarStore>(
-    sync_collection: &SyncCollectionRequest<ReportPropName>,
-    props: &[&str],
+    sync_collection: &SyncCollectionRequest<CalendarObjectPropWrapperName>,
     path: &str,
     puri: &impl PrincipalUri,
     user: &User,
@@ -39,7 +39,7 @@ pub async fn handle_sync_collection<C: CalendarStore>(
                 object,
                 principal: principal.to_owned(),
             }
-            .propfind(&path, props, puri, user)?,
+            .propfind_typed(&path, &sync_collection.prop, puri, user)?,
         );
     }
 

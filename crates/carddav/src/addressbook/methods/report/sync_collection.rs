@@ -1,6 +1,8 @@
 use crate::{
     Error,
-    address_object::resource::{AddressObjectPropWrapper, AddressObjectResource},
+    address_object::resource::{
+        AddressObjectPropWrapper, AddressObjectPropWrapperName, AddressObjectResource,
+    },
 };
 use actix_web::http::StatusCode;
 use rustical_dav::{
@@ -16,8 +18,7 @@ use rustical_store::{
 };
 
 pub async fn handle_sync_collection<AS: AddressbookStore>(
-    sync_collection: &SyncCollectionRequest,
-    props: &[&str],
+    sync_collection: &SyncCollectionRequest<AddressObjectPropWrapperName>,
     path: &str,
     puri: &impl PrincipalUri,
     user: &User,
@@ -38,7 +39,7 @@ pub async fn handle_sync_collection<AS: AddressbookStore>(
                 object,
                 principal: principal.to_owned(),
             }
-            .propfind(&path, props, puri, user)?,
+            .propfind_typed(&path, &sync_collection.prop, puri, user)?,
         );
     }
 

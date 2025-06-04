@@ -7,7 +7,8 @@ use crate::xml::TagList;
 use crate::xml::multistatus::{PropstatElement, PropstatWrapper, ResponseElement};
 use http::StatusCode;
 use quick_xml::name::Namespace;
-use rustical_xml::EnumUnitVariants;
+use rustical_xml::NamespaceOwned;
+use rustical_xml::PropName;
 use rustical_xml::Unparsed;
 use rustical_xml::XmlDeserialize;
 use rustical_xml::XmlDocument;
@@ -111,13 +112,15 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
             }) => {
                 match property {
                     SetPropertyPropWrapper::Valid(prop) => {
-                        let propname: <<R::Resource as Resource>::Prop as EnumUnitVariants>::UnitVariants = prop.clone().into();
+                        let propname: <<R::Resource as Resource>::Prop as PropName>::Names =
+                            prop.clone().into();
                         let (ns, propname): (Option<Namespace>, &str) = propname.into();
                         match resource.set_prop(prop) {
-                            Ok(()) => props_ok.push((ns, propname.to_owned())),
-                            Err(Error::PropReadOnly) => {
-                                props_conflict.push((ns, propname.to_owned()))
+                            Ok(()) => {
+                                props_ok.push((ns.map(NamespaceOwned::from), propname.to_owned()))
                             }
+                            Err(Error::PropReadOnly) => props_conflict
+                                .push((ns.map(NamespaceOwned::from), propname.to_owned())),
                             Err(err) => return Err(err.into()),
                         };
                     }
@@ -128,7 +131,7 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
                             .into_iter()
                             .find_map(|(ns, tag)| {
                                 if tag == propname.as_str() {
-                                    Some((ns, tag.to_owned()))
+                                    Some((ns.map(NamespaceOwned::from), tag.to_owned()))
                                 } else {
                                     None
                                 }
@@ -146,14 +149,12 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
             }
             Operation::Remove(remove_el) => {
                 let propname = remove_el.prop.0.0;
-                match <<R::Resource as Resource>::Prop as EnumUnitVariants>::UnitVariants::from_str(
-                    &propname,
-                ) {
+                match <<R::Resource as Resource>::Prop as PropName>::Names::from_str(&propname) {
                     Ok(prop) => match resource.remove_prop(&prop) {
                         Ok(()) => props_ok.push((None, propname)),
                         Err(Error::PropReadOnly) => props_conflict.push({
                             let (ns, tag) = prop.into();
-                            (ns, tag.to_owned())
+                            (ns.map(NamespaceOwned::from), tag.to_owned())
                         }),
                         Err(err) => return Err(err.into()),
                     },
