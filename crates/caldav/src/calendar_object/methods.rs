@@ -1,4 +1,5 @@
 use crate::Error;
+use crate::error::Precondition;
 use actix_web::HttpRequest;
 use actix_web::HttpResponse;
 use actix_web::http::header;
@@ -60,16 +61,21 @@ pub async fn put_event<C: CalendarStore>(
     } = path.into_inner();
 
     if !user.is_principal(&principal) {
-        return Ok(HttpResponse::Unauthorized().body(""));
+        return Ok(HttpResponse::Unauthorized().finish());
     }
 
     let overwrite =
         Some(&HeaderValue::from_static("*")) != req.headers().get(header::IF_NONE_MATCH);
 
-    let object = CalendarObject::from_ics(object_id, body)?;
+    let object = match CalendarObject::from_ics(object_id, body) {
+        Ok(obj) => obj,
+        Err(_) => {
+            return Err(Error::PreconditionFailed(Precondition::ValidCalendarData));
+        }
+    };
     store
         .put_object(principal, calendar_id, object, overwrite)
         .await?;
 
-    Ok(HttpResponse::Created().body(""))
+    Ok(HttpResponse::Created().finish())
 }

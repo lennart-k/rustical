@@ -4,8 +4,8 @@ use std::io::BufRead;
 pub use xml_derive::XmlDeserialize;
 pub use xml_derive::XmlDocument;
 
-use crate::XmlError;
 use crate::XmlRootTag;
+use crate::{XmlError, XmlSerialize};
 
 pub trait XmlDeserialize: Sized {
     fn deserialize<R: BufRead>(

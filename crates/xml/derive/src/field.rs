@@ -296,6 +296,12 @@ impl Field {
             None => quote! { None },
         };
 
+        let target = if let syn::Type::Reference(_) = self.field.ty {
+            quote! { (*self.#target_field_index) }
+        } else {
+            quote! { self.#target_field_index }
+        };
+
         match (&self.attrs.xml_ty, self.attrs.flatten.is_present()) {
             (FieldType::Attr, _) => None,
             (FieldType::Text, true) => Some(quote! {
@@ -309,7 +315,7 @@ impl Field {
             (FieldType::Tag, true) => {
                 let field_name = self.xml_name();
                 Some(quote! {
-                    for item in self.#target_field_index.iter() {
+                    for item in #target.iter() {
                         #serializer(item, #ns, Some(#field_name), namespaces, writer)?;
                     }
                 })
@@ -317,16 +323,16 @@ impl Field {
             (FieldType::Tag, false) => {
                 let field_name = self.xml_name();
                 Some(quote! {
-                    #serializer(&self.#target_field_index, #ns, Some(#field_name), namespaces, writer)?;
+                    #serializer(&#target, #ns, Some(#field_name), namespaces, writer)?;
                 })
             }
             (FieldType::Untagged, true) => Some(quote! {
-                for item in self.#target_field_index.iter() {
+                for item in #target.iter() {
                     #serializer(item, None, None, namespaces, writer)?;
                 }
             }),
             (FieldType::Untagged, false) => Some(quote! {
-                #serializer(&self.#target_field_index, None, None, namespaces, writer)?;
+                #serializer(&#target, None, None, namespaces, writer)?;
             }),
             // We ignore this :)
             (FieldType::TagName | FieldType::Namespace, _) => None,
