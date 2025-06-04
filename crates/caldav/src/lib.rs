@@ -43,7 +43,7 @@ fn options_handler() -> ErrorHandlers<BoxBody> {
                     HeaderName::from_static("dav"),
                     // https://datatracker.ietf.org/doc/html/rfc4918#section-18
                     HeaderValue::from_static(
-                        "1, 3, access-control, calendar-access, extended-mkcol, calendar-no-timezone, webdav-push",
+                        "1, 3, access-control, calendar-access, extended-mkcol, webdav-push",
                     ),
                 ));
 
