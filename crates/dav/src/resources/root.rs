@@ -58,7 +58,7 @@ impl<PRS: ResourceService + Clone, P: Principal, PURI: PrincipalUri>
     }
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl<PRS: ResourceService<Principal = P> + Clone, P: Principal, PURI: PrincipalUri> ResourceService
     for RootResourceService<PRS, P, PURI>
 {
@@ -68,6 +68,8 @@ impl<PRS: ResourceService<Principal = P> + Clone, P: Principal, PURI: PrincipalU
     type Error = PRS::Error;
     type Principal = P;
     type PrincipalUri = PURI;
+
+    const DAV_HEADER: &str = "1, 3, access-control";
 
     async fn get_resource(&self, _: &()) -> Result<Self::Resource, Self::Error> {
         Ok(RootResource::<PRS::Resource, P>::default())

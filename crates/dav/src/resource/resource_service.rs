@@ -2,26 +2,35 @@
 use super::methods::{actix_route_delete, actix_route_propfind, actix_route_proppatch};
 use super::{PrincipalUri, Resource};
 use crate::Principal;
+#[cfg(feature = "axum")]
+use crate::resource::{AxumMethods, AxumService};
 #[cfg(feature = "actix")]
 use actix_web::{http::Method, web, web::Data};
 use async_trait::async_trait;
 use serde::Deserialize;
-use std::str::FromStr;
+use std::{str::FromStr, sync::Arc};
 
-#[async_trait(?Send)]
-pub trait ResourceService: Sized + 'static {
+#[async_trait]
+pub trait ResourceService: Sized + Send + Sync + 'static {
+    type PathComponents: for<'de> Deserialize<'de> + Sized + Send + Sync + Clone + 'static; // defines how the resource URI maps to parameters, i.e. /{principal}/{calendar} -> (String, String)
     type MemberType: Resource<Error = Self::Error, Principal = Self::Principal>;
-    type PathComponents: for<'de> Deserialize<'de> + Sized + Clone + 'static; // defines how the resource URI maps to parameters, i.e. /{principal}/{calendar} -> (String, String)
     type Resource: Resource<Error = Self::Error, Principal = Self::Principal>;
-    type Error: From<crate::Error>;
+    type Error: From<crate::Error> + Send;
     type Principal: Principal;
     type PrincipalUri: PrincipalUri;
 
+    const DAV_HEADER: &'static str;
+
     async fn get_members(
         &self,
-        _path_components: &Self::PathComponents,
+        _path: &Self::PathComponents,
     ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
         Ok(vec![])
+    }
+
+    async fn test_get_members(&self, _path: &Self::PathComponents) -> Result<String, Self::Error> {
+        // ) -> Result<Vec<Self::MemberType>, Self::Error> {
+        Ok("asd".to_string())
     }
 
     async fn get_resource(
@@ -69,4 +78,12 @@ pub trait ResourceService: Sized + 'static {
     where
         Self::Error: actix_web::ResponseError,
         Self::Principal: actix_web::FromRequest;
+
+    #[cfg(feature = "axum")]
+    fn axum_service(self) -> AxumService<Self>
+    where
+        Self: Clone + Send + Sync + AxumMethods,
+    {
+        AxumService::new(Arc::new(self))
+    }
 }

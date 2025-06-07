@@ -188,7 +188,7 @@ impl Resource for AddressbookResource {
     }
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
     for AddressbookResourceService<AS, S>
 {
@@ -198,6 +198,8 @@ impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
     type Error = Error;
     type Principal = User;
     type PrincipalUri = CardDavPrincipalUri;
+
+    const DAV_HEADER: &str = "1, 3, access-control, addressbook";
 
     async fn get_resource(
         &self,

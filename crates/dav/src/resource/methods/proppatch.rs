@@ -1,7 +1,10 @@
 use crate::Error;
 use crate::privileges::UserPrivilege;
+use std::sync::Arc;
 use crate::resource::Resource;
 use crate::resource::ResourceService;
+#[cfg(feature = "axum")]
+use axum::extract::{Extension, OriginalUri, Path, State};
 use crate::xml::MultistatusElement;
 use crate::xml::TagList;
 use crate::xml::multistatus::{PropstatElement, PropstatWrapper, ResponseElement};
@@ -74,8 +77,30 @@ pub(crate) async fn actix_route_proppatch<R: ResourceService>(
     route_proppatch(
         &path.into_inner(),
         req.path(),
-        body,
-        principal,
+        &body,
+        &principal,
+        resource_service.as_ref(),
+    )
+    .await
+}
+
+
+#[cfg(feature = "axum")]
+pub(crate) async fn axum_route_proppatch<R: ResourceService>(
+    Path(path): Path<R::PathComponents>,
+    State(resource_service): State<Arc<R>>,
+    Extension(principal): Extension<R::Principal>,
+    uri: OriginalUri,
+    body: String,
+) -> Result<
+    MultistatusElement<String, String>,
+    R::Error,
+> {
+    route_proppatch(
+        &path,
+        uri.path(),
+        &body,
+        &principal,
         resource_service.as_ref(),
     )
     .await
@@ -84,8 +109,8 @@ pub(crate) async fn actix_route_proppatch<R: ResourceService>(
 pub(crate) async fn route_proppatch<R: ResourceService>(
     path_components: &R::PathComponents,
     path: &str,
-    body: String,
-    principal: R::Principal,
+    body: &str,
+    principal: &R::Principal,
     resource_service: &R,
 ) -> Result<MultistatusElement<String, String>, R::Error> {
     let href = path.to_owned();

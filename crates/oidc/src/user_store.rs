@@ -1,7 +1,7 @@
 use actix_web::ResponseError;
 use async_trait::async_trait;
 
-#[async_trait(?Send)]
+#[async_trait]
 pub trait UserStore: 'static {
     type Error: ResponseError;
 

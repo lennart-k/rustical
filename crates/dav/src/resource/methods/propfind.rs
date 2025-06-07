@@ -7,8 +7,11 @@ use crate::resource::ResourceService;
 use crate::xml::MultistatusElement;
 use crate::xml::PropfindElement;
 use crate::xml::PropfindType;
+#[cfg(feature = "axum")]
+use axum::extract::{Extension, OriginalUri, Path, State};
 use rustical_xml::PropName;
 use rustical_xml::XmlDocument;
+use std::sync::Arc;
 use tracing::instrument;
 
 #[cfg(feature = "actix")]
@@ -30,11 +33,36 @@ pub(crate) async fn actix_route_propfind<R: ResourceService>(
     route_propfind(
         &path.into_inner(),
         req.path(),
-        body,
-        user,
-        depth,
+        &body,
+        &user,
+        &depth,
         resource_service.as_ref(),
         puri.as_ref(),
+    )
+    .await
+}
+
+#[cfg(feature = "axum")]
+pub(crate) async fn axum_route_propfind<R: ResourceService>(
+    Path(path): Path<R::PathComponents>,
+    State(resource_service): State<Arc<R>>,
+    depth: Depth,
+    Extension(principal): Extension<R::Principal>,
+    uri: OriginalUri,
+    Extension(puri): Extension<R::PrincipalUri>,
+    body: String,
+) -> Result<
+    MultistatusElement<<R::Resource as Resource>::Prop, <R::MemberType as Resource>::Prop>,
+    R::Error,
+> {
+    route_propfind::<R>(
+        &path,
+        uri.path(),
+        &body,
+        &principal,
+        &depth,
+        resource_service.as_ref(),
+        &puri,
     )
     .await
 }
@@ -42,9 +70,9 @@ pub(crate) async fn actix_route_propfind<R: ResourceService>(
 pub(crate) async fn route_propfind<R: ResourceService>(
     path_components: &R::PathComponents,
     path: &str,
-    body: String,
-    user: R::Principal,
-    depth: Depth,
+    body: &str,
+    principal: &R::Principal,
+    depth: &Depth,
     resource_service: &R,
     puri: &impl PrincipalUri,
 ) -> Result<
@@ -52,7 +80,7 @@ pub(crate) async fn route_propfind<R: ResourceService>(
     R::Error,
 > {
     let resource = resource_service.get_resource(path_components).await?;
-    let privileges = resource.get_user_privileges(&user)?;
+    let privileges = resource.get_user_privileges(principal)?;
     if !privileges.has(&UserPrivilege::Read) {
         return Err(Error::Unauthorized.into());
     }
@@ -60,7 +88,7 @@ pub(crate) async fn route_propfind<R: ResourceService>(
     // A request body is optional. If empty we MUST return all props
     let propfind_self: PropfindElement<<<R::Resource as Resource>::Prop as PropName>::Names> =
         if !body.is_empty() {
-            PropfindElement::parse_str(&body).map_err(Error::XmlError)?
+            PropfindElement::parse_str(body).map_err(Error::XmlError)?
         } else {
             PropfindElement {
                 prop: PropfindType::Allprop,
@@ -68,7 +96,7 @@ pub(crate) async fn route_propfind<R: ResourceService>(
         };
     let propfind_member: PropfindElement<<<R::MemberType as Resource>::Prop as PropName>::Names> =
         if !body.is_empty() {
-            PropfindElement::parse_str(&body).map_err(Error::XmlError)?
+            PropfindElement::parse_str(body).map_err(Error::XmlError)?
         } else {
             PropfindElement {
                 prop: PropfindType::Allprop,
@@ -76,18 +104,18 @@ pub(crate) async fn route_propfind<R: ResourceService>(
         };
 
     let mut member_responses = Vec::new();
-    if depth != Depth::Zero {
+    if depth != &Depth::Zero {
         for (subpath, member) in resource_service.get_members(path_components).await? {
             member_responses.push(member.propfind_typed(
                 &format!("{}/{}", path.trim_end_matches('/'), subpath),
                 &propfind_member.prop,
                 puri,
-                &user,
+                principal,
             )?);
         }
     }
 
-    let response = resource.propfind_typed(path, &propfind_self.prop, puri, &user)?;
+    let response = resource.propfind_typed(path, &propfind_self.prop, puri, &principal)?;
 
     Ok(MultistatusElement {
         responses: vec![response],

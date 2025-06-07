@@ -1,4 +1,4 @@
-use actix_web::http::StatusCode;
+use http::StatusCode;
 use reqwest::{
     Method, Request,
     header::{self, HeaderName, HeaderValue},

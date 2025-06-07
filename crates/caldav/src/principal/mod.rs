@@ -145,7 +145,7 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore, BS: Ca
     }
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore, BS: CalendarStore>
     ResourceService for PrincipalResourceService<AP, S, CS, BS>
 {
@@ -155,6 +155,8 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore, BS: Ca
     type Error = Error;
     type Principal = User;
     type PrincipalUri = CalDavPrincipalUri;
+
+    const DAV_HEADER: &str = "1, 3, access-control";
 
     async fn get_resource(
         &self,

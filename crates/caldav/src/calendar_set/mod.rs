@@ -77,7 +77,7 @@ impl<C: CalendarStore, S: SubscriptionStore> CalendarSetResourceService<C, S> {
     }
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarSetResourceService<C, S> {
     type PathComponents = (String,);
     type MemberType = CalendarResource;
@@ -85,6 +85,8 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarSetReso
     type Error = Error;
     type Principal = User;
     type PrincipalUri = CalDavPrincipalUri;
+
+    const DAV_HEADER: &str = "1, 3, access-control, extended-mkcol";
 
     async fn get_resource(
         &self,

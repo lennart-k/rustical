@@ -86,7 +86,8 @@ sqlx = { version = "0.8", default-features = false, features = [
   "migrate",
   "json",
 ] }
-http = "0.2" # This version is used by actix-web
+http_02 = { package = "http", version = "0.2" } # actix-web uses a very outdated version
+http = "1.3"
 headers = "0.4"
 strum = "0.27"
 strum_macros = "0.27"

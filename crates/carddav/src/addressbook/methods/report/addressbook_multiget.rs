@@ -4,10 +4,9 @@ use crate::{
         AddressObjectPropWrapper, AddressObjectPropWrapperName, AddressObjectResource,
     },
 };
-use actix_web::{
-    dev::{Path, ResourceDef},
-    http::StatusCode,
-};
+use actix_web::dev::{Path, ResourceDef};
+
+use http::StatusCode;
 use rustical_dav::{
     resource::{PrincipalUri, Resource},
     xml::{MultistatusElement, PropfindType, multistatus::ResponseElement},

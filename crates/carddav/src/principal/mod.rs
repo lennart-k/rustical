@@ -140,7 +140,7 @@ impl Resource for PrincipalResource {
     }
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> ResourceService
     for PrincipalResourceService<A, AP, S>
 {
@@ -150,6 +150,8 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> Reso
     type Error = Error;
     type Principal = User;
     type PrincipalUri = CardDavPrincipalUri;
+
+    const DAV_HEADER: &str = "1, 3, access-control, addressbook";
 
     async fn get_resource(
         &self,

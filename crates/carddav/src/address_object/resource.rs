@@ -105,7 +105,7 @@ pub struct AddressObjectPathComponents {
     pub object_id: String,
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl<AS: AddressbookStore> ResourceService for AddressObjectResourceService<AS> {
     type PathComponents = AddressObjectPathComponents;
     type Resource = AddressObjectResource;
@@ -113,6 +113,8 @@ impl<AS: AddressbookStore> ResourceService for AddressObjectResourceService<AS> 
     type Error = Error;
     type Principal = User;
     type PrincipalUri = CardDavPrincipalUri;
+
+    const DAV_HEADER: &str = "1, 3, access-control, addressbook";
 
     async fn get_resource(
         &self,

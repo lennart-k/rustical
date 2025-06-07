@@ -4,7 +4,7 @@ use crate::error::Error;
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait AuthenticationProvider: 'static {
+pub trait AuthenticationProvider: Send + Sync + 'static {
     async fn get_principals(&self) -> Result<Vec<User>, crate::Error>;
     async fn get_principal(&self, id: &str) -> Result<Option<User>, crate::Error>;
     async fn remove_principal(&self, id: &str) -> Result<(), crate::Error>;

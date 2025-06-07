@@ -7,9 +7,16 @@ repository.workspace = true
 publish = false
 
 [features]
-actix = ["dep:actix-web", "dep:tracing-actix-web"]
+actix = ["dep:actix-web", "dep:tracing-actix-web", "dep:http_02"]
+axum = ["dep:axum", "dep:axum-extra", "dep:tower"]
 
 [dependencies]
+axum = { version = "0.8", optional = true }
+axum-extra = { version = "0.10", optional = true, features = ["typed-header"] }
+tower = { version = "0.5", optional = true }
+
+http_02 = { workspace = true, optional = true }
+
 rustical_xml.workspace = true
 async-trait.workspace = true
 futures-util.workspace = true

@@ -137,7 +137,7 @@ pub struct CalendarObjectPathComponents {
     pub object_id: String,
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl<C: CalendarStore> ResourceService for CalendarObjectResourceService<C> {
     type PathComponents = CalendarObjectPathComponents;
     type Resource = CalendarObjectResource;
@@ -145,6 +145,8 @@ impl<C: CalendarStore> ResourceService for CalendarObjectResourceService<C> {
     type Error = Error;
     type Principal = User;
     type PrincipalUri = CalDavPrincipalUri;
+
+    const DAV_HEADER: &str = "1, 3, access-control, calendar-access";
 
     async fn get_resource(
         &self,

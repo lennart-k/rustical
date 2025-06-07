@@ -124,3 +124,25 @@ impl<T1: XmlSerialize, T2: XmlSerialize> Responder for MultistatusElement<T1, T2
             .body(String::from_utf8(output).unwrap())
     }
 }
+
+#[cfg(feature = "axum")]
+impl<T1: XmlSerialize, T2: XmlSerialize> axum::response::IntoResponse
+    for MultistatusElement<T1, T2>
+{
+    fn into_response(self) -> axum::response::Response {
+        use axum::body::Body;
+        use http::header;
+
+        let mut output: Vec<_> = b"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".into();
+        let mut writer = quick_xml::Writer::new_with_indent(&mut output, b' ', 4);
+        if let Err(err) = self.serialize_root(&mut writer) {
+            return crate::Error::from(err).into_response();
+        }
+
+        let mut resp = axum::response::Response::builder().status(StatusCode::MULTI_STATUS);
+        resp.headers_mut()
+            .unwrap()
+            .insert(header::CONTENT_TYPE, "application/xml".try_into().unwrap());
+        resp.body(Body::from(output)).unwrap()
+    }
+}

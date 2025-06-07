@@ -6,11 +6,11 @@ use crate::{
 };
 use actix_web::{
     HttpRequest, Responder,
-    http::StatusCode,
     web::{Data, Path},
 };
 use calendar_multiget::{CalendarMultigetRequest, get_objects_calendar_multiget};
 use calendar_query::{CalendarQueryRequest, get_objects_calendar_query};
+use http::StatusCode;
 use rustical_dav::{
     resource::{PrincipalUri, Resource},
     xml::{

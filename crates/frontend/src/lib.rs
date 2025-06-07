@@ -335,7 +335,7 @@ pub fn configure_frontend<AP: AuthenticationProvider, CS: CalendarStore, AS: Add
 
 struct OidcUserStore<AP: AuthenticationProvider>(Arc<AP>);
 
-#[async_trait(?Send)]
+#[async_trait]
 impl<AP: AuthenticationProvider> UserStore for OidcUserStore<AP> {
     type Error = rustical_store::Error;
 

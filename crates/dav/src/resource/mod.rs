@@ -12,12 +12,19 @@ use rustical_xml::{EnumVariants, NamespaceOwned, PropName, XmlDeserialize, XmlSe
 use std::collections::HashSet;
 use std::str::FromStr;
 
+#[cfg(feature = "axum")]
+mod axum_methods;
+#[cfg(feature = "axum")]
+mod axum_service;
 mod methods;
 mod principal_uri;
 mod resource_service;
 
+#[cfg(feature = "axum")]
+pub use axum_methods::AxumMethods;
+#[cfg(feature = "axum")]
+pub use axum_service::AxumService;
 pub use principal_uri::PrincipalUri;
-pub use resource_service::*;
 
 pub trait ResourceProp: XmlSerialize + XmlDeserialize {}
 impl<T: XmlSerialize + XmlDeserialize> ResourceProp for T {}
@@ -25,8 +32,8 @@ impl<T: XmlSerialize + XmlDeserialize> ResourceProp for T {}
 pub trait ResourcePropName: FromStr {}
 impl<T: FromStr> ResourcePropName for T {}
 
-pub trait Resource: Clone + 'static {
-    type Prop: ResourceProp + PartialEq + Clone + EnumVariants + PropName;
+pub trait Resource: Clone + Send + 'static {
+    type Prop: ResourceProp + PartialEq + Clone + EnumVariants + PropName + Send;
     type Error: From<crate::Error>;
     type Principal: Principal;
 

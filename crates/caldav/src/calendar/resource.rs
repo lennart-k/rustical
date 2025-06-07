@@ -322,7 +322,7 @@ impl<C: CalendarStore, S: SubscriptionStore> CalendarResourceService<C, S> {
     }
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourceService<C, S> {
     type MemberType = CalendarObjectResource;
     type PathComponents = (String, String); // principal, calendar_id
@@ -330,6 +330,8 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
     type Error = Error;
     type Principal = User;
     type PrincipalUri = CalDavPrincipalUri;
+
+    const DAV_HEADER: &str = "1, 3, access-control, calendar-access";
 
     async fn get_resource(
         &self,

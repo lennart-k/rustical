@@ -4,7 +4,7 @@ use crate::{
         AddressObjectPropWrapper, AddressObjectPropWrapperName, AddressObjectResource,
     },
 };
-use actix_web::http::StatusCode;
+use http::StatusCode;
 use rustical_dav::{
     resource::{PrincipalUri, Resource},
     xml::{

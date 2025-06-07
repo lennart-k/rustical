@@ -29,3 +29,4 @@ rustical_xml.workspace = true
 uuid.workspace = true
 rustical_dav_push.workspace = true
 rustical_ical.workspace = true
+http.workspace = true

@@ -71,7 +71,8 @@ impl actix_web::ResponseError for Error {
                 _ => StatusCode::INTERNAL_SERVER_ERROR,
             },
             Error::ChronoParseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            Error::DavError(err) => err.status_code(),
+            Error::DavError(err) => StatusCode::try_from(err.status_code().as_u16())
+                .expect("Just converting between versions"),
             Error::Unauthorized => StatusCode::UNAUTHORIZED,
             Error::XmlDecodeError(_) => StatusCode::BAD_REQUEST,
             Error::NotImplemented => StatusCode::INTERNAL_SERVER_ERROR,

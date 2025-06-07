@@ -9,6 +9,6 @@ pub mod xml;
 
 pub use error::Error;
 
-pub trait Principal: std::fmt::Debug + Clone + 'static {
+pub trait Principal: std::fmt::Debug + Clone + Send + Sync + 'static {
     fn get_id(&self) -> &str;
 }

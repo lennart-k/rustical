@@ -41,6 +41,8 @@ pub trait EnumVariants {
 pub trait PropName: Sized {
     type Names: Into<(Option<Namespace<'static>>, &'static str)>
         + Clone
+        + Send
+        + Sync
         + From<Self>
         + FromStr<Err: std::fmt::Debug>
         + Hash
