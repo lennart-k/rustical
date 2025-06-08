@@ -7,15 +7,15 @@ repository.workspace = true
 publish = false
 
 [dependencies]
-actix-web = { workspace = true }
+axum.workspace = true
+axum-extra.workspace = true
+tower.workspace = true
 async-trait = { workspace = true }
 thiserror = { workspace = true }
 quick-xml = { workspace = true }
 tracing = { workspace = true }
-tracing-actix-web = { workspace = true }
 futures-util = { workspace = true }
 derive_more = { workspace = true }
-actix-web-httpauth = { workspace = true }
 base64 = { workspace = true }
 serde = { workspace = true }
 tokio = { workspace = true }

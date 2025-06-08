@@ -2,6 +2,7 @@ use super::methods::{axum_route_propfind, axum_route_proppatch};
 use crate::resource::{ResourceService, axum_methods::AxumMethods};
 use axum::{
     body::Body,
+    extract::FromRequestParts,
     handler::Handler,
     http::{Request, Response},
     response::IntoResponse,
@@ -9,16 +10,16 @@ use axum::{
 use futures_util::future::BoxFuture;
 use headers::HeaderMapExt;
 use http::{HeaderValue, StatusCode};
-use std::{convert::Infallible, sync::Arc};
+use std::convert::Infallible;
 use tower::Service;
 
 #[derive(Clone)]
 pub struct AxumService<RS: ResourceService + AxumMethods> {
-    resource_service: Arc<RS>,
+    resource_service: RS,
 }
 
 impl<RS: ResourceService + AxumMethods> AxumService<RS> {
-    pub fn new(resource_service: Arc<RS>) -> Self {
+    pub fn new(resource_service: RS) -> Self {
         Self { resource_service }
     }
 }
@@ -27,6 +28,7 @@ impl<RS: ResourceService + AxumMethods + Clone + Send + Sync> Service<Request<Bo
     for AxumService<RS>
 where
     RS::Error: IntoResponse + Send + Sync + 'static,
+    RS::Principal: FromRequestParts<RS>,
 {
     type Error = Infallible;
     type Response = Response<Body>;

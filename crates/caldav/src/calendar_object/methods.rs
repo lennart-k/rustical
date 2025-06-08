@@ -1,71 +1,70 @@
+use super::resource::CalendarObjectPathComponents;
 use crate::Error;
+use crate::calendar_object::resource::CalendarObjectResourceService;
 use crate::error::Precondition;
-use actix_web::HttpRequest;
-use actix_web::HttpResponse;
-use actix_web::http::header;
-use actix_web::http::header::HeaderValue;
-use actix_web::web::{Data, Path};
+use axum::body::Body;
+use axum::extract::{Path, State};
+use axum::response::{IntoResponse, Response};
+use axum_extra::TypedHeader;
+use headers::{ContentType, ETag, HeaderMapExt, IfNoneMatch};
+use http::StatusCode;
 use rustical_ical::CalendarObject;
 use rustical_store::CalendarStore;
 use rustical_store::auth::User;
+use std::str::FromStr;
 use tracing::instrument;
-use tracing_actix_web::RootSpan;
 
-use super::resource::CalendarObjectPathComponents;
-
-#[instrument(parent = root_span.id(), skip(store, root_span))]
+#[instrument(skip(cal_store))]
 pub async fn get_event<C: CalendarStore>(
-    path: Path<CalendarObjectPathComponents>,
-    store: Data<C>,
-    user: User,
-    root_span: RootSpan,
-) -> Result<HttpResponse, Error> {
-    let CalendarObjectPathComponents {
+    Path(CalendarObjectPathComponents {
         principal,
         calendar_id,
         object_id,
-    } = path.into_inner();
-
+    }): Path<CalendarObjectPathComponents>,
+    State(CalendarObjectResourceService { cal_store }): State<CalendarObjectResourceService<C>>,
+    user: User,
+) -> Result<Response, Error> {
     if !user.is_principal(&principal) {
-        return Ok(HttpResponse::Unauthorized().body(""));
+        return Err(crate::Error::Unauthorized);
     }
 
-    let calendar = store.get_calendar(&principal, &calendar_id).await?;
+    let calendar = cal_store.get_calendar(&principal, &calendar_id).await?;
     if !user.is_principal(&calendar.principal) {
-        return Ok(HttpResponse::Unauthorized().body(""));
+        return Err(crate::Error::Unauthorized);
     }
 
-    let event = store
+    let event = cal_store
         .get_object(&principal, &calendar_id, &object_id)
         .await?;
 
-    Ok(HttpResponse::Ok()
-        .insert_header(("ETag", event.get_etag()))
-        .insert_header(("Content-Type", "text/calendar"))
-        .body(event.get_ics().to_owned()))
+    let mut resp = Response::builder().status(StatusCode::OK);
+    let hdrs = resp.headers_mut().unwrap();
+    hdrs.typed_insert(ETag::from_str(&event.get_etag()).unwrap());
+    hdrs.typed_insert(ContentType::from_str("text/calendar").unwrap());
+    Ok(resp.body(Body::new(event.get_ics().to_owned())).unwrap())
 }
 
-#[instrument(parent = root_span.id(), skip(store, req, root_span))]
+#[instrument(skip(cal_store))]
 pub async fn put_event<C: CalendarStore>(
-    path: Path<CalendarObjectPathComponents>,
-    store: Data<C>,
-    body: String,
-    user: User,
-    req: HttpRequest,
-    root_span: RootSpan,
-) -> Result<HttpResponse, Error> {
-    let CalendarObjectPathComponents {
+    Path(CalendarObjectPathComponents {
         principal,
         calendar_id,
         object_id,
-    } = path.into_inner();
-
+    }): Path<CalendarObjectPathComponents>,
+    State(CalendarObjectResourceService { cal_store }): State<CalendarObjectResourceService<C>>,
+    user: User,
+    if_none_match: Option<TypedHeader<IfNoneMatch>>,
+    body: String,
+) -> Result<Response, Error> {
     if !user.is_principal(&principal) {
-        return Ok(HttpResponse::Unauthorized().finish());
+        return Err(crate::Error::Unauthorized);
     }
 
-    let overwrite =
-        Some(&HeaderValue::from_static("*")) != req.headers().get(header::IF_NONE_MATCH);
+    let overwrite = if let Some(TypedHeader(if_none_match)) = if_none_match {
+        if_none_match == IfNoneMatch::any()
+    } else {
+        true
+    };
 
     let object = match CalendarObject::from_ics(object_id, body) {
         Ok(obj) => obj,
@@ -73,9 +72,9 @@ pub async fn put_event<C: CalendarStore>(
             return Err(Error::PreconditionFailed(Precondition::ValidCalendarData));
         }
     };
-    store
+    cal_store
         .put_object(principal, calendar_id, object, overwrite)
         .await?;
 
-    Ok(HttpResponse::Created().finish())
+    Ok(StatusCode::CREATED.into_response())
 }

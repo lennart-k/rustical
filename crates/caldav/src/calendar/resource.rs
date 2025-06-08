@@ -1,19 +1,20 @@
-use super::methods::mkcalendar::route_mkcalendar;
-use super::methods::post::route_post;
-use super::methods::report::route_report_calendar;
 use super::prop::{SupportedCalendarComponentSet, SupportedCalendarData, SupportedReportSet};
-use crate::calendar_object::resource::{CalendarObjectResource, CalendarObjectResourceService};
+use crate::calendar::methods::mkcalendar::route_mkcalendar;
+use crate::calendar::methods::report::route_report_calendar;
+use crate::calendar_object::resource::CalendarObjectResource;
 use crate::{CalDavPrincipalUri, Error};
-use actix_web::http::Method;
-use actix_web::web::{self};
 use async_trait::async_trait;
+use axum::extract::Request;
+use axum::handler::Handler;
+use axum::response::Response;
 use chrono::{DateTime, Utc};
 use derive_more::derive::{From, Into};
+use futures_util::future::BoxFuture;
 use rustical_dav::extensions::{
     CommonPropertiesExtension, CommonPropertiesProp, SyncTokenExtension, SyncTokenExtensionProp,
 };
 use rustical_dav::privileges::UserPrivilegeSet;
-use rustical_dav::resource::{PrincipalUri, Resource, ResourceService};
+use rustical_dav::resource::{AxumMethods, PrincipalUri, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_dav_push::{DavPushExtension, DavPushExtensionProp};
 use rustical_ical::CalDateTime;
@@ -21,8 +22,10 @@ use rustical_store::auth::User;
 use rustical_store::{Calendar, CalendarStore, SubscriptionStore};
 use rustical_xml::{EnumVariants, PropName};
 use rustical_xml::{XmlDeserialize, XmlSerialize};
+use std::convert::Infallible;
 use std::str::FromStr;
 use std::sync::Arc;
+use tower::Service;
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "CalendarPropName")]
@@ -313,6 +316,15 @@ pub struct CalendarResourceService<C: CalendarStore, S: SubscriptionStore> {
     pub(crate) sub_store: Arc<S>,
 }
 
+impl<C: CalendarStore, S: SubscriptionStore> Clone for CalendarResourceService<C, S> {
+    fn clone(&self) -> Self {
+        Self {
+            cal_store: self.cal_store.clone(),
+            sub_store: self.sub_store.clone(),
+        }
+    }
+}
+
 impl<C: CalendarStore, S: SubscriptionStore> CalendarResourceService<C, S> {
     pub fn new(cal_store: Arc<C>, sub_store: Arc<S>) -> Self {
         Self {
@@ -386,17 +398,21 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
             .await?;
         Ok(())
     }
+}
 
-    fn actix_scope(self) -> actix_web::Scope {
-        let report_method = web::method(Method::from_str("REPORT").unwrap());
-        let mkcalendar_method = web::method(Method::from_str("MKCALENDAR").unwrap());
-        web::scope("/{calendar_id}")
-            .service(CalendarObjectResourceService::new(self.cal_store.clone()).actix_scope())
-            .service(
-                self.actix_resource()
-                    .route(report_method.to(route_report_calendar::<C>))
-                    .route(mkcalendar_method.to(route_mkcalendar::<C>))
-                    .post(route_post::<C, S>),
-            )
+impl<C: CalendarStore, S: SubscriptionStore> AxumMethods for CalendarResourceService<C, S> {
+    fn report() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
+        Some(|state, req| {
+            let mut service = Handler::with_state(route_report_calendar::<C, S>, state);
+            Box::pin(Service::call(&mut service, req))
+        })
+    }
+
+    fn mkcalendar() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>>
+    {
+        Some(|state, req| {
+            let mut service = Handler::with_state(route_mkcalendar::<C, S>, state);
+            Box::pin(Service::call(&mut service, req))
+        })
     }
 }

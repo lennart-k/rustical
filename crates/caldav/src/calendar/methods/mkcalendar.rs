@@ -1,13 +1,14 @@
 use crate::Error;
 use crate::calendar::prop::SupportedCalendarComponentSet;
-use actix_web::HttpResponse;
-use actix_web::web::{Data, Path};
+use crate::calendar::resource::CalendarResourceService;
+use axum::extract::{Path, State};
+use axum::response::{IntoResponse, Response};
+use http::StatusCode;
 use rustical_ical::CalendarObjectType;
 use rustical_store::auth::User;
-use rustical_store::{Calendar, CalendarStore};
+use rustical_store::{Calendar, CalendarStore, SubscriptionStore};
 use rustical_xml::{Unparsed, XmlDeserialize, XmlDocument, XmlRootTag};
 use tracing::instrument;
-use tracing_actix_web::RootSpan;
 
 #[derive(XmlDeserialize, Clone, Debug)]
 pub struct MkcolCalendarProp {
@@ -48,15 +49,13 @@ struct MkcalendarRequest {
     set: PropElement,
 }
 
-#[instrument(parent = root_span.id(), skip(store, root_span))]
-pub async fn route_mkcalendar<C: CalendarStore>(
-    path: Path<(String, String)>,
-    body: String,
+#[instrument(skip(cal_store))]
+pub async fn route_mkcalendar<C: CalendarStore, S: SubscriptionStore>(
+    Path((principal, cal_id)): Path<(String, String)>,
     user: User,
-    store: Data<C>,
-    root_span: RootSpan,
-) -> Result<HttpResponse, Error> {
-    let (principal, cal_id) = path.into_inner();
+    State(CalendarResourceService { cal_store, .. }): State<CalendarResourceService<C, S>>,
+    body: String,
+) -> Result<Response, Error> {
     if !user.is_principal(&principal) {
         return Err(Error::Unauthorized);
     }
@@ -87,12 +86,10 @@ pub async fn route_mkcalendar<C: CalendarStore>(
             ]),
     };
 
-    match store.insert_calendar(calendar).await {
+    match cal_store.insert_calendar(calendar).await {
         // The spec says we should return a mkcalendar-response but I don't know what goes into it.
         // However, it works without one but breaks on iPadOS when using an empty one :)
-        Ok(()) => Ok(HttpResponse::Created()
-            .insert_header(("Cache-Control", "no-cache"))
-            .body("")),
+        Ok(()) => Ok(StatusCode::CREATED.into_response()),
         Err(err) => {
             dbg!(err.to_string());
             Err(err.into())

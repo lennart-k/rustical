@@ -16,12 +16,9 @@ chrono = { workspace = true }
 regex = { workspace = true }
 lazy_static = { workspace = true }
 thiserror = { workspace = true }
-actix-web = { workspace = true }
-actix-session = { workspace = true }
-actix-web-httpauth = { workspace = true }
 tracing = { workspace = true }
 chrono-tz = { workspace = true }
-derive_more = { workspace = true }
+derive_more = { workspace = true, features = ["as_ref"] }
 rustical_xml.workspace = true
 tokio.workspace = true
 rand.workspace = true
@@ -29,7 +26,12 @@ uuid.workspace = true
 clap.workspace = true
 rustical_dav.workspace = true
 rustical_ical.workspace = true
+axum.workspace = true
+http.workspace = true
 rrule.workspace = true
+headers.workspace = true
+tower.workspace = true
+futures-core.workspace = true
 
 [dev-dependencies]
 rstest = { workspace = true }

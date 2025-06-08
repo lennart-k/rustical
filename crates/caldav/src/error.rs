@@ -1,7 +1,9 @@
-use actix_web::{
-    HttpResponse,
-    http::{StatusCode, header::ContentType},
+use axum::{
+    body::Body,
+    response::{IntoResponse, Response},
 };
+use headers::{ContentType, HeaderMapExt};
+use http::StatusCode;
 use rustical_xml::{XmlSerialize, XmlSerializeRoot};
 use tracing::error;
 
@@ -12,22 +14,18 @@ pub enum Precondition {
     ValidCalendarData,
 }
 
-impl actix_web::ResponseError for Precondition {
-    fn status_code(&self) -> StatusCode {
-        StatusCode::PRECONDITION_FAILED
-    }
-    fn error_response(&self) -> HttpResponse<actix_web::body::BoxBody> {
+impl IntoResponse for Precondition {
+    fn into_response(self) -> axum::response::Response {
         let mut output: Vec<_> = b"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".into();
         let mut writer = quick_xml::Writer::new_with_indent(&mut output, b' ', 4);
 
-        let error = rustical_dav::xml::ErrorElement(self);
+        let error = rustical_dav::xml::ErrorElement(&self);
         if let Err(err) = error.serialize_root(&mut writer) {
-            return rustical_dav::Error::from(err).error_response();
+            return rustical_dav::Error::from(err).into_response();
         }
-
-        HttpResponse::PreconditionFailed()
-            .content_type(ContentType::xml())
-            .body(String::from_utf8(output).unwrap())
+        let mut res = Response::builder().status(StatusCode::PRECONDITION_FAILED);
+        res.headers_mut().unwrap().typed_insert(ContentType::xml());
+        res.body(Body::from(output)).unwrap()
     }
 }
 
@@ -61,8 +59,8 @@ pub enum Error {
     PreconditionFailed(Precondition),
 }
 
-impl actix_web::ResponseError for Error {
-    fn status_code(&self) -> actix_web::http::StatusCode {
+impl Error {
+    pub fn status_code(&self) -> StatusCode {
         match self {
             Error::StoreError(err) => match err {
                 rustical_store::Error::NotFound => StatusCode::NOT_FOUND,
@@ -78,16 +76,13 @@ impl actix_web::ResponseError for Error {
             Error::NotImplemented => StatusCode::INTERNAL_SERVER_ERROR,
             Error::NotFound => StatusCode::NOT_FOUND,
             Error::IcalError(err) => err.status_code(),
-            Error::PreconditionFailed(err) => err.status_code(),
+            Error::PreconditionFailed(_err) => StatusCode::PRECONDITION_FAILED,
         }
     }
-    fn error_response(&self) -> actix_web::HttpResponse<actix_web::body::BoxBody> {
-        error!("Error: {self}");
-        match self {
-            Error::DavError(err) => err.error_response(),
-            Error::IcalError(err) => err.error_response(),
-            Error::PreconditionFailed(err) => err.error_response(),
-            _ => HttpResponse::build(self.status_code()).body(self.to_string()),
-        }
+}
+
+impl IntoResponse for Error {
+    fn into_response(self) -> axum::response::Response {
+        (self.status_code(), self.to_string()).into_response()
     }
 }

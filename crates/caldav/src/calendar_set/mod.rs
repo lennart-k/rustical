@@ -1,10 +1,9 @@
-use crate::calendar::resource::{CalendarResource, CalendarResourceService};
+use crate::calendar::resource::CalendarResource;
 use crate::{CalDavPrincipalUri, Error};
-use actix_web::web;
 use async_trait::async_trait;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
-use rustical_dav::resource::{PrincipalUri, Resource, ResourceService};
+use rustical_dav::resource::{AxumMethods, PrincipalUri, Resource, ResourceService};
 use rustical_dav::xml::{Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
 use rustical_store::{CalendarStore, SubscriptionStore};
@@ -67,6 +66,16 @@ pub struct CalendarSetResourceService<C: CalendarStore, S: SubscriptionStore> {
     sub_store: Arc<S>,
 }
 
+impl<C: CalendarStore, S: SubscriptionStore> Clone for CalendarSetResourceService<C, S> {
+    fn clone(&self) -> Self {
+        Self {
+            name: self.name,
+            cal_store: self.cal_store.clone(),
+            sub_store: self.sub_store.clone(),
+        }
+    }
+}
+
 impl<C: CalendarStore, S: SubscriptionStore> CalendarSetResourceService<C, S> {
     pub fn new(name: &'static str, cal_store: Arc<C>, sub_store: Arc<S>) -> Self {
         Self {
@@ -116,16 +125,5 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarSetReso
             })
             .collect())
     }
-
-    fn actix_scope(self) -> actix_web::Scope {
-        web::scope(&format!("/{}", self.name))
-            .service(
-                CalendarResourceService::<_, S>::new(
-                    self.cal_store.clone(),
-                    self.sub_store.clone(),
-                )
-                .actix_scope(),
-            )
-            .service(self.actix_resource())
-    }
 }
+impl<C: CalendarStore, S: SubscriptionStore> AxumMethods for CalendarSetResourceService<C, S> {}

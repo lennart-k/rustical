@@ -1,8 +1,4 @@
-#[cfg(feature = "actix")]
-use actix_web::{HttpRequest, ResponseError};
-#[cfg(feature = "axum")]
 use axum::{body::Body, extract::FromRequestParts, response::IntoResponse};
-use futures_util::future::{Ready, err, ok};
 use rustical_xml::{ValueDeserialize, ValueSerialize, XmlError};
 use thiserror::Error;
 
@@ -10,14 +6,6 @@ use thiserror::Error;
 #[error("Invalid Depth header")]
 pub struct InvalidDepthHeader;
 
-#[cfg(feature = "actix")]
-impl ResponseError for InvalidDepthHeader {
-    fn status_code(&self) -> actix_web::http::StatusCode {
-        http_02::StatusCode::BAD_REQUEST
-    }
-}
-
-#[cfg(feature = "axum")]
 impl IntoResponse for InvalidDepthHeader {
     fn into_response(self) -> axum::response::Response {
         axum::response::Response::builder()
@@ -71,35 +59,12 @@ impl TryFrom<&[u8]> for Depth {
     }
 }
 
-#[cfg(feature = "actix")]
-impl actix_web::FromRequest for Depth {
-    type Error = InvalidDepthHeader;
-    type Future = Ready<Result<Self, Self::Error>>;
-
-    fn extract(req: &HttpRequest) -> Self::Future {
-        if let Some(depth_header) = req.headers().get("Depth") {
-            match depth_header.as_bytes().try_into() {
-                Ok(depth) => ok(depth),
-                Err(e) => err(e),
-            }
-        } else {
-            // default depth
-            ok(Depth::Zero)
-        }
-    }
-
-    fn from_request(req: &HttpRequest, _payload: &mut actix_web::dev::Payload) -> Self::Future {
-        Self::extract(req)
-    }
-}
-
-#[cfg(feature = "axum")]
 impl<S: Send + Sync> FromRequestParts<S> for Depth {
     type Rejection = InvalidDepthHeader;
 
     async fn from_request_parts(
         parts: &mut axum::http::request::Parts,
-        state: &S,
+        _state: &S,
     ) -> Result<Self, Self::Rejection> {
         if let Some(depth_header) = parts.headers.get("Depth") {
             depth_header.as_bytes().try_into()

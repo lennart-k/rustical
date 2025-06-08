@@ -1,6 +1,4 @@
 use crate::config::Config;
-use actix_web::HttpServer;
-use actix_web::http::KeepAlive;
 use anyhow::Result;
 use app::make_app;
 use clap::{Parser, Subcommand};
@@ -105,67 +103,24 @@ async fn main() -> Result<()> {
 
             let nextcloud_flows = Arc::new(NextcloudFlows::default());
 
-            HttpServer::new(move || {
-                make_app(
-                    addr_store.clone(),
-                    cal_store.clone(),
-                    subscription_store.clone(),
-                    principal_store.clone(),
-                    config.frontend.clone(),
-                    config.oidc.clone(),
-                    config.nextcloud_login.clone(),
-                    nextcloud_flows.clone(),
-                )
-            })
-            .bind((config.http.host, config.http.port))?
-            // Workaround for a weird bug where
-            // new requests might timeout since they cannot properly reuse the connection
-            // https://github.com/lennart-k/rustical/issues/10
-            .keep_alive(KeepAlive::Disabled)
-            .run()
+            let app = make_app(
+                addr_store.clone(),
+                cal_store.clone(),
+                subscription_store.clone(),
+                principal_store.clone(),
+                config.frontend.clone(),
+                config.oidc.clone(),
+                config.nextcloud_login.clone(),
+                nextcloud_flows.clone(),
+            );
+
+            let listener = tokio::net::TcpListener::bind(&format!(
+                "{}:{}",
+                config.http.host, config.http.port
+            ))
             .await?;
+            axum::serve(listener, app).await?;
         }
     }
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::{app::make_app, config::NextcloudLoginConfig, get_data_stores};
-    use actix_web::{http::StatusCode, test::TestRequest};
-    use rustical_frontend::nextcloud_login::NextcloudFlows;
-    use rustical_frontend::{FrontendConfig, generate_frontend_secret};
-    use std::sync::Arc;
-
-    #[tokio::test]
-    async fn test_main() {
-        let (addr_store, cal_store, subscription_store, principal_store, _update_recv) =
-            get_data_stores(
-                true,
-                &crate::config::DataStoreConfig::Sqlite(crate::config::SqliteDataStoreConfig {
-                    db_url: "".to_owned(),
-                }),
-            )
-            .await
-            .unwrap();
-
-        let app = make_app(
-            addr_store,
-            cal_store,
-            subscription_store,
-            principal_store,
-            FrontendConfig {
-                enabled: false,
-                secret_key: generate_frontend_secret(),
-                allow_password_login: false,
-            },
-            None,
-            NextcloudLoginConfig { enabled: false },
-            Arc::new(NextcloudFlows::default()),
-        );
-        let app = actix_web::test::init_service(app).await;
-        let req = TestRequest::get().uri("/").to_request();
-        let resp = actix_web::test::call_service(&app, req).await;
-        assert_eq!(resp.status(), StatusCode::NOT_FOUND);
-    }
 }

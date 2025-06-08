@@ -1,8 +1,7 @@
 use crate::Error;
 use crate::calendar::resource::{CalendarResource, CalendarResourceService};
-use actix_web::http::header;
-use actix_web::web::{Data, Path};
-use actix_web::{HttpRequest, HttpResponse};
+use axum::extract::{Path, State};
+use axum::response::Response;
 use rustical_dav::privileges::UserPrivilege;
 use rustical_dav::resource::Resource;
 use rustical_dav_push::register::PushRegister;
@@ -10,18 +9,14 @@ use rustical_store::auth::User;
 use rustical_store::{CalendarStore, Subscription, SubscriptionStore};
 use rustical_xml::XmlDocument;
 use tracing::instrument;
-use tracing_actix_web::RootSpan;
 
-#[instrument(parent = root_span.id(), skip(resource_service, root_span, req))]
+#[instrument(skip(resource_service))]
 pub async fn route_post<C: CalendarStore, S: SubscriptionStore>(
-    path: Path<(String, String)>,
-    body: String,
+    Path((principal, cal_id)): Path<(String, String)>,
     user: User,
-    resource_service: Data<CalendarResourceService<C, S>>,
-    root_span: RootSpan,
-    req: HttpRequest,
-) -> Result<HttpResponse, Error> {
-    let (principal, cal_id) = path.into_inner();
+    State(resource_service): State<CalendarResourceService<C, S>>,
+    body: String,
+) -> Result<Response, Error> {
     if !user.is_principal(&principal) {
         return Err(Error::Unauthorized);
     }

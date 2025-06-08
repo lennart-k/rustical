@@ -2,10 +2,10 @@ use axum::body::Body;
 use futures_util::future::BoxFuture;
 use headers::Allow;
 use http::{Method, Request, Response};
-use std::{convert::Infallible, str::FromStr, sync::Arc};
+use std::{convert::Infallible, str::FromStr};
 
 pub type MethodFunction<Service> =
-    fn(Arc<Service>, Request<Body>) -> BoxFuture<'static, Result<Response<Body>, Infallible>>;
+    fn(Service, Request<Body>) -> BoxFuture<'static, Result<Response<Body>, Infallible>>;
 
 pub trait AxumMethods: Sized + Send + Sync + 'static {
     #[inline]

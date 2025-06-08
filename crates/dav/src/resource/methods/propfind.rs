@@ -7,47 +7,15 @@ use crate::resource::ResourceService;
 use crate::xml::MultistatusElement;
 use crate::xml::PropfindElement;
 use crate::xml::PropfindType;
-#[cfg(feature = "axum")]
 use axum::extract::{Extension, OriginalUri, Path, State};
 use rustical_xml::PropName;
 use rustical_xml::XmlDocument;
-use std::sync::Arc;
-use tracing::instrument;
 
-#[cfg(feature = "actix")]
-#[instrument(parent = root_span.id(), skip(path, req, root_span, resource_service, puri))]
-#[allow(clippy::type_complexity)]
-pub(crate) async fn actix_route_propfind<R: ResourceService>(
-    path: ::actix_web::web::Path<R::PathComponents>,
-    body: String,
-    req: ::actix_web::HttpRequest,
-    user: R::Principal,
-    depth: Depth,
-    root_span: tracing_actix_web::RootSpan,
-    resource_service: ::actix_web::web::Data<R>,
-    puri: ::actix_web::web::Data<R::PrincipalUri>,
-) -> Result<
-    MultistatusElement<<R::Resource as Resource>::Prop, <R::MemberType as Resource>::Prop>,
-    R::Error,
-> {
-    route_propfind(
-        &path.into_inner(),
-        req.path(),
-        &body,
-        &user,
-        &depth,
-        resource_service.as_ref(),
-        puri.as_ref(),
-    )
-    .await
-}
-
-#[cfg(feature = "axum")]
 pub(crate) async fn axum_route_propfind<R: ResourceService>(
     Path(path): Path<R::PathComponents>,
-    State(resource_service): State<Arc<R>>,
+    State(resource_service): State<R>,
     depth: Depth,
-    Extension(principal): Extension<R::Principal>,
+    principal: R::Principal,
     uri: OriginalUri,
     Extension(puri): Extension<R::PrincipalUri>,
     body: String,
@@ -61,7 +29,7 @@ pub(crate) async fn axum_route_propfind<R: ResourceService>(
         &body,
         &principal,
         &depth,
-        resource_service.as_ref(),
+        &resource_service,
         &puri,
     )
     .await
@@ -115,7 +83,7 @@ pub(crate) async fn route_propfind<R: ResourceService>(
         }
     }
 
-    let response = resource.propfind_typed(path, &propfind_self.prop, puri, &principal)?;
+    let response = resource.propfind_typed(path, &propfind_self.prop, puri, principal)?;
 
     Ok(MultistatusElement {
         responses: vec![response],

@@ -1,4 +1,5 @@
-use actix_web::{HttpResponse, http::StatusCode};
+use axum::response::IntoResponse;
+use http::StatusCode;
 use tracing::error;
 
 #[derive(Debug, thiserror::Error)]
@@ -28,8 +29,8 @@ pub enum Error {
     IcalError(#[from] rustical_ical::Error),
 }
 
-impl actix_web::ResponseError for Error {
-    fn status_code(&self) -> actix_web::http::StatusCode {
+impl Error {
+    pub fn status_code(&self) -> StatusCode {
         match self {
             Error::StoreError(err) => match err {
                 rustical_store::Error::NotFound => StatusCode::NOT_FOUND,
@@ -38,8 +39,7 @@ impl actix_web::ResponseError for Error {
                 _ => StatusCode::INTERNAL_SERVER_ERROR,
             },
             Error::ChronoParseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            Error::DavError(err) => StatusCode::try_from(err.status_code().as_u16())
-                .expect("Just converting between versions"),
+            Error::DavError(err) => err.status_code(),
             Error::Unauthorized => StatusCode::UNAUTHORIZED,
             Error::XmlDecodeError(_) => StatusCode::BAD_REQUEST,
             Error::NotImplemented => StatusCode::INTERNAL_SERVER_ERROR,
@@ -47,12 +47,10 @@ impl actix_web::ResponseError for Error {
             Self::IcalError(err) => err.status_code(),
         }
     }
-    fn error_response(&self) -> actix_web::HttpResponse<actix_web::body::BoxBody> {
-        error!("Error: {self}");
-        match self {
-            Error::DavError(err) => err.error_response(),
-            Error::IcalError(err) => err.error_response(),
-            _ => HttpResponse::build(self.status_code()).body(self.to_string()),
-        }
+}
+
+impl IntoResponse for Error {
+    fn into_response(self) -> axum::response::Response {
+        (self.status_code(), self.to_string()).into_response()
     }
 }

@@ -1,13 +1,14 @@
+use std::sync::Arc;
+
 use crate::{FrontendConfig, OidcConfig};
-use actix_session::Session;
-use actix_web::{
-    HttpRequest, HttpResponse, Responder,
-    error::{ErrorNotFound, ErrorUnauthorized},
-    web::{Data, Form, Query, Redirect},
-};
 use askama::Template;
 use askama_web::WebTemplate;
-use rustical_oidc::ROUTE_NAME_OIDC_LOGIN;
+use axum::{
+    Extension, Form,
+    extract::{OriginalUri, Query},
+    response::{IntoResponse, Redirect, Response},
+};
+use http::StatusCode;
 use rustical_store::auth::AuthenticationProvider;
 use serde::Deserialize;
 use tracing::instrument;
@@ -30,29 +31,28 @@ pub struct GetLoginQuery {
     redirect_uri: Option<String>,
 }
 
-#[instrument(skip(req, config, oidc_config))]
+#[instrument(skip(config, oidc_config))]
 pub async fn route_get_login(
     Query(GetLoginQuery { redirect_uri }): Query<GetLoginQuery>,
-    req: HttpRequest,
-    config: Data<FrontendConfig>,
-    oidc_config: Data<Option<OidcConfig>>,
-) -> HttpResponse {
-    let oidc_data = oidc_config
-        .as_ref()
-        .as_ref()
-        .map(|oidc_config| OidcProviderData {
-            name: &oidc_config.name,
-            redirect_url: req
-                .url_for_static(ROUTE_NAME_OIDC_LOGIN)
-                .unwrap()
-                .to_string(),
-        });
+    Extension(config): Extension<FrontendConfig>,
+    Extension(oidc_config): Extension<Option<OidcConfig>>,
+) -> Response {
+    // let oidc_data = oidc_config
+    //     .as_ref()
+    //     .as_ref()
+    //     .map(|oidc_config| OidcProviderData {
+    //         name: &oidc_config.name,
+    //         redirect_url: req
+    //             .url_for_static(ROUTE_NAME_OIDC_LOGIN)
+    //             .unwrap()
+    //             .to_string(),
+    //     });
     LoginPage {
         redirect_uri,
         allow_password_login: config.allow_password_login,
-        oidc_data,
+        oidc_data: None,
     }
-    .respond_to(&req)
+    .into_response()
 }
 
 #[derive(Deserialize)]
@@ -62,43 +62,38 @@ pub struct PostLoginForm {
     redirect_uri: Option<String>,
 }
 
-#[instrument(skip(req, password, auth_provider, session, config))]
+// #[instrument(skip(password, auth_provider, config))]
 pub async fn route_post_login<AP: AuthenticationProvider>(
-    req: HttpRequest,
+    Extension(auth_provider): Extension<Arc<AP>>,
+    Extension(config): Extension<FrontendConfig>,
+    OriginalUri(orig_uri): OriginalUri,
     Form(PostLoginForm {
         username,
         password,
         redirect_uri,
     }): Form<PostLoginForm>,
-    session: Session,
-    auth_provider: Data<AP>,
-    config: Data<FrontendConfig>,
-) -> HttpResponse {
+) -> Response {
     if !config.allow_password_login {
-        return ErrorNotFound("Password authentication disabled").error_response();
+        return StatusCode::METHOD_NOT_ALLOWED.into_response();
     }
     // Ensure that redirect_uri never goes cross-origin
     let default_redirect = "/frontend/user".to_string();
     let redirect_uri = redirect_uri.unwrap_or(default_redirect.clone());
-    let redirect_uri = req
-        .full_url()
-        .join(&redirect_uri)
-        .ok()
-        .and_then(|uri| req.full_url().make_relative(&uri))
-        .unwrap_or(default_redirect);
+    // let redirect_uri = orig_uri
+    //     .join(&redirect_uri)
+    //     .ok()
+    //     .and_then(|uri| orig_uri.make_relative(&uri))
+    //     .unwrap_or(default_redirect);
 
     if let Ok(Some(user)) = auth_provider.validate_password(&username, &password).await {
-        session.insert("user", user.id).unwrap();
-        Redirect::to(redirect_uri)
-            .see_other()
-            .respond_to(&req)
-            .map_into_boxed_body()
+        // session.insert("user", user.id).unwrap();
+        Redirect::to(&redirect_uri).into_response()
     } else {
-        ErrorUnauthorized("Unauthorized").error_response()
+        StatusCode::UNAUTHORIZED.into_response()
     }
 }
 
-pub async fn route_post_logout(req: HttpRequest, session: Session) -> Redirect {
-    session.remove("user");
-    Redirect::to(req.url_for_static("frontend_login").unwrap().to_string()).see_other()
+pub async fn route_post_logout() -> Redirect {
+    // session.remove("user");
+    Redirect::to("/")
 }

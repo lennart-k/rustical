@@ -1,10 +1,9 @@
-use crate::addressbook::resource::{AddressbookResource, AddressbookResourceService};
+use crate::addressbook::resource::AddressbookResource;
 use crate::{CardDavPrincipalUri, Error};
-use actix_web::web;
 use async_trait::async_trait;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
-use rustical_dav::resource::{PrincipalUri, Resource, ResourceService};
+use rustical_dav::resource::{AxumMethods, PrincipalUri, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::{AuthenticationProvider, User};
 use rustical_store::{AddressbookStore, SubscriptionStore};
@@ -175,16 +174,9 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> Reso
             .map(|addressbook| (addressbook.id.to_owned(), addressbook.into()))
             .collect())
     }
+}
 
-    fn actix_scope(self) -> actix_web::Scope {
-        web::scope("/principal/{principal}")
-            .service(
-                AddressbookResourceService::<_, S>::new(
-                    self.addr_store.clone(),
-                    self.sub_store.clone(),
-                )
-                .actix_scope(),
-            )
-            .service(self.actix_resource())
-    }
+impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> AxumMethods
+    for PrincipalResourceService<A, AP, S>
+{
 }

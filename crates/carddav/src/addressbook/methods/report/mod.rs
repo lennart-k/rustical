@@ -1,11 +1,15 @@
-use crate::{CardDavPrincipalUri, Error, address_object::resource::AddressObjectPropWrapperName};
-use actix_web::{
-    HttpRequest, Responder,
-    web::{Data, Path},
+use crate::{
+    CardDavPrincipalUri, Error, address_object::resource::AddressObjectPropWrapperName,
+    addressbook::resource::AddressbookResourceService,
 };
 use addressbook_multiget::{AddressbookMultigetRequest, handle_addressbook_multiget};
+use axum::{
+    Extension,
+    extract::{OriginalUri, Path, State},
+    response::IntoResponse,
+};
 use rustical_dav::xml::{PropfindType, sync_collection::SyncCollectionRequest};
-use rustical_store::{AddressbookStore, auth::User};
+use rustical_store::{AddressbookStore, SubscriptionStore, auth::User};
 use rustical_xml::{XmlDeserialize, XmlDocument};
 use sync_collection::handle_sync_collection;
 use tracing::instrument;
@@ -30,16 +34,15 @@ impl ReportRequest {
     }
 }
 
-#[instrument(skip(req, addr_store))]
-pub async fn route_report_addressbook<AS: AddressbookStore>(
-    path: Path<(String, String)>,
-    body: String,
+#[instrument(skip(addr_store))]
+pub async fn route_report_addressbook<AS: AddressbookStore, S: SubscriptionStore>(
+    Path((principal, addressbook_id)): Path<(String, String)>,
     user: User,
-    req: HttpRequest,
-    puri: Data<CardDavPrincipalUri>,
-    addr_store: Data<AS>,
-) -> Result<impl Responder, Error> {
-    let (principal, addressbook_id) = path.into_inner();
+    OriginalUri(uri): OriginalUri,
+    Extension(puri): Extension<CardDavPrincipalUri>,
+    State(AddressbookResourceService { addr_store, .. }): State<AddressbookResourceService<AS, S>>,
+    body: String,
+) -> Result<impl IntoResponse, Error> {
     if !user.is_principal(&principal) {
         return Err(Error::Unauthorized);
     }
@@ -51,8 +54,8 @@ pub async fn route_report_addressbook<AS: AddressbookStore>(
             handle_addressbook_multiget(
                 addr_multiget,
                 request.props(),
-                req.path(),
-                puri.as_ref(),
+                uri.path(),
+                &puri,
                 &user,
                 &principal,
                 &addressbook_id,
@@ -63,8 +66,8 @@ pub async fn route_report_addressbook<AS: AddressbookStore>(
         ReportRequest::SyncCollection(sync_collection) => {
             handle_sync_collection(
                 sync_collection,
-                req.path(),
-                puri.as_ref(),
+                uri.path(),
+                &puri,
                 &user,
                 &principal,
                 &addressbook_id,

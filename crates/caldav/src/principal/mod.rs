@@ -1,10 +1,9 @@
-use crate::calendar_set::{CalendarSetResource, CalendarSetResourceService};
+use crate::calendar_set::CalendarSetResource;
 use crate::{CalDavPrincipalUri, Error};
-use actix_web::web;
 use async_trait::async_trait;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
-use rustical_dav::resource::{PrincipalUri, Resource, ResourceService};
+use rustical_dav::resource::{AxumMethods, PrincipalUri, Resource, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::user::PrincipalType;
 use rustical_store::auth::{AuthenticationProvider, User};
@@ -194,25 +193,9 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore, BS: Ca
             ),
         ])
     }
+}
 
-    fn actix_scope(self) -> actix_web::Scope {
-        web::scope("/principal/{principal}")
-            .service(
-                CalendarSetResourceService::<_, S>::new(
-                    "calendar",
-                    self.cal_store.clone(),
-                    self.sub_store.clone(),
-                )
-                .actix_scope(),
-            )
-            .service(
-                CalendarSetResourceService::<_, S>::new(
-                    "birthdays",
-                    self.birthday_store.clone(),
-                    self.sub_store.clone(),
-                )
-                .actix_scope(),
-            )
-            .service(self.actix_resource())
-    }
+impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore, BS: CalendarStore>
+    AxumMethods for PrincipalResourceService<AP, S, CS, BS>
+{
 }

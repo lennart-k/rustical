@@ -1,4 +1,4 @@
-use actix_web::{ResponseError, http::StatusCode};
+use http::StatusCode;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -27,8 +27,8 @@ pub enum Error {
     IcalError(#[from] rustical_ical::Error),
 }
 
-impl ResponseError for Error {
-    fn status_code(&self) -> actix_web::http::StatusCode {
+impl Error {
+    pub fn status_code(&self) -> StatusCode {
         match self {
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::AlreadyExists => StatusCode::CONFLICT,

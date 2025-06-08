@@ -1,10 +1,12 @@
-use crate::Error;
-use actix_web::web::Path;
-use actix_web::{HttpResponse, web::Data};
-use rustical_store::{Addressbook, AddressbookStore, auth::User};
+use crate::{Error, addressbook::resource::AddressbookResourceService};
+use axum::{
+    extract::{Path, State},
+    response::{IntoResponse, Response},
+};
+use http::StatusCode;
+use rustical_store::{Addressbook, AddressbookStore, SubscriptionStore, auth::User};
 use rustical_xml::{XmlDeserialize, XmlDocument, XmlRootTag};
 use tracing::instrument;
-use tracing_actix_web::RootSpan;
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 pub struct Resourcetype {
@@ -39,15 +41,13 @@ struct MkcolRequest {
     set: PropElement<MkcolAddressbookProp>,
 }
 
-#[instrument(parent = root_span.id(), skip(store, root_span))]
-pub async fn route_mkcol<AS: AddressbookStore>(
-    path: Path<(String, String)>,
-    body: String,
+#[instrument(skip(addr_store))]
+pub async fn route_mkcol<AS: AddressbookStore, S: SubscriptionStore>(
+    Path((principal, addressbook_id)): Path<(String, String)>,
     user: User,
-    store: Data<AS>,
-    root_span: RootSpan,
-) -> Result<HttpResponse, Error> {
-    let (principal, addressbook_id) = path.into_inner();
+    State(AddressbookResourceService { addr_store, .. }): State<AddressbookResourceService<AS, S>>,
+    body: String,
+) -> Result<Response, Error> {
     if !user.is_principal(&principal) {
         return Err(Error::Unauthorized);
     }
@@ -65,7 +65,7 @@ pub async fn route_mkcol<AS: AddressbookStore>(
         push_topic: uuid::Uuid::new_v4().to_string(),
     };
 
-    match store
+    match addr_store
         .get_addressbook(&principal, &addressbook_id, true)
         .await
     {
@@ -74,7 +74,11 @@ pub async fn route_mkcol<AS: AddressbookStore>(
         }
         Ok(_) => {
             // oh no, there's a conflict
-            return Ok(HttpResponse::Conflict().body("An addressbook already exists at this URI"));
+            return Ok((
+                StatusCode::CONFLICT,
+                "An addressbook already exists at this URI",
+            )
+                .into_response());
         }
         Err(err) => {
             // some other error
@@ -82,12 +86,10 @@ pub async fn route_mkcol<AS: AddressbookStore>(
         }
     }
 
-    match store.insert_addressbook(addressbook).await {
+    match addr_store.insert_addressbook(addressbook).await {
         // TODO: The spec says we should return a mkcol-response.
         // However, it works without one but breaks on iPadOS when using an empty one :)
-        Ok(()) => Ok(HttpResponse::Created()
-            .insert_header(("Cache-Control", "no-cache"))
-            .body("")),
+        Ok(()) => Ok(StatusCode::CREATED.into_response()),
         Err(err) => {
             dbg!(err.to_string());
             Err(err.into())

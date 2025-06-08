@@ -3,7 +3,7 @@ use crate::extensions::{
     CommonPropertiesExtension, CommonPropertiesProp, CommonPropertiesPropName,
 };
 use crate::privileges::UserPrivilegeSet;
-use crate::resource::{PrincipalUri, Resource, ResourceService};
+use crate::resource::{AxumMethods, PrincipalUri, Resource, ResourceService};
 use crate::xml::{Resourcetype, ResourcetypeInner};
 use async_trait::async_trait;
 use std::marker::PhantomData;
@@ -74,15 +74,9 @@ impl<PRS: ResourceService<Principal = P> + Clone, P: Principal, PURI: PrincipalU
     async fn get_resource(&self, _: &()) -> Result<Self::Resource, Self::Error> {
         Ok(RootResource::<PRS::Resource, P>::default())
     }
+}
 
-    #[cfg(feature = "actix")]
-    fn actix_scope(self) -> actix_web::Scope
-    where
-        Self::Error: actix_web::ResponseError,
-        Self::Principal: actix_web::FromRequest,
-    {
-        actix_web::web::scope("")
-            .service(self.0.clone().actix_scope())
-            .service(self.actix_resource())
-    }
+impl<PRS: ResourceService<Principal = P> + Clone, P: Principal, PURI: PrincipalUri> AxumMethods
+    for RootResourceService<PRS, P, PURI>
+{
 }

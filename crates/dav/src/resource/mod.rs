@@ -12,17 +12,13 @@ use rustical_xml::{EnumVariants, NamespaceOwned, PropName, XmlDeserialize, XmlSe
 use std::collections::HashSet;
 use std::str::FromStr;
 
-#[cfg(feature = "axum")]
 mod axum_methods;
-#[cfg(feature = "axum")]
 mod axum_service;
 mod methods;
 mod principal_uri;
 mod resource_service;
 
-#[cfg(feature = "axum")]
 pub use axum_methods::AxumMethods;
-#[cfg(feature = "axum")]
 pub use axum_service::AxumService;
 pub use principal_uri::PrincipalUri;
 

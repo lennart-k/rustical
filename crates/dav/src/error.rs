@@ -53,30 +53,6 @@ impl Error {
     }
 }
 
-#[cfg(feature = "actix")]
-impl actix_web::error::ResponseError for Error {
-    fn status_code(&self) -> actix_web::http::StatusCode {
-        self.status_code()
-            .as_u16()
-            .try_into()
-            .expect("Just converting between versions")
-    }
-
-    fn error_response(&self) -> actix_web::HttpResponse {
-        use actix_web::ResponseError;
-
-        error!("Error: {self}");
-        match self {
-            Error::Unauthorized => actix_web::HttpResponse::build(ResponseError::status_code(self))
-                .append_header(("WWW-Authenticate", "Basic"))
-                .body(self.to_string()),
-            _ => actix_web::HttpResponse::build(ResponseError::status_code(self))
-                .body(self.to_string()),
-        }
-    }
-}
-
-#[cfg(feature = "axum")]
 impl axum::response::IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
         use axum::body::Body;

@@ -1,3 +1,5 @@
+use axum::{http::StatusCode, response::IntoResponse};
+
 use crate::CalDateTimeError;
 
 #[derive(Debug, thiserror::Error)]
@@ -21,15 +23,18 @@ pub enum Error {
     RRuleError(#[from] rrule::RRuleError),
 }
 
-#[cfg(feature = "actix")]
-impl actix_web::ResponseError for Error {
-    fn status_code(&self) -> actix_web::http::StatusCode {
+impl Error {
+    pub fn status_code(&self) -> StatusCode {
         match self {
-            Self::InvalidData(_) => actix_web::http::StatusCode::BAD_REQUEST,
-            Self::MissingCalendar | Self::MissingContact => {
-                actix_web::http::StatusCode::BAD_REQUEST
-            }
-            _ => actix_web::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Self::InvalidData(_) => StatusCode::BAD_REQUEST,
+            Self::MissingCalendar | Self::MissingContact => StatusCode::BAD_REQUEST,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
+    }
+}
+
+impl IntoResponse for Error {
+    fn into_response(self) -> axum::response::Response {
+        (self.status_code(), self.to_string()).into_response()
     }
 }

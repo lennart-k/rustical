@@ -1,12 +1,14 @@
 use crate::{
     CalDavPrincipalUri, Error,
+    calendar::resource::CalendarResourceService,
     calendar_object::resource::{
         CalendarObjectPropWrapper, CalendarObjectPropWrapperName, CalendarObjectResource,
     },
 };
-use actix_web::{
-    HttpRequest, Responder,
-    web::{Data, Path},
+use axum::{
+    Extension,
+    extract::{OriginalUri, Path, State},
+    response::IntoResponse,
 };
 use calendar_multiget::{CalendarMultigetRequest, get_objects_calendar_multiget};
 use calendar_query::{CalendarQueryRequest, get_objects_calendar_query};
@@ -19,7 +21,7 @@ use rustical_dav::{
     },
 };
 use rustical_ical::CalendarObject;
-use rustical_store::{CalendarStore, auth::User};
+use rustical_store::{CalendarStore, SubscriptionStore, auth::User};
 use rustical_xml::{XmlDeserialize, XmlDocument};
 use sync_collection::handle_sync_collection;
 use tracing::instrument;
@@ -85,16 +87,15 @@ fn objects_response(
     })
 }
 
-#[instrument(skip(req, cal_store))]
-pub async fn route_report_calendar<C: CalendarStore>(
-    path: Path<(String, String)>,
-    body: String,
+#[instrument(skip(cal_store))]
+pub async fn route_report_calendar<C: CalendarStore, S: SubscriptionStore>(
+    Path((principal, cal_id)): Path<(String, String)>,
     user: User,
-    req: HttpRequest,
-    puri: Data<CalDavPrincipalUri>,
-    cal_store: Data<C>,
-) -> Result<impl Responder, Error> {
-    let (principal, cal_id) = path.into_inner();
+    Extension(puri): Extension<CalDavPrincipalUri>,
+    State(CalendarResourceService { cal_store, .. }): State<CalendarResourceService<C, S>>,
+    OriginalUri(uri): OriginalUri,
+    body: String,
+) -> Result<impl IntoResponse, Error> {
     if !user.is_principal(&principal) {
         return Err(Error::Unauthorized);
     }
@@ -107,20 +108,12 @@ pub async fn route_report_calendar<C: CalendarStore>(
             let objects =
                 get_objects_calendar_query(cal_query, &principal, &cal_id, cal_store.as_ref())
                     .await?;
-            objects_response(
-                objects,
-                vec![],
-                req.path(),
-                &principal,
-                puri.as_ref(),
-                &user,
-                props,
-            )?
+            objects_response(objects, vec![], uri.path(), &principal, &puri, &user, props)?
         }
         ReportRequest::CalendarMultiget(cal_multiget) => {
             let (objects, not_found) = get_objects_calendar_multiget(
                 cal_multiget,
-                req.path(),
+                uri.path(),
                 &principal,
                 &cal_id,
                 cal_store.as_ref(),
@@ -129,9 +122,9 @@ pub async fn route_report_calendar<C: CalendarStore>(
             objects_response(
                 objects,
                 not_found,
-                req.path(),
+                uri.path(),
                 &principal,
-                puri.as_ref(),
+                &puri,
                 &user,
                 props,
             )?
@@ -139,8 +132,8 @@ pub async fn route_report_calendar<C: CalendarStore>(
         ReportRequest::SyncCollection(sync_collection) => {
             handle_sync_collection(
                 sync_collection,
-                req.path(),
-                puri.as_ref(),
+                uri.path(),
+                &puri,
                 &user,
                 &principal,
                 &cal_id,

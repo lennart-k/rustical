@@ -1,22 +1,35 @@
-use super::methods::{get_event, put_event};
-use crate::{CalDavPrincipalUri, Error};
-use actix_web::web;
+// use super::methods::{get_event, put_event};
+use crate::{
+    CalDavPrincipalUri, Error,
+    calendar_object::methods::{get_event, put_event},
+};
 use async_trait::async_trait;
+use axum::{extract::Request, handler::Handler, response::Response};
 use derive_more::derive::{From, Into};
+use futures_util::future::BoxFuture;
 use rustical_dav::{
     extensions::{CommonPropertiesExtension, CommonPropertiesProp},
     privileges::UserPrivilegeSet,
-    resource::{PrincipalUri, Resource, ResourceService},
+    resource::{AxumMethods, PrincipalUri, Resource, ResourceService},
     xml::Resourcetype,
 };
 use rustical_ical::{CalendarObject, UtcDateTime};
 use rustical_store::{CalendarStore, auth::User};
 use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
-use serde::Deserialize;
-use std::sync::Arc;
+use serde::{Deserialize, Deserializer};
+use std::{convert::Infallible, sync::Arc};
+use tower::Service;
 
 pub struct CalendarObjectResourceService<C: CalendarStore> {
-    cal_store: Arc<C>,
+    pub(crate) cal_store: Arc<C>,
+}
+
+impl<C: CalendarStore> Clone for CalendarObjectResourceService<C> {
+    fn clone(&self) -> Self {
+        Self {
+            cal_store: self.cal_store.clone(),
+        }
+    }
 }
 
 impl<C: CalendarStore> CalendarObjectResourceService<C> {
@@ -130,10 +143,23 @@ impl Resource for CalendarObjectResource {
     }
 }
 
+fn deserialize_ics_name<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let name: String = Deserialize::deserialize(deserializer)?;
+    if let Some(object_id) = name.strip_suffix(".ics") {
+        Ok(object_id.to_owned())
+    } else {
+        Err(serde::de::Error::custom("Missing .ics extension"))
+    }
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct CalendarObjectPathComponents {
     pub principal: String,
     pub calendar_id: String,
+    #[serde(deserialize_with = "deserialize_ics_name")]
     pub object_id: String,
 }
 
@@ -180,12 +206,19 @@ impl<C: CalendarStore> ResourceService for CalendarObjectResourceService<C> {
             .await?;
         Ok(())
     }
+}
 
-    fn actix_scope(self) -> actix_web::Scope {
-        web::scope("/{object_id}.ics").service(
-            self.actix_resource()
-                .get(get_event::<C>)
-                .put(put_event::<C>),
-        )
+impl<C: CalendarStore> AxumMethods for CalendarObjectResourceService<C> {
+    fn get() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
+        Some(|state, req| {
+            let mut service = Handler::with_state(get_event::<C>, state);
+            Box::pin(Service::call(&mut service, req))
+        })
+    }
+    fn put() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
+        Some(|state, req| {
+            let mut service = Handler::with_state(put_event::<C>, state);
+            Box::pin(Service::call(&mut service, req))
+        })
     }
 }

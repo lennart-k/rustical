@@ -1,16 +1,14 @@
-use actix_web::{
-    FromRequest, HttpMessage, HttpResponse, ResponseError,
-    body::BoxBody,
-    http::{StatusCode, header},
+use axum::{
+    body::Body,
+    extract::FromRequestParts,
+    response::{IntoResponse, Response},
 };
 use chrono::{DateTime, Utc};
 use derive_more::Display;
+use http::{HeaderValue, StatusCode, header};
 use rustical_xml::ValueSerialize;
 use serde::{Deserialize, Serialize};
-use std::{
-    fmt::Display,
-    future::{Ready, ready},
-};
+use std::fmt::Display;
 
 use crate::Secret;
 
@@ -121,33 +119,28 @@ impl rustical_dav::Principal for User {
 #[derive(Clone, Debug, Display)]
 pub struct UnauthorizedError;
 
-impl ResponseError for UnauthorizedError {
-    fn status_code(&self) -> actix_web::http::StatusCode {
-        StatusCode::UNAUTHORIZED
-    }
-    fn error_response(&self) -> HttpResponse<BoxBody> {
-        HttpResponse::build(StatusCode::UNAUTHORIZED)
-            .insert_header((
-                header::WWW_AUTHENTICATE,
-                r#"Basic realm="RustiCal", charset="UTF-8""#,
-            ))
-            .finish()
+impl IntoResponse for UnauthorizedError {
+    fn into_response(self) -> axum::response::Response {
+        let mut resp = Response::builder().status(StatusCode::UNAUTHORIZED);
+        resp.headers_mut().unwrap().insert(
+            header::WWW_AUTHENTICATE,
+            HeaderValue::from_static(r#"Basic realm="RustiCal", charset="UTF-8""#),
+        );
+        resp.body(Body::empty()).unwrap()
     }
 }
 
-impl FromRequest for User {
-    type Error = UnauthorizedError;
-    type Future = Ready<Result<Self, Self::Error>>;
+impl<S: Send + Sync + Clone> FromRequestParts<S> for User {
+    type Rejection = UnauthorizedError;
 
-    fn from_request(
-        req: &actix_web::HttpRequest,
-        _payload: &mut actix_web::dev::Payload,
-    ) -> Self::Future {
-        ready(
-            req.extensions()
-                .get::<Self>()
-                .cloned()
-                .ok_or(UnauthorizedError),
-        )
+    async fn from_request_parts(
+        parts: &mut http::request::Parts,
+        _state: &S,
+    ) -> Result<Self, Self::Rejection> {
+        parts
+            .extensions
+            .get::<Self>()
+            .cloned()
+            .ok_or(UnauthorizedError)
     }
 }

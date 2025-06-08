@@ -4,8 +4,6 @@ use crate::{
         AddressObjectPropWrapper, AddressObjectPropWrapperName, AddressObjectResource,
     },
 };
-use actix_web::dev::{Path, ResourceDef};
-
 use http::StatusCode;
 use rustical_dav::{
     resource::{PrincipalUri, Resource},
@@ -32,27 +30,28 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
     addressbook_id: &str,
     store: &AS,
 ) -> Result<(Vec<AddressObject>, Vec<String>), Error> {
-    let resource_def = ResourceDef::prefix(path).join(&ResourceDef::new("/{object_id}.vcf"));
-
     let mut result = vec![];
     let mut not_found = vec![];
 
     for href in &addressbook_multiget.href {
-        let mut path = Path::new(href.as_str());
-        if !resource_def.capture_match_info(&mut path) {
+        if let Some(filename) = href.strip_prefix(path) {
+            if let Some(object_id) = filename.strip_suffix(".vcf") {
+                match store
+                    .get_object(principal, addressbook_id, object_id, false)
+                    .await
+                {
+                    Ok(object) => result.push(object),
+                    Err(rustical_store::Error::NotFound) => not_found.push(href.to_owned()),
+                    Err(err) => return Err(err.into()),
+                };
+            } else {
+                not_found.push(href.to_owned());
+                continue;
+            }
+        } else {
             not_found.push(href.to_owned());
             continue;
-        };
-        let object_id = path.get("object_id").unwrap();
-        match store
-            .get_object(principal, addressbook_id, object_id, false)
-            .await
-        {
-            Ok(object) => result.push(object),
-            Err(rustical_store::Error::NotFound) => not_found.push(href.to_owned()),
-            // TODO: Maybe add error handling on a per-object basis
-            Err(err) => return Err(err.into()),
-        };
+        }
     }
 
     Ok((result, not_found))

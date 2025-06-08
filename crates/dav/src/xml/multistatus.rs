@@ -1,8 +1,4 @@
 use crate::xml::TagList;
-#[cfg(feature = "actix")]
-use actix_web::{
-    HttpRequest, HttpResponse, Responder, ResponseError, body::BoxBody, http::header::ContentType,
-};
 use http::StatusCode;
 use quick_xml::name::Namespace;
 use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
@@ -108,24 +104,6 @@ impl<T1: XmlSerialize, T2: XmlSerialize> Default for MultistatusElement<T1, T2> 
     }
 }
 
-#[cfg(feature = "actix")]
-impl<T1: XmlSerialize, T2: XmlSerialize> Responder for MultistatusElement<T1, T2> {
-    type Body = BoxBody;
-
-    fn respond_to(self, _req: &HttpRequest) -> HttpResponse<Self::Body> {
-        let mut output: Vec<_> = b"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".into();
-        let mut writer = quick_xml::Writer::new_with_indent(&mut output, b' ', 4);
-        if let Err(err) = self.serialize_root(&mut writer) {
-            return crate::Error::from(err).error_response();
-        }
-
-        HttpResponse::MultiStatus()
-            .content_type(ContentType::xml())
-            .body(String::from_utf8(output).unwrap())
-    }
-}
-
-#[cfg(feature = "axum")]
 impl<T1: XmlSerialize, T2: XmlSerialize> axum::response::IntoResponse
     for MultistatusElement<T1, T2>
 {

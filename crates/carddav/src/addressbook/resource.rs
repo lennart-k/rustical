@@ -1,25 +1,27 @@
 use super::methods::mkcol::route_mkcol;
-use super::methods::post::route_post;
 use super::methods::report::route_report_addressbook;
 use super::prop::{SupportedAddressData, SupportedReportSet};
-use crate::address_object::resource::{AddressObjectResource, AddressObjectResourceService};
+use crate::address_object::resource::AddressObjectResource;
 use crate::{CardDavPrincipalUri, Error};
-use actix_web::http::Method;
-use actix_web::web;
 use async_trait::async_trait;
+use axum::extract::Request;
+use axum::handler::Handler;
+use axum::response::Response;
 use derive_more::derive::{From, Into};
+use futures_util::future::BoxFuture;
 use rustical_dav::extensions::{
     CommonPropertiesExtension, CommonPropertiesProp, SyncTokenExtension, SyncTokenExtensionProp,
 };
 use rustical_dav::privileges::UserPrivilegeSet;
-use rustical_dav::resource::{PrincipalUri, Resource, ResourceService};
+use rustical_dav::resource::{AxumMethods, PrincipalUri, Resource, ResourceService};
 use rustical_dav::xml::{Resourcetype, ResourcetypeInner};
 use rustical_dav_push::{DavPushExtension, DavPushExtensionProp};
 use rustical_store::auth::User;
 use rustical_store::{Addressbook, AddressbookStore, SubscriptionStore};
 use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
-use std::str::FromStr;
+use std::convert::Infallible;
 use std::sync::Arc;
+use tower::Service;
 
 pub struct AddressbookResourceService<AS: AddressbookStore, S: SubscriptionStore> {
     pub(crate) addr_store: Arc<AS>,
@@ -31,6 +33,15 @@ impl<A: AddressbookStore, S: SubscriptionStore> AddressbookResourceService<A, S>
         Self {
             addr_store,
             sub_store,
+        }
+    }
+}
+
+impl<A: AddressbookStore, S: SubscriptionStore> Clone for AddressbookResourceService<A, S> {
+    fn clone(&self) -> Self {
+        Self {
+            addr_store: self.addr_store.clone(),
+            sub_store: self.sub_store.clone(),
         }
     }
 }
@@ -255,18 +266,20 @@ impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
             .await?;
         Ok(())
     }
+}
 
-    #[inline]
-    fn actix_scope(self) -> actix_web::Scope {
-        let mkcol_method = web::method(Method::from_str("MKCOL").unwrap());
-        let report_method = web::method(Method::from_str("REPORT").unwrap());
-        web::scope("/{addressbook_id}")
-            .service(AddressObjectResourceService::<AS>::new(self.addr_store.clone()).actix_scope())
-            .service(
-                self.actix_resource()
-                    .route(mkcol_method.to(route_mkcol::<AS>))
-                    .route(report_method.to(route_report_addressbook::<AS>))
-                    .post(route_post::<AS, S>),
-            )
+impl<AS: AddressbookStore, S: SubscriptionStore> AxumMethods for AddressbookResourceService<AS, S> {
+    fn report() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
+        Some(|state, req| {
+            let mut service = Handler::with_state(route_report_addressbook::<AS, S>, state);
+            Box::pin(Service::call(&mut service, req))
+        })
+    }
+
+    fn mkcol() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
+        Some(|state, req| {
+            let mut service = Handler::with_state(route_mkcol::<AS, S>, state);
+            Box::pin(Service::call(&mut service, req))
+        })
     }
 }

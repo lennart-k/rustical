@@ -7,14 +7,15 @@ repository.workspace = true
 publish = false
 
 [dependencies]
+tower.workspace = true
+http.workspace = true
+axum.workspace = true
 askama.workspace = true
-async-trait.workspace = true
 askama_web.workspace = true
-actix-session.workspace = true
+async-trait.workspace = true
 serde.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
-actix-web.workspace = true
 rustical_store.workspace = true
 rust-embed.workspace = true
 futures-core.workspace = true
@@ -27,3 +28,5 @@ uuid.workspace = true
 url.workspace = true
 tracing.workspace = true
 rustical_oidc.workspace = true
+axum-extra.workspace= true
+headers.workspace = true

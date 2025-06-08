@@ -1,13 +1,11 @@
 use crate::Error;
 use crate::privileges::UserPrivilege;
-use std::sync::Arc;
 use crate::resource::Resource;
 use crate::resource::ResourceService;
-#[cfg(feature = "axum")]
-use axum::extract::{Extension, OriginalUri, Path, State};
 use crate::xml::MultistatusElement;
 use crate::xml::TagList;
 use crate::xml::multistatus::{PropstatElement, PropstatWrapper, ResponseElement};
+use axum::extract::{OriginalUri, Path, State};
 use http::StatusCode;
 use quick_xml::name::Namespace;
 use rustical_xml::NamespaceOwned;
@@ -17,7 +15,6 @@ use rustical_xml::XmlDeserialize;
 use rustical_xml::XmlDocument;
 use rustical_xml::XmlRootTag;
 use std::str::FromStr;
-use tracing::instrument;
 
 #[derive(XmlDeserialize, Clone, Debug)]
 #[xml(untagged)]
@@ -64,46 +61,14 @@ enum Operation<T: XmlDeserialize> {
 #[xml(ns = "crate::namespace::NS_DAV")]
 struct PropertyupdateElement<T: XmlDeserialize>(#[xml(ty = "untagged", flatten)] Vec<Operation<T>>);
 
-#[cfg(feature = "actix")]
-#[instrument(parent = root_span.id(), skip(path, req, root_span, resource_service))]
-pub(crate) async fn actix_route_proppatch<R: ResourceService>(
-    path: actix_web::web::Path<R::PathComponents>,
-    body: String,
-    req: actix_web::HttpRequest,
-    principal: R::Principal,
-    root_span: tracing_actix_web::RootSpan,
-    resource_service: actix_web::web::Data<R>,
-) -> Result<MultistatusElement<String, String>, R::Error> {
-    route_proppatch(
-        &path.into_inner(),
-        req.path(),
-        &body,
-        &principal,
-        resource_service.as_ref(),
-    )
-    .await
-}
-
-
-#[cfg(feature = "axum")]
 pub(crate) async fn axum_route_proppatch<R: ResourceService>(
     Path(path): Path<R::PathComponents>,
-    State(resource_service): State<Arc<R>>,
-    Extension(principal): Extension<R::Principal>,
+    State(resource_service): State<R>,
+    principal: R::Principal,
     uri: OriginalUri,
     body: String,
-) -> Result<
-    MultistatusElement<String, String>,
-    R::Error,
-> {
-    route_proppatch(
-        &path,
-        uri.path(),
-        &body,
-        &principal,
-        resource_service.as_ref(),
-    )
-    .await
+) -> Result<MultistatusElement<String, String>, R::Error> {
+    route_proppatch(&path, uri.path(), &body, &principal, &resource_service).await
 }
 
 pub(crate) async fn route_proppatch<R: ResourceService>(
@@ -118,10 +83,10 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
     // Extract operations
     let PropertyupdateElement::<SetPropertyPropWrapperWrapper<<R::Resource as Resource>::Prop>>(
         operations,
-    ) = XmlDocument::parse_str(&body).map_err(Error::XmlError)?;
+    ) = XmlDocument::parse_str(body).map_err(Error::XmlError)?;
 
     let mut resource = resource_service.get_resource(path_components).await?;
-    let privileges = resource.get_user_privileges(&principal)?;
+    let privileges = resource.get_user_privileges(principal)?;
     if !privileges.has(&UserPrivilege::Write) {
         return Err(Error::Unauthorized.into());
     }

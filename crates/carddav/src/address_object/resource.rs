@@ -1,24 +1,34 @@
 use crate::{CardDavPrincipalUri, Error};
-use actix_web::web;
 use async_trait::async_trait;
+use axum::{extract::Request, handler::Handler, response::Response};
 use derive_more::derive::{Constructor, From, Into};
+use futures_util::future::BoxFuture;
 use rustical_dav::{
     extensions::{CommonPropertiesExtension, CommonPropertiesProp},
     privileges::UserPrivilegeSet,
-    resource::{PrincipalUri, Resource, ResourceService},
+    resource::{AxumMethods, PrincipalUri, Resource, ResourceService},
     xml::Resourcetype,
 };
 use rustical_ical::AddressObject;
 use rustical_store::{AddressbookStore, auth::User};
 use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 use serde::Deserialize;
-use std::sync::Arc;
+use std::{convert::Infallible, sync::Arc};
+use tower::Service;
 
 use super::methods::{get_object, put_object};
 
 #[derive(Constructor)]
 pub struct AddressObjectResourceService<AS: AddressbookStore> {
-    addr_store: Arc<AS>,
+    pub(crate) addr_store: Arc<AS>,
+}
+
+impl<AS: AddressbookStore> Clone for AddressObjectResourceService<AS> {
+    fn clone(&self) -> Self {
+        Self {
+            addr_store: self.addr_store.clone(),
+        }
+    }
 }
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
@@ -148,13 +158,20 @@ impl<AS: AddressbookStore> ResourceService for AddressObjectResourceService<AS> 
             .await?;
         Ok(())
     }
+}
 
-    #[inline]
-    fn actix_scope(self) -> actix_web::Scope {
-        web::scope("/{object_id}.vcf").service(
-            self.actix_resource()
-                .get(get_object::<AS>)
-                .put(put_object::<AS>),
-        )
+impl<AS: AddressbookStore> AxumMethods for AddressObjectResourceService<AS> {
+    fn get() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
+        Some(|state, req| {
+            let mut service = Handler::with_state(get_object::<AS>, state);
+            Box::pin(Service::call(&mut service, req))
+        })
+    }
+
+    fn put() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
+        Some(|state, req| {
+            let mut service = Handler::with_state(put_object::<AS>, state);
+            Box::pin(Service::call(&mut service, req))
+        })
     }
 }
