@@ -55,7 +55,7 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
         )
         .route(
             "/.well-known/carddav",
-            any(async || Redirect::permanent("/caldav")),
+            any(async || Redirect::permanent("/carddav")),
         );
 
     let session_store = MemoryStore::default();
