@@ -1,11 +1,10 @@
+use crate::XmlError;
+use crate::XmlRootTag;
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::name::ResolveResult;
 use std::io::BufRead;
 pub use xml_derive::XmlDeserialize;
 pub use xml_derive::XmlDocument;
-
-use crate::XmlRootTag;
-use crate::{XmlError, XmlSerialize};
 
 pub trait XmlDeserialize: Sized {
     fn deserialize<R: BufRead>(

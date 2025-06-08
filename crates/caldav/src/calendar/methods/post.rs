@@ -1,7 +1,8 @@
 use crate::Error;
 use crate::calendar::resource::{CalendarResource, CalendarResourceService};
 use axum::extract::{Path, State};
-use axum::response::Response;
+use axum::response::{IntoResponse, Response};
+use http::{HeaderMap, StatusCode, header};
 use rustical_dav::privileges::UserPrivilege;
 use rustical_dav::resource::Resource;
 use rustical_dav_push::register::PushRegister;
@@ -72,10 +73,17 @@ pub async fn route_post<C: CalendarStore, S: SubscriptionStore>(
         .upsert_subscription(subscription)
         .await?;
 
-    let location = req
-        .resource_map()
-        .url_for(&req, "subscription", &[sub_id])
-        .unwrap();
+    // let location = req
+    //     .resource_map()
+    //     .url_for(&req, "subscription", &[sub_id])
+    //     .unwrap();
+    //
+    let location = "asd";
+    Ok((
+        StatusCode::CREATED,
+        HeaderMap::from_iter([(header::LOCATION, location)]),
+    )
+        .into_response());
 
     Ok(HttpResponse::Created()
         .append_header((header::LOCATION, location.to_string()))

@@ -1,11 +1,8 @@
-use crate::auth::User;
-
 use super::AuthenticationProvider;
 use axum::{extract::Request, response::Response};
 use futures_core::future::BoxFuture;
 use headers::{Authorization, HeaderMapExt, authorization::Basic};
 use std::{
-    pin::Pin,
     sync::Arc,
     task::{Context, Poll},
 };
