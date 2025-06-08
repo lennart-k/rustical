@@ -42,7 +42,7 @@ FROM scratch
 COPY --from=builder /usr/local/cargo/bin/rustical /usr/local/bin/rustical
 CMD ["/usr/local/bin/rustical"]
 
-ENV RUSTICAL_DATA_STORE__SQLITE__DB_URL: /var/lib/rustical/db.sqlite3
+ENV RUSTICAL_DATA_STORE__SQLITE__DB_URL=/var/lib/rustical/db.sqlite3
 
 LABEL org.opencontainers.image.authors="Lennart K github.com/lennart-k"
 EXPOSE 4000
