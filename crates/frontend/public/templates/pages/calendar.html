@@ -29,6 +29,14 @@
 <textarea rows="16" readonly>{{ timezone }}</textarea>
 {% endif %}
 
-
 <pre>{{ calendar|json }}</pre>
+
+<h2>Delete</h2>
+
+<section>
+  <form method="POST" action="/frontend/user/{{calendar.principal}}/calendar/{{calendar.id}}/delete">
+    <button type="submit">Move to trash</button>
+  </form>
+</section>
+
 {%endblock %}

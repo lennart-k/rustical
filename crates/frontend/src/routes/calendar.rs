@@ -125,3 +125,17 @@ pub async fn route_calendar_restore<CS: CalendarStore>(
         None => (StatusCode::CREATED, "Restored").into_response(),
     })
 }
+
+pub async fn route_delete_calendar<C: CalendarStore>(
+    Path((owner, cal_id)): Path<(String, String)>,
+    Extension(store): Extension<Arc<C>>,
+    user: User,
+) -> Result<Response, rustical_store::Error> {
+    if !user.is_principal(&owner) {
+        return Ok(StatusCode::UNAUTHORIZED.into_response());
+    }
+
+    store.delete_calendar(&owner, &cal_id, true).await?;
+
+    Ok(Redirect::to(&format!("/frontend/user/{}", user.id)).into_response())
+}
