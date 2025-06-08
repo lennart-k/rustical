@@ -10,13 +10,13 @@ use axum::{
 use axum_extra::extract::Host;
 use headers::{ContentType, HeaderMapExt};
 use http::{HeaderValue, StatusCode, header};
-use rand::{Rng, distributions::Alphanumeric};
+use rand::{Rng, distr::Alphanumeric};
 use rustical_store::auth::{AuthenticationProvider, User};
 use serde::Deserialize;
 use uuid::Uuid;
 
 pub fn generate_app_token() -> String {
-    rand::thread_rng()
+    rand::rng()
         .sample_iter(Alphanumeric)
         .map(char::from)
         .take(64)

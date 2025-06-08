@@ -1,8 +1,7 @@
 use argon2::password_hash::SaltString;
 use clap::{Parser, ValueEnum};
-use password_hash::PasswordHasher;
+use password_hash::{PasswordHasher, rand_core::OsRng};
 use pbkdf2::Params;
-use rand::rngs::OsRng;
 use rustical_frontend::FrontendConfig;
 
 use crate::config::{

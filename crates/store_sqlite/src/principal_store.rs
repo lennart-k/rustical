@@ -1,8 +1,10 @@
 use async_trait::async_trait;
 use derive_more::Constructor;
 use password_hash::PasswordHasher;
-use pbkdf2::{Params, password_hash::SaltString};
-use rand::rngs::OsRng;
+use pbkdf2::{
+    Params,
+    password_hash::{SaltString, rand_core::OsRng},
+};
 use rustical_store::{
     Error, Secret,
     auth::{AuthenticationProvider, User, user::AppToken},

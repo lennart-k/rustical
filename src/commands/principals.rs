@@ -5,9 +5,7 @@ use figment::{
     Figment,
     providers::{Env, Format, Toml},
 };
-use password_hash::PasswordHasher;
-use password_hash::SaltString;
-use rand::rngs::OsRng;
+use password_hash::{PasswordHasher, SaltString, rand_core::OsRng};
 use rustical_store::auth::{AuthenticationProvider, User, user::PrincipalType};
 
 #[derive(Parser, Debug)]

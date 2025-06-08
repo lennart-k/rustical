@@ -106,7 +106,7 @@ rustical_oidc = { path = "./crates/oidc/" }
 rustical_ical = { path = "./crates/ical/"}
 chrono-tz = "0.10"
 chrono-humanize = "0.2"
-rand = "0.8"
+rand = "0.9"
 axum-extra = { version = "0.10", features = ["typed-header"] }
 rrule = "0.14"
 argon2 = "0.5"
@@ -158,7 +158,6 @@ tracing-subscriber = { version = "0.3", features = [
 ] }
 figment = { version = "0.10", features = ["env", "toml"] }
 tower-sessions.workspace = true
-rand.workspace = true
 rpassword.workspace = true
 tower.workspace = true
 argon2.workspace = true
