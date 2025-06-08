@@ -32,7 +32,7 @@ use oidc_user_store::OidcUserStore;
 use crate::{
     assets::{Assets, EmbedService},
     routes::{
-        addressbook::{route_addressbook, route_addressbook_restore},
+        addressbook::{route_addressbook, route_addressbook_restore, route_create_addressbook},
         app_token::{route_delete_app_token, route_post_app_token},
         calendar::{route_calendar, route_calendar_restore, route_create_calendar},
         login::{route_get_login, route_post_login, route_post_logout},
@@ -76,6 +76,10 @@ pub fn frontend_router<
             post(route_calendar_restore::<CS>),
         )
         // Addressbook
+        .route(
+            "/user/{user}/addressbook",
+            post(route_create_addressbook::<AS>),
+        )
         .route(
             "/user/{user}/addressbook/{addressbook}",
             get(route_addressbook::<AS>),

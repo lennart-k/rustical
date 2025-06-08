@@ -96,7 +96,7 @@ pub async fn route_create_calendar<C: CalendarStore>(
         description,
         color,
         subscription_url,
-        principal: user.id,
+        principal: user.id.to_owned(),
         components: comps,
         order: 0,
         timezone_id: None,
@@ -107,7 +107,7 @@ pub async fn route_create_calendar<C: CalendarStore>(
     };
 
     store.insert_calendar(cal).await?;
-    Ok(Redirect::to(&id).into_response())
+    Ok(Redirect::to(&format!("/frontend/user/{}/calendar/{}", user.id, id)).into_response())
 }
 
 pub async fn route_calendar_restore<CS: CalendarStore>(
