@@ -2796,6 +2796,7 @@ dependencies = [
  "mime_guess",
  "rand 0.9.1",
  "rust-embed",
+ "rustical_ical",
  "rustical_oidc",
  "rustical_store",
  "serde",

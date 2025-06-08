@@ -159,14 +159,14 @@ table {
         display: grid;
         min-height: 80px;
         grid-template-areas:
-          ". color-chip"
-          "title color-chip"
-          "description color-chip"
-          "subscription-url color-chip"
-          "restore color-chip"
-          ". color-chip";
+          ".                .     color-chip"
+          "title            comps color-chip"
+          "description      .     color-chip"
+          "subscription-url .     color-chip"
+          "restore          .     color-chip"
+          ".                .     color-chip";
         grid-template-rows: 12px auto auto auto 12px;
-        grid-template-columns: auto 80px;
+        grid-template-columns: min-content auto 80px;
         color: inherit;
         text-decoration: none;
         padding-left: 12px;
@@ -180,14 +180,31 @@ table {
         .title {
           font-weight: bold;
           grid-area: title;
+          margin-right: 12px;
+          white-space: nowrap;
+        }
+
+        .comps {
+          grid-area: comps;
+
+          span {
+            margin: 0 2px;
+            background: var(--primary-color);
+            color: var(--text-on-primary-color);
+            font-size: .8em;
+            padding: 3px 8px;
+            border-radius: 12px;
+          }
         }
 
         .description {
           grid-area: description;
+          white-space: nowrap;
         }
 
         .subscription-url {
           grid-area: subscription-url;
+          white-space: nowrap;
         }
 
         .color-chip {

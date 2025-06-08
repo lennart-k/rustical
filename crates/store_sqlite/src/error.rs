@@ -1,3 +1,5 @@
+use tracing::warn;
+
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
@@ -16,6 +18,7 @@ impl From<sqlx::Error> for Error {
             sqlx::Error::RowNotFound => Error::StoreError(rustical_store::Error::NotFound),
             sqlx::Error::Database(err) => {
                 if err.is_unique_violation() {
+                    warn!("{err:?}");
                     Error::StoreError(rustical_store::Error::AlreadyExists)
                 } else {
                     Error::SqlxError(sqlx::Error::Database(err))

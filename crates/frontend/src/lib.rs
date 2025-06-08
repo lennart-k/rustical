@@ -34,7 +34,7 @@ use crate::{
     routes::{
         addressbook::{route_addressbook, route_addressbook_restore},
         app_token::{route_delete_app_token, route_post_app_token},
-        calendar::{route_calendar, route_calendar_restore},
+        calendar::{route_calendar, route_calendar_restore, route_create_calendar},
         login::{route_get_login, route_post_login, route_post_logout},
         user::{route_get_home, route_root, route_user_named},
     },
@@ -66,6 +66,7 @@ pub fn frontend_router<
             post(route_delete_app_token::<AP>),
         )
         // Calendar
+        .route("/user/{user}/calendar", post(route_create_calendar::<CS>))
         .route(
             "/user/{user}/calendar/{calendar}",
             get(route_calendar::<CS>),

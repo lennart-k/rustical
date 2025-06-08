@@ -3,6 +3,7 @@ use crate::CalDateTime;
 use crate::Error;
 use chrono::DateTime;
 use chrono::Utc;
+use derive_more::Display;
 use ical::{
     generator::{Emitter, IcalCalendar},
     parser::{Component, ical::component::IcalTimeZone},
@@ -11,7 +12,7 @@ use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::{collections::HashMap, io::BufReader};
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq, Display)]
 // specified in https://datatracker.ietf.org/doc/html/rfc5545#section-3.6
 pub enum CalendarObjectType {
     Event = 0,

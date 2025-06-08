@@ -17,6 +17,7 @@ serde.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 rustical_store.workspace = true
+rustical_ical.workspace = true
 rust-embed.workspace = true
 futures-core.workspace = true
 hex.workspace = true

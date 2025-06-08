@@ -64,6 +64,11 @@
   <li class="collection-list-item" style="--color: {{ color }}">
     <a href="/frontend/user/{{ calendar.principal }}/calendar/{{ calendar.id }}">
       <span class="title">{{ calendar.displayname.to_owned().unwrap_or(calendar.id.to_owned()) }}</span>
+      <div class="comps">
+        {% for comp in calendar.components %}
+        <span>{{ comp }}</span>
+        {% endfor %}
+      </div>
       <span class="description">
       {% if let Some(description) = calendar.description %}{{ description }}{% endif %}
       </span>
@@ -85,6 +90,11 @@
   <li class="collection-list-item" style="--color: {{ color }}">
     <a href="/frontend/user/{{ calendar.principal }}/calendar/{{ calendar.id}}">
       <span class="title">{{ calendar.displayname.to_owned().unwrap_or(calendar.id.to_owned()) }}</span>
+      <div class="comps">
+        {% for comp in calendar.components %}
+        <span>{{ comp }}</span>
+        {% endfor %}
+      </div>
       <span class="description">
       {% if let Some(description) = calendar.description %}{{ description }}{% endif %}
       </span>
@@ -97,6 +107,49 @@
   {% endfor %}
 </ul>
 {% endif %}
+
+<h3>Create calendar</h3>
+    <form action="/frontend/user/{{ user.id }}/calendar" method="POST">
+      <label>
+        href
+        <input type="text" name="id" />
+      </label>
+      <br>
+      <label>
+        Displayname
+        <input type="text" name="displayname" />
+      </label>
+      <br>
+      <label>
+        Description
+        <input type="text" name="description" />
+      </label>
+      <br>
+      <label>
+        Color
+        <input type="color" name="color" />
+      </label>
+      <br>
+      <label>
+        Subscription URL
+        <input type="text" name="subscription_url" />
+      </label>
+      <br>
+      <label>
+        Support VEVENT
+        <input type="checkbox" name="comp_event" checked />
+      </label>
+      <label>
+        Support VTODO
+        <input type="checkbox" name="comp_todo" checked />
+      </label>
+      <label>
+        Support VJOURNAL
+        <input type="checkbox" name="comp_journal" />
+      </label>
+      <br>
+      <button type="submit">Create</button>
+    </form>
 </section>
 
 <section>
