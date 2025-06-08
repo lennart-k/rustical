@@ -142,7 +142,7 @@ impl CalendarObject {
         let mut hasher = Sha256::new();
         hasher.update(&self.id);
         hasher.update(self.get_ics());
-        format!("{:x}", hasher.finalize())
+        format!("\"{:x}\"", hasher.finalize())
     }
 
     pub fn get_ics(&self) -> &str {

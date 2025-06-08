@@ -1,48 +1,39 @@
-use crate::generate_app_token;
-
 use super::{
     NextcloudFlow, NextcloudFlows, NextcloudLoginPoll, NextcloudLoginResponse,
     NextcloudSuccessResponse,
 };
-use actix_web::{
-    HttpRequest, HttpResponse, Responder,
-    http::header::{self},
-    web::{Data, Form, Html, Json, Path},
-};
+use crate::routes::app_token::generate_app_token;
 use askama::Template;
+use axum::{
+    Extension, Form, Json,
+    extract::Path,
+    response::{Html, IntoResponse, Response},
+};
+use axum_extra::{TypedHeader, extract::Host};
 use chrono::{Duration, Utc};
+use headers::UserAgent;
+use http::StatusCode;
 use rustical_store::auth::{AuthenticationProvider, User};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use tracing::instrument;
 
 pub(crate) async fn post_nextcloud_login(
-    req: HttpRequest,
-    state: Data<NextcloudFlows>,
+    Extension(state): Extension<Arc<NextcloudFlows>>,
+    TypedHeader(user_agent): TypedHeader<UserAgent>,
+    Host(host): Host,
 ) -> Json<NextcloudLoginResponse> {
     let flow_id = uuid::Uuid::new_v4().to_string();
     let token = uuid::Uuid::new_v4().to_string();
-    let poll_url = req
-        .resource_map()
-        .url_for(&req, "nc_login_poll", [&flow_id])
-        .unwrap();
-    let flow_url = req
-        .resource_map()
-        .url_for(&req, "nc_login_flow", [&flow_id])
-        .unwrap();
 
-    let app_name = req
-        .headers()
-        .get(header::USER_AGENT)
-        .map(|val| val.to_str().unwrap_or("Unknown client"))
-        .unwrap_or("Unknown client");
-
+    let app_name = user_agent.to_string();
     let mut flows = state.flows.write().await;
     // Flows must not last longer than 10 minutes
     // We also enforce that condition here to prevent a memory leak where unpolled flows would
     // never be cleaned up
     flows.retain(|_, flow| Utc::now() - flow.created_at < Duration::minutes(10));
     flows.insert(
-        flow_id,
+        flow_id.clone(),
         NextcloudFlow {
             app_name: app_name.to_owned(),
             created_at: Utc::now(),
@@ -51,10 +42,10 @@ pub(crate) async fn post_nextcloud_login(
         },
     );
     Json(NextcloudLoginResponse {
-        login: flow_url.to_string(),
+        login: format!("https://{host}/index.php/login/v2/flow/{flow_id}"),
         poll: NextcloudLoginPoll {
             token,
-            endpoint: poll_url.to_string(),
+            endpoint: format!("https://{host}/index.php/login/v2/poll/{flow_id}"),
         },
     })
 }
@@ -66,13 +57,11 @@ pub(crate) struct NextcloudPollForm {
 }
 
 pub(crate) async fn post_nextcloud_poll<AP: AuthenticationProvider>(
-    state: Data<NextcloudFlows>,
-    form: Form<NextcloudPollForm>,
-    path: Path<String>,
-    auth_provider: Data<AP>,
-    req: HttpRequest,
-) -> Result<HttpResponse, rustical_store::Error> {
-    let flow_id = path.into_inner();
+    Extension(state): Extension<Arc<NextcloudFlows>>,
+    Path(flow_id): Path<String>,
+    Extension(auth_provider): Extension<Arc<AP>>,
+    Form(form): Form<NextcloudPollForm>,
+) -> Result<Response, rustical_store::Error> {
     let mut flows = state.flows.write().await;
 
     // Flows must not last longer than 10 minutes
@@ -80,7 +69,7 @@ pub(crate) async fn post_nextcloud_poll<AP: AuthenticationProvider>(
 
     if let Some(flow) = flows.get(&flow_id).cloned() {
         if flow.token != form.token {
-            return Ok(HttpResponse::Unauthorized().body("Unauthorized"));
+            return Ok(StatusCode::UNAUTHORIZED.into_response());
         }
         if let Some(response) = &flow.response {
             auth_provider
@@ -91,13 +80,13 @@ pub(crate) async fn post_nextcloud_poll<AP: AuthenticationProvider>(
                 )
                 .await?;
             flows.remove(&flow_id);
-            Ok(Json(response).respond_to(&req).map_into_boxed_body())
+            Ok(Json(response).into_response())
         } else {
             // Not done yet, re-insert flow
-            Ok(HttpResponse::NotFound().finish())
+            Ok(StatusCode::NOT_FOUND.into_response())
         }
     } else {
-        Ok(HttpResponse::Unauthorized().body("Unauthorized"))
+        Ok(StatusCode::UNAUTHORIZED.into_response())
     }
 }
 
@@ -108,16 +97,14 @@ struct NextcloudLoginPage {
     app_name: String,
 }
 
-#[instrument(skip(state, req))]
+#[instrument(skip(state))]
 pub(crate) async fn get_nextcloud_flow(
+    Extension(state): Extension<Arc<NextcloudFlows>>,
+    Path(flow_id): Path<String>,
     user: User,
-    state: Data<NextcloudFlows>,
-    path: Path<String>,
-    req: HttpRequest,
-) -> Result<impl Responder, rustical_store::Error> {
-    let flow_id = path.into_inner();
+) -> Result<Response, rustical_store::Error> {
     if let Some(flow) = state.flows.read().await.get(&flow_id) {
-        Ok(Html::new(
+        Ok(Html(
             NextcloudLoginPage {
                 username: user.displayname.unwrap_or(user.id),
                 app_name: flow.app_name.to_owned(),
@@ -125,10 +112,9 @@ pub(crate) async fn get_nextcloud_flow(
             .render()
             .unwrap(),
         )
-        .respond_to(&req)
-        .map_into_boxed_body())
+        .into_response())
     } else {
-        Ok(HttpResponse::NotFound().body("Login flow not found"))
+        Ok((StatusCode::NOT_FOUND, "Login flow not found").into_response())
     }
 }
 
@@ -143,32 +129,30 @@ struct NextcloudLoginSuccessPage {
     app_name: String,
 }
 
-#[instrument(skip(state, req))]
+#[instrument(skip(state))]
 pub(crate) async fn post_nextcloud_flow(
     user: User,
-    state: Data<NextcloudFlows>,
-    path: Path<String>,
-    req: HttpRequest,
-    form: Form<NextcloudAuthorizeForm>,
-) -> Result<impl Responder, rustical_store::Error> {
-    let flow_id = path.into_inner();
+    Extension(state): Extension<Arc<NextcloudFlows>>,
+    Path(flow_id): Path<String>,
+    Host(host): Host,
+    Form(form): Form<NextcloudAuthorizeForm>,
+) -> Result<Response, rustical_store::Error> {
     if let Some(flow) = state.flows.write().await.get_mut(&flow_id) {
-        flow.app_name = form.into_inner().app_name;
+        flow.app_name = form.app_name;
         flow.response = Some(NextcloudSuccessResponse {
-            server: req.full_url().origin().unicode_serialization(),
+            server: format!("https://{host}"),
             login_name: user.id.to_owned(),
             app_password: generate_app_token(),
         });
-        Ok(Html::new(
+        Ok(Html(
             NextcloudLoginSuccessPage {
                 app_name: flow.app_name.to_owned(),
             }
             .render()
             .unwrap(),
         )
-        .respond_to(&req)
-        .map_into_boxed_body())
+        .into_response())
     } else {
-        Ok(HttpResponse::NotFound().body("Login flow not found"))
+        Ok((StatusCode::NOT_FOUND, "Login flow not found").into_response())
     }
 }

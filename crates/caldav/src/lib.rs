@@ -26,40 +26,9 @@ pub struct CalDavPrincipalUri(&'static str);
 
 impl PrincipalUri for CalDavPrincipalUri {
     fn principal_uri(&self, principal: &str) -> String {
-        format!("{}/{}", self.0, principal)
+        format!("{}/principal/{}", self.0, principal)
     }
 }
-
-// pub fn caldav_service<
-//     AP: AuthenticationProvider,
-//     AS: AddressbookStore,
-//     C: CalendarStore,
-//     S: SubscriptionStore,
-// >(
-//     prefix: &'static str,
-//     auth_provider: Arc<AP>,
-//     store: Arc<C>,
-//     addr_store: Arc<AS>,
-//     subscription_store: Arc<S>,
-// ) -> impl HttpServiceFactory {
-//     let birthday_store = Arc::new(ContactBirthdayStore::new(addr_store));
-//
-//     RootResourceService::<_, User, CalDavPrincipalUri>::new(PrincipalResourceService {
-//         auth_provider: auth_provider.clone(),
-//         sub_store: subscription_store.clone(),
-//         birthday_store: birthday_store.clone(),
-//         cal_store: store.clone(),
-//     })
-//     .actix_scope()
-//     .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
-//     .wrap(options_handler())
-//     .app_data(Data::from(store.clone()))
-//     .app_data(Data::from(birthday_store.clone()))
-//     .app_data(Data::new(CalDavPrincipalUri::new(
-//         format!("{prefix}/principal").leak(),
-//     )))
-//     .service(subscription_resource(subscription_store))
-// }
 
 pub fn caldav_router<
     AP: AuthenticationProvider,

@@ -9,7 +9,7 @@ use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Response};
 use axum_extra::TypedHeader;
 use axum_extra::headers::{ContentType, ETag, HeaderMapExt, IfNoneMatch};
-use http::StatusCode;
+use http::{HeaderMap, StatusCode};
 use rustical_dav::privileges::UserPrivilege;
 use rustical_dav::resource::Resource;
 use rustical_ical::AddressObject;
@@ -62,11 +62,17 @@ pub async fn put_object<AS: AddressbookStore>(
     }): Path<AddressObjectPathComponents>,
     State(AddressObjectResourceService { addr_store }): State<AddressObjectResourceService<AS>>,
     user: User,
-    if_none_match: Option<TypedHeader<IfNoneMatch>>,
+    mut if_none_match: Option<TypedHeader<IfNoneMatch>>,
+    header_map: HeaderMap,
     body: String,
 ) -> Result<Response, Error> {
     if !user.is_principal(&principal) {
         return Err(Error::Unauthorized);
+    }
+
+    // https://github.com/hyperium/headers/issues/204
+    if !header_map.contains_key("If-None-Match") {
+        if_none_match = None;
     }
 
     let overwrite = if let Some(TypedHeader(if_none_match)) = if_none_match {

@@ -155,7 +155,7 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore, BS: Ca
     type Principal = User;
     type PrincipalUri = CalDavPrincipalUri;
 
-    const DAV_HEADER: &str = "1, 3, access-control";
+    const DAV_HEADER: &str = "1, 3, access-control, calendar-access";
 
     async fn get_resource(
         &self,

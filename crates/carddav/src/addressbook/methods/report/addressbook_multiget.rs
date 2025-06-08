@@ -35,6 +35,7 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
 
     for href in &addressbook_multiget.href {
         if let Some(filename) = href.strip_prefix(path) {
+            let filename = filename.trim_start_matches("/");
             if let Some(object_id) = filename.strip_suffix(".vcf") {
                 match store
                     .get_object(principal, addressbook_id, object_id, false)

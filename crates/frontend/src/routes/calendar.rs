@@ -1,10 +1,15 @@
-use actix_web::{
-    HttpRequest, HttpResponse, Responder,
-    http::{StatusCode, header},
-    web::{self, Data, Path},
-};
+use std::sync::Arc;
+
 use askama::Template;
 use askama_web::WebTemplate;
+use axum::{
+    Extension,
+    extract::Path,
+    response::{IntoResponse, Redirect, Response},
+};
+use axum_extra::TypedHeader;
+use headers::Referer;
+use http::StatusCode;
 use rustical_store::{Calendar, CalendarStore, auth::User};
 
 #[derive(Template, WebTemplate)]
@@ -14,37 +19,31 @@ struct CalendarPage {
 }
 
 pub async fn route_calendar<C: CalendarStore>(
-    path: Path<(String, String)>,
-    store: Data<C>,
+    Path((owner, cal_id)): Path<(String, String)>,
+    Extension(store): Extension<Arc<C>>,
     user: User,
-    req: HttpRequest,
-) -> Result<HttpResponse, rustical_store::Error> {
-    let (owner, cal_id) = path.into_inner();
+) -> Result<Response, rustical_store::Error> {
     if !user.is_principal(&owner) {
-        return Ok(HttpResponse::Unauthorized().body("Unauthorized"));
+        return Ok(StatusCode::UNAUTHORIZED.into_response());
     }
     Ok(CalendarPage {
         calendar: store.get_calendar(&owner, &cal_id).await?,
     }
-    .respond_to(&req))
+    .into_response())
 }
 
 pub async fn route_calendar_restore<CS: CalendarStore>(
-    path: Path<(String, String)>,
-    req: HttpRequest,
-    store: Data<CS>,
+    Path((owner, cal_id)): Path<(String, String)>,
+    Extension(store): Extension<Arc<CS>>,
     user: User,
-) -> Result<HttpResponse, rustical_store::Error> {
-    let (owner, cal_id) = path.into_inner();
+    referer: Option<TypedHeader<Referer>>,
+) -> Result<Response, rustical_store::Error> {
     if !user.is_principal(&owner) {
-        return Ok(HttpResponse::Unauthorized().body("Unauthorized"));
+        return Ok(StatusCode::UNAUTHORIZED.into_response());
     }
     store.restore_calendar(&owner, &cal_id).await?;
-    Ok(match req.headers().get(header::REFERER) {
-        Some(referer) => web::Redirect::to(referer.to_str().unwrap().to_owned())
-            .using_status_code(StatusCode::FOUND)
-            .respond_to(&req)
-            .map_into_boxed_body(),
-        None => HttpResponse::Created().body("Restored"),
+    Ok(match referer {
+        Some(referer) => Redirect::to(&referer.to_string()).into_response(),
+        None => (StatusCode::CREATED, "Restored").into_response(),
     })
 }

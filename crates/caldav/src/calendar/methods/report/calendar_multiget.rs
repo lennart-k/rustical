@@ -27,6 +27,7 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore>(
 
     for href in &cal_query.href {
         if let Some(filename) = href.strip_prefix(path) {
+            let filename = filename.trim_start_matches("/");
             if let Some(object_id) = filename.strip_suffix(".ics") {
                 match store.get_object(principal, cal_id, object_id).await {
                     Ok(object) => result.push(object),

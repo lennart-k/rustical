@@ -1,10 +1,15 @@
-use actix_web::{
-    HttpRequest, HttpResponse, Responder,
-    http::{StatusCode, header},
-    web::{self, Data, Path},
-};
+use std::sync::Arc;
+
 use askama::Template;
 use askama_web::WebTemplate;
+use axum::{
+    Extension,
+    extract::Path,
+    response::{IntoResponse, Redirect, Response},
+};
+use axum_extra::TypedHeader;
+use headers::Referer;
+use http::StatusCode;
 use rustical_store::{Addressbook, AddressbookStore, auth::User};
 
 #[derive(Template, WebTemplate)]
@@ -14,37 +19,31 @@ struct AddressbookPage {
 }
 
 pub async fn route_addressbook<AS: AddressbookStore>(
-    path: Path<(String, String)>,
-    store: Data<AS>,
+    Path((owner, addrbook_id)): Path<(String, String)>,
+    Extension(store): Extension<Arc<AS>>,
     user: User,
-    req: HttpRequest,
-) -> Result<impl Responder, rustical_store::Error> {
-    let (owner, addrbook_id) = path.into_inner();
+) -> Result<Response, rustical_store::Error> {
     if !user.is_principal(&owner) {
-        return Ok(HttpResponse::Unauthorized().body("Unauthorized"));
+        return Ok(StatusCode::UNAUTHORIZED.into_response());
     }
     Ok(AddressbookPage {
         addressbook: store.get_addressbook(&owner, &addrbook_id, true).await?,
     }
-    .respond_to(&req))
+    .into_response())
 }
 
 pub async fn route_addressbook_restore<AS: AddressbookStore>(
-    path: Path<(String, String)>,
-    req: HttpRequest,
-    store: Data<AS>,
+    Path((owner, addressbook_id)): Path<(String, String)>,
+    Extension(store): Extension<Arc<AS>>,
     user: User,
-) -> Result<impl Responder, rustical_store::Error> {
-    let (owner, addressbook_id) = path.into_inner();
+    referer: Option<TypedHeader<Referer>>,
+) -> Result<Response, rustical_store::Error> {
     if !user.is_principal(&owner) {
-        return Ok(HttpResponse::Unauthorized().body("Unauthorized"));
+        return Ok(StatusCode::UNAUTHORIZED.into_response());
     }
     store.restore_addressbook(&owner, &addressbook_id).await?;
-    Ok(match req.headers().get(header::REFERER) {
-        Some(referer) => web::Redirect::to(referer.to_str().unwrap().to_owned())
-            .using_status_code(StatusCode::FOUND)
-            .respond_to(&req)
-            .map_into_boxed_body(),
-        None => HttpResponse::Ok().body("Restored"),
+    Ok(match referer {
+        Some(referer) => Redirect::to(&referer.to_string()).into_response(),
+        None => (StatusCode::CREATED, "Restored").into_response(),
     })
 }

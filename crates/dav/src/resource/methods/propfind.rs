@@ -10,7 +10,9 @@ use crate::xml::PropfindType;
 use axum::extract::{Extension, OriginalUri, Path, State};
 use rustical_xml::PropName;
 use rustical_xml::XmlDocument;
+use tracing::instrument;
 
+#[instrument(skip(path, resource_service, puri))]
 pub(crate) async fn axum_route_propfind<R: ResourceService>(
     Path(path): Path<R::PathComponents>,
     State(resource_service): State<R>,

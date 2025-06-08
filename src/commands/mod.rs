@@ -3,7 +3,7 @@ use clap::{Parser, ValueEnum};
 use password_hash::PasswordHasher;
 use pbkdf2::Params;
 use rand::rngs::OsRng;
-use rustical_frontend::{FrontendConfig, generate_frontend_secret};
+use rustical_frontend::FrontendConfig;
 
 use crate::config::{
     Config, DataStoreConfig, DavPushConfig, HttpConfig, SqliteDataStoreConfig, TracingConfig,
@@ -23,7 +23,6 @@ pub fn cmd_gen_config(_args: GenConfigArgs) -> anyhow::Result<()> {
         }),
         tracing: TracingConfig::default(),
         frontend: FrontendConfig {
-            secret_key: generate_frontend_secret(),
             enabled: true,
             allow_password_login: true,
         },

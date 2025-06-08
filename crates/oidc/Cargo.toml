@@ -12,4 +12,6 @@ reqwest.workspace = true
 thiserror.workspace = true
 async-trait.workspace = true
 axum.workspace = true
-axum_session = "0.16"
+tower-sessions = "0.14"
+axum-extra.workspace = true
+headers.workspace = true

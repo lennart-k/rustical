@@ -58,6 +58,7 @@ base64 = "0.22"
 thiserror = "2.0"
 quick-xml = { version = "0.37" }
 rust-embed = "8.5"
+tower-sessions = "0.14"
 futures-core = "0.3.31"
 hex = { version = "0.4.3", features = ["serde"] }
 mime_guess = "2.0"
@@ -92,6 +93,7 @@ sqlx-sqlite = { version = "0.8", features = ["bundled"] }
 ical = { version = "0.11", features = ["generator", "serde"] }
 toml = "0.8"
 tower = "0.5"
+tower-http = { version = "0.6", features = ["trace", "normalize-path"] }
 rustical_dav = { path = "./crates/dav/" }
 rustical_dav_push = { path = "./crates/dav_push/" }
 rustical_store = { path = "./crates/store/" }
@@ -155,9 +157,10 @@ tracing-subscriber = { version = "0.3", features = [
   "registry",
 ] }
 figment = { version = "0.10", features = ["env", "toml"] }
-
+tower-sessions.workspace = true
 rand.workspace = true
 rpassword.workspace = true
+tower.workspace = true
 argon2.workspace = true
 pbkdf2.workspace = true
 password-hash.workspace = true
@@ -166,3 +169,4 @@ rustical_dav.workspace = true
 rustical_dav_push.workspace = true
 rustical_oidc.workspace = true
 quick-xml.workspace = true
+tower-http.workspace = true

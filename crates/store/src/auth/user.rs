@@ -1,6 +1,6 @@
 use axum::{
     body::Body,
-    extract::FromRequestParts,
+    extract::{FromRequestParts, OptionalFromRequestParts},
     response::{IntoResponse, Response},
 };
 use chrono::{DateTime, Utc};
@@ -8,7 +8,7 @@ use derive_more::Display;
 use http::{HeaderValue, StatusCode, header};
 use rustical_xml::ValueSerialize;
 use serde::{Deserialize, Serialize};
-use std::fmt::Display;
+use std::{convert::Infallible, fmt::Display};
 
 use crate::Secret;
 
@@ -142,5 +142,16 @@ impl<S: Send + Sync + Clone> FromRequestParts<S> for User {
             .get::<Self>()
             .cloned()
             .ok_or(UnauthorizedError)
+    }
+}
+
+impl<S: Send + Sync + Clone> OptionalFromRequestParts<S> for User {
+    type Rejection = Infallible;
+
+    async fn from_request_parts(
+        parts: &mut http::request::Parts,
+        _state: &S,
+    ) -> Result<Option<Self>, Self::Rejection> {
+        Ok(parts.extensions.get::<Self>().cloned())
     }
 }

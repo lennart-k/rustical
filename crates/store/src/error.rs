@@ -1,3 +1,4 @@
+use axum::response::IntoResponse;
 use http::StatusCode;
 
 #[derive(Debug, thiserror::Error)]
@@ -37,5 +38,11 @@ impl Error {
             Self::InvalidPrincipalType(_) => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
+    }
+}
+
+impl IntoResponse for Error {
+    fn into_response(self) -> axum::response::Response {
+        (self.status_code(), self.to_string()).into_response()
     }
 }

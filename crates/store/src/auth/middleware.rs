@@ -1,3 +1,5 @@
+use crate::auth::User;
+
 use super::AuthenticationProvider;
 use axum::{extract::Request, response::Response};
 use futures_core::future::BoxFuture;
@@ -8,6 +10,7 @@ use std::{
     task::{Context, Poll},
 };
 use tower::{Layer, Service};
+use tower_sessions::Session;
 use tracing::{Instrument, info_span};
 
 pub struct AuthenticationLayer<AP: AuthenticationProvider> {
@@ -71,8 +74,15 @@ where
         let ap = self.auth_provider.clone();
         let mut inner = self.inner.clone();
 
-        // request.extensions_mut();
         Box::pin(async move {
+            if let Some(session) = request.extensions().get::<Session>() {
+                if let Ok(Some(user_id)) = session.get::<String>("user").await {
+                    if let Ok(Some(user)) = ap.get_principal(&user_id).await {
+                        request.extensions_mut().insert(user);
+                    }
+                }
+            }
+
             if let Some(auth) = auth_header {
                 let user_id = auth.username();
                 let password = auth.password();
@@ -84,6 +94,7 @@ where
                     request.extensions_mut().insert(user);
                 }
             }
+
             let response = inner.call(request).await?;
             Ok(response)
         })

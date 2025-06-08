@@ -1,11 +1,19 @@
+use axum::routing::{get, post};
+use axum::{Extension, Router, middleware};
 use chrono::{DateTime, Utc};
-// use routes::{get_nextcloud_flow, post_nextcloud_flow, post_nextcloud_login, post_nextcloud_poll};
-use rustical_store::auth::{AuthenticationMiddleware, AuthenticationProvider};
+use routes::{get_nextcloud_flow, post_nextcloud_flow, post_nextcloud_login, post_nextcloud_poll};
+use rustical_store::auth::AuthenticationProvider;
+use rustical_store::auth::middleware::AuthenticationLayer;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-// mod routes;
+use tower_sessions::cookie::SameSite;
+use tower_sessions::cookie::time::Duration;
+use tower_sessions::{Expiry, SessionManagerLayer, SessionStore};
+
+use crate::unauthorized_handler;
+mod routes;
 
 #[derive(Debug, Clone)]
 struct NextcloudFlow {
@@ -42,32 +50,26 @@ pub struct NextcloudFlows {
     flows: RwLock<HashMap<String, NextcloudFlow>>,
 }
 
-// use crate::{session_middleware, unauthorized_handler};
-//
-// pub fn configure_nextcloud_login<AP: AuthenticationProvider>(
-//     cfg: &mut ServiceConfig,
-//     nextcloud_flows_state: Arc<NextcloudFlows>,
-//     auth_provider: Arc<AP>,
-//     frontend_secret: [u8; 64],
-// ) {
-//     cfg.service(
-//         web::scope("/index.php/login/v2")
-//             .wrap(ErrorHandlers::new().handler(StatusCode::UNAUTHORIZED, unauthorized_handler))
-//             .wrap(AuthenticationMiddleware::new(auth_provider.clone()))
-//             .wrap(session_middleware(frontend_secret))
-//             .app_data(Data::from(nextcloud_flows_state))
-//             .app_data(Data::from(auth_provider.clone()))
-//             .service(web::resource("").post(post_nextcloud_login))
-//             .service(
-//                 web::resource("/poll/{flow}")
-//                     .name("nc_login_poll")
-//                     .post(post_nextcloud_poll::<AP>),
-//             )
-//             .service(
-//                 web::resource("/flow/{flow}")
-//                     .name("nc_login_flow")
-//                     .get(get_nextcloud_flow)
-//                     .post(post_nextcloud_flow),
-//             ),
-//     );
-// }
+pub fn nextcloud_login_router<AP: AuthenticationProvider, S: SessionStore + Clone>(
+    nextcloud_flows_state: Arc<NextcloudFlows>,
+    auth_provider: Arc<AP>,
+    session_store: S,
+) -> Router {
+    Router::new()
+        .route("/poll/{flow}", post(post_nextcloud_poll::<AP>))
+        .route(
+            "/flow/{flow}",
+            get(get_nextcloud_flow).post(post_nextcloud_flow),
+        )
+        .route("/", post(post_nextcloud_login))
+        .layer(Extension(nextcloud_flows_state))
+        .layer(Extension(auth_provider.clone()))
+        .layer(AuthenticationLayer::new(auth_provider.clone()))
+        .layer(
+            SessionManagerLayer::new(session_store)
+                .with_secure(true)
+                .with_same_site(SameSite::Strict)
+                .with_expiry(Expiry::OnInactivity(Duration::hours(2))),
+        )
+        .layer(middleware::from_fn(unauthorized_handler))
+}

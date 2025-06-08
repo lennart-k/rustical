@@ -39,7 +39,7 @@ impl AddressObject {
         let mut hasher = Sha256::new();
         hasher.update(&self.id);
         hasher.update(self.get_vcf());
-        format!("{:x}", hasher.finalize())
+        format!("\"{:x}\"", hasher.finalize())
     }
 
     pub fn get_vcf(&self) -> &str {

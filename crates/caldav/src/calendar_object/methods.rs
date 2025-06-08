@@ -7,7 +7,7 @@ use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Response};
 use axum_extra::TypedHeader;
 use headers::{ContentType, ETag, HeaderMapExt, IfNoneMatch};
-use http::StatusCode;
+use http::{HeaderMap, StatusCode};
 use rustical_ical::CalendarObject;
 use rustical_store::CalendarStore;
 use rustical_store::auth::User;
@@ -53,11 +53,17 @@ pub async fn put_event<C: CalendarStore>(
     }): Path<CalendarObjectPathComponents>,
     State(CalendarObjectResourceService { cal_store }): State<CalendarObjectResourceService<C>>,
     user: User,
-    if_none_match: Option<TypedHeader<IfNoneMatch>>,
+    mut if_none_match: Option<TypedHeader<IfNoneMatch>>,
+    header_map: HeaderMap,
     body: String,
 ) -> Result<Response, Error> {
     if !user.is_principal(&principal) {
         return Err(crate::Error::Unauthorized);
+    }
+
+    // https://github.com/hyperium/headers/issues/204
+    if !header_map.contains_key("If-None-Match") {
+        if_none_match = None;
     }
 
     let overwrite = if let Some(TypedHeader(if_none_match)) = if_none_match {

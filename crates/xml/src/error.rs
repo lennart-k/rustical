@@ -4,7 +4,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum XmlError {
-    // Syntactix errors
+    // Syntactic errors
     #[error(transparent)]
     QuickXmlError(#[from] quick_xml::Error),
     #[error(transparent)]

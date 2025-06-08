@@ -30,3 +30,4 @@ tracing.workspace = true
 rustical_oidc.workspace = true
 axum-extra.workspace= true
 headers.workspace = true
+tower-sessions = "0.14"

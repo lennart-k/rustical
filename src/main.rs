@@ -1,6 +1,8 @@
 use crate::config::Config;
 use anyhow::Result;
 use app::make_app;
+use axum::ServiceExt;
+use axum::extract::Request;
 use clap::{Parser, Subcommand};
 use commands::principals::{PrincipalsArgs, cmd_principals};
 use commands::{cmd_gen_config, cmd_pwhash};
@@ -18,6 +20,8 @@ use rustical_store_sqlite::{SqliteStore, create_db_pool};
 use setup_tracing::setup_tracing;
 use std::sync::Arc;
 use tokio::sync::mpsc::Receiver;
+use tower::Layer;
+use tower_http::normalize_path::NormalizePathLayer;
 
 mod app;
 mod commands;
@@ -112,6 +116,9 @@ async fn main() -> Result<()> {
                 config.oidc.clone(),
                 config.nextcloud_login.clone(),
                 nextcloud_flows.clone(),
+            );
+            let app = ServiceExt::<Request>::into_make_service(
+                NormalizePathLayer::trim_trailing_slash().layer(app),
             );
 
             let listener = tokio::net::TcpListener::bind(&format!(

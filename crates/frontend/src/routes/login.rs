@@ -5,13 +5,16 @@ use askama::Template;
 use askama_web::WebTemplate;
 use axum::{
     Extension, Form,
-    extract::{OriginalUri, Query},
+    extract::Query,
     response::{IntoResponse, Redirect, Response},
 };
+use axum_extra::extract::Host;
 use http::StatusCode;
 use rustical_store::auth::AuthenticationProvider;
 use serde::Deserialize;
+use tower_sessions::Session;
 use tracing::instrument;
+use url::Url;
 
 #[derive(Template, WebTemplate)]
 #[template(path = "pages/login.html")]
@@ -37,20 +40,17 @@ pub async fn route_get_login(
     Extension(config): Extension<FrontendConfig>,
     Extension(oidc_config): Extension<Option<OidcConfig>>,
 ) -> Response {
-    // let oidc_data = oidc_config
-    //     .as_ref()
-    //     .as_ref()
-    //     .map(|oidc_config| OidcProviderData {
-    //         name: &oidc_config.name,
-    //         redirect_url: req
-    //             .url_for_static(ROUTE_NAME_OIDC_LOGIN)
-    //             .unwrap()
-    //             .to_string(),
-    //     });
+    let oidc_data = oidc_config
+        .as_ref()
+        .as_ref()
+        .map(|oidc_config| OidcProviderData {
+            name: &oidc_config.name,
+            redirect_url: "/frontend/login/oidc".to_owned(),
+        });
     LoginPage {
         redirect_uri,
         allow_password_login: config.allow_password_login,
-        oidc_data: None,
+        oidc_data,
     }
     .into_response()
 }
@@ -66,7 +66,8 @@ pub struct PostLoginForm {
 pub async fn route_post_login<AP: AuthenticationProvider>(
     Extension(auth_provider): Extension<Arc<AP>>,
     Extension(config): Extension<FrontendConfig>,
-    OriginalUri(orig_uri): OriginalUri,
+    session: Session,
+    Host(host): Host,
     Form(PostLoginForm {
         username,
         password,
@@ -76,24 +77,32 @@ pub async fn route_post_login<AP: AuthenticationProvider>(
     if !config.allow_password_login {
         return StatusCode::METHOD_NOT_ALLOWED.into_response();
     }
-    // Ensure that redirect_uri never goes cross-origin
     let default_redirect = "/frontend/user".to_string();
-    let redirect_uri = redirect_uri.unwrap_or(default_redirect.clone());
-    // let redirect_uri = orig_uri
-    //     .join(&redirect_uri)
-    //     .ok()
-    //     .and_then(|uri| orig_uri.make_relative(&uri))
-    //     .unwrap_or(default_redirect);
+    // Ensure that redirect_uri never goes cross-origin
+    let base_url: Url = format!("https://{host}").parse().unwrap();
+    let redirect_uri = if let Some(redirect_uri) = redirect_uri {
+        if let Ok(redirect_url) = base_url.join(&redirect_uri) {
+            if redirect_url.origin() == base_url.origin() {
+                redirect_url.path().to_owned()
+            } else {
+                default_redirect
+            }
+        } else {
+            default_redirect
+        }
+    } else {
+        default_redirect
+    };
 
     if let Ok(Some(user)) = auth_provider.validate_password(&username, &password).await {
-        // session.insert("user", user.id).unwrap();
+        session.insert("user", user.id).await.unwrap();
         Redirect::to(&redirect_uri).into_response()
     } else {
         StatusCode::UNAUTHORIZED.into_response()
     }
 }
 
-pub async fn route_post_logout() -> Redirect {
-    // session.remove("user");
+pub async fn route_post_logout(session: Session) -> Redirect {
+    session.remove_value("user").await.unwrap();
     Redirect::to("/")
 }

@@ -11,10 +11,17 @@ pub(crate) async fn axum_route_delete<R: ResourceService>(
     Path(path): Path<R::PathComponents>,
     State(resource_service): State<R>,
     principal: R::Principal,
-    if_match: Option<TypedHeader<IfMatch>>,
-    if_none_match: Option<TypedHeader<IfNoneMatch>>,
+    mut if_match: Option<TypedHeader<IfMatch>>,
+    mut if_none_match: Option<TypedHeader<IfNoneMatch>>,
     header_map: HeaderMap,
 ) -> Result<(), R::Error> {
+    // https://github.com/hyperium/headers/issues/204
+    if !header_map.contains_key("If-Match") {
+        if_match = None;
+    }
+    if !header_map.contains_key("If-None-Match") {
+        if_none_match = None;
+    }
     let no_trash = header_map
         .get("X-No-Trashbin")
         .map(|val| matches!(val.to_str(), Ok("1")))
@@ -46,6 +53,7 @@ pub async fn route_delete<R: ResourceService>(
     }
 
     if let Some(if_match) = if_match {
+        dbg!(&if_match);
         if !resource.satisfies_if_match(&if_match) {
             // Precondition failed
             return Err(crate::Error::PreconditionFailed.into());

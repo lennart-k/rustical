@@ -1,4 +1,5 @@
 use openidconnect::{ClientId, ClientSecret, IssuerUrl, Scope};
+use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Clone, Default)]

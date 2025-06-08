@@ -12,7 +12,7 @@ use rustical_dav::{
 use rustical_ical::AddressObject;
 use rustical_store::{AddressbookStore, auth::User};
 use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 use std::{convert::Infallible, sync::Arc};
 use tower::Service;
 
@@ -108,10 +108,23 @@ impl Resource for AddressObjectResource {
     }
 }
 
+fn deserialize_vcf_name<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let name: String = Deserialize::deserialize(deserializer)?;
+    if let Some(object_id) = name.strip_suffix(".vcf") {
+        Ok(object_id.to_owned())
+    } else {
+        Err(serde::de::Error::custom("Missing .vcf extension"))
+    }
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct AddressObjectPathComponents {
     pub principal: String,
     pub addressbook_id: String,
+    #[serde(deserialize_with = "deserialize_vcf_name")]
     pub object_id: String,
 }
 
