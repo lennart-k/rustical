@@ -1,11 +1,5 @@
 # Installation
 
-## Manual
-
-```sh
-cargo install --locked --git https://github.com/lennart-k/rustical
-```
-
 ## Docker
 
 ```sh
@@ -84,4 +78,10 @@ Since push messages are currently not encrypted you might potentially want to en
 [dav_push]
 # Must strictly be the URL origin (so no trailing slashes)
 allowed_push_servers = ["https://your-instance-ntfy.sh"]
+```
+
+## Manual
+
+```sh
+cargo install --locked --git https://github.com/lennart-k/rustical
 ```

@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM rust:1.86-alpine AS chef
+FROM --platform=$BUILDPLATFORM rust:1.87-alpine AS chef
 
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
@@ -41,6 +41,8 @@ RUN cargo install --target "$(cat /tmp/rust_target)" --path .
 FROM scratch
 COPY --from=builder /usr/local/cargo/bin/rustical /usr/local/bin/rustical
 CMD ["/usr/local/bin/rustical"]
+
+ENV RUSTICAL_DATA_STORE__SQLITE__DB_URL: /var/lib/rustical/db.sqlite3
 
 LABEL org.opencontainers.image.authors="Lennart K github.com/lennart-k"
 EXPOSE 4000
