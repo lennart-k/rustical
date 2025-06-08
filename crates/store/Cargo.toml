@@ -22,7 +22,6 @@ derive_more = { workspace = true, features = ["as_ref"] }
 rustical_xml.workspace = true
 tokio.workspace = true
 rand.workspace = true
-uuid.workspace = true
 clap.workspace = true
 rustical_dav.workspace = true
 rustical_ical.workspace = true
