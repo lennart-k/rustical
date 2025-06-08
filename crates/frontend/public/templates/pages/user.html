@@ -54,6 +54,9 @@
         </td>
     </tr>
   </table>
+  {% if let Some(hostname) = davx5_hostname %}
+  <a href="intent://{{ hostname | urlencode }}#Intent;action=android.intent.action.VIEW;component=at.bitfire.davdroid.ui.setup.LoginActivity;scheme=davx5;package=at.bitfire.davdroid;S.loginFlow=1;end">Configure in DAVx5</a>
+  {% endif %}
 </section>
 
 <section>

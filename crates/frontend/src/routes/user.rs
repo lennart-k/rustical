@@ -7,7 +7,7 @@ use axum::{
     extract::Path,
     response::{IntoResponse, Redirect},
 };
-use axum_extra::TypedHeader;
+use axum_extra::{TypedHeader, extract::Host};
 use headers::UserAgent;
 use http::StatusCode;
 use rustical_store::{
@@ -25,6 +25,7 @@ pub struct UserPage {
     pub addressbooks: Vec<Addressbook>,
     pub deleted_addressbooks: Vec<Addressbook>,
     pub is_apple: bool,
+    pub davx5_hostname: Option<String>,
 }
 
 pub async fn route_user_named<
@@ -37,6 +38,7 @@ pub async fn route_user_named<
     Extension(addr_store): Extension<Arc<AS>>,
     Extension(auth_provider): Extension<Arc<AP>>,
     TypedHeader(user_agent): TypedHeader<UserAgent>,
+    Host(host): Host,
     user: User,
 ) -> impl IntoResponse {
     if user_id != user.id {
@@ -64,6 +66,7 @@ pub async fn route_user_named<
     }
 
     let is_apple = user_agent.as_str().contains("Apple") || user_agent.as_str().contains("Mac OS");
+    let davx5_hostname = user_agent.as_str().contains("Android").then_some(host);
 
     UserPage {
         app_tokens: auth_provider.get_app_tokens(&user.id).await.unwrap(),
@@ -73,6 +76,7 @@ pub async fn route_user_named<
         deleted_addressbooks,
         user,
         is_apple,
+        davx5_hostname,
     }
     .into_response()
 }
