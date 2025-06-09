@@ -63,6 +63,11 @@ impl EventObject {
 
     pub fn recurrence_ruleset(&self) -> Result<Option<rrule::RRuleSet>, Error> {
         let dtstart: DateTime<rrule::Tz> = if let Some(dtstart) = self.get_first_occurence()? {
+            if let Some(dtend) = self.get_dtend()? {
+                // DTSTART and DTEND MUST have the same timezone
+                assert_eq!(dtstart.timezone(), dtend.timezone());
+            }
+
             dtstart
                 .as_datetime()
                 .with_timezone(&dtstart.timezone().into())
@@ -125,10 +130,13 @@ impl EventObject {
                 ev.remove_property("RDATE");
                 ev.remove_property("EXDATE");
                 ev.remove_property("EXRULE");
+                let dtstart_prop = ev
+                    .get_property("DTSTART")
+                    .expect("We must have a DTSTART here")
+                    .clone();
                 ev.remove_property("DTSTART");
                 ev.remove_property("DTEND");
                 // TODO: Recurrence does not seem to properly include the start
-                // TODO: Timezone fixing
                 ev.set_property(Property {
                     name: "RECURRENCE-ID".to_string(),
                     value: Some(date.format()),
@@ -137,13 +145,13 @@ impl EventObject {
                 ev.set_property(Property {
                     name: "DTSTART".to_string(),
                     value: Some(date.format()),
-                    params: None,
+                    params: dtstart_prop.params.clone(),
                 });
                 if let Some(duration) = computed_duration {
                     ev.set_property(Property {
                         name: "DTEND".to_string(),
                         value: Some((date + duration).format()),
-                        params: None,
+                        params: dtstart_prop.params,
                     });
                 }
                 events.push(ev);
