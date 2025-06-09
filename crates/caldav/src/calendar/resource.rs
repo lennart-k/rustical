@@ -1,9 +1,10 @@
 use super::prop::{SupportedCalendarComponentSet, SupportedCalendarData, SupportedReportSet};
 use crate::calendar::methods::mkcalendar::route_mkcalendar;
 use crate::calendar::methods::report::route_report_calendar;
-use crate::calendar_object::resource::CalendarObjectResource;
+use crate::calendar_object::resource::{CalendarObjectResource, CalendarObjectResourceService};
 use crate::{CalDavPrincipalUri, Error};
 use async_trait::async_trait;
+use axum::Router;
 use axum::extract::Request;
 use axum::handler::Handler;
 use axum::response::Response;
@@ -397,6 +398,15 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
             .delete_calendar(principal, cal_id, use_trashbin)
             .await?;
         Ok(())
+    }
+
+    fn axum_router<State: Send + Sync + Clone + 'static>(self) -> axum::Router<State> {
+        Router::new()
+            .nest(
+                "/{object_id}",
+                CalendarObjectResourceService::new(self.cal_store.clone()).axum_router(),
+            )
+            .route_service("/", self.axum_service())
     }
 }
 

@@ -1,6 +1,7 @@
-use crate::calendar_set::CalendarSetResource;
+use crate::calendar_set::{CalendarSetResource, CalendarSetResourceService};
 use crate::{CalDavPrincipalUri, Error};
 use async_trait::async_trait;
+use axum::Router;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{AxumMethods, PrincipalUri, Resource, ResourceService};
@@ -192,6 +193,29 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore, BS: Ca
                 },
             ),
         ])
+    }
+
+    fn axum_router<State: Send + Sync + Clone + 'static>(self) -> axum::Router<State> {
+        Router::new()
+            .nest(
+                "/calendar",
+                CalendarSetResourceService::new(
+                    "calendar",
+                    self.cal_store.clone(),
+                    self.sub_store.clone(),
+                )
+                .axum_router(),
+            )
+            .nest(
+                "/birthdays",
+                CalendarSetResourceService::new(
+                    "birthdays",
+                    self.birthday_store.clone(),
+                    self.sub_store.clone(),
+                )
+                .axum_router(),
+            )
+            .route_service("/", self.axum_service())
     }
 }
 

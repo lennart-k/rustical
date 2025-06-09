@@ -6,6 +6,8 @@ use crate::privileges::UserPrivilegeSet;
 use crate::resource::{AxumMethods, PrincipalUri, Resource, ResourceService};
 use crate::xml::{Resourcetype, ResourcetypeInner};
 use async_trait::async_trait;
+use axum::Router;
+use axum::extract::FromRequestParts;
 use std::marker::PhantomData;
 
 #[derive(Clone)]
@@ -59,8 +61,11 @@ impl<PRS: ResourceService + Clone, P: Principal, PURI: PrincipalUri>
 }
 
 #[async_trait]
-impl<PRS: ResourceService<Principal = P> + Clone, P: Principal, PURI: PrincipalUri> ResourceService
-    for RootResourceService<PRS, P, PURI>
+impl<
+    PRS: ResourceService<Principal = P> + Clone,
+    P: Principal + FromRequestParts<Self>,
+    PURI: PrincipalUri,
+> ResourceService for RootResourceService<PRS, P, PURI>
 {
     type PathComponents = ();
     type MemberType = PRS::Resource;
@@ -73,6 +78,12 @@ impl<PRS: ResourceService<Principal = P> + Clone, P: Principal, PURI: PrincipalU
 
     async fn get_resource(&self, _: &()) -> Result<Self::Resource, Self::Error> {
         Ok(RootResource::<PRS::Resource, P>::default())
+    }
+
+    fn axum_router<S: Send + Sync + Clone + 'static>(self) -> Router<S> {
+        Router::new()
+            .nest("/principal/{principal}", self.0.clone().axum_router())
+            .route_service("/", self.axum_service())
     }
 }
 

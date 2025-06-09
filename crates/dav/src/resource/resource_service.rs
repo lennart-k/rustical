@@ -2,15 +2,18 @@ use super::{PrincipalUri, Resource};
 use crate::Principal;
 use crate::resource::{AxumMethods, AxumService};
 use async_trait::async_trait;
+use axum::Router;
+use axum::extract::FromRequestParts;
+use axum::response::IntoResponse;
 use serde::Deserialize;
 
 #[async_trait]
-pub trait ResourceService: Sized + Send + Sync + 'static {
+pub trait ResourceService: Clone + Sized + Send + Sync + AxumMethods + 'static {
     type PathComponents: for<'de> Deserialize<'de> + Sized + Send + Sync + Clone + 'static; // defines how the resource URI maps to parameters, i.e. /{principal}/{calendar} -> (String, String)
     type MemberType: Resource<Error = Self::Error, Principal = Self::Principal>;
     type Resource: Resource<Error = Self::Error, Principal = Self::Principal>;
-    type Error: From<crate::Error> + Send;
-    type Principal: Principal;
+    type Error: From<crate::Error> + Send + Sync + IntoResponse + 'static;
+    type Principal: Principal + FromRequestParts<Self>;
     type PrincipalUri: PrincipalUri;
 
     const DAV_HEADER: &'static str;
@@ -45,8 +48,12 @@ pub trait ResourceService: Sized + Send + Sync + 'static {
 
     fn axum_service(self) -> AxumService<Self>
     where
-        Self: Clone + Send + Sync + AxumMethods,
+        Self: AxumMethods,
     {
         AxumService::new(self)
+    }
+
+    fn axum_router<S: Send + Sync + Clone + 'static>(self) -> Router<S> {
+        Router::new().route_service("/", self.axum_service())
     }
 }

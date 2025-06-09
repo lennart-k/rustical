@@ -1,5 +1,3 @@
-use crate::address_object::resource::AddressObjectResourceService;
-use crate::addressbook::resource::AddressbookResourceService;
 use axum::{Extension, Router};
 use derive_more::Constructor;
 pub use error::Error;
@@ -38,22 +36,8 @@ pub fn carddav_router<AP: AuthenticationProvider, A: AddressbookStore, S: Subscr
         auth_provider.clone(),
         subscription_store.clone(),
     );
-    Router::new()
-        .route_service(
-            "/",
-            RootResourceService::<_, User, CardDavPrincipalUri>::new(principal_service.clone())
-                .axum_service(),
-        )
-        .route_service("/principal/{principal}", principal_service.axum_service())
-        .route_service(
-            "/principal/{principal}/{addressbook_id}",
-            AddressbookResourceService::new(store.clone(), subscription_store.clone())
-                .axum_service(),
-        )
-        .route_service(
-            "/principal/{principal}/{addressbook_id}/{object_id}",
-            AddressObjectResourceService::new(store.clone()).axum_service(),
-        )
+    RootResourceService::<_, User, CardDavPrincipalUri>::new(principal_service.clone())
+        .axum_router()
         .layer(AuthenticationLayer::new(auth_provider))
         .layer(Extension(CardDavPrincipalUri(prefix)))
 }

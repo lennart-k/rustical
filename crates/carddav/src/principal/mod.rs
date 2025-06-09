@@ -1,6 +1,7 @@
-use crate::addressbook::resource::AddressbookResource;
+use crate::addressbook::resource::{AddressbookResource, AddressbookResourceService};
 use crate::{CardDavPrincipalUri, Error};
 use async_trait::async_trait;
+use axum::Router;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{AxumMethods, PrincipalUri, Resource, ResourceService};
@@ -173,6 +174,16 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> Reso
             .into_iter()
             .map(|addressbook| (addressbook.id.to_owned(), addressbook.into()))
             .collect())
+    }
+
+    fn axum_router<State: Send + Sync + Clone + 'static>(self) -> Router<State> {
+        Router::new()
+            .nest(
+                "/{addressbook_id}",
+                AddressbookResourceService::new(self.addr_store.clone(), self.sub_store.clone())
+                    .axum_router(),
+            )
+            .route_service("/", self.axum_service())
     }
 }
 

@@ -1,9 +1,10 @@
 use super::methods::mkcol::route_mkcol;
 use super::methods::report::route_report_addressbook;
 use super::prop::{SupportedAddressData, SupportedReportSet};
-use crate::address_object::resource::AddressObjectResource;
+use crate::address_object::resource::{AddressObjectResource, AddressObjectResourceService};
 use crate::{CardDavPrincipalUri, Error};
 use async_trait::async_trait;
+use axum::Router;
 use axum::extract::Request;
 use axum::handler::Handler;
 use axum::response::Response;
@@ -265,6 +266,15 @@ impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
             .delete_addressbook(principal, addressbook_id, use_trashbin)
             .await?;
         Ok(())
+    }
+
+    fn axum_router<State: Send + Sync + Clone + 'static>(self) -> Router<State> {
+        Router::new()
+            .nest(
+                "/{object_id}",
+                AddressObjectResourceService::new(self.addr_store.clone()).axum_router(),
+            )
+            .route_service("/", self.axum_service())
     }
 }
 

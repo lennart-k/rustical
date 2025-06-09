@@ -17,10 +17,6 @@ pub mod principal;
 
 pub use error::Error;
 
-use crate::calendar::resource::CalendarResourceService;
-use crate::calendar_object::resource::CalendarObjectResourceService;
-use crate::calendar_set::CalendarSetResourceService;
-
 #[derive(Debug, Clone, Constructor)]
 pub struct CalDavPrincipalUri(&'static str);
 
@@ -50,44 +46,8 @@ pub fn caldav_router<
         cal_store: store.clone(),
     };
 
-    Router::new()
-        .route_service(
-            "/",
-            RootResourceService::<_, User, CalDavPrincipalUri>::new(principal_service.clone())
-                .axum_service(),
-        )
-        .route_service("/principal/{principal}", principal_service.axum_service())
-        .route_service(
-            "/principal/{principal}/calendar",
-            CalendarSetResourceService::new("calendar", store.clone(), subscription_store.clone())
-                .axum_service(),
-        )
-        .route_service(
-            "/principal/{principal}/calendar/{calendar_id}",
-            CalendarResourceService::new(store.clone(), subscription_store.clone()).axum_service(),
-        )
-        .route_service(
-            "/principal/{principal}/calendar/{calendar_id}/{object_id}",
-            CalendarObjectResourceService::new(store.clone()).axum_service(),
-        )
-        .route_service(
-            "/principal/{principal}/birthdays",
-            CalendarSetResourceService::new(
-                "birthdays",
-                birthday_store.clone(),
-                subscription_store.clone(),
-            )
-            .axum_service(),
-        )
-        .route_service(
-            "/principal/{principal}/birthdays/{calendar_id}",
-            CalendarResourceService::new(birthday_store.clone(), subscription_store.clone())
-                .axum_service(),
-        )
-        .route_service(
-            "/principal/{principal}/birthdays/{calendar_id}/{object_id}",
-            CalendarObjectResourceService::new(birthday_store.clone()).axum_service(),
-        )
+    RootResourceService::<_, User, CalDavPrincipalUri>::new(principal_service.clone())
+        .axum_router()
         .layer(AuthenticationLayer::new(auth_provider))
         .layer(Extension(CalDavPrincipalUri(prefix)))
 }
