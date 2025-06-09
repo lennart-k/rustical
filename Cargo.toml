@@ -173,3 +173,6 @@ rustical_dav_push.workspace = true
 rustical_oidc.workspace = true
 quick-xml.workspace = true
 tower-http.workspace = true
+axum-extra.workspace = true
+headers.workspace = true
+http.workspace = true

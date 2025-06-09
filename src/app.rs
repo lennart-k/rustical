@@ -1,7 +1,8 @@
 use axum::Router;
 use axum::extract::Request;
 use axum::response::Response;
-use reqwest::StatusCode;
+use headers::{HeaderMapExt, UserAgent};
+use http::StatusCode;
 use rustical_caldav::caldav_router;
 use rustical_carddav::carddav_router;
 use rustical_frontend::nextcloud_login::{NextcloudFlows, nextcloud_login_router};
@@ -80,20 +81,24 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
                 .make_span_with(|request: &Request| {
                     tracing::info_span!(
                         "http-request",
-                        status_code = tracing::field::Empty,
+                        status = tracing::field::Empty,
                         otel.name = tracing::field::display(format!(
                             "{} {}",
                             request.method(),
                             request.uri()
                         )),
+                        ua = tracing::field::Empty,
                     )
                 })
                 .on_request(|req: &Request, span: &Span| {
                     span.record("method", display(req.method()));
                     span.record("path", display(req.uri()));
+                    if let Some(ua) = req.headers().typed_get::<UserAgent>() {
+                        span.record("ua", display(ua));
+                    }
                 })
                 .on_response(|response: &Response, _latency: Duration, span: &Span| {
-                    span.record("status_code", display(response.status()));
+                    span.record("status", display(response.status()));
                     if response.status().is_server_error() {
                         tracing::error!("server error");
                     } else if response.status().is_client_error() {
