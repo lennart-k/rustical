@@ -55,6 +55,7 @@ pub fn setup_tracing(config: &TracingConfig) {
         .from_env_lossy()
         .add_directive("h2=warn".parse().unwrap())
         .add_directive("hyper_util=warn".parse().unwrap())
+        .add_directive("opentelemetry_sdk=warn".parse().unwrap())
         .add_directive("tower=warn".parse().unwrap());
 
     let registry = tracing_subscriber::registry()
