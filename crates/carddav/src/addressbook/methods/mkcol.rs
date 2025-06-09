@@ -1,4 +1,4 @@
-use crate::{Error, addressbook::resource::AddressbookResourceService};
+use crate::{Error, addressbook::AddressbookResourceService};
 use axum::{
     extract::{Path, State},
     response::{IntoResponse, Response},

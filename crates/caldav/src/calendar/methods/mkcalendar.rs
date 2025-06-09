@@ -1,6 +1,6 @@
 use crate::Error;
+use crate::calendar::CalendarResourceService;
 use crate::calendar::prop::SupportedCalendarComponentSet;
-use crate::calendar::resource::CalendarResourceService;
 use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Response};
 use http::StatusCode;

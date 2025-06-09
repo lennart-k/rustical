@@ -1,8 +1,8 @@
 use crate::{
     CalDavPrincipalUri, Error,
-    calendar::resource::CalendarResourceService,
-    calendar_object::resource::{
-        CalendarObjectPropWrapper, CalendarObjectPropWrapperName, CalendarObjectResource,
+    calendar::CalendarResourceService,
+    calendar_object::{
+        CalendarObjectPropWrapper, CalendarObjectPropWrapperName, resource::CalendarObjectResource,
     },
 };
 use axum::{
@@ -147,7 +147,7 @@ pub async fn route_report_calendar<C: CalendarStore, S: SubscriptionStore>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::calendar_object::resource::{CalendarData, CalendarObjectPropName, ExpandElement};
+    use crate::calendar_object::{CalendarData, CalendarObjectPropName, ExpandElement};
     use calendar_query::{CompFilterElement, FilterElement, TimeRangeElement};
     use rustical_dav::xml::PropElement;
     use rustical_ical::UtcDateTime;

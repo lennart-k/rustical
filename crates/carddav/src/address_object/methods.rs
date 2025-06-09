@@ -1,8 +1,6 @@
-use std::str::FromStr;
-
-use super::resource::AddressObjectPathComponents;
+use super::AddressObjectPathComponents;
+use super::AddressObjectResourceService;
 use crate::Error;
-use crate::address_object::resource::AddressObjectResourceService;
 use crate::addressbook::resource::AddressbookResource;
 use axum::body::Body;
 use axum::extract::{Path, State};
@@ -15,6 +13,7 @@ use rustical_dav::resource::Resource;
 use rustical_ical::AddressObject;
 use rustical_store::AddressbookStore;
 use rustical_store::auth::User;
+use std::str::FromStr;
 use tracing::instrument;
 
 #[instrument(skip(addr_store))]

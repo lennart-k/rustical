@@ -1,6 +1,5 @@
-use super::resource::CalendarObjectPathComponents;
 use crate::Error;
-use crate::calendar_object::resource::CalendarObjectResourceService;
+use crate::calendar_object::{CalendarObjectPathComponents, CalendarObjectResourceService};
 use crate::error::Precondition;
 use axum::body::Body;
 use axum::extract::{Path, State};

@@ -1,4 +1,4 @@
-use crate::{Error, calendar_object::resource::CalendarObjectPropWrapperName};
+use crate::{Error, calendar_object::CalendarObjectPropWrapperName};
 use rustical_dav::xml::PropfindType;
 use rustical_ical::{CalendarObject, UtcDateTime};
 use rustical_store::{CalendarStore, calendar_store::CalendarQuery};

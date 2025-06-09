@@ -1,7 +1,7 @@
 use crate::{
     Error,
-    calendar_object::resource::{
-        CalendarObjectPropWrapper, CalendarObjectPropWrapperName, CalendarObjectResource,
+    calendar_object::{
+        CalendarObjectPropWrapper, CalendarObjectPropWrapperName, resource::CalendarObjectResource,
     },
 };
 use http::StatusCode;

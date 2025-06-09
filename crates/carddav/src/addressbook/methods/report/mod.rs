@@ -1,6 +1,6 @@
 use crate::{
-    CardDavPrincipalUri, Error, address_object::resource::AddressObjectPropWrapperName,
-    addressbook::resource::AddressbookResourceService,
+    CardDavPrincipalUri, Error, address_object::AddressObjectPropWrapperName,
+    addressbook::AddressbookResourceService,
 };
 use addressbook_multiget::{AddressbookMultigetRequest, handle_addressbook_multiget};
 use axum::{
@@ -81,7 +81,7 @@ pub async fn route_report_addressbook<AS: AddressbookStore, S: SubscriptionStore
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::address_object::resource::AddressObjectPropName;
+    use crate::address_object::AddressObjectPropName;
     use rustical_dav::xml::{PropElement, sync_collection::SyncLevel};
 
     #[test]

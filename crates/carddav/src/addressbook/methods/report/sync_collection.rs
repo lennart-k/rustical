@@ -1,7 +1,7 @@
 use crate::{
     Error,
-    address_object::resource::{
-        AddressObjectPropWrapper, AddressObjectPropWrapperName, AddressObjectResource,
+    address_object::{
+        AddressObjectPropWrapper, AddressObjectPropWrapperName, resource::AddressObjectResource,
     },
 };
 use http::StatusCode;
