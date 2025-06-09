@@ -1,7 +1,6 @@
 use axum::Router;
 use axum::extract::Request;
-use axum::response::{Redirect, Response};
-use axum::routing::{any, get};
+use axum::response::Response;
 use rustical_caldav::caldav_router;
 use rustical_carddav::carddav_router;
 use rustical_frontend::nextcloud_login::{NextcloudFlows, nextcloud_login_router};
@@ -30,49 +29,31 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
     nextcloud_flows_state: Arc<NextcloudFlows>,
 ) -> Router {
     let mut router = Router::new()
-        .nest(
+        .merge(caldav_router(
             "/caldav",
-            caldav_router(
-                "/caldav",
-                auth_provider.clone(),
-                cal_store.clone(),
-                addr_store.clone(),
-                subscription_store.clone(),
-            ),
-        )
-        .nest(
+            auth_provider.clone(),
+            cal_store.clone(),
+            addr_store.clone(),
+            subscription_store.clone(),
+        ))
+        .merge(carddav_router(
             "/carddav",
-            carddav_router(
-                "/carddav",
-                auth_provider.clone(),
-                addr_store.clone(),
-                subscription_store.clone(),
-            ),
-        )
-        .route(
-            "/.well-known/caldav",
-            any(async || Redirect::permanent("/caldav")),
-        )
-        .route(
-            "/.well-known/carddav",
-            any(async || Redirect::permanent("/carddav")),
-        );
+            auth_provider.clone(),
+            addr_store.clone(),
+            subscription_store.clone(),
+        ));
 
     let session_store = MemoryStore::default();
     if frontend_config.enabled {
-        router = router
-            .nest(
-                "/frontend",
-                frontend_router(
-                    auth_provider.clone(),
-                    cal_store.clone(),
-                    addr_store.clone(),
-                    frontend_config,
-                    oidc_config,
-                    session_store.clone(),
-                ),
-            )
-            .route("/", get(async || Redirect::to("/frontend")));
+        router = router.merge(frontend_router(
+            "/frontend",
+            auth_provider.clone(),
+            cal_store.clone(),
+            addr_store.clone(),
+            frontend_config,
+            oidc_config,
+            session_store.clone(),
+        ));
     }
 
     if nextcloud_login_config.enabled {

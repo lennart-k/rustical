@@ -1,3 +1,5 @@
+use axum::response::Redirect;
+use axum::routing::any;
 use axum::{Extension, Router};
 use derive_more::Constructor;
 pub use error::Error;
@@ -36,8 +38,16 @@ pub fn carddav_router<AP: AuthenticationProvider, A: AddressbookStore, S: Subscr
         auth_provider.clone(),
         subscription_store.clone(),
     );
-    RootResourceService::<_, User, CardDavPrincipalUri>::new(principal_service.clone())
-        .axum_router()
-        .layer(AuthenticationLayer::new(auth_provider))
-        .layer(Extension(CardDavPrincipalUri(prefix)))
+    Router::new()
+        .nest(
+            prefix,
+            RootResourceService::<_, User, CardDavPrincipalUri>::new(principal_service.clone())
+                .axum_router()
+                .layer(AuthenticationLayer::new(auth_provider))
+                .layer(Extension(CardDavPrincipalUri(prefix))),
+        )
+        .route(
+            "/.well-known/carddav",
+            any(async || Redirect::permanent(prefix)),
+        )
 }

@@ -3,7 +3,7 @@ use axum::{
     body::Body,
     extract::{OriginalUri, Request},
     middleware::{self, Next},
-    response::Response,
+    response::{Redirect, Response},
     routing::{get, post},
 };
 use headers::{ContentType, HeaderMapExt};
@@ -51,6 +51,7 @@ pub fn frontend_router<
     AS: AddressbookStore,
     S: SessionStore + Clone,
 >(
+    prefix: &'static str,
     auth_provider: Arc<AP>,
     cal_store: Arc<CS>,
     addr_store: Arc<AS>,
@@ -120,7 +121,7 @@ pub fn frontend_router<
             .layer(Extension(oidc_config));
     }
 
-    router
+    router = router
         .layer(AuthenticationLayer::new(auth_provider.clone()))
         .layer(
             SessionManagerLayer::new(session_store)
@@ -133,7 +134,11 @@ pub fn frontend_router<
         .layer(Extension(addr_store.clone()))
         .layer(Extension(frontend_config.clone()))
         .layer(Extension(oidc_config.clone()))
-        .layer(middleware::from_fn(unauthorized_handler))
+        .layer(middleware::from_fn(unauthorized_handler));
+
+    Router::new()
+        .nest(prefix, router)
+        .route("/", get(async || Redirect::to(prefix)))
 }
 
 async fn unauthorized_handler(mut request: Request, next: Next) -> Response {

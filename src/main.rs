@@ -9,6 +9,7 @@ use commands::{cmd_gen_config, cmd_pwhash};
 use config::{DataStoreConfig, SqliteDataStoreConfig};
 use figment::Figment;
 use figment::providers::{Env, Format, Toml};
+use rustical_dav_push::DavPushController;
 use rustical_dav_push::notifier::push_notifier;
 use rustical_frontend::nextcloud_login::NextcloudFlows;
 use rustical_store::auth::AuthenticationProvider;
@@ -97,12 +98,16 @@ async fn main() -> Result<()> {
             let (addr_store, cal_store, subscription_store, principal_store, update_recv) =
                 get_data_stores(!args.no_migrations, &config.data_store).await?;
 
+            let mut tasks = vec![];
+
             if config.dav_push.enabled {
-                tokio::spawn(push_notifier(
+                let dav_push_controller = DavPushController::new(
                     config.dav_push.allowed_push_servers,
-                    update_recv,
                     subscription_store.clone(),
-                ));
+                );
+                tasks.push(tokio::spawn(async move {
+                    dav_push_controller.notifier(update_recv).await;
+                }));
             }
 
             let nextcloud_flows = Arc::new(NextcloudFlows::default());
@@ -126,7 +131,13 @@ async fn main() -> Result<()> {
                 config.http.host, config.http.port
             ))
             .await?;
-            axum::serve(listener, app).await?;
+            tasks.push(tokio::spawn(async {
+                axum::serve(listener, app).await.unwrap()
+            }));
+
+            for task in tasks {
+                task.await?;
+            }
         }
     }
     Ok(())

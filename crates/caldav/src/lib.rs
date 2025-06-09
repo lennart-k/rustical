@@ -1,3 +1,5 @@
+use axum::response::Redirect;
+use axum::routing::any;
 use axum::{Extension, Router};
 use derive_more::Constructor;
 use principal::PrincipalResourceService;
@@ -46,8 +48,16 @@ pub fn caldav_router<
         cal_store: store.clone(),
     };
 
-    RootResourceService::<_, User, CalDavPrincipalUri>::new(principal_service.clone())
-        .axum_router()
-        .layer(AuthenticationLayer::new(auth_provider))
-        .layer(Extension(CalDavPrincipalUri(prefix)))
+    Router::new()
+        .nest(
+            prefix,
+            RootResourceService::<_, User, CalDavPrincipalUri>::new(principal_service.clone())
+                .axum_router()
+                .layer(AuthenticationLayer::new(auth_provider))
+                .layer(Extension(CalDavPrincipalUri(prefix))),
+        )
+        .route(
+            "/.well-known/caldav",
+            any(async || Redirect::permanent(prefix)),
+        )
 }
