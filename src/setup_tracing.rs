@@ -51,7 +51,7 @@ pub fn init_otel() -> Tracer {
 pub fn setup_tracing(config: &TracingConfig) {
     let fmt_layer = tracing_subscriber::fmt::layer();
     let filter_layer = EnvFilter::builder()
-        .with_default_directive(LevelFilter::WARN.into())
+        .with_default_directive(LevelFilter::INFO.into())
         .from_env_lossy()
         .add_directive("h2=warn".parse().unwrap())
         .add_directive("hyper_util=warn".parse().unwrap())
