@@ -41,6 +41,7 @@ impl<AS: AddressbookStore> ResourceService for AddressObjectResourceService<AS> 
     type PrincipalUri = CardDavPrincipalUri;
 
     const DAV_HEADER: &str = "1, 3, access-control, addressbook";
+    const IS_COLLECTION: bool = false;
 
     async fn get_resource(
         &self,

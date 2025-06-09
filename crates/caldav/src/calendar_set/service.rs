@@ -45,6 +45,7 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarSetReso
     type PrincipalUri = CalDavPrincipalUri;
 
     const DAV_HEADER: &str = "1, 3, access-control, extended-mkcol, calendar-access";
+    const IS_COLLECTION: bool = true;
 
     async fn get_resource(
         &self,

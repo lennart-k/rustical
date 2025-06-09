@@ -76,8 +76,13 @@ pub(crate) async fn route_propfind<R: ResourceService>(
     let mut member_responses = Vec::new();
     if depth != &Depth::Zero {
         for member in resource_service.get_members(path_components).await? {
+            // Collections should have a trailing slash
+            let mut name = member.get_name();
+            if R::IS_COLLECTION {
+                name.push('/')
+            }
             member_responses.push(member.propfind_typed(
-                &format!("{}/{}", path.trim_end_matches('/'), member.get_name()),
+                &format!("{}/{}", path.trim_end_matches('/'), name),
                 &propfind_member.prop,
                 puri,
                 principal,

@@ -77,6 +77,7 @@ where
     type PrincipalUri = PURI;
 
     const DAV_HEADER: &str = "1, 3, access-control";
+    const IS_COLLECTION: bool = true;
 
     async fn get_resource(&self, _: &()) -> Result<Self::Resource, Self::Error> {
         Ok(RootResource::<PRS::Resource, P>::default())

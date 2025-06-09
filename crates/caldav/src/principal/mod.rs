@@ -48,7 +48,7 @@ impl Resource for PrincipalResource {
                 .map(|principal| puri.principal_uri(principal))
                 .flat_map(|principal_url| {
                     self.home_set.iter().map(move |&home_name| {
-                        HrefElement::new(format!("{}/{}", &principal_url, home_name))
+                        HrefElement::new(format!("{}{}/", &principal_url, home_name))
                     })
                 })
                 .collect(),
