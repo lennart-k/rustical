@@ -10,7 +10,6 @@ use config::{DataStoreConfig, SqliteDataStoreConfig};
 use figment::Figment;
 use figment::providers::{Env, Format, Toml};
 use rustical_dav_push::DavPushController;
-use rustical_frontend::nextcloud_login::NextcloudFlows;
 use rustical_store::auth::AuthenticationProvider;
 use rustical_store::{AddressbookStore, CalendarStore, CollectionOperation, SubscriptionStore};
 use rustical_store_sqlite::addressbook_store::SqliteAddressbookStore;
@@ -110,8 +109,6 @@ async fn main() -> Result<()> {
                 }));
             }
 
-            let nextcloud_flows = Arc::new(NextcloudFlows::default());
-
             let app = make_app(
                 addr_store.clone(),
                 cal_store.clone(),
@@ -120,7 +117,6 @@ async fn main() -> Result<()> {
                 config.frontend.clone(),
                 config.oidc.clone(),
                 config.nextcloud_login.clone(),
-                nextcloud_flows.clone(),
             );
             let app = ServiceExt::<Request>::into_make_service(
                 NormalizePathLayer::trim_trailing_slash().layer(app),

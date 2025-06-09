@@ -28,6 +28,10 @@ impl<T: XmlSerialize + XmlDeserialize> ResourceProp for T {}
 pub trait ResourcePropName: FromStr {}
 impl<T: FromStr> ResourcePropName for T {}
 
+pub trait ResourceName {
+    fn get_name(&self) -> String;
+}
+
 pub trait Resource: Clone + Send + 'static {
     type Prop: ResourceProp + PartialEq + Clone + EnumVariants + PropName + Send;
     type Error: From<crate::Error>;

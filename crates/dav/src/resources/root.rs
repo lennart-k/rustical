@@ -3,7 +3,7 @@ use crate::extensions::{
     CommonPropertiesExtension, CommonPropertiesProp, CommonPropertiesPropName,
 };
 use crate::privileges::UserPrivilegeSet;
-use crate::resource::{AxumMethods, PrincipalUri, Resource, ResourceService};
+use crate::resource::{AxumMethods, PrincipalUri, Resource, ResourceName, ResourceService};
 use crate::xml::{Resourcetype, ResourcetypeInner};
 use async_trait::async_trait;
 use axum::Router;
@@ -66,6 +66,8 @@ impl<
     P: Principal + FromRequestParts<Self>,
     PURI: PrincipalUri,
 > ResourceService for RootResourceService<PRS, P, PURI>
+where
+    PRS::Resource: ResourceName,
 {
     type PathComponents = ();
     type MemberType = PRS::Resource;

@@ -46,10 +46,9 @@ pub struct NextcloudFlows {
     flows: RwLock<HashMap<String, NextcloudFlow>>,
 }
 
-pub fn nextcloud_login_router<AP: AuthenticationProvider>(
-    nextcloud_flows_state: Arc<NextcloudFlows>,
-    auth_provider: Arc<AP>,
-) -> Router {
+pub fn nextcloud_login_router<AP: AuthenticationProvider>(auth_provider: Arc<AP>) -> Router {
+    let nextcloud_flows = Arc::new(NextcloudFlows::default());
+
     Router::new()
         .route("/poll/{flow}", post(post_nextcloud_poll::<AP>))
         .route(
@@ -57,7 +56,7 @@ pub fn nextcloud_login_router<AP: AuthenticationProvider>(
             get(get_nextcloud_flow).post(post_nextcloud_flow),
         )
         .route("/", post(post_nextcloud_login))
-        .layer(Extension(nextcloud_flows_state))
+        .layer(Extension(nextcloud_flows))
         .layer(Extension(auth_provider.clone()))
         .layer(AuthenticationLayer::new(auth_provider.clone()))
         .layer(middleware::from_fn(unauthorized_handler))

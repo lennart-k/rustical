@@ -10,7 +10,8 @@ use serde::Deserialize;
 #[async_trait]
 pub trait ResourceService: Clone + Sized + Send + Sync + AxumMethods + 'static {
     type PathComponents: for<'de> Deserialize<'de> + Sized + Send + Sync + Clone + 'static; // defines how the resource URI maps to parameters, i.e. /{principal}/{calendar} -> (String, String)
-    type MemberType: Resource<Error = Self::Error, Principal = Self::Principal>;
+    type MemberType: Resource<Error = Self::Error, Principal = Self::Principal>
+        + super::ResourceName;
     type Resource: Resource<Error = Self::Error, Principal = Self::Principal>;
     type Error: From<crate::Error> + Send + Sync + IntoResponse + 'static;
     type Principal: Principal + FromRequestParts<Self>;
@@ -21,7 +22,7 @@ pub trait ResourceService: Clone + Sized + Send + Sync + AxumMethods + 'static {
     async fn get_members(
         &self,
         _path: &Self::PathComponents,
-    ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
+    ) -> Result<Vec<Self::MemberType>, Self::Error> {
         Ok(vec![])
     }
 

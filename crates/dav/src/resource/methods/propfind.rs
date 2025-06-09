@@ -3,6 +3,7 @@ use crate::header::Depth;
 use crate::privileges::UserPrivilege;
 use crate::resource::PrincipalUri;
 use crate::resource::Resource;
+use crate::resource::ResourceName;
 use crate::resource::ResourceService;
 use crate::xml::MultistatusElement;
 use crate::xml::PropfindElement;
@@ -11,6 +12,11 @@ use axum::extract::{Extension, OriginalUri, Path, State};
 use rustical_xml::PropName;
 use rustical_xml::XmlDocument;
 use tracing::instrument;
+
+type RSMultistatus<R> = MultistatusElement<
+    <<R as ResourceService>::Resource as Resource>::Prop,
+    <<R as ResourceService>::MemberType as Resource>::Prop,
+>;
 
 #[instrument(skip(path, resource_service, puri))]
 pub(crate) async fn axum_route_propfind<R: ResourceService>(
@@ -21,10 +27,7 @@ pub(crate) async fn axum_route_propfind<R: ResourceService>(
     uri: OriginalUri,
     Extension(puri): Extension<R::PrincipalUri>,
     body: String,
-) -> Result<
-    MultistatusElement<<R::Resource as Resource>::Prop, <R::MemberType as Resource>::Prop>,
-    R::Error,
-> {
+) -> Result<RSMultistatus<R>, R::Error> {
     route_propfind::<R>(
         &path,
         uri.path(),
@@ -45,10 +48,7 @@ pub(crate) async fn route_propfind<R: ResourceService>(
     depth: &Depth,
     resource_service: &R,
     puri: &impl PrincipalUri,
-) -> Result<
-    MultistatusElement<<R::Resource as Resource>::Prop, <R::MemberType as Resource>::Prop>,
-    R::Error,
-> {
+) -> Result<RSMultistatus<R>, R::Error> {
     let resource = resource_service.get_resource(path_components).await?;
     let privileges = resource.get_user_privileges(principal)?;
     if !privileges.has(&UserPrivilege::Read) {
@@ -75,9 +75,9 @@ pub(crate) async fn route_propfind<R: ResourceService>(
 
     let mut member_responses = Vec::new();
     if depth != &Depth::Zero {
-        for (subpath, member) in resource_service.get_members(path_components).await? {
+        for member in resource_service.get_members(path_components).await? {
             member_responses.push(member.propfind_typed(
-                &format!("{}/{}", path.trim_end_matches('/'), subpath),
+                &format!("{}/{}", path.trim_end_matches('/'), member.get_name()),
                 &propfind_member.prop,
                 puri,
                 principal,

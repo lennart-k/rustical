@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use axum::Router;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
-use rustical_dav::resource::{AxumMethods, PrincipalUri, Resource, ResourceService};
+use rustical_dav::resource::{AxumMethods, PrincipalUri, Resource, ResourceName, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::{AuthenticationProvider, User};
 use rustical_store::{AddressbookStore, SubscriptionStore};
@@ -48,6 +48,12 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore>
 #[derive(Debug, Clone)]
 pub struct PrincipalResource {
     principal: User,
+}
+
+impl ResourceName for PrincipalResource {
+    fn get_name(&self) -> String {
+        self.principal.id.to_owned()
+    }
 }
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
@@ -168,11 +174,11 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> Reso
     async fn get_members(
         &self,
         (principal,): &Self::PathComponents,
-    ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
+    ) -> Result<Vec<Self::MemberType>, Self::Error> {
         let addressbooks = self.addr_store.get_addressbooks(principal).await?;
         Ok(addressbooks
             .into_iter()
-            .map(|addressbook| (addressbook.id.to_owned(), addressbook.into()))
+            .map(AddressbookResource::from)
             .collect())
     }
 

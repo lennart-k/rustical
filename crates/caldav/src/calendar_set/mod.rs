@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use axum::Router;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
-use rustical_dav::resource::{AxumMethods, PrincipalUri, Resource, ResourceService};
+use rustical_dav::resource::{AxumMethods, PrincipalUri, Resource, ResourceName, ResourceService};
 use rustical_dav::xml::{Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
 use rustical_store::{CalendarStore, SubscriptionStore};
@@ -15,6 +15,13 @@ use std::sync::Arc;
 pub struct CalendarSetResource {
     pub(crate) principal: String,
     pub(crate) read_only: bool,
+    pub(crate) name: &'static str,
+}
+
+impl ResourceName for CalendarSetResource {
+    fn get_name(&self) -> String {
+        self.name.to_owned()
+    }
 }
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
@@ -105,24 +112,20 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarSetReso
         Ok(CalendarSetResource {
             principal: principal.to_owned(),
             read_only: self.cal_store.is_read_only(),
+            name: self.name,
         })
     }
 
     async fn get_members(
         &self,
         (principal,): &Self::PathComponents,
-    ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
+    ) -> Result<Vec<Self::MemberType>, Self::Error> {
         let calendars = self.cal_store.get_calendars(principal).await?;
         Ok(calendars
             .into_iter()
-            .map(|cal| {
-                (
-                    cal.id.to_owned(),
-                    CalendarResource {
-                        cal,
-                        read_only: self.cal_store.is_read_only(),
-                    },
-                )
+            .map(|cal| CalendarResource {
+                cal,
+                read_only: self.cal_store.is_read_only(),
             })
             .collect())
     }

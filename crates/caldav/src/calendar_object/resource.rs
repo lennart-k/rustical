@@ -10,7 +10,7 @@ use futures_util::future::BoxFuture;
 use rustical_dav::{
     extensions::{CommonPropertiesExtension, CommonPropertiesProp},
     privileges::UserPrivilegeSet,
-    resource::{AxumMethods, PrincipalUri, Resource, ResourceService},
+    resource::{AxumMethods, PrincipalUri, Resource, ResourceName, ResourceService},
     xml::Resourcetype,
 };
 use rustical_ical::{CalendarObject, UtcDateTime};
@@ -19,24 +19,6 @@ use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 use serde::{Deserialize, Deserializer};
 use std::{convert::Infallible, sync::Arc};
 use tower::Service;
-
-pub struct CalendarObjectResourceService<C: CalendarStore> {
-    pub(crate) cal_store: Arc<C>,
-}
-
-impl<C: CalendarStore> Clone for CalendarObjectResourceService<C> {
-    fn clone(&self) -> Self {
-        Self {
-            cal_store: self.cal_store.clone(),
-        }
-    }
-}
-
-impl<C: CalendarStore> CalendarObjectResourceService<C> {
-    pub fn new(cal_store: Arc<C>) -> Self {
-        Self { cal_store }
-    }
-}
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq, Hash)]
 pub(crate) struct ExpandElement {
@@ -84,6 +66,12 @@ pub enum CalendarObjectPropWrapper {
 pub struct CalendarObjectResource {
     pub object: CalendarObject,
     pub principal: String,
+}
+
+impl ResourceName for CalendarObjectResource {
+    fn get_name(&self) -> String {
+        format!("{}.ics", self.object.get_id())
+    }
 }
 
 impl Resource for CalendarObjectResource {
@@ -161,6 +149,24 @@ pub struct CalendarObjectPathComponents {
     pub calendar_id: String,
     #[serde(deserialize_with = "deserialize_ics_name")]
     pub object_id: String,
+}
+
+pub struct CalendarObjectResourceService<C: CalendarStore> {
+    pub(crate) cal_store: Arc<C>,
+}
+
+impl<C: CalendarStore> Clone for CalendarObjectResourceService<C> {
+    fn clone(&self) -> Self {
+        Self {
+            cal_store: self.cal_store.clone(),
+        }
+    }
+}
+
+impl<C: CalendarStore> CalendarObjectResourceService<C> {
+    pub fn new(cal_store: Arc<C>) -> Self {
+        Self { cal_store }
+    }
 }
 
 #[async_trait]

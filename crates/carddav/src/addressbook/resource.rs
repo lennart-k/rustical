@@ -14,7 +14,7 @@ use rustical_dav::extensions::{
     CommonPropertiesExtension, CommonPropertiesProp, SyncTokenExtension, SyncTokenExtensionProp,
 };
 use rustical_dav::privileges::UserPrivilegeSet;
-use rustical_dav::resource::{AxumMethods, PrincipalUri, Resource, ResourceService};
+use rustical_dav::resource::{AxumMethods, PrincipalUri, Resource, ResourceName, ResourceService};
 use rustical_dav::xml::{Resourcetype, ResourcetypeInner};
 use rustical_dav_push::{DavPushExtension, DavPushExtensionProp};
 use rustical_store::auth::User;
@@ -76,6 +76,12 @@ pub enum AddressbookPropWrapper {
 
 #[derive(Clone, Debug, From, Into)]
 pub struct AddressbookResource(pub(crate) Addressbook);
+
+impl ResourceName for AddressbookResource {
+    fn get_name(&self) -> String {
+        self.0.id.to_owned()
+    }
+}
 
 impl SyncTokenExtension for AddressbookResource {
     fn get_synctoken(&self) -> String {
@@ -228,20 +234,15 @@ impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
     async fn get_members(
         &self,
         (principal, addressbook_id): &Self::PathComponents,
-    ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
+    ) -> Result<Vec<Self::MemberType>, Self::Error> {
         Ok(self
             .addr_store
             .get_objects(principal, addressbook_id)
             .await?
             .into_iter()
-            .map(|object| {
-                (
-                    format!("{}.vcf", object.get_id()),
-                    AddressObjectResource {
-                        object,
-                        principal: principal.to_owned(),
-                    },
-                )
+            .map(|object| AddressObjectResource {
+                object,
+                principal: principal.to_owned(),
             })
             .collect())
     }

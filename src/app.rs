@@ -1,3 +1,4 @@
+use crate::config::NextcloudLoginConfig;
 use axum::Router;
 use axum::extract::Request;
 use axum::response::Response;
@@ -5,7 +6,7 @@ use headers::{HeaderMapExt, UserAgent};
 use http::StatusCode;
 use rustical_caldav::caldav_router;
 use rustical_carddav::carddav_router;
-use rustical_frontend::nextcloud_login::{NextcloudFlows, nextcloud_login_router};
+use rustical_frontend::nextcloud_login::nextcloud_login_router;
 use rustical_frontend::{FrontendConfig, frontend_router};
 use rustical_oidc::OidcConfig;
 use rustical_store::auth::AuthenticationProvider;
@@ -20,8 +21,6 @@ use tower_sessions::{Expiry, MemoryStore, SessionManagerLayer};
 use tracing::Span;
 use tracing::field::display;
 
-use crate::config::NextcloudLoginConfig;
-
 #[allow(clippy::too_many_arguments)]
 pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
     addr_store: Arc<AS>,
@@ -31,7 +30,6 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
     frontend_config: FrontendConfig,
     oidc_config: Option<OidcConfig>,
     nextcloud_login_config: NextcloudLoginConfig,
-    nextcloud_flows_state: Arc<NextcloudFlows>,
 ) -> Router<()> {
     let mut router = Router::new()
         .merge(caldav_router(
@@ -63,7 +61,7 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
     if nextcloud_login_config.enabled {
         router = router.nest(
             "/index.php/login/v2",
-            nextcloud_login_router(nextcloud_flows_state, auth_provider.clone()),
+            nextcloud_login_router(auth_provider.clone()),
         );
     }
     router

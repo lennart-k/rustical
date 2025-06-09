@@ -6,7 +6,7 @@ use futures_util::future::BoxFuture;
 use rustical_dav::{
     extensions::{CommonPropertiesExtension, CommonPropertiesProp},
     privileges::UserPrivilegeSet,
-    resource::{AxumMethods, PrincipalUri, Resource, ResourceService},
+    resource::{AxumMethods, PrincipalUri, Resource, ResourceName, ResourceService},
     xml::Resourcetype,
 };
 use rustical_ical::AddressObject;
@@ -56,6 +56,12 @@ pub enum AddressObjectPropWrapper {
 pub struct AddressObjectResource {
     pub object: AddressObject,
     pub principal: String,
+}
+
+impl ResourceName for AddressObjectResource {
+    fn get_name(&self) -> String {
+        format!("{}.vcf", self.object.get_id())
+    }
 }
 
 impl Resource for AddressObjectResource {

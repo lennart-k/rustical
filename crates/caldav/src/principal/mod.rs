@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use axum::Router;
 use rustical_dav::extensions::{CommonPropertiesExtension, CommonPropertiesProp};
 use rustical_dav::privileges::UserPrivilegeSet;
-use rustical_dav::resource::{AxumMethods, PrincipalUri, Resource, ResourceService};
+use rustical_dav::resource::{AxumMethods, PrincipalUri, Resource, ResourceName, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_store::auth::user::PrincipalType;
 use rustical_store::auth::{AuthenticationProvider, User};
@@ -16,6 +16,12 @@ use std::sync::Arc;
 pub struct PrincipalResource {
     principal: User,
     home_set: &'static [&'static str],
+}
+
+impl ResourceName for PrincipalResource {
+    fn get_name(&self) -> String {
+        self.principal.id.to_owned()
+    }
 }
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
@@ -176,22 +182,18 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore, BS: Ca
     async fn get_members(
         &self,
         (principal,): &Self::PathComponents,
-    ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
+    ) -> Result<Vec<Self::MemberType>, Self::Error> {
         Ok(vec![
-            (
-                "calendar".to_owned(),
-                CalendarSetResource {
-                    principal: principal.to_owned(),
-                    read_only: false,
-                },
-            ),
-            (
-                "birthdays".to_owned(),
-                CalendarSetResource {
-                    principal: principal.to_owned(),
-                    read_only: true,
-                },
-            ),
+            CalendarSetResource {
+                name: "calendar",
+                principal: principal.to_owned(),
+                read_only: false,
+            },
+            CalendarSetResource {
+                name: "birthdays",
+                principal: principal.to_owned(),
+                read_only: true,
+            },
         ])
     }
 

@@ -15,7 +15,7 @@ use rustical_dav::extensions::{
     CommonPropertiesExtension, CommonPropertiesProp, SyncTokenExtension, SyncTokenExtensionProp,
 };
 use rustical_dav::privileges::UserPrivilegeSet;
-use rustical_dav::resource::{AxumMethods, PrincipalUri, Resource, ResourceService};
+use rustical_dav::resource::{AxumMethods, PrincipalUri, Resource, ResourceName, ResourceService};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
 use rustical_dav_push::DavPushExtension;
 use rustical_ical::CalDateTime;
@@ -81,6 +81,12 @@ pub enum CalendarPropWrapper {
 pub struct CalendarResource {
     pub cal: Calendar,
     pub read_only: bool,
+}
+
+impl ResourceName for CalendarResource {
+    fn get_name(&self) -> String {
+        self.cal.id.to_owned()
+    }
 }
 
 impl From<CalendarResource> for Calendar {
@@ -360,20 +366,15 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
     async fn get_members(
         &self,
         (principal, cal_id): &Self::PathComponents,
-    ) -> Result<Vec<(String, Self::MemberType)>, Self::Error> {
+    ) -> Result<Vec<Self::MemberType>, Self::Error> {
         Ok(self
             .cal_store
             .get_objects(principal, cal_id)
             .await?
             .into_iter()
-            .map(|object| {
-                (
-                    format!("{}.ics", object.get_id()),
-                    CalendarObjectResource {
-                        object,
-                        principal: principal.to_owned(),
-                    },
-                )
+            .map(|object| CalendarObjectResource {
+                object,
+                principal: principal.to_owned(),
             })
             .collect())
     }
