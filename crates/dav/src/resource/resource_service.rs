@@ -18,7 +18,6 @@ pub trait ResourceService: Clone + Sized + Send + Sync + AxumMethods + 'static {
     type PrincipalUri: PrincipalUri;
 
     const DAV_HEADER: &'static str;
-    const IS_COLLECTION: bool;
 
     async fn get_members(
         &self,

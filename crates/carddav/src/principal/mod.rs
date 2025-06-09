@@ -26,6 +26,8 @@ impl Resource for PrincipalResource {
     type Error = Error;
     type Principal = User;
 
+    const IS_COLLECTION: bool = true;
+
     fn get_resourcetype(&self) -> Resourcetype {
         Resourcetype(&[
             ResourcetypeInner(Some(rustical_dav::namespace::NS_DAV), "collection"),

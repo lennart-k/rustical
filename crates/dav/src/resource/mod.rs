@@ -37,6 +37,8 @@ pub trait Resource: Clone + Send + 'static {
     type Error: From<crate::Error>;
     type Principal: Principal;
 
+    const IS_COLLECTION: bool;
+
     fn get_resourcetype(&self) -> Resourcetype;
 
     fn list_props() -> Vec<(Option<Namespace<'static>>, &'static str)> {
@@ -95,13 +97,19 @@ pub trait Resource: Clone + Send + 'static {
         principal: &Self::Principal,
     ) -> Result<UserPrivilegeSet, Self::Error>;
 
-    fn propfind_typed(
+    fn propfind(
         &self,
         path: &str,
         prop: &PropfindType<<Self::Prop as PropName>::Names>,
         principal_uri: &impl PrincipalUri,
         principal: &Self::Principal,
     ) -> Result<ResponseElement<Self::Prop>, Self::Error> {
+        // Collections have a trailing slash
+        let mut path = path.to_string();
+        if Self::IS_COLLECTION && !path.ends_with('/') {
+            path.push('/');
+        }
+
         // TODO: Support include element
         let (props, invalid_props): (HashSet<<Self::Prop as PropName>::Names>, Vec<_>) = match prop
         {

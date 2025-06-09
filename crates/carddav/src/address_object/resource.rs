@@ -32,6 +32,8 @@ impl Resource for AddressObjectResource {
     type Error = Error;
     type Principal = User;
 
+    const IS_COLLECTION: bool = false;
+
     fn get_resourcetype(&self) -> Resourcetype {
         Resourcetype(&[])
     }

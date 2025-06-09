@@ -24,6 +24,8 @@ impl<PR: Resource, P: Principal> Resource for RootResource<PR, P> {
     type Error = PR::Error;
     type Principal = P;
 
+    const IS_COLLECTION: bool = true;
+
     fn get_resourcetype(&self) -> Resourcetype {
         Resourcetype(&[ResourcetypeInner(
             Some(crate::namespace::NS_DAV),
@@ -77,7 +79,6 @@ where
     type PrincipalUri = PURI;
 
     const DAV_HEADER: &str = "1, 3, access-control";
-    const IS_COLLECTION: bool = true;
 
     async fn get_resource(&self, _: &()) -> Result<Self::Resource, Self::Error> {
         Ok(RootResource::<PRS::Resource, P>::default())

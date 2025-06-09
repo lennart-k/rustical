@@ -39,7 +39,7 @@ pub async fn handle_sync_collection<AS: AddressbookStore>(
                 object,
                 principal: principal.to_owned(),
             }
-            .propfind_typed(&path, &sync_collection.prop, puri, user)?,
+            .propfind(&path, &sync_collection.prop, puri, user)?,
         );
     }
 
