@@ -1,13 +1,12 @@
+pub use error::Error;
 use serde::Serialize;
 use sqlx::{Pool, Sqlite, SqlitePool, sqlite::SqliteConnectOptions};
-
+use tracing::info;
 pub mod addressbook_store;
 pub mod calendar_store;
 pub mod error;
 pub mod principal_store;
 pub mod subscription_store;
-
-pub use error::Error;
 
 #[derive(Debug, Clone, Serialize, sqlx::Type)]
 #[serde(rename_all = "kebab-case")]
@@ -38,7 +37,7 @@ pub async fn create_db_pool(db_url: &str, migrate: bool) -> Result<Pool<Sqlite>,
     )
     .await?;
     if migrate {
-        println!("Running database migrations");
+        info!("Running database migrations");
         sqlx::migrate!("./migrations").run(&db).await?;
     }
     Ok(db)

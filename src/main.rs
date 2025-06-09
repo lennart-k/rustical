@@ -22,6 +22,7 @@ use std::sync::Arc;
 use tokio::sync::mpsc::Receiver;
 use tower::Layer;
 use tower_http::normalize_path::NormalizePathLayer;
+use tracing::info;
 
 mod app;
 mod commands;
@@ -125,12 +126,10 @@ async fn main() -> Result<()> {
                 NormalizePathLayer::trim_trailing_slash().layer(app),
             );
 
-            let listener = tokio::net::TcpListener::bind(&format!(
-                "{}:{}",
-                config.http.host, config.http.port
-            ))
-            .await?;
-            tasks.push(tokio::spawn(async {
+            let address = format!("{}:{}", config.http.host, config.http.port);
+            let listener = tokio::net::TcpListener::bind(&address).await?;
+            tasks.push(tokio::spawn(async move {
+                info!("RustiCal serving on http://{address}");
                 axum::serve(listener, app).await.unwrap()
             }));
 

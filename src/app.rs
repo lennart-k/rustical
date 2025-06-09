@@ -1,6 +1,7 @@
 use axum::Router;
 use axum::extract::Request;
 use axum::response::Response;
+use reqwest::StatusCode;
 use rustical_caldav::caldav_router;
 use rustical_carddav::carddav_router;
 use rustical_frontend::nextcloud_login::{NextcloudFlows, nextcloud_login_router};
@@ -16,6 +17,7 @@ use tower_http::trace::TraceLayer;
 use tower_sessions::cookie::SameSite;
 use tower_sessions::{Expiry, MemoryStore, SessionManagerLayer};
 use tracing::Span;
+use tracing::field::display;
 
 use crate::config::NextcloudLoginConfig;
 
@@ -76,7 +78,7 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(|request: &Request| {
-                    tracing::debug_span!(
+                    tracing::info_span!(
                         "http-request",
                         status_code = tracing::field::Empty,
                         otel.name = tracing::field::display(format!(
@@ -86,13 +88,22 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
                         )),
                     )
                 })
-                .on_request(|_req: &Request, _span: &Span| {})
+                .on_request(|req: &Request, span: &Span| {
+                    span.record("method", display(req.method()));
+                    span.record("path", display(req.uri()));
+                })
                 .on_response(|response: &Response, _latency: Duration, span: &Span| {
-                    span.record("status_code", tracing::field::display(response.status()));
+                    span.record("status_code", display(response.status()));
                     if response.status().is_server_error() {
-                        tracing::error!("status server error");
+                        tracing::error!("server error");
                     } else if response.status().is_client_error() {
-                        tracing::error!("status client error");
+                        if response.status() == StatusCode::UNAUTHORIZED {
+                            // The iOS client always tries an unauthenticated request first so
+                            // logging 401's as errors would clog up our logs
+                            tracing::debug!("unauthorized");
+                        } else {
+                            tracing::error!("client error");
+                        }
                     };
                 })
                 .on_failure(
