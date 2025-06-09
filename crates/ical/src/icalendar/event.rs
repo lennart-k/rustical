@@ -136,7 +136,7 @@ impl EventObject {
                     .clone();
                 ev.remove_property("DTSTART");
                 ev.remove_property("DTEND");
-                // TODO: Recurrence does not seem to properly include the start
+
                 ev.set_property(Property {
                     name: "RECURRENCE-ID".to_string(),
                     value: Some(date.format()),
