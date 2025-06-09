@@ -10,6 +10,7 @@ use rustical_store::auth::AuthenticationProvider;
 use rustical_store::{AddressbookStore, CalendarStore, SubscriptionStore};
 use std::sync::Arc;
 use std::time::Duration;
+use tower_http::catch_panic::CatchPanicLayer;
 use tower_http::classify::ServerErrorsFailureClass;
 use tower_http::trace::TraceLayer;
 use tower_sessions::cookie::SameSite;
@@ -28,7 +29,7 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
     oidc_config: Option<OidcConfig>,
     nextcloud_login_config: NextcloudLoginConfig,
     nextcloud_flows_state: Arc<NextcloudFlows>,
-) -> Router {
+) -> Router<()> {
     let mut router = Router::new()
         .merge(caldav_router(
             "/caldav",
@@ -71,6 +72,7 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
                     tower_sessions::cookie::time::Duration::hours(2),
                 )),
         )
+        .layer(CatchPanicLayer::new())
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(|request: &Request| {
@@ -87,8 +89,11 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
                 .on_request(|_req: &Request, _span: &Span| {})
                 .on_response(|response: &Response, _latency: Duration, span: &Span| {
                     span.record("status_code", tracing::field::display(response.status()));
-
-                    tracing::debug!("response generated")
+                    if response.status().is_server_error() {
+                        tracing::error!("status server error");
+                    } else if response.status().is_client_error() {
+                        tracing::error!("status client error");
+                    };
                 })
                 .on_failure(
                     |_error: ServerErrorsFailureClass, _latency: Duration, _span: &Span| {

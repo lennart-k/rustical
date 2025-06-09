@@ -93,7 +93,11 @@ sqlx-sqlite = { version = "0.8", features = ["bundled"] }
 ical = { version = "0.11", features = ["generator", "serde"] }
 toml = "0.8"
 tower = "0.5"
-tower-http = { version = "0.6", features = ["trace", "normalize-path"] }
+tower-http = { version = "0.6", features = [
+  "trace",
+  "normalize-path",
+  "catch-panic",
+] }
 rustical_dav = { path = "./crates/dav/" }
 rustical_dav_push = { path = "./crates/dav_push/" }
 rustical_store = { path = "./crates/store/" }
