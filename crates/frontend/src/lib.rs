@@ -14,10 +14,6 @@ use rustical_store::{
     auth::{AuthenticationProvider, middleware::AuthenticationLayer},
 };
 use std::sync::Arc;
-use tower_sessions::{
-    Expiry, SessionManagerLayer, SessionStore,
-    cookie::{SameSite, time::Duration},
-};
 use url::Url;
 
 mod assets;
@@ -45,19 +41,13 @@ use crate::{
     },
 };
 
-pub fn frontend_router<
-    AP: AuthenticationProvider,
-    CS: CalendarStore,
-    AS: AddressbookStore,
-    S: SessionStore + Clone,
->(
+pub fn frontend_router<AP: AuthenticationProvider, CS: CalendarStore, AS: AddressbookStore>(
     prefix: &'static str,
     auth_provider: Arc<AP>,
     cal_store: Arc<CS>,
     addr_store: Arc<AS>,
     frontend_config: FrontendConfig,
     oidc_config: Option<OidcConfig>,
-    session_store: S,
 ) -> Router {
     let mut router = Router::new();
     router = router
@@ -123,12 +113,6 @@ pub fn frontend_router<
 
     router = router
         .layer(AuthenticationLayer::new(auth_provider.clone()))
-        .layer(
-            SessionManagerLayer::new(session_store)
-                .with_secure(true)
-                .with_same_site(SameSite::Strict)
-                .with_expiry(Expiry::OnInactivity(Duration::hours(2))),
-        )
         .layer(Extension(auth_provider.clone()))
         .layer(Extension(cal_store.clone()))
         .layer(Extension(addr_store.clone()))

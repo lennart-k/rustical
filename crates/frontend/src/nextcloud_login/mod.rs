@@ -1,3 +1,4 @@
+use crate::unauthorized_handler;
 use axum::routing::{get, post};
 use axum::{Extension, Router, middleware};
 use chrono::{DateTime, Utc};
@@ -8,11 +9,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tower_sessions::cookie::SameSite;
-use tower_sessions::cookie::time::Duration;
-use tower_sessions::{Expiry, SessionManagerLayer, SessionStore};
-
-use crate::unauthorized_handler;
 mod routes;
 
 #[derive(Debug, Clone)]
@@ -50,10 +46,9 @@ pub struct NextcloudFlows {
     flows: RwLock<HashMap<String, NextcloudFlow>>,
 }
 
-pub fn nextcloud_login_router<AP: AuthenticationProvider, S: SessionStore + Clone>(
+pub fn nextcloud_login_router<AP: AuthenticationProvider>(
     nextcloud_flows_state: Arc<NextcloudFlows>,
     auth_provider: Arc<AP>,
-    session_store: S,
 ) -> Router {
     Router::new()
         .route("/poll/{flow}", post(post_nextcloud_poll::<AP>))
@@ -65,11 +60,5 @@ pub fn nextcloud_login_router<AP: AuthenticationProvider, S: SessionStore + Clon
         .layer(Extension(nextcloud_flows_state))
         .layer(Extension(auth_provider.clone()))
         .layer(AuthenticationLayer::new(auth_provider.clone()))
-        .layer(
-            SessionManagerLayer::new(session_store)
-                .with_secure(true)
-                .with_same_site(SameSite::Strict)
-                .with_expiry(Expiry::OnInactivity(Duration::hours(2))),
-        )
         .layer(middleware::from_fn(unauthorized_handler))
 }

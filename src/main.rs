@@ -10,7 +10,6 @@ use config::{DataStoreConfig, SqliteDataStoreConfig};
 use figment::Figment;
 use figment::providers::{Env, Format, Toml};
 use rustical_dav_push::DavPushController;
-use rustical_dav_push::notifier::push_notifier;
 use rustical_frontend::nextcloud_login::NextcloudFlows;
 use rustical_store::auth::AuthenticationProvider;
 use rustical_store::{AddressbookStore, CalendarStore, CollectionOperation, SubscriptionStore};

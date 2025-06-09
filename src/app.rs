@@ -12,7 +12,8 @@ use std::sync::Arc;
 use std::time::Duration;
 use tower_http::classify::ServerErrorsFailureClass;
 use tower_http::trace::TraceLayer;
-use tower_sessions::MemoryStore;
+use tower_sessions::cookie::SameSite;
+use tower_sessions::{Expiry, MemoryStore, SessionManagerLayer};
 use tracing::Span;
 
 use crate::config::NextcloudLoginConfig;
@@ -52,40 +53,47 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
             addr_store.clone(),
             frontend_config,
             oidc_config,
-            session_store.clone(),
         ));
     }
 
     if nextcloud_login_config.enabled {
         router = router.nest(
             "/index.php/login/v2",
-            nextcloud_login_router(
-                nextcloud_flows_state,
-                auth_provider.clone(),
-                session_store.clone(),
-            ),
+            nextcloud_login_router(nextcloud_flows_state, auth_provider.clone()),
         );
     }
-    router.layer(
-        TraceLayer::new_for_http()
-            .make_span_with(|request: &Request| {
-                tracing::debug_span!(
-                    "http-request",
-                    status_code = tracing::field::Empty,
-                    otel.name =
-                        tracing::field::display(format!("{} {}", request.method(), request.uri())),
-                )
-            })
-            .on_request(|_req: &Request, _span: &Span| {})
-            .on_response(|response: &Response, _latency: Duration, span: &Span| {
-                span.record("status_code", tracing::field::display(response.status()));
+    router
+        .layer(
+            SessionManagerLayer::new(session_store)
+                .with_secure(true)
+                .with_same_site(SameSite::Strict)
+                .with_expiry(Expiry::OnInactivity(
+                    tower_sessions::cookie::time::Duration::hours(2),
+                )),
+        )
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(|request: &Request| {
+                    tracing::debug_span!(
+                        "http-request",
+                        status_code = tracing::field::Empty,
+                        otel.name = tracing::field::display(format!(
+                            "{} {}",
+                            request.method(),
+                            request.uri()
+                        )),
+                    )
+                })
+                .on_request(|_req: &Request, _span: &Span| {})
+                .on_response(|response: &Response, _latency: Duration, span: &Span| {
+                    span.record("status_code", tracing::field::display(response.status()));
 
-                tracing::debug!("response generated")
-            })
-            .on_failure(
-                |_error: ServerErrorsFailureClass, _latency: Duration, _span: &Span| {
-                    tracing::error!("something went wrong")
-                },
-            ),
-    )
+                    tracing::debug!("response generated")
+                })
+                .on_failure(
+                    |_error: ServerErrorsFailureClass, _latency: Duration, _span: &Span| {
+                        tracing::error!("something went wrong")
+                    },
+                ),
+        )
 }
