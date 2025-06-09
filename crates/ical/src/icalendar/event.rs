@@ -25,6 +25,14 @@ impl EventObject {
         }
     }
 
+    pub fn get_dtend(&self) -> Result<Option<CalDateTime>, Error> {
+        if let Some(dtend) = self.event.get_property("DTEND") {
+            Ok(Some(CalDateTime::parse_prop(dtend, &self.timezones)?))
+        } else {
+            Ok(None)
+        }
+    }
+
     pub fn get_last_occurence(&self) -> Result<Option<CalDateTime>, Error> {
         if let Some(_rrule) = self.event.get_property("RRULE") {
             // TODO: understand recurrence rules
@@ -103,6 +111,12 @@ impl EventObject {
             }
             let mut events = vec![];
             let dates = rrule_set.all(2048).dates;
+            let dtstart = self
+                .get_first_occurence()?
+                .expect("We must have a DTSTART here");
+            let computed_duration = self
+                .get_dtend()?
+                .map(|dtend| dtend.as_datetime().into_owned() - dtstart.as_datetime().into_owned());
 
             for date in dates {
                 let date = CalDateTime::from(date);
@@ -111,6 +125,10 @@ impl EventObject {
                 ev.remove_property("RDATE");
                 ev.remove_property("EXDATE");
                 ev.remove_property("EXRULE");
+                ev.remove_property("DTSTART");
+                ev.remove_property("DTEND");
+                // TODO: Recurrence does not seem to properly include the start
+                // TODO: Timezone fixing
                 ev.set_property(Property {
                     name: "RECURRENCE-ID".to_string(),
                     value: Some(date.format()),
@@ -121,7 +139,7 @@ impl EventObject {
                     value: Some(date.format()),
                     params: None,
                 });
-                if let Some(duration) = self.get_duration()? {
+                if let Some(duration) = computed_duration {
                     ev.set_property(Property {
                         name: "DTEND".to_string(),
                         value: Some((date + duration).format()),
