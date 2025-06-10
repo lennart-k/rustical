@@ -190,11 +190,22 @@ impl CalDateTime {
         }
     }
 
+    pub fn format_date(&self) -> String {
+        match self {
+            Self::DateTime(datetime) => datetime.format(LOCAL_DATE).to_string(),
+            Self::Date(date, _) => date.format(LOCAL_DATE).to_string(),
+        }
+    }
+
     pub fn date(&self) -> NaiveDate {
         match self {
             Self::DateTime(datetime) => datetime.date_naive(),
             Self::Date(date, _) => date.to_owned(),
         }
+    }
+
+    pub fn is_date(&self) -> bool {
+        matches!(&self, Self::Date(_, _))
     }
 
     pub fn as_datetime(&self) -> Cow<DateTime<CalTimezone>> {

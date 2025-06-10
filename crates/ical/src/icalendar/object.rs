@@ -176,7 +176,7 @@ impl CalendarObject {
 
     pub fn get_first_occurence(&self) -> Result<Option<CalDateTime>, Error> {
         match &self.data {
-            CalendarObjectComponent::Event(event) => event.get_first_occurence(),
+            CalendarObjectComponent::Event(event) => event.get_dtstart(),
             _ => Ok(None),
         }
     }

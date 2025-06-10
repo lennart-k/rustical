@@ -17,7 +17,7 @@ pub struct EventObject {
 }
 
 impl EventObject {
-    pub fn get_first_occurence(&self) -> Result<Option<CalDateTime>, Error> {
+    pub fn get_dtstart(&self) -> Result<Option<CalDateTime>, Error> {
         if let Some(dtstart) = self.event.get_property("DTSTART") {
             Ok(Some(CalDateTime::parse_prop(dtstart, &self.timezones)?))
         } else {
@@ -45,7 +45,7 @@ impl EventObject {
 
         let duration = self.get_duration()?.unwrap_or(Duration::days(1));
 
-        let first_occurence = self.get_first_occurence()?;
+        let first_occurence = self.get_dtstart()?;
         Ok(first_occurence.map(|first_occurence| first_occurence + duration))
     }
 
@@ -62,7 +62,7 @@ impl EventObject {
     }
 
     pub fn recurrence_ruleset(&self) -> Result<Option<rrule::RRuleSet>, Error> {
-        let dtstart: DateTime<rrule::Tz> = if let Some(dtstart) = self.get_first_occurence()? {
+        let dtstart: DateTime<rrule::Tz> = if let Some(dtstart) = self.get_dtstart()? {
             if let Some(dtend) = self.get_dtend()? {
                 // DTSTART and DTEND MUST have the same timezone
                 assert_eq!(dtstart.timezone(), dtend.timezone());
@@ -116,15 +116,18 @@ impl EventObject {
             }
             let mut events = vec![];
             let dates = rrule_set.all(2048).dates;
-            let dtstart = self
-                .get_first_occurence()?
-                .expect("We must have a DTSTART here");
+            let dtstart = self.get_dtstart()?.expect("We must have a DTSTART here");
             let computed_duration = self
                 .get_dtend()?
                 .map(|dtend| dtend.as_datetime().into_owned() - dtstart.as_datetime().into_owned());
 
             for date in dates {
                 let date = CalDateTime::from(date);
+                let dateformat = if dtstart.is_date() {
+                    date.format_date()
+                } else {
+                    date.format()
+                };
                 let mut ev = self.event.clone();
                 ev.remove_property("RRULE");
                 ev.remove_property("RDATE");
@@ -139,18 +142,24 @@ impl EventObject {
 
                 ev.set_property(Property {
                     name: "RECURRENCE-ID".to_string(),
-                    value: Some(date.format()),
+                    value: Some(dateformat.to_owned()),
                     params: None,
                 });
                 ev.set_property(Property {
                     name: "DTSTART".to_string(),
-                    value: Some(date.format()),
+                    value: Some(dateformat),
                     params: dtstart_prop.params.clone(),
                 });
                 if let Some(duration) = computed_duration {
+                    let dtend = date + duration;
+                    let dtendformat = if dtstart.is_date() {
+                        dtend.format_date()
+                    } else {
+                        dtend.format()
+                    };
                     ev.set_property(Property {
                         name: "DTEND".to_string(),
-                        value: Some((date + duration).format()),
+                        value: Some(dtendformat),
                         params: dtstart_prop.params,
                     });
                 }
