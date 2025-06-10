@@ -584,6 +584,33 @@ impl AddressbookStore for SqliteAddressbookStore {
 
         Ok(())
     }
+
+    #[instrument(skip(objects))]
+    async fn import_addressbook(
+        &self,
+        principal: String,
+        addressbook: Addressbook,
+        objects: Vec<AddressObject>,
+    ) -> Result<(), Error> {
+        let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
+
+        let addressbook_id = addressbook.id.clone();
+        Self::_insert_addressbook(&mut *tx, addressbook).await?;
+
+        for object in objects {
+            Self::_put_object(
+                &mut *tx,
+                principal.clone(),
+                addressbook_id.clone(),
+                object,
+                false,
+            )
+            .await?;
+        }
+
+        tx.commit().await.map_err(crate::Error::from)?;
+        Ok(())
+    }
 }
 
 // Logs an operation to an address object

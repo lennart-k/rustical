@@ -1,6 +1,7 @@
 use crate::{CalDateTime, LOCAL_DATE};
 use crate::{CalendarObject, Error};
 use chrono::Datelike;
+use ical::generator::Emitter;
 use ical::parser::{
     Component,
     vcard::{self, component::VcardContact},
@@ -13,6 +14,21 @@ pub struct AddressObject {
     id: String,
     vcf: String,
     vcard: VcardContact,
+}
+
+impl TryFrom<VcardContact> for AddressObject {
+    type Error = Error;
+
+    fn try_from(vcard: VcardContact) -> Result<Self, Self::Error> {
+        let id = vcard
+            .get_property("UID")
+            .ok_or(Error::InvalidData("Missing UID".to_owned()))?
+            .value
+            .clone()
+            .ok_or(Error::InvalidData("Missing UID".to_owned()))?;
+        let vcf = vcard.generate();
+        Ok(Self { id, vcf, vcard })
+    }
 }
 
 impl AddressObject {

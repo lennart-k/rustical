@@ -2724,6 +2724,7 @@ dependencies = [
  "derive_more",
  "futures-util",
  "http",
+ "ical",
  "percent-encoding",
  "quick-xml",
  "rustical_dav",
