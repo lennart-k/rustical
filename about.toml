@@ -1,0 +1,11 @@
+accepted = [
+  "Apache-2.0",
+  "MIT",
+  "BSD-3-Clause",
+  "ISC",
+  "Unicode-3.0",
+  "CDLA-Permissive-2.0",
+  "Zlib",
+  "AGPL-3.0",
+]
+workarounds = ["ring", "chrono", "rustls"]
