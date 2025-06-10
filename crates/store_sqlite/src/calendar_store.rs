@@ -144,14 +144,15 @@ impl SqliteCalendarStore {
         let comp_journal = calendar.components.contains(&CalendarObjectType::Journal);
 
         sqlx::query!(
-            r#"INSERT INTO calendars (principal, id, displayname, description, "order", color, timezone, timezone_id, push_topic, comp_event, comp_todo, comp_journal)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"#,
+            r#"INSERT INTO calendars (principal, id, displayname, description, "order", color, subscription_url, timezone, timezone_id, push_topic, comp_event, comp_todo, comp_journal)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"#,
             calendar.principal,
             calendar.id,
             calendar.displayname,
             calendar.description,
             calendar.order,
             calendar.color,
+            calendar.subscription_url,
             calendar.timezone,
             calendar.timezone_id,
             calendar.push_topic,
