@@ -62,7 +62,8 @@ html {
   background-color: var(--background-color);
 }
 
-button {
+button,
+.button {
   border: none;
   background: var(--primary-color);
   padding: 8px 12px;
@@ -163,9 +164,9 @@ table {
           "title            comps color-chip"
           "description      .     color-chip"
           "subscription-url .     color-chip"
-          "restore          .     color-chip"
+          "actions          .     color-chip"
           ".                .     color-chip";
-        grid-template-rows: 12px auto auto auto 12px;
+        grid-template-rows: 12px auto auto auto auto 12px;
         grid-template-columns: min-content auto 80px;
         color: inherit;
         text-decoration: none;
@@ -182,6 +183,10 @@ table {
           grid-area: title;
           margin-right: 12px;
           white-space: nowrap;
+        }
+
+        span {
+          margin: 8px initial;
         }
 
         .comps {
@@ -212,8 +217,9 @@ table {
           grid-area: color-chip;
         }
 
-        .restore-form {
-          grid-area: restore;
+        .actions {
+          grid-area: actions;
+          width: fit-content;
         }
 
         &:hover {

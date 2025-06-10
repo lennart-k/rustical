@@ -10,6 +10,7 @@ use axum::{
 use axum_extra::extract::Host;
 use headers::{ContentType, HeaderMapExt};
 use http::{HeaderValue, StatusCode, header};
+use percent_encoding::{CONTROLS, utf8_percent_encode};
 use rand::{Rng, distr::Alphanumeric};
 use rustical_store::auth::{AuthenticationProvider, User};
 use serde::Deserialize;
@@ -79,6 +80,7 @@ pub async fn route_post_app_token<AP: AuthenticationProvider>(
             ContentType::from_str("application/x-apple-aspen-config; charset=utf-8").unwrap(),
         );
         let filename = format!("rustical-{}.mobileconfig", user_id);
+        let filename = utf8_percent_encode(&filename, CONTROLS);
         hdrs.insert(
             header::CONTENT_DISPOSITION,
             HeaderValue::from_str(&format!(

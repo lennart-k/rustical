@@ -1,3 +1,4 @@
+use crate::calendar::methods::get::route_get;
 use crate::calendar::methods::mkcalendar::route_mkcalendar;
 use crate::calendar::methods::report::route_report_calendar;
 use crate::calendar::resource::CalendarResource;
@@ -114,6 +115,13 @@ impl<C: CalendarStore, S: SubscriptionStore> AxumMethods for CalendarResourceSer
     fn report() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
         Some(|state, req| {
             let mut service = Handler::with_state(route_report_calendar::<C, S>, state);
+            Box::pin(Service::call(&mut service, req))
+        })
+    }
+
+    fn get() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
+        Some(|state, req| {
+            let mut service = Handler::with_state(route_get::<C, S>, state);
             Box::pin(Service::call(&mut service, req))
         })
     }

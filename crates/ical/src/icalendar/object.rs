@@ -136,6 +136,10 @@ impl CalendarObject {
         ))
     }
 
+    pub fn get_data(&self) -> &CalendarObjectComponent {
+        &self.data
+    }
+
     pub fn get_id(&self) -> &str {
         &self.id
     }

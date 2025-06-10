@@ -11,8 +11,8 @@ use std::{collections::HashMap, str::FromStr};
 
 #[derive(Debug, Clone)]
 pub struct EventObject {
-    pub(crate) event: IcalEvent,
-    pub(crate) timezones: HashMap<String, IcalTimeZone>,
+    pub event: IcalEvent,
+    pub timezones: HashMap<String, IcalTimeZone>,
     pub(crate) ics: String,
 }
 
