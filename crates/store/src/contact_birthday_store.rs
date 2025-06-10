@@ -158,4 +158,13 @@ impl<AS: AddressbookStore> CalendarStore for ContactBirthdayStore<AS> {
     fn is_read_only(&self) -> bool {
         true
     }
+
+    async fn import_calendar(
+        &self,
+        _principal: &str,
+        _calendar: Calendar,
+        _objects: Vec<CalendarObject>,
+    ) -> Result<(), Error> {
+        Err(Error::ReadOnly)
+    }
 }

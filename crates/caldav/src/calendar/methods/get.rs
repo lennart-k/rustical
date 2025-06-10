@@ -58,6 +58,13 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
             params: None,
         });
     }
+    if calendar.color.is_some() {
+        ical_calendar_builder = ical_calendar_builder.set(Property {
+            name: "X-RUSTICAL-COLOR".to_owned(),
+            value: calendar.color,
+            params: None,
+        });
+    }
     let mut ical_calendar = ical_calendar_builder.build();
 
     for object in &objects {

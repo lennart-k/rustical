@@ -673,6 +673,33 @@ impl CalendarStore for SqliteCalendarStore {
     fn is_read_only(&self) -> bool {
         false
     }
+
+    #[instrument(skip(calendar, objects))]
+    async fn import_calendar(
+        &self,
+        principal: &str,
+        calendar: Calendar,
+        objects: Vec<CalendarObject>,
+    ) -> Result<(), Error> {
+        let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
+
+        let cal_id = calendar.id.clone();
+        Self::_insert_calendar(&mut *tx, calendar).await?;
+
+        for object in objects {
+            Self::_put_object(
+                &mut *tx,
+                principal.to_owned(),
+                cal_id.clone(),
+                object,
+                false,
+            )
+            .await?;
+        }
+
+        tx.commit().await.map_err(crate::Error::from)?;
+        Ok(())
+    }
 }
 
 // Logs an operation to the events

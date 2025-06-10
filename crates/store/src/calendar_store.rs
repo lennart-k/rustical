@@ -81,4 +81,11 @@ pub trait CalendarStore: Send + Sync + 'static {
     ) -> Result<(), Error>;
 
     fn is_read_only(&self) -> bool;
+
+    async fn import_calendar(
+        &self,
+        principal: &str,
+        calendar: Calendar,
+        objects: Vec<CalendarObject>,
+    ) -> Result<(), Error>;
 }
