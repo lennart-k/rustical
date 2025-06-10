@@ -399,34 +399,6 @@ impl Datelike for CalDateTime {
     }
 }
 
-impl CalDateTime {
-    pub fn inc_year(&self, interval: u32) -> Option<Self> {
-        self.with_year(self.year() + interval as i32)
-    }
-
-    // Increments the year until a valid date is found
-    pub fn inc_find_year(&self, interval: u32) -> Self {
-        let mut year = self.year();
-        loop {
-            year += interval as i32;
-            if let Some(date) = self.with_year(year) {
-                return date;
-            }
-        }
-    }
-
-    pub fn inc_month(&self, interval: u32) -> Self {
-        let mut month0 = self.month0();
-        loop {
-            month0 += interval;
-            if month0 >= 12 {}
-            if let Some(date) = self.with_month0(month0) {
-                return date;
-            }
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use crate::CalDateTime;
