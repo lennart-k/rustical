@@ -1,4 +1,8 @@
-use axum::{body::Body, extract::FromRequestParts, response::IntoResponse};
+use axum::{
+    body::Body,
+    extract::{FromRequestParts, OptionalFromRequestParts},
+    response::IntoResponse,
+};
 use rustical_xml::{ValueDeserialize, ValueSerialize, XmlError};
 use thiserror::Error;
 
@@ -55,6 +59,21 @@ impl TryFrom<&[u8]> for Depth {
             b"1" => Ok(Depth::One),
             b"Infinity" | b"infinity" => Ok(Depth::Infinity),
             _ => Err(InvalidDepthHeader),
+        }
+    }
+}
+
+impl<S: Send + Sync> OptionalFromRequestParts<S> for Depth {
+    type Rejection = InvalidDepthHeader;
+
+    async fn from_request_parts(
+        parts: &mut axum::http::request::Parts,
+        _state: &S,
+    ) -> Result<Option<Self>, Self::Rejection> {
+        if let Some(depth_header) = parts.headers.get("Depth") {
+            Ok(Some(depth_header.as_bytes().try_into()?))
+        } else {
+            Ok(None)
         }
     }
 }

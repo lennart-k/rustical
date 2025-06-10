@@ -39,16 +39,6 @@ pub trait AxumMethods: Sized + Send + Sync + 'static {
     }
 
     #[inline]
-    fn copy() -> Option<MethodFunction<Self>> {
-        None
-    }
-
-    #[inline]
-    fn mv() -> Option<MethodFunction<Self>> {
-        None
-    }
-
-    #[inline]
     fn put() -> Option<MethodFunction<Self>> {
         None
     }
@@ -58,6 +48,8 @@ pub trait AxumMethods: Sized + Send + Sync + 'static {
         let mut allow = vec![
             Method::from_str("PROPFIND").unwrap(),
             Method::from_str("PROPPATCH").unwrap(),
+            Method::from_str("COPY").unwrap(),
+            Method::from_str("MOVE").unwrap(),
             Method::DELETE,
             Method::OPTIONS,
         ];
@@ -78,12 +70,6 @@ pub trait AxumMethods: Sized + Send + Sync + 'static {
         }
         if Self::mkcalendar().is_some() {
             allow.push(Method::from_str("MKCALENDAR").unwrap());
-        }
-        if Self::copy().is_some() {
-            allow.push(Method::from_str("COPY").unwrap());
-        }
-        if Self::mv().is_some() {
-            allow.push(Method::from_str("MOVE").unwrap());
         }
         if Self::put().is_some() {
             allow.push(Method::PUT);

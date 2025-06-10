@@ -1,5 +1,9 @@
 use super::methods::{axum_route_propfind, axum_route_proppatch};
-use crate::resource::{ResourceService, axum_methods::AxumMethods};
+use crate::resource::{
+    ResourceService,
+    axum_methods::AxumMethods,
+    methods::{axum_route_copy, axum_route_move},
+};
 use axum::{
     body::Body,
     extract::FromRequestParts,
@@ -51,12 +55,18 @@ where
             Handler::with_state(axum_route_proppatch::<RS>, self.resource_service.clone());
         let mut delete_service =
             Handler::with_state(axum_route_delete::<RS>, self.resource_service.clone());
+        let mut move_service =
+            Handler::with_state(axum_route_move::<RS>, self.resource_service.clone());
+        let mut copy_service =
+            Handler::with_state(axum_route_copy::<RS>, self.resource_service.clone());
         let mut options_service = Handler::with_state(route_options::<RS>, ());
         match req.method().as_str() {
             "PROPFIND" => return Box::pin(Service::call(&mut propfind_service, req)),
             "PROPPATCH" => return Box::pin(Service::call(&mut proppatch_service, req)),
             "DELETE" => return Box::pin(Service::call(&mut delete_service, req)),
             "OPTIONS" => return Box::pin(Service::call(&mut options_service, req)),
+            "MOVE" => return Box::pin(Service::call(&mut move_service, req)),
+            "COPY" => return Box::pin(Service::call(&mut copy_service, req)),
             "REPORT" => {
                 if let Some(svc) = RS::report() {
                     return svc(self.resource_service.clone(), req);
@@ -84,16 +94,6 @@ where
             }
             "MKCALENDAR" => {
                 if let Some(svc) = RS::mkcalendar() {
-                    return svc(self.resource_service.clone(), req);
-                }
-            }
-            "COPY" => {
-                if let Some(svc) = RS::copy() {
-                    return svc(self.resource_service.clone(), req);
-                }
-            }
-            "MOVE" => {
-                if let Some(svc) = RS::mv() {
                     return svc(self.resource_service.clone(), req);
                 }
             }
