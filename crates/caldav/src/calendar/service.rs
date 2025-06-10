@@ -125,4 +125,11 @@ impl<C: CalendarStore, S: SubscriptionStore> AxumMethods for CalendarResourceSer
             Box::pin(Service::call(&mut service, req))
         })
     }
+
+    fn mkcol() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
+        Some(|state, req| {
+            let mut service = Handler::with_state(route_mkcalendar::<C, S>, state);
+            Box::pin(Service::call(&mut service, req))
+        })
+    }
 }
