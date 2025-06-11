@@ -6,6 +6,7 @@ version = "0.1.0"
 edition = "2024"
 description = "A CalDAV server"
 repository = "https://github.com/lennart-k/rustical"
+license = "AGPL-3.0-or-later"
 
 [package]
 name = "rustical"
@@ -13,6 +14,7 @@ version.workspace = true
 edition.workspace = true
 description.workspace = true
 repository.workspace = true
+license.workspace = true
 resolver = "2"
 publish = false
 
@@ -25,6 +27,7 @@ opentelemetry = [
   "dep:opentelemetry-semantic-conventions",
   "dep:tracing-opentelemetry",
 ]
+
 
 [profile.dev]
 debug = 0
