@@ -13,7 +13,10 @@ client_secret = "secret..."
 claim_userid = "preferred_username"  # (1)!
 scopes = ["openid", "profile", "groups"]
 require_group = "app/rustical"  # (2)!
-allow_sign_up = false
+allow_sign_up = true
+
+[frontend]
+allow_password_login = false  # optional
 ```
 
 1. Can be either `preferred_username` or `sub`
@@ -31,4 +34,18 @@ identity_providers:
         token_endpoint_auth_method: client_secret_basic
         redirect_uris:
           - https://rustical.example.com/frontend/login/oidc/callback
+```
+
+### With environment variables
+
+```sh
+RUSTICAL_OIDC__NAME: "Authelia"
+RUSTICAL_OIDC__ISSUER: "https://auth.example.com"
+RUSTICAL_OIDC__CLIENT_ID: "rustical"
+RUSTICAL_OIDC__CLIENT_SECRET: "secret..."
+RUSTICAL_OIDC__CLAIM_USERID: "preferred_username"
+RUSTICAL_OIDC__SCOPES: '["openid", "profile", "groups"]'
+RUSTICAL_OIDC__REQUIRE_GROUP: "app:rustical"
+RUSTICAL_OIDC__ALLOW_SIGN_UP: "true"
+RUSTICAL_FRONTEND__ALLOW_PASSWORD_LOGIN: "false"
 ```

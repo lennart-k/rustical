@@ -22,3 +22,10 @@ a CalDAV/CardDAV server
 ## Getting Started
 
 - Check out the [documentation](https://lennart-k.github.io/rustical/installation/)
+
+## Tested Clients
+
+- DAVx5,
+- GNOME Accounts, GNOME Calendar, GNOME Contacts
+- Evolution
+- Apple Calendar (known issue: If a user is member of multiple groups then Apple Calendar just randomly selects a calendar home)
