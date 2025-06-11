@@ -114,6 +114,9 @@ where
 }
 
 async fn route_options<RS: ResourceService + AxumMethods>() -> Response<Body> {
+    // Semantically NO_CONTENT would also make sense,
+    // but GNOME Accounts only works when returning OK
+    // https://gitlab.gnome.org/GNOME/gnome-online-accounts/-/blob/master/src/goabackend/goadavclient.c#L289
     let mut resp = Response::builder().status(StatusCode::OK);
     let headers = resp.headers_mut().unwrap();
     headers.insert("DAV", HeaderValue::from_static(RS::DAV_HEADER));

@@ -1,9 +1,11 @@
 use crate::config::NextcloudLoginConfig;
 use axum::Router;
+use axum::body::Body;
 use axum::extract::Request;
-use axum::response::Response;
+use axum::response::{IntoResponse, Response};
+use axum::routing::options;
 use headers::{HeaderMapExt, UserAgent};
-use http::StatusCode;
+use http::{HeaderValue, StatusCode};
 use rustical_caldav::caldav_router;
 use rustical_carddav::carddav_router;
 use rustical_frontend::nextcloud_login::nextcloud_login_router;
@@ -45,6 +47,24 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
             addr_store.clone(),
             subscription_store.clone(),
         ));
+
+    // GNOME Accounts needs to discover a WebDAV Files endpoint to complete the setup
+    // It looks at / as well as /remote.php/dav (Nextcloud)
+    // This is not nice but we offer this as a sacrificial route to ensure the CalDAV/CardDAV setup
+    // works.
+    // See:
+    // https://github.com/GNOME/gnome-online-accounts/blob/master/src/goabackend/goadavclient.c
+    // https://github.com/GNOME/gnome-online-accounts/blob/master/src/goabackend/goawebdavprovider.c
+    router = router.route(
+        "/remote.php/dav",
+        options(async || {
+            let mut resp = Response::builder().status(StatusCode::OK);
+            resp.headers_mut()
+                .unwrap()
+                .insert("DAV", HeaderValue::from_static("1"));
+            resp.body(Body::empty()).unwrap()
+        }),
+    );
 
     let session_store = MemoryStore::default();
     if frontend_config.enabled {
