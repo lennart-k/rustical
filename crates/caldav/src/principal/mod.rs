@@ -2,7 +2,7 @@ use crate::Error;
 use rustical_dav::extensions::CommonPropertiesExtension;
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
-use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
+use rustical_dav::xml::{Resourcetype, ResourcetypeInner};
 use rustical_store::auth::User;
 
 mod service;
@@ -13,7 +13,6 @@ pub use prop::*;
 #[derive(Clone)]
 pub struct PrincipalResource {
     principal: User,
-    home_set: &'static [&'static str],
 }
 
 impl ResourceName for PrincipalResource {
@@ -47,12 +46,7 @@ impl Resource for PrincipalResource {
         let home_set = CalendarHomeSet(
             user.memberships()
                 .into_iter()
-                .map(|principal| puri.principal_uri(principal))
-                .flat_map(|principal_url| {
-                    self.home_set.iter().map(move |&home_name| {
-                        HrefElement::new(format!("{}{}/", &principal_url, home_name))
-                    })
-                })
+                .map(|principal| puri.principal_uri(principal).into())
                 .collect(),
         );
 

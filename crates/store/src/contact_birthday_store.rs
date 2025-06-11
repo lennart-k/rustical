@@ -5,13 +5,15 @@ use rustical_ical::{AddressObject, CalendarObject, CalendarObjectType};
 use sha2::{Digest, Sha256};
 use std::{collections::HashMap, sync::Arc};
 
+pub(crate) const BIRTHDAYS_PREFIX: &str = "_birthdays_";
+
 #[derive(Constructor, Clone)]
 pub struct ContactBirthdayStore<AS: AddressbookStore>(Arc<AS>);
 
 fn birthday_calendar(addressbook: Addressbook) -> Calendar {
     Calendar {
         principal: addressbook.principal,
-        id: addressbook.id,
+        id: format!("{}{}", BIRTHDAYS_PREFIX, addressbook.id),
         displayname: addressbook
             .displayname
             .map(|name| format!("{} birthdays", name)),
@@ -33,9 +35,11 @@ fn birthday_calendar(addressbook: Addressbook) -> Calendar {
     }
 }
 
+/// Objects are all prefixed with BIRTHDAYS_PREFIX
 #[async_trait]
 impl<AS: AddressbookStore> CalendarStore for ContactBirthdayStore<AS> {
     async fn get_calendar(&self, principal: &str, id: &str) -> Result<Calendar, Error> {
+        let id = id.strip_prefix(BIRTHDAYS_PREFIX).ok_or(Error::NotFound)?;
         let addressbook = self.0.get_addressbook(principal, id, false).await?;
         Ok(birthday_calendar(addressbook))
     }
@@ -80,6 +84,9 @@ impl<AS: AddressbookStore> CalendarStore for ContactBirthdayStore<AS> {
         cal_id: &str,
         synctoken: i64,
     ) -> Result<(Vec<CalendarObject>, Vec<String>, i64), Error> {
+        let cal_id = cal_id
+            .strip_prefix(BIRTHDAYS_PREFIX)
+            .ok_or(Error::NotFound)?;
         let (objects, deleted_objects, new_synctoken) =
             self.0.sync_changes(principal, cal_id, synctoken).await?;
         let objects: Result<Vec<Option<CalendarObject>>, rustical_ical::Error> = objects
@@ -96,6 +103,9 @@ impl<AS: AddressbookStore> CalendarStore for ContactBirthdayStore<AS> {
         principal: &str,
         cal_id: &str,
     ) -> Result<Vec<CalendarObject>, Error> {
+        let cal_id = cal_id
+            .strip_prefix(BIRTHDAYS_PREFIX)
+            .ok_or(Error::NotFound)?;
         let objects: Result<Vec<HashMap<&'static str, CalendarObject>>, rustical_ical::Error> =
             self.0
                 .get_objects(principal, cal_id)
@@ -117,6 +127,9 @@ impl<AS: AddressbookStore> CalendarStore for ContactBirthdayStore<AS> {
         cal_id: &str,
         object_id: &str,
     ) -> Result<CalendarObject, Error> {
+        let cal_id = cal_id
+            .strip_prefix(BIRTHDAYS_PREFIX)
+            .ok_or(Error::NotFound)?;
         let (addressobject_id, date_type) = object_id.rsplit_once("-").ok_or(Error::NotFound)?;
         self.0
             .get_object(principal, cal_id, addressobject_id, false)
@@ -155,7 +168,7 @@ impl<AS: AddressbookStore> CalendarStore for ContactBirthdayStore<AS> {
         Err(Error::ReadOnly)
     }
 
-    fn is_read_only(&self) -> bool {
+    fn is_read_only(&self, _cal_id: &str) -> bool {
         true
     }
 }

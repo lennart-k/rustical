@@ -2,7 +2,7 @@ use crate::config::NextcloudLoginConfig;
 use axum::Router;
 use axum::body::Body;
 use axum::extract::Request;
-use axum::response::{IntoResponse, Response};
+use axum::response::Response;
 use axum::routing::options;
 use headers::{HeaderMapExt, UserAgent};
 use http::{HeaderValue, StatusCode};
@@ -12,7 +12,9 @@ use rustical_frontend::nextcloud_login::nextcloud_login_router;
 use rustical_frontend::{FrontendConfig, frontend_router};
 use rustical_oidc::OidcConfig;
 use rustical_store::auth::AuthenticationProvider;
-use rustical_store::{AddressbookStore, CalendarStore, SubscriptionStore};
+use rustical_store::{
+    AddressbookStore, CalendarStore, CombinedCalendarStore, ContactBirthdayStore, SubscriptionStore,
+};
 use std::sync::Arc;
 use std::time::Duration;
 use tower_http::catch_panic::CatchPanicLayer;
@@ -33,12 +35,16 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
     oidc_config: Option<OidcConfig>,
     nextcloud_login_config: NextcloudLoginConfig,
 ) -> Router<()> {
+    let combined_cal_store = Arc::new(CombinedCalendarStore::new(
+        cal_store.clone(),
+        ContactBirthdayStore::new(addr_store.clone()).into(),
+    ));
+
     let mut router = Router::new()
         .merge(caldav_router(
             "/caldav",
             auth_provider.clone(),
-            cal_store.clone(),
-            addr_store.clone(),
+            combined_cal_store.clone(),
             subscription_store.clone(),
         ))
         .merge(carddav_router(
@@ -71,7 +77,7 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
         router = router.merge(frontend_router(
             "/frontend",
             auth_provider.clone(),
-            cal_store.clone(),
+            combined_cal_store.clone(),
             addr_store.clone(),
             frontend_config,
             oidc_config,

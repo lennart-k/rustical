@@ -671,7 +671,7 @@ impl CalendarStore for SqliteCalendarStore {
         Self::_sync_changes(&self.db, principal, cal_id, synctoken).await
     }
 
-    fn is_read_only(&self) -> bool {
+    fn is_read_only(&self, _cal_id: &str) -> bool {
         false
     }
 }

@@ -1,4 +1,5 @@
-use crate::calendar_set::{CalendarSetResource, CalendarSetResourceService};
+use crate::calendar::CalendarResourceService;
+use crate::calendar::resource::CalendarResource;
 use crate::principal::PrincipalResource;
 use crate::{CalDavPrincipalUri, Error};
 use async_trait::async_trait;
@@ -13,33 +14,30 @@ pub struct PrincipalResourceService<
     AP: AuthenticationProvider,
     S: SubscriptionStore,
     CS: CalendarStore,
-    BS: CalendarStore,
 > {
     pub(crate) auth_provider: Arc<AP>,
     pub(crate) sub_store: Arc<S>,
     pub(crate) cal_store: Arc<CS>,
-    pub(crate) birthday_store: Arc<BS>,
 }
 
-impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore, BS: CalendarStore> Clone
-    for PrincipalResourceService<AP, S, CS, BS>
+impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Clone
+    for PrincipalResourceService<AP, S, CS>
 {
     fn clone(&self) -> Self {
         Self {
             auth_provider: self.auth_provider.clone(),
             sub_store: self.sub_store.clone(),
             cal_store: self.cal_store.clone(),
-            birthday_store: self.birthday_store.clone(),
         }
     }
 }
 
 #[async_trait]
-impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore, BS: CalendarStore>
-    ResourceService for PrincipalResourceService<AP, S, CS, BS>
+impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> ResourceService
+    for PrincipalResourceService<AP, S, CS>
 {
     type PathComponents = (String,);
-    type MemberType = CalendarSetResource;
+    type MemberType = CalendarResource;
     type Resource = PrincipalResource;
     type Error = Error;
     type Principal = User;
@@ -56,55 +54,36 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore, BS: Ca
             .get_principal(principal)
             .await?
             .ok_or(crate::Error::NotFound)?;
-        Ok(PrincipalResource {
-            principal: user,
-            home_set: &["calendar", "birthdays"],
-        })
+        Ok(PrincipalResource { principal: user })
     }
 
     async fn get_members(
         &self,
         (principal,): &Self::PathComponents,
     ) -> Result<Vec<Self::MemberType>, Self::Error> {
-        Ok(vec![
-            CalendarSetResource {
-                name: "calendar",
-                principal: principal.to_owned(),
-                read_only: false,
-            },
-            CalendarSetResource {
-                name: "birthdays",
-                principal: principal.to_owned(),
-                read_only: true,
-            },
-        ])
+        let calendars = self.cal_store.get_calendars(principal).await?;
+
+        Ok(calendars
+            .into_iter()
+            .map(|cal| CalendarResource {
+                read_only: self.cal_store.is_read_only(&cal.id),
+                cal,
+            })
+            .collect())
     }
 
     fn axum_router<State: Send + Sync + Clone + 'static>(self) -> axum::Router<State> {
         Router::new()
             .nest(
-                "/calendar",
-                CalendarSetResourceService::new(
-                    "calendar",
-                    self.cal_store.clone(),
-                    self.sub_store.clone(),
-                )
-                .axum_router(),
-            )
-            .nest(
-                "/birthdays",
-                CalendarSetResourceService::new(
-                    "birthdays",
-                    self.birthday_store.clone(),
-                    self.sub_store.clone(),
-                )
-                .axum_router(),
+                "/{calendar_id}",
+                CalendarResourceService::new(self.cal_store.clone(), self.sub_store.clone())
+                    .axum_router(),
             )
             .route_service("/", self.axum_service())
     }
 }
 
-impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore, BS: CalendarStore>
-    AxumMethods for PrincipalResourceService<AP, S, CS, BS>
+impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> AxumMethods
+    for PrincipalResourceService<AP, S, CS>
 {
 }

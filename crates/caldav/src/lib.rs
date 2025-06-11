@@ -7,12 +7,11 @@ use rustical_dav::resource::{PrincipalUri, ResourceService};
 use rustical_dav::resources::RootResourceService;
 use rustical_store::auth::middleware::AuthenticationLayer;
 use rustical_store::auth::{AuthenticationProvider, User};
-use rustical_store::{AddressbookStore, CalendarStore, ContactBirthdayStore, SubscriptionStore};
+use rustical_store::{CalendarStore, SubscriptionStore};
 use std::sync::Arc;
 
 pub mod calendar;
 pub mod calendar_object;
-pub mod calendar_set;
 pub mod error;
 pub mod principal;
 // mod subscription;
@@ -28,23 +27,15 @@ impl PrincipalUri for CalDavPrincipalUri {
     }
 }
 
-pub fn caldav_router<
-    AP: AuthenticationProvider,
-    AS: AddressbookStore,
-    C: CalendarStore,
-    S: SubscriptionStore,
->(
+pub fn caldav_router<AP: AuthenticationProvider, C: CalendarStore, S: SubscriptionStore>(
     prefix: &'static str,
     auth_provider: Arc<AP>,
     store: Arc<C>,
-    addr_store: Arc<AS>,
     subscription_store: Arc<S>,
 ) -> Router {
-    let birthday_store = Arc::new(ContactBirthdayStore::new(addr_store));
     let principal_service = PrincipalResourceService {
         auth_provider: auth_provider.clone(),
         sub_store: subscription_store.clone(),
-        birthday_store: birthday_store.clone(),
         cal_store: store.clone(),
     };
 

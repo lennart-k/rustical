@@ -59,7 +59,7 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
         let calendar = self.cal_store.get_calendar(principal, cal_id).await?;
         Ok(CalendarResource {
             cal: calendar,
-            read_only: self.cal_store.is_read_only(),
+            read_only: self.cal_store.is_read_only(cal_id),
         })
     }
 

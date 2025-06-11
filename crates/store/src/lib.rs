@@ -5,6 +5,7 @@ pub mod error;
 pub use error::Error;
 pub mod auth;
 mod calendar;
+mod combined_calendar_store;
 mod contact_birthday_store;
 mod secret;
 mod subscription_store;
@@ -12,6 +13,7 @@ pub mod synctoken;
 
 pub use addressbook_store::AddressbookStore;
 pub use calendar_store::CalendarStore;
+pub use combined_calendar_store::CombinedCalendarStore;
 pub use contact_birthday_store::ContactBirthdayStore;
 pub use secret::Secret;
 pub use subscription_store::*;
