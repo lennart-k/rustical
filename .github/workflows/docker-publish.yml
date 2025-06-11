@@ -3,6 +3,9 @@ name: Docker
 on:
   push:
     branches: ["main"]
+  release:
+    types: ["published"]
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -42,7 +45,6 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           # As long as we don't have releases everything on the main branch shall be tagged as latest
-          # TODO: Before first release correctly configure this
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=branch
