@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "REPLACE INTO memberships (principal, member_of) VALUES (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "e947709ba03b108765082d1c4cff3dd8cb485fba5819ac914e20cb8e97037da9"
+}

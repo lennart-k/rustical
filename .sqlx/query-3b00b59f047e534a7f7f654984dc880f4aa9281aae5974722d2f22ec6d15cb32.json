@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT principal FROM memberships WHERE member_of = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "principal",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "3b00b59f047e534a7f7f654984dc880f4aa9281aae5974722d2f22ec6d15cb32"
+}

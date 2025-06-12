@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM davpush_subscriptions WHERE id = ? ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "e912be3352702bbf035b3ee6e9f239bf75a1ffef20211f1b1e895a67a2310960"
+}

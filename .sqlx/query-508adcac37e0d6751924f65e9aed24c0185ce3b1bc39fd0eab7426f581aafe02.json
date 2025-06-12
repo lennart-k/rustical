@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO addressbooks (principal, id, displayname, description, push_topic)\n                VALUES (?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "508adcac37e0d6751924f65e9aed24c0185ce3b1bc39fd0eab7426f581aafe02"
+}
