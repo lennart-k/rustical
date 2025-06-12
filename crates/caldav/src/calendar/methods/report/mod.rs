@@ -149,7 +149,7 @@ mod tests {
     use super::*;
     use crate::calendar_object::{CalendarData, CalendarObjectPropName, ExpandElement};
     use calendar_query::{CompFilterElement, FilterElement, TimeRangeElement};
-    use rustical_dav::xml::PropElement;
+    use rustical_dav::{extensions::CommonPropertiesPropName, xml::PropElement};
     use rustical_ical::UtcDateTime;
     use rustical_xml::{NamespaceOwned, ValueDeserialize};
 
@@ -160,7 +160,6 @@ mod tests {
             <calendar-multiget xmlns="urn:ietf:params:xml:ns:caldav" xmlns:D="DAV:">
                 <D:prop>
                     <D:getetag/>
-                    <D:displayname/>
                     <calendar-data>
                         <expand start="20250426T220000Z" end="20250503T220000Z"/>
                     </calendar-data>
@@ -180,7 +179,7 @@ mod tests {
                         end: <UtcDateTime as ValueDeserialize>::deserialize("20250503T220000Z").unwrap(),
                     }), limit_recurrence_set: None, limit_freebusy_set: None }
                     )),
-                ], vec![(Some(NamespaceOwned(Vec::from("DAV:"))), "displayname".to_string())])),
+                ], vec![])),
                 href: vec![
                     "/caldav/user/user/6f787542-5256-401a-8db97003260da/ae7a998fdfd1d84a20391168962c62b".to_owned()
                 ]
@@ -253,6 +252,7 @@ mod tests {
                 <D:prop>
                     <D:getetag/>
                     <D:displayname/>
+                    <D:invalid-prop/>
                 </D:prop>
                 <D:href>/caldav/user/user/6f787542-5256-401a-8db97003260da/ae7a998fdfd1d84a20391168962c62b</D:href>
             </calendar-multiget>
@@ -263,7 +263,8 @@ mod tests {
             ReportRequest::CalendarMultiget(CalendarMultigetRequest {
                 prop: rustical_dav::xml::PropfindType::Prop(PropElement(vec![
                     CalendarObjectPropWrapperName::CalendarObject(CalendarObjectPropName::Getetag),
-                ], vec![(Some(NamespaceOwned(Vec::from("DAV:"))), "displayname".to_string())])),
+                    CalendarObjectPropWrapperName::Common(CommonPropertiesPropName::Displayname),
+                ], vec![(Some(NamespaceOwned(Vec::from("DAV:"))), "invalid-prop".to_string())])),
                 href: vec![
                     "/caldav/user/user/6f787542-5256-401a-8db97003260da/ae7a998fdfd1d84a20391168962c62b".to_owned()
                 ]
