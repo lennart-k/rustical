@@ -72,9 +72,9 @@ impl AddressObject {
         CalDateTime::parse_prop(prop, &HashMap::default()).ok()
     }
 
-    pub fn get_full_name(&self) -> Option<&String> {
+    pub fn get_full_name(&self) -> Option<&str> {
         let prop = self.vcard.get_property("FN")?;
-        prop.value.as_ref()
+        prop.value.as_deref()
     }
 
     pub fn get_anniversary_object(&self) -> Result<Option<CalendarObject>, Error> {

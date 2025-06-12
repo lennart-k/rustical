@@ -60,6 +60,11 @@ pub trait Resource: Clone + Send + 'static {
         Err(crate::Error::PropReadOnly)
     }
 
+    fn get_displayname(&self) -> Option<&str>;
+    fn set_displayname(&mut self, _name: Option<String>) -> Result<(), crate::Error> {
+        Err(crate::Error::PropReadOnly)
+    }
+
     fn get_owner(&self) -> Option<&str> {
         None
     }

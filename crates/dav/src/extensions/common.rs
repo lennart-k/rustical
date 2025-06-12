@@ -13,6 +13,8 @@ pub enum CommonPropertiesProp {
     #[xml(skip_deserializing)]
     #[xml(ns = "crate::namespace::NS_DAV")]
     Resourcetype(Resourcetype),
+    #[xml(ns = "crate::namespace::NS_DAV")]
+    Displayname(Option<String>),
 
     // WebDAV Current Principal Extension (RFC 5397)
     #[xml(ns = "crate::namespace::NS_DAV")]
@@ -37,6 +39,9 @@ pub trait CommonPropertiesExtension: Resource {
             CommonPropertiesPropName::Resourcetype => {
                 CommonPropertiesProp::Resourcetype(self.get_resourcetype())
             }
+            CommonPropertiesPropName::Displayname => {
+                CommonPropertiesProp::Displayname(self.get_displayname().map(|s| s.to_string()))
+            }
             CommonPropertiesPropName::CurrentUserPrincipal => {
                 CommonPropertiesProp::CurrentUserPrincipal(
                     principal_uri.principal_uri(principal.get_id()).into(),
@@ -52,12 +57,18 @@ pub trait CommonPropertiesExtension: Resource {
         })
     }
 
-    fn set_prop(&self, _prop: CommonPropertiesProp) -> Result<(), crate::Error> {
-        Err(crate::Error::PropReadOnly)
+    fn set_prop(&mut self, prop: CommonPropertiesProp) -> Result<(), crate::Error> {
+        match prop {
+            CommonPropertiesProp::Displayname(name) => self.set_displayname(name),
+            _ => Err(crate::Error::PropReadOnly),
+        }
     }
 
-    fn remove_prop(&self, _prop: &CommonPropertiesPropName) -> Result<(), crate::Error> {
-        Err(crate::Error::PropReadOnly)
+    fn remove_prop(&mut self, prop: &CommonPropertiesPropName) -> Result<(), crate::Error> {
+        match prop {
+            CommonPropertiesPropName::Displayname => self.set_displayname(None),
+            _ => Err(crate::Error::PropReadOnly),
+        }
     }
 }
 

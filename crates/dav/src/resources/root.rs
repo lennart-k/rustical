@@ -33,6 +33,10 @@ impl<PR: Resource, P: Principal> Resource for RootResource<PR, P> {
         )])
     }
 
+    fn get_displayname(&self) -> Option<&str> {
+        Some("RustiCal DAV root")
+    }
+
     fn get_prop(
         &self,
         principal_uri: &impl PrincipalUri,

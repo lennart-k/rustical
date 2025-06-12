@@ -56,12 +56,6 @@ impl Resource for PrincipalResource {
                     PrincipalPropName::CalendarUserType => {
                         PrincipalProp::CalendarUserType(self.principal.principal_type.to_owned())
                     }
-                    PrincipalPropName::Displayname => PrincipalProp::Displayname(
-                        self.principal
-                            .displayname
-                            .to_owned()
-                            .unwrap_or(self.principal.id.to_owned()),
-                    ),
                     PrincipalPropName::PrincipalUrl => {
                         PrincipalProp::PrincipalUrl(principal_url.into())
                     }
@@ -75,6 +69,15 @@ impl Resource for PrincipalResource {
                 <Self as CommonPropertiesExtension>::get_prop(self, puri, user, prop)?,
             ),
         })
+    }
+
+    fn get_displayname(&self) -> Option<&str> {
+        Some(
+            self.principal
+                .displayname
+                .as_ref()
+                .unwrap_or(&self.principal.id),
+        )
     }
 
     fn get_owner(&self) -> Option<&str> {

@@ -56,9 +56,6 @@ impl Resource for AddressbookResource {
         Ok(match prop {
             AddressbookPropWrapperName::Addressbook(prop) => {
                 AddressbookPropWrapper::Addressbook(match prop {
-                    AddressbookPropName::Displayname => {
-                        AddressbookProp::Displayname(self.0.displayname.clone())
-                    }
                     AddressbookPropName::MaxResourceSize => {
                         AddressbookProp::MaxResourceSize(10000000)
                     }
@@ -89,10 +86,6 @@ impl Resource for AddressbookResource {
     fn set_prop(&mut self, prop: Self::Prop) -> Result<(), rustical_dav::Error> {
         match prop {
             AddressbookPropWrapper::Addressbook(prop) => match prop {
-                AddressbookProp::Displayname(displayname) => {
-                    self.0.displayname = displayname;
-                    Ok(())
-                }
                 AddressbookProp::AddressbookDescription(description) => {
                     self.0.description = description;
                     Ok(())
@@ -113,10 +106,6 @@ impl Resource for AddressbookResource {
     ) -> Result<(), rustical_dav::Error> {
         match prop {
             AddressbookPropWrapperName::Addressbook(prop) => match prop {
-                AddressbookPropName::Displayname => {
-                    self.0.displayname = None;
-                    Ok(())
-                }
                 AddressbookPropName::AddressbookDescription => {
                     self.0.description = None;
                     Ok(())
@@ -133,6 +122,14 @@ impl Resource for AddressbookResource {
                 CommonPropertiesExtension::remove_prop(self, prop)
             }
         }
+    }
+
+    fn get_displayname(&self) -> Option<&str> {
+        self.0.displayname.as_deref()
+    }
+    fn set_displayname(&mut self, name: Option<String>) -> Result<(), rustical_dav::Error> {
+        self.0.displayname = name;
+        Ok(())
     }
 
     fn get_owner(&self) -> Option<&str> {

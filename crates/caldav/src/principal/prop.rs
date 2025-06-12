@@ -5,9 +5,6 @@ use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "PrincipalPropName")]
 pub enum PrincipalProp {
-    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
-    Displayname(String),
-
     // Scheduling Extensions to CalDAV (RFC 6638)
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV", skip_deserializing)]
     CalendarUserType(PrincipalType),

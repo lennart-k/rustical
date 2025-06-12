@@ -7,9 +7,6 @@ pub struct AddressbookHomeSet(#[xml(ty = "untagged", flatten)] pub(super) Vec<Hr
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "PrincipalPropName")]
 pub enum PrincipalProp {
-    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
-    Displayname(String),
-
     // WebDAV Access Control (RFC 3744)
     #[xml(rename = b"principal-URL")]
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]

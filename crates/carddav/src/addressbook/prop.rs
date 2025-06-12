@@ -5,10 +5,6 @@ use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "AddressbookPropName")]
 pub enum AddressbookProp {
-    // WebDAV (RFC 2518)
-    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
-    Displayname(Option<String>),
-
     // CardDAV (RFC 6352)
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     AddressbookDescription(Option<String>),

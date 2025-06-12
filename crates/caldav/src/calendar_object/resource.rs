@@ -66,6 +66,11 @@ impl Resource for CalendarObjectResource {
         })
     }
 
+    fn get_displayname(&self) -> Option<&str> {
+        // TODO: Extract summary from object
+        None
+    }
+
     fn get_owner(&self) -> Option<&str> {
         Some(&self.principal)
     }

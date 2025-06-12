@@ -54,12 +54,6 @@ impl Resource for PrincipalResource {
         Ok(match prop {
             PrincipalPropWrapperName::Principal(prop) => {
                 PrincipalPropWrapper::Principal(match prop {
-                    PrincipalPropName::Displayname => PrincipalProp::Displayname(
-                        self.principal
-                            .displayname
-                            .to_owned()
-                            .unwrap_or(self.principal.id.to_owned()),
-                    ),
                     PrincipalPropName::PrincipalUrl => PrincipalProp::PrincipalUrl(principal_href),
                     PrincipalPropName::AddressbookHomeSet => {
                         PrincipalProp::AddressbookHomeSet(home_set)
@@ -72,6 +66,15 @@ impl Resource for PrincipalResource {
                 CommonPropertiesExtension::get_prop(self, puri, user, prop)?,
             ),
         })
+    }
+
+    fn get_displayname(&self) -> Option<&str> {
+        Some(
+            self.principal
+                .displayname
+                .as_ref()
+                .unwrap_or(&self.principal.id),
+        )
     }
 
     fn get_owner(&self) -> Option<&str> {

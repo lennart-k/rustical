@@ -19,10 +19,6 @@ use std::str::FromStr;
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "CalendarPropName")]
 pub enum CalendarProp {
-    // WebDAV (RFC 2518)
-    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
-    Displayname(Option<String>),
-
     // CalDAV (RFC 4791)
     #[xml(ns = "rustical_dav::namespace::NS_ICAL")]
     CalendarColor(Option<String>),
@@ -127,9 +123,6 @@ impl Resource for CalendarResource {
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
             CalendarPropWrapperName::Calendar(prop) => CalendarPropWrapper::Calendar(match prop {
-                CalendarPropName::Displayname => {
-                    CalendarProp::Displayname(self.cal.displayname.clone())
-                }
                 CalendarPropName::CalendarColor => {
                     CalendarProp::CalendarColor(self.cal.color.clone())
                 }
@@ -187,10 +180,6 @@ impl Resource for CalendarResource {
         }
         match prop {
             CalendarPropWrapper::Calendar(prop) => match prop {
-                CalendarProp::Displayname(displayname) => {
-                    self.cal.displayname = displayname;
-                    Ok(())
-                }
                 CalendarProp::CalendarColor(color) => {
                     self.cal.color = color;
                     Ok(())
@@ -247,10 +236,6 @@ impl Resource for CalendarResource {
         }
         match prop {
             CalendarPropWrapperName::Calendar(prop) => match prop {
-                CalendarPropName::Displayname => {
-                    self.cal.displayname = None;
-                    Ok(())
-                }
                 CalendarPropName::CalendarColor => {
                     self.cal.color = None;
                     Ok(())
@@ -289,6 +274,14 @@ impl Resource for CalendarResource {
                 CommonPropertiesExtension::remove_prop(self, prop)
             }
         }
+    }
+
+    fn get_displayname(&self) -> Option<&str> {
+        self.cal.displayname.as_deref()
+    }
+    fn set_displayname(&mut self, name: Option<String>) -> Result<(), rustical_dav::Error> {
+        self.cal.displayname = name;
+        Ok(())
     }
 
     fn get_owner(&self) -> Option<&str> {
