@@ -22,8 +22,11 @@ pub use error::Error;
 pub struct CalDavPrincipalUri(&'static str);
 
 impl PrincipalUri for CalDavPrincipalUri {
+    fn principal_collection(&self) -> String {
+        format!("{}/principal/", self.0)
+    }
     fn principal_uri(&self, principal: &str) -> String {
-        format!("{}/principal/{}/", self.0, principal)
+        format!("{}{}/", self.principal_collection(), principal)
     }
 }
 

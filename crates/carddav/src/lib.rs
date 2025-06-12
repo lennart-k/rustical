@@ -22,8 +22,11 @@ pub mod principal;
 pub struct CardDavPrincipalUri(&'static str);
 
 impl PrincipalUri for CardDavPrincipalUri {
+    fn principal_collection(&self) -> String {
+        format!("{}/principal/", self.0)
+    }
     fn principal_uri(&self, principal: &str) -> String {
-        format!("{}/principal/{}/", self.0, principal)
+        format!("{}{}/", self.principal_collection(), principal)
     }
 }
 

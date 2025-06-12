@@ -18,6 +18,8 @@ pub enum PrincipalProp {
     GroupMembership(GroupMembership),
     #[xml(ns = "rustical_dav::namespace::NS_DAV", rename = b"alternate-URI-set")]
     AlternateUriSet,
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
+    PrincipalCollectionSet(PrincipalCollectionSet),
 
     // CalDAV (RFC 4791)
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
@@ -36,3 +38,6 @@ pub struct CalendarHomeSet(#[xml(ty = "untagged", flatten)] pub(super) Vec<HrefE
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
 pub struct GroupMembership(#[xml(ty = "untagged", flatten)] pub(super) Vec<HrefElement>);
+
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
+pub struct PrincipalCollectionSet(#[xml(ty = "untagged")] pub(super) HrefElement);

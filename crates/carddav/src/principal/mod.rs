@@ -70,6 +70,11 @@ impl Resource for PrincipalResource {
                         ))
                     }
                     PrincipalPropName::AlternateUriSet => PrincipalProp::AlternateUriSet,
+                    PrincipalPropName::PrincipalCollectionSet => {
+                        PrincipalProp::PrincipalCollectionSet(PrincipalCollectionSet(
+                            puri.principal_collection().into(),
+                        ))
+                    }
                 })
             }
 

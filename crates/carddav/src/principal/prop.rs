@@ -1,9 +1,6 @@
 use rustical_dav::{extensions::CommonPropertiesProp, xml::HrefElement};
 use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
-pub struct AddressbookHomeSet(#[xml(ty = "untagged", flatten)] pub(super) Vec<HrefElement>);
-
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "PrincipalPropName")]
 pub enum PrincipalProp {
@@ -15,6 +12,8 @@ pub enum PrincipalProp {
     GroupMembership(GroupMembership),
     #[xml(ns = "rustical_dav::namespace::NS_DAV", rename = b"alternate-URI-set")]
     AlternateUriSet,
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
+    PrincipalCollectionSet(PrincipalCollectionSet),
 
     // CardDAV (RFC 6352)
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
@@ -31,4 +30,10 @@ pub enum PrincipalPropWrapper {
 }
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
+pub struct AddressbookHomeSet(#[xml(ty = "untagged", flatten)] pub(super) Vec<HrefElement>);
+
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
 pub struct GroupMembership(#[xml(ty = "untagged", flatten)] pub(super) Vec<HrefElement>);
+
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
+pub struct PrincipalCollectionSet(#[xml(ty = "untagged")] pub(super) HrefElement);
