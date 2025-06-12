@@ -1,5 +1,6 @@
-use super::prop::{SupportedCalendarComponentSet, SupportedCalendarData, SupportedReportSet};
+use super::prop::{SupportedCalendarComponentSet, SupportedCalendarData};
 use crate::Error;
+use crate::calendar::prop::ReportMethod;
 use chrono::{DateTime, Utc};
 use derive_more::derive::{From, Into};
 use rustical_dav::extensions::{
@@ -7,7 +8,7 @@ use rustical_dav::extensions::{
 };
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
-use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
+use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner, SupportedReportSet};
 use rustical_dav_push::DavPushExtension;
 use rustical_ical::CalDateTime;
 use rustical_store::Calendar;
@@ -40,8 +41,8 @@ pub enum CalendarProp {
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     MaxResourceSize(i64),
     #[xml(skip_deserializing)]
-    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
-    SupportedReportSet(SupportedReportSet),
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
+    SupportedReportSet(SupportedReportSet<ReportMethod>),
     #[xml(ns = "rustical_dav::namespace::NS_CALENDARSERVER")]
     Source(Option<HrefElement>),
     #[xml(skip_deserializing)]
@@ -150,7 +151,7 @@ impl Resource for CalendarResource {
                 }
                 CalendarPropName::MaxResourceSize => CalendarProp::MaxResourceSize(10000000),
                 CalendarPropName::SupportedReportSet => {
-                    CalendarProp::SupportedReportSet(SupportedReportSet::default())
+                    CalendarProp::SupportedReportSet(SupportedReportSet::all())
                 }
                 CalendarPropName::Source => CalendarProp::Source(
                     self.cal.subscription_url.to_owned().map(HrefElement::from),

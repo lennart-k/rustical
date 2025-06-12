@@ -11,3 +11,5 @@ pub use tag_list::TagList;
 mod error;
 pub mod sync_collection;
 pub use error::ErrorElement;
+mod report_set;
+pub use report_set::SupportedReportSet;

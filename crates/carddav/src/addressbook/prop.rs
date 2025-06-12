@@ -1,6 +1,10 @@
-use rustical_dav::extensions::{CommonPropertiesProp, SyncTokenExtensionProp};
+use rustical_dav::{
+    extensions::{CommonPropertiesProp, SyncTokenExtensionProp},
+    xml::SupportedReportSet,
+};
 use rustical_dav_push::DavPushExtensionProp;
 use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
+use strum_macros::VariantArray;
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "AddressbookPropName")]
@@ -10,8 +14,8 @@ pub enum AddressbookProp {
     AddressbookDescription(Option<String>),
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV", skip_deserializing)]
     SupportedAddressData(SupportedAddressData),
-    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV", skip_deserializing)]
-    SupportedReportSet(SupportedReportSet),
+    #[xml(ns = "rustical_dav::namespace::NS_DAV", skip_deserializing)]
+    SupportedReportSet(SupportedReportSet<ReportMethod>),
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     MaxResourceSize(i64),
 }
@@ -56,37 +60,10 @@ impl Default for SupportedAddressData {
     }
 }
 
-#[derive(Debug, Clone, XmlSerialize, PartialEq)]
+#[derive(Debug, Clone, XmlSerialize, PartialEq, VariantArray)]
 pub enum ReportMethod {
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     AddressbookMultiget,
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     SyncCollection,
-}
-
-#[derive(Debug, Clone, XmlSerialize, PartialEq)]
-pub struct SupportedReportWrapper {
-    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
-    report: ReportMethod,
-}
-
-// RFC 3253 section-3.1.5
-#[derive(Debug, Clone, XmlSerialize, PartialEq)]
-pub struct SupportedReportSet {
-    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV", flatten)]
-    supported_report: &'static [SupportedReportWrapper],
-}
-
-impl Default for SupportedReportSet {
-    fn default() -> Self {
-        Self {
-            supported_report: &[
-                SupportedReportWrapper {
-                    report: ReportMethod::AddressbookMultiget,
-                },
-                SupportedReportWrapper {
-                    report: ReportMethod::SyncCollection,
-                },
-            ],
-        }
-    }
 }

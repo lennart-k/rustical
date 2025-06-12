@@ -25,3 +25,4 @@ tracing.workspace = true
 tokio.workspace = true
 http.workspace = true
 headers.workspace = true
+strum.workspace = true

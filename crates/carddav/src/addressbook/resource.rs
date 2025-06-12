@@ -1,4 +1,4 @@
-use super::prop::{SupportedAddressData, SupportedReportSet};
+use super::prop::SupportedAddressData;
 use crate::Error;
 use crate::addressbook::prop::{
     AddressbookProp, AddressbookPropName, AddressbookPropWrapper, AddressbookPropWrapperName,
@@ -7,7 +7,7 @@ use derive_more::derive::{From, Into};
 use rustical_dav::extensions::{CommonPropertiesExtension, SyncTokenExtension};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
-use rustical_dav::xml::{Resourcetype, ResourcetypeInner};
+use rustical_dav::xml::{Resourcetype, ResourcetypeInner, SupportedReportSet};
 use rustical_dav_push::DavPushExtension;
 use rustical_store::Addressbook;
 use rustical_store::auth::User;
@@ -60,7 +60,7 @@ impl Resource for AddressbookResource {
                         AddressbookProp::MaxResourceSize(10000000)
                     }
                     AddressbookPropName::SupportedReportSet => {
-                        AddressbookProp::SupportedReportSet(SupportedReportSet::default())
+                        AddressbookProp::SupportedReportSet(SupportedReportSet::all())
                     }
                     AddressbookPropName::AddressbookDescription => {
                         AddressbookProp::AddressbookDescription(self.0.description.to_owned())

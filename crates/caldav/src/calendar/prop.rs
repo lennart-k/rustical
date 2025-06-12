@@ -1,6 +1,7 @@
 use derive_more::derive::{From, Into};
 use rustical_ical::CalendarObjectType;
 use rustical_xml::{XmlDeserialize, XmlSerialize};
+use strum_macros::VariantArray;
 
 #[derive(Debug, Clone, XmlSerialize, XmlDeserialize, PartialEq, From, Into)]
 pub struct SupportedCalendarComponent {
@@ -58,39 +59,12 @@ pub struct SupportedCalendarData {
     calendar_data: CalendarData,
 }
 
-#[derive(Debug, Clone, XmlSerialize, PartialEq)]
+#[derive(Debug, Clone, XmlSerialize, PartialEq, VariantArray)]
 pub enum ReportMethod {
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     CalendarQuery,
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     CalendarMultiget,
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     SyncCollection,
-}
-
-#[derive(Debug, Clone, XmlSerialize, PartialEq)]
-pub struct ReportWrapper {
-    report: ReportMethod,
-}
-
-// RFC 3253 section-3.1.5
-#[derive(Debug, Clone, XmlSerialize, PartialEq)]
-pub struct SupportedReportSet {
-    #[xml(flatten)]
-    supported_report: Vec<ReportWrapper>,
-}
-
-impl Default for SupportedReportSet {
-    fn default() -> Self {
-        Self {
-            supported_report: vec![
-                ReportWrapper {
-                    report: ReportMethod::CalendarQuery,
-                },
-                ReportWrapper {
-                    report: ReportMethod::CalendarMultiget,
-                },
-                ReportWrapper {
-                    report: ReportMethod::SyncCollection,
-                },
-            ],
-        }
-    }
 }

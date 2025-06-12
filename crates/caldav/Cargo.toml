@@ -35,3 +35,5 @@ rustical_ical.workspace = true
 http.workspace = true
 headers.workspace = true
 tower-http.workspace = true
+strum.workspace = true
+strum_macros.workspace = true
