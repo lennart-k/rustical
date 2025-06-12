@@ -25,13 +25,13 @@ pub enum PrincipalProp {
     #[xml(ns = "rustical_dav::namespace::NS_DAV", rename = b"alternate-URI-set")]
     AlternateUriSet,
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
-    PrincipalCollectionSet(PrincipalCollectionSet),
+    PrincipalCollectionSet(HrefElement),
     #[xml(ns = "rustical_dav::namespace::NS_DAV", skip_deserializing)]
     SupportedReportSet(SupportedReportSet<ReportMethod>),
 
     // CalDAV (RFC 4791)
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
-    CalendarHomeSet(CalendarHomeSet),
+    CalendarHomeSet(HrefElement),
 }
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
@@ -42,16 +42,10 @@ pub enum PrincipalPropWrapper {
 }
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
-pub struct CalendarHomeSet(#[xml(ty = "untagged", flatten)] pub(super) Vec<HrefElement>);
-
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
 pub struct GroupMembership(#[xml(ty = "untagged", flatten)] pub(super) Vec<HrefElement>);
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
 pub struct GroupMemberSet(#[xml(ty = "untagged", flatten)] pub(super) Vec<HrefElement>);
-
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
-pub struct PrincipalCollectionSet(#[xml(ty = "untagged")] pub(super) HrefElement);
 
 #[derive(XmlSerialize, PartialEq, Clone, VariantArray)]
 pub enum ReportMethod {

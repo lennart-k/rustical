@@ -49,14 +49,6 @@ impl Resource for PrincipalResource {
     ) -> Result<Self::Prop, Self::Error> {
         let principal_url = puri.principal_uri(&self.principal.id);
 
-        let home_set = CalendarHomeSet(
-            self.principal
-                .memberships()
-                .into_iter()
-                .map(|principal| puri.principal_uri(principal).into())
-                .collect(),
-        );
-
         Ok(match prop {
             PrincipalPropWrapperName::Principal(prop) => {
                 PrincipalPropWrapper::Principal(match prop {
@@ -66,7 +58,9 @@ impl Resource for PrincipalResource {
                     PrincipalPropName::PrincipalUrl => {
                         PrincipalProp::PrincipalUrl(principal_url.into())
                     }
-                    PrincipalPropName::CalendarHomeSet => PrincipalProp::CalendarHomeSet(home_set),
+                    PrincipalPropName::CalendarHomeSet => {
+                        PrincipalProp::CalendarHomeSet(principal_url.into())
+                    }
                     PrincipalPropName::CalendarUserAddressSet => {
                         PrincipalProp::CalendarUserAddressSet(principal_url.into())
                     }
@@ -89,9 +83,7 @@ impl Resource for PrincipalResource {
                     }
                     PrincipalPropName::AlternateUriSet => PrincipalProp::AlternateUriSet,
                     PrincipalPropName::PrincipalCollectionSet => {
-                        PrincipalProp::PrincipalCollectionSet(PrincipalCollectionSet(
-                            puri.principal_collection().into(),
-                        ))
+                        PrincipalProp::PrincipalCollectionSet(puri.principal_collection().into())
                     }
                     PrincipalPropName::SupportedReportSet => {
                         PrincipalProp::SupportedReportSet(SupportedReportSet::all())
