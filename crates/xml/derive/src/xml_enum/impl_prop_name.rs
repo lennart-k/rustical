@@ -92,10 +92,17 @@ impl Enum {
 
             let prop_name_variants = tagged_variants.iter().map(|variant| {
                 let ident = &variant.variant.ident;
+                let xml_name = variant.xml_name();
                 if let Some(proptype) = &variant.attrs.prop {
-                    quote! {#ident(#proptype)}
+                    quote! {
+                        #[xml(rename = #xml_name)]
+                        #ident(#proptype)
+                    }
                 } else {
-                    quote! {#ident}
+                    quote! {
+                        #[xml(rename = #xml_name)]
+                        #ident
+                    }
                 }
             });
 
