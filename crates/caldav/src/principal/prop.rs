@@ -1,6 +1,10 @@
-use rustical_dav::{extensions::CommonPropertiesProp, xml::HrefElement};
+use rustical_dav::{
+    extensions::CommonPropertiesProp,
+    xml::{HrefElement, SupportedReportSet},
+};
 use rustical_store::auth::user::PrincipalType;
 use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
+use strum_macros::VariantArray;
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "PrincipalPropName")]
@@ -16,10 +20,14 @@ pub enum PrincipalProp {
     PrincipalUrl(HrefElement),
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     GroupMembership(GroupMembership),
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
+    GroupMemberSet(GroupMemberSet),
     #[xml(ns = "rustical_dav::namespace::NS_DAV", rename = b"alternate-URI-set")]
     AlternateUriSet,
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     PrincipalCollectionSet(PrincipalCollectionSet),
+    #[xml(ns = "rustical_dav::namespace::NS_DAV", skip_deserializing)]
+    SupportedReportSet(SupportedReportSet<ReportMethod>),
 
     // CalDAV (RFC 4791)
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
@@ -40,4 +48,14 @@ pub struct CalendarHomeSet(#[xml(ty = "untagged", flatten)] pub(super) Vec<HrefE
 pub struct GroupMembership(#[xml(ty = "untagged", flatten)] pub(super) Vec<HrefElement>);
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
+pub struct GroupMemberSet(#[xml(ty = "untagged", flatten)] pub(super) Vec<HrefElement>);
+
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
 pub struct PrincipalCollectionSet(#[xml(ty = "untagged")] pub(super) HrefElement);
+
+#[derive(XmlSerialize, PartialEq, Clone, VariantArray)]
+pub enum ReportMethod {
+    // We don't actually support principal-match
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
+    PrincipalMatch,
+}

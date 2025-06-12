@@ -43,7 +43,7 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Resour
     type Principal = User;
     type PrincipalUri = CalDavPrincipalUri;
 
-    const DAV_HEADER: &str = "1, 3, access-control, calendar-access";
+    const DAV_HEADER: &str = "1, 3, access-control, calendar-access, calendar-proxy";
 
     async fn get_resource(
         &self,
@@ -54,7 +54,10 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Resour
             .get_principal(principal)
             .await?
             .ok_or(crate::Error::NotFound)?;
-        Ok(PrincipalResource { principal: user })
+        Ok(PrincipalResource {
+            members: self.auth_provider.list_members(&user.id).await?,
+            principal: user,
+        })
     }
 
     async fn get_members(

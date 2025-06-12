@@ -2,7 +2,7 @@ use crate::Error;
 use rustical_dav::extensions::CommonPropertiesExtension;
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
-use rustical_dav::xml::{Resourcetype, ResourcetypeInner};
+use rustical_dav::xml::{Resourcetype, ResourcetypeInner, SupportedReportSet};
 use rustical_store::auth::User;
 
 mod service;
@@ -13,6 +13,7 @@ pub use prop::*;
 #[derive(Clone)]
 pub struct PrincipalResource {
     principal: User,
+    members: Vec<String>,
 }
 
 impl ResourceName for PrincipalResource {
@@ -32,6 +33,11 @@ impl Resource for PrincipalResource {
         Resourcetype(&[
             ResourcetypeInner(Some(rustical_dav::namespace::NS_DAV), "collection"),
             ResourcetypeInner(Some(rustical_dav::namespace::NS_DAV), "principal"),
+            // https://github.com/apple/ccs-calendarserver/blob/13c706b985fb728b9aab42dc0fef85aae21921c3/doc/Extensions/caldav-proxy.txt
+            ResourcetypeInner(
+                Some(rustical_dav::namespace::NS_CALENDARSERVER),
+                "calendar-proxy-write",
+            ),
         ])
     }
 
@@ -64,6 +70,14 @@ impl Resource for PrincipalResource {
                     PrincipalPropName::CalendarUserAddressSet => {
                         PrincipalProp::CalendarUserAddressSet(principal_url.into())
                     }
+                    PrincipalPropName::GroupMemberSet => {
+                        PrincipalProp::GroupMemberSet(GroupMemberSet(
+                            self.members
+                                .iter()
+                                .map(|principal| puri.principal_uri(principal).into())
+                                .collect(),
+                        ))
+                    }
                     PrincipalPropName::GroupMembership => {
                         PrincipalProp::GroupMembership(GroupMembership(
                             self.principal
@@ -78,6 +92,9 @@ impl Resource for PrincipalResource {
                         PrincipalProp::PrincipalCollectionSet(PrincipalCollectionSet(
                             puri.principal_collection().into(),
                         ))
+                    }
+                    PrincipalPropName::SupportedReportSet => {
+                        PrincipalProp::SupportedReportSet(SupportedReportSet::all())
                     }
                 })
             }
