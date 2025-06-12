@@ -25,7 +25,11 @@ impl Enum {
                     let prefix = ns
                         .map(|ns| namespaces.get(&ns))
                         .unwrap_or(None)
-                        .map(|prefix| [*prefix, b":"].concat());
+                        .map(|prefix| if !prefix.is_empty() {
+                            [*prefix, b":"].concat()
+                        } else {
+                            vec![]
+                        });
                     let has_prefix = prefix.is_some();
                     let tagname = tag.map(|tag| [&prefix.unwrap_or_default(), tag].concat());
                     let qname = tagname.as_ref().map(|tagname| ::quick_xml::name::QName(tagname));
