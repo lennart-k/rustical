@@ -44,7 +44,8 @@ impl Resource for PrincipalResource {
         let principal_url = puri.principal_uri(&self.principal.id);
 
         let home_set = CalendarHomeSet(
-            user.memberships()
+            self.principal
+                .memberships()
                 .into_iter()
                 .map(|principal| puri.principal_uri(principal).into())
                 .collect(),
@@ -65,7 +66,8 @@ impl Resource for PrincipalResource {
                     }
                     PrincipalPropName::GroupMembership => {
                         PrincipalProp::GroupMembership(GroupMembership(
-                            user.memberships_without_self()
+                            self.principal
+                                .memberships_without_self()
                                 .iter()
                                 .map(|principal| puri.principal_uri(principal).into())
                                 .collect(),

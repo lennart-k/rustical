@@ -44,7 +44,8 @@ impl Resource for PrincipalResource {
         let principal_href = HrefElement::new(puri.principal_uri(&user.id));
 
         let home_set = AddressbookHomeSet(
-            user.memberships()
+            self.principal
+                .memberships()
                 .into_iter()
                 .map(|principal| puri.principal_uri(principal))
                 .map(HrefElement::new)
@@ -61,7 +62,8 @@ impl Resource for PrincipalResource {
                     PrincipalPropName::PrincipalAddress => PrincipalProp::PrincipalAddress(None),
                     PrincipalPropName::GroupMembership => {
                         PrincipalProp::GroupMembership(GroupMembership(
-                            user.memberships_without_self()
+                            self.principal
+                                .memberships_without_self()
                                 .iter()
                                 .map(|principal| puri.principal_uri(principal).into())
                                 .collect(),
