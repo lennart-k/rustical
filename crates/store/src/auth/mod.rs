@@ -24,6 +24,7 @@ pub trait AuthenticationProvider: Send + Sync + 'static {
 
     async fn add_membership(&self, principal: &str, member_of: &str) -> Result<(), Error>;
     async fn remove_membership(&self, principal: &str, member_of: &str) -> Result<(), Error>;
+    async fn list_members(&self, principal: &str) -> Result<Vec<String>, Error>;
 }
 
 pub use middleware::AuthenticationMiddleware;

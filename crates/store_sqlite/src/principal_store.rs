@@ -249,4 +249,18 @@ impl AuthenticationProvider for SqlitePrincipalStore {
         .map_err(crate::Error::from)?;
         Ok(())
     }
+
+    #[instrument]
+    async fn list_members(&self, principal: &str) -> Result<Vec<String>, Error> {
+        Ok(sqlx::query!(
+            r#"SELECT principal FROM memberships WHERE member_of = ?"#,
+            principal
+        )
+        .fetch_all(&self.db)
+        .await
+        .map_err(crate::Error::from)?
+        .into_iter()
+        .map(|record| record.principal)
+        .collect())
+    }
 }
