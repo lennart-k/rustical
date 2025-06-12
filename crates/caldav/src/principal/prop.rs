@@ -14,6 +14,10 @@ pub enum PrincipalProp {
     // WebDAV Access Control (RFC 3744)
     #[xml(ns = "rustical_dav::namespace::NS_DAV", rename = b"principal-URL")]
     PrincipalUrl(HrefElement),
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
+    GroupMembership(GroupMembership),
+    #[xml(ns = "rustical_dav::namespace::NS_DAV", rename = b"alternate-URI-set")]
+    AlternateUriSet,
 
     // CalDAV (RFC 4791)
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
@@ -29,3 +33,6 @@ pub enum PrincipalPropWrapper {
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
 pub struct CalendarHomeSet(#[xml(ty = "untagged", flatten)] pub(super) Vec<HrefElement>);
+
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
+pub struct GroupMembership(#[xml(ty = "untagged", flatten)] pub(super) Vec<HrefElement>);

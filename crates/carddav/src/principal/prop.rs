@@ -11,6 +11,10 @@ pub enum PrincipalProp {
     #[xml(rename = b"principal-URL")]
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     PrincipalUrl(HrefElement),
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
+    GroupMembership(GroupMembership),
+    #[xml(ns = "rustical_dav::namespace::NS_DAV", rename = b"alternate-URI-set")]
+    AlternateUriSet,
 
     // CardDAV (RFC 6352)
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
@@ -25,3 +29,6 @@ pub enum PrincipalPropWrapper {
     Principal(PrincipalProp),
     Common(CommonPropertiesProp),
 }
+
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
+pub struct GroupMembership(#[xml(ty = "untagged", flatten)] pub(super) Vec<HrefElement>);

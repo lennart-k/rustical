@@ -59,6 +59,15 @@ impl Resource for PrincipalResource {
                         PrincipalProp::AddressbookHomeSet(home_set)
                     }
                     PrincipalPropName::PrincipalAddress => PrincipalProp::PrincipalAddress(None),
+                    PrincipalPropName::GroupMembership => {
+                        PrincipalProp::GroupMembership(GroupMembership(
+                            user.memberships_without_self()
+                                .iter()
+                                .map(|principal| puri.principal_uri(principal).into())
+                                .collect(),
+                        ))
+                    }
+                    PrincipalPropName::AlternateUriSet => PrincipalProp::AlternateUriSet,
                 })
             }
 

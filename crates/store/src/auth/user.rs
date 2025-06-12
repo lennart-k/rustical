@@ -108,6 +108,10 @@ impl User {
         memberships.push(self.id.as_str());
         memberships
     }
+
+    pub fn memberships_without_self(&self) -> Vec<&str> {
+        self.memberships.iter().map(String::as_str).collect()
+    }
 }
 
 impl rustical_dav::Principal for User {
