@@ -1,6 +1,6 @@
 use rustical_dav::{
     extensions::CommonPropertiesProp,
-    xml::{HrefElement, SupportedReportSet},
+    xml::{GroupMemberSet, GroupMembership, HrefElement, SupportedReportSet},
 };
 use rustical_store::auth::user::PrincipalType;
 use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
@@ -24,8 +24,8 @@ pub enum PrincipalProp {
     GroupMemberSet(GroupMemberSet),
     #[xml(ns = "rustical_dav::namespace::NS_DAV", rename = b"alternate-URI-set")]
     AlternateUriSet,
-    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
-    PrincipalCollectionSet(HrefElement),
+    // #[xml(ns = "rustical_dav::namespace::NS_DAV")]
+    // PrincipalCollectionSet(HrefElement),
     #[xml(ns = "rustical_dav::namespace::NS_DAV", skip_deserializing)]
     SupportedReportSet(SupportedReportSet<ReportMethod>),
 
@@ -40,12 +40,6 @@ pub enum PrincipalPropWrapper {
     Principal(PrincipalProp),
     Common(CommonPropertiesProp),
 }
-
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
-pub struct GroupMembership(#[xml(ty = "untagged", flatten)] pub(super) Vec<HrefElement>);
-
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
-pub struct GroupMemberSet(#[xml(ty = "untagged", flatten)] pub(super) Vec<HrefElement>);
 
 #[derive(XmlSerialize, PartialEq, Clone, VariantArray)]
 pub enum ReportMethod {

@@ -1,4 +1,7 @@
-use rustical_dav::{extensions::CommonPropertiesProp, xml::HrefElement};
+use rustical_dav::{
+    extensions::CommonPropertiesProp,
+    xml::{GroupMemberSet, GroupMembership, HrefElement},
+};
 use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
@@ -10,6 +13,8 @@ pub enum PrincipalProp {
     PrincipalUrl(HrefElement),
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     GroupMembership(GroupMembership),
+    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
+    GroupMemberSet(GroupMemberSet),
     #[xml(ns = "rustical_dav::namespace::NS_DAV", rename = b"alternate-URI-set")]
     AlternateUriSet,
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
@@ -28,6 +33,3 @@ pub enum PrincipalPropWrapper {
     Principal(PrincipalProp),
     Common(CommonPropertiesProp),
 }
-
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
-pub struct GroupMembership(#[xml(ty = "untagged", flatten)] pub(super) Vec<HrefElement>);

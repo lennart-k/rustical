@@ -2,7 +2,9 @@ use crate::Error;
 use rustical_dav::extensions::CommonPropertiesExtension;
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
-use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner};
+use rustical_dav::xml::{
+    GroupMemberSet, GroupMembership, HrefElement, Resourcetype, ResourcetypeInner,
+};
 use rustical_store::auth::User;
 
 mod service;
@@ -13,6 +15,7 @@ pub use prop::*;
 #[derive(Debug, Clone)]
 pub struct PrincipalResource {
     principal: User,
+    members: Vec<String>,
 }
 
 impl ResourceName for PrincipalResource {
@@ -41,7 +44,7 @@ impl Resource for PrincipalResource {
         user: &User,
         prop: &PrincipalPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
-        let principal_href = HrefElement::new(puri.principal_uri(&user.id));
+        let principal_href = HrefElement::new(puri.principal_uri(&self.principal.id));
 
         Ok(match prop {
             PrincipalPropWrapperName::Principal(prop) => {
@@ -55,6 +58,14 @@ impl Resource for PrincipalResource {
                         PrincipalProp::GroupMembership(GroupMembership(
                             self.principal
                                 .memberships_without_self()
+                                .iter()
+                                .map(|principal| puri.principal_uri(principal).into())
+                                .collect(),
+                        ))
+                    }
+                    PrincipalPropName::GroupMemberSet => {
+                        PrincipalProp::GroupMemberSet(GroupMemberSet(
+                            self.members
                                 .iter()
                                 .map(|principal| puri.principal_uri(principal).into())
                                 .collect(),

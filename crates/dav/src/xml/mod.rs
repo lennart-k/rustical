@@ -13,3 +13,5 @@ pub mod sync_collection;
 pub use error::ErrorElement;
 mod report_set;
 pub use report_set::SupportedReportSet;
+mod group;
+pub use group::*;

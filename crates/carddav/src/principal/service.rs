@@ -65,7 +65,10 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> Reso
             .get_principal(principal)
             .await?
             .ok_or(crate::Error::NotFound)?;
-        Ok(PrincipalResource { principal: user })
+        Ok(PrincipalResource {
+            members: self.auth_provider.list_members(&user.id).await?,
+            principal: user,
+        })
     }
 
     async fn get_members(

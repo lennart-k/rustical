@@ -2,7 +2,9 @@ use crate::Error;
 use rustical_dav::extensions::CommonPropertiesExtension;
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
-use rustical_dav::xml::{Resourcetype, ResourcetypeInner, SupportedReportSet};
+use rustical_dav::xml::{
+    GroupMemberSet, GroupMembership, Resourcetype, ResourcetypeInner, SupportedReportSet,
+};
 use rustical_store::auth::User;
 
 mod service;
@@ -82,9 +84,9 @@ impl Resource for PrincipalResource {
                         ))
                     }
                     PrincipalPropName::AlternateUriSet => PrincipalProp::AlternateUriSet,
-                    PrincipalPropName::PrincipalCollectionSet => {
-                        PrincipalProp::PrincipalCollectionSet(puri.principal_collection().into())
-                    }
+                    // PrincipalPropName::PrincipalCollectionSet => {
+                    //     PrincipalProp::PrincipalCollectionSet(puri.principal_collection().into())
+                    // }
                     PrincipalPropName::SupportedReportSet => {
                         PrincipalProp::SupportedReportSet(SupportedReportSet::all())
                     }
