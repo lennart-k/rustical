@@ -43,21 +43,12 @@ impl Resource for PrincipalResource {
     ) -> Result<Self::Prop, Self::Error> {
         let principal_href = HrefElement::new(puri.principal_uri(&user.id));
 
-        let home_set = AddressbookHomeSet(
-            self.principal
-                .memberships()
-                .into_iter()
-                .map(|principal| puri.principal_uri(principal))
-                .map(HrefElement::new)
-                .collect(),
-        );
-
         Ok(match prop {
             PrincipalPropWrapperName::Principal(prop) => {
                 PrincipalPropWrapper::Principal(match prop {
                     PrincipalPropName::PrincipalUrl => PrincipalProp::PrincipalUrl(principal_href),
                     PrincipalPropName::AddressbookHomeSet => {
-                        PrincipalProp::AddressbookHomeSet(home_set)
+                        PrincipalProp::AddressbookHomeSet(principal_href)
                     }
                     PrincipalPropName::PrincipalAddress => PrincipalProp::PrincipalAddress(None),
                     PrincipalPropName::GroupMembership => {
@@ -71,9 +62,7 @@ impl Resource for PrincipalResource {
                     }
                     PrincipalPropName::AlternateUriSet => PrincipalProp::AlternateUriSet,
                     PrincipalPropName::PrincipalCollectionSet => {
-                        PrincipalProp::PrincipalCollectionSet(PrincipalCollectionSet(
-                            puri.principal_collection().into(),
-                        ))
+                        PrincipalProp::PrincipalCollectionSet(puri.principal_collection().into())
                     }
                 })
             }
