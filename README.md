@@ -29,4 +29,4 @@ a CalDAV/CardDAV server
 - DAVx5,
 - GNOME Accounts, GNOME Calendar, GNOME Contacts
 - Evolution
-- Apple Calendar (known issue: If a user is member of multiple groups then Apple Calendar just randomly selects a calendar home)
+- Apple Calendar

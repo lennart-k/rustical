@@ -29,8 +29,7 @@ docker run --rm -it -v YOUR_DATA_DIR:/var/lib/rustical/ ghcr.io/lennart-k/rustic
 This is also the place to set up **groups**.
 Groups and rooms are also just principals and you can specify them as such using the `--principal-type` parameter.
 To assign a user to a group you can use the `rustical membership` command. Being a member to a principal means that you can completely act on their behalf and see their collections.
-
-**Note:** Apple Calendar doesn't play well with the current membership implementation so you might not want to set up groups at the moment.
+**Note:** Many clients don't support autodiscovery of principals a user is a member of. In that case you'd have to set up multiple CalDAV profiles in your client with the respective principal URLs.
 
 ## Password vs app tokens
 
