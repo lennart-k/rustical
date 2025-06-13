@@ -25,21 +25,20 @@ mod routes;
 pub use config::FrontendConfig;
 use oidc_user_store::OidcUserStore;
 
-use crate::{
-    assets::{Assets, EmbedService},
-    routes::{
-        addressbook::{
-            route_addressbook, route_addressbook_restore, route_create_addressbook,
-            route_delete_addressbook,
-        },
-        app_token::{route_delete_app_token, route_post_app_token},
-        calendar::{
-            route_calendar, route_calendar_restore, route_create_calendar, route_delete_calendar,
-        },
-        login::{route_get_login, route_post_login, route_post_logout},
-        user::{route_get_home, route_root, route_user_named},
+use crate::routes::{
+    addressbook::{
+        route_addressbook, route_addressbook_restore, route_create_addressbook,
+        route_delete_addressbook,
     },
+    app_token::{route_delete_app_token, route_post_app_token},
+    calendar::{
+        route_calendar, route_calendar_restore, route_create_calendar, route_delete_calendar,
+    },
+    login::{route_get_login, route_post_login, route_post_logout},
+    user::{route_get_home, route_root, route_user_named},
 };
+#[cfg(not(feature = "dev"))]
+use assets::{Assets, EmbedService};
 
 pub fn frontend_router<AP: AuthenticationProvider, CS: CalendarStore, AS: AddressbookStore>(
     prefix: &'static str,
@@ -93,8 +92,15 @@ pub fn frontend_router<AP: AuthenticationProvider, CS: CalendarStore, AS: Addres
             post(route_addressbook_restore::<AS>),
         )
         .route("/login", get(route_get_login).post(route_post_login::<AP>))
-        .route("/logout", post(route_post_logout))
-        .route_service("/assets/{*file}", EmbedService::<Assets>::new());
+        .route("/logout", post(route_post_logout));
+
+    #[cfg(not(feature = "dev"))]
+    let mut router = router.route_service("/assets/{*file}", EmbedService::<Assets>::new());
+    #[cfg(feature = "dev")]
+    let mut router = router.nest_service(
+        "/assets",
+        tower_http::services::ServeDir::new(concat!(env!("CARGO_MANIFEST_DIR"), "/public/assets")),
+    );
 
     if let Some(oidc_config) = oidc_config.clone() {
         router = router

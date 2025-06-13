@@ -7,6 +7,10 @@ repository.workspace = true
 license.workspace = true
 publish = false
 
+[features]
+default = []
+dev = ["tower-http/fs"]
+
 [dependencies]
 tower.workspace = true
 http.workspace = true
@@ -34,3 +38,4 @@ axum-extra.workspace = true
 headers.workspace = true
 tower-sessions.workspace = true
 percent-encoding.workspace = true
+tower-http = { workspace = true, optional = true }

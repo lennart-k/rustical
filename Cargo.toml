@@ -20,6 +20,7 @@ publish = false
 
 [features]
 debug = ["opentelemetry"]
+frontend-dev = ["rustical_frontend/dev"]
 opentelemetry = [
   "dep:opentelemetry",
   "dep:opentelemetry-otlp",
