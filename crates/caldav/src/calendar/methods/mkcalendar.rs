@@ -72,11 +72,15 @@ pub async fn route_mkcalendar<C: CalendarStore, S: SubscriptionStore>(
         return Err(Error::Unauthorized);
     }
 
-    let request = match method.as_str() {
+    let mut request = match method.as_str() {
         "MKCALENDAR" => MkcalendarRequest::parse_str(&body)?.set.prop,
         "MKCOL" => MkcolRequest::parse_str(&body)?.set.prop,
         _ => unreachable!("We never call with another method"),
     };
+
+    if let Some("") = request.displayname.as_deref() {
+        request.displayname = None
+    }
 
     let calendar = Calendar {
         id: cal_id.to_owned(),

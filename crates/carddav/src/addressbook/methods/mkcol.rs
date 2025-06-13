@@ -52,8 +52,10 @@ pub async fn route_mkcol<AS: AddressbookStore, S: SubscriptionStore>(
         return Err(Error::Unauthorized);
     }
 
-    let request = MkcolRequest::parse_str(&body)?;
-    let request = request.set.prop;
+    let mut request = MkcolRequest::parse_str(&body)?.set.prop;
+    if let Some("") = request.displayname.as_deref() {
+        request.displayname = None
+    }
 
     let addressbook = Addressbook {
         id: addressbook_id.to_owned(),
