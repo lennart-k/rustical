@@ -15,23 +15,12 @@ use tower::Service;
 #[folder = "public/assets"]
 pub struct Assets;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct EmbedService<E>
 where
     E: 'static + RustEmbed,
 {
     _embed: PhantomData<E>,
-}
-
-impl<E> EmbedService<E>
-where
-    E: 'static + RustEmbed,
-{
-    pub fn new() -> Self {
-        Self {
-            _embed: PhantomData,
-        }
-    }
 }
 
 impl<E> Service<Request> for EmbedService<E>

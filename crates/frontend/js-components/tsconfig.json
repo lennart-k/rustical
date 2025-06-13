@@ -1,0 +1,12 @@
+{
+  "module": "nodenext",
+  "moduleResolution": "nodenext",
+  "compilerOptions": {
+    "target": "es2020",
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false
+  },
+  "include": [
+    "lib/**/*.ts"
+  ]
+}

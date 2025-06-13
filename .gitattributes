@@ -1,2 +1,3 @@
 # Otherwise GitHub thinks this is an HTML project
 crates/frontend/public/assets/licenses.html linguist-detectable=false
+crates/frontend/public/assets/js/* linguist-detectable=false

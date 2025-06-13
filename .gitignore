@@ -12,3 +12,7 @@ principals.toml
 .env
 
 site
+
+# Frontend
+**/node_modules
+**/.vite

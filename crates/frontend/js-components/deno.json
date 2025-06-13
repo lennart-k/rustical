@@ -1,0 +1,19 @@
+{
+  "tasks": {
+    "dev": "deno run -A --node-modules-dir npm:vite build --emptyOutDir --watch",
+    "build": "deno run -A --node-modules-dir npm:vite build --emptyOutDir"
+  },
+  "compilerOptions": {
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ]
+  },
+  "imports": {
+    "@deno/vite-plugin": "npm:@deno/vite-plugin@^1.0.4",
+    "lit": "npm:lit@^3.2.1",
+    "vite": "npm:vite@^6.1.1",
+    "webdav": "npm:webdav@^5.8.0"
+  }
+}

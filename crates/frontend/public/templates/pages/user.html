@@ -1,5 +1,10 @@
 {% extends "layouts/default.html" %}
 
+{% block imports %}
+<script type="module" src="/frontend/assets/js/create-calendar-form.mjs" async></script>
+<script type="module" src="/frontend/assets/js/create-addressbook-form.mjs" async></script>
+{% endblock %}
+
 {% block content %}
 <div id="page-user">
 
@@ -9,7 +14,6 @@
   <h2>Profile</h2>
 
   <h3>Groups</h3>
-
   <ul>
     {% for group in user.memberships() %}
       <li>{{ group }}</li>
@@ -117,51 +121,7 @@
   {% endfor %}
 </ul>
 {% endif %}
-
-<section>
-  <h3>Create calendar</h3>
-  <form action="/frontend/user/{{ user.id }}/calendar" method="POST">
-    <label>
-      href
-      <input type="text" name="id" />
-    </label>
-    <br>
-    <label>
-      Displayname
-      <input type="text" name="displayname" />
-    </label>
-    <br>
-    <label>
-      Description
-      <input type="text" name="description" />
-    </label>
-    <br>
-    <label>
-      Color
-      <input type="color" name="color" />
-    </label>
-    <br>
-    <label>
-      Subscription URL
-      <input type="text" name="subscription_url" />
-    </label>
-    <br>
-    <label>
-      Support VEVENT
-      <input type="checkbox" name="comp_event" checked />
-    </label>
-    <label>
-      Support VTODO
-      <input type="checkbox" name="comp_todo" checked />
-    </label>
-    <label>
-      Support VJOURNAL
-      <input type="checkbox" name="comp_journal" />
-    </label>
-    <br>
-    <button type="submit">Create</button>
-  </form>
-</section>
+<create-calendar-form user="{{ user.id }}"></create-calendar-form>
 
 </section>
 
@@ -207,27 +167,7 @@
 </ul>
 {% endif %}
 
-<section>
-  <h3>Create addressbook</h3>
-  <form action="/frontend/user/{{ user.id }}/addressbook" method="POST">
-    <label>
-      href
-      <input type="text" name="id" />
-    </label>
-    <br>
-    <label>
-      Displayname
-      <input type="text" name="displayname" />
-    </label>
-    <br>
-    <label>
-      Description
-      <input type="text" name="description" />
-    </label>
-    <br>
-    <button type="submit">Create</button>
-  </form>
-</section>
+<create-addressbook-form user="{{ user.id }}"></create-addressbook-form>
 
 </section>
 {% endblock %}

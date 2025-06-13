@@ -33,53 +33,6 @@ pub async fn route_addressbook<AS: AddressbookStore>(
     .into_response())
 }
 
-fn empty_to_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let val: Option<String> = Deserialize::deserialize(deserializer)?;
-    Ok(val.filter(|val| !val.is_empty()))
-}
-
-#[derive(Deserialize, Clone)]
-pub struct PutAddressbookForm {
-    id: String,
-    #[serde(deserialize_with = "empty_to_none")]
-    displayname: Option<String>,
-    #[serde(deserialize_with = "empty_to_none")]
-    description: Option<String>,
-}
-
-pub async fn route_create_addressbook<AS: AddressbookStore>(
-    Path(owner): Path<String>,
-    Extension(store): Extension<Arc<AS>>,
-    user: User,
-    Form(PutAddressbookForm {
-        id,
-        displayname,
-        description,
-    }): Form<PutAddressbookForm>,
-) -> Result<Response, rustical_store::Error> {
-    if !user.is_principal(&owner) {
-        return Ok(StatusCode::UNAUTHORIZED.into_response());
-    }
-
-    assert!(!id.is_empty());
-
-    let addressbook = Addressbook {
-        id: id.to_owned(),
-        displayname,
-        description,
-        principal: user.id.to_owned(),
-        synctoken: 0,
-        deleted_at: None,
-        push_topic: uuid::Uuid::new_v4().to_string(),
-    };
-
-    store.insert_addressbook(addressbook).await?;
-    Ok(Redirect::to(&format!("/frontend/user/{}/addressbook/{}", user.id, id)).into_response())
-}
-
 pub async fn route_addressbook_restore<AS: AddressbookStore>(
     Path((owner, addressbook_id)): Path<(String, String)>,
     Extension(store): Extension<Arc<AS>>,

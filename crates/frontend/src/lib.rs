@@ -26,14 +26,9 @@ pub use config::FrontendConfig;
 use oidc_user_store::OidcUserStore;
 
 use crate::routes::{
-    addressbook::{
-        route_addressbook, route_addressbook_restore, route_create_addressbook,
-        route_delete_addressbook,
-    },
+    addressbook::{route_addressbook, route_addressbook_restore, route_delete_addressbook},
     app_token::{route_delete_app_token, route_post_app_token},
-    calendar::{
-        route_calendar, route_calendar_restore, route_create_calendar, route_delete_calendar,
-    },
+    calendar::{route_calendar, route_calendar_restore, route_delete_calendar},
     login::{route_get_login, route_post_login, route_post_logout},
     user::{route_get_home, route_root, route_user_named},
 };
@@ -61,7 +56,6 @@ pub fn frontend_router<AP: AuthenticationProvider, CS: CalendarStore, AS: Addres
             post(route_delete_app_token::<AP>),
         )
         // Calendar
-        .route("/user/{user}/calendar", post(route_create_calendar::<CS>))
         .route(
             "/user/{user}/calendar/{calendar}",
             get(route_calendar::<CS>),
@@ -75,10 +69,6 @@ pub fn frontend_router<AP: AuthenticationProvider, CS: CalendarStore, AS: Addres
             post(route_calendar_restore::<CS>),
         )
         // Addressbook
-        .route(
-            "/user/{user}/addressbook",
-            post(route_create_addressbook::<AS>),
-        )
         .route(
             "/user/{user}/addressbook/{addressbook}",
             get(route_addressbook::<AS>),
@@ -95,7 +85,7 @@ pub fn frontend_router<AP: AuthenticationProvider, CS: CalendarStore, AS: Addres
         .route("/logout", post(route_post_logout));
 
     #[cfg(not(feature = "dev"))]
-    let mut router = router.route_service("/assets/{*file}", EmbedService::<Assets>::new());
+    let mut router = router.route_service("/assets/{*file}", EmbedService::<Assets>::default());
     #[cfg(feature = "dev")]
     let mut router = router.nest_service(
         "/assets",
