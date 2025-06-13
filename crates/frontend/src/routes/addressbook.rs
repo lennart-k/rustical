@@ -3,7 +3,7 @@ use std::sync::Arc;
 use askama::Template;
 use askama_web::WebTemplate;
 use axum::{
-    Extension, Form,
+    Extension,
     extract::Path,
     response::{IntoResponse, Redirect, Response},
 };
@@ -11,7 +11,6 @@ use axum_extra::TypedHeader;
 use headers::Referer;
 use http::StatusCode;
 use rustical_store::{Addressbook, AddressbookStore, auth::User};
-use serde::{Deserialize, Deserializer};
 
 #[derive(Template, WebTemplate)]
 #[template(path = "pages/addressbook.html")]

@@ -11,7 +11,7 @@ use rust_embed::RustEmbed;
 use std::{convert::Infallible, marker::PhantomData, str::FromStr};
 use tower::Service;
 
-#[derive(Clone, RustEmbed)]
+#[derive(Clone, RustEmbed, Default)]
 #[folder = "public/assets"]
 pub struct Assets;
 
