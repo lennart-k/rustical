@@ -4,6 +4,7 @@ use crate::calendar::prop::SupportedCalendarComponentSet;
 use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Response};
 use http::{Method, StatusCode};
+use rustical_dav::xml::HrefElement;
 use rustical_ical::CalendarObjectType;
 use rustical_store::auth::User;
 use rustical_store::{Calendar, CalendarStore, SubscriptionStore};
@@ -29,6 +30,8 @@ pub struct MkcolCalendarProp {
     resourcetype: Option<Unparsed>,
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     supported_calendar_component_set: Option<SupportedCalendarComponentSet>,
+    #[xml(ns = "rustical_dav::namespace::NS_CALENDARSERVER")]
+    source: Option<HrefElement>,
     // Ignore that property, we don't support it but also don't want to throw an error
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     #[allow(dead_code)]
@@ -86,7 +89,7 @@ pub async fn route_mkcalendar<C: CalendarStore, S: SubscriptionStore>(
         description: request.calendar_description,
         deleted_at: None,
         synctoken: 0,
-        subscription_url: None,
+        subscription_url: request.source.map(|href| href.href),
         push_topic: uuid::Uuid::new_v4().to_string(),
         components: request
             .supported_calendar_component_set
