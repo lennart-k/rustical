@@ -1,8 +1,9 @@
 use crate::Error;
-use crate::calendar::resource::{CalendarResource, CalendarResourceService};
+use crate::calendar::CalendarResourceService;
+use crate::calendar::resource::CalendarResource;
 use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Response};
-use http::{HeaderMap, StatusCode, header};
+use http::{HeaderMap, HeaderValue, StatusCode, header};
 use rustical_dav::privileges::UserPrivilege;
 use rustical_dav::resource::Resource;
 use rustical_dav_push::register::PushRegister;
@@ -73,20 +74,17 @@ pub async fn route_post<C: CalendarStore, S: SubscriptionStore>(
         .upsert_subscription(subscription)
         .await?;
 
-    // let location = req
-    //     .resource_map()
-    //     .url_for(&req, "subscription", &[sub_id])
-    //     .unwrap();
-    //
-    let location = "asd";
+    // TODO: make nicer
+    let location = format!("/push_subscription/{sub_id}");
     Ok((
         StatusCode::CREATED,
-        HeaderMap::from_iter([(header::LOCATION, location)]),
+        HeaderMap::from_iter([
+            (header::LOCATION, HeaderValue::from_str(&location).unwrap()),
+            (
+                header::EXPIRES,
+                HeaderValue::from_str(&expires.to_rfc2822()).unwrap(),
+            ),
+        ]),
     )
-        .into_response());
-
-    Ok(HttpResponse::Created()
-        .append_header((header::LOCATION, location.to_string()))
-        .append_header((header::EXPIRES, expires.to_rfc2822()))
-        .finish())
+        .into_response())
 }

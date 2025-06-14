@@ -6,7 +6,7 @@ use rustical_ical::{CalDateTime, CalendarObject, CalendarObjectType};
 use rustical_store::calendar_store::CalendarQuery;
 use rustical_store::synctoken::format_synctoken;
 use rustical_store::{Calendar, CalendarStore, Error};
-use rustical_store::{CollectionOperation, CollectionOperationType};
+use rustical_store::{CollectionOperation, CollectionOperationInfo};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};
 use tokio::sync::mpsc::Sender;
@@ -518,10 +518,8 @@ impl CalendarStore for SqliteCalendarStore {
 
         if let Some(cal) = cal {
             if let Err(err) = self.sender.try_send(CollectionOperation {
-                r#type: CollectionOperationType::Delete,
-                domain: rustical_store::CollectionOperationDomain::Calendar,
+                data: CollectionOperationInfo::Delete,
                 topic: cal.push_topic,
-                sync_token: None,
             }) {
                 error!("Push notification about deleted calendar failed: {err}");
             };
@@ -585,7 +583,7 @@ impl CalendarStore for SqliteCalendarStore {
         )
         .await?;
 
-        let synctoken = log_object_operation(
+        let sync_token = log_object_operation(
             &mut tx,
             &principal,
             &cal_id,
@@ -597,10 +595,8 @@ impl CalendarStore for SqliteCalendarStore {
         tx.commit().await.map_err(crate::Error::from)?;
 
         if let Err(err) = self.sender.try_send(CollectionOperation {
-            r#type: CollectionOperationType::Object,
-            domain: rustical_store::CollectionOperationDomain::Calendar,
+            data: CollectionOperationInfo::Content { sync_token },
             topic: self.get_calendar(&principal, &cal_id).await?.push_topic,
-            sync_token: Some(synctoken),
         }) {
             error!("Push notification about deleted calendar failed: {err}");
         };
@@ -619,15 +615,13 @@ impl CalendarStore for SqliteCalendarStore {
 
         Self::_delete_object(&mut *tx, principal, cal_id, id, use_trashbin).await?;
 
-        let synctoken =
+        let sync_token =
             log_object_operation(&mut tx, principal, cal_id, id, ChangeOperation::Delete).await?;
         tx.commit().await.map_err(crate::Error::from)?;
 
         if let Err(err) = self.sender.try_send(CollectionOperation {
-            r#type: CollectionOperationType::Object,
-            domain: rustical_store::CollectionOperationDomain::Calendar,
+            data: CollectionOperationInfo::Content { sync_token },
             topic: self.get_calendar(principal, cal_id).await?.push_topic,
-            sync_token: Some(synctoken),
         }) {
             error!("Push notification about deleted calendar failed: {err}");
         };
@@ -645,16 +639,14 @@ impl CalendarStore for SqliteCalendarStore {
 
         Self::_restore_object(&mut *tx, principal, cal_id, object_id).await?;
 
-        let synctoken =
+        let sync_token =
             log_object_operation(&mut tx, principal, cal_id, object_id, ChangeOperation::Add)
                 .await?;
         tx.commit().await.map_err(crate::Error::from)?;
 
         if let Err(err) = self.sender.try_send(CollectionOperation {
-            r#type: CollectionOperationType::Object,
-            domain: rustical_store::CollectionOperationDomain::Calendar,
+            data: CollectionOperationInfo::Content { sync_token },
             topic: self.get_calendar(principal, cal_id).await?.push_topic,
-            sync_token: Some(synctoken),
         }) {
             error!("Push notification about deleted calendar failed: {err}");
         };

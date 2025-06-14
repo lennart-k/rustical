@@ -1,5 +1,6 @@
 use crate::calendar::methods::get::route_get;
 use crate::calendar::methods::mkcalendar::route_mkcalendar;
+use crate::calendar::methods::post::route_post;
 use crate::calendar::methods::report::route_report_calendar;
 use crate::calendar::resource::CalendarResource;
 use crate::calendar_object::CalendarObjectResourceService;
@@ -50,7 +51,7 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
     type Principal = User;
     type PrincipalUri = CalDavPrincipalUri;
 
-    const DAV_HEADER: &str = "1, 3, access-control, calendar-access, calendar-proxy";
+    const DAV_HEADER: &str = "1, 3, access-control, calendar-access, calendar-proxy, webdav-push";
 
     async fn get_resource(
         &self,
@@ -122,6 +123,13 @@ impl<C: CalendarStore, S: SubscriptionStore> AxumMethods for CalendarResourceSer
     fn get() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
         Some(|state, req| {
             let mut service = Handler::with_state(route_get::<C, S>, state);
+            Box::pin(Service::call(&mut service, req))
+        })
+    }
+
+    fn post() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
+        Some(|state, req| {
+            let mut service = Handler::with_state(route_post::<C, S>, state);
             Box::pin(Service::call(&mut service, req))
         })
     }

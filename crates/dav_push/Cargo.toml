@@ -23,3 +23,8 @@ tokio.workspace = true
 rustical_dav.workspace = true
 rustical_store.workspace = true
 http.workspace = true
+base64 = "0.22"
+p256 = { version = "0.13", features = ["ecdh"] }
+rand.workspace = true
+ece = "2.3"
+axum.workspace = true

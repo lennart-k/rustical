@@ -9,7 +9,7 @@ use rustical_dav::extensions::{
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner, SupportedReportSet};
-use rustical_dav_push::DavPushExtension;
+use rustical_dav_push::{DavPushExtension, DavPushExtensionProp};
 use rustical_ical::CalDateTime;
 use rustical_store::Calendar;
 use rustical_store::auth::User;
@@ -58,7 +58,7 @@ pub enum CalendarProp {
 pub enum CalendarPropWrapper {
     Calendar(CalendarProp),
     SyncToken(SyncTokenExtensionProp),
-    // DavPush(DavPushExtensionProp),
+    DavPush(DavPushExtensionProp),
     Common(CommonPropertiesProp),
 }
 
@@ -168,9 +168,9 @@ impl Resource for CalendarResource {
             CalendarPropWrapperName::SyncToken(prop) => {
                 CalendarPropWrapper::SyncToken(SyncTokenExtension::get_prop(self, prop)?)
             }
-            // CalendarPropWrapperName::DavPush(prop) => {
-            //     CalendarPropWrapper::DavPush(DavPushExtension::get_prop(self, prop)?)
-            // }
+            CalendarPropWrapperName::DavPush(prop) => {
+                CalendarPropWrapper::DavPush(DavPushExtension::get_prop(self, prop)?)
+            }
             CalendarPropWrapperName::Common(prop) => CalendarPropWrapper::Common(
                 CommonPropertiesExtension::get_prop(self, puri, user, prop)?,
             ),
@@ -228,7 +228,7 @@ impl Resource for CalendarResource {
                 CalendarProp::MaxDateTime(_) => Err(rustical_dav::Error::PropReadOnly),
             },
             CalendarPropWrapper::SyncToken(prop) => SyncTokenExtension::set_prop(self, prop),
-            // CalendarPropWrapper::DavPush(prop) => DavPushExtension::set_prop(self, prop),
+            CalendarPropWrapper::DavPush(prop) => DavPushExtension::set_prop(self, prop),
             CalendarPropWrapper::Common(prop) => CommonPropertiesExtension::set_prop(self, prop),
         }
     }
@@ -272,7 +272,7 @@ impl Resource for CalendarResource {
                 CalendarPropName::MaxDateTime => Err(rustical_dav::Error::PropReadOnly),
             },
             CalendarPropWrapperName::SyncToken(prop) => SyncTokenExtension::remove_prop(self, prop),
-            // CalendarPropWrapperName::DavPush(prop) => DavPushExtension::remove_prop(self, prop),
+            CalendarPropWrapperName::DavPush(prop) => DavPushExtension::remove_prop(self, prop),
             CalendarPropWrapperName::Common(prop) => {
                 CommonPropertiesExtension::remove_prop(self, prop)
             }

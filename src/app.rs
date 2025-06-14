@@ -34,6 +34,7 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
     frontend_config: FrontendConfig,
     oidc_config: Option<OidcConfig>,
     nextcloud_login_config: NextcloudLoginConfig,
+    dav_push_enabled: bool,
 ) -> Router<()> {
     let combined_cal_store = Arc::new(CombinedCalendarStore::new(
         cal_store.clone(),
@@ -90,6 +91,13 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
             nextcloud_login_router(auth_provider.clone()),
         );
     }
+
+    if dav_push_enabled {
+        router = router.merge(rustical_dav_push::subscription_service(
+            subscription_store.clone(),
+        ));
+    }
+
     router
         .layer(
             SessionManagerLayer::new(session_store)

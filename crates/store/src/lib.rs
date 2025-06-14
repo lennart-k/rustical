@@ -22,22 +22,15 @@ pub use addressbook::Addressbook;
 pub use calendar::Calendar;
 
 #[derive(Debug, Clone)]
-pub enum CollectionOperationType {
+pub enum CollectionOperationInfo {
     // Sync-Token increased
-    Object,
+    Content { sync_token: String },
+    // Collection deleted
     Delete,
 }
 
 #[derive(Debug, Clone)]
-pub enum CollectionOperationDomain {
-    Calendar,
-    Addressbook,
-}
-
-#[derive(Debug, Clone)]
 pub struct CollectionOperation {
-    pub r#type: CollectionOperationType,
-    pub domain: CollectionOperationDomain,
     pub topic: String,
-    pub sync_token: Option<String>,
+    pub data: CollectionOperationInfo,
 }

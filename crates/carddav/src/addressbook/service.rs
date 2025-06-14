@@ -3,6 +3,7 @@ use super::methods::report::route_report_addressbook;
 use crate::address_object::AddressObjectResourceService;
 use crate::address_object::resource::AddressObjectResource;
 use crate::addressbook::methods::get::route_get;
+use crate::addressbook::methods::post::route_post;
 use crate::addressbook::methods::put::route_put;
 use crate::addressbook::resource::AddressbookResource;
 use crate::{CardDavPrincipalUri, Error};
@@ -53,7 +54,7 @@ impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
     type Principal = User;
     type PrincipalUri = CardDavPrincipalUri;
 
-    const DAV_HEADER: &str = "1, 3, access-control, addressbook";
+    const DAV_HEADER: &str = "1, 3, access-control, addressbook, webdav-push";
 
     async fn get_resource(
         &self,
@@ -126,6 +127,13 @@ impl<AS: AddressbookStore, S: SubscriptionStore> AxumMethods for AddressbookReso
     fn get() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
         Some(|state, req| {
             let mut service = Handler::with_state(route_get::<AS, S>, state);
+            Box::pin(Service::call(&mut service, req))
+        })
+    }
+
+    fn post() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
+        Some(|state, req| {
+            let mut service = Handler::with_state(route_post::<AS, S>, state);
             Box::pin(Service::call(&mut service, req))
         })
     }

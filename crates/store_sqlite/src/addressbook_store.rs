@@ -3,8 +3,8 @@ use async_trait::async_trait;
 use derive_more::derive::Constructor;
 use rustical_ical::AddressObject;
 use rustical_store::{
-    Addressbook, AddressbookStore, CollectionOperation, CollectionOperationDomain,
-    CollectionOperationType, Error, synctoken::format_synctoken,
+    Addressbook, AddressbookStore, CollectionOperation, CollectionOperationInfo, Error,
+    synctoken::format_synctoken,
 };
 use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};
 use tokio::sync::mpsc::Sender;
@@ -413,10 +413,8 @@ impl AddressbookStore for SqliteAddressbookStore {
 
         if let Some(addressbook) = addressbook {
             if let Err(err) = self.sender.try_send(CollectionOperation {
-                r#type: CollectionOperationType::Delete,
-                domain: CollectionOperationDomain::Addressbook,
+                data: CollectionOperationInfo::Delete,
                 topic: addressbook.push_topic,
-                sync_token: None,
             }) {
                 error!("Push notification about deleted addressbook failed: {err}");
             };
@@ -485,7 +483,7 @@ impl AddressbookStore for SqliteAddressbookStore {
         )
         .await?;
 
-        let synctoken = log_object_operation(
+        let sync_token = log_object_operation(
             &mut tx,
             &principal,
             &addressbook_id,
@@ -498,13 +496,11 @@ impl AddressbookStore for SqliteAddressbookStore {
         tx.commit().await.map_err(crate::Error::from)?;
 
         if let Err(err) = self.sender.try_send(CollectionOperation {
-            r#type: CollectionOperationType::Object,
-            domain: CollectionOperationDomain::Addressbook,
+            data: CollectionOperationInfo::Content { sync_token },
             topic: self
                 .get_addressbook(&principal, &addressbook_id, false)
                 .await?
                 .push_topic,
-            sync_token: Some(synctoken),
         }) {
             error!("Push notification about deleted addressbook failed: {err}");
         };
@@ -524,7 +520,7 @@ impl AddressbookStore for SqliteAddressbookStore {
 
         Self::_delete_object(&mut *tx, principal, addressbook_id, object_id, use_trashbin).await?;
 
-        let synctoken = log_object_operation(
+        let sync_token = log_object_operation(
             &mut tx,
             principal,
             addressbook_id,
@@ -536,16 +532,15 @@ impl AddressbookStore for SqliteAddressbookStore {
 
         tx.commit().await.map_err(crate::Error::from)?;
 
-        // TODO: Watch for errors here?
-        let _ = self.sender.try_send(CollectionOperation {
-            r#type: CollectionOperationType::Object,
-            domain: CollectionOperationDomain::Addressbook,
+        if let Err(err) = self.sender.try_send(CollectionOperation {
+            data: CollectionOperationInfo::Content { sync_token },
             topic: self
                 .get_addressbook(principal, addressbook_id, false)
                 .await?
                 .push_topic,
-            sync_token: Some(synctoken),
-        });
+        }) {
+            error!("Push notification about deleted addressbook failed: {err}");
+        };
         Ok(())
     }
 
@@ -560,7 +555,7 @@ impl AddressbookStore for SqliteAddressbookStore {
 
         Self::_restore_object(&mut *tx, principal, addressbook_id, object_id).await?;
 
-        let synctoken = log_object_operation(
+        let sync_token = log_object_operation(
             &mut tx,
             principal,
             addressbook_id,
@@ -571,16 +566,15 @@ impl AddressbookStore for SqliteAddressbookStore {
         .map_err(crate::Error::from)?;
         tx.commit().await.map_err(crate::Error::from)?;
 
-        // TODO: Watch for errors here?
-        let _ = self.sender.try_send(CollectionOperation {
-            r#type: CollectionOperationType::Object,
-            domain: CollectionOperationDomain::Addressbook,
+        if let Err(err) = self.sender.try_send(CollectionOperation {
+            data: CollectionOperationInfo::Content { sync_token },
             topic: self
                 .get_addressbook(principal, addressbook_id, false)
                 .await?
                 .push_topic,
-            sync_token: Some(synctoken),
-        });
+        }) {
+            error!("Push notification about deleted addressbook failed: {err}");
+        };
 
         Ok(())
     }

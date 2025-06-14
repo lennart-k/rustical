@@ -37,9 +37,14 @@ pub struct TracingConfig {
     pub opentelemetry: bool,
 }
 
+fn default_true() -> bool {
+    true
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields, default)]
 pub struct DavPushConfig {
+    #[serde(default = "default_true")]
     pub enabled: bool,
     #[serde(default)]
     // Allowed Push servers, accepts any by default

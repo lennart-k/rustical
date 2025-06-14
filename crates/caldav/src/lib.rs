@@ -14,7 +14,6 @@ pub mod calendar;
 pub mod calendar_object;
 pub mod error;
 pub mod principal;
-// mod subscription;
 
 pub use error::Error;
 
