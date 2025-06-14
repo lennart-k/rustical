@@ -33,8 +33,8 @@ pub(crate) async fn axum_route_copy<R: ResourceService>(
     let mut router = matchit::Router::new();
     router.insert(matched_path.as_str(), ()).unwrap();
     if let Ok(matchit::Match { params, .. }) = router.at(destination) {
-        let params: Vec<(&str, &str)> = params.iter().collect();
-        let params = matchit_serde::Params(&params);
+        let params =
+            matchit_serde::Params::try_from(&params).map_err(|_| crate::Error::Forbidden)?;
         let dest_path = R::PathComponents::deserialize(&ParamsDeserializer::new(params))
             .map_err(|_| crate::Error::Forbidden)?;
 
