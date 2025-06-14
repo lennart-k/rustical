@@ -28,6 +28,9 @@ pub enum Error {
 
     #[error("Precondition Failed")]
     PreconditionFailed,
+
+    #[error("Forbidden")]
+    Forbidden,
 }
 
 impl Error {
@@ -49,6 +52,7 @@ impl Error {
             Error::PropReadOnly => StatusCode::CONFLICT,
             Error::PreconditionFailed => StatusCode::PRECONDITION_FAILED,
             Self::IOError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::Forbidden => StatusCode::FORBIDDEN,
         }
     }
 }

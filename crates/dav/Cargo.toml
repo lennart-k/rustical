@@ -26,3 +26,5 @@ tokio.workspace = true
 http.workspace = true
 headers.workspace = true
 strum.workspace = true
+matchit.workspace = true
+matchit-serde.workspace = true

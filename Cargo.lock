@@ -1623,6 +1623,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "47e1ffaa40ddd1f3ed91f717a33c8c0ee23fff369e3aa8772b9605cc1d22f4c3"
 
 [[package]]
+name = "matchit-serde"
+version = "0.1.0"
+source = "git+https://github.com/lennart-k/matchit-serde?rev=a6efbcee#a6efbcee66deb95e2a1dad5bf770ab457ce4f3aa"
+dependencies = [
+ "derive_more",
+ "matchit",
+ "serde",
+ "thiserror 2.0.12",
+]
+
+[[package]]
 name = "md-5"
 version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2765,6 +2776,8 @@ dependencies = [
  "http",
  "itertools 0.14.0",
  "log",
+ "matchit",
+ "matchit-serde",
  "quick-xml",
  "rustical_xml",
  "serde",

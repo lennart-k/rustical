@@ -9,7 +9,13 @@ use serde::Deserialize;
 
 #[async_trait]
 pub trait ResourceService: Clone + Sized + Send + Sync + AxumMethods + 'static {
-    type PathComponents: for<'de> Deserialize<'de> + Sized + Send + Sync + Clone + 'static; // defines how the resource URI maps to parameters, i.e. /{principal}/{calendar} -> (String, String)
+    type PathComponents: std::fmt::Debug
+        + for<'de> Deserialize<'de>
+        + Sized
+        + Send
+        + Sync
+        + Clone
+        + 'static; // defines how the resource URI maps to parameters, i.e. /{principal}/{calendar} -> (String, String)
     type MemberType: Resource<Error = Self::Error, Principal = Self::Principal>
         + super::ResourceName;
     type Resource: Resource<Error = Self::Error, Principal = Self::Principal>;
@@ -45,6 +51,28 @@ pub trait ResourceService: Clone + Sized + Send + Sync + AxumMethods + 'static {
         _use_trashbin: bool,
     ) -> Result<(), Self::Error> {
         Err(crate::Error::Unauthorized.into())
+    }
+
+    // Returns whether an existing resource was overwritten
+    async fn copy_resource(
+        &self,
+        _path: &Self::PathComponents,
+        _destination: &Self::PathComponents,
+        _user: &Self::Principal,
+        _overwrite: bool,
+    ) -> Result<bool, Self::Error> {
+        Err(crate::Error::Forbidden.into())
+    }
+
+    // Returns whether an existing resource was overwritten
+    async fn move_resource(
+        &self,
+        _path: &Self::PathComponents,
+        _destination: &Self::PathComponents,
+        _user: &Self::Principal,
+        _overwrite: bool,
+    ) -> Result<bool, Self::Error> {
+        Err(crate::Error::Forbidden.into())
     }
 
     fn axum_service(self) -> AxumService<Self>
