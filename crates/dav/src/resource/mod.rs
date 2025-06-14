@@ -18,7 +18,7 @@ mod methods;
 mod principal_uri;
 mod resource_service;
 
-pub use axum_methods::AxumMethods;
+pub use axum_methods::{AxumMethods, MethodFunction};
 pub use axum_service::AxumService;
 pub use principal_uri::PrincipalUri;
 
