@@ -28,3 +28,4 @@ p256.workspace = true
 rand.workspace = true
 ece.workspace = true
 axum.workspace = true
+openssl.workspace = true

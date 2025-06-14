@@ -16,7 +16,7 @@ RUN case $TARGETPLATFORM in \
   *) echo "Unsupported platform ${TARGETPLATFORM}"; exit 1;;  \
   esac
 
-RUN apk add --no-cache musl-dev llvm19 clang \
+RUN apk add --no-cache musl-dev llvm19 clang perl pkgconf make \
   && rustup target add "$(cat /tmp/rust_target)" \
   && cargo install cargo-chef --locked \
   && rm -rf "$CARGO_HOME/registry"
