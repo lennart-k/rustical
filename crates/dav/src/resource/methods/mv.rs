@@ -6,7 +6,7 @@ use axum::{
     extract::{MatchedPath, Path, State},
     response::{IntoResponse, Response},
 };
-use http::{HeaderMap, StatusCode};
+use http::{HeaderMap, StatusCode, Uri};
 use matchit_serde::ParamsDeserializer;
 use serde::Deserialize;
 use tracing::instrument;
@@ -26,6 +26,9 @@ pub(crate) async fn axum_route_move<R: ResourceService>(
         .ok_or(crate::Error::Forbidden)?
         .to_str()
         .map_err(|_| crate::Error::Forbidden)?;
+    let destination_uri: Uri = destination.parse().map_err(|_| crate::Error::Forbidden)?;
+    // TODO: Check that host also matches
+    let destination = destination_uri.path();
 
     let mut router = matchit::Router::new();
     router.insert(matched_path.as_str(), ()).unwrap();
