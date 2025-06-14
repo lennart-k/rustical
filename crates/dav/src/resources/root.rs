@@ -24,7 +24,9 @@ impl<PR: Resource, P: Principal> Resource for RootResource<PR, P> {
     type Error = PR::Error;
     type Principal = P;
 
-    const IS_COLLECTION: bool = true;
+    fn is_collection(&self) -> bool {
+        true
+    }
 
     fn get_resourcetype(&self) -> Resourcetype {
         Resourcetype(&[ResourcetypeInner(

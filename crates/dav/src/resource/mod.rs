@@ -37,7 +37,7 @@ pub trait Resource: Clone + Send + 'static {
     type Error: From<crate::Error>;
     type Principal: Principal;
 
-    const IS_COLLECTION: bool;
+    fn is_collection(&self) -> bool;
 
     fn get_resourcetype(&self) -> Resourcetype;
 
@@ -111,7 +111,7 @@ pub trait Resource: Clone + Send + 'static {
     ) -> Result<ResponseElement<Self::Prop>, Self::Error> {
         // Collections have a trailing slash
         let mut path = path.to_string();
-        if Self::IS_COLLECTION && !path.ends_with('/') {
+        if self.is_collection() && !path.ends_with('/') {
             path.push('/');
         }
 

@@ -27,7 +27,9 @@ impl Resource for CalendarObjectResource {
     type Error = Error;
     type Principal = User;
 
-    const IS_COLLECTION: bool = false;
+    fn is_collection(&self) -> bool {
+        false
+    }
 
     fn get_resourcetype(&self) -> Resourcetype {
         Resourcetype(&[])

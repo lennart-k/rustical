@@ -97,7 +97,9 @@ impl Resource for CalendarResource {
     type Error = Error;
     type Principal = User;
 
-    const IS_COLLECTION: bool = true;
+    fn is_collection(&self) -> bool {
+        true
+    }
 
     fn get_resourcetype(&self) -> Resourcetype {
         if self.cal.subscription_url.is_none() {
