@@ -126,12 +126,18 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
                     if response.status().is_server_error() {
                         tracing::error!("server error");
                     } else if response.status().is_client_error() {
-                        if response.status() == StatusCode::UNAUTHORIZED {
-                            // The iOS client always tries an unauthenticated request first so
-                            // logging 401's as errors would clog up our logs
-                            tracing::debug!("unauthorized");
-                        } else {
-                            tracing::error!("client error");
+                        match response.status() {
+                            StatusCode::UNAUTHORIZED => {
+                                // The iOS client always tries an unauthenticated request first so
+                                // logging 401's as errors would clog up our logs
+                                tracing::debug!("unauthorized");
+                            }
+                            StatusCode::NOT_FOUND => {
+                                tracing::warn!("client error");
+                            }
+                            _ => {
+                                tracing::error!("client error");
+                            }
                         }
                     };
                 })
