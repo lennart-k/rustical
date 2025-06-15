@@ -250,7 +250,7 @@ impl SqliteAddressbookStore {
     ) -> Result<AddressObject, rustical_store::Error> {
         Ok(sqlx::query_as!(
             AddressObjectRow,
-            "SELECT id, vcf FROM addressobjects WHERE (principal, addressbook_id, id) = (?, ?, ?) AND ((deleted_at IS NULL) or ?)",
+            "SELECT id, vcf FROM addressobjects WHERE (principal, addressbook_id, id) = (?, ?, ?) AND ((deleted_at IS NULL) OR ?)",
             principal,
             addressbook_id,
             object_id,

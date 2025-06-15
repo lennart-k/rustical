@@ -126,13 +126,14 @@ impl<AS: AddressbookStore> CalendarStore for ContactBirthdayStore<AS> {
         principal: &str,
         cal_id: &str,
         object_id: &str,
+        show_deleted: bool,
     ) -> Result<CalendarObject, Error> {
         let cal_id = cal_id
             .strip_prefix(BIRTHDAYS_PREFIX)
             .ok_or(Error::NotFound)?;
         let (addressobject_id, date_type) = object_id.rsplit_once("-").ok_or(Error::NotFound)?;
         self.0
-            .get_object(principal, cal_id, addressobject_id, false)
+            .get_object(principal, cal_id, addressobject_id, show_deleted)
             .await?
             .get_significant_dates()?
             .remove(date_type)

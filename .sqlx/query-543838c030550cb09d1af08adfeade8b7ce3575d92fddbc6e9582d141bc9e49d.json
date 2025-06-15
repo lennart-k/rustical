@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, vcf FROM addressobjects WHERE (principal, addressbook_id, id) = (?, ?, ?) AND ((deleted_at IS NULL) or ?)",
+  "query": "SELECT id, ics FROM calendarobjects WHERE (principal, cal_id, id) = (?, ?, ?) AND ((deleted_at IS NULL) OR ?)",
   "describe": {
     "columns": [
       {
@@ -9,7 +9,7 @@
         "type_info": "Text"
       },
       {
-        "name": "vcf",
+        "name": "ics",
         "ordinal": 1,
         "type_info": "Text"
       }
@@ -22,5 +22,5 @@
       false
     ]
   },
-  "hash": "395e40a7b3333b79bc2ad50a123d99f74bc2712a16257ee2119dd211fdb61f7e"
+  "hash": "543838c030550cb09d1af08adfeade8b7ce3575d92fddbc6e9582d141bc9e49d"
 }

@@ -96,14 +96,15 @@ impl<CS: CalendarStore, BS: CalendarStore> CalendarStore for CombinedCalendarSto
         principal: &str,
         cal_id: &str,
         object_id: &str,
+        show_deleted: bool,
     ) -> Result<CalendarObject, Error> {
         if cal_id.starts_with(BIRTHDAYS_PREFIX) {
             self.birthday_store
-                .get_object(principal, cal_id, object_id)
+                .get_object(principal, cal_id, object_id, show_deleted)
                 .await
         } else {
             self.cal_store
-                .get_object(principal, cal_id, object_id)
+                .get_object(principal, cal_id, object_id, show_deleted)
                 .await
         }
     }

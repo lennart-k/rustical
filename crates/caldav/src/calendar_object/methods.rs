@@ -33,7 +33,7 @@ pub async fn get_event<C: CalendarStore>(
     }
 
     let event = cal_store
-        .get_object(&principal, &calendar_id, &object_id)
+        .get_object(&principal, &calendar_id, &object_id, false)
         .await?;
 
     let mut resp = Response::builder().status(StatusCode::OK);

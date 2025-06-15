@@ -58,6 +58,7 @@ pub trait CalendarStore: Send + Sync + 'static {
         principal: &str,
         cal_id: &str,
         object_id: &str,
+        show_deleted: bool,
     ) -> Result<CalendarObject, Error>;
     async fn put_object(
         &self,

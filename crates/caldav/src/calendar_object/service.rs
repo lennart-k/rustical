@@ -61,7 +61,7 @@ impl<C: CalendarStore> ResourceService for CalendarObjectResourceService<C> {
     ) -> Result<Self::Resource, Self::Error> {
         let object = self
             .cal_store
-            .get_object(principal, calendar_id, object_id)
+            .get_object(principal, calendar_id, object_id, false)
             .await?;
         Ok(CalendarObjectResource {
             object,

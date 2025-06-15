@@ -296,13 +296,15 @@ impl SqliteCalendarStore {
         principal: &str,
         cal_id: &str,
         object_id: &str,
+        show_deleted: bool,
     ) -> Result<CalendarObject, Error> {
         sqlx::query_as!(
             CalendarObjectRow,
-            "SELECT id, ics FROM calendarobjects WHERE (principal, cal_id, id) = (?, ?, ?)",
+            "SELECT id, ics FROM calendarobjects WHERE (principal, cal_id, id) = (?, ?, ?) AND ((deleted_at IS NULL) OR ?)",
             principal,
             cal_id,
-            object_id
+            object_id,
+            show_deleted
         )
         .fetch_one(executor)
         .await
@@ -454,7 +456,7 @@ impl SqliteCalendarStore {
             .unwrap_or(0);
 
         for Row { object_id, .. } in changes {
-            match Self::_get_object(&mut *conn, principal, cal_id, &object_id).await {
+            match Self::_get_object(&mut *conn, principal, cal_id, &object_id, false).await {
                 Ok(object) => objects.push(object),
                 Err(rustical_store::Error::NotFound) => deleted_objects.push(object_id),
                 Err(err) => return Err(err),
@@ -557,8 +559,9 @@ impl CalendarStore for SqliteCalendarStore {
         principal: &str,
         cal_id: &str,
         object_id: &str,
+        show_deleted: bool,
     ) -> Result<CalendarObject, Error> {
-        Self::_get_object(&self.db, principal, cal_id, object_id).await
+        Self::_get_object(&self.db, principal, cal_id, object_id, show_deleted).await
     }
 
     #[instrument]
