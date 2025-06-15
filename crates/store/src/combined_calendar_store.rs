@@ -80,9 +80,11 @@ impl<CS: CalendarStore, BS: CalendarStore> CalendarStore for CombinedCalendarSto
         use_trashbin: bool,
     ) -> Result<(), Error> {
         if cal_id.starts_with(BIRTHDAYS_PREFIX) {
-            Err(Error::ReadOnly)
-        } else {
             self.birthday_store
+                .delete_object(principal, cal_id, object_id, use_trashbin)
+                .await
+        } else {
+            self.cal_store
                 .delete_object(principal, cal_id, object_id, use_trashbin)
                 .await
         }
@@ -237,4 +239,3 @@ impl<CS: CalendarStore, BS: CalendarStore> CalendarStore for CombinedCalendarSto
         }
     }
 }
-
