@@ -1,4 +1,5 @@
 use crate::xml::TagList;
+use headers::{CacheControl, ContentType, HeaderMapExt};
 use http::StatusCode;
 use quick_xml::name::Namespace;
 use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
@@ -109,7 +110,6 @@ impl<T1: XmlSerialize, T2: XmlSerialize> axum::response::IntoResponse
 {
     fn into_response(self) -> axum::response::Response {
         use axum::body::Body;
-        use http::header;
 
         let mut output: Vec<_> = b"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".into();
         let mut writer = quick_xml::Writer::new_with_indent(&mut output, b' ', 4);
@@ -118,9 +118,9 @@ impl<T1: XmlSerialize, T2: XmlSerialize> axum::response::IntoResponse
         }
 
         let mut resp = axum::response::Response::builder().status(StatusCode::MULTI_STATUS);
-        resp.headers_mut()
-            .unwrap()
-            .insert(header::CONTENT_TYPE, "application/xml".try_into().unwrap());
+        let hdrs = resp.headers_mut().unwrap();
+        hdrs.typed_insert(ContentType::xml());
+        hdrs.typed_insert(CacheControl::new().with_no_cache());
         resp.body(Body::from(output)).unwrap()
     }
 }
