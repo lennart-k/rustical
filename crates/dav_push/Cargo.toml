@@ -24,7 +24,6 @@ rustical_dav.workspace = true
 rustical_store.workspace = true
 http.workspace = true
 base64.workspace = true
-p256.workspace = true
 rand.workspace = true
 ece.workspace = true
 axum.workspace = true
