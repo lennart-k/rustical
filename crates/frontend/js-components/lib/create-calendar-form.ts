@@ -1,5 +1,6 @@
 import { html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { Ref, createRef, ref } from 'lit/directives/ref.js';
 import { createClient } from "webdav";
 
 @customElement("create-calendar-form")
@@ -30,12 +31,16 @@ export class CreateCalendarForm extends LitElement {
   @property()
   components: Set<"VEVENT" | "VTODO" | "VJOURNAL"> = new Set()
 
+  dialog: Ref<HTMLDialogElement> = createRef()
+  form: Ref<HTMLFormElement> = createRef()
+
 
   override render() {
     return html`
-      <section>
+      <button @click=${() => this.dialog.value.showModal()}>Create calendar</button>
+      <dialog ${ref(this.dialog)}>
         <h3>Create calendar</h3>
-        <form @submit=${this.submit}>
+        <form @submit=${this.submit} ${ref(this.form)}>
           <label>
             id
             <input type="text" name="id" @change=${e => this.id = e.target.value} />
@@ -69,9 +74,10 @@ export class CreateCalendarForm extends LitElement {
           `)}
           <br>
           <button type="submit">Create</button>
-        </form>
-      </section>
-    `
+          <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close(); this.form.value.reset() }}> Cancel </button>
+      </form>
+      </dialog>
+        `
   }
 
   async submit(e: SubmitEvent) {
@@ -89,7 +95,7 @@ export class CreateCalendarForm extends LitElement {
       alert("No calendar components selected")
       return
     }
-    await this.client.createDirectory(`/principal/${this.user}/${this.id}`, {
+    await this.client.createDirectory(`/ principal / ${this.user}/${this.id}`, {
       data: `
       <mkcol xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CS="http://calendarserver.org/ns/" xmlns:ICAL="http://apple.com/ns/ical/">
         <set>

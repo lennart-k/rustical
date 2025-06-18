@@ -1,45 +1,49 @@
-import { i as d, x as m } from "./lit-Dq9MfRDi.mjs";
-import { n, t as c } from "./property-DwhV4xIV.mjs";
-import { a as u } from "./webdav-Bz4I5vNH.mjs";
-var h = Object.defineProperty, y = Object.getOwnPropertyDescriptor, r = (e, a, o, s) => {
-  for (var t = s > 1 ? void 0 : s ? y(a, o) : a, p = e.length - 1, l; p >= 0; p--)
-    (l = e[p]) && (t = (s ? l(a, o, t) : l(t)) || t);
-  return s && t && h(a, o, t), t;
+import { i as c, x as u } from "./lit-CWlWuEHk.mjs";
+import { e as d, n as m, a as o, t as h } from "./ref-DuYNkSJ_.mjs";
+import { a as b } from "./webdav-Bz4I5vNH.mjs";
+var y = Object.defineProperty, f = Object.getOwnPropertyDescriptor, a = (t, s, l, r) => {
+  for (var e = r > 1 ? void 0 : r ? f(s, l) : s, n = t.length - 1, p; n >= 0; n--)
+    (p = t[n]) && (e = (r ? p(s, l, e) : p(e)) || e);
+  return r && e && y(s, l, e), e;
 };
-let i = class extends d {
+let i = class extends c {
   constructor() {
-    super(), this.client = u("/carddav"), this.user = "", this.id = "", this.displayname = "", this.description = "";
+    super(), this.client = b("/carddav"), this.user = "", this.id = "", this.displayname = "", this.description = "", this.dialog = d(), this.form = d();
   }
   createRenderRoot() {
     return this;
   }
   render() {
-    return m`
-      <section>
-        <h3>Create calendar</h3>
-        <form @submit=${this.submit}>
+    return u`
+      <button @click=${() => this.dialog.value.showModal()}>Create addressbook</button>
+      <dialog ${m(this.dialog)}>
+        <h3>Create addressbook</h3>
+        <form @submit=${this.submit} ${m(this.form)}>
           <label>
             id
-            <input type="text" name="id" @change=${(e) => this.id = e.target.value} />
+            <input type="text" name="id" @change=${(t) => this.id = t.target.value} />
           </label>
           <br>
           <label>
             Displayname
-            <input type="text" name="displayname" value=${this.displayname} @change=${(e) => this.displayname = e.target.value} />
+            <input type="text" name="displayname" value=${this.displayname} @change=${(t) => this.displayname = t.target.value} />
           </label>
           <br>
           <label>
             Description
-            <input type="text" name="description" @change=${(e) => this.description = e.target.value} />
+            <input type="text" name="description" @change=${(t) => this.description = t.target.value} />
           </label>
           <br>
           <button type="submit">Create</button>
+          <button type="submit" @click=${(t) => {
+      t.preventDefault(), this.dialog.value.close(), this.form.value.reset();
+    }}> Cancel </button>
         </form>
-      </section>
+      </dialog>
     `;
   }
-  async submit(e) {
-    if (console.log(this.displayname), e.preventDefault(), !this.id) {
+  async submit(t) {
+    if (console.log(this.displayname), t.preventDefault(), !this.id) {
       alert("Empty id");
       return;
     }
@@ -61,20 +65,20 @@ let i = class extends d {
     }), window.location.reload(), null;
   }
 };
-r([
-  n()
+a([
+  o()
 ], i.prototype, "user", 2);
-r([
-  n()
+a([
+  o()
 ], i.prototype, "id", 2);
-r([
-  n()
+a([
+  o()
 ], i.prototype, "displayname", 2);
-r([
-  n()
+a([
+  o()
 ], i.prototype, "description", 2);
-i = r([
-  c("create-addressbook-form")
+i = a([
+  h("create-addressbook-form")
 ], i);
 export {
   i as CreateAddressbookForm

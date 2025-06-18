@@ -543,6 +543,7 @@ const z = y.litElementPolyfillSupport;
 z == null || z({ LitElement: T });
 (y.litElementVersions ?? (y.litElementVersions = [])).push("4.2.0");
 export {
+  d as E,
   et as f,
   T as i,
   j as u,

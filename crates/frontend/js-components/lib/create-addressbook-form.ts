@@ -1,5 +1,6 @@
 import { html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { Ref, createRef, ref } from 'lit/directives/ref.js';
 import { createClient } from "webdav";
 
 @customElement("create-addressbook-form")
@@ -24,12 +25,15 @@ export class CreateAddressbookForm extends LitElement {
   @property()
   description: String = ''
 
+  dialog: Ref<HTMLDialogElement> = createRef()
+  form: Ref<HTMLFormElement> = createRef()
 
   override render() {
     return html`
-      <section>
-        <h3>Create calendar</h3>
-        <form @submit=${this.submit}>
+      <button @click=${() => this.dialog.value.showModal()}>Create addressbook</button>
+      <dialog ${ref(this.dialog)}>
+        <h3>Create addressbook</h3>
+        <form @submit=${this.submit} ${ref(this.form)}>
           <label>
             id
             <input type="text" name="id" @change=${e => this.id = e.target.value} />
@@ -46,8 +50,9 @@ export class CreateAddressbookForm extends LitElement {
           </label>
           <br>
           <button type="submit">Create</button>
+          <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close(); this.form.value.reset() }}> Cancel </button>
         </form>
-      </section>
+      </dialog>
     `
   }
 
