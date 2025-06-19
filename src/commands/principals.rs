@@ -6,7 +6,7 @@ use figment::{
     providers::{Env, Format, Toml},
 };
 use password_hash::{PasswordHasher, SaltString, rand_core::OsRng};
-use rustical_store::auth::{AuthenticationProvider, User, user::PrincipalType};
+use rustical_store::auth::{AuthenticationProvider, Principal, PrincipalType};
 
 #[derive(Parser, Debug)]
 pub struct PrincipalsArgs {
@@ -99,7 +99,7 @@ pub async fn cmd_principals(args: PrincipalsArgs) -> anyhow::Result<()> {
             };
             principal_store
                 .insert_principal(
-                    User {
+                    Principal {
                         id,
                         displayname: name,
                         principal_type: principal_type.unwrap_or_default(),

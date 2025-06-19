@@ -1,17 +1,26 @@
 pub mod middleware;
-pub mod user;
+mod principal;
 use crate::error::Error;
 use async_trait::async_trait;
 
+pub use principal::{AppToken, Principal, PrincipalType};
+
 #[async_trait]
 pub trait AuthenticationProvider: Send + Sync + 'static {
-    async fn get_principals(&self) -> Result<Vec<User>, crate::Error>;
-    async fn get_principal(&self, id: &str) -> Result<Option<User>, crate::Error>;
+    async fn get_principals(&self) -> Result<Vec<Principal>, crate::Error>;
+    async fn get_principal(&self, id: &str) -> Result<Option<Principal>, crate::Error>;
     async fn remove_principal(&self, id: &str) -> Result<(), crate::Error>;
-    async fn insert_principal(&self, user: User, overwrite: bool) -> Result<(), crate::Error>;
-    async fn validate_password(&self, user_id: &str, password: &str)
-    -> Result<Option<User>, Error>;
-    async fn validate_app_token(&self, user_id: &str, token: &str) -> Result<Option<User>, Error>;
+    async fn insert_principal(&self, user: Principal, overwrite: bool) -> Result<(), crate::Error>;
+    async fn validate_password(
+        &self,
+        user_id: &str,
+        password: &str,
+    ) -> Result<Option<Principal>, Error>;
+    async fn validate_app_token(
+        &self,
+        user_id: &str,
+        token: &str,
+    ) -> Result<Option<Principal>, Error>;
     /// Returns a token identifier
     async fn add_app_token(
         &self,
@@ -28,5 +37,3 @@ pub trait AuthenticationProvider: Send + Sync + 'static {
 }
 
 pub use middleware::AuthenticationMiddleware;
-use user::AppToken;
-pub use user::User;

@@ -10,7 +10,7 @@ use percent_encoding::{CONTROLS, utf8_percent_encode};
 use rustical_dav::privileges::UserPrivilege;
 use rustical_dav::resource::Resource;
 use rustical_ical::AddressObject;
-use rustical_store::auth::User;
+use rustical_store::auth::Principal;
 use rustical_store::{AddressbookStore, SubscriptionStore};
 use std::str::FromStr;
 use tracing::instrument;
@@ -19,7 +19,7 @@ use tracing::instrument;
 pub async fn route_get<AS: AddressbookStore, S: SubscriptionStore>(
     Path((principal, addressbook_id)): Path<(String, String)>,
     State(AddressbookResourceService { addr_store, .. }): State<AddressbookResourceService<AS, S>>,
-    user: User,
+    user: Principal,
 ) -> Result<Response, Error> {
     if !user.is_principal(&principal) {
         return Err(Error::Unauthorized);

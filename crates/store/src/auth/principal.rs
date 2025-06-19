@@ -78,8 +78,7 @@ pub struct AppToken {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-// TODO: Rename this to Principal
-pub struct User {
+pub struct Principal {
     pub id: String,
     pub displayname: Option<String>,
     #[serde(default)]
@@ -89,7 +88,7 @@ pub struct User {
     pub memberships: Vec<String>,
 }
 
-impl User {
+impl Principal {
     /// Returns true if the user is either
     /// - the principal itself
     /// - has full access to the prinicpal (is member)
@@ -114,7 +113,7 @@ impl User {
     }
 }
 
-impl rustical_dav::Principal for User {
+impl rustical_dav::Principal for Principal {
     fn get_id(&self) -> &str {
         &self.id
     }
@@ -134,7 +133,7 @@ impl IntoResponse for UnauthorizedError {
     }
 }
 
-impl<S: Send + Sync + Clone> FromRequestParts<S> for User {
+impl<S: Send + Sync + Clone> FromRequestParts<S> for Principal {
     type Rejection = UnauthorizedError;
 
     async fn from_request_parts(
@@ -149,7 +148,7 @@ impl<S: Send + Sync + Clone> FromRequestParts<S> for User {
     }
 }
 
-impl<S: Send + Sync + Clone> OptionalFromRequestParts<S> for User {
+impl<S: Send + Sync + Clone> OptionalFromRequestParts<S> for Principal {
     type Rejection = Infallible;
 
     async fn from_request_parts(

@@ -9,7 +9,7 @@ use async_trait::async_trait;
 use axum::{extract::Request, handler::Handler, response::Response};
 use futures_util::future::BoxFuture;
 use rustical_dav::resource::{AxumMethods, ResourceService};
-use rustical_store::{CalendarStore, auth::User};
+use rustical_store::{CalendarStore, auth::Principal};
 use serde::{Deserialize, Deserializer};
 use std::{convert::Infallible, sync::Arc};
 use tower::Service;
@@ -46,7 +46,7 @@ impl<C: CalendarStore> ResourceService for CalendarObjectResourceService<C> {
     type Resource = CalendarObjectResource;
     type MemberType = CalendarObjectResource;
     type Error = Error;
-    type Principal = User;
+    type Principal = Principal;
     type PrincipalUri = CalDavPrincipalUri;
 
     const DAV_HEADER: &str = "1, 3, access-control, calendar-access";

@@ -13,7 +13,7 @@ use rustical_dav::{
 };
 use rustical_store::{
     AddressbookStore,
-    auth::User,
+    auth::Principal,
     synctoken::{format_synctoken, parse_synctoken},
 };
 
@@ -21,7 +21,7 @@ pub async fn handle_sync_collection<AS: AddressbookStore>(
     sync_collection: &SyncCollectionRequest<AddressObjectPropWrapperName>,
     path: &str,
     puri: &impl PrincipalUri,
-    user: &User,
+    user: &Principal,
     principal: &str,
     addressbook_id: &str,
     addr_store: &AS,

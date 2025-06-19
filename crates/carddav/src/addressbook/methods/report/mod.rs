@@ -9,7 +9,7 @@ use axum::{
     response::IntoResponse,
 };
 use rustical_dav::xml::{PropfindType, sync_collection::SyncCollectionRequest};
-use rustical_store::{AddressbookStore, SubscriptionStore, auth::User};
+use rustical_store::{AddressbookStore, SubscriptionStore, auth::Principal};
 use rustical_xml::{XmlDeserialize, XmlDocument};
 use sync_collection::handle_sync_collection;
 use tracing::instrument;
@@ -37,7 +37,7 @@ impl ReportRequest {
 #[instrument(skip(addr_store))]
 pub async fn route_report_addressbook<AS: AddressbookStore, S: SubscriptionStore>(
     Path((principal, addressbook_id)): Path<(String, String)>,
-    user: User,
+    user: Principal,
     OriginalUri(uri): OriginalUri,
     Extension(puri): Extension<CardDavPrincipalUri>,
     State(AddressbookResourceService { addr_store, .. }): State<AddressbookResourceService<AS, S>>,

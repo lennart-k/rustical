@@ -5,7 +5,7 @@ use axum::{extract::Request, handler::Handler, response::Response};
 use derive_more::derive::Constructor;
 use futures_util::future::BoxFuture;
 use rustical_dav::resource::{AxumMethods, ResourceService};
-use rustical_store::{AddressbookStore, auth::User};
+use rustical_store::{AddressbookStore, auth::Principal};
 use serde::{Deserialize, Deserializer};
 use std::{convert::Infallible, sync::Arc};
 use tower::Service;
@@ -37,7 +37,7 @@ impl<AS: AddressbookStore> ResourceService for AddressObjectResourceService<AS> 
     type Resource = AddressObjectResource;
     type MemberType = AddressObjectResource;
     type Error = Error;
-    type Principal = User;
+    type Principal = Principal;
     type PrincipalUri = CardDavPrincipalUri;
 
     const DAV_HEADER: &str = "1, 3, access-control, addressbook";

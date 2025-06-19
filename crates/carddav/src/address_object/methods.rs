@@ -12,7 +12,7 @@ use rustical_dav::privileges::UserPrivilege;
 use rustical_dav::resource::Resource;
 use rustical_ical::AddressObject;
 use rustical_store::AddressbookStore;
-use rustical_store::auth::User;
+use rustical_store::auth::Principal;
 use std::str::FromStr;
 use tracing::instrument;
 
@@ -24,7 +24,7 @@ pub async fn get_object<AS: AddressbookStore>(
         object_id,
     }): Path<AddressObjectPathComponents>,
     State(AddressObjectResourceService { addr_store }): State<AddressObjectResourceService<AS>>,
-    user: User,
+    user: Principal,
 ) -> Result<Response, Error> {
     if !user.is_principal(&principal) {
         return Err(Error::Unauthorized);
@@ -60,7 +60,7 @@ pub async fn put_object<AS: AddressbookStore>(
         object_id,
     }): Path<AddressObjectPathComponents>,
     State(AddressObjectResourceService { addr_store }): State<AddressObjectResourceService<AS>>,
-    user: User,
+    user: Principal,
     mut if_none_match: Option<TypedHeader<IfNoneMatch>>,
     header_map: HeaderMap,
     body: String,

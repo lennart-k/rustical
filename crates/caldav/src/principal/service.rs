@@ -5,7 +5,7 @@ use crate::{CalDavPrincipalUri, Error};
 use async_trait::async_trait;
 use axum::Router;
 use rustical_dav::resource::{AxumMethods, ResourceService};
-use rustical_store::auth::{AuthenticationProvider, User};
+use rustical_store::auth::{AuthenticationProvider, Principal};
 use rustical_store::{CalendarStore, SubscriptionStore};
 use std::sync::Arc;
 
@@ -40,7 +40,7 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Resour
     type MemberType = CalendarResource;
     type Resource = PrincipalResource;
     type Error = Error;
-    type Principal = User;
+    type Principal = Principal;
     type PrincipalUri = CalDavPrincipalUri;
 
     const DAV_HEADER: &str = "1, 3, access-control, calendar-access, calendar-proxy";

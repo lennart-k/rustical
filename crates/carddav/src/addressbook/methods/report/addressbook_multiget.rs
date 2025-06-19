@@ -10,7 +10,7 @@ use rustical_dav::{
     xml::{MultistatusElement, PropfindType, multistatus::ResponseElement},
 };
 use rustical_ical::AddressObject;
-use rustical_store::{AddressbookStore, auth::User};
+use rustical_store::{AddressbookStore, auth::Principal};
 use rustical_xml::XmlDeserialize;
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
@@ -63,7 +63,7 @@ pub async fn handle_addressbook_multiget<AS: AddressbookStore>(
     prop: &PropfindType<AddressObjectPropWrapperName>,
     path: &str,
     puri: &impl PrincipalUri,
-    user: &User,
+    user: &Principal,
     principal: &str,
     cal_id: &str,
     addr_store: &AS,

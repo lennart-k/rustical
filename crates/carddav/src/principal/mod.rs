@@ -5,7 +5,7 @@ use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
 use rustical_dav::xml::{
     GroupMemberSet, GroupMembership, HrefElement, Resourcetype, ResourcetypeInner,
 };
-use rustical_store::auth::User;
+use rustical_store::auth::Principal;
 
 mod service;
 pub use service::*;
@@ -14,7 +14,7 @@ pub use prop::*;
 
 #[derive(Debug, Clone)]
 pub struct PrincipalResource {
-    principal: User,
+    principal: Principal,
     members: Vec<String>,
 }
 
@@ -27,7 +27,7 @@ impl ResourceName for PrincipalResource {
 impl Resource for PrincipalResource {
     type Prop = PrincipalPropWrapper;
     type Error = Error;
-    type Principal = User;
+    type Principal = Principal;
 
     fn is_collection(&self) -> bool {
         true
@@ -43,7 +43,7 @@ impl Resource for PrincipalResource {
     fn get_prop(
         &self,
         puri: &impl PrincipalUri,
-        user: &User,
+        user: &Principal,
         prop: &PrincipalPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
         let principal_href = HrefElement::new(puri.principal_uri(&self.principal.id));
@@ -99,7 +99,7 @@ impl Resource for PrincipalResource {
         Some(&self.principal.id)
     }
 
-    fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
+    fn get_user_privileges(&self, user: &Principal) -> Result<UserPrivilegeSet, Self::Error> {
         Ok(UserPrivilegeSet::owner_only(
             user.is_principal(&self.principal.id),
         ))

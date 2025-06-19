@@ -21,7 +21,7 @@ use rustical_dav::{
     },
 };
 use rustical_ical::CalendarObject;
-use rustical_store::{CalendarStore, SubscriptionStore, auth::User};
+use rustical_store::{CalendarStore, SubscriptionStore, auth::Principal};
 use rustical_xml::{XmlDeserialize, XmlDocument};
 use sync_collection::handle_sync_collection;
 use tracing::instrument;
@@ -56,7 +56,7 @@ fn objects_response(
     path: &str,
     principal: &str,
     puri: &impl PrincipalUri,
-    user: &User,
+    user: &Principal,
     prop: &PropfindType<CalendarObjectPropWrapperName>,
 ) -> Result<MultistatusElement<CalendarObjectPropWrapper, String>, Error> {
     let mut responses = Vec::new();
@@ -90,7 +90,7 @@ fn objects_response(
 #[instrument(skip(cal_store))]
 pub async fn route_report_calendar<C: CalendarStore, S: SubscriptionStore>(
     Path((principal, cal_id)): Path<(String, String)>,
-    user: User,
+    user: Principal,
     Extension(puri): Extension<CalDavPrincipalUri>,
     State(CalendarResourceService { cal_store, .. }): State<CalendarResourceService<C, S>>,
     OriginalUri(uri): OriginalUri,

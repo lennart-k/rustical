@@ -12,13 +12,13 @@ use headers::UserAgent;
 use http::StatusCode;
 use rustical_store::{
     Addressbook, AddressbookStore, Calendar, CalendarStore,
-    auth::{AuthenticationProvider, User, user::AppToken},
+    auth::{AppToken, AuthenticationProvider, Principal},
 };
 
 #[derive(Template, WebTemplate)]
 #[template(path = "pages/user.html")]
 pub struct UserPage {
-    pub user: User,
+    pub user: Principal,
     pub app_tokens: Vec<AppToken>,
     pub calendars: Vec<Calendar>,
     pub deleted_calendars: Vec<Calendar>,
@@ -39,7 +39,7 @@ pub async fn route_user_named<
     Extension(auth_provider): Extension<Arc<AP>>,
     TypedHeader(user_agent): TypedHeader<UserAgent>,
     Host(host): Host,
-    user: User,
+    user: Principal,
 ) -> impl IntoResponse {
     if user_id != user.id {
         return StatusCode::UNAUTHORIZED.into_response();
@@ -81,11 +81,11 @@ pub async fn route_user_named<
     .into_response()
 }
 
-pub async fn route_get_home(user: User) -> Redirect {
+pub async fn route_get_home(user: Principal) -> Redirect {
     Redirect::to(&format!("/frontend/user/{}", user.id))
 }
 
-pub async fn route_root(user: Option<User>) -> Redirect {
+pub async fn route_root(user: Option<Principal>) -> Redirect {
     match user {
         Some(user) => route_get_home(user).await,
         None => Redirect::to("/frontend/login"),

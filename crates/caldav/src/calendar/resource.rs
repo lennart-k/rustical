@@ -12,7 +12,7 @@ use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner, SupportedR
 use rustical_dav_push::{DavPushExtension, DavPushExtensionProp};
 use rustical_ical::CalDateTime;
 use rustical_store::Calendar;
-use rustical_store::auth::User;
+use rustical_store::auth::Principal;
 use rustical_xml::{EnumVariants, PropName};
 use rustical_xml::{XmlDeserialize, XmlSerialize};
 use std::str::FromStr;
@@ -95,7 +95,7 @@ impl DavPushExtension for CalendarResource {
 impl Resource for CalendarResource {
     type Prop = CalendarPropWrapper;
     type Error = Error;
-    type Principal = User;
+    type Principal = Principal;
 
     fn is_collection(&self) -> bool {
         true
@@ -121,7 +121,7 @@ impl Resource for CalendarResource {
     fn get_prop(
         &self,
         puri: &impl PrincipalUri,
-        user: &User,
+        user: &Principal,
         prop: &CalendarPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
@@ -291,7 +291,7 @@ impl Resource for CalendarResource {
         Some(&self.cal.principal)
     }
 
-    fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
+    fn get_user_privileges(&self, user: &Principal) -> Result<UserPrivilegeSet, Self::Error> {
         if self.cal.subscription_url.is_some() || self.read_only {
             return Ok(UserPrivilegeSet::owner_read(
                 user.is_principal(&self.cal.principal),

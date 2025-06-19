@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use rustical_oidc::UserStore;
-use rustical_store::auth::{AuthenticationProvider, User};
+use rustical_store::auth::{AuthenticationProvider, Principal};
 
 pub struct OidcUserStore<AP: AuthenticationProvider>(pub Arc<AP>);
 
@@ -23,7 +23,7 @@ impl<AP: AuthenticationProvider> UserStore for OidcUserStore<AP> {
     async fn insert_user(&self, id: &str) -> Result<(), Self::Error> {
         self.0
             .insert_principal(
-                User {
+                Principal {
                     id: id.to_owned(),
                     displayname: None,
                     principal_type: Default::default(),

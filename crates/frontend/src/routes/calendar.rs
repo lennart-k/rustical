@@ -10,7 +10,7 @@ use axum::{
 use axum_extra::TypedHeader;
 use headers::Referer;
 use http::StatusCode;
-use rustical_store::{Calendar, CalendarStore, auth::User};
+use rustical_store::{Calendar, CalendarStore, auth::Principal};
 
 #[derive(Template, WebTemplate)]
 #[template(path = "pages/calendar.html")]
@@ -21,7 +21,7 @@ struct CalendarPage {
 pub async fn route_calendar<C: CalendarStore>(
     Path((owner, cal_id)): Path<(String, String)>,
     Extension(store): Extension<Arc<C>>,
-    user: User,
+    user: Principal,
 ) -> Result<Response, rustical_store::Error> {
     if !user.is_principal(&owner) {
         return Ok(StatusCode::UNAUTHORIZED.into_response());
@@ -35,7 +35,7 @@ pub async fn route_calendar<C: CalendarStore>(
 pub async fn route_calendar_restore<CS: CalendarStore>(
     Path((owner, cal_id)): Path<(String, String)>,
     Extension(store): Extension<Arc<CS>>,
-    user: User,
+    user: Principal,
     referer: Option<TypedHeader<Referer>>,
 ) -> Result<Response, rustical_store::Error> {
     if !user.is_principal(&owner) {
@@ -51,7 +51,7 @@ pub async fn route_calendar_restore<CS: CalendarStore>(
 pub async fn route_delete_calendar<C: CalendarStore>(
     Path((owner, cal_id)): Path<(String, String)>,
     Extension(store): Extension<Arc<C>>,
-    user: User,
+    user: Principal,
 ) -> Result<Response, rustical_store::Error> {
     if !user.is_principal(&owner) {
         return Ok(StatusCode::UNAUTHORIZED.into_response());

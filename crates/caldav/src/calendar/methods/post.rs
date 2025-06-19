@@ -7,7 +7,7 @@ use http::{HeaderMap, HeaderValue, StatusCode, header};
 use rustical_dav::privileges::UserPrivilege;
 use rustical_dav::resource::Resource;
 use rustical_dav_push::register::PushRegister;
-use rustical_store::auth::User;
+use rustical_store::auth::Principal;
 use rustical_store::{CalendarStore, Subscription, SubscriptionStore};
 use rustical_xml::XmlDocument;
 use tracing::instrument;
@@ -15,7 +15,7 @@ use tracing::instrument;
 #[instrument(skip(resource_service))]
 pub async fn route_post<C: CalendarStore, S: SubscriptionStore>(
     Path((principal, cal_id)): Path<(String, String)>,
-    user: User,
+    user: Principal,
     State(resource_service): State<CalendarResourceService<C, S>>,
     body: String,
 ) -> Result<Response, Error> {

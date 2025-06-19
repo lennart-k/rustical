@@ -10,7 +10,7 @@ use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
 use rustical_dav::xml::{Resourcetype, ResourcetypeInner, SupportedReportSet};
 use rustical_dav_push::DavPushExtension;
 use rustical_store::Addressbook;
-use rustical_store::auth::User;
+use rustical_store::auth::Principal;
 
 #[derive(Clone, Debug, From, Into)]
 pub struct AddressbookResource(pub(crate) Addressbook);
@@ -36,7 +36,7 @@ impl DavPushExtension for AddressbookResource {
 impl Resource for AddressbookResource {
     type Prop = AddressbookPropWrapper;
     type Error = Error;
-    type Principal = User;
+    type Principal = Principal;
 
     fn is_collection(&self) -> bool {
         true
@@ -52,7 +52,7 @@ impl Resource for AddressbookResource {
     fn get_prop(
         &self,
         puri: &impl PrincipalUri,
-        user: &User,
+        user: &Principal,
         prop: &AddressbookPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
@@ -138,7 +138,7 @@ impl Resource for AddressbookResource {
         Some(&self.0.principal)
     }
 
-    fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
+    fn get_user_privileges(&self, user: &Principal) -> Result<UserPrivilegeSet, Self::Error> {
         Ok(UserPrivilegeSet::owner_only(
             user.is_principal(&self.0.principal),
         ))

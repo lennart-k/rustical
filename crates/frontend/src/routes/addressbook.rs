@@ -10,7 +10,7 @@ use axum::{
 use axum_extra::TypedHeader;
 use headers::Referer;
 use http::StatusCode;
-use rustical_store::{Addressbook, AddressbookStore, auth::User};
+use rustical_store::{Addressbook, AddressbookStore, auth::Principal};
 
 #[derive(Template, WebTemplate)]
 #[template(path = "pages/addressbook.html")]
@@ -21,7 +21,7 @@ struct AddressbookPage {
 pub async fn route_addressbook<AS: AddressbookStore>(
     Path((owner, addrbook_id)): Path<(String, String)>,
     Extension(store): Extension<Arc<AS>>,
-    user: User,
+    user: Principal,
 ) -> Result<Response, rustical_store::Error> {
     if !user.is_principal(&owner) {
         return Ok(StatusCode::UNAUTHORIZED.into_response());
@@ -35,7 +35,7 @@ pub async fn route_addressbook<AS: AddressbookStore>(
 pub async fn route_addressbook_restore<AS: AddressbookStore>(
     Path((owner, addressbook_id)): Path<(String, String)>,
     Extension(store): Extension<Arc<AS>>,
-    user: User,
+    user: Principal,
     referer: Option<TypedHeader<Referer>>,
 ) -> Result<Response, rustical_store::Error> {
     if !user.is_principal(&owner) {
@@ -51,7 +51,7 @@ pub async fn route_addressbook_restore<AS: AddressbookStore>(
 pub async fn route_delete_addressbook<AS: AddressbookStore>(
     Path((owner, addressbook_id)): Path<(String, String)>,
     Extension(store): Extension<Arc<AS>>,
-    user: User,
+    user: Principal,
 ) -> Result<Response, rustical_store::Error> {
     if !user.is_principal(&owner) {
         return Ok(StatusCode::UNAUTHORIZED.into_response());

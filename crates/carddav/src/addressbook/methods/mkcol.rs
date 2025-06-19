@@ -4,7 +4,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use http::StatusCode;
-use rustical_store::{Addressbook, AddressbookStore, SubscriptionStore, auth::User};
+use rustical_store::{Addressbook, AddressbookStore, SubscriptionStore, auth::Principal};
 use rustical_xml::{XmlDeserialize, XmlDocument, XmlRootTag};
 use tracing::instrument;
 
@@ -44,7 +44,7 @@ struct MkcolRequest {
 #[instrument(skip(addr_store))]
 pub async fn route_mkcol<AS: AddressbookStore, S: SubscriptionStore>(
     Path((principal, addressbook_id)): Path<(String, String)>,
-    user: User,
+    user: Principal,
     State(AddressbookResourceService { addr_store, .. }): State<AddressbookResourceService<AS, S>>,
     body: String,
 ) -> Result<Response, Error> {

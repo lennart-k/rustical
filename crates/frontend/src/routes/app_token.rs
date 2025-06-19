@@ -12,7 +12,7 @@ use headers::{ContentType, HeaderMapExt};
 use http::{HeaderValue, StatusCode, header};
 use percent_encoding::{CONTROLS, utf8_percent_encode};
 use rand::{Rng, distr::Alphanumeric};
-use rustical_store::auth::{AuthenticationProvider, User};
+use rustical_store::auth::{AuthenticationProvider, Principal};
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -47,7 +47,7 @@ pub(crate) struct PostAppTokenForm {
 }
 
 pub async fn route_post_app_token<AP: AuthenticationProvider>(
-    user: User,
+    user: Principal,
     Extension(auth_provider): Extension<Arc<AP>>,
     Path(user_id): Path<String>,
     Host(hostname): Host,
@@ -96,7 +96,7 @@ pub async fn route_post_app_token<AP: AuthenticationProvider>(
 }
 
 pub async fn route_delete_app_token<AP: AuthenticationProvider>(
-    user: User,
+    user: Principal,
     Extension(auth_provider): Extension<Arc<AP>>,
     Path((user_id, token_id)): Path<(String, String)>,
 ) -> Result<Redirect, rustical_store::Error> {

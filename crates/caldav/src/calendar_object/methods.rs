@@ -9,7 +9,7 @@ use headers::{ContentType, ETag, HeaderMapExt, IfNoneMatch};
 use http::{HeaderMap, StatusCode};
 use rustical_ical::CalendarObject;
 use rustical_store::CalendarStore;
-use rustical_store::auth::User;
+use rustical_store::auth::Principal;
 use std::str::FromStr;
 use tracing::instrument;
 
@@ -21,7 +21,7 @@ pub async fn get_event<C: CalendarStore>(
         object_id,
     }): Path<CalendarObjectPathComponents>,
     State(CalendarObjectResourceService { cal_store }): State<CalendarObjectResourceService<C>>,
-    user: User,
+    user: Principal,
 ) -> Result<Response, Error> {
     if !user.is_principal(&principal) {
         return Err(crate::Error::Unauthorized);
@@ -51,7 +51,7 @@ pub async fn put_event<C: CalendarStore>(
         object_id,
     }): Path<CalendarObjectPathComponents>,
     State(CalendarObjectResourceService { cal_store }): State<CalendarObjectResourceService<C>>,
-    user: User,
+    user: Principal,
     mut if_none_match: Option<TypedHeader<IfNoneMatch>>,
     header_map: HeaderMap,
     body: String,

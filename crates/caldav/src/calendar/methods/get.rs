@@ -9,7 +9,7 @@ use ical::generator::{Emitter, IcalCalendarBuilder};
 use ical::property::Property;
 use percent_encoding::{CONTROLS, utf8_percent_encode};
 use rustical_ical::{CalendarObjectComponent, EventObject, JournalObject, TodoObject};
-use rustical_store::{CalendarStore, SubscriptionStore, auth::User};
+use rustical_store::{CalendarStore, SubscriptionStore, auth::Principal};
 use std::collections::HashMap;
 use std::str::FromStr;
 use tracing::instrument;
@@ -18,7 +18,7 @@ use tracing::instrument;
 pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
     Path((principal, calendar_id)): Path<(String, String)>,
     State(CalendarResourceService { cal_store, .. }): State<CalendarResourceService<C, S>>,
-    user: User,
+    user: Principal,
 ) -> Result<Response, Error> {
     if !user.is_principal(&principal) {
         return Err(crate::Error::Unauthorized);

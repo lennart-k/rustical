@@ -14,7 +14,7 @@ use axum::handler::Handler;
 use axum::response::Response;
 use futures_util::future::BoxFuture;
 use rustical_dav::resource::{AxumMethods, ResourceService};
-use rustical_store::auth::User;
+use rustical_store::auth::Principal;
 use rustical_store::{AddressbookStore, SubscriptionStore};
 use std::convert::Infallible;
 use std::sync::Arc;
@@ -51,7 +51,7 @@ impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
     type PathComponents = (String, String); // principal, addressbook_id
     type Resource = AddressbookResource;
     type Error = Error;
-    type Principal = User;
+    type Principal = Principal;
     type PrincipalUri = CardDavPrincipalUri;
 
     const DAV_HEADER: &str = "1, 3, access-control, addressbook, webdav-push";

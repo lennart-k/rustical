@@ -2,7 +2,7 @@ use rustical_dav::{
     extensions::CommonPropertiesProp,
     xml::{GroupMemberSet, GroupMembership, HrefElement, SupportedReportSet},
 };
-use rustical_store::auth::user::PrincipalType;
+use rustical_store::auth::PrincipalType;
 use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 use strum_macros::VariantArray;
 

@@ -7,7 +7,7 @@ use pbkdf2::{
 };
 use rustical_store::{
     Error, Secret,
-    auth::{AuthenticationProvider, User, user::AppToken},
+    auth::{AppToken, AuthenticationProvider, Principal},
 };
 use sqlx::{SqlitePool, types::Json};
 use tracing::instrument;
@@ -21,11 +21,11 @@ struct PrincipalRow {
     memberships: Option<Json<Vec<Option<String>>>>,
 }
 
-impl TryFrom<PrincipalRow> for User {
+impl TryFrom<PrincipalRow> for Principal {
     type Error = Error;
 
     fn try_from(value: PrincipalRow) -> Result<Self, Self::Error> {
-        Ok(User {
+        Ok(Principal {
             id: value.id,
             displayname: value.displayname,
             password: value.password_hash.map(Secret::from),
@@ -49,8 +49,8 @@ pub struct SqlitePrincipalStore {
 #[async_trait]
 impl AuthenticationProvider for SqlitePrincipalStore {
     #[instrument]
-    async fn get_principals(&self) -> Result<Vec<User>, Error> {
-        let result: Result<Vec<User>, Error> = sqlx::query_as!(
+    async fn get_principals(&self) -> Result<Vec<Principal>, Error> {
+        let result: Result<Vec<Principal>, Error> = sqlx::query_as!(
             PrincipalRow,
             r#"
             SELECT id, displayname, principal_type, password_hash, json_group_array(member_of) AS "memberships: Json<Vec<Option<String>>>"
@@ -63,13 +63,13 @@ impl AuthenticationProvider for SqlitePrincipalStore {
         .await
         .map_err(crate::Error::from)?
         .into_iter()
-        .map(User::try_from)
+        .map(Principal::try_from)
         .collect();
         Ok(result?)
     }
 
     #[instrument]
-    async fn get_principal(&self, id: &str) -> Result<Option<User>, Error> {
+    async fn get_principal(&self, id: &str) -> Result<Option<Principal>, Error> {
         let row= sqlx::query_as!(
             PrincipalRow,
             r#"
@@ -83,7 +83,7 @@ impl AuthenticationProvider for SqlitePrincipalStore {
             .fetch_optional(&self.db)
             .await
             .map_err(crate::Error::from)?
-            .map(User::try_from);
+            .map(Principal::try_from);
         if let Some(row) = row {
             Ok(Some(row?))
         } else {
@@ -103,7 +103,7 @@ impl AuthenticationProvider for SqlitePrincipalStore {
     #[instrument]
     async fn insert_principal(
         &self,
-        user: User,
+        user: Principal,
         overwrite: bool,
     ) -> Result<(), rustical_store::Error> {
         // Would be cleaner to put this into a transaction but for now it will be fine
@@ -142,7 +142,11 @@ impl AuthenticationProvider for SqlitePrincipalStore {
     }
 
     #[instrument(skip(token))]
-    async fn validate_app_token(&self, user_id: &str, token: &str) -> Result<Option<User>, Error> {
+    async fn validate_app_token(
+        &self,
+        user_id: &str,
+        token: &str,
+    ) -> Result<Option<Principal>, Error> {
         for app_token in &self.get_app_tokens(user_id).await? {
             if password_auth::verify_password(token, app_token.token.as_ref()).is_ok() {
                 return self.get_principal(user_id).await;
@@ -169,8 +173,8 @@ impl AuthenticationProvider for SqlitePrincipalStore {
         &self,
         user_id: &str,
         password_input: &str,
-    ) -> Result<Option<User>, Error> {
-        let user: User = match self.get_principal(user_id).await? {
+    ) -> Result<Option<Principal>, Error> {
+        let user: Principal = match self.get_principal(user_id).await? {
             Some(user) => user,
             None => return Ok(None),
         };

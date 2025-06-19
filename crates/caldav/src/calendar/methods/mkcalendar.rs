@@ -6,7 +6,7 @@ use axum::response::{IntoResponse, Response};
 use http::{Method, StatusCode};
 use rustical_dav::xml::HrefElement;
 use rustical_ical::CalendarObjectType;
-use rustical_store::auth::User;
+use rustical_store::auth::Principal;
 use rustical_store::{Calendar, CalendarStore, SubscriptionStore};
 use rustical_xml::{Unparsed, XmlDeserialize, XmlDocument, XmlRootTag};
 use tracing::instrument;
@@ -63,7 +63,7 @@ struct MkcolRequest {
 #[instrument(skip(cal_store))]
 pub async fn route_mkcalendar<C: CalendarStore, S: SubscriptionStore>(
     Path((principal, cal_id)): Path<(String, String)>,
-    user: User,
+    user: Principal,
     State(CalendarResourceService { cal_store, .. }): State<CalendarResourceService<C, S>>,
     method: Method,
     body: String,

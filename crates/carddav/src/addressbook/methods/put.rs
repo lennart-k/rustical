@@ -9,14 +9,14 @@ use http::StatusCode;
 use ical::VcardParser;
 use rustical_ical::AddressObject;
 use rustical_store::Addressbook;
-use rustical_store::{AddressbookStore, SubscriptionStore, auth::User};
+use rustical_store::{AddressbookStore, SubscriptionStore, auth::Principal};
 use tracing::instrument;
 
 #[instrument(skip(addr_store))]
 pub async fn route_put<AS: AddressbookStore, S: SubscriptionStore>(
     Path((principal, addressbook_id)): Path<(String, String)>,
     State(AddressbookResourceService { addr_store, .. }): State<AddressbookResourceService<AS, S>>,
-    user: User,
+    user: Principal,
     body: String,
 ) -> Result<Response, Error> {
     if !user.is_principal(&principal) {

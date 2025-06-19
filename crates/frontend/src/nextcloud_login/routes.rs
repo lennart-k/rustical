@@ -13,7 +13,7 @@ use axum_extra::{TypedHeader, extract::Host};
 use chrono::{Duration, Utc};
 use headers::UserAgent;
 use http::StatusCode;
-use rustical_store::auth::{AuthenticationProvider, User};
+use rustical_store::auth::{AuthenticationProvider, Principal};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tracing::instrument;
@@ -101,7 +101,7 @@ struct NextcloudLoginPage {
 pub(crate) async fn get_nextcloud_flow(
     Extension(state): Extension<Arc<NextcloudFlows>>,
     Path(flow_id): Path<String>,
-    user: User,
+    user: Principal,
 ) -> Result<Response, rustical_store::Error> {
     if let Some(flow) = state.flows.read().await.get(&flow_id) {
         Ok(Html(
@@ -131,7 +131,7 @@ struct NextcloudLoginSuccessPage {
 
 #[instrument(skip(state))]
 pub(crate) async fn post_nextcloud_flow(
-    user: User,
+    user: Principal,
     Extension(state): Extension<Arc<NextcloudFlows>>,
     Path(flow_id): Path<String>,
     Host(host): Host,

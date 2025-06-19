@@ -6,7 +6,7 @@ use principal::PrincipalResourceService;
 use rustical_dav::resource::{PrincipalUri, ResourceService};
 use rustical_dav::resources::RootResourceService;
 use rustical_store::auth::middleware::AuthenticationLayer;
-use rustical_store::auth::{AuthenticationProvider, User};
+use rustical_store::auth::{AuthenticationProvider, Principal};
 use rustical_store::{CalendarStore, SubscriptionStore};
 use std::sync::Arc;
 
@@ -44,7 +44,7 @@ pub fn caldav_router<AP: AuthenticationProvider, C: CalendarStore, S: Subscripti
     Router::new()
         .nest(
             prefix,
-            RootResourceService::<_, User, CalDavPrincipalUri>::new(principal_service.clone())
+            RootResourceService::<_, Principal, CalDavPrincipalUri>::new(principal_service.clone())
                 .axum_router()
                 .layer(AuthenticationLayer::new(auth_provider))
                 .layer(Extension(CalDavPrincipalUri(prefix))),

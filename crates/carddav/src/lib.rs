@@ -9,7 +9,7 @@ use rustical_dav::resources::RootResourceService;
 use rustical_store::auth::middleware::AuthenticationLayer;
 use rustical_store::{
     AddressbookStore, SubscriptionStore,
-    auth::{AuthenticationProvider, User},
+    auth::{AuthenticationProvider, Principal},
 };
 use std::sync::Arc;
 
@@ -44,10 +44,12 @@ pub fn carddav_router<AP: AuthenticationProvider, A: AddressbookStore, S: Subscr
     Router::new()
         .nest(
             prefix,
-            RootResourceService::<_, User, CardDavPrincipalUri>::new(principal_service.clone())
-                .axum_router()
-                .layer(AuthenticationLayer::new(auth_provider))
-                .layer(Extension(CardDavPrincipalUri(prefix))),
+            RootResourceService::<_, Principal, CardDavPrincipalUri>::new(
+                principal_service.clone(),
+            )
+            .axum_router()
+            .layer(AuthenticationLayer::new(auth_provider))
+            .layer(Extension(CardDavPrincipalUri(prefix))),
         )
         .route(
             "/.well-known/carddav",

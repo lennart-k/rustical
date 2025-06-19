@@ -5,7 +5,7 @@ use crate::{CardDavPrincipalUri, Error};
 use async_trait::async_trait;
 use axum::Router;
 use rustical_dav::resource::{AxumMethods, ResourceService};
-use rustical_store::auth::{AuthenticationProvider, User};
+use rustical_store::auth::{AuthenticationProvider, Principal};
 use rustical_store::{AddressbookStore, SubscriptionStore};
 use std::sync::Arc;
 
@@ -51,7 +51,7 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> Reso
     type MemberType = AddressbookResource;
     type Resource = PrincipalResource;
     type Error = Error;
-    type Principal = User;
+    type Principal = Principal;
     type PrincipalUri = CardDavPrincipalUri;
 
     const DAV_HEADER: &str = "1, 3, access-control, addressbook";

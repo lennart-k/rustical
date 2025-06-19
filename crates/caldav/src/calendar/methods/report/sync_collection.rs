@@ -13,7 +13,7 @@ use rustical_dav::{
 };
 use rustical_store::{
     CalendarStore,
-    auth::User,
+    auth::Principal,
     synctoken::{format_synctoken, parse_synctoken},
 };
 
@@ -21,7 +21,7 @@ pub async fn handle_sync_collection<C: CalendarStore>(
     sync_collection: &SyncCollectionRequest<CalendarObjectPropWrapperName>,
     path: &str,
     puri: &impl PrincipalUri,
-    user: &User,
+    user: &Principal,
     principal: &str,
     cal_id: &str,
     cal_store: &C,

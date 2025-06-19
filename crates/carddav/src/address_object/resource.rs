@@ -13,7 +13,7 @@ use rustical_dav::{
     xml::Resourcetype,
 };
 use rustical_ical::AddressObject;
-use rustical_store::auth::User;
+use rustical_store::auth::Principal;
 
 #[derive(Clone, From, Into)]
 pub struct AddressObjectResource {
@@ -30,7 +30,7 @@ impl ResourceName for AddressObjectResource {
 impl Resource for AddressObjectResource {
     type Prop = AddressObjectPropWrapper;
     type Error = Error;
-    type Principal = User;
+    type Principal = Principal;
 
     fn is_collection(&self) -> bool {
         false
@@ -43,7 +43,7 @@ impl Resource for AddressObjectResource {
     fn get_prop(
         &self,
         puri: &impl PrincipalUri,
-        user: &User,
+        user: &Principal,
         prop: &AddressObjectPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
@@ -78,7 +78,7 @@ impl Resource for AddressObjectResource {
         Some(self.object.get_etag())
     }
 
-    fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
+    fn get_user_privileges(&self, user: &Principal) -> Result<UserPrivilegeSet, Self::Error> {
         Ok(UserPrivilegeSet::owner_only(
             user.is_principal(&self.principal),
         ))

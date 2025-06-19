@@ -13,7 +13,7 @@ use axum::handler::Handler;
 use axum::response::Response;
 use futures_util::future::BoxFuture;
 use rustical_dav::resource::{AxumMethods, ResourceService};
-use rustical_store::auth::User;
+use rustical_store::auth::Principal;
 use rustical_store::{CalendarStore, SubscriptionStore};
 use std::convert::Infallible;
 use std::sync::Arc;
@@ -48,7 +48,7 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
     type PathComponents = (String, String); // principal, calendar_id
     type Resource = CalendarResource;
     type Error = Error;
-    type Principal = User;
+    type Principal = Principal;
     type PrincipalUri = CalDavPrincipalUri;
 
     const DAV_HEADER: &str = "1, 3, access-control, calendar-access, calendar-proxy, webdav-push";

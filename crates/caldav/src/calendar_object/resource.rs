@@ -8,7 +8,7 @@ use rustical_dav::{
     xml::Resourcetype,
 };
 use rustical_ical::CalendarObject;
-use rustical_store::auth::User;
+use rustical_store::auth::Principal;
 
 #[derive(Clone, From, Into)]
 pub struct CalendarObjectResource {
@@ -25,7 +25,7 @@ impl ResourceName for CalendarObjectResource {
 impl Resource for CalendarObjectResource {
     type Prop = CalendarObjectPropWrapper;
     type Error = Error;
-    type Principal = User;
+    type Principal = Principal;
 
     fn is_collection(&self) -> bool {
         false
@@ -38,7 +38,7 @@ impl Resource for CalendarObjectResource {
     fn get_prop(
         &self,
         puri: &impl PrincipalUri,
-        user: &User,
+        user: &Principal,
         prop: &CalendarObjectPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
         Ok(match prop {
@@ -81,7 +81,7 @@ impl Resource for CalendarObjectResource {
         Some(self.object.get_etag())
     }
 
-    fn get_user_privileges(&self, user: &User) -> Result<UserPrivilegeSet, Self::Error> {
+    fn get_user_privileges(&self, user: &Principal) -> Result<UserPrivilegeSet, Self::Error> {
         Ok(UserPrivilegeSet::owner_only(
             user.is_principal(&self.principal),
         ))
