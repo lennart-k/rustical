@@ -138,7 +138,8 @@ pub async fn route_post_oidc(
 #[derive(Debug, Clone, Deserialize)]
 pub struct AuthCallbackQuery {
     code: AuthorizationCode,
-    iss: IssuerUrl,
+    // RFC 9207
+    iss: Option<IssuerUrl>,
     state: String,
 }
 
@@ -153,7 +154,9 @@ pub async fn route_get_oidc_callback<US: UserStore + Clone>(
 ) -> Result<Response, OidcError> {
     let callback_uri = format!("https://{host}/frontend/login/oidc/callback");
 
-    assert_eq!(iss, oidc_config.issuer);
+    if let Some(iss) = iss {
+        assert_eq!(iss, oidc_config.issuer);
+    }
     let oidc_state = session
         .remove::<OidcState>(SESSION_KEY_OIDC_STATE)
         .await?
