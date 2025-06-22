@@ -26,3 +26,4 @@ If you still want to play around with it in its current state, absolutely feel f
 - GNOME Accounts, GNOME Calendar, GNOME Contacts
 - Evolution
 - Apple Calendar
+- Home Assistant integration

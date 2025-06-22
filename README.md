@@ -30,3 +30,4 @@ a CalDAV/CardDAV server
 - GNOME Accounts, GNOME Calendar, GNOME Contacts
 - Evolution
 - Apple Calendar
+- Home Assistant integration
