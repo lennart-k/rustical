@@ -95,7 +95,7 @@ export class CreateCalendarForm extends LitElement {
       alert("No calendar components selected")
       return
     }
-    await this.client.createDirectory(`/ principal / ${this.user}/${this.id}`, {
+    await this.client.createDirectory(`/principal/${this.user}/${this.id}`, {
       data: `
       <mkcol xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CS="http://calendarserver.org/ns/" xmlns:ICAL="http://apple.com/ns/ical/">
         <set>

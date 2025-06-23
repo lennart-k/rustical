@@ -72,7 +72,7 @@ let r = class extends u {
       alert("No calendar components selected");
       return;
     }
-    return await this.client.createDirectory(`/ principal / ${this.user}/${this.id}`, {
+    return await this.client.createDirectory(`/principal/${this.user}/${this.id}`, {
       data: `
       <mkcol xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CS="http://calendarserver.org/ns/" xmlns:ICAL="http://apple.com/ns/ical/">
         <set>
