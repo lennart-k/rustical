@@ -1,14 +1,15 @@
 import { i as u, x as c } from "./lit-CWlWuEHk.mjs";
-import { e as d, n as m, a as o, t as h } from "./ref-DuYNkSJ_.mjs";
+import { n as o, t as h } from "./property-DYFkTqgI.mjs";
+import { e as m, n as d } from "./ref-nf9JiOyl.mjs";
 import { a as b } from "./webdav-Bz4I5vNH.mjs";
-var y = Object.defineProperty, $ = Object.getOwnPropertyDescriptor, a = (t, e, l, s) => {
-  for (var i = s > 1 ? void 0 : s ? $(e, l) : e, n = t.length - 1, p; n >= 0; n--)
-    (p = t[n]) && (i = (s ? p(e, l, i) : p(i)) || i);
-  return s && i && y(e, l, i), i;
+var y = Object.defineProperty, $ = Object.getOwnPropertyDescriptor, a = (t, e, n, s) => {
+  for (var i = s > 1 ? void 0 : s ? $(e, n) : e, l = t.length - 1, p; l >= 0; l--)
+    (p = t[l]) && (i = (s ? p(e, n, i) : p(i)) || i);
+  return s && i && y(e, n, i), i;
 };
 let r = class extends u {
   constructor() {
-    super(), this.client = b("/caldav"), this.user = "", this.id = "", this.displayname = "", this.description = "", this.color = "", this.subscriptionUrl = "", this.components = /* @__PURE__ */ new Set(), this.dialog = d(), this.form = d();
+    super(), this.client = b("/caldav"), this.user = "", this.id = "", this.displayname = "", this.description = "", this.color = "", this.subscriptionUrl = "", this.components = /* @__PURE__ */ new Set(), this.dialog = m(), this.form = m();
   }
   createRenderRoot() {
     return this;
@@ -16,9 +17,9 @@ let r = class extends u {
   render() {
     return c`
       <button @click=${() => this.dialog.value.showModal()}>Create calendar</button>
-      <dialog ${m(this.dialog)}>
+      <dialog ${d(this.dialog)}>
         <h3>Create calendar</h3>
-        <form @submit=${this.submit} ${m(this.form)}>
+        <form @submit=${this.submit} ${d(this.form)}>
           <label>
             id
             <input type="text" name="id" @change=${(t) => this.id = t.target.value} />

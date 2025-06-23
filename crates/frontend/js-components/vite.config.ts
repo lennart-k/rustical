@@ -15,6 +15,7 @@ export default defineConfig({
       input: [
         "lib/create-calendar-form.ts",
         "lib/create-addressbook-form.ts",
+        "lib/delete-button.ts",
       ],
       output: {
         dir: "../public/assets/js/",

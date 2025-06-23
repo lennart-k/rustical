@@ -1,10 +1,11 @@
 import { i as c, x as u } from "./lit-CWlWuEHk.mjs";
-import { e as d, n as m, a as o, t as h } from "./ref-DuYNkSJ_.mjs";
+import { n as o, t as h } from "./property-DYFkTqgI.mjs";
+import { e as d, n as m } from "./ref-nf9JiOyl.mjs";
 import { a as b } from "./webdav-Bz4I5vNH.mjs";
-var y = Object.defineProperty, f = Object.getOwnPropertyDescriptor, a = (t, s, l, r) => {
-  for (var e = r > 1 ? void 0 : r ? f(s, l) : s, n = t.length - 1, p; n >= 0; n--)
-    (p = t[n]) && (e = (r ? p(s, l, e) : p(e)) || e);
-  return r && e && y(s, l, e), e;
+var y = Object.defineProperty, f = Object.getOwnPropertyDescriptor, r = (t, a, n, s) => {
+  for (var e = s > 1 ? void 0 : s ? f(a, n) : a, l = t.length - 1, p; l >= 0; l--)
+    (p = t[l]) && (e = (s ? p(a, n, e) : p(e)) || e);
+  return s && e && y(a, n, e), e;
 };
 let i = class extends c {
   constructor() {
@@ -65,19 +66,19 @@ let i = class extends c {
     }), window.location.reload(), null;
   }
 };
-a([
+r([
   o()
 ], i.prototype, "user", 2);
-a([
+r([
   o()
 ], i.prototype, "id", 2);
-a([
+r([
   o()
 ], i.prototype, "displayname", 2);
-a([
+r([
   o()
 ], i.prototype, "description", 2);
-i = a([
+i = r([
   h("create-addressbook-form")
 ], i);
 export {

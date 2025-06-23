@@ -3,6 +3,7 @@
 {% block imports %}
 <script type="module" src="/frontend/assets/js/create-calendar-form.mjs" async></script>
 <script type="module" src="/frontend/assets/js/create-addressbook-form.mjs" async></script>
+<script type="module" src="/frontend/assets/js/delete-button.mjs" async></script>
 {% endblock %}
 
 {% block content %}
@@ -86,6 +87,7 @@
         <form action="/caldav/principal/{{ calendar.principal }}/{{ calendar.id }}" target="_blank" method="GET">
           <button type="submit">Download</button>
         </form>
+        <delete-button trash href="/caldav/principal/{{ calendar.principal }}/{{ calendar.id }}"></delete-button>
       </div>
       <div class="color-chip"></div>
     </a>
@@ -114,6 +116,7 @@
         <form action="/frontend/user/{{ calendar.principal }}/calendar/{{ calendar.id}}/restore" method="POST" class="restore-form">
           <button type="submit">Restore</button>
         </form>
+        <delete-button href="/caldav/principal/{{ calendar.principal }}/{{ calendar.id }}"></delete-button>
       </div>
       <div class="color-chip"></div>
     </a>
@@ -139,6 +142,7 @@
         <form action="/carddav/principal/{{ addressbook.principal }}/{{ addressbook.id }}" target="_blank" method="GET">
           <button type="submit">Download</button>
         </form>
+        <delete-button trash href="/carddav/principal/{{ addressbook.principal }}/{{ addressbook.id }}"></delete-button>
       </div>
     </a>
   </li>
@@ -160,6 +164,7 @@
         <form action="/frontend/user/{{ addressbook.principal }}/addressbook/{{ addressbook.id}}/restore" method="POST" class="restore-form">
           <button type="submit">Restore</button>
         </form>
+        <delete-button href="/carddav/principal/{{ addressbook.principal }}/{{ addressbook.id }}"></delete-button>
       </div>
     </a>
   </li>

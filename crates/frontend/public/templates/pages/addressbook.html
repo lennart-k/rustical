@@ -10,12 +10,4 @@
 
 <pre>{{ addressbook|json }}</pre>
 
-<h2>Delete</h2>
-
-<section>
-  <form method="POST" action="/frontend/user/{{addressbook.principal}}/addressbook/{{addressbook.id}}/delete">
-    <button type="submit">Move to trash</button>
-  </form>
-</section>
-
 {% endblock %}

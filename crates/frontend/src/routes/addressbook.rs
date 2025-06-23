@@ -47,19 +47,3 @@ pub async fn route_addressbook_restore<AS: AddressbookStore>(
         None => (StatusCode::CREATED, "Restored").into_response(),
     })
 }
-
-pub async fn route_delete_addressbook<AS: AddressbookStore>(
-    Path((owner, addressbook_id)): Path<(String, String)>,
-    Extension(store): Extension<Arc<AS>>,
-    user: Principal,
-) -> Result<Response, rustical_store::Error> {
-    if !user.is_principal(&owner) {
-        return Ok(StatusCode::UNAUTHORIZED.into_response());
-    }
-
-    store
-        .delete_addressbook(&owner, &addressbook_id, true)
-        .await?;
-
-    Ok(Redirect::to(&format!("/frontend/user/{}", user.id)).into_response())
-}

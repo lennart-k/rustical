@@ -160,12 +160,12 @@ table {
         display: grid;
         min-height: 80px;
         grid-template-areas:
-          ".                .     color-chip"
-          "title            comps color-chip"
-          "description      .     color-chip"
-          "subscription-url .     color-chip"
-          "actions          .     color-chip"
-          ".                .     color-chip";
+          ".                .                 color-chip"
+          "title            comps             color-chip"
+          "description      description       color-chip"
+          "subscription-url subscription-url  color-chip"
+          "actions          actions           color-chip"
+          ".                .                 color-chip";
         grid-template-rows: 12px auto auto auto auto 12px;
         grid-template-columns: min-content auto 80px;
         color: inherit;
@@ -220,6 +220,8 @@ table {
         .actions {
           grid-area: actions;
           width: fit-content;
+          display: flex;
+          gap: 12px;
         }
 
         &:hover {

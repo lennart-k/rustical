@@ -26,9 +26,9 @@ pub use config::FrontendConfig;
 use oidc_user_store::OidcUserStore;
 
 use crate::routes::{
-    addressbook::{route_addressbook, route_addressbook_restore, route_delete_addressbook},
+    addressbook::{route_addressbook, route_addressbook_restore},
     app_token::{route_delete_app_token, route_post_app_token},
-    calendar::{route_calendar, route_calendar_restore, route_delete_calendar},
+    calendar::{route_calendar, route_calendar_restore},
     login::{route_get_login, route_post_login, route_post_logout},
     user::{route_get_home, route_root, route_user_named},
 };
@@ -61,10 +61,6 @@ pub fn frontend_router<AP: AuthenticationProvider, CS: CalendarStore, AS: Addres
             get(route_calendar::<CS>),
         )
         .route(
-            "/user/{user}/calendar/{calendar}/delete",
-            post(route_delete_calendar::<CS>),
-        )
-        .route(
             "/user/{user}/calendar/{calendar}/restore",
             post(route_calendar_restore::<CS>),
         )
@@ -72,10 +68,6 @@ pub fn frontend_router<AP: AuthenticationProvider, CS: CalendarStore, AS: Addres
         .route(
             "/user/{user}/addressbook/{addressbook}",
             get(route_addressbook::<AS>),
-        )
-        .route(
-            "/user/{user}/addressbook/{addressbook}/delete",
-            post(route_delete_addressbook::<AS>),
         )
         .route(
             "/user/{user}/addressbook/{addressbook}/restore",
