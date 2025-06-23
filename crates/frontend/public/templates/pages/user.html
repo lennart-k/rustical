@@ -83,7 +83,7 @@
       <span class="subscription-url">{{ subscription_url }}</span>
       {% endif %}
       <div class="actions">
-        <form action="/caldav/principal/{{ calendar.principal }}/calendar/{{ calendar.id }}" target="_blank" method="GET">
+        <form action="/caldav/principal/{{ calendar.principal }}/{{ calendar.id }}" target="_blank" method="GET">
           <button type="submit">Download</button>
         </form>
       </div>
