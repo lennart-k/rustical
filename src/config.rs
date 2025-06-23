@@ -79,6 +79,7 @@ pub struct Config {
     pub data_store: DataStoreConfig,
     #[serde(default)]
     pub http: HttpConfig,
+    #[serde(default)]
     pub frontend: FrontendConfig,
     #[serde(default)]
     pub oidc: Option<OidcConfig>,
