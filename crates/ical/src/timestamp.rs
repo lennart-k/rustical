@@ -419,24 +419,33 @@ mod tests {
     #[test]
     fn test_vcard_date() {
         assert_eq!(
-            CalDateTime::parse("19850412", None).unwrap(),
-            CalDateTime::Date(
-                NaiveDate::from_ymd_opt(1985, 4, 12).unwrap(),
-                crate::CalTimezone::Local
+            CalDateTime::parse_vcard("19850412").unwrap(),
+            (
+                CalDateTime::Date(
+                    NaiveDate::from_ymd_opt(1985, 4, 12).unwrap(),
+                    crate::CalTimezone::Local
+                ),
+                true
             )
         );
         assert_eq!(
-            CalDateTime::parse("1985-04-12", None).unwrap(),
-            CalDateTime::Date(
-                NaiveDate::from_ymd_opt(1985, 4, 12).unwrap(),
-                crate::CalTimezone::Local
+            CalDateTime::parse_vcard("1985-04-12").unwrap(),
+            (
+                CalDateTime::Date(
+                    NaiveDate::from_ymd_opt(1985, 4, 12).unwrap(),
+                    crate::CalTimezone::Local
+                ),
+                true
             )
         );
         assert_eq!(
-            CalDateTime::parse("--0412", None).unwrap(),
-            CalDateTime::Date(
-                NaiveDate::from_ymd_opt(1972, 4, 12).unwrap(),
-                crate::CalTimezone::Local
+            CalDateTime::parse_vcard("--0412").unwrap(),
+            (
+                CalDateTime::Date(
+                    NaiveDate::from_ymd_opt(1972, 4, 12).unwrap(),
+                    crate::CalTimezone::Local
+                ),
+                false
             )
         );
     }
