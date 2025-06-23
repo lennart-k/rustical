@@ -2,6 +2,7 @@ use quick_xml::name::Namespace;
 use rustical_xml::{XmlDeserialize, XmlSerialize};
 use std::collections::{HashMap, HashSet};
 
+// https://datatracker.ietf.org/doc/html/rfc3744
 #[derive(Debug, Clone, XmlSerialize, XmlDeserialize, Eq, Hash, PartialEq)]
 pub enum UserPrivilege {
     Read,
@@ -47,6 +48,12 @@ pub struct UserPrivilegeSet {
 
 impl UserPrivilegeSet {
     pub fn has(&self, privilege: &UserPrivilege) -> bool {
+        if (privilege == &UserPrivilege::WriteProperties
+            || privilege == &UserPrivilege::WriteContent)
+            && self.privileges.contains(&UserPrivilege::Write)
+        {
+            return true;
+        }
         self.privileges.contains(privilege) || self.privileges.contains(&UserPrivilege::All)
     }
 
@@ -72,10 +79,30 @@ impl UserPrivilegeSet {
         }
     }
 
+    pub fn owner_write_properties(is_owner: bool) -> Self {
+        // Content is read-only but we can write properties
+        if is_owner {
+            Self::write_properties()
+        } else {
+            Self::default()
+        }
+    }
+
     pub fn read_only() -> Self {
         Self {
             privileges: HashSet::from([
                 UserPrivilege::Read,
+                UserPrivilege::ReadAcl,
+                UserPrivilege::ReadCurrentUserPrivilegeSet,
+            ]),
+        }
+    }
+
+    pub fn write_properties() -> Self {
+        Self {
+            privileges: HashSet::from([
+                UserPrivilege::Read,
+                UserPrivilege::WriteProperties,
                 UserPrivilege::ReadAcl,
                 UserPrivilege::ReadCurrentUserPrivilegeSet,
             ]),

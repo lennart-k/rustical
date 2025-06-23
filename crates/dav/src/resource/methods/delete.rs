@@ -47,8 +47,9 @@ pub async fn route_delete<R: ResourceService>(
 ) -> Result<(), R::Error> {
     let resource = resource_service.get_resource(path_components).await?;
 
+    // Kind of a bodge since we don't get unbind from the parent
     let privileges = resource.get_user_privileges(principal)?;
-    if !privileges.has(&UserPrivilege::Write) {
+    if !privileges.has(&UserPrivilege::WriteProperties) {
         return Err(Error::Unauthorized.into());
     }
 
