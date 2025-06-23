@@ -34,7 +34,8 @@ pub trait ResourceService: Clone + Sized + Send + Sync + AxumMethods + 'static {
 
     async fn get_resource(
         &self,
-        _path: &Self::PathComponents,
+        path: &Self::PathComponents,
+        show_deleted: bool,
     ) -> Result<Self::Resource, Self::Error>;
 
     async fn save_resource(

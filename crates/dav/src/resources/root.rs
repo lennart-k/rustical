@@ -86,7 +86,11 @@ where
 
     const DAV_HEADER: &str = "1, 3, access-control";
 
-    async fn get_resource(&self, _: &()) -> Result<Self::Resource, Self::Error> {
+    async fn get_resource(
+        &self,
+        _: &(),
+        _show_deleted: bool,
+    ) -> Result<Self::Resource, Self::Error> {
         Ok(RootResource::<PRS::Resource, P>::default())
     }
 

@@ -49,10 +49,11 @@ impl<AS: AddressbookStore> ResourceService for AddressObjectResourceService<AS> 
             addressbook_id,
             object_id,
         }: &Self::PathComponents,
+        show_deleted: bool,
     ) -> Result<Self::Resource, Self::Error> {
         let object = self
             .addr_store
-            .get_object(principal, addressbook_id, object_id, false)
+            .get_object(principal, addressbook_id, object_id, show_deleted)
             .await?;
         Ok(AddressObjectResource {
             object,

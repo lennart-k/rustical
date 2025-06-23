@@ -56,10 +56,11 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
     async fn get_resource(
         &self,
         (principal, cal_id): &Self::PathComponents,
+        show_deleted: bool,
     ) -> Result<Self::Resource, Error> {
         let calendar = self
             .cal_store
-            .get_calendar(principal, cal_id, false)
+            .get_calendar(principal, cal_id, show_deleted)
             .await?;
         Ok(CalendarResource {
             cal: calendar,

@@ -59,6 +59,7 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> Reso
     async fn get_resource(
         &self,
         (principal,): &Self::PathComponents,
+        _show_deleted: bool,
     ) -> Result<Self::Resource, Self::Error> {
         let user = self
             .auth_provider

@@ -85,7 +85,9 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
         operations,
     ) = XmlDocument::parse_str(body).map_err(Error::XmlError)?;
 
-    let mut resource = resource_service.get_resource(path_components).await?;
+    let mut resource = resource_service
+        .get_resource(path_components, false)
+        .await?;
     let privileges = resource.get_user_privileges(principal)?;
     if !privileges.has(&UserPrivilege::Write) {
         return Err(Error::Unauthorized.into());

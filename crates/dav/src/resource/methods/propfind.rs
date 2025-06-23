@@ -49,7 +49,9 @@ pub(crate) async fn route_propfind<R: ResourceService>(
     resource_service: &R,
     puri: &impl PrincipalUri,
 ) -> Result<RSMultistatus<R>, R::Error> {
-    let resource = resource_service.get_resource(path_components).await?;
+    let resource = resource_service
+        .get_resource(path_components, false)
+        .await?;
     let privileges = resource.get_user_privileges(principal)?;
     if !privileges.has(&UserPrivilege::Read) {
         return Err(Error::Unauthorized.into());

@@ -59,10 +59,11 @@ impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
     async fn get_resource(
         &self,
         (principal, addressbook_id): &Self::PathComponents,
+        show_deleted: bool,
     ) -> Result<Self::Resource, Error> {
         let addressbook = self
             .addr_store
-            .get_addressbook(principal, addressbook_id, false)
+            .get_addressbook(principal, addressbook_id, show_deleted)
             .await
             .map_err(|_e| Error::NotFound)?;
         Ok(addressbook.into())
