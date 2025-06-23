@@ -27,7 +27,7 @@ pub async fn route_calendar<C: CalendarStore>(
         return Ok(StatusCode::UNAUTHORIZED.into_response());
     }
     Ok(CalendarPage {
-        calendar: store.get_calendar(&owner, &cal_id).await?,
+        calendar: store.get_calendar(&owner, &cal_id, true).await?,
     }
     .into_response())
 }

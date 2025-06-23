@@ -57,7 +57,10 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
         &self,
         (principal, cal_id): &Self::PathComponents,
     ) -> Result<Self::Resource, Error> {
-        let calendar = self.cal_store.get_calendar(principal, cal_id).await?;
+        let calendar = self
+            .cal_store
+            .get_calendar(principal, cal_id, false)
+            .await?;
         Ok(CalendarResource {
             cal: calendar,
             read_only: self.cal_store.is_read_only(cal_id),

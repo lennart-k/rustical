@@ -38,11 +38,17 @@ fn birthday_calendar(addressbook: Addressbook) -> Calendar {
 /// Objects are all prefixed with BIRTHDAYS_PREFIX
 #[async_trait]
 impl<AS: AddressbookStore> CalendarStore for ContactBirthdayStore<AS> {
-    async fn get_calendar(&self, principal: &str, id: &str) -> Result<Calendar, Error> {
+    async fn get_calendar(
+        &self,
+        principal: &str,
+        id: &str,
+        show_deleted: bool,
+    ) -> Result<Calendar, Error> {
         let id = id.strip_prefix(BIRTHDAYS_PREFIX).ok_or(Error::NotFound)?;
-        let addressbook = self.0.get_addressbook(principal, id, false).await?;
+        let addressbook = self.0.get_addressbook(principal, id, show_deleted).await?;
         Ok(birthday_calendar(addressbook))
     }
+
     async fn get_calendars(&self, principal: &str) -> Result<Vec<Calendar>, Error> {
         let addressbooks = self.0.get_addressbooks(principal).await?;
         Ok(addressbooks.into_iter().map(birthday_calendar).collect())

@@ -27,7 +27,9 @@ pub async fn get_event<C: CalendarStore>(
         return Err(crate::Error::Unauthorized);
     }
 
-    let calendar = cal_store.get_calendar(&principal, &calendar_id).await?;
+    let calendar = cal_store
+        .get_calendar(&principal, &calendar_id, false)
+        .await?;
     if !user.is_principal(&calendar.principal) {
         return Err(crate::Error::Unauthorized);
     }

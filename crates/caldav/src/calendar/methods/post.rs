@@ -25,7 +25,7 @@ pub async fn route_post<C: CalendarStore, S: SubscriptionStore>(
 
     let calendar = resource_service
         .cal_store
-        .get_calendar(&principal, &cal_id)
+        .get_calendar(&principal, &cal_id, false)
         .await?;
     let calendar_resource = CalendarResource {
         cal: calendar,

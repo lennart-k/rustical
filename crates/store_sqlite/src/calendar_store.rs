@@ -86,14 +86,17 @@ impl SqliteCalendarStore {
         executor: E,
         principal: &str,
         id: &str,
+        show_deleted: bool,
     ) -> Result<Calendar, Error> {
         let cal = sqlx::query_as!(
             CalendarRow,
             r#"SELECT *
                 FROM calendars
-                WHERE (principal, id) = (?, ?)"#,
+                WHERE (principal, id) = (?, ?)
+                AND ((deleted_at IS NULL) OR ?) "#,
             principal,
-            id
+            id,
+            show_deleted
         )
         .fetch_one(executor)
         .await
@@ -470,8 +473,13 @@ impl SqliteCalendarStore {
 #[async_trait]
 impl CalendarStore for SqliteCalendarStore {
     #[instrument]
-    async fn get_calendar(&self, principal: &str, id: &str) -> Result<Calendar, Error> {
-        Self::_get_calendar(&self.db, principal, id).await
+    async fn get_calendar(
+        &self,
+        principal: &str,
+        id: &str,
+        show_deleted: bool,
+    ) -> Result<Calendar, Error> {
+        Self::_get_calendar(&self.db, principal, id, show_deleted).await
     }
 
     #[instrument]
@@ -509,7 +517,7 @@ impl CalendarStore for SqliteCalendarStore {
     ) -> Result<(), Error> {
         let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
 
-        let cal = match Self::_get_calendar(&mut *tx, principal, id).await {
+        let cal = match Self::_get_calendar(&mut *tx, principal, id, true).await {
             Ok(cal) => Some(cal),
             Err(Error::NotFound) => None,
             Err(err) => return Err(err),
@@ -599,7 +607,10 @@ impl CalendarStore for SqliteCalendarStore {
 
         if let Err(err) = self.sender.try_send(CollectionOperation {
             data: CollectionOperationInfo::Content { sync_token },
-            topic: self.get_calendar(&principal, &cal_id).await?.push_topic,
+            topic: self
+                .get_calendar(&principal, &cal_id, true)
+                .await?
+                .push_topic,
         }) {
             error!("Push notification about deleted calendar failed: {err}");
         };
@@ -624,7 +635,7 @@ impl CalendarStore for SqliteCalendarStore {
 
         if let Err(err) = self.sender.try_send(CollectionOperation {
             data: CollectionOperationInfo::Content { sync_token },
-            topic: self.get_calendar(principal, cal_id).await?.push_topic,
+            topic: self.get_calendar(principal, cal_id, true).await?.push_topic,
         }) {
             error!("Push notification about deleted calendar failed: {err}");
         };
@@ -649,7 +660,7 @@ impl CalendarStore for SqliteCalendarStore {
 
         if let Err(err) = self.sender.try_send(CollectionOperation {
             data: CollectionOperationInfo::Content { sync_token },
-            topic: self.get_calendar(principal, cal_id).await?.push_topic,
+            topic: self.get_calendar(principal, cal_id, true).await?.push_topic,
         }) {
             error!("Push notification about deleted calendar failed: {err}");
         };

@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT *\n                FROM calendars\n                WHERE (principal, id) = (?, ?)",
+  "query": "SELECT *\n                FROM calendars\n                WHERE (principal, id) = (?, ?)\n                AND ((deleted_at IS NULL) OR ?) ",
   "describe": {
     "columns": [
       {
@@ -80,7 +80,7 @@
       }
     ],
     "parameters": {
-      "Right": 2
+      "Right": 3
     },
     "nullable": [
       false,
@@ -100,5 +100,5 @@
       false
     ]
   },
-  "hash": "9f930775043a6d4571a8ffd5a981cadf7c51f3f11a189f8461505abec31076e6"
+  "hash": "bb2fa030f2e7c7afdb38c5c54cb31de5293be332d86cf643977d479999542553"
 }

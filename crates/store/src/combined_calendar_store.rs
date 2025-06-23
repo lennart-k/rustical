@@ -1,8 +1,7 @@
-use std::sync::Arc;
-
 use async_trait::async_trait;
 use derive_more::Constructor;
 use rustical_ical::CalendarObject;
+use std::sync::Arc;
 
 use crate::{
     Calendar, CalendarStore, Error, calendar_store::CalendarQuery,
@@ -27,11 +26,20 @@ impl<CS: CalendarStore, BS: CalendarStore> Clone for CombinedCalendarStore<CS, B
 #[async_trait]
 impl<CS: CalendarStore, BS: CalendarStore> CalendarStore for CombinedCalendarStore<CS, BS> {
     #[inline]
-    async fn get_calendar(&self, principal: &str, id: &str) -> Result<Calendar, Error> {
+    async fn get_calendar(
+        &self,
+        principal: &str,
+        id: &str,
+        show_deleted: bool,
+    ) -> Result<Calendar, Error> {
         if id.starts_with(BIRTHDAYS_PREFIX) {
-            self.birthday_store.get_calendar(principal, id).await
+            self.birthday_store
+                .get_calendar(principal, id, show_deleted)
+                .await
         } else {
-            self.cal_store.get_calendar(principal, id).await
+            self.cal_store
+                .get_calendar(principal, id, show_deleted)
+                .await
         }
     }
 

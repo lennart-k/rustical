@@ -24,12 +24,16 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
         return Err(crate::Error::Unauthorized);
     }
 
-    let calendar = cal_store.get_calendar(&principal, &calendar_id).await?;
+    let calendar = cal_store
+        .get_calendar(&principal, &calendar_id, true)
+        .await?;
     if !user.is_principal(&calendar.principal) {
         return Err(crate::Error::Unauthorized);
     }
 
-    let calendar = cal_store.get_calendar(&principal, &calendar_id).await?;
+    let calendar = cal_store
+        .get_calendar(&principal, &calendar_id, true)
+        .await?;
 
     let mut timezones = HashMap::new();
     let objects = cal_store.get_objects(&principal, &calendar_id).await?;

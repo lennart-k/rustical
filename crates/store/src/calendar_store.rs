@@ -11,7 +11,12 @@ pub struct CalendarQuery {
 
 #[async_trait]
 pub trait CalendarStore: Send + Sync + 'static {
-    async fn get_calendar(&self, principal: &str, id: &str) -> Result<Calendar, Error>;
+    async fn get_calendar(
+        &self,
+        principal: &str,
+        id: &str,
+        show_deleted: bool,
+    ) -> Result<Calendar, Error>;
     async fn get_calendars(&self, principal: &str) -> Result<Vec<Calendar>, Error>;
     async fn get_deleted_calendars(&self, principal: &str) -> Result<Vec<Calendar>, Error>;
 
