@@ -254,6 +254,16 @@ impl CalDateTime {
         if let Ok(date) = NaiveDate::parse_from_str(value, "%Y%m%d") {
             return Ok(CalDateTime::Date(date, timezone));
         }
+
+        Err(CalDateTimeError::InvalidDatetimeFormat(value.to_string()))
+    }
+
+    // Also returns whether the date contains a year
+    pub fn parse_vcard(value: &str) -> Result<(Self, bool), CalDateTimeError> {
+        if let Ok(datetime) = Self::parse(value, None) {
+            return Ok((datetime, true));
+        }
+
         if let Some(captures) = RE_VCARD_DATE_MM_DD.captures(value) {
             // Because 1972 is a leap year
             let year = 1972;
@@ -261,13 +271,15 @@ impl CalDateTime {
             let month = captures.name("m").unwrap().as_str().parse().ok().unwrap();
             let day = captures.name("d").unwrap().as_str().parse().ok().unwrap();
 
-            return Ok(CalDateTime::Date(
-                NaiveDate::from_ymd_opt(year, month, day)
-                    .ok_or(CalDateTimeError::ParseError(value.to_string()))?,
-                timezone,
+            return Ok((
+                CalDateTime::Date(
+                    NaiveDate::from_ymd_opt(year, month, day)
+                        .ok_or(CalDateTimeError::ParseError(value.to_string()))?,
+                    CalTimezone::Local,
+                ),
+                false,
             ));
         }
-
         Err(CalDateTimeError::InvalidDatetimeFormat(value.to_string()))
     }
 
