@@ -103,7 +103,7 @@ export class CreateCalendarForm extends LitElement {
             <displayname>${this.displayname}</displayname>
             ${this.description ? `<CAL:calendar-description>${this.description}</CAL:calendar-description>` : ''}
             ${this.color ? `<ICAL:calendar-color>${this.color}</ICAL:calendar-color>` : ''}
-            ${this.subscriptionUrl ? `<CS:source>${this.subscriptionUrl}</CS:source>` : ''}
+            ${this.subscriptionUrl ? `<CS:source><href>${this.subscriptionUrl}</href></CS:source>` : ''}
             <CAL:supported-calendar-component-set>
               ${Array.from(this.components.keys()).map(comp => `<CAL:comp name="${comp}" />`).join('\n')}
             </CAL:supported-calendar-component-set>
