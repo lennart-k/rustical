@@ -87,7 +87,9 @@
         <form action="/caldav/principal/{{ calendar.principal }}/{{ calendar.id }}" target="_blank" method="GET">
           <button type="submit">Download</button>
         </form>
+        {% if !calendar.id.starts_with("_birthdays_") %}
         <delete-button trash href="/caldav/principal/{{ calendar.principal }}/{{ calendar.id }}"></delete-button>
+        {% endif %}
       </div>
       <div class="color-chip"></div>
     </a>
