@@ -71,7 +71,10 @@
   {% let color = calendar.color.to_owned().unwrap_or("transparent".to_owned()) %}
   <li class="collection-list-item" style="--color: {{ color }}">
     <a href="/frontend/user/{{ calendar.principal }}/calendar/{{ calendar.id }}">
-      <span class="title">{{ calendar.displayname.to_owned().unwrap_or(calendar.id.to_owned()) }}</span>
+      <span class="title">
+        {%- if calendar.principal != user.id -%}{{ calendar.principal }}/{%- endif -%}
+        {{ calendar.displayname.to_owned().unwrap_or(calendar.id.to_owned()) }}
+      </span>
       <div class="comps">
         {% for comp in calendar.components %}
         <span>{{ comp }}</span>
@@ -105,7 +108,10 @@
   {% let color = calendar.color.to_owned().unwrap_or("transparent".to_owned()) %}
   <li class="collection-list-item" style="--color: {{ color }}">
     <a href="/frontend/user/{{ calendar.principal }}/calendar/{{ calendar.id}}">
-      <span class="title">{{ calendar.displayname.to_owned().unwrap_or(calendar.id.to_owned()) }}</span>
+      <span class="title">
+        {%- if calendar.principal != user.id -%}{{ calendar.principal }}/{%- endif -%}
+        {{ calendar.displayname.to_owned().unwrap_or(calendar.id.to_owned()) }}
+      </span>
       <div class="comps">
         {% for comp in calendar.components %}
         <span>{{ comp }}</span>
@@ -136,7 +142,10 @@
   {% for addressbook in addressbooks %}
   <li class="collection-list-item">
     <a href="/frontend/user/{{ addressbook.principal }}/addressbook/{{ addressbook.id}}">
-      <span class="title">{{ addressbook.displayname.to_owned().unwrap_or(addressbook.id.to_owned()) }}</span>
+      <span class="title">
+        {%- if addressbook.principal != user.id -%}{{ addressbook.principal }}/{%- endif -%}
+        {{ addressbook.displayname.to_owned().unwrap_or(addressbook.id.to_owned()) }}
+      </span>
       <span class="description">
       {% if let Some(description) = addressbook.description %}{{ description }}{% endif %}
       </span>
@@ -158,7 +167,10 @@
   {% for addressbook in deleted_addressbooks %}
   <li class="collection-list-item">
     <a href="/frontend/user/{{ addressbook.principal }}/addressbook/{{ addressbook.id}}">
-      <span class="title">{{ addressbook.displayname.to_owned().unwrap_or(addressbook.id.to_owned()) }}</span>
+      <span class="title">
+        {%- if addressbook.principal != user.id -%}{{ addressbook.principal }}/{%- endif -%}
+        {{ addressbook.displayname.to_owned().unwrap_or(addressbook.id.to_owned()) }}
+      </span>
       <span class="description">
       {% if let Some(description) = addressbook.description %}{{ description }}{% endif %}
       </span>
