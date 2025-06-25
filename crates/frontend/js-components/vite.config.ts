@@ -1,10 +1,11 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  optimizeDeps: {
-    // include: ["lit"]
-  },
   build: {
+    minify: false,
+    modulePreload: {
+      polyfill: false
+    },
     copyPublicDir: false,
     lib: {
       entry: 'lib/index.ts',

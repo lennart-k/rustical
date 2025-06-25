@@ -7,7 +7,6 @@ import { createClient } from "webdav";
 export class CreateCalendarForm extends LitElement {
   constructor() {
     super()
-
   }
 
   protected override createRenderRoot() {
@@ -19,7 +18,7 @@ export class CreateCalendarForm extends LitElement {
   @property()
   user: String = ''
   @property()
-  id: String = ''
+  cal_id: String = ''
   @property()
   displayname: String = ''
   @property()
@@ -43,7 +42,7 @@ export class CreateCalendarForm extends LitElement {
         <form @submit=${this.submit} ${ref(this.form)}>
           <label>
             id
-            <input type="text" name="id" @change=${e => this.id = e.target.value} />
+            <input type="text" name="id" @change=${e => this.cal_id = e.target.value} />
           </label>
           <br>
           <label>
@@ -83,7 +82,7 @@ export class CreateCalendarForm extends LitElement {
   async submit(e: SubmitEvent) {
     console.log(this.displayname)
     e.preventDefault()
-    if (!this.id) {
+    if (!this.cal_id) {
       alert("Empty id")
       return
     }
@@ -95,7 +94,7 @@ export class CreateCalendarForm extends LitElement {
       alert("No calendar components selected")
       return
     }
-    await this.client.createDirectory(`/principal/${this.user}/${this.id}`, {
+    await this.client.createDirectory(`/principal/${this.user}/${this.cal_id}`, {
       data: `
       <mkcol xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CS="http://calendarserver.org/ns/" xmlns:ICAL="http://apple.com/ns/ical/">
         <set>

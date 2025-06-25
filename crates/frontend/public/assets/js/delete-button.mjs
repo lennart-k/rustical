@@ -1,46 +1,55 @@
-import { i as c, x as p } from "./lit-CWlWuEHk.mjs";
-import { n as h, t as u } from "./property-DYFkTqgI.mjs";
-var f = Object.defineProperty, d = Object.getOwnPropertyDescriptor, i = (r, t, n, o) => {
-  for (var e = o > 1 ? void 0 : o ? d(t, n) : t, l = r.length - 1, a; l >= 0; l--)
-    (a = r[l]) && (e = (o ? a(t, n, e) : a(e)) || e);
-  return o && e && f(t, n, e), e;
+import { i, x } from "./lit-z6_uA4GX.mjs";
+import { n, t } from "./property-D0NJdseG.mjs";
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __decorateClass = (decorators, target, key, kind) => {
+  var result = kind > 1 ? void 0 : kind ? __getOwnPropDesc(target, key) : target;
+  for (var i2 = decorators.length - 1, decorator; i2 >= 0; i2--)
+    if (decorator = decorators[i2])
+      result = (kind ? decorator(target, key, result) : decorator(result)) || result;
+  if (kind && result) __defProp(target, key, result);
+  return result;
 };
-let s = class extends c {
+let DeleteButton = class extends i {
   constructor() {
-    super(), this.trash = !1;
+    super();
+    this.trash = false;
   }
   createRenderRoot() {
     return this;
   }
   render() {
-    let r = this.trash ? "Move to trash" : "Delete";
-    return p`<button class="delete" @click=${(t) => this._onClick(t)}>${r}</button>`;
+    let text = this.trash ? "Move to trash" : "Delete";
+    return x`<button class="delete" @click=${(e) => this._onClick(e)}>${text}</button>`;
   }
-  async _onClick(r) {
-    if (r.preventDefault(), !this.trash && !confirm("Do you want to delete this collection permanently?"))
+  async _onClick(event) {
+    event.preventDefault();
+    if (!this.trash && !confirm("Do you want to delete this collection permanently?")) {
       return;
-    let t = await fetch(this.href, {
+    }
+    let response = await fetch(this.href, {
       method: "DELETE",
       headers: {
         "X-No-Trashbin": this.trash ? "0" : "1"
       }
     });
-    if (t.status < 200 || t.status >= 300) {
-      alert("An error occured, look into the console"), console.error(t);
+    if (response.status < 200 || response.status >= 300) {
+      alert("An error occured, look into the console");
+      console.error(response);
       return;
     }
     window.location.reload();
   }
 };
-i([
-  h({ type: Boolean })
-], s.prototype, "trash", 2);
-i([
-  h()
-], s.prototype, "href", 2);
-s = i([
-  u("delete-button")
-], s);
+__decorateClass([
+  n({ type: Boolean })
+], DeleteButton.prototype, "trash", 2);
+__decorateClass([
+  n()
+], DeleteButton.prototype, "href", 2);
+DeleteButton = __decorateClass([
+  t("delete-button")
+], DeleteButton);
 export {
-  s as DeleteButton
+  DeleteButton
 };

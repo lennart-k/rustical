@@ -1,7 +1,7 @@
 {
-  "module": "nodenext",
   "compilerOptions": {
     "target": "es2024",
+    "moduleResolution": "bundler",
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
     "lib": [

@@ -19,7 +19,7 @@ export class CreateAddressbookForm extends LitElement {
   @property()
   user: String = ''
   @property()
-  id: String = ''
+  addr_id: String = ''
   @property()
   displayname: String = ''
   @property()
@@ -36,7 +36,7 @@ export class CreateAddressbookForm extends LitElement {
         <form @submit=${this.submit} ${ref(this.form)}>
           <label>
             id
-            <input type="text" name="id" @change=${e => this.id = e.target.value} />
+            <input type="text" name="id" @change=${e => this.addr_id = e.target.value} />
           </label>
           <br>
           <label>
@@ -59,7 +59,7 @@ export class CreateAddressbookForm extends LitElement {
   async submit(e: SubmitEvent) {
     console.log(this.displayname)
     e.preventDefault()
-    if (!this.id) {
+    if (!this.addr_id) {
       alert("Empty id")
       return
     }
@@ -68,7 +68,7 @@ export class CreateAddressbookForm extends LitElement {
       return
     }
     // TODO: Escape user input: There's not really a security risk here but would be nicer
-    await this.client.createDirectory(`/principal/${this.user}/${this.id}`, {
+    await this.client.createDirectory(`/principal/${this.user}/${this.addr_id}`, {
       data: `
       <mkcol xmlns="DAV:" xmlns:CARD="urn:ietf:params:xml:ns:carddav">
         <set>
