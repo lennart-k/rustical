@@ -3,7 +3,10 @@ mod principal;
 use crate::error::Error;
 use async_trait::async_trait;
 
-pub use principal::{AppToken, Principal, PrincipalType};
+mod principal_type;
+pub use principal_type::*;
+
+pub use principal::{AppToken, Principal};
 
 #[async_trait]
 pub trait AuthenticationProvider: Send + Sync + 'static {
