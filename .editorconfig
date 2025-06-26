@@ -2,3 +2,5 @@
 indent_style = space
 indent_size = 4
 
+[docs/**/*.md]
+indent_size = 4

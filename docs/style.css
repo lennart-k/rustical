@@ -1,0 +1,10 @@
+body .md-main {
+  h1 {
+    font-weight: bold;
+    color: var(--md-typeset-color);
+  }
+}
+
+.md-tabs {
+  box-shadow: 0px 0 20px -10px black;
+}

@@ -3,10 +3,10 @@
 a CalDAV/CardDAV server
 
 !!! warning
-RustiCal is **not production-ready!**
-I've been using it for the last few weeks and I'm slowly becoming more confident,
-however you'd be one of the first testers so expect bugs and rough edges.
-If you still want to play around with it in its current state, absolutely feel free to do so and to open up an issue if something is not working. :)
+    RustiCal is **not production-ready!**
+    I've been using it for the last few weeks and I'm slowly becoming more confident,
+    however you'd be one of the first testers so expect bugs and rough edges.
+    If you still want to play around with it in its current state, absolutely feel free to do so and to open up an issue if something is not working. :)
 
 ## Features
 

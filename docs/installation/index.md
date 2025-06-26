@@ -40,38 +40,6 @@ App tokens are used by your CalDAV/CardDAV client (which can be managed through 
 I recommend to generate random app tokens for each CalDAV/CardDAV client.
 Since the app tokens are random they use the faster `pbkdf2` algorithm.
 
-## Configuration
-
-While RustiCal (apart from user management) will work without any configuration you should still know how to configure it. :)
-
-You can either mount a `config.toml` file or use environment variables.
-
-To see the options you can generate a default configuration using
-
-```sh title="Generate default config.toml"
-rustical gen-config
-```
-
-To see all configuration options available you can browse the [Cargo docs](/rustical/_crate/rustical/config/struct.Config.html).
-
-### Environment variables
-
-The options in `config.toml` can also be configured using environment variables.
-Names translate the following:
-
-```toml title="Example config.toml"
-[data_store.toml]
-path = "asd"
-```
-
-becomes `RUSTICAL_DATA_STORE__TOML__PATH`.
-Every variable is
-
-- uppercase
-- prefixed by `RUSTICAL_`
-- Dots become `__`
-- Arrays are JSON-encoded
-
 ## Manual
 
 ```sh

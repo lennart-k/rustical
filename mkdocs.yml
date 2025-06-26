@@ -14,7 +14,7 @@ theme:
         name: Switch to light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: indigo
+      primary: white
       accent: indigo
       toggle:
         icon: material/toggle-switch
@@ -38,6 +38,13 @@ theme:
     - content.tooltips
     - navigation.indices
     - navigation.tabs
+    - navigation.indexes
+    - navigation.indexes
+    - navigation.instant
+    - navigation.footer
+
+extra_css:
+  - style.css
 
 markdown_extensions:
   - fenced_code
@@ -58,10 +65,13 @@ markdown_extensions:
 
 nav:
   - Home: index.md
-  - Installation: installation.md
+  - Installation:
+      - installation/index.md
+      - Configuration: installation/configuration.md
   - OpenID Connect: setup/oidc.md
   - Developers:
       - developers/index.md
       - Relevant RFCs: developers/rfcs.md
+      - Frontend: developers/frontend.md
       - Debugging: developers/debugging.md
   - Cargo docs: /rustical/_crate/rustical/
