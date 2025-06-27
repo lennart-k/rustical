@@ -7,6 +7,9 @@ repository.workspace = true
 license.workspace = true
 publish = false
 
+[features]
+test = []
+
 [dependencies]
 tokio.workspace = true
 rustical_store = { workspace = true }

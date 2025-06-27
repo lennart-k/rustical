@@ -8,7 +8,7 @@ pub mod error;
 pub mod principal_store;
 pub mod subscription_store;
 
-#[cfg(test)]
+#[cfg(any(test, feature = "test"))]
 pub mod tests;
 
 #[derive(Debug, Clone, Serialize, sqlx::Type)]

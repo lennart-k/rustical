@@ -2816,6 +2816,7 @@ dependencies = [
  "rustical_dav_push",
  "rustical_ical",
  "rustical_store",
+ "rustical_store_sqlite",
  "rustical_xml",
  "serde",
  "sha2",

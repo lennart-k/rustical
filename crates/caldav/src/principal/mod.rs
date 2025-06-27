@@ -11,8 +11,10 @@ mod service;
 pub use service::*;
 mod prop;
 pub use prop::*;
+#[cfg(test)]
+pub mod tests;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct PrincipalResource {
     principal: Principal,
     members: Vec<String>,

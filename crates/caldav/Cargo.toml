@@ -7,6 +7,9 @@ repository.workspace = true
 license.workspace = true
 publish = false
 
+[dev-dependencies]
+rustical_store_sqlite = { workspace = true, features = ["test"] }
+
 [dependencies]
 axum.workspace = true
 axum-extra.workspace = true
