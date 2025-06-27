@@ -7,6 +7,9 @@ pub enum OidcError {
     #[error("Cannot generate redirect url, something's not configured correctly")]
     OidcParseError(#[from] ParseError),
 
+    #[error("Error fetching user info: {0}")]
+    UserInfo(String),
+
     #[error(transparent)]
     OidcConfigurationError(#[from] ConfigurationError),
 

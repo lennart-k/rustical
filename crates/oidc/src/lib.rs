@@ -41,7 +41,7 @@ struct OidcState {
 #[derive(Debug, Deserialize, Serialize)]
 struct GroupAdditionalClaims {
     #[serde(default)]
-    pub groups: Vec<String>,
+    groups: Option<Vec<String>>,
 }
 
 impl openidconnect::AdditionalClaims for GroupAdditionalClaims {}
@@ -190,12 +190,14 @@ pub async fn route_get_oidc_callback<US: UserStore + Clone>(
         )?
         .request_async(&http_client)
         .await
-        .map_err(|_| OidcError::Other("Error fetching user info"))?;
+        .map_err(|e| OidcError::UserInfo(e.to_string()))?;
 
     if let Some(require_group) = &oidc_config.require_group {
         if !user_info_claims
             .additional_claims()
             .groups
+            .clone()
+            .unwrap_or_default()
             .contains(require_group)
         {
             return Ok((
