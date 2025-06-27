@@ -11,6 +11,9 @@ mod secret;
 mod subscription_store;
 pub mod synctoken;
 
+#[cfg(test)]
+pub mod tests;
+
 pub use addressbook_store::AddressbookStore;
 pub use calendar_store::CalendarStore;
 pub use combined_calendar_store::CombinedCalendarStore;

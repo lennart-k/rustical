@@ -8,6 +8,9 @@ pub mod error;
 pub mod principal_store;
 pub mod subscription_store;
 
+#[cfg(test)]
+pub mod tests;
+
 #[derive(Debug, Clone, Serialize, sqlx::Type)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) enum ChangeOperation {
@@ -41,14 +44,4 @@ pub async fn create_db_pool(db_url: &str, migrate: bool) -> Result<Pool<Sqlite>,
         sqlx::migrate!("./migrations").run(&db).await?;
     }
     Ok(db)
-}
-
-pub async fn create_test_db() -> Result<SqlitePool, sqlx::Error> {
-    let db = SqlitePool::connect("sqlite::memory:").await?;
-    sqlx::migrate!("./migrations").run(&db).await?;
-    Ok(db)
-}
-
-pub async fn create_test_store() -> Result<SqliteStore, sqlx::Error> {
-    Ok(SqliteStore::new(create_test_db().await?))
 }
