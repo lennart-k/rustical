@@ -58,6 +58,7 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
     Ok((result, not_found))
 }
 
+#[allow(clippy::too_many_arguments)]
 pub async fn handle_addressbook_multiget<AS: AddressbookStore>(
     addr_multiget: &AddressbookMultigetRequest,
     prop: &PropfindType<AddressObjectPropWrapperName>,
