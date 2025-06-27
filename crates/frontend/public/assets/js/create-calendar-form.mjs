@@ -72,7 +72,7 @@ let CreateCalendarForm = class extends i {
       event.preventDefault();
       this.dialog.value.close();
       this.form.value.reset();
-    }}> Cancel </button>
+    }} class="cancel">Cancel</button>
       </form>
       </dialog>
         `;

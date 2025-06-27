@@ -5,7 +5,8 @@
   --primary-color-dark: color-mix(in srgb, var(--primary-color), #000000 80%);
   --text-on-primary-color: #FFF;
   /* --color-red: #FE2060; */
-  --color-red: #EE1D59;
+  /* --color-red: #EE1D59; */
+  --color-red: #E31B39;
 }
 
 html {
@@ -13,9 +14,11 @@ html {
 }
 
 body {
+  /* position: relative; */
   font-family: sans-serif;
   margin: 0 auto;
   max-width: 1200px;
+  min-height: 100%;
 }
 
 * {
@@ -66,7 +69,7 @@ button,
 .button {
   border: none;
   background: var(--primary-color);
-  padding: 8px 12px;
+  padding: 10px 16px;
   border-radius: 8px;
   color: var(--text-on-primary-color);
   font-size: 0.9em;
@@ -75,7 +78,8 @@ button,
     filter: brightness(90%);
   }
 
-  &.delete {
+  &.delete,
+  &.cancel {
     background: var(--color-red);
   }
 }
@@ -235,4 +239,19 @@ table {
 
 textarea {
   width: 100%;
+}
+
+dialog {
+  border: 1px solid black;
+  border-radius: 16px;
+  padding: 32px;
+}
+
+footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+  gap: 24px;
+  /* position: absolute; */
+  bottom: 20px;
 }
