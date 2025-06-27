@@ -1,3 +1,17 @@
+:root {
+  --background-color: #FFF;
+  --background-darker: #EEE;
+  --primary-color: #2F2FE1;
+  --primary-color-dark: color-mix(in srgb, var(--primary-color), #000000 80%);
+  --text-on-primary-color: #FFF;
+  /* --color-red: #FE2060; */
+  --color-red: #EE1D59;
+}
+
+html {
+  background-color: var(--background-color);
+}
+
 body {
   font-family: sans-serif;
   margin: 0 auto;
@@ -48,20 +62,6 @@ header {
   align-items: center;
 }
 
-:root {
-  --background-color: #FFF;
-  --background-darker: #EEE;
-  --primary-color: #2F2FE1;
-  --primary-color-dark: color-mix(in srgb, var(--primary-color), #000000 80%);
-  --text-on-primary-color: #FFF;
-  /* --color-red: #FE2060; */
-  --color-red: #EE1D59;
-}
-
-html {
-  background-color: var(--background-color);
-}
-
 button,
 .button {
   border: none;
@@ -109,13 +109,13 @@ table {
   box-shadow: 4px 2px 12px -6px black;
   border-collapse: collapse;
   overflow-x: scroll;
-  display: block;
-  width: fit-content;
+  width: 100%;
 
   td,
   th {
     padding: 8px;
     border: 1px solid black;
+    width: max-content;
   }
 
   th {
