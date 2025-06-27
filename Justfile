@@ -7,3 +7,8 @@ frontend-dev:
 frontend-build:
   cd crates/frontend/js-components && deno task build
 
+docs:
+  mkdocs build
+
+docs-dev:
+  mkdocs serve
