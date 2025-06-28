@@ -27,3 +27,4 @@ a CalDAV/CardDAV server
 - Evolution
 - Apple Calendar
 - Home Assistant integration
+- Thunderbird
