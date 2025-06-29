@@ -198,6 +198,7 @@ fn test_struct_generics() {
     #[derive(XmlDeserialize, XmlRootTag)]
     #[xml(root = b"document")]
     struct Document<T: XmlDeserialize> {
+        #[allow(dead_code)]
         child: T,
     }
 
@@ -218,6 +219,7 @@ fn test_struct_unparsed() {
     #[derive(XmlDeserialize, XmlRootTag)]
     #[xml(root = b"document")]
     struct Document {
+        #[allow(dead_code)]
         child: Unparsed,
     }
 

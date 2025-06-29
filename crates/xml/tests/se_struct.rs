@@ -1,11 +1,7 @@
-use std::{
-    borrow::{Borrow, Cow},
-    collections::HashMap,
-};
-
 use quick_xml::Writer;
 use quick_xml::name::Namespace;
-use rustical_xml::{XmlDocument, XmlRootTag, XmlSerialize, XmlSerializeRoot};
+use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
+use std::collections::HashMap;
 use xml_derive::XmlDeserialize;
 
 #[test]
@@ -22,16 +18,13 @@ fn test_struct_document() {
         text: String,
     }
 
-    let mut buf = Vec::new();
-    let mut writer = quick_xml::Writer::new(&mut buf);
     Document {
         child: Child {
             text: "asd".to_owned(),
         },
     }
-    .serialize_root(&mut writer)
+    .serialize_to_string()
     .unwrap();
-    let out = String::from_utf8(buf).unwrap();
 }
 
 #[test]
@@ -51,17 +44,14 @@ fn test_struct_untagged_attr() {
         text: String,
     }
 
-    let mut buf = Vec::new();
-    let mut writer = quick_xml::Writer::new(&mut buf);
     Document {
         name: "okay".to_owned(),
         child: Child {
             text: "asd".to_owned(),
         },
     }
-    .serialize_root(&mut writer)
+    .serialize_to_string()
     .unwrap();
-    let out = String::from_utf8(buf).unwrap();
 }
 
 #[test]
@@ -73,16 +63,16 @@ fn test_struct_value_tagged() {
         num: usize,
     }
 
-    let mut buf = Vec::new();
-    let mut writer = quick_xml::Writer::new(&mut buf);
-    Document {
+    let out = Document {
         href: "okay".to_owned(),
         num: 123,
     }
-    .serialize_root(&mut writer)
+    .serialize_to_string()
     .unwrap();
-    let out = String::from_utf8(buf).unwrap();
-    assert_eq!(out, "<document><href>okay</href><num>123</num></document>");
+    assert_eq!(
+        out,
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<document><href>okay</href><num>123</num></document>"
+    );
 }
 
 #[test]
@@ -94,15 +84,15 @@ fn test_struct_value_untagged() {
         href: String,
     }
 
-    let mut buf = Vec::new();
-    let mut writer = quick_xml::Writer::new(&mut buf);
-    Document {
+    let out = Document {
         href: "okays".to_owned(),
     }
-    .serialize_root(&mut writer)
+    .serialize_to_string()
     .unwrap();
-    let out = String::from_utf8(buf).unwrap();
-    assert_eq!(out, "<document>okays</document>");
+    assert_eq!(
+        out,
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<document>okays</document>"
+    );
 }
 
 #[test]
@@ -114,17 +104,14 @@ fn test_struct_vec() {
         href: Vec<String>,
     }
 
-    let mut buf = Vec::new();
-    let mut writer = quick_xml::Writer::new(&mut buf);
-    Document {
+    let out = Document {
         href: vec!["okay".to_owned(), "wow".to_owned()],
     }
-    .serialize_root(&mut writer)
+    .serialize_to_string()
     .unwrap();
-    let out = String::from_utf8(buf).unwrap();
     assert_eq!(
         out,
-        "<document><href>okay</href><href>wow</href></document>"
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<document><href>okay</href><href>wow</href></document>"
     );
 }
 
@@ -147,15 +134,15 @@ fn test_struct_serialize_with() {
         val.to_uppercase().serialize(ns, tag, namespaces, writer)
     }
 
-    let mut buf = Vec::new();
-    let mut writer = quick_xml::Writer::new(&mut buf);
-    Document {
+    let out = Document {
         href: "okay".to_owned(),
     }
-    .serialize_root(&mut writer)
+    .serialize_to_string()
     .unwrap();
-    let out = String::from_utf8(buf).unwrap();
-    assert_eq!(out, "<document><href>OKAY</href></document>");
+    assert_eq!(
+        out,
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<document><href>OKAY</href></document>"
+    );
 }
 
 #[test]
@@ -173,8 +160,6 @@ fn test_struct_tag_list() {
         name: String,
     }
 
-    let mut buf = Vec::new();
-    let mut writer = quick_xml::Writer::new(&mut buf);
     Document {
         tags: vec![
             Tag {
@@ -188,10 +173,8 @@ fn test_struct_tag_list() {
             },
         ],
     }
-    .serialize_root(&mut writer)
+    .serialize_to_string()
     .unwrap();
-    let out = String::from_utf8(buf).unwrap();
-    dbg!(out);
 }
 
 #[test]
@@ -205,15 +188,11 @@ fn test_struct_ns() {
         child: String,
     }
 
-    let mut buf = Vec::new();
-    let mut writer = quick_xml::Writer::new(&mut buf);
     Document {
         child: "hello!".to_string(),
     }
-    .serialize_root(&mut writer)
+    .serialize_to_string()
     .unwrap();
-    let out = String::from_utf8(buf).unwrap();
-    dbg!(out);
 }
 
 #[test]
@@ -227,16 +206,11 @@ fn test_struct_tuple() {
     #[derive(Debug, XmlSerialize, PartialEq, Default)]
     struct Child(#[xml(ty = "tag_name")] String, #[xml(ty = "text")] String);
 
-    let mut buf = Vec::new();
-    let mut writer = quick_xml::Writer::new(&mut buf);
-
     Document {
         child: Child("child".to_owned(), "Hello!".to_owned()),
     }
-    .serialize_root(&mut writer)
+    .serialize_to_string()
     .unwrap();
-    let out = String::from_utf8(buf).unwrap();
-    dbg!(out);
 }
 
 #[test]
@@ -247,11 +221,7 @@ fn test_tuple_struct() {
     #[xml(root = b"document")]
     struct Document(#[xml(ns = "NS", rename = b"okay")] String);
 
-    let mut buf = Vec::new();
-    let mut writer = quick_xml::Writer::new(&mut buf);
     Document("hello!".to_string())
-        .serialize_root(&mut writer)
+        .serialize_to_string()
         .unwrap();
-    let out = String::from_utf8(buf).unwrap();
-    dbg!(out);
 }

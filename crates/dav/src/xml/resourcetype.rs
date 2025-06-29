@@ -23,20 +23,17 @@ mod tests {
 
     #[test]
     fn test_serialize_resourcetype() {
-        let mut buf = Vec::new();
-        let mut writer = quick_xml::Writer::new(&mut buf);
-        Document {
+        let out = Document {
             resourcetype: Resourcetype(&[
                 ResourcetypeInner(Some(crate::namespace::NS_DAV), "displayname"),
                 ResourcetypeInner(Some(crate::namespace::NS_CALENDARSERVER), "calendar-color"),
             ]),
         }
-        .serialize_root(&mut writer)
+        .serialize_to_string()
         .unwrap();
-        let out = String::from_utf8(buf).unwrap();
         assert_eq!(
             out,
-            "<document><resourcetype><displayname xmlns=\"DAV:\"/><calendar-color xmlns=\"http://calendarserver.org/ns/\"/></resourcetype></document>"
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<document><resourcetype><displayname xmlns=\"DAV:\"/><calendar-color xmlns=\"http://calendarserver.org/ns/\"/></resourcetype></document>"
         )
     }
 }

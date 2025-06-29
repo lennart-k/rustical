@@ -99,13 +99,13 @@ impl<S: SubscriptionStore> DavPushController<S> {
             content_update,
         };
 
-        let mut output: Vec<_> = b"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".into();
-        let mut writer = quick_xml::Writer::new_with_indent(&mut output, b' ', 4);
-        if let Err(err) = push_message.serialize_root(&mut writer) {
-            error!("Could not serialize push message: {}", err);
-            return;
-        }
-        let payload = String::from_utf8(output).unwrap();
+        let payload = match push_message.serialize_to_string() {
+            Ok(payload) => payload,
+            Err(err) => {
+                error!("Could not serialize push message: {}", err);
+                return;
+            }
+        };
 
         for subsciption in subscriptions {
             if let Some(allowed_push_servers) = &self.allowed_push_servers {

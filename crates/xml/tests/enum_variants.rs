@@ -23,12 +23,16 @@ enum ExtensionProp {
 enum CalendarProp {
     // WebDAV (RFC 2518)
     #[xml(ns = "NS_DAV")]
+    #[allow(dead_code)]
     Displayname(Option<String>),
     #[xml(ns = "NS_DAV")]
+    #[allow(dead_code)]
     Getcontenttype(&'static str),
 
     #[xml(ns = "NS_DAV", rename = b"principal-URL")]
+    #[allow(dead_code)]
     PrincipalUrl,
+    #[allow(dead_code)]
     Topic,
 }
 

@@ -111,11 +111,10 @@ impl<T1: XmlSerialize, T2: XmlSerialize> axum::response::IntoResponse
     fn into_response(self) -> axum::response::Response {
         use axum::body::Body;
 
-        let mut output: Vec<_> = b"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".into();
-        let mut writer = quick_xml::Writer::new_with_indent(&mut output, b' ', 4);
-        if let Err(err) = self.serialize_root(&mut writer) {
-            return crate::Error::from(err).into_response();
-        }
+        let output = match self.serialize_to_string() {
+            Ok(out) => out,
+            Err(err) => return crate::Error::from(err).into_response(),
+        };
 
         let mut resp = axum::response::Response::builder().status(StatusCode::MULTI_STATUS);
         let hdrs = resp.headers_mut().unwrap();

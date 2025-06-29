@@ -11,17 +11,17 @@ fn test_struct_value_tagged() {
     #[derive(Debug, XmlSerialize, PartialEq)]
     enum Prop {
         Test(String),
-        Hello(usize),
-        Unit,
+        // Hello(usize),
+        // Unit,
     }
 
-    let mut buf = Vec::new();
-    let mut writer = quick_xml::Writer::new(&mut buf);
-    Document {
+    let out = Document {
         prop: Prop::Test("asd".to_owned()),
     }
-    .serialize_root(&mut writer)
+    .serialize_to_string()
     .unwrap();
-    let out = String::from_utf8(buf).unwrap();
-    assert_eq!(out, "<propfind><prop><test>asd</test></prop></propfind>");
+    assert_eq!(
+        out,
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<propfind><prop><test>asd</test></prop></propfind>"
+    );
 }

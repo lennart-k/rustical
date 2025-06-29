@@ -4,29 +4,34 @@ use rustical_xml::{Unparsed, XmlDeserialize, XmlDocument, XmlRootTag};
 fn test_propertyupdate() {
     #[derive(XmlDeserialize)]
     struct SetPropertyElement<T: XmlDeserialize> {
+        #[allow(dead_code)]
         prop: T,
     }
 
     #[derive(XmlDeserialize)]
     struct TagName {
         #[xml(ty = "tag_name")]
+        #[allow(dead_code)]
         name: String,
     }
 
     #[derive(XmlDeserialize)]
     struct PropertyElement {
         #[xml(ty = "untagged")]
+        #[allow(dead_code)]
         property: TagName,
     }
 
     #[derive(XmlDeserialize)]
     struct RemovePropertyElement {
+        #[allow(dead_code)]
         prop: PropertyElement,
     }
 
     #[derive(XmlDeserialize)]
     enum Operation<T: XmlDeserialize> {
         Set(SetPropertyElement<T>),
+        #[allow(dead_code)]
         Remove(RemovePropertyElement),
     }
 
@@ -34,10 +39,11 @@ fn test_propertyupdate() {
     #[xml(root = b"propertyupdate")]
     struct PropertyupdateElement<T: XmlDeserialize> {
         #[xml(ty = "untagged", flatten)]
+        #[allow(dead_code)]
         operations: Vec<Operation<T>>,
     }
 
-    let doc = PropertyupdateElement::<Unparsed>::parse_str(
+    PropertyupdateElement::<Unparsed>::parse_str(
         r#"
          <propertyupdate>
             <set>
