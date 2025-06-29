@@ -2,41 +2,54 @@ use crate::{
     SqliteStore, addressbook_store::SqliteAddressbookStore, calendar_store::SqliteCalendarStore,
     principal_store::SqlitePrincipalStore,
 };
-use rustical_store::{
-    AddressbookStore, CalendarStore, CollectionOperation, SubscriptionStore,
-    auth::AuthenticationProvider,
-};
+use rustical_store::auth::{AuthenticationProvider, Principal, PrincipalType};
 use sqlx::SqlitePool;
-use std::sync::Arc;
-use tokio::sync::mpsc::Receiver;
+use tokio::sync::OnceCell;
 
-pub async fn get_test_stores() -> (
-    Arc<impl AddressbookStore>,
-    Arc<impl CalendarStore>,
-    Arc<impl SubscriptionStore>,
-    Arc<impl AuthenticationProvider>,
-    Receiver<CollectionOperation>,
-) {
-    let db = SqlitePool::connect("sqlite::memory:").await.unwrap();
-    sqlx::migrate!("./migrations").run(&db).await.unwrap();
-    // let db = create_db_pool("sqlite::memory:", true).await.unwrap();
-    // Channel to watch for changes (for DAV Push)
-    let (send, recv) = tokio::sync::mpsc::channel(1000);
+static DB: OnceCell<SqlitePool> = OnceCell::const_new();
 
-    let addressbook_store = Arc::new(SqliteAddressbookStore::new(db.clone(), send.clone()));
-    let cal_store = Arc::new(SqliteCalendarStore::new(db.clone(), send));
-    let subscription_store = Arc::new(SqliteStore::new(db.clone()));
-    let principal_store = Arc::new(SqlitePrincipalStore::new(db.clone()));
-    (
-        addressbook_store,
-        cal_store,
-        subscription_store,
-        principal_store,
-        recv,
-    )
+async fn get_test_db() -> SqlitePool {
+    DB.get_or_init(async || {
+        let db = SqlitePool::connect("sqlite::memory:").await.unwrap();
+        sqlx::migrate!("./migrations").run(&db).await.unwrap();
+
+        // Populate with test data
+        let principal_store = SqlitePrincipalStore::new(db.clone());
+        principal_store
+            .insert_principal(
+                Principal {
+                    id: "user".to_owned(),
+                    displayname: None,
+                    memberships: vec![],
+                    password: None,
+                    principal_type: PrincipalType::Individual,
+                },
+                false,
+            )
+            .await
+            .unwrap();
+
+        db
+    })
+    .await
+    .clone()
 }
 
-#[tokio::test]
-async fn test_create_store() {
-    get_test_stores().await;
+#[rstest::fixture]
+pub async fn get_test_addressbook_store() -> SqliteAddressbookStore {
+    let (send, _recv) = tokio::sync::mpsc::channel(1000);
+    SqliteAddressbookStore::new(get_test_db().await, send)
+}
+#[rstest::fixture]
+pub async fn get_test_calendar_store() -> SqliteCalendarStore {
+    let (send, _recv) = tokio::sync::mpsc::channel(1000);
+    SqliteCalendarStore::new(get_test_db().await, send)
+}
+#[rstest::fixture]
+pub async fn get_test_subscription_store() -> SqliteStore {
+    SqliteStore::new(get_test_db().await)
+}
+#[rstest::fixture]
+pub async fn get_test_principal_store() -> SqlitePrincipalStore {
+    SqlitePrincipalStore::new(get_test_db().await)
 }

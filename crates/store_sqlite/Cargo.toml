@@ -8,7 +8,10 @@ license.workspace = true
 publish = false
 
 [features]
-test = []
+test = ["dep:rstest"]
+
+[dev-dependencies]
+rstest.workspace = true
 
 [dependencies]
 tokio.workspace = true
@@ -25,3 +28,4 @@ password-hash.workspace = true
 uuid.workspace = true
 pbkdf2.workspace = true
 rustical_ical.workspace = true
+rstest = { workspace = true, optional = true }

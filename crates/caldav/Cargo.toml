@@ -9,6 +9,8 @@ publish = false
 
 [dev-dependencies]
 rustical_store_sqlite = { workspace = true, features = ["test"] }
+rstest.workspace = true
+async-std.workspace = true
 
 [dependencies]
 axum.workspace = true
