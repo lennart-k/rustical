@@ -1,4 +1,4 @@
-use rustical_xml::{ValueDeserialize, ValueSerialize, XmlDeserialize};
+use rustical_xml::{ValueDeserialize, ValueSerialize, XmlDeserialize, XmlRootTag};
 
 use super::PropfindType;
 
@@ -32,11 +32,35 @@ impl ValueSerialize for SyncLevel {
     }
 }
 
+// https://datatracker.ietf.org/doc/html/rfc5323#section-5.17
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
+pub struct LimitElement {
+    #[xml(ns = "crate::namespace::NS_DAV")]
+    pub nresults: NresultsElement,
+}
+
+impl From<u64> for LimitElement {
+    fn from(value: u64) -> Self {
+        Self {
+            nresults: NresultsElement(value),
+        }
+    }
+}
+
+impl From<LimitElement> for u64 {
+    fn from(value: LimitElement) -> Self {
+        value.nresults.0
+    }
+}
+
+#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
+pub struct NresultsElement(#[xml(ty = "text")] u64);
+
+#[derive(XmlDeserialize, Clone, Debug, PartialEq, XmlRootTag)]
 // <!ELEMENT sync-collection (sync-token, sync-level, limit?, prop)>
 //    <!-- DAV:limit defined in RFC 5323, Section 5.17 -->
 //    <!-- DAV:prop defined in RFC 4918, Section 14.18 -->
-#[xml(ns = "crate::namespace::NS_DAV")]
+#[xml(ns = "crate::namespace::NS_DAV", root = b"sync-collection")]
 pub struct SyncCollectionRequest<PN: XmlDeserialize> {
     #[xml(ns = "crate::namespace::NS_DAV")]
     pub sync_token: String,
@@ -45,5 +69,48 @@ pub struct SyncCollectionRequest<PN: XmlDeserialize> {
     #[xml(ns = "crate::namespace::NS_DAV", ty = "untagged")]
     pub prop: PropfindType<PN>,
     #[xml(ns = "crate::namespace::NS_DAV")]
-    pub limit: Option<u64>,
+    pub limit: Option<LimitElement>,
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::xml::{
+        PropElement, PropfindType,
+        sync_collection::{SyncCollectionRequest, SyncLevel},
+    };
+    use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlDocument};
+
+    const SYNC_COLLECTION_REQUEST: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+    <sync-collection xmlns="DAV:">
+        <sync-token />
+        <sync-level>1</sync-level>
+        <limit>
+            <nresults>100</nresults>
+        </limit>
+        <prop>
+            <getetag />
+        </prop>
+    </sync-collection>
+    "#;
+
+    #[derive(XmlDeserialize, PropName, EnumVariants, PartialEq)]
+    #[xml(unit_variants_ident = "TestPropName")]
+    enum TestProp {
+        Getetag(String),
+    }
+
+    #[test]
+    fn test_parse_sync_collection_request() {
+        let request =
+            SyncCollectionRequest::<TestPropName>::parse_str(SYNC_COLLECTION_REQUEST).unwrap();
+        assert_eq!(
+            request,
+            SyncCollectionRequest {
+                sync_token: "".to_owned(),
+                sync_level: SyncLevel::One,
+                prop: PropfindType::Prop(PropElement(vec![TestPropName::Getetag], vec![])),
+                limit: Some(100.into())
+            }
+        )
+    }
 }
