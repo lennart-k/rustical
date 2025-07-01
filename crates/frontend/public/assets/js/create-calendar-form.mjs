@@ -17,6 +17,7 @@ let CreateCalendarForm = class extends i {
     super();
     this.client = an("/caldav");
     this.user = "";
+    this.principal = "";
     this.cal_id = "";
     this.displayname = "";
     this.description = "";
@@ -35,6 +36,11 @@ let CreateCalendarForm = class extends i {
       <dialog ${n(this.dialog)}>
         <h3>Create calendar</h3>
         <form @submit=${this.submit} ${n(this.form)}>
+          <label>
+            principal (for group calendar)
+            <input type="text" name="principal" value=${this.user} @change=${(e2) => this.principal = e2.target.value} />
+          </label>
+          <br>
           <label>
             id
             <input type="text" name="id" @change=${(e2) => this.cal_id = e2.target.value} />
@@ -92,7 +98,7 @@ let CreateCalendarForm = class extends i {
       alert("No calendar components selected");
       return;
     }
-    await this.client.createDirectory(`/principal/${this.user}/${this.cal_id}`, {
+    await this.client.createDirectory(`/principal/${this.principal || this.user}/${this.cal_id}`, {
       data: `
       <mkcol xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CS="http://calendarserver.org/ns/" xmlns:ICAL="http://apple.com/ns/ical/">
         <set>
@@ -116,6 +122,9 @@ let CreateCalendarForm = class extends i {
 __decorateClass([
   n$1()
 ], CreateCalendarForm.prototype, "user", 2);
+__decorateClass([
+  n$1()
+], CreateCalendarForm.prototype, "principal", 2);
 __decorateClass([
   n$1()
 ], CreateCalendarForm.prototype, "cal_id", 2);

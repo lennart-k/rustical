@@ -18,6 +18,8 @@ export class CreateCalendarForm extends LitElement {
   @property()
   user: String = ''
   @property()
+  principal: String = ''
+  @property()
   cal_id: String = ''
   @property()
   displayname: String = ''
@@ -40,6 +42,11 @@ export class CreateCalendarForm extends LitElement {
       <dialog ${ref(this.dialog)}>
         <h3>Create calendar</h3>
         <form @submit=${this.submit} ${ref(this.form)}>
+          <label>
+            principal (for group calendar)
+            <input type="text" name="principal" value=${this.user} @change=${e => this.principal = e.target.value} />
+          </label>
+          <br>
           <label>
             id
             <input type="text" name="id" @change=${e => this.cal_id = e.target.value} />
@@ -94,7 +101,7 @@ export class CreateCalendarForm extends LitElement {
       alert("No calendar components selected")
       return
     }
-    await this.client.createDirectory(`/principal/${this.user}/${this.cal_id}`, {
+    await this.client.createDirectory(`/principal/${this.principal || this.user}/${this.cal_id}`, {
       data: `
       <mkcol xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CS="http://calendarserver.org/ns/" xmlns:ICAL="http://apple.com/ns/ical/">
         <set>

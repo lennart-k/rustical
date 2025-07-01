@@ -17,6 +17,7 @@ let CreateAddressbookForm = class extends i {
     super();
     this.client = an("/carddav");
     this.user = "";
+    this.principal = "";
     this.addr_id = "";
     this.displayname = "";
     this.description = "";
@@ -32,6 +33,11 @@ let CreateAddressbookForm = class extends i {
       <dialog ${n(this.dialog)}>
         <h3>Create addressbook</h3>
         <form @submit=${this.submit} ${n(this.form)}>
+          <label>
+            principal (for group addressbooks)
+            <input type="text" name="principal" value=${this.user} @change=${(e2) => this.principal = e2.target.value} />
+          </label>
+          <br>
           <label>
             id
             <input type="text" name="id" @change=${(e2) => this.addr_id = e2.target.value} />
@@ -68,7 +74,7 @@ let CreateAddressbookForm = class extends i {
       alert("Empty displayname");
       return;
     }
-    await this.client.createDirectory(`/principal/${this.user}/${this.addr_id}`, {
+    await this.client.createDirectory(`/principal/${this.principal || this.user}/${this.addr_id}`, {
       data: `
       <mkcol xmlns="DAV:" xmlns:CARD="urn:ietf:params:xml:ns:carddav">
         <set>
@@ -87,6 +93,9 @@ let CreateAddressbookForm = class extends i {
 __decorateClass([
   n$1()
 ], CreateAddressbookForm.prototype, "user", 2);
+__decorateClass([
+  n$1()
+], CreateAddressbookForm.prototype, "principal", 2);
 __decorateClass([
   n$1()
 ], CreateAddressbookForm.prototype, "addr_id", 2);

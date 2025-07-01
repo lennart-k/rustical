@@ -19,6 +19,8 @@ export class CreateAddressbookForm extends LitElement {
   @property()
   user: String = ''
   @property()
+  principal: String = ''
+  @property()
   addr_id: String = ''
   @property()
   displayname: String = ''
@@ -34,6 +36,11 @@ export class CreateAddressbookForm extends LitElement {
       <dialog ${ref(this.dialog)}>
         <h3>Create addressbook</h3>
         <form @submit=${this.submit} ${ref(this.form)}>
+          <label>
+            principal (for group addressbooks)
+            <input type="text" name="principal" value=${this.user} @change=${e => this.principal = e.target.value} />
+          </label>
+          <br>
           <label>
             id
             <input type="text" name="id" @change=${e => this.addr_id = e.target.value} />
@@ -68,7 +75,7 @@ export class CreateAddressbookForm extends LitElement {
       return
     }
     // TODO: Escape user input: There's not really a security risk here but would be nicer
-    await this.client.createDirectory(`/principal/${this.user}/${this.addr_id}`, {
+    await this.client.createDirectory(`/principal/${this.principal || this.user}/${this.addr_id}`, {
       data: `
       <mkcol xmlns="DAV:" xmlns:CARD="urn:ietf:params:xml:ns:carddav">
         <set>
