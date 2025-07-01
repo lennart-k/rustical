@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO principals\n            (id, displayname, principal_type, password_hash) VALUES (?, ?, ?, ?)\n            ON CONFLICT(id) DO UPDATE SET\n                (displayname, principal_type, password_hash)\n                = (excluded.displayname, excluded.principal_type, excluded.password_hash)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "5c09c2a3c052188435409d4ff076575394e625dd19f00dea2d4c71a9f34a5952"
+}

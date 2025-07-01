@@ -114,9 +114,11 @@ impl AuthenticationProvider for SqlitePrincipalStore {
         let password = user.password.map(Secret::into_inner);
         sqlx::query!(
             r#"
-            REPLACE INTO principals
-            (id, displayname, principal_type, password_hash)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO principals
+            (id, displayname, principal_type, password_hash) VALUES (?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                (displayname, principal_type, password_hash)
+                = (excluded.displayname, excluded.principal_type, excluded.password_hash)
         "#,
             user.id,
             user.displayname,
