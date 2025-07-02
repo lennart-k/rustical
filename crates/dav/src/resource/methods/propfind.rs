@@ -77,6 +77,7 @@ pub(crate) async fn route_propfind<R: ResourceService>(
 
     let mut member_responses = Vec::new();
     if depth != &Depth::Zero {
+        // TODO: authorization check for member resources
         for member in resource_service.get_members(path_components).await? {
             member_responses.push(member.propfind(
                 &format!("{}/{}", path.trim_end_matches('/'), member.get_name()),
