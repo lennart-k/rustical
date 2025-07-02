@@ -129,7 +129,7 @@ fn test_struct_serialize_with() {
         ns: Option<Namespace>,
         tag: Option<&[u8]>,
         namespaces: &HashMap<Namespace, &[u8]>,
-        writer: &mut Writer<&mut [u8]>,
+        writer: &mut Writer<&mut Vec<u8>>,
     ) -> std::io::Result<()> {
         val.to_uppercase().serialize(ns, tag, namespaces, writer)
     }

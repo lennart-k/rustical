@@ -21,7 +21,7 @@ impl XmlSerialize for UserPrivilegeSet {
         ns: Option<Namespace>,
         tag: Option<&[u8]>,
         namespaces: &HashMap<Namespace, &[u8]>,
-        writer: &mut quick_xml::Writer<&mut [u8]>,
+        writer: &mut quick_xml::Writer<&mut Vec<u8>>,
     ) -> std::io::Result<()> {
         #[derive(XmlSerialize)]
         pub struct FakeUserPrivilegeSet {

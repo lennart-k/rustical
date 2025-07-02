@@ -109,7 +109,7 @@ impl<T: ValueSerialize> XmlSerialize for T {
         ns: Option<Namespace>,
         tag: Option<&[u8]>,
         namespaces: &HashMap<Namespace, &[u8]>,
-        writer: &mut quick_xml::Writer<&mut [u8]>,
+        writer: &mut quick_xml::Writer<&mut Vec<u8>>,
     ) -> std::io::Result<()> {
         let prefix = ns
             .map(|ns| namespaces.get(&ns))

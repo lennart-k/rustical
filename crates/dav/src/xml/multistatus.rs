@@ -24,7 +24,7 @@ fn xml_serialize_status(
     ns: Option<Namespace>,
     tag: Option<&[u8]>,
     namespaces: &HashMap<Namespace, &[u8]>,
-    writer: &mut quick_xml::Writer<&mut [u8]>,
+    writer: &mut quick_xml::Writer<&mut Vec<u8>>,
 ) -> std::io::Result<()> {
     XmlSerialize::serialize(&format!("HTTP/1.1 {}", status), ns, tag, namespaces, writer)
 }
@@ -54,7 +54,7 @@ fn xml_serialize_optional_status(
     ns: Option<Namespace>,
     tag: Option<&[u8]>,
     namespaces: &HashMap<Namespace, &[u8]>,
-    writer: &mut quick_xml::Writer<&mut [u8]>,
+    writer: &mut quick_xml::Writer<&mut Vec<u8>>,
 ) -> std::io::Result<()> {
     XmlSerialize::serialize(
         &val.map(|status| format!("HTTP/1.1 {}", status)),

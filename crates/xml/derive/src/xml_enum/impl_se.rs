@@ -18,7 +18,7 @@ impl Enum {
                     ns: Option<::quick_xml::name::Namespace>,
                     tag: Option<&[u8]>,
                     namespaces: &::std::collections::HashMap<::quick_xml::name::Namespace, &[u8]>,
-                    writer: &mut ::quick_xml::Writer<&mut [u8]>
+                    writer: &mut ::quick_xml::Writer<&mut Vec<u8>>
                 ) -> ::std::io::Result<()> {
                     use ::quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
 
