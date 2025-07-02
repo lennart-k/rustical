@@ -15,7 +15,7 @@ pub trait XmlSerialize {
         writer: &mut quick_xml::Writer<W>,
     ) -> std::io::Result<()>;
 
-    fn attributes<'a>(&self) -> Option<impl IntoIterator<Item: Into<Attribute<'a>>>>;
+    fn attributes<'a>(&self) -> Option<Vec<Attribute<'a>>>;
 }
 
 impl<T: XmlSerialize> XmlSerialize for Option<T> {
@@ -33,7 +33,6 @@ impl<T: XmlSerialize> XmlSerialize for Option<T> {
         }
     }
 
-    #[allow(refining_impl_trait)]
     fn attributes<'a>(&self) -> Option<Vec<Attribute<'a>>> {
         None
     }
@@ -96,7 +95,6 @@ impl XmlSerialize for () {
         Ok(())
     }
 
-    #[allow(refining_impl_trait)]
     fn attributes<'a>(&self) -> Option<Vec<quick_xml::events::attributes::Attribute<'a>>> {
         None
     }

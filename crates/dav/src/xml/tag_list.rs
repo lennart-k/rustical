@@ -57,7 +57,6 @@ impl XmlSerialize for TagList {
         Ok(())
     }
 
-    #[allow(refining_impl_trait)]
     fn attributes<'a>(&self) -> Option<Vec<quick_xml::events::attributes::Attribute<'a>>> {
         None
     }

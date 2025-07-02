@@ -140,7 +140,6 @@ impl<T: ValueSerialize> XmlSerialize for T {
         Ok(())
     }
 
-    #[allow(refining_impl_trait)]
     fn attributes<'a>(&self) -> Option<Vec<quick_xml::events::attributes::Attribute<'a>>> {
         None
     }
