@@ -4,8 +4,8 @@ use app::make_app;
 use axum::ServiceExt;
 use axum::extract::Request;
 use clap::{Parser, Subcommand};
+use commands::cmd_gen_config;
 use commands::principals::{PrincipalsArgs, cmd_principals};
-use commands::{cmd_gen_config, cmd_pwhash};
 use config::{DataStoreConfig, SqliteDataStoreConfig};
 use figment::Figment;
 use figment::providers::{Env, Format, Toml};
@@ -43,7 +43,6 @@ struct Args {
 #[derive(Debug, Subcommand)]
 enum Command {
     GenConfig(commands::GenConfigArgs),
-    Pwhash(commands::PwhashArgs),
     Principals(PrincipalsArgs),
 }
 
@@ -84,7 +83,6 @@ async fn main() -> Result<()> {
 
     match args.command {
         Some(Command::GenConfig(gen_config_args)) => cmd_gen_config(gen_config_args)?,
-        Some(Command::Pwhash(pwhash_args)) => cmd_pwhash(pwhash_args)?,
         Some(Command::Principals(principals_args)) => cmd_principals(principals_args).await?,
         None => {
             let config: Config = Figment::new()
