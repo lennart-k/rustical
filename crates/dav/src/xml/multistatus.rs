@@ -19,12 +19,12 @@ pub struct PropstatElement<PropType: XmlSerialize> {
     pub status: StatusCode,
 }
 
-fn xml_serialize_status<W: ::std::io::Write>(
+fn xml_serialize_status(
     status: &StatusCode,
     ns: Option<Namespace>,
     tag: Option<&[u8]>,
     namespaces: &HashMap<Namespace, &[u8]>,
-    writer: &mut quick_xml::Writer<W>,
+    writer: &mut quick_xml::Writer<&mut [u8]>,
 ) -> std::io::Result<()> {
     XmlSerialize::serialize(&format!("HTTP/1.1 {}", status), ns, tag, namespaces, writer)
 }
@@ -49,12 +49,12 @@ pub struct ResponseElement<PropstatType: XmlSerialize> {
     pub propstat: Vec<PropstatWrapper<PropstatType>>,
 }
 
-fn xml_serialize_optional_status<W: ::std::io::Write>(
+fn xml_serialize_optional_status(
     val: &Option<StatusCode>,
     ns: Option<Namespace>,
     tag: Option<&[u8]>,
     namespaces: &HashMap<Namespace, &[u8]>,
-    writer: &mut quick_xml::Writer<W>,
+    writer: &mut quick_xml::Writer<&mut [u8]>,
 ) -> std::io::Result<()> {
     XmlSerialize::serialize(
         &val.map(|status| format!("HTTP/1.1 {}", status)),

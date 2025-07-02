@@ -10,12 +10,12 @@ use std::collections::HashMap;
 pub struct TagList(Vec<(Option<NamespaceOwned>, String)>);
 
 impl XmlSerialize for TagList {
-    fn serialize<W: std::io::Write>(
+    fn serialize(
         &self,
         ns: Option<Namespace>,
         tag: Option<&[u8]>,
         namespaces: &HashMap<Namespace, &[u8]>,
-        writer: &mut quick_xml::Writer<W>,
+        writer: &mut quick_xml::Writer<&mut [u8]>,
     ) -> std::io::Result<()> {
         let prefix = ns
             .map(|ns| namespaces.get(&ns))

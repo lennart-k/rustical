@@ -16,12 +16,12 @@ pub enum UserPrivilege {
 }
 
 impl XmlSerialize for UserPrivilegeSet {
-    fn serialize<W: std::io::Write>(
+    fn serialize(
         &self,
         ns: Option<Namespace>,
         tag: Option<&[u8]>,
         namespaces: &HashMap<Namespace, &[u8]>,
-        writer: &mut quick_xml::Writer<W>,
+        writer: &mut quick_xml::Writer<&mut [u8]>,
     ) -> std::io::Result<()> {
         #[derive(XmlSerialize)]
         pub struct FakeUserPrivilegeSet {

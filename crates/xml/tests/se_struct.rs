@@ -124,12 +124,12 @@ fn test_struct_serialize_with() {
         href: String,
     }
 
-    fn serialize_href<W: ::std::io::Write>(
+    fn serialize_href(
         val: &str,
         ns: Option<Namespace>,
         tag: Option<&[u8]>,
         namespaces: &HashMap<Namespace, &[u8]>,
-        writer: &mut Writer<W>,
+        writer: &mut Writer<&mut [u8]>,
     ) -> std::io::Result<()> {
         val.to_uppercase().serialize(ns, tag, namespaces, writer)
     }

@@ -7,24 +7,24 @@ use std::collections::HashMap;
 pub use xml_derive::XmlSerialize;
 
 pub trait XmlSerialize {
-    fn serialize<W: std::io::Write>(
+    fn serialize(
         &self,
         ns: Option<Namespace>,
         tag: Option<&[u8]>,
         namespaces: &HashMap<Namespace, &[u8]>,
-        writer: &mut quick_xml::Writer<W>,
+        writer: &mut quick_xml::Writer<&mut [u8]>,
     ) -> std::io::Result<()>;
 
     fn attributes<'a>(&self) -> Option<Vec<Attribute<'a>>>;
 }
 
 impl<T: XmlSerialize> XmlSerialize for Option<T> {
-    fn serialize<W: std::io::Write>(
+    fn serialize(
         &self,
         ns: Option<Namespace>,
         tag: Option<&[u8]>,
         namespaces: &HashMap<Namespace, &[u8]>,
-        writer: &mut quick_xml::Writer<W>,
+        writer: &mut quick_xml::Writer<&mut [u8]>,
     ) -> std::io::Result<()> {
         if let Some(some) = self {
             some.serialize(ns, tag, namespaces, writer)
@@ -39,36 +39,30 @@ impl<T: XmlSerialize> XmlSerialize for Option<T> {
 }
 
 pub trait XmlSerializeRoot {
-    fn serialize_root<W: std::io::Write>(
-        &self,
-        writer: &mut quick_xml::Writer<W>,
-    ) -> std::io::Result<()>;
+    fn serialize_root(&self, writer: &mut quick_xml::Writer<&mut [u8]>) -> std::io::Result<()>;
 
     fn serialize_to_string(&self) -> std::io::Result<String> {
         let mut buf: Vec<_> = b"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".into();
-        let mut writer = quick_xml::Writer::new(&mut buf);
+        let mut writer = quick_xml::Writer::new(buf.as_mut_slice());
         self.serialize_root(&mut writer)?;
         Ok(String::from_utf8_lossy(&buf).to_string())
     }
 }
 
 impl<T: XmlSerialize + XmlRootTag> XmlSerializeRoot for T {
-    fn serialize_root<W: std::io::Write>(
-        &self,
-        writer: &mut quick_xml::Writer<W>,
-    ) -> std::io::Result<()> {
+    fn serialize_root(&self, writer: &mut quick_xml::Writer<&mut [u8]>) -> std::io::Result<()> {
         let namespaces = Self::root_ns_prefixes();
         self.serialize(Self::root_ns(), Some(Self::root_tag()), &namespaces, writer)
     }
 }
 
 impl XmlSerialize for () {
-    fn serialize<W: std::io::Write>(
+    fn serialize(
         &self,
         ns: Option<Namespace>,
         tag: Option<&[u8]>,
         namespaces: &HashMap<Namespace, &[u8]>,
-        writer: &mut quick_xml::Writer<W>,
+        writer: &mut quick_xml::Writer<&mut [u8]>,
     ) -> std::io::Result<()> {
         let prefix = ns
             .map(|ns| namespaces.get(&ns))

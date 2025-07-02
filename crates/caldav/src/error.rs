@@ -17,7 +17,7 @@ pub enum Precondition {
 impl IntoResponse for Precondition {
     fn into_response(self) -> axum::response::Response {
         let mut output: Vec<_> = b"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".into();
-        let mut writer = quick_xml::Writer::new_with_indent(&mut output, b' ', 4);
+        let mut writer = quick_xml::Writer::new_with_indent(output.as_mut_slice(), b' ', 4);
 
         let error = rustical_dav::xml::ErrorElement(&self);
         if let Err(err) = error.serialize_root(&mut writer) {
