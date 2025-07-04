@@ -8,6 +8,7 @@ use axum::{
 };
 use headers::{ContentType, HeaderMapExt};
 use http::{Method, StatusCode};
+use routes::{addressbooks::route_addressbooks, calendars::route_calendars};
 use rustical_oidc::{OidcConfig, OidcServiceConfig, route_get_oidc_callback, route_post_oidc};
 use rustical_store::{
     AddressbookStore, CalendarStore,
@@ -20,6 +21,7 @@ mod assets;
 mod config;
 pub mod nextcloud_login;
 mod oidc_user_store;
+pub(crate) mod pages;
 mod routes;
 
 pub use config::FrontendConfig;
@@ -56,6 +58,7 @@ pub fn frontend_router<AP: AuthenticationProvider, CS: CalendarStore, AS: Addres
             post(route_delete_app_token::<AP>),
         )
         // Calendar
+        .route("/user/{user}/calendar", get(route_calendars::<CS>))
         .route(
             "/user/{user}/calendar/{calendar}",
             get(route_calendar::<CS>),
@@ -65,6 +68,7 @@ pub fn frontend_router<AP: AuthenticationProvider, CS: CalendarStore, AS: Addres
             post(route_calendar_restore::<CS>),
         )
         // Addressbook
+        .route("/user/{user}/addressbook", get(route_addressbooks::<AS>))
         .route(
             "/user/{user}/addressbook/{addressbook}",
             get(route_addressbook::<AS>),

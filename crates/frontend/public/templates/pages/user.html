@@ -5,15 +5,15 @@
 <script type="module" src="/frontend/assets/js/create-addressbook-form.mjs" async></script>
 <script type="module" src="/frontend/assets/js/delete-button.mjs" async></script>
 {% endblock %}
+{% block header_center %}
+<nav class="header-center">
+  <a href="/frontend/user/{{ user.id }}" {% if S::name() == "profile" %}class="active"{% endif %}>Profile</a>
+  <a href="/frontend/user/{{ user.id }}/calendar" {% if S::name() == "calendars" %}class="active"{% endif %}>Calendars</a>
+  <a href="/frontend/user/{{ user.id }}/addressbook" {% if S::name() == "addressbooks" %}class="active"{% endif %}>Addressbooks</a>
+</nav>
+{% endblock %}
 
 {% block content %}
-<div id="page-user">
-
-<h1>Welcome {{ user.id }}!</h1>
-
-{% include "components/profile_section.html" %}
-{% include "components/calendars_section.html" %}
-{% include "components/addressbooks_section.html" %}
-
+{{ section|safe }}
 {% endblock %}
 

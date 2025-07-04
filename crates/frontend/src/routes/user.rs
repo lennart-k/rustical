@@ -11,19 +11,23 @@ use axum_extra::{TypedHeader, extract::Host};
 use headers::UserAgent;
 use http::StatusCode;
 use rustical_store::{
-    Addressbook, AddressbookStore, Calendar, CalendarStore,
+    AddressbookStore, CalendarStore,
     auth::{AppToken, AuthenticationProvider, Principal},
 };
 
+use crate::pages::user::{Section, UserPage};
+
+impl Section for ProfileSection {
+    fn name() -> &'static str {
+        "profile"
+    }
+}
+
 #[derive(Template, WebTemplate)]
-#[template(path = "pages/user.html")]
-pub struct UserPage {
+#[template(path = "components/sections/profile_section.html")]
+pub struct ProfileSection {
     pub user: Principal,
     pub app_tokens: Vec<AppToken>,
-    pub calendars: Vec<Calendar>,
-    pub deleted_calendars: Vec<Calendar>,
-    pub addressbooks: Vec<Addressbook>,
-    pub deleted_addressbooks: Vec<Addressbook>,
     pub is_apple: bool,
     pub davx5_hostname: Option<String>,
 }
@@ -69,14 +73,13 @@ pub async fn route_user_named<
     let davx5_hostname = user_agent.as_str().contains("Android").then_some(host);
 
     UserPage {
-        app_tokens: auth_provider.get_app_tokens(&user.id).await.unwrap(),
-        calendars,
-        deleted_calendars,
-        addressbooks,
-        deleted_addressbooks,
+        section: ProfileSection {
+            user: user.clone(),
+            app_tokens: auth_provider.get_app_tokens(&user.id).await.unwrap(),
+            is_apple,
+            davx5_hostname,
+        },
         user,
-        is_apple,
-        davx5_hostname,
     }
     .into_response()
 }

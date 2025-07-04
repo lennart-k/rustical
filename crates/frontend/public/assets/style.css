@@ -1,21 +1,40 @@
 :root {
   --background-color: #FFF;
   --background-darker: #EEE;
+  --text-on-background-color: #111;
   --primary-color: #2F2FE1;
   --primary-color-dark: color-mix(in srgb, var(--primary-color), #000000 80%);
   --text-on-primary-color: #FFF;
   /* --color-red: #FE2060; */
   /* --color-red: #EE1D59; */
   --color-red: #E31B39;
+  --dilute-color: black;
+  --border-color: black;
 }
 
-html {
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background-color: #222;
+    --background-darker: #292929;
+    --text-on-background-color: #CACACA;
+    --primary-color: color-mix(in srgb, #2F2FE1, white 15%);
+    --primary-color-dark: color-mix(in srgb, var(--primary-color), #000000 80%);
+    --text-on-primary-color: #FFF;
+    /* --color-red: #FE2060; */
+    --color-red: #EE1D59;
+    --dilute-color: white;
+    --border-color: color-mix(in srgb, var(--background-color), var(--dilute-color) 15%);
+  }
+}
+
+html, dialog {
   background-color: var(--background-color);
+  color: var(--text-on-background-color);
 }
 
 body {
   /* position: relative; */
-  font-family: sans-serif;
+  font-family: 'Noto Sans', Helvetica, Arial, sans-serif;
   margin: 0 auto;
   max-width: 1200px;
   min-height: 100%;
@@ -29,6 +48,10 @@ body {
   padding: 12px;
 }
 
+a {
+  color: var(--text-on-background-color);
+}
+
 header {
   background: var(--background-darker);
   height: 60px;
@@ -37,24 +60,45 @@ header {
   align-items: center;
   padding: 12px;
 
-  border: 2px solid black;
+  border: 2px solid var(--border-color);
   border-radius: 12px;
   margin: 12px;
   box-shadow: 4px 2px 12px -5px black;
 
-  a {
+  display: flex;
+  justify-content: space-between;
+
+  a.logo {
     font-size: 2em;
     text-decoration: none;
-    color: black;
+  }
+
+  nav {
+    display: flex;
+
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--background-darker), var(--dilute-color) 5%);
+
+    a {
+      text-decoration: none;
+      margin: 4px 8px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      background: color-mix(in srgb, var(--background-darker), var(--dilute-color) 2%);
+
+      &:hover {
+        background: color-mix(in srgb, var(--background-darker), var(--dilute-color) 20%);
+      }
+
+      &.active {
+        background: color-mix(in srgb, var(--background-darker), var(--dilute-color) 15%);
+      }
+    }
   }
 
 
   .logout_form {
     display: contents;
-
-    button {
-      margin-left: auto;
-    }
   }
 }
 
@@ -69,7 +113,7 @@ button,
 .button {
   border: none;
   background: var(--primary-color);
-  padding: 10px 16px;
+  padding: 8px 16px;
   border-radius: 8px;
   color: var(--text-on-primary-color);
   font-size: 0.9em;
@@ -97,7 +141,7 @@ input[type="password"] {
 }
 
 section {
-  border: 1px solid black;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   box-shadow: 4px 2px 12px -8px black;
   border-collapse: collapse;
@@ -108,7 +152,7 @@ section {
 }
 
 table {
-  border: 1px solid black;
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   box-shadow: 4px 2px 12px -6px black;
   border-collapse: collapse;
@@ -118,7 +162,7 @@ table {
   td,
   th {
     padding: 8px;
-    border: 1px solid black;
+    border: 1px solid var(--border-color);
     width: max-content;
   }
 
@@ -126,12 +170,8 @@ table {
     height: 40px;
   }
 
-  /* tr:nth-of-type(2n+1) { */
-  /*   background: var(--background-darker); */
-  /* } */
-
   tr:hover {
-    background: #DDD;
+    background: color-mix(in srgb, var(--background-color), var(--dilute-color) 10%);
   }
 
   tr:first-child th {
@@ -151,87 +191,85 @@ table {
   }
 }
 
-#page-user {
-  ul {
-    padding-left: 0;
+ul.collection-list {
+  padding-left: 0;
 
-    li.collection-list-item {
-      list-style: none;
-      display: contents;
+  li.collection-list-item {
+    list-style: none;
+    display: contents;
 
-      a {
-        background: #EEE;
-        display: grid;
-        min-height: 80px;
-        grid-template-areas:
-          ".                .                 color-chip"
-          "title            comps             color-chip"
-          "description      description       color-chip"
-          "subscription-url subscription-url  color-chip"
-          "actions          actions           color-chip"
-          ".                .                 color-chip";
-        grid-template-rows: 12px auto auto auto auto 12px;
-        grid-template-columns: min-content auto 80px;
-        row-gap: 4px;
-        color: inherit;
-        text-decoration: none;
-        padding-left: 12px;
+    a {
+      background: color-mix(in srgb, var(--background-color), var(--dilute-color) 5%);
+      display: grid;
+      min-height: 80px;
+      grid-template-areas:
+        ".                .                 color-chip"
+        "title            comps             color-chip"
+        "description      description       color-chip"
+        "subscription-url subscription-url  color-chip"
+        "actions          actions           color-chip"
+        ".                .                 color-chip";
+      grid-template-rows: 12px auto auto auto auto 12px;
+      grid-template-columns: min-content auto 80px;
+      row-gap: 4px;
+      color: inherit;
+      text-decoration: none;
+      padding-left: 12px;
 
-        border: 2px solid black;
-        border-radius: 12px;
-        margin: 12px;
-        box-shadow: 4px 2px 12px -6px black;
-        overflow: hidden;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      margin: 12px;
+      box-shadow: 4px 2px 12px -6px black;
+      overflow: hidden;
 
-        .title {
-          font-weight: bold;
-          grid-area: title;
-          margin-right: 12px;
-          white-space: nowrap;
-        }
+      .title {
+        font-weight: bold;
+        grid-area: title;
+        margin-right: 12px;
+        white-space: nowrap;
+      }
+
+      span {
+        margin: 8px initial;
+      }
+
+      .comps {
+        grid-area: comps;
 
         span {
-          margin: 8px initial;
+          margin: 0 2px;
+          background: var(--primary-color);
+          color: var(--text-on-primary-color);
+          font-size: .8em;
+          padding: 3px 8px;
+          border-radius: 12px;
         }
+      }
 
-        .comps {
-          grid-area: comps;
+      .description {
+        grid-area: description;
+        white-space: nowrap;
+      }
 
-          span {
-            margin: 0 2px;
-            background: var(--primary-color);
-            color: var(--text-on-primary-color);
-            font-size: .8em;
-            padding: 3px 8px;
-            border-radius: 12px;
-          }
-        }
+      .subscription-url {
+        grid-area: subscription-url;
+        white-space: nowrap;
+      }
 
-        .description {
-          grid-area: description;
-          white-space: nowrap;
-        }
+      .color-chip {
+        background: var(--color);
+        grid-area: color-chip;
+      }
 
-        .subscription-url {
-          grid-area: subscription-url;
-          white-space: nowrap;
-        }
+      .actions {
+        grid-area: actions;
+        width: fit-content;
+        display: flex;
+        gap: 12px;
+      }
 
-        .color-chip {
-          background: var(--color);
-          grid-area: color-chip;
-        }
-
-        .actions {
-          grid-area: actions;
-          width: fit-content;
-          display: flex;
-          gap: 12px;
-        }
-
-        &:hover {
-          background: #DDD;
-        }
+      &:hover {
+        background: color-mix(in srgb, var(--background-color), var(--dilute-color) 10%);
       }
     }
   }
@@ -242,7 +280,7 @@ textarea {
 }
 
 dialog {
-  border: 1px solid black;
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 32px;
 }
@@ -252,6 +290,14 @@ footer {
   justify-content: center;
   margin-top: 32px;
   gap: 24px;
-  /* position: absolute; */
   bottom: 20px;
+}
+
+input[type="text"],
+input[type="password"] {
+    background: color-mix(in srgb, var(--background-color), var(--dilute-color) 10%);
+    border: 2px solid var(--border-color);
+    padding: 6px 6px;
+    color: var(--text-on-background-color);
+    margin: 2px;
 }
