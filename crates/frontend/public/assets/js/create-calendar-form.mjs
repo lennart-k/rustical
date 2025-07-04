@@ -71,6 +71,7 @@ let CreateCalendarForm = class extends i {
               Support ${comp}
               <input type="checkbox" value=${comp} @change=${(e2) => e2.target.checked ? this.components.add(e2.target.value) : this.components.delete(e2.target.value)} />
             </label>
+            <br>
           `)}
           <br>
           <button type="submit">Create</button>

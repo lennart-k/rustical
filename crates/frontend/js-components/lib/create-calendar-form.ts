@@ -77,6 +77,7 @@ export class CreateCalendarForm extends LitElement {
               Support ${comp}
               <input type="checkbox" value=${comp} @change=${e => e.target.checked ? this.components.add(e.target.value) : this.components.delete(e.target.value)} />
             </label>
+            <br>
           `)}
           <br>
           <button type="submit">Create</button>
