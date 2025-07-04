@@ -28,7 +28,7 @@
         {% endif %}
       </div>
       <div class="metadata">
-        {{ meta.len }} objects, {{ meta.deleted_len }} deleted objects
+        {{ meta.len }} ({{ meta.size | filesizeformat }}) objects, {{ meta.deleted_len }} ({{ meta.deleted_size | filesizeformat }}) deleted objects
       </div>
       <div class="color-chip"></div>
     </a>
@@ -64,7 +64,7 @@
         <delete-button href="/caldav/principal/{{ calendar.principal }}/{{ calendar.id }}"></delete-button>
       </div>
       <div class="metadata">
-        {{ meta.len }} objects, {{ meta.deleted_len }} deleted objects
+        {{ meta.len }} ({{ meta.size | filesizeformat }}) objects, {{ meta.deleted_len }} ({{ meta.deleted_size | filesizeformat }}) deleted objects
       </div>
       <div class="color-chip"></div>
     </a>

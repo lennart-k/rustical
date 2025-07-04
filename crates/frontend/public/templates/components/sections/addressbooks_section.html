@@ -19,7 +19,7 @@
           href="/carddav/principal/{{ addressbook.principal }}/{{ addressbook.id }}"></delete-button>
       </div>
       <div class="metadata">
-        {{ meta.len }} objects, {{ meta.deleted_len }} deleted objects
+        {{ meta.len }} ({{ meta.size | filesizeformat }}) objects, {{ meta.deleted_len }} ({{ meta.deleted_size | filesizeformat }}) deleted objects
       </div>
     </a>
   </li>
@@ -48,7 +48,7 @@
         <delete-button href="/carddav/principal/{{ addressbook.principal }}/{{ addressbook.id }}"></delete-button>
       </div>
       <div class="metadata">
-        {{ meta.len }} objects, {{ meta.deleted_len }} deleted objects
+        {{ meta.len }} ({{ meta.size | filesizeformat }}) objects, {{ meta.deleted_len }} ({{ meta.deleted_size | filesizeformat }}) deleted objects
       </div>
     </a>
   </li>
