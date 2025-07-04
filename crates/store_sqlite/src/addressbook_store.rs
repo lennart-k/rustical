@@ -3,8 +3,8 @@ use async_trait::async_trait;
 use derive_more::derive::Constructor;
 use rustical_ical::AddressObject;
 use rustical_store::{
-    Addressbook, AddressbookStore, CollectionOperation, CollectionOperationInfo, Error,
-    synctoken::format_synctoken,
+    Addressbook, AddressbookStore, CollectionMetadata, CollectionOperation,
+    CollectionOperationInfo, Error, synctoken::format_synctoken,
 };
 use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};
 use tokio::sync::mpsc::Sender;
@@ -221,6 +221,28 @@ impl SqliteAddressbookStore {
         }
 
         Ok((objects, deleted_objects, new_synctoken))
+    }
+
+    async fn _list_objects<'e, E: Executor<'e, Database = Sqlite>>(
+        executor: E,
+        principal: &str,
+        addressbook_id: &str,
+    ) -> Result<Vec<(u64, bool)>, rustical_store::Error> {
+        struct ObjectEntry {
+            length: u64,
+            deleted: bool,
+        }
+        Ok(sqlx::query_as!(
+            ObjectEntry,
+            "SELECT length(vcf) AS 'length!: u64', deleted_at AS 'deleted!: bool' FROM addressobjects WHERE principal = ? AND addressbook_id = ?",
+            principal,
+            addressbook_id
+        )
+        .fetch_all(executor)
+        .await.map_err(crate::Error::from)?
+        .into_iter()
+        .map(|row| (row.length, row.deleted))
+        .collect())
     }
 
     async fn _get_objects<'e, E: Executor<'e, Database = Sqlite>>(
@@ -440,6 +462,29 @@ impl AddressbookStore for SqliteAddressbookStore {
         synctoken: i64,
     ) -> Result<(Vec<AddressObject>, Vec<String>, i64), rustical_store::Error> {
         Self::_sync_changes(&self.db, principal, addressbook_id, synctoken).await
+    }
+
+    #[instrument]
+    async fn addressbook_metadata(
+        &self,
+        principal: &str,
+        addressbook_id: &str,
+    ) -> Result<CollectionMetadata, rustical_store::Error> {
+        let mut sizes = vec![];
+        let mut deleted_sizes = vec![];
+        for (size, deleted) in Self::_list_objects(&self.db, principal, addressbook_id).await? {
+            if deleted {
+                deleted_sizes.push(size)
+            } else {
+                sizes.push(size)
+            }
+        }
+        Ok(CollectionMetadata {
+            len: sizes.len(),
+            deleted_len: deleted_sizes.len(),
+            size: sizes.iter().sum(),
+            deleted_size: deleted_sizes.iter().sum(),
+        })
     }
 
     #[instrument]

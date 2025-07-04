@@ -5,7 +5,7 @@ use derive_more::derive::Constructor;
 use rustical_ical::{CalDateTime, CalendarObject, CalendarObjectType};
 use rustical_store::calendar_store::CalendarQuery;
 use rustical_store::synctoken::format_synctoken;
-use rustical_store::{Calendar, CalendarStore, Error};
+use rustical_store::{Calendar, CalendarStore, CollectionMetadata, Error};
 use rustical_store::{CollectionOperation, CollectionOperationInfo};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};
@@ -240,6 +240,28 @@ impl SqliteCalendarStore {
         .await
         .map_err(crate::Error::from)?;
         Ok(())
+    }
+
+    async fn _list_objects<'e, E: Executor<'e, Database = Sqlite>>(
+        executor: E,
+        principal: &str,
+        cal_id: &str,
+    ) -> Result<Vec<(u64, bool)>, rustical_store::Error> {
+        struct ObjectEntry {
+            length: u64,
+            deleted: bool,
+        }
+        Ok(sqlx::query_as!(
+            ObjectEntry,
+            "SELECT length(ics) AS 'length!: u64', deleted_at AS 'deleted!: bool' FROM calendarobjects WHERE principal = ? AND cal_id = ?",
+            principal,
+            cal_id
+        )
+        .fetch_all(executor)
+        .await.map_err(crate::Error::from)?
+        .into_iter()
+        .map(|row| (row.length, row.deleted))
+        .collect())
     }
 
     async fn _get_objects<'e, E: Executor<'e, Database = Sqlite>>(
@@ -550,6 +572,28 @@ impl CalendarStore for SqliteCalendarStore {
         query: CalendarQuery,
     ) -> Result<Vec<CalendarObject>, Error> {
         Self::_calendar_query(&self.db, principal, cal_id, query).await
+    }
+
+    async fn calendar_metadata(
+        &self,
+        principal: &str,
+        cal_id: &str,
+    ) -> Result<CollectionMetadata, Error> {
+        let mut sizes = vec![];
+        let mut deleted_sizes = vec![];
+        for (size, deleted) in Self::_list_objects(&self.db, principal, cal_id).await? {
+            if deleted {
+                deleted_sizes.push(size)
+            } else {
+                sizes.push(size)
+            }
+        }
+        Ok(CollectionMetadata {
+            len: sizes.len(),
+            deleted_len: deleted_sizes.len(),
+            size: sizes.iter().sum(),
+            deleted_size: deleted_sizes.iter().sum(),
+        })
     }
 
     #[instrument]

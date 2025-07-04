@@ -16,7 +16,7 @@ fn birthday_calendar(addressbook: Addressbook) -> Calendar {
         id: format!("{}{}", BIRTHDAYS_PREFIX, addressbook.id),
         displayname: addressbook
             .displayname
-            .map(|name| format!("{} birthdays", name)),
+            .map(|name| format!("{name} birthdays")),
         order: 0,
         description: None,
         color: None,
@@ -102,6 +102,17 @@ impl<AS: AddressbookStore> CalendarStore for ContactBirthdayStore<AS> {
         let objects = objects?.into_iter().flatten().collect();
 
         Ok((objects, deleted_objects, new_synctoken))
+    }
+
+    async fn calendar_metadata(
+        &self,
+        principal: &str,
+        cal_id: &str,
+    ) -> Result<crate::CollectionMetadata, Error> {
+        let cal_id = cal_id
+            .strip_prefix(BIRTHDAYS_PREFIX)
+            .ok_or(Error::NotFound)?;
+        self.0.addressbook_metadata(principal, cal_id).await
     }
 
     async fn get_objects(

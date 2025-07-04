@@ -1,4 +1,4 @@
-use crate::{Error, addressbook::Addressbook};
+use crate::{CollectionMetadata, Error, addressbook::Addressbook};
 use async_trait::async_trait;
 use rustical_ical::AddressObject;
 
@@ -34,6 +34,12 @@ pub trait AddressbookStore: Send + Sync + 'static {
         addressbook_id: &str,
         synctoken: i64,
     ) -> Result<(Vec<AddressObject>, Vec<String>, i64), Error>;
+
+    async fn addressbook_metadata(
+        &self,
+        principal: &str,
+        addressbook_id: &str,
+    ) -> Result<CollectionMetadata, Error>;
 
     async fn get_objects(
         &self,

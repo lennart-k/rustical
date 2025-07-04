@@ -136,6 +136,20 @@ impl<CS: CalendarStore, BS: CalendarStore> CalendarStore for CombinedCalendarSto
     }
 
     #[inline]
+    async fn calendar_metadata(
+        &self,
+        principal: &str,
+        cal_id: &str,
+    ) -> Result<crate::CollectionMetadata, Error> {
+        if cal_id.starts_with(BIRTHDAYS_PREFIX) {
+            self.birthday_store
+                .calendar_metadata(principal, cal_id)
+                .await
+        } else {
+            self.cal_store.calendar_metadata(principal, cal_id).await
+        }
+    }
+    #[inline]
     async fn get_objects(
         &self,
         principal: &str,

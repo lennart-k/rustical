@@ -1,6 +1,6 @@
 <h2>{{user.id }}'s Addressbooks</h2>
 <ul class="collection-list">
-  {% for addressbook in addressbooks %}
+  {% for (meta, addressbook) in addressbooks %}
   <li class="collection-list-item">
     <a href="/frontend/user/{{ addressbook.principal }}/addressbook/{{ addressbook.id}}">
       <span class="title">
@@ -18,6 +18,9 @@
         <delete-button trash
           href="/carddav/principal/{{ addressbook.principal }}/{{ addressbook.id }}"></delete-button>
       </div>
+      <div class="metadata">
+        {{ meta.len }} objects, {{ meta.deleted_len }} deleted objects
+      </div>
     </a>
   </li>
   {% else %}
@@ -27,7 +30,7 @@
 {%if !deleted_addressbooks.is_empty() %}
 <h3>Deleted Addressbooks</h3>
 <ul class="collection-list">
-  {% for addressbook in deleted_addressbooks %}
+  {% for (meta, addressbook) in deleted_addressbooks %}
   <li class="collection-list-item">
     <a href="/frontend/user/{{ addressbook.principal }}/addressbook/{{ addressbook.id}}">
       <span class="title">
@@ -43,6 +46,9 @@
           <button type="submit">Restore</button>
         </form>
         <delete-button href="/carddav/principal/{{ addressbook.principal }}/{{ addressbook.id }}"></delete-button>
+      </div>
+      <div class="metadata">
+        {{ meta.len }} objects, {{ meta.deleted_len }} deleted objects
       </div>
     </a>
   </li>

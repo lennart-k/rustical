@@ -1,4 +1,4 @@
-use crate::{Calendar, error::Error};
+use crate::{Calendar, CollectionMetadata, error::Error};
 use async_trait::async_trait;
 use chrono::NaiveDate;
 use rustical_ical::CalendarObject;
@@ -52,6 +52,12 @@ pub trait CalendarStore: Send + Sync + 'static {
     ) -> Result<Vec<CalendarObject>, Error> {
         self.get_objects(principal, cal_id).await
     }
+
+    async fn calendar_metadata(
+        &self,
+        principal: &str,
+        cal_id: &str,
+    ) -> Result<CollectionMetadata, Error>;
 
     async fn get_objects(
         &self,

@@ -1,6 +1,6 @@
 <h2>{{ user.id }}'s Calendars</h2>
 <ul class="collection-list">
-  {% for calendar in calendars %}
+  {% for (meta, calendar) in calendars %}
   {% let color = calendar.color.to_owned().unwrap_or("transparent".to_owned()) %}
   <li class="collection-list-item" style="--color: {{ color }}">
     <a href="/frontend/user/{{ calendar.principal }}/calendar/{{ calendar.id }}">
@@ -27,6 +27,9 @@
         <delete-button trash href="/caldav/principal/{{ calendar.principal }}/{{ calendar.id }}"></delete-button>
         {% endif %}
       </div>
+      <div class="metadata">
+        {{ meta.len }} objects, {{ meta.deleted_len }} deleted objects
+      </div>
       <div class="color-chip"></div>
     </a>
   </li>
@@ -37,7 +40,7 @@
 {%if !deleted_calendars.is_empty() %}
 <h3>Deleted Calendars</h3>
 <ul class="collection-list">
-  {% for calendar in deleted_calendars %}
+  {% for (meta, calendar) in deleted_calendars %}
   {% let color = calendar.color.to_owned().unwrap_or("transparent".to_owned()) %}
   <li class="collection-list-item" style="--color: {{ color }}">
     <a href="/frontend/user/{{ calendar.principal }}/calendar/{{ calendar.id}}">
@@ -59,6 +62,9 @@
           <button type="submit">Restore</button>
         </form>
         <delete-button href="/caldav/principal/{{ calendar.principal }}/{{ calendar.id }}"></delete-button>
+      </div>
+      <div class="metadata">
+        {{ meta.len }} objects, {{ meta.deleted_len }} deleted objects
       </div>
       <div class="color-chip"></div>
     </a>

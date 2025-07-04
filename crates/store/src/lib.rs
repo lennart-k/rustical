@@ -37,3 +37,11 @@ pub struct CollectionOperation {
     pub topic: String,
     pub data: CollectionOperationInfo,
 }
+
+#[derive(Default, Debug, Clone)]
+pub struct CollectionMetadata {
+    pub len: usize,
+    pub deleted_len: usize,
+    pub size: u64,
+    pub deleted_size: u64,
+}

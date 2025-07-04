@@ -202,14 +202,16 @@ ul.collection-list {
       background: color-mix(in srgb, var(--background-color), var(--dilute-color) 5%);
       display: grid;
       min-height: 80px;
+      height: fit-content;
       grid-template-areas:
         ".                .                 color-chip"
         "title            comps             color-chip"
         "description      description       color-chip"
         "subscription-url subscription-url  color-chip"
+        "metadata         metadata          color-chip"
         "actions          actions           color-chip"
         ".                .                 color-chip";
-      grid-template-rows: 12px auto auto auto auto 12px;
+      grid-template-rows: 12px auto auto auto auto auto 12px;
       grid-template-columns: min-content auto 80px;
       row-gap: 4px;
       color: inherit;
@@ -248,6 +250,11 @@ ul.collection-list {
 
       .description {
         grid-area: description;
+        white-space: nowrap;
+      }
+
+      .metadata {
+        grid-area: metadata;
         white-space: nowrap;
       }
 
