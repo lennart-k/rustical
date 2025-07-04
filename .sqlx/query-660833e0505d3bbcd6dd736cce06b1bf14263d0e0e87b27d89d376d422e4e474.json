@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT length(vcf) AS 'length!: u64', deleted_at AS 'deleted!: bool' FROM addressobjects WHERE principal = ? AND addressbook_id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "length!: u64",
+        "ordinal": 0,
+        "type_info": "Null"
+      },
+      {
+        "name": "deleted!: bool",
+        "ordinal": 1,
+        "type_info": "Datetime"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      null,
+      true
+    ]
+  },
+  "hash": "660833e0505d3bbcd6dd736cce06b1bf14263d0e0e87b27d89d376d422e4e474"
+}

@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT length(ics) AS 'length!: u64', deleted_at AS 'deleted!: bool' FROM calendarobjects WHERE principal = ? AND cal_id = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "length!: u64",
+        "ordinal": 0,
+        "type_info": "Null"
+      },
+      {
+        "name": "deleted!: bool",
+        "ordinal": 1,
+        "type_info": "Datetime"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      null,
+      true
+    ]
+  },
+  "hash": "d9f14260a46a7ccd137d462c35d350a7fe338a074131776596c5d803fcda1f48"
+}
