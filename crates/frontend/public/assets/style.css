@@ -93,6 +93,12 @@ header {
       &.active {
         background: color-mix(in srgb, var(--background-darker), var(--dilute-color) 15%);
       }
+
+      svg.icon {
+        width: 1.3em;
+        vertical-align: bottom;
+        margin-right: 6px;
+      }
     }
   }
 
@@ -307,4 +313,10 @@ input[type="password"] {
     padding: 6px 6px;
     color: var(--text-on-background-color);
     margin: 2px;
+}
+
+svg.icon {
+  stroke-width: 2px;
+  color: var(--text-on-background-color);
+  stroke: var(--text-on-background-color);
 }
