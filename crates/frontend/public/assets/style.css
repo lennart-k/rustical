@@ -229,7 +229,7 @@ ul.collection-list {
 
       border: 2px solid var(--border-color);
       border-radius: 12px;
-      margin: 12px;
+      margin: 12px 0;
       box-shadow: 4px 2px 12px -6px black;
       overflow: hidden;
 
