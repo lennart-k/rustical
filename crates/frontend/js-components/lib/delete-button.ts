@@ -1,6 +1,5 @@
 import { html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { createClient } from "webdav";
 
 @customElement("delete-button")
 export class DeleteButton extends LitElement {

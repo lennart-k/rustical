@@ -38,8 +38,13 @@ let CreateCalendarForm = class extends i {
         <h3>Create calendar</h3>
         <form @submit=${this.submit} ${n(this.form)}>
           <label>
-            principal (for group calendar)
-            <input type="text" name="principal" value=${this.user} @change=${(e2) => this.principal = e2.target.value} />
+            principal (for group calendars)
+            <select name="principal" value=${this.user} @change=${(e2) => this.principal = e2.target.value}>
+              <option value=${this.user}>${this.user}</option>
+              ${window.rusticalUser.memberships.map((membership) => x`
+                <option value=${membership}>${membership}</option>
+              `)}
+            </select>
           </label>
           <br>
           <label>

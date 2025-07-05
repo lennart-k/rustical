@@ -38,7 +38,12 @@ export class CreateAddressbookForm extends LitElement {
         <form @submit=${this.submit} ${ref(this.form)}>
           <label>
             principal (for group addressbooks)
-            <input type="text" name="principal" value=${this.user} @change=${e => this.principal = e.target.value} />
+            <select name="principal" value=${this.user} @change=${e => this.principal = e.target.value}>
+              <option value=${this.user}>${this.user}</option>
+              ${window.rusticalUser.memberships.map(membership => html`
+                <option value=${membership}>${membership}</option>
+              `)}
+            </select>
           </label>
           <br>
           <label>

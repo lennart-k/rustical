@@ -45,8 +45,13 @@ export class CreateCalendarForm extends LitElement {
         <h3>Create calendar</h3>
         <form @submit=${this.submit} ${ref(this.form)}>
           <label>
-            principal (for group calendar)
-            <input type="text" name="principal" value=${this.user} @change=${e => this.principal = e.target.value} />
+            principal (for group calendars)
+            <select name="principal" value=${this.user} @change=${e => this.principal = e.target.value}>
+              <option value=${this.user}>${this.user}</option>
+              ${window.rusticalUser.memberships.map(membership => html`
+                <option value=${membership}>${membership}</option>
+              `)}
+            </select>
           </label>
           <br>
           <label>

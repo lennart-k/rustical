@@ -25,6 +25,7 @@ pub struct Principal {
     pub displayname: Option<String>,
     #[serde(default)]
     pub principal_type: PrincipalType,
+    #[serde(skip_serializing)]
     pub password: Option<Secret<String>>,
     #[serde(default)]
     pub memberships: Vec<String>,

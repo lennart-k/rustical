@@ -35,7 +35,12 @@ let CreateAddressbookForm = class extends i {
         <form @submit=${this.submit} ${n(this.form)}>
           <label>
             principal (for group addressbooks)
-            <input type="text" name="principal" value=${this.user} @change=${(e2) => this.principal = e2.target.value} />
+            <select name="principal" value=${this.user} @change=${(e2) => this.principal = e2.target.value}>
+              <option value=${this.user}>${this.user}</option>
+              ${window.rusticalUser.memberships.map((membership) => x`
+                <option value=${membership}>${membership}</option>
+              `)}
+            </select>
           </label>
           <br>
           <label>
