@@ -2,7 +2,7 @@
 members = ["crates/*"]
 
 [workspace.package]
-version = "0.4.10"
+version = "0.4.11"
 edition = "2024"
 description = "A CalDAV server"
 repository = "https://github.com/lennart-k/rustical"
