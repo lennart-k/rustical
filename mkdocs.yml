@@ -68,6 +68,7 @@ nav:
   - Installation:
       - installation/index.md
       - Configuration: installation/configuration.md
+  - Client Setup: setup/client.md
   - OpenID Connect: setup/oidc.md
   - Developers:
       - developers/index.md
