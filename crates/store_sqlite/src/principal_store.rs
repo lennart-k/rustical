@@ -206,7 +206,7 @@ impl AuthenticationProvider for SqlitePrincipalStore {
                 None,
                 None,
                 Params {
-                    rounds: 100,
+                    rounds: 10,
                     ..Default::default()
                 },
                 &salt,
