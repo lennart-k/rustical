@@ -19,11 +19,6 @@ pub trait AxumMethods: Sized + Send + Sync + 'static {
     }
 
     #[inline]
-    fn head() -> Option<MethodFunction<Self>> {
-        None
-    }
-
-    #[inline]
     fn post() -> Option<MethodFunction<Self>> {
         None
     }
@@ -58,8 +53,6 @@ pub trait AxumMethods: Sized + Send + Sync + 'static {
         }
         if Self::get().is_some() {
             allow.push(Method::GET);
-        }
-        if Self::head().is_some() {
             allow.push(Method::HEAD);
         }
         if Self::post().is_some() {

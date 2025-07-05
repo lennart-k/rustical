@@ -72,13 +72,8 @@ where
                     return svc(self.resource_service.clone(), req);
                 }
             }
-            "GET" => {
+            "GET" | "HEAD" => {
                 if let Some(svc) = RS::get() {
-                    return svc(self.resource_service.clone(), req);
-                }
-            }
-            "HEAD" => {
-                if let Some(svc) = RS::head() {
                     return svc(self.resource_service.clone(), req);
                 }
             }

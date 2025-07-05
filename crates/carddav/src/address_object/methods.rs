@@ -7,6 +7,7 @@ use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Response};
 use axum_extra::TypedHeader;
 use axum_extra::headers::{ContentType, ETag, HeaderMapExt, IfNoneMatch};
+use http::Method;
 use http::{HeaderMap, StatusCode};
 use rustical_dav::privileges::UserPrivilege;
 use rustical_dav::resource::Resource;
@@ -25,6 +26,7 @@ pub async fn get_object<AS: AddressbookStore>(
     }): Path<AddressObjectPathComponents>,
     State(AddressObjectResourceService { addr_store }): State<AddressObjectResourceService<AS>>,
     user: Principal,
+    method: Method,
 ) -> Result<Response, Error> {
     if !user.is_principal(&principal) {
         return Err(Error::Unauthorized);
@@ -49,7 +51,11 @@ pub async fn get_object<AS: AddressbookStore>(
     let hdrs = resp.headers_mut().unwrap();
     hdrs.typed_insert(ETag::from_str(&object.get_etag()).unwrap());
     hdrs.typed_insert(ContentType::from_str("text/vcard").unwrap());
-    Ok(resp.body(Body::new(object.get_vcf().to_owned())).unwrap())
+    if matches!(method, Method::HEAD) {
+        Ok(resp.body(Body::empty()).unwrap())
+    } else {
+        Ok(resp.body(Body::new(object.get_vcf().to_owned())).unwrap())
+    }
 }
 
 #[instrument(skip(addr_store, body))]

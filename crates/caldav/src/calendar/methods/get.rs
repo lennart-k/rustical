@@ -4,7 +4,7 @@ use axum::body::Body;
 use axum::extract::State;
 use axum::{extract::Path, response::Response};
 use headers::{ContentType, HeaderMapExt};
-use http::{HeaderValue, StatusCode, header};
+use http::{HeaderValue, Method, StatusCode, header};
 use ical::generator::{Emitter, IcalCalendarBuilder};
 use ical::property::Property;
 use percent_encoding::{CONTROLS, utf8_percent_encode};
@@ -19,6 +19,7 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
     Path((principal, calendar_id)): Path<(String, String)>,
     State(CalendarResourceService { cal_store, .. }): State<CalendarResourceService<C, S>>,
     user: Principal,
+    method: Method,
 ) -> Result<Response, Error> {
     if !user.is_principal(&principal) {
         return Err(crate::Error::Unauthorized);
@@ -96,5 +97,9 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
         ))
         .unwrap(),
     );
-    Ok(resp.body(Body::new(ical_calendar.generate())).unwrap())
+    if matches!(method, Method::HEAD) {
+        Ok(resp.body(Body::empty()).unwrap())
+    } else {
+        Ok(resp.body(Body::new(ical_calendar.generate())).unwrap())
+    }
 }

@@ -6,7 +6,7 @@ use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Response};
 use axum_extra::TypedHeader;
 use headers::{ContentType, ETag, HeaderMapExt, IfNoneMatch};
-use http::{HeaderMap, StatusCode};
+use http::{HeaderMap, Method, StatusCode};
 use rustical_ical::CalendarObject;
 use rustical_store::CalendarStore;
 use rustical_store::auth::Principal;
@@ -22,6 +22,7 @@ pub async fn get_event<C: CalendarStore>(
     }): Path<CalendarObjectPathComponents>,
     State(CalendarObjectResourceService { cal_store }): State<CalendarObjectResourceService<C>>,
     user: Principal,
+    method: Method,
 ) -> Result<Response, Error> {
     if !user.is_principal(&principal) {
         return Err(crate::Error::Unauthorized);
@@ -42,7 +43,11 @@ pub async fn get_event<C: CalendarStore>(
     let hdrs = resp.headers_mut().unwrap();
     hdrs.typed_insert(ETag::from_str(&event.get_etag()).unwrap());
     hdrs.typed_insert(ContentType::from_str("text/calendar").unwrap());
-    Ok(resp.body(Body::new(event.get_ics().to_owned())).unwrap())
+    if matches!(method, Method::HEAD) {
+        Ok(resp.body(Body::empty()).unwrap())
+    } else {
+        Ok(resp.body(Body::new(event.get_ics().to_owned())).unwrap())
+    }
 }
 
 #[instrument(skip(cal_store))]

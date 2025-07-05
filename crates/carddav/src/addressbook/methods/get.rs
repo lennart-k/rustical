@@ -5,7 +5,7 @@ use axum::body::Body;
 use axum::extract::{Path, State};
 use axum::response::Response;
 use axum_extra::headers::{ContentType, HeaderMapExt};
-use http::{HeaderValue, StatusCode, header};
+use http::{HeaderValue, Method, StatusCode, header};
 use percent_encoding::{CONTROLS, utf8_percent_encode};
 use rustical_dav::privileges::UserPrivilege;
 use rustical_dav::resource::Resource;
@@ -20,6 +20,7 @@ pub async fn route_get<AS: AddressbookStore, S: SubscriptionStore>(
     Path((principal, addressbook_id)): Path<(String, String)>,
     State(AddressbookResourceService { addr_store, .. }): State<AddressbookResourceService<AS, S>>,
     user: Principal,
+    method: Method,
 ) -> Result<Response, Error> {
     if !user.is_principal(&principal) {
         return Err(Error::Unauthorized);
@@ -55,5 +56,9 @@ pub async fn route_get<AS: AddressbookStore, S: SubscriptionStore>(
         ))
         .unwrap(),
     );
-    Ok(resp.body(Body::new(vcf)).unwrap())
+    if matches!(method, Method::HEAD) {
+        Ok(resp.body(Body::empty()).unwrap())
+    } else {
+        Ok(resp.body(Body::new(vcf)).unwrap())
+    }
 }
