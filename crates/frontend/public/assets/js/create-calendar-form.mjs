@@ -22,6 +22,7 @@ let CreateCalendarForm = class extends i {
     this.displayname = "";
     this.description = "";
     this.color = "";
+    this.isSubscription = false;
     this.subscriptionUrl = "";
     this.components = /* @__PURE__ */ new Set();
     this.dialog = e();
@@ -61,10 +62,19 @@ let CreateCalendarForm = class extends i {
             <input type="color" name="color"  @change=${(e2) => this.color = e2.target.value} />
           </label>
           <br>
+          <br>
           <label>
-            Subscription URL
-            <input type="text" name="subscription_url" @change=${(e2) => this.subscriptionUrl = e2.target.value}  />
+            Calendar is subscription to external calendar
+            <input type="checkbox" name="is_subscription" @change=${(e2) => this.isSubscription = e2.target.checked}  />
           </label>
+          <br>
+          ${this.isSubscription ? x`
+            <label>
+              Subscription URL
+              <input type="text" name="subscription_url" @change=${(e2) => this.subscriptionUrl = e2.target.value}  />
+            </label>
+            <br>
+          ` : x``}
           <br>
           ${["VEVENT", "VTODO", "VJOURNAL"].map((comp) => x`
             <label>
@@ -107,7 +117,7 @@ let CreateCalendarForm = class extends i {
             <displayname>${this.displayname}</displayname>
             ${this.description ? `<CAL:calendar-description>${this.description}</CAL:calendar-description>` : ""}
             ${this.color ? `<ICAL:calendar-color>${this.color}</ICAL:calendar-color>` : ""}
-            ${this.subscriptionUrl ? `<CS:source><href>${this.subscriptionUrl}</href></CS:source>` : ""}
+            ${this.isSubscription && this.subscriptionUrl ? `<CS:source><href>${this.subscriptionUrl}</href></CS:source>` : ""}
             <CAL:supported-calendar-component-set>
               ${Array.from(this.components.keys()).map((comp) => `<CAL:comp name="${comp}" />`).join("\n")}
             </CAL:supported-calendar-component-set>
@@ -138,6 +148,9 @@ __decorateClass([
 __decorateClass([
   n$1()
 ], CreateCalendarForm.prototype, "color", 2);
+__decorateClass([
+  n$1()
+], CreateCalendarForm.prototype, "isSubscription", 2);
 __decorateClass([
   n$1()
 ], CreateCalendarForm.prototype, "subscriptionUrl", 2);

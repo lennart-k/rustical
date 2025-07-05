@@ -28,6 +28,8 @@ export class CreateCalendarForm extends LitElement {
   @property()
   color: String = ''
   @property()
+  isSubscription: boolean = false
+  @property()
   subscriptionUrl: String = ''
   @property()
   components: Set<"VEVENT" | "VTODO" | "VJOURNAL"> = new Set()
@@ -67,10 +69,19 @@ export class CreateCalendarForm extends LitElement {
             <input type="color" name="color"  @change=${e => this.color = e.target.value} />
           </label>
           <br>
+          <br>
           <label>
-            Subscription URL
-            <input type="text" name="subscription_url" @change=${e => this.subscriptionUrl = e.target.value}  />
+            Calendar is subscription to external calendar
+            <input type="checkbox" name="is_subscription" @change=${e => this.isSubscription = e.target.checked}  />
           </label>
+          <br>
+          ${this.isSubscription ? html`
+            <label>
+              Subscription URL
+              <input type="text" name="subscription_url" @change=${e => this.subscriptionUrl = e.target.value}  />
+            </label>
+            <br>
+          `: html``}
           <br>
           ${["VEVENT", "VTODO", "VJOURNAL"].map(comp => html`
             <label>
@@ -110,7 +121,7 @@ export class CreateCalendarForm extends LitElement {
             <displayname>${this.displayname}</displayname>
             ${this.description ? `<CAL:calendar-description>${this.description}</CAL:calendar-description>` : ''}
             ${this.color ? `<ICAL:calendar-color>${this.color}</ICAL:calendar-color>` : ''}
-            ${this.subscriptionUrl ? `<CS:source><href>${this.subscriptionUrl}</href></CS:source>` : ''}
+            ${(this.isSubscription && this.subscriptionUrl) ? `<CS:source><href>${this.subscriptionUrl}</href></CS:source>` : ''}
             <CAL:supported-calendar-component-set>
               ${Array.from(this.components.keys()).map(comp => `<CAL:comp name="${comp}" />`).join('\n')}
             </CAL:supported-calendar-component-set>
