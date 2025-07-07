@@ -205,10 +205,21 @@ ul.collection-list {
 
   li.collection-list-item {
     list-style: none;
-    display: contents;
+    display: block;
+    position: relative;
+    background: color-mix(in srgb, var(--background-color), var(--dilute-color) 5%);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    margin: 12px 0;
+    box-shadow: 4px 2px 12px -6px black;
+    overflow: hidden;
 
     a {
-      background: color-mix(in srgb, var(--background-color), var(--dilute-color) 5%);
+      position: absolute;
+      inset: 2px;
+    }
+
+    .inner {
       display: grid;
       min-height: 80px;
       height: fit-content;
@@ -227,11 +238,15 @@ ul.collection-list {
       text-decoration: none;
       padding-left: 12px;
 
-      border: 2px solid var(--border-color);
-      border-radius: 12px;
-      margin: 12px 0;
-      box-shadow: 4px 2px 12px -6px black;
-      overflow: hidden;
+      position: relative;
+      z-index: 1;
+      pointer-events: none;
+
+      a,
+      button {
+        pointer-events: all;
+        cursor: pointer;
+      }
 
       .title {
         font-weight: bold;
@@ -283,10 +298,10 @@ ul.collection-list {
         display: flex;
         gap: 12px;
       }
+    }
 
-      &:hover {
-        background: color-mix(in srgb, var(--background-color), var(--dilute-color) 10%);
-      }
+    &:hover {
+      background: color-mix(in srgb, var(--background-color), var(--dilute-color) 10%);
     }
   }
 }

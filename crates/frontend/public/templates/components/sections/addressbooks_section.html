@@ -2,7 +2,8 @@
 <ul class="collection-list">
   {% for (meta, addressbook) in addressbooks %}
   <li class="collection-list-item">
-    <a href="/frontend/user/{{ addressbook.principal }}/addressbook/{{ addressbook.id}}">
+    <a href="/frontend/user/{{ addressbook.principal }}/addressbook/{{ addressbook.id}}"></a>
+    <div class="inner">
       <span class="title">
         {%- if addressbook.principal != user.id -%}{{ addressbook.principal }}/{%- endif -%}
         {{ addressbook.displayname.to_owned().unwrap_or(addressbook.id.to_owned()) }}
@@ -21,7 +22,7 @@
       <div class="metadata">
         {{ meta.len }} ({{ meta.size | filesizeformat }}) objects, {{ meta.deleted_len }} ({{ meta.deleted_size | filesizeformat }}) deleted objects
       </div>
-    </a>
+    </div>
   </li>
   {% else %}
   You do not have any addressbooks yet
@@ -32,7 +33,8 @@
 <ul class="collection-list">
   {% for (meta, addressbook) in deleted_addressbooks %}
   <li class="collection-list-item">
-    <a href="/frontend/user/{{ addressbook.principal }}/addressbook/{{ addressbook.id}}">
+    <a href="/frontend/user/{{ addressbook.principal }}/addressbook/{{ addressbook.id}}"></a>
+    <div class="inner">
       <span class="title">
         {%- if addressbook.principal != user.id -%}{{ addressbook.principal }}/{%- endif -%}
         {{ addressbook.displayname.to_owned().unwrap_or(addressbook.id.to_owned()) }}
@@ -50,7 +52,7 @@
       <div class="metadata">
         {{ meta.len }} ({{ meta.size | filesizeformat }}) objects, {{ meta.deleted_len }} ({{ meta.deleted_size | filesizeformat }}) deleted objects
       </div>
-    </a>
+    </div>
   </li>
   {% endfor %}
 </ul>

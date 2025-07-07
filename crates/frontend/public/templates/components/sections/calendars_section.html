@@ -3,7 +3,8 @@
   {% for (meta, calendar) in calendars %}
   {% let color = calendar.color.to_owned().unwrap_or("transparent".to_owned()) %}
   <li class="collection-list-item" style="--color: {{ color }}">
-    <a href="/frontend/user/{{ calendar.principal }}/calendar/{{ calendar.id }}">
+    <a href="/frontend/user/{{ calendar.principal }}/calendar/{{ calendar.id }}"></a>
+    <div class="inner">
       <span class="title">
         {%- if calendar.principal != user.id -%}{{ calendar.principal }}/{%- endif -%}
         {{ calendar.displayname.to_owned().unwrap_or(calendar.id.to_owned()) }}
@@ -31,7 +32,7 @@
         {{ meta.len }} ({{ meta.size | filesizeformat }}) objects, {{ meta.deleted_len }} ({{ meta.deleted_size | filesizeformat }}) deleted objects
       </div>
       <div class="color-chip"></div>
-    </a>
+    </div>
   </li>
   {% else %}
   You do not have any calendars yet
@@ -43,7 +44,8 @@
   {% for (meta, calendar) in deleted_calendars %}
   {% let color = calendar.color.to_owned().unwrap_or("transparent".to_owned()) %}
   <li class="collection-list-item" style="--color: {{ color }}">
-    <a href="/frontend/user/{{ calendar.principal }}/calendar/{{ calendar.id}}">
+    <a href="/frontend/user/{{ calendar.principal }}/calendar/{{ calendar.id}}"></a>
+    <div class="inner">
       <span class="title">
         {%- if calendar.principal != user.id -%}{{ calendar.principal }}/{%- endif -%}
         {{ calendar.displayname.to_owned().unwrap_or(calendar.id.to_owned()) }}
@@ -67,7 +69,7 @@
         {{ meta.len }} ({{ meta.size | filesizeformat }}) objects, {{ meta.deleted_len }} ({{ meta.deleted_size | filesizeformat }}) deleted objects
       </div>
       <div class="color-chip"></div>
-    </a>
+    </div>
   </li>
   {% endfor %}
 </ul>
