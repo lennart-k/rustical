@@ -2,6 +2,7 @@ import { html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Ref, createRef, ref } from 'lit/directives/ref.js';
 import { createClient } from "webdav";
+import { escapeXml } from ".";
 
 @customElement("create-calendar-form")
 export class CreateCalendarForm extends LitElement {
@@ -16,21 +17,21 @@ export class CreateCalendarForm extends LitElement {
   client = createClient("/caldav")
 
   @property()
-  user: String = ''
+  user: string = ''
   @property()
-  principal: String = ''
+  principal: string = ''
   @property()
-  cal_id: String = ''
+  cal_id: string = ''
   @property()
-  displayname: String = ''
+  displayname: string = ''
   @property()
-  description: String = ''
+  description: string = ''
   @property()
-  color: String = ''
+  color: string = ''
   @property()
   isSubscription: boolean = false
   @property()
-  subscriptionUrl: String = ''
+  subscriptionUrl: string = ''
   @property()
   components: Set<"VEVENT" | "VTODO" | "VJOURNAL"> = new Set()
 
@@ -123,12 +124,12 @@ export class CreateCalendarForm extends LitElement {
       <mkcol xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CS="http://calendarserver.org/ns/" xmlns:ICAL="http://apple.com/ns/ical/">
         <set>
           <prop>
-            <displayname>${this.displayname}</displayname>
-            ${this.description ? `<CAL:calendar-description>${this.description}</CAL:calendar-description>` : ''}
-            ${this.color ? `<ICAL:calendar-color>${this.color}</ICAL:calendar-color>` : ''}
-            ${(this.isSubscription && this.subscriptionUrl) ? `<CS:source><href>${this.subscriptionUrl}</href></CS:source>` : ''}
+            <displayname>${escapeXml(this.displayname)}</displayname>
+            ${this.description ? `<CAL:calendar-description>${escapeXml(this.description)}</CAL:calendar-description>` : ''}
+            ${this.color ? `<ICAL:calendar-color>${escapeXml(this.color)}</ICAL:calendar-color>` : ''}
+            ${(this.isSubscription && this.subscriptionUrl) ? `<CS:source><href>${escapeXml(this.subscriptionUrl)}</href></CS:source>` : ''}
             <CAL:supported-calendar-component-set>
-              ${Array.from(this.components.keys()).map(comp => `<CAL:comp name="${comp}" />`).join('\n')}
+              ${Array.from(this.components.keys()).map(comp => `<CAL:comp name="${escapeXml(comp)}" />`).join('\n')}
             </CAL:supported-calendar-component-set>
           </prop>
         </set>

@@ -1,6 +1,6 @@
 import { i, x } from "./lit-z6_uA4GX.mjs";
 import { n as n$1, t } from "./property-D0NJdseG.mjs";
-import { e, n } from "./ref-CPp9J0V5.mjs";
+import { e, n, a as escapeXml } from "./index-b86iLJlP.mjs";
 import { a as an } from "./webdav-D0R7xCzX.mjs";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -84,8 +84,8 @@ let CreateAddressbookForm = class extends i {
       <mkcol xmlns="DAV:" xmlns:CARD="urn:ietf:params:xml:ns:carddav">
         <set>
           <prop>
-            <displayname>${this.displayname}</displayname>
-            ${this.description ? `<CARD:addressbook-description>${this.description}</CARD:addressbook-description>` : ""}
+            <displayname>${escapeXml(this.displayname)}</displayname>
+            ${this.description ? `<CARD:addressbook-description>${escapeXml(this.description)}</CARD:addressbook-description>` : ""}
           </prop>
         </set>
       </mkcol>

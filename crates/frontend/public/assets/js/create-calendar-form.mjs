@@ -1,6 +1,6 @@
 import { i, x } from "./lit-z6_uA4GX.mjs";
 import { n as n$1, t } from "./property-D0NJdseG.mjs";
-import { e, n } from "./ref-CPp9J0V5.mjs";
+import { e, n, a as escapeXml } from "./index-b86iLJlP.mjs";
 import { a as an } from "./webdav-D0R7xCzX.mjs";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -119,12 +119,12 @@ let CreateCalendarForm = class extends i {
       <mkcol xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CS="http://calendarserver.org/ns/" xmlns:ICAL="http://apple.com/ns/ical/">
         <set>
           <prop>
-            <displayname>${this.displayname}</displayname>
-            ${this.description ? `<CAL:calendar-description>${this.description}</CAL:calendar-description>` : ""}
-            ${this.color ? `<ICAL:calendar-color>${this.color}</ICAL:calendar-color>` : ""}
-            ${this.isSubscription && this.subscriptionUrl ? `<CS:source><href>${this.subscriptionUrl}</href></CS:source>` : ""}
+            <displayname>${escapeXml(this.displayname)}</displayname>
+            ${this.description ? `<CAL:calendar-description>${escapeXml(this.description)}</CAL:calendar-description>` : ""}
+            ${this.color ? `<ICAL:calendar-color>${escapeXml(this.color)}</ICAL:calendar-color>` : ""}
+            ${this.isSubscription && this.subscriptionUrl ? `<CS:source><href>${escapeXml(this.subscriptionUrl)}</href></CS:source>` : ""}
             <CAL:supported-calendar-component-set>
-              ${Array.from(this.components.keys()).map((comp) => `<CAL:comp name="${comp}" />`).join("\n")}
+              ${Array.from(this.components.keys()).map((comp) => `<CAL:comp name="${escapeXml(comp)}" />`).join("\n")}
             </CAL:supported-calendar-component-set>
           </prop>
         </set>

@@ -2,6 +2,7 @@ import { html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Ref, createRef, ref } from 'lit/directives/ref.js';
 import { createClient } from "webdav";
+import { escapeXml } from ".";
 
 @customElement("create-addressbook-form")
 export class CreateAddressbookForm extends LitElement {
@@ -17,15 +18,15 @@ export class CreateAddressbookForm extends LitElement {
   client = createClient("/carddav")
 
   @property()
-  user: String = ''
+  user: string = ''
   @property()
-  principal: String = ''
+  principal: string = ''
   @property()
-  addr_id: String = ''
+  addr_id: string = ''
   @property()
-  displayname: String = ''
+  displayname: string = ''
   @property()
-  description: String = ''
+  description: string = ''
 
   dialog: Ref<HTMLDialogElement> = createRef()
   form: Ref<HTMLFormElement> = createRef()
@@ -85,8 +86,8 @@ export class CreateAddressbookForm extends LitElement {
       <mkcol xmlns="DAV:" xmlns:CARD="urn:ietf:params:xml:ns:carddav">
         <set>
           <prop>
-            <displayname>${this.displayname}</displayname>
-            ${this.description ? `<CARD:addressbook-description>${this.description}</CARD:addressbook-description>` : ''}
+            <displayname>${escapeXml(this.displayname)}</displayname>
+            ${this.description ? `<CARD:addressbook-description>${escapeXml(this.description)}</CARD:addressbook-description>` : ''}
           </prop>
         </set>
       </mkcol>
