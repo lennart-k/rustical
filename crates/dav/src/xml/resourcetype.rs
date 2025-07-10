@@ -33,7 +33,13 @@ mod tests {
         .unwrap();
         assert_eq!(
             out,
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<document><resourcetype><displayname xmlns=\"DAV:\"/><calendar-color xmlns=\"http://calendarserver.org/ns/\"/></resourcetype></document>"
+            r#"<?xml version="1.0" encoding="utf-8"?>
+<document>
+    <resourcetype>
+        <displayname xmlns="DAV:"/>
+        <calendar-color xmlns="http://calendarserver.org/ns/"/>
+    </resourcetype>
+</document>"#
         )
     }
 }

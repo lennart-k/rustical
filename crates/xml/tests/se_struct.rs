@@ -71,7 +71,11 @@ fn test_struct_value_tagged() {
     .unwrap();
     assert_eq!(
         out,
-        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<document><href>okay</href><num>123</num></document>"
+        r#"<?xml version="1.0" encoding="utf-8"?>
+<document>
+    <href>okay</href>
+    <num>123</num>
+</document>"#
     );
 }
 
@@ -91,7 +95,8 @@ fn test_struct_value_untagged() {
     .unwrap();
     assert_eq!(
         out,
-        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<document>okays</document>"
+        r#"<?xml version="1.0" encoding="utf-8"?>
+<document>okays</document>"#
     );
 }
 
@@ -111,7 +116,11 @@ fn test_struct_vec() {
     .unwrap();
     assert_eq!(
         out,
-        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<document><href>okay</href><href>wow</href></document>"
+        r#"<?xml version="1.0" encoding="utf-8"?>
+<document>
+    <href>okay</href>
+    <href>wow</href>
+</document>"#
     );
 }
 
@@ -141,7 +150,10 @@ fn test_struct_serialize_with() {
     .unwrap();
     assert_eq!(
         out,
-        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<document><href>OKAY</href></document>"
+        r#"<?xml version="1.0" encoding="utf-8"?>
+<document>
+    <href>OKAY</href>
+</document>"#
     );
 }
 

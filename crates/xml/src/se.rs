@@ -43,7 +43,7 @@ pub trait XmlSerializeRoot {
 
     fn serialize_to_string(&self) -> std::io::Result<String> {
         let mut buf: Vec<_> = b"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n".into();
-        let mut writer = quick_xml::Writer::new(&mut buf);
+        let mut writer = quick_xml::Writer::new_with_indent(&mut buf, b' ', 4);
         self.serialize_root(&mut writer)?;
         Ok(String::from_utf8_lossy(&buf).to_string())
     }

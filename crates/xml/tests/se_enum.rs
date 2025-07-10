@@ -22,6 +22,11 @@ fn test_struct_value_tagged() {
     .unwrap();
     assert_eq!(
         out,
-        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<propfind><prop><test>asd</test></prop></propfind>"
+        r#"<?xml version="1.0" encoding="utf-8"?>
+<propfind>
+    <prop>
+        <test>asd</test>
+    </prop>
+</propfind>"#
     );
 }
