@@ -67,7 +67,7 @@ fn objects_response(
                 object,
                 principal: principal.to_owned(),
             }
-            .propfind(&path, prop, puri, user)?,
+            .propfind(&path, prop, None, puri, user)?,
         );
     }
 

@@ -39,7 +39,7 @@ pub async fn handle_sync_collection<C: CalendarStore>(
                 object,
                 principal: principal.to_owned(),
             }
-            .propfind(&path, &sync_collection.prop, puri, user)?,
+            .propfind(&path, &sync_collection.prop, None, puri, user)?,
         );
     }
 

@@ -106,6 +106,7 @@ pub trait Resource: Clone + Send + 'static {
         &self,
         path: &str,
         prop: &PropfindType<<Self::Prop as PropName>::Names>,
+        include: Option<&PropElement<<Self::Prop as PropName>::Names>>,
         principal_uri: &impl PrincipalUri,
         principal: &Self::Principal,
     ) -> Result<ResponseElement<Self::Prop>, Self::Error> {
@@ -115,36 +116,40 @@ pub trait Resource: Clone + Send + 'static {
             path.push('/');
         }
 
-        // TODO: Support include element
-        let (props, invalid_props): (HashSet<<Self::Prop as PropName>::Names>, Vec<_>) = match prop
-        {
-            PropfindType::Propname => {
-                let props = Self::list_props()
-                    .into_iter()
-                    .map(|(ns, tag)| (ns.map(NamespaceOwned::from), tag.to_string()))
-                    .collect_vec();
+        let (mut props, mut invalid_props): (HashSet<<Self::Prop as PropName>::Names>, Vec<_>) =
+            match prop {
+                PropfindType::Propname => {
+                    let props = Self::list_props()
+                        .into_iter()
+                        .map(|(ns, tag)| (ns.map(NamespaceOwned::from), tag.to_string()))
+                        .collect_vec();
 
-                return Ok(ResponseElement {
-                    href: path.to_owned(),
-                    propstat: vec![PropstatWrapper::TagList(PropstatElement {
-                        prop: TagList::from(props),
-                        status: StatusCode::OK,
-                    })],
-                    ..Default::default()
-                });
-            }
-            PropfindType::Allprop => (
-                Self::list_props()
-                    .iter()
-                    .map(|(_ns, name)| <Self::Prop as PropName>::Names::from_str(name).unwrap())
-                    .collect(),
-                vec![],
-            ),
-            PropfindType::Prop(PropElement(valid_tags, invalid_tags)) => (
-                valid_tags.iter().cloned().collect(),
-                invalid_tags.to_owned(),
-            ),
-        };
+                    return Ok(ResponseElement {
+                        href: path.to_owned(),
+                        propstat: vec![PropstatWrapper::TagList(PropstatElement {
+                            prop: TagList::from(props),
+                            status: StatusCode::OK,
+                        })],
+                        ..Default::default()
+                    });
+                }
+                PropfindType::Allprop => (
+                    Self::list_props()
+                        .iter()
+                        .map(|(_ns, name)| <Self::Prop as PropName>::Names::from_str(name).unwrap())
+                        .collect(),
+                    vec![],
+                ),
+                PropfindType::Prop(PropElement(valid_tags, invalid_tags)) => (
+                    valid_tags.iter().cloned().collect(),
+                    invalid_tags.to_owned(),
+                ),
+            };
+
+        if let Some(PropElement(valid_tags, invalid_tags)) = include {
+            props.extend(valid_tags.clone());
+            invalid_props.extend(invalid_tags.to_owned());
+        }
 
         let prop_responses = props
             .into_iter()

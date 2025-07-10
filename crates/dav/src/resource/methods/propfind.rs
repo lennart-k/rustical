@@ -64,6 +64,7 @@ pub(crate) async fn route_propfind<R: ResourceService>(
         } else {
             PropfindElement {
                 prop: PropfindType::Allprop,
+                include: None,
             }
         };
     let propfind_member: PropfindElement<<<R::MemberType as Resource>::Prop as PropName>::Names> =
@@ -72,6 +73,7 @@ pub(crate) async fn route_propfind<R: ResourceService>(
         } else {
             PropfindElement {
                 prop: PropfindType::Allprop,
+                include: None,
             }
         };
 
@@ -82,13 +84,20 @@ pub(crate) async fn route_propfind<R: ResourceService>(
             member_responses.push(member.propfind(
                 &format!("{}/{}", path.trim_end_matches('/'), member.get_name()),
                 &propfind_member.prop,
+                propfind_member.include.as_ref(),
                 puri,
                 principal,
             )?);
         }
     }
 
-    let response = resource.propfind(path, &propfind_self.prop, puri, principal)?;
+    let response = resource.propfind(
+        path,
+        &propfind_self.prop,
+        propfind_self.include.as_ref(),
+        puri,
+        principal,
+    )?;
 
     Ok(MultistatusElement {
         responses: vec![response],

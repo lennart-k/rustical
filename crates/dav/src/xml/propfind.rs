@@ -11,10 +11,11 @@ use rustical_xml::XmlRootTag;
 pub struct PropfindElement<PN: XmlDeserialize> {
     #[xml(ty = "untagged")]
     pub prop: PropfindType<PN>,
+    #[xml(ns = "crate::namespace::NS_DAV")]
+    pub include: Option<PropElement<PN>>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-// pub struct PropElement<PN: XmlDeserialize = Propname>(#[xml(ty = "untagged", flatten)] pub Vec<PN>);
 pub struct PropElement<PN: XmlDeserialize>(
     // valid
     pub Vec<PN>,
