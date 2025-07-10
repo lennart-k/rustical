@@ -88,15 +88,8 @@ pub async fn route_mkcol<AS: AddressbookStore, S: SubscriptionStore>(
         }
     }
 
-    match addr_store.insert_addressbook(addressbook).await {
-        // TODO: The spec says we should return a mkcol-response.
-        // However, it works without one but breaks on iPadOS when using an empty one :)
-        Ok(()) => Ok(StatusCode::CREATED.into_response()),
-        Err(err) => {
-            dbg!(err.to_string());
-            Err(err.into())
-        }
-    }
+    addr_store.insert_addressbook(addressbook).await?;
+    Ok(StatusCode::CREATED.into_response())
 }
 
 #[cfg(test)]

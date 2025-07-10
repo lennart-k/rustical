@@ -13,7 +13,7 @@ pub enum PrincipalType {
     Resource,
     Room,
     Unknown,
-    // TODO: X-Name, IANA-token
+    // X-Name, IANA-token
 }
 
 impl TryFrom<&str> for PrincipalType {

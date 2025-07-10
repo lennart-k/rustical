@@ -47,7 +47,7 @@ pub async fn route_get<AS: AddressbookStore, S: SubscriptionStore>(
     let mut resp = Response::builder().status(StatusCode::OK);
     let hdrs = resp.headers_mut().unwrap();
     hdrs.typed_insert(ContentType::from_str("text/vcard").unwrap());
-    let filename = format!("{}_{}.vcf", principal, addressbook_id);
+    let filename = format!("{principal}_{addressbook_id}.vcf");
     let filename = utf8_percent_encode(&filename, CONTROLS);
     hdrs.insert(
         header::CONTENT_DISPOSITION,

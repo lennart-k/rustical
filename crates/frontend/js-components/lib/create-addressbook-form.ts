@@ -80,7 +80,6 @@ export class CreateAddressbookForm extends LitElement {
       alert("Empty displayname")
       return
     }
-    // TODO: Escape user input: There's not really a security risk here but would be nicer
     await this.client.createDirectory(`/principal/${this.principal || this.user}/${this.addr_id}`, {
       data: `
       <mkcol xmlns="DAV:" xmlns:CARD="urn:ietf:params:xml:ns:carddav">
