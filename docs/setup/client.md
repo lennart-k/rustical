@@ -13,6 +13,10 @@ Following resources are available.
 # Calendar home
 /caldav/principal/<user_id>/<calendar_id>
 /caldav/principal/<user_id>/_birthdays_<addressbook_id>
+
+# CalDAV root
+/caldav-compat
+/caldav-compat/principal...
 ```
 
 ```
@@ -28,6 +32,14 @@ Following resources are available.
 ### Authentication
 
 Authenticate with HTTP Basic authentication using your user id and a generated app token.
+
+## `/caldav` vs `/caldav-compat` (relevant for group sharing)
+
+To discover shared calendars the `calendar-home-set` property is used to list all principals the user has access to.
+However, some clients don't support `calendar-home-set` containing multiple paths (e.g. Apple Calendar).
+
+As a workaround `/caldav-compat` offers the same endpoints as `/caldav` with the only difference being that it does not return all calendar homes in `calendar-home-set`.
+This means that clients under this path will probably not auto-discover group calendars so you can instead add them one-by-one using the principal path `/caldav-compat/principal/<principal_id>`.
 
 ## DAVx5
 
