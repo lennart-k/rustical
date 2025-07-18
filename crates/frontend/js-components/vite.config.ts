@@ -17,6 +17,7 @@ export default defineConfig({
         "lib/create-calendar-form.ts",
         "lib/edit-calendar-form.ts",
         "lib/create-addressbook-form.ts",
+        "lib/edit-addressbook-form.ts",
         "lib/delete-button.ts",
       ],
       output: {

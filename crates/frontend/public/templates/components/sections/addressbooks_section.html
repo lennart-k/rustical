@@ -16,6 +16,12 @@
           method="GET">
           <button type="submit">Download</button>
         </form>
+        <edit-addressbook-form
+          principal="{{ addressbook.principal }}"
+          addr_id="{{ addressbook.id }}"
+          displayname="{{ addressbook.displayname.as_deref().unwrap_or_default() }}"
+          description="{{ addressbook.description.as_deref().unwrap_or_default() }}"
+        ></edit-addressbook-form>
         <delete-button trash
           href="/carddav/principal/{{ addressbook.principal }}/{{ addressbook.id }}"></delete-button>
       </div>
