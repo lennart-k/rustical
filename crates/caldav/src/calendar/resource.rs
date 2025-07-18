@@ -34,7 +34,7 @@ pub enum CalendarProp {
     CalendarTimezoneId(Option<String>),
     #[xml(ns = "rustical_dav::namespace::NS_ICAL")]
     CalendarOrder(Option<i64>),
-    #[xml(ns = "rustical_dav::namespace::NS_CALDAV", skip_deserializing)]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     SupportedCalendarComponentSet(SupportedCalendarComponentSet),
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV", skip_deserializing)]
     SupportedCalendarData(SupportedCalendarData),
