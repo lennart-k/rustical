@@ -15,8 +15,11 @@ use std::{collections::HashMap, io::BufReader};
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Display)]
 // specified in https://datatracker.ietf.org/doc/html/rfc5545#section-3.6
 pub enum CalendarObjectType {
+    #[serde(rename = "VEVENT")]
     Event = 0,
+    #[serde(rename = "VTODO")]
     Todo = 1,
+    #[serde(rename = "VJOURNAL")]
     Journal = 2,
 }
 
