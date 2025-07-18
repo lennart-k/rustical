@@ -72,3 +72,9 @@ For group collections explicitly specify
 ```
 https://<your-host>/caldav-compat/principal/<principal>
 ```
+
+## Thunderbird
+
+- Go to `New Account -> Calendar -> On The Network`
+- Specify the root path of RustiCal
+- Thunderbird will properly discover group calendars
