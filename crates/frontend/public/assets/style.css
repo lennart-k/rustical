@@ -224,15 +224,15 @@ ul.collection-list {
       min-height: 80px;
       height: fit-content;
       grid-template-areas:
-        ".                .                 color-chip"
-        "title            comps             color-chip"
-        "description      description       color-chip"
-        "subscription-url subscription-url  color-chip"
-        "metadata         metadata          color-chip"
-        "actions          actions           color-chip"
-        ".                .                 color-chip";
+        ".                color-chip"
+        "title            color-chip"
+        "description      color-chip"
+        "subscription-url color-chip"
+        "metadata         color-chip"
+        "actions          color-chip"
+        ".                color-chip";
       grid-template-rows: 12px auto auto auto auto auto 12px;
-      grid-template-columns: min-content auto 80px;
+      grid-template-columns: auto 80px;
       row-gap: 4px;
       color: inherit;
       text-decoration: none;
@@ -260,7 +260,7 @@ ul.collection-list {
       }
 
       .comps {
-        grid-area: comps;
+        display: inline;
 
         span {
           margin: 0 2px;
@@ -293,6 +293,7 @@ ul.collection-list {
       }
 
       .actions {
+        pointer-events: all;
         grid-area: actions;
         width: fit-content;
         display: flex;
