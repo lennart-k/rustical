@@ -16,6 +16,9 @@ docker run \
 1. Mount config file
 2. Alternatively specify configuration using environment variables
 
+!!! info
+    Note that you are expected to run RustiCal behind a reverse proxy with HTTPS. (The frontend will only work on non-localhost addresses with https) and clients like Apple Calendar also expect HTTPS.
+
 ## User management
 
 In case you already have an OIDC server set up, see [here](setup/oidc.md) how to set up OIDC login and maybe skip this section.
