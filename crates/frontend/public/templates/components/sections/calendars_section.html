@@ -25,6 +25,14 @@
           <button type="submit">Download</button>
         </form>
         {% if !calendar.id.starts_with("_birthdays_") %}
+        <edit-calendar-form
+          principal="{{ calendar.principal }}"
+          cal_id="{{ calendar.id }}"
+          displayname="{{ calendar.displayname.as_deref().unwrap_or_default() }}"
+          description="{{ calendar.description.as_deref().unwrap_or_default() }}"
+          color="{{ calendar.color.as_deref().unwrap_or_default() }}"
+          components="{{ calendar.components | json }}"
+        ></edit-calendar-form>
         <delete-button trash href="/caldav/principal/{{ calendar.principal }}/{{ calendar.id }}"></delete-button>
         {% endif %}
       </div>

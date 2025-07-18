@@ -15,6 +15,7 @@ export default defineConfig({
     rollupOptions: {
       input: [
         "lib/create-calendar-form.ts",
+        "lib/edit-calendar-form.ts",
         "lib/create-addressbook-form.ts",
         "lib/delete-button.ts",
       ],
