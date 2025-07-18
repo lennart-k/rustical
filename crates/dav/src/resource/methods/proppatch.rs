@@ -26,21 +26,21 @@ enum SetPropertyPropWrapper<T: XmlDeserialize> {
 // We are <prop>
 #[derive(XmlDeserialize, Clone, Debug)]
 struct SetPropertyPropWrapperWrapper<T: XmlDeserialize>(
-    #[xml(ty = "untagged")] SetPropertyPropWrapper<T>,
+    #[xml(ty = "untagged", flatten)] Vec<SetPropertyPropWrapper<T>>,
 );
 
 // We are <set>
 #[derive(XmlDeserialize, Clone, Debug)]
 struct SetPropertyElement<T: XmlDeserialize> {
     #[xml(ns = "crate::namespace::NS_DAV")]
-    prop: T,
+    prop: SetPropertyPropWrapperWrapper<T>,
 }
 
 #[derive(XmlDeserialize, Clone, Debug)]
 struct TagName(#[xml(ty = "tag_name")] String);
 
 #[derive(XmlDeserialize, Clone, Debug)]
-struct PropertyElement(#[xml(ty = "untagged")] TagName);
+struct PropertyElement(#[xml(ty = "untagged", flatten)] Vec<TagName>);
 
 #[derive(XmlDeserialize, Clone, Debug)]
 struct RemovePropertyElement {
@@ -81,9 +81,8 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
     let href = path.to_owned();
 
     // Extract operations
-    let PropertyupdateElement::<SetPropertyPropWrapperWrapper<<R::Resource as Resource>::Prop>>(
-        operations,
-    ) = XmlDocument::parse_str(body).map_err(Error::XmlError)?;
+    let PropertyupdateElement::<<R::Resource as Resource>::Prop>(operations) =
+        XmlDocument::parse_str(body).map_err(Error::XmlError)?;
 
     let mut resource = resource_service
         .get_resource(path_components, false)
@@ -100,59 +99,63 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
     for operation in operations.into_iter() {
         match operation {
             Operation::Set(SetPropertyElement {
-                prop: SetPropertyPropWrapperWrapper(property),
+                prop: SetPropertyPropWrapperWrapper(properties),
             }) => {
-                match property {
-                    SetPropertyPropWrapper::Valid(prop) => {
-                        let propname: <<R::Resource as Resource>::Prop as PropName>::Names =
-                            prop.clone().into();
-                        let (ns, propname): (Option<Namespace>, &str) = propname.into();
-                        match resource.set_prop(prop) {
-                            Ok(()) => {
-                                props_ok.push((ns.map(NamespaceOwned::from), propname.to_owned()))
-                            }
-                            Err(Error::PropReadOnly) => props_conflict
-                                .push((ns.map(NamespaceOwned::from), propname.to_owned())),
-                            Err(err) => return Err(err.into()),
-                        };
-                    }
-                    SetPropertyPropWrapper::Invalid(invalid) => {
-                        let propname = invalid.tag_name();
+                for property in properties {
+                    match property {
+                        SetPropertyPropWrapper::Valid(prop) => {
+                            let propname: <<R::Resource as Resource>::Prop as PropName>::Names =
+                                prop.clone().into();
+                            let (ns, propname): (Option<Namespace>, &str) = propname.into();
+                            match resource.set_prop(prop) {
+                                Ok(()) => props_ok
+                                    .push((ns.map(NamespaceOwned::from), propname.to_owned())),
+                                Err(Error::PropReadOnly) => props_conflict
+                                    .push((ns.map(NamespaceOwned::from), propname.to_owned())),
+                                Err(err) => return Err(err.into()),
+                            };
+                        }
+                        SetPropertyPropWrapper::Invalid(invalid) => {
+                            let propname = invalid.tag_name();
 
-                        if let Some(full_propname) = <R::Resource as Resource>::list_props()
-                            .into_iter()
-                            .find_map(|(ns, tag)| {
-                                if tag == propname.as_str() {
-                                    Some((ns.map(NamespaceOwned::from), tag.to_owned()))
-                                } else {
-                                    None
-                                }
-                            })
-                        {
-                            // This happens in following cases:
-                            // - read-only properties with #[serde(skip_deserializing)]
-                            // - internal properties
-                            props_conflict.push(full_propname)
-                        } else {
-                            props_not_found.push((None, propname));
+                            if let Some(full_propname) = <R::Resource as Resource>::list_props()
+                                .into_iter()
+                                .find_map(|(ns, tag)| {
+                                    if tag == propname.as_str() {
+                                        Some((ns.map(NamespaceOwned::from), tag.to_owned()))
+                                    } else {
+                                        None
+                                    }
+                                })
+                            {
+                                // This happens in following cases:
+                                // - read-only properties with #[serde(skip_deserializing)]
+                                // - internal properties
+                                props_conflict.push(full_propname)
+                            } else {
+                                props_not_found.push((None, propname));
+                            }
                         }
                     }
                 }
             }
             Operation::Remove(remove_el) => {
-                let propname = remove_el.prop.0.0;
-                match <<R::Resource as Resource>::Prop as PropName>::Names::from_str(&propname) {
-                    Ok(prop) => match resource.remove_prop(&prop) {
-                        Ok(()) => props_ok.push((None, propname)),
-                        Err(Error::PropReadOnly) => props_conflict.push({
-                            let (ns, tag) = prop.into();
-                            (ns.map(NamespaceOwned::from), tag.to_owned())
-                        }),
-                        Err(err) => return Err(err.into()),
-                    },
-                    // I guess removing a nonexisting property should be successful :)
-                    Err(_) => props_ok.push((None, propname)),
-                };
+                for tagname in remove_el.prop.0 {
+                    let propname = tagname.0;
+                    match <<R::Resource as Resource>::Prop as PropName>::Names::from_str(&propname)
+                    {
+                        Ok(prop) => match resource.remove_prop(&prop) {
+                            Ok(()) => props_ok.push((None, propname)),
+                            Err(Error::PropReadOnly) => props_conflict.push({
+                                let (ns, tag) = prop.into();
+                                (ns.map(NamespaceOwned::from), tag.to_owned())
+                            }),
+                            Err(err) => return Err(err.into()),
+                        },
+                        // I guess removing a nonexisting property should be successful :)
+                        Err(_) => props_ok.push((None, propname)),
+                    };
+                }
             }
         }
     }
