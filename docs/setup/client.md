@@ -49,7 +49,8 @@ You can set up DAVx5 through the Nextcloud login flow. Collections including gro
 
 You can download a configuration profile from the frontend in the app token section.
 
-**Limitation**: Group collections are not automatically discovered, for these you need to set up separate CalDAV configurations using the corresponding principal homes (but your own user id).
+**Note**: Since Apple Calendar does not properly support the `calendar-home-set` property the `/caldav-compat` endpoints should be used.
+That also means that Apple Calendar is not able to automatically discover group collections so in that case you'll have to manually add all principals with `/caldav-compat/principal/<principal_id>`.
 
 ## Evolution
 
