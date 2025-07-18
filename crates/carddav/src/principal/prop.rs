@@ -22,10 +22,13 @@ pub enum PrincipalProp {
 
     // CardDAV (RFC 6352)
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
-    AddressbookHomeSet(HrefElement),
+    AddressbookHomeSet(AddressbookHomeSet),
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     PrincipalAddress(Option<HrefElement>),
 }
+
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
+pub struct AddressbookHomeSet(#[xml(ty = "untagged", flatten)] pub Vec<HrefElement>);
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "PrincipalPropWrapperName", untagged)]
