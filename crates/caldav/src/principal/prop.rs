@@ -31,8 +31,11 @@ pub enum PrincipalProp {
 
     // CalDAV (RFC 4791)
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
-    CalendarHomeSet(HrefElement),
+    CalendarHomeSet(CalendarHomeSet),
 }
+
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
+pub struct CalendarHomeSet(#[xml(ty = "untagged", flatten)] pub Vec<HrefElement>);
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "PrincipalPropWrapperName", untagged)]

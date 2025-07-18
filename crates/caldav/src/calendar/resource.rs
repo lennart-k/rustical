@@ -201,10 +201,7 @@ impl Resource for CalendarResource {
                     if let Some(tzid) = &timezone_id {
                         // Validate timezone id
                         chrono_tz::Tz::from_str(tzid).map_err(|_| {
-                            rustical_dav::Error::BadRequest(format!(
-                                "Invalid timezone-id: {}",
-                                tzid
-                            ))
+                            rustical_dav::Error::BadRequest(format!("Invalid timezone-id: {tzid}"))
                         })?;
                         // TODO: Ensure that timezone is also updated (For now hope that clients play nice)
                     }

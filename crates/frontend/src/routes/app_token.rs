@@ -64,7 +64,7 @@ pub async fn route_post_app_token<AP: AuthenticationProvider>(
             token_name: name,
             account_description: format!("{}@{}", &user.id, &hostname),
             hostname: hostname.clone(),
-            caldav_principal_url: format!("https://{hostname}/caldav/principal/{user_id}"),
+            caldav_principal_url: format!("https://{hostname}/caldav-compat/principal/{user_id}"),
             carddav_principal_url: format!("https://{hostname}/carddav/principal/{user_id}"),
             user: user.id.to_owned(),
             token,
@@ -79,13 +79,12 @@ pub async fn route_post_app_token<AP: AuthenticationProvider>(
         hdrs.typed_insert(
             ContentType::from_str("application/x-apple-aspen-config; charset=utf-8").unwrap(),
         );
-        let filename = format!("rustical-{}.mobileconfig", user_id);
+        let filename = format!("rustical-{user_id}.mobileconfig");
         let filename = utf8_percent_encode(&filename, CONTROLS);
         hdrs.insert(
             header::CONTENT_DISPOSITION,
             HeaderValue::from_str(&format!(
-                "attachement; filename*=UTF-8''{} filename={}",
-                filename, filename
+                "attachement; filename*=UTF-8''{filename} filename={filename}",
             ))
             .unwrap(),
         );

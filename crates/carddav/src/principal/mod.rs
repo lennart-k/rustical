@@ -53,7 +53,13 @@ impl Resource for PrincipalResource {
                 PrincipalPropWrapper::Principal(match prop {
                     PrincipalPropName::PrincipalUrl => PrincipalProp::PrincipalUrl(principal_href),
                     PrincipalPropName::AddressbookHomeSet => {
-                        PrincipalProp::AddressbookHomeSet(principal_href)
+                        PrincipalProp::AddressbookHomeSet(AddressbookHomeSet(
+                            self.principal
+                                .memberships()
+                                .iter()
+                                .map(|principal| puri.principal_uri(principal).into())
+                                .collect(),
+                        ))
                     }
                     PrincipalPropName::PrincipalAddress => PrincipalProp::PrincipalAddress(None),
                     PrincipalPropName::GroupMembership => {

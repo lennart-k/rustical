@@ -18,6 +18,8 @@ pub mod tests;
 pub struct PrincipalResource {
     principal: Principal,
     members: Vec<String>,
+    // If true only return the principal as the calendar home set, otherwise also groups
+    simplified_home_set: bool,
 }
 
 impl ResourceName for PrincipalResource {
@@ -64,9 +66,17 @@ impl Resource for PrincipalResource {
                     PrincipalPropName::PrincipalUrl => {
                         PrincipalProp::PrincipalUrl(principal_url.into())
                     }
-                    PrincipalPropName::CalendarHomeSet => {
-                        PrincipalProp::CalendarHomeSet(principal_url.into())
-                    }
+                    PrincipalPropName::CalendarHomeSet => PrincipalProp::CalendarHomeSet(
+                        CalendarHomeSet(if self.simplified_home_set {
+                            vec![principal_url.into()]
+                        } else {
+                            self.principal
+                                .memberships()
+                                .iter()
+                                .map(|principal| puri.principal_uri(principal).into())
+                                .collect()
+                        }),
+                    ),
                     PrincipalPropName::CalendarUserAddressSet => {
                         PrincipalProp::CalendarUserAddressSet(principal_url.into())
                     }

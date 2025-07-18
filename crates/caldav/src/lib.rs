@@ -1,5 +1,3 @@
-use axum::response::Redirect;
-use axum::routing::any;
 use axum::{Extension, Router};
 use derive_more::Constructor;
 use principal::PrincipalResourceService;
@@ -14,7 +12,6 @@ pub mod calendar;
 pub mod calendar_object;
 pub mod error;
 pub mod principal;
-
 pub use error::Error;
 
 #[derive(Debug, Clone, Constructor)]
@@ -34,23 +31,18 @@ pub fn caldav_router<AP: AuthenticationProvider, C: CalendarStore, S: Subscripti
     auth_provider: Arc<AP>,
     store: Arc<C>,
     subscription_store: Arc<S>,
+    simplified_home_set: bool,
 ) -> Router {
-    let principal_service = PrincipalResourceService {
-        auth_provider: auth_provider.clone(),
-        sub_store: subscription_store.clone(),
-        cal_store: store.clone(),
-    };
-
-    Router::new()
-        .nest(
-            prefix,
-            RootResourceService::<_, Principal, CalDavPrincipalUri>::new(principal_service.clone())
-                .axum_router()
-                .layer(AuthenticationLayer::new(auth_provider))
-                .layer(Extension(CalDavPrincipalUri(prefix))),
-        )
-        .route(
-            "/.well-known/caldav",
-            any(async || Redirect::permanent(prefix)),
-        )
+    Router::new().nest(
+        prefix,
+        RootResourceService::<_, Principal, CalDavPrincipalUri>::new(PrincipalResourceService {
+            auth_provider: auth_provider.clone(),
+            sub_store: subscription_store.clone(),
+            cal_store: store.clone(),
+            simplified_home_set,
+        })
+        .axum_router()
+        .layer(AuthenticationLayer::new(auth_provider))
+        .layer(Extension(CalDavPrincipalUri(prefix))),
+    )
 }
