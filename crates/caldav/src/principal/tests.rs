@@ -27,6 +27,7 @@ async fn test_principal_resource(
         cal_store: Arc::new(cal_store.await),
         sub_store: Arc::new(sub_store.await),
         auth_provider: Arc::new(auth_provider.await),
+        simplified_home_set: false,
     };
 
     assert!(matches!(

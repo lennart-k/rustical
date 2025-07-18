@@ -2,8 +2,8 @@ use crate::config::NextcloudLoginConfig;
 use axum::Router;
 use axum::body::Body;
 use axum::extract::Request;
-use axum::response::Response;
-use axum::routing::options;
+use axum::response::{Redirect, Response};
+use axum::routing::{any, options};
 use headers::{HeaderMapExt, UserAgent};
 use http::{HeaderValue, StatusCode};
 use rustical_caldav::caldav_router;
@@ -47,7 +47,19 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
             auth_provider.clone(),
             combined_cal_store.clone(),
             subscription_store.clone(),
+            false,
         ))
+        .merge(caldav_router(
+            "/caldav-compat",
+            auth_provider.clone(),
+            combined_cal_store.clone(),
+            subscription_store.clone(),
+            true,
+        ))
+        .route(
+            "/.well-known/caldav",
+            any(async || Redirect::permanent("/caldav")),
+        )
         .merge(carddav_router(
             "/carddav",
             auth_provider.clone(),

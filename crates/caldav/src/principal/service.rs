@@ -18,6 +18,8 @@ pub struct PrincipalResourceService<
     pub(crate) auth_provider: Arc<AP>,
     pub(crate) sub_store: Arc<S>,
     pub(crate) cal_store: Arc<CS>,
+    // If true only return the principal as the calendar home set, otherwise also groups
+    pub(crate) simplified_home_set: bool,
 }
 
 impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Clone
@@ -28,6 +30,7 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Clone
             auth_provider: self.auth_provider.clone(),
             sub_store: self.sub_store.clone(),
             cal_store: self.cal_store.clone(),
+            simplified_home_set: self.simplified_home_set,
         }
     }
 }
@@ -58,6 +61,7 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Resour
         Ok(PrincipalResource {
             members: self.auth_provider.list_members(&user.id).await?,
             principal: user,
+            simplified_home_set: self.simplified_home_set,
         })
     }
 
