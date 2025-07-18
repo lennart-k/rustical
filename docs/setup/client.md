@@ -55,19 +55,20 @@ That also means that Apple Calendar is not able to automatically discover group 
 ## Evolution
 
 Set up a collection account in the account settings.
-
-**Limitation**: Group collections are not discovered. It seems as if currently you have to add each group collection manually.
+Evolution correctly uses all calendar homes so group collections work properly.
 
 ## Home Assistant CalDAV integration
+
+The underlying library `python-caldav` does not support multiple calendar homes so you should use the `/caldav-compat` endpoints.
 
 As URL specify
 
 ```
-https://<your-host>/.well-known/caldav
+https://<your-host>/caldav-compat
 ```
 
-For goup collections explicitly specify
+For group collections explicitly specify
 
 ```
-https://<your-host>/caldav/principal/<principal>
+https://<your-host>/caldav-compat/principal/<principal>
 ```
