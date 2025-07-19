@@ -22,9 +22,9 @@
   <div id="app">
     {% block content %}<p>Placeholder</p>{% endblock %}
   </div>
+  <footer>
+      <a href="{{ env!("CARGO_PKG_REPOSITORY") }}" target="_blank">RustiCal {{ env!("CARGO_PKG_VERSION") }}</a>
+      <a href="/frontend/assets/licenses.html" target="_blank">Open Source Licenses</a>
+  </footer>
 </body>
-<footer>
-    <a href="{{ env!("CARGO_PKG_REPOSITORY") }}" target="_blank">RustiCal {{ env!("CARGO_PKG_VERSION") }}</a>
-    <a href="/frontend/assets/licenses.html" target="_blank">Open Source Licenses</a>
-</footer>
 </html>

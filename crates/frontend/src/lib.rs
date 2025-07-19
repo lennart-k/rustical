@@ -141,15 +141,14 @@ async fn unauthorized_handler(mut request: Request, next: Next) -> Response {
         return resp
             .body(Body::new(format!(
                 r#"<!Doctype html>
-                <html>
-                    <head>
-                        <meta http-equiv="refresh" content="1; url={login_url}" />
-                    </head>
-                    <body>
-                        Unauthorized, redirecting to <a href="{login_url}">login page</a>
-                    </body>
-                <html>
-            "#,
+<html>
+    <head>
+        <meta http-equiv="refresh" content="1; url={login_url}" />
+    </head>
+    <body>
+        Unauthorized, redirecting to <a href="{login_url}">login page</a>
+    </body>
+</html>"#,
             )))
             .unwrap();
     }
