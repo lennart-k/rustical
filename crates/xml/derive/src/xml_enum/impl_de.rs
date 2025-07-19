@@ -16,8 +16,8 @@ impl Enum {
         quote! {
             impl #impl_generics ::rustical_xml::XmlDeserialize for #name #type_generics #where_clause {
                 fn deserialize<R: ::std::io::BufRead>(
-                    reader: &mut quick_xml::NsReader<R>,
-                    start: &quick_xml::events::BytesStart,
+                    reader: &mut ::quick_xml::NsReader<R>,
+                    start: &::quick_xml::events::BytesStart,
                     empty: bool
                 ) -> Result<Self, rustical_xml::XmlError> {
                     #(#variant_branches);*
@@ -37,8 +37,8 @@ impl Enum {
         quote! {
             impl #impl_generics ::rustical_xml::XmlDeserialize for #name #type_generics #where_clause {
                 fn deserialize<R: std::io::BufRead>(
-                    reader: &mut quick_xml::NsReader<R>,
-                    start: &quick_xml::events::BytesStart,
+                    reader: &mut ::quick_xml::NsReader<R>,
+                    start: &::quick_xml::events::BytesStart,
                     empty: bool
                 ) -> Result<Self, rustical_xml::XmlError> {
                     let (_ns, name) = reader.resolve_element(start.name());

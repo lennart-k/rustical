@@ -118,8 +118,8 @@ impl NamedStruct {
         quote! {
             impl #impl_generics ::rustical_xml::XmlDeserialize for #ident #type_generics #where_clause {
                 fn deserialize<R: ::std::io::BufRead>(
-                    reader: &mut quick_xml::NsReader<R>,
-                    start: &quick_xml::events::BytesStart,
+                    reader: &mut ::quick_xml::NsReader<R>,
+                    start: &::quick_xml::events::BytesStart,
                     empty: bool
                 ) -> Result<Self, rustical_xml::XmlError> {
                     use quick_xml::events::Event;
