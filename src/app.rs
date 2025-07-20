@@ -60,7 +60,7 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
         .route(
             "/.well-known/caldav",
             any(async |TypedHeader(ua): TypedHeader<UserAgent>| {
-                if ua.as_str().contains("remindd") {
+                if ua.as_str().contains("remindd") || ua.as_str().contains("dataaccessd") {
                     // remindd is an Apple Calendar User Agent
                     // Even when explicitly configuring a principal URL in Apple Calendar Apple
                     // will not respect that configuration but call /.well-known/caldav,
