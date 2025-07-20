@@ -4,6 +4,7 @@ use axum::body::Body;
 use axum::extract::Request;
 use axum::response::{Redirect, Response};
 use axum::routing::{any, options};
+use axum_extra::TypedHeader;
 use headers::{HeaderMapExt, UserAgent};
 use http::{HeaderValue, StatusCode};
 use rustical_caldav::caldav_router;
@@ -58,7 +59,17 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
         ))
         .route(
             "/.well-known/caldav",
-            any(async || Redirect::permanent("/caldav")),
+            any(async |TypedHeader(ua): TypedHeader<UserAgent>| {
+                if ua.as_str().contains("remindd") {
+                    // remindd is an Apple Calendar User Agent
+                    // Even when explicitly configuring a principal URL in Apple Calendar Apple
+                    // will not respect that configuration but call /.well-known/caldav,
+                    // so sadly we have to do this user-agent filtering. :(
+                    // (I should have never gotten an Apple device)
+                    return Redirect::permanent("/caldav-compat");
+                }
+                Redirect::permanent("/caldav")
+            }),
         )
         .merge(carddav_router(
             "/carddav",
