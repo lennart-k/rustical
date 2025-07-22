@@ -1,11 +1,13 @@
 use crate::config::NextcloudLoginConfig;
 use axum::Router;
-use axum::body::Body;
+use axum::body::{Body, HttpBody};
 use axum::extract::Request;
+use axum::middleware::Next;
 use axum::response::{Redirect, Response};
 use axum::routing::{any, options};
 use axum_extra::TypedHeader;
 use headers::{HeaderMapExt, UserAgent};
+use http::header::CONNECTION;
 use http::{HeaderValue, StatusCode};
 use rustical_caldav::caldav_router;
 use rustical_carddav::carddav_router;
@@ -178,4 +180,21 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
                     },
                 ),
         )
+        .layer(axum::middleware::from_fn(
+            async |req: Request, next: Next| {
+                // Closes the connection if the request body might've not been fully consumed
+                // Otherwise subsequent requests reusing the connection might fail.
+                // See https://github.com/lennart-k/rustical/issues/77
+                let body_empty = req.body().is_end_stream();
+                let mut response = next.run(req).await;
+                if !body_empty
+                    && (response.status().is_server_error() || response.status().is_client_error())
+                {
+                    response
+                        .headers_mut()
+                        .insert(CONNECTION, HeaderValue::from_static("close"));
+                }
+                response
+            },
+        ))
 }
