@@ -206,7 +206,10 @@ impl AuthenticationProvider for SqlitePrincipalStore {
                 None,
                 None,
                 Params {
-                    rounds: 10,
+                    // The app token has a high entropy so we are quite safe from quessing attacks
+                    // Also if an attacker got access to the hashes they'd have already gotten
+                    // access to the whole database.
+                    rounds: 2,
                     ..Default::default()
                 },
                 &salt,
