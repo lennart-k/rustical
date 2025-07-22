@@ -56,9 +56,13 @@ pub async fn route_post_app_token<AP: AuthenticationProvider>(
     assert!(!name.is_empty());
     assert_eq!(user_id, user.id);
     let token = generate_app_token();
-    auth_provider
+    let mut token_id = auth_provider
         .add_app_token(&user.id, name.to_owned(), token.clone())
         .await?;
+    // Get first 4 characters of token identifier
+    token_id.truncate(4);
+    // This will be a hint for the token validator which app token hash to verify against
+    let token = format!("{token_id}_{token}");
     if apple {
         let profile = AppleConfig {
             token_name: name,

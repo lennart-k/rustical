@@ -149,8 +149,23 @@ impl AuthenticationProvider for SqlitePrincipalStore {
         user_id: &str,
         token: &str,
     ) -> Result<Option<Principal>, Error> {
+        #[instrument(skip(password))]
+        fn verify_password(password: &str, hash: &str) -> Result<(), password_auth::VerifyError> {
+            password_auth::verify_password(password, hash)
+        }
+
+        // Allow to specify the token id to use to make validation faster
+        // Doesn't match the whole length of the token id to keep the length in bounds
+        // Example: asd_selgkh
+        // where the app token id starts with asd and its value is selgkh
+        let (token_id_prefix, token) = token.split_once('_').unwrap_or(("", token));
+
         for app_token in &self.get_app_tokens(user_id).await? {
-            if password_auth::verify_password(token, app_token.token.as_ref()).is_ok() {
+            // Wrong token id
+            if !app_token.id.starts_with(token_id_prefix) {
+                continue;
+            }
+            if verify_password(token, app_token.token.as_ref()).is_ok() {
                 return self.get_principal(user_id).await;
             }
         }
