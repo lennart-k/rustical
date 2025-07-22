@@ -46,7 +46,7 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Resour
     type Principal = Principal;
     type PrincipalUri = CalDavPrincipalUri;
 
-    const DAV_HEADER: &str = "1, 3, access-control, calendar-access, calendar-proxy";
+    const DAV_HEADER: &str = "1, 3, access-control, calendar-access";
 
     async fn get_resource(
         &self,

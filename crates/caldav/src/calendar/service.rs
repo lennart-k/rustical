@@ -51,7 +51,7 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
     type Principal = Principal;
     type PrincipalUri = CalDavPrincipalUri;
 
-    const DAV_HEADER: &str = "1, 3, access-control, calendar-access, calendar-proxy, webdav-push";
+    const DAV_HEADER: &str = "1, 3, access-control, calendar-access, webdav-push";
 
     async fn get_resource(
         &self,

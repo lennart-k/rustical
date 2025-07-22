@@ -41,11 +41,6 @@ impl Resource for PrincipalResource {
         Resourcetype(&[
             ResourcetypeInner(Some(rustical_dav::namespace::NS_DAV), "collection"),
             ResourcetypeInner(Some(rustical_dav::namespace::NS_DAV), "principal"),
-            // https://github.com/apple/ccs-calendarserver/blob/13c706b985fb728b9aab42dc0fef85aae21921c3/doc/Extensions/caldav-proxy.txt
-            // ResourcetypeInner(
-            //     Some(rustical_dav::namespace::NS_CALENDARSERVER),
-            //     "calendar-proxy-write",
-            // ),
         ])
     }
 
