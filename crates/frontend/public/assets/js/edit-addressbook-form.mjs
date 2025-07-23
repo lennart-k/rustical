@@ -64,7 +64,7 @@ let EditAddressbookForm = class extends i {
       alert("Empty displayname");
       return;
     }
-    await fetch(`/carddav/principal/${this.principal}/${this.addr_id}`, {
+    let response = await fetch(`/carddav/principal/${this.principal}/${this.addr_id}`, {
       method: "PROPPATCH",
       headers: {
         "Content-Type": "application/xml"
@@ -85,6 +85,10 @@ let EditAddressbookForm = class extends i {
       </propertyupdate>
       `
     });
+    if (response.status >= 400) {
+      alert(`Error ${response.status}: ${await response.text()}`);
+      return null;
+    }
     window.location.reload();
     return null;
   }

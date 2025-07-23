@@ -97,7 +97,7 @@ export class EditCalendarForm extends LitElement {
       alert("No calendar components selected")
       return
     }
-    await fetch(`/caldav/principal/${this.principal}/${this.cal_id}`, {
+    let response = await fetch(`/caldav/principal/${this.principal}/${this.cal_id}`, {
       method: 'PROPPATCH',
       headers: {
         'Content-Type': 'application/xml'
@@ -124,6 +124,12 @@ export class EditCalendarForm extends LitElement {
       </propertyupdate>
       `
     })
+
+    if (response.status >= 400) {
+      alert(`Error ${response.status}: ${await response.text()}`)
+      return null
+    }
+
     window.location.reload()
     return null
   }

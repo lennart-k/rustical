@@ -25,7 +25,7 @@ export default defineConfig({
         format: "es",
         manualChunks: {
           lit: ["lit"],
-          webdav: ["webdav"],
+          // webdav: ["webdav"],
         }
       }
     },

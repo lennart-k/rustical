@@ -1,7 +1,6 @@
 import { i, x } from "./lit-z6_uA4GX.mjs";
 import { n as n$1, t } from "./property-D0NJdseG.mjs";
 import { e, n, a as escapeXml } from "./index-b86iLJlP.mjs";
-import { a as an } from "./webdav-D0R7xCzX.mjs";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __decorateClass = (decorators, target, key, kind) => {
@@ -15,7 +14,6 @@ var __decorateClass = (decorators, target, key, kind) => {
 let CreateCalendarForm = class extends i {
   constructor() {
     super();
-    this.client = an("/caldav");
     this.user = "";
     this.principal = "";
     this.cal_id = "";
@@ -120,8 +118,12 @@ let CreateCalendarForm = class extends i {
       alert("No calendar components selected");
       return;
     }
-    await this.client.createDirectory(`/principal/${this.principal || this.user}/${this.cal_id}`, {
-      data: `
+    let response = await fetch(`/caldav/principal/${this.principal || this.user}/${this.cal_id}`, {
+      method: "MKCOL",
+      headers: {
+        "Content-Type": "application/xml"
+      },
+      body: `
       <mkcol xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CS="http://calendarserver.org/ns/" xmlns:ICAL="http://apple.com/ns/ical/">
         <set>
           <prop>
@@ -138,6 +140,10 @@ let CreateCalendarForm = class extends i {
       </mkcol>
       `
     });
+    if (response.status >= 400) {
+      alert(`Error ${response.status}: ${await response.text()}`);
+      return null;
+    }
     window.location.reload();
     return null;
   }

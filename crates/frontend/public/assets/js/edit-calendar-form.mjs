@@ -87,7 +87,7 @@ let EditCalendarForm = class extends i {
       alert("No calendar components selected");
       return;
     }
-    await fetch(`/caldav/principal/${this.principal}/${this.cal_id}`, {
+    let response = await fetch(`/caldav/principal/${this.principal}/${this.cal_id}`, {
       method: "PROPPATCH",
       headers: {
         "Content-Type": "application/xml"
@@ -114,6 +114,10 @@ let EditCalendarForm = class extends i {
       </propertyupdate>
       `
     });
+    if (response.status >= 400) {
+      alert(`Error ${response.status}: ${await response.text()}`);
+      return null;
+    }
     window.location.reload();
     return null;
   }

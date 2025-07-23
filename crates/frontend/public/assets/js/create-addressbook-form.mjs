@@ -1,7 +1,6 @@
 import { i, x } from "./lit-z6_uA4GX.mjs";
 import { n as n$1, t } from "./property-D0NJdseG.mjs";
 import { e, n, a as escapeXml } from "./index-b86iLJlP.mjs";
-import { a as an } from "./webdav-D0R7xCzX.mjs";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __decorateClass = (decorators, target, key, kind) => {
@@ -15,7 +14,6 @@ var __decorateClass = (decorators, target, key, kind) => {
 let CreateAddressbookForm = class extends i {
   constructor() {
     super();
-    this.client = an("/carddav");
     this.user = "";
     this.principal = "";
     this.addr_id = "";
@@ -79,8 +77,12 @@ let CreateAddressbookForm = class extends i {
       alert("Empty displayname");
       return;
     }
-    await this.client.createDirectory(`/principal/${this.principal || this.user}/${this.addr_id}`, {
-      data: `
+    let response = await fetch(`/carddav/principal/${this.principal || this.user}/${this.addr_id}`, {
+      method: "MKCOL",
+      headers: {
+        "Content-Type": "application/xml"
+      },
+      body: `
       <mkcol xmlns="DAV:" xmlns:CARD="urn:ietf:params:xml:ns:carddav">
         <set>
           <prop>
@@ -91,6 +93,10 @@ let CreateAddressbookForm = class extends i {
       </mkcol>
       `
     });
+    if (response.status >= 400) {
+      alert(`Error ${response.status}: ${await response.text()}`);
+      return null;
+    }
     window.location.reload();
     return null;
   }

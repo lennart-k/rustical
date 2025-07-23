@@ -1,7 +1,6 @@
 import { html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Ref, createRef, ref } from 'lit/directives/ref.js';
-import { createClient } from "webdav";
 import { escapeXml } from ".";
 
 @customElement("create-calendar-form")
@@ -13,8 +12,6 @@ export class CreateCalendarForm extends LitElement {
   protected override createRenderRoot() {
     return this
   }
-
-  client = createClient("/caldav")
 
   @property()
   user: string = ''
@@ -126,8 +123,13 @@ export class CreateCalendarForm extends LitElement {
       alert("No calendar components selected")
       return
     }
-    await this.client.createDirectory(`/principal/${this.principal || this.user}/${this.cal_id}`, {
-      data: `
+
+    let response = await fetch(`/caldav/principal/${this.principal || this.user}/${this.cal_id}`, {
+      method: 'MKCOL',
+      headers: {
+        'Content-Type': 'application/xml'
+      },
+      body: `
       <mkcol xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CS="http://calendarserver.org/ns/" xmlns:ICAL="http://apple.com/ns/ical/">
         <set>
           <prop>
@@ -144,6 +146,11 @@ export class CreateCalendarForm extends LitElement {
       </mkcol>
       `
     })
+
+    if (response.status >= 400) {
+      alert(`Error ${response.status}: ${await response.text()}`)
+      return null
+    }
     window.location.reload()
     return null
   }

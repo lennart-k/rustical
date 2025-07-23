@@ -1,7 +1,6 @@
 import { html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Ref, createRef, ref } from 'lit/directives/ref.js';
-import { createClient } from "webdav";
 import { escapeXml } from ".";
 
 @customElement("create-addressbook-form")
@@ -14,8 +13,6 @@ export class CreateAddressbookForm extends LitElement {
   protected override createRenderRoot() {
     return this
   }
-
-  client = createClient("/carddav")
 
   @property()
   user: string = ''
@@ -80,8 +77,12 @@ export class CreateAddressbookForm extends LitElement {
       alert("Empty displayname")
       return
     }
-    await this.client.createDirectory(`/principal/${this.principal || this.user}/${this.addr_id}`, {
-      data: `
+    let response = await fetch(`/carddav/principal/${this.principal || this.user}/${this.addr_id}`, {
+      method: 'MKCOL',
+      headers: {
+        'Content-Type': 'application/xml'
+      },
+      body: `
       <mkcol xmlns="DAV:" xmlns:CARD="urn:ietf:params:xml:ns:carddav">
         <set>
           <prop>
@@ -91,7 +92,14 @@ export class CreateAddressbookForm extends LitElement {
         </set>
       </mkcol>
       `
+
     })
+
+    if (response.status >= 400) {
+      alert(`Error ${response.status}: ${await response.text()}`)
+      return null
+    }
+
     window.location.reload()
     return null
   }
