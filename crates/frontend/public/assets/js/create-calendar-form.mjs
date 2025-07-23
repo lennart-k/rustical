@@ -21,6 +21,7 @@ let CreateCalendarForm = class extends i {
     this.cal_id = "";
     this.displayname = "";
     this.description = "";
+    this.timezone_id = "";
     this.color = "";
     this.isSubscription = false;
     this.subscriptionUrl = "";
@@ -55,6 +56,11 @@ let CreateCalendarForm = class extends i {
           <label>
             Displayname
             <input type="text" name="displayname" value=${this.displayname} @change=${(e2) => this.displayname = e2.target.value} />
+          </label>
+          <br>
+          <label>
+            Timezone (optional)
+            <input type="text" name="timezone" .value=${this.timezone_id} @change=${(e2) => this.timezone_id = e2.target.value} />
           </label>
           <br>
           <label>
@@ -120,6 +126,7 @@ let CreateCalendarForm = class extends i {
         <set>
           <prop>
             <displayname>${escapeXml(this.displayname)}</displayname>
+            ${this.timezone_id ? `<CAL:calendar-timezone-id>${escapeXml(this.timezone_id)}</CAL:calendar-timezone-id>` : ""}
             ${this.description ? `<CAL:calendar-description>${escapeXml(this.description)}</CAL:calendar-description>` : ""}
             ${this.color ? `<ICAL:calendar-color>${escapeXml(this.color)}</ICAL:calendar-color>` : ""}
             ${this.isSubscription && this.subscriptionUrl ? `<CS:source><href>${escapeXml(this.subscriptionUrl)}</href></CS:source>` : ""}
@@ -150,6 +157,9 @@ __decorateClass([
 __decorateClass([
   n$1()
 ], CreateCalendarForm.prototype, "description", 2);
+__decorateClass([
+  n$1()
+], CreateCalendarForm.prototype, "timezone_id", 2);
 __decorateClass([
   n$1()
 ], CreateCalendarForm.prototype, "color", 2);

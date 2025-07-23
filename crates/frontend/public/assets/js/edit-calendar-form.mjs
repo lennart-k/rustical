@@ -16,6 +16,7 @@ let EditCalendarForm = class extends i {
     super();
     this.displayname = "";
     this.description = "";
+    this.timezone_id = "";
     this.color = "";
     this.components = /* @__PURE__ */ new Set();
     this.dialog = e();
@@ -33,6 +34,11 @@ let EditCalendarForm = class extends i {
           <label>
             Displayname
             <input type="text" name="displayname" .value=${this.displayname} @change=${(e2) => this.displayname = e2.target.value} />
+          </label>
+          <br>
+          <label>
+            Timezone (optional)
+            <input type="text" name="timezone" .value=${this.timezone_id} @change=${(e2) => this.timezone_id = e2.target.value} />
           </label>
           <br>
           <label>
@@ -91,6 +97,7 @@ let EditCalendarForm = class extends i {
         <set>
           <prop>
             <displayname>${escapeXml(this.displayname)}</displayname>
+            ${this.timezone_id ? `<CAL:calendar-timezone-id>${escapeXml(this.timezone_id)}</CAL:calendar-timezone-id>` : ""}
             ${this.description ? `<CAL:calendar-description>${escapeXml(this.description)}</CAL:calendar-description>` : ""}
             ${this.color ? `<ICAL:calendar-color>${escapeXml(this.color)}</ICAL:calendar-color>` : ""}
             <CAL:supported-calendar-component-set>
@@ -123,6 +130,9 @@ __decorateClass([
 __decorateClass([
   n$1()
 ], EditCalendarForm.prototype, "description", 2);
+__decorateClass([
+  n$1()
+], EditCalendarForm.prototype, "timezone_id", 2);
 __decorateClass([
   n$1()
 ], EditCalendarForm.prototype, "color", 2);

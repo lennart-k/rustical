@@ -23,6 +23,8 @@ export class EditCalendarForm extends LitElement {
   @property()
   description: string = ''
   @property()
+  timezone_id: string = ''
+  @property()
   color: string = ''
   @property({
     converter: {
@@ -45,6 +47,11 @@ export class EditCalendarForm extends LitElement {
           <label>
             Displayname
             <input type="text" name="displayname" .value=${this.displayname} @change=${e => this.displayname = e.target.value} />
+          </label>
+          <br>
+          <label>
+            Timezone (optional)
+            <input type="text" name="timezone" .value=${this.timezone_id} @change=${e => this.timezone_id = e.target.value} />
           </label>
           <br>
           <label>
@@ -100,6 +107,7 @@ export class EditCalendarForm extends LitElement {
         <set>
           <prop>
             <displayname>${escapeXml(this.displayname)}</displayname>
+            ${this.timezone_id ? `<CAL:calendar-timezone-id>${escapeXml(this.timezone_id)}</CAL:calendar-timezone-id>` : ''}
             ${this.description ? `<CAL:calendar-description>${escapeXml(this.description)}</CAL:calendar-description>` : ''}
             ${this.color ? `<ICAL:calendar-color>${escapeXml(this.color)}</ICAL:calendar-color>` : ''}
             <CAL:supported-calendar-component-set>

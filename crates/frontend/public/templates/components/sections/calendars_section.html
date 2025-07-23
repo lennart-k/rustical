@@ -28,6 +28,7 @@
         <edit-calendar-form
           principal="{{ calendar.principal }}"
           cal_id="{{ calendar.id }}"
+          timezone_id="{{ calendar.timezone_id.as_deref().unwrap_or_default() }}"
           displayname="{{ calendar.displayname.as_deref().unwrap_or_default() }}"
           description="{{ calendar.description.as_deref().unwrap_or_default() }}"
           color="{{ calendar.color.as_deref().unwrap_or_default() }}"

@@ -27,6 +27,8 @@ export class CreateCalendarForm extends LitElement {
   @property()
   description: string = ''
   @property()
+  timezone_id: string = ''
+  @property()
   color: string = ''
   @property()
   isSubscription: boolean = false
@@ -63,6 +65,11 @@ export class CreateCalendarForm extends LitElement {
           <label>
             Displayname
             <input type="text" name="displayname" value=${this.displayname} @change=${e => this.displayname = e.target.value} />
+          </label>
+          <br>
+          <label>
+            Timezone (optional)
+            <input type="text" name="timezone" .value=${this.timezone_id} @change=${e => this.timezone_id = e.target.value} />
           </label>
           <br>
           <label>
@@ -125,6 +132,7 @@ export class CreateCalendarForm extends LitElement {
         <set>
           <prop>
             <displayname>${escapeXml(this.displayname)}</displayname>
+            ${this.timezone_id ? `<CAL:calendar-timezone-id>${escapeXml(this.timezone_id)}</CAL:calendar-timezone-id>` : ''}
             ${this.description ? `<CAL:calendar-description>${escapeXml(this.description)}</CAL:calendar-description>` : ''}
             ${this.color ? `<ICAL:calendar-color>${escapeXml(this.color)}</ICAL:calendar-color>` : ''}
             ${(this.isSubscription && this.subscriptionUrl) ? `<CS:source><href>${escapeXml(this.subscriptionUrl)}</href></CS:source>` : ''}
