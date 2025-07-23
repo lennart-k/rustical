@@ -31,6 +31,11 @@ impl SubscriptionStore for SqliteStore {
     }
 
     async fn upsert_subscription(&self, sub: Subscription) -> Result<bool, Error> {
+        let already_exists = match self.get_subscription(&sub.id).await {
+            Ok(_) => true,
+            Err(Error::NotFound) => false,
+            Err(err) => return Err(err),
+        };
         sqlx::query!(
             r#"INSERT OR REPLACE INTO davpush_subscriptions (id, topic, expiration, push_resource, public_key, public_key_type, auth_secret) VALUES (?, ?, ?, ?, ?, ?, ?)"#,
             sub.id,
@@ -41,8 +46,7 @@ impl SubscriptionStore for SqliteStore {
             sub.public_key_type,
             sub.auth_secret
         ).execute(&self.db).await.map_err(crate::Error::from)?;
-        // TODO: Correctly return whether a subscription already existed
-        Ok(false)
+        Ok(already_exists)
     }
     async fn delete_subscription(&self, id: &str) -> Result<(), Error> {
         sqlx::query!(r#"DELETE FROM davpush_subscriptions WHERE id = ? "#, id)
