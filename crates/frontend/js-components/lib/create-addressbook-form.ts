@@ -19,7 +19,7 @@ export class CreateAddressbookForm extends LitElement {
   @property()
   principal: string = ''
   @property()
-  addr_id: string = ''
+  addr_id: string = self.crypto.randomUUID()
   @property()
   displayname: string = ''
   @property()
@@ -46,7 +46,7 @@ export class CreateAddressbookForm extends LitElement {
           <br>
           <label>
             id
-            <input type="text" name="id" @change=${e => this.addr_id = e.target.value} />
+            <input type="text" name="id" value=${this.addr_id} @change=${e => this.addr_id = e.target.value} />
           </label>
           <br>
           <label>

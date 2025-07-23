@@ -16,7 +16,7 @@ let CreateAddressbookForm = class extends i {
     super();
     this.user = "";
     this.principal = "";
-    this.addr_id = "";
+    this.addr_id = self.crypto.randomUUID();
     this.displayname = "";
     this.description = "";
     this.dialog = e();
@@ -43,7 +43,7 @@ let CreateAddressbookForm = class extends i {
           <br>
           <label>
             id
-            <input type="text" name="id" @change=${(e2) => this.addr_id = e2.target.value} />
+            <input type="text" name="id" value=${this.addr_id} @change=${(e2) => this.addr_id = e2.target.value} />
           </label>
           <br>
           <label>

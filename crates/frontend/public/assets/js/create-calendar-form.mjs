@@ -16,7 +16,7 @@ let CreateCalendarForm = class extends i {
     super();
     this.user = "";
     this.principal = "";
-    this.cal_id = "";
+    this.cal_id = self.crypto.randomUUID();
     this.displayname = "";
     this.description = "";
     this.timezone_id = "";
@@ -48,7 +48,7 @@ let CreateCalendarForm = class extends i {
           <br>
           <label>
             id
-            <input type="text" name="id" @change=${(e2) => this.cal_id = e2.target.value} />
+            <input type="text" name="id" value=${this.cal_id} @change=${(e2) => this.cal_id = e2.target.value} />
           </label>
           <br>
           <label>

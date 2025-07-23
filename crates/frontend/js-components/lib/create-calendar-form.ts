@@ -18,7 +18,7 @@ export class CreateCalendarForm extends LitElement {
   @property()
   principal: string = ''
   @property()
-  cal_id: string = ''
+  cal_id: string = self.crypto.randomUUID()
   @property()
   displayname: string = ''
   @property()
@@ -36,7 +36,6 @@ export class CreateCalendarForm extends LitElement {
 
   dialog: Ref<HTMLDialogElement> = createRef()
   form: Ref<HTMLFormElement> = createRef()
-
 
   override render() {
     return html`
@@ -56,7 +55,7 @@ export class CreateCalendarForm extends LitElement {
           <br>
           <label>
             id
-            <input type="text" name="id" @change=${e => this.cal_id = e.target.value} />
+            <input type="text" name="id" value=${this.cal_id} @change=${e => this.cal_id = e.target.value} />
           </label>
           <br>
           <label>
