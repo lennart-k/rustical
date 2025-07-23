@@ -121,7 +121,7 @@ impl Resource for PrincipalResource {
     }
 
     fn get_user_privileges(&self, user: &Principal) -> Result<UserPrivilegeSet, Self::Error> {
-        Ok(UserPrivilegeSet::owner_read(
+        Ok(UserPrivilegeSet::owner_only(
             user.is_principal(&self.principal.id),
         ))
     }
