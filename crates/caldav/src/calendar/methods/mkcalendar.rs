@@ -82,12 +82,25 @@ pub async fn route_mkcalendar<C: CalendarStore, S: SubscriptionStore>(
         request.displayname = None
     }
 
+    let mut timezone = request.calendar_timezone;
+    if let Some(tzid) = request.calendar_timezone_id.as_ref() {
+        // Validate timezone id and set timezone accordingly
+        timezone = Some(
+            vzic_rs::VTIMEZONES
+                .get(tzid)
+                .ok_or(rustical_dav::Error::BadRequest(format!(
+                    "Invalid timezone-id: {tzid}"
+                )))?
+                .to_string(),
+        );
+    }
+
     let calendar = Calendar {
         id: cal_id.to_owned(),
         principal: principal.to_owned(),
         order: request.calendar_order.unwrap_or(0),
         displayname: request.displayname,
-        timezone: request.calendar_timezone,
+        timezone,
         timezone_id: request.calendar_timezone_id,
         color: request.calendar_color,
         description: request.calendar_description,
