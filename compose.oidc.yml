@@ -1,0 +1,22 @@
+services:
+  rustical:
+    image: ghcr.io/lennart-k/rustical:latest
+    restart: unless-stopped
+    environment:
+      RUSTICAL_FRONTEND__ALLOW_PASSWORD_LOGIN: "false"
+      RUSTICAL_OIDC__NAME: "Authelia"
+      RUSTICAL_OIDC__ISSUER: "https://auth.example.com"
+      RUSTICAL_OIDC__CLIENT_ID: "{{ rustical_oidc_client_id }}"
+      RUSTICAL_OIDC__CLIENT_SECRET: "{{ rustical_oidc_client_secret }}"
+      RUSTICAL_OIDC__CLAIM_USERID: "preferred_username"
+      RUSTICAL_OIDC__SCOPES: '["openid", "profile", "groups"]'
+      RUSTICAL_OIDC__REQUIRE_GROUP: "app:rustical" # optional
+      RUSTICAL_OIDC__ALLOW_SIGN_UP: "true"
+    volumes:
+      - data:/var/lib/rustical
+    # Here you probably want to you expose instead
+    ports:
+      - 4000:4000
+
+volumes:
+  data:

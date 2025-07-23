@@ -8,6 +8,8 @@ a CalDAV/CardDAV server
     you'd still be one of the first testers so expect bugs and rough edges.
     If you still want to play around with it in its current state, absolutely feel free to do so and to open up an issue if something is not working. :)
 
+[Installation](installation/index.md){ .md-button }
+
 ## Features
 
 - easy to backup, everything saved in one SQLite database
