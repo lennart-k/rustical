@@ -192,6 +192,7 @@ impl Resource for CalendarResource {
                 }
                 CalendarProp::CalendarTimezone(timezone) => {
                     // TODO: Ensure that timezone-id is also updated
+                    // We probably want to prohibit non-IANA timezones
                     self.cal.timezone = timezone;
                     Ok(())
                 }
