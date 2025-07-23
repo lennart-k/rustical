@@ -135,8 +135,7 @@ reqwest = { version = "0.12", features = [
 openidconnect = "4.0"
 clap = { version = "4.5", features = ["derive", "env"] }
 matchit-serde = { git = "https://github.com/lennart-k/matchit-serde", rev = "f0591d13" }
-# TODO: Pin version
-vtimezones-rs = { git = "https://github.com/lennart-k/vtimezones-rs", branch = "main" }
+vtimezones-rs = "0.1"
 ece = { version = "2.3", default-features = false, features = [
   "backend-openssl",
 ] }
