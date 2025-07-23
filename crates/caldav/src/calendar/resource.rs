@@ -201,7 +201,7 @@ impl Resource for CalendarResource {
                     if let Some(tzid) = &timezone_id {
                         // Validate timezone id and set timezone accordingly
                         self.cal.timezone = Some(
-                            vzic_rs::VTIMEZONES
+                            vtimezones_rs::VTIMEZONES
                                 .get(tzid)
                                 .ok_or(rustical_dav::Error::BadRequest(format!(
                                     "Invalid timezone-id: {tzid}"
@@ -315,6 +315,9 @@ mod tests {
     #[test]
     fn test_tzdb_version() {
         // Ensure that both chrono_tz and vzic_rs use the same tzdb version
-        assert_eq!(chrono_tz::IANA_TZDB_VERSION, vzic_rs::IANA_TZDB_VERSION);
+        assert_eq!(
+            chrono_tz::IANA_TZDB_VERSION,
+            vtimezones_rs::IANA_TZDB_VERSION
+        );
     }
 }
