@@ -208,7 +208,7 @@ impl CalDateTime {
         matches!(&self, Self::Date(_, _))
     }
 
-    pub fn as_datetime(&self) -> Cow<DateTime<CalTimezone>> {
+    pub fn as_datetime(&self) -> Cow<'_, DateTime<CalTimezone>> {
         match self {
             Self::DateTime(datetime) => Cow::Borrowed(datetime),
             Self::Date(date, tz) => Cow::Owned(
