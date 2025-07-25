@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT *\n                FROM calendars\n                WHERE principal = ? AND deleted_at IS NULL",
+  "query": "SELECT principal, id, displayname, \"order\", description, color, timezone_id, deleted_at, synctoken, subscription_url, push_topic, comp_event, comp_todo, comp_journal\n                FROM calendars\n                WHERE principal = ? AND deleted_at IS NULL",
   "describe": {
     "columns": [
       {
@@ -14,14 +14,14 @@
         "type_info": "Text"
       },
       {
-        "name": "synctoken",
+        "name": "displayname",
         "ordinal": 2,
-        "type_info": "Integer"
+        "type_info": "Text"
       },
       {
-        "name": "displayname",
+        "name": "order",
         "ordinal": 3,
-        "type_info": "Text"
+        "type_info": "Integer"
       },
       {
         "name": "description",
@@ -29,53 +29,48 @@
         "type_info": "Text"
       },
       {
-        "name": "order",
-        "ordinal": 5,
-        "type_info": "Integer"
-      },
-      {
         "name": "color",
-        "ordinal": 6,
-        "type_info": "Text"
-      },
-      {
-        "name": "timezone",
-        "ordinal": 7,
+        "ordinal": 5,
         "type_info": "Text"
       },
       {
         "name": "timezone_id",
-        "ordinal": 8,
+        "ordinal": 6,
         "type_info": "Text"
       },
       {
         "name": "deleted_at",
-        "ordinal": 9,
+        "ordinal": 7,
         "type_info": "Datetime"
       },
       {
+        "name": "synctoken",
+        "ordinal": 8,
+        "type_info": "Integer"
+      },
+      {
         "name": "subscription_url",
-        "ordinal": 10,
+        "ordinal": 9,
         "type_info": "Text"
       },
       {
         "name": "push_topic",
-        "ordinal": 11,
+        "ordinal": 10,
         "type_info": "Text"
       },
       {
         "name": "comp_event",
-        "ordinal": 12,
+        "ordinal": 11,
         "type_info": "Bool"
       },
       {
         "name": "comp_todo",
-        "ordinal": 13,
+        "ordinal": 12,
         "type_info": "Bool"
       },
       {
         "name": "comp_journal",
-        "ordinal": 14,
+        "ordinal": 13,
         "type_info": "Bool"
       }
     ],
@@ -85,14 +80,13 @@
     "nullable": [
       false,
       false,
-      false,
-      true,
       true,
       false,
       true,
       true,
       true,
       true,
+      false,
       true,
       false,
       false,
@@ -100,5 +94,5 @@
       false
     ]
   },
-  "hash": "cedfb82b38fdd0c7681b9873b1008abee4a2f4ca16abad1b837f256d0bf416b1"
+  "hash": "751fbac9c965451b8a43ad51986cfc710ca757573ffdb90160a04041de28ae28"
 }
