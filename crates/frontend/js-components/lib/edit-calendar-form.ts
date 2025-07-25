@@ -117,6 +117,7 @@ export class EditCalendarForm extends LitElement {
         </set>
         <remove>
           <prop>
+            ${!this.timezone_id ? `<CAL:calendar-timezone-id />` : ''}
             ${!this.description ? '<CAL:calendar-description />' : ''}
             ${!this.color ? '<ICAL:calendar-color />' : ''}
           </prop>
