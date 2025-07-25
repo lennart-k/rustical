@@ -4569,10 +4569,11 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "vtimezones-rs"
-version = "0.1.2"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "317410bb7aefbce6c154d65ed7db4daba20756d121dd1f221941b72286c9a03c"
+checksum = "f6728de8767c8dea44f41b88115a205ed23adc3302e1b4342be59d922934dae5"
 dependencies = [
+ "glob",
  "phf",
  "phf_codegen",
 ]
