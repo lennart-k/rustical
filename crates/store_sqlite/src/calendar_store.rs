@@ -98,7 +98,7 @@ impl SqliteCalendarStore {
     ) -> Result<Calendar, Error> {
         let cal = sqlx::query_as!(
             CalendarRow,
-            r#"SELECT principal, id, displayname, "order", description, color, timezone_id, deleted_at, synctoken, subscription_url, push_topic, comp_event, comp_todo, comp_journal
+            r#"SELECT *
                 FROM calendars
                 WHERE (principal, id) = (?, ?)
                 AND ((deleted_at IS NULL) OR ?) "#,
@@ -118,7 +118,7 @@ impl SqliteCalendarStore {
     ) -> Result<Vec<Calendar>, Error> {
         let cals = sqlx::query_as!(
             CalendarRow,
-            r#"SELECT principal, id, displayname, "order", description, color, timezone_id, deleted_at, synctoken, subscription_url, push_topic, comp_event, comp_todo, comp_journal
+            r#"SELECT *
                 FROM calendars
                 WHERE principal = ? AND deleted_at IS NULL"#,
             principal

@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT principal, id, displayname, \"order\", description, color, timezone_id, deleted_at, synctoken, subscription_url, push_topic, comp_event, comp_todo, comp_journal\n                FROM calendars\n                WHERE (principal, id) = (?, ?)\n                AND ((deleted_at IS NULL) OR ?) ",
+  "query": "SELECT *\n                FROM calendars\n                WHERE principal = ? AND deleted_at IS NULL",
   "describe": {
     "columns": [
       {
@@ -14,14 +14,14 @@
         "type_info": "Text"
       },
       {
-        "name": "displayname",
+        "name": "synctoken",
         "ordinal": 2,
-        "type_info": "Text"
+        "type_info": "Integer"
       },
       {
-        "name": "order",
+        "name": "displayname",
         "ordinal": 3,
-        "type_info": "Integer"
+        "type_info": "Text"
       },
       {
         "name": "description",
@@ -29,24 +29,24 @@
         "type_info": "Text"
       },
       {
-        "name": "color",
+        "name": "order",
         "ordinal": 5,
-        "type_info": "Text"
+        "type_info": "Integer"
       },
       {
-        "name": "timezone_id",
+        "name": "color",
         "ordinal": 6,
         "type_info": "Text"
       },
       {
-        "name": "deleted_at",
+        "name": "timezone_id",
         "ordinal": 7,
-        "type_info": "Datetime"
+        "type_info": "Text"
       },
       {
-        "name": "synctoken",
+        "name": "deleted_at",
         "ordinal": 8,
-        "type_info": "Integer"
+        "type_info": "Datetime"
       },
       {
         "name": "subscription_url",
@@ -75,18 +75,18 @@
       }
     ],
     "parameters": {
-      "Right": 3
+      "Right": 1
     },
     "nullable": [
       false,
       false,
+      false,
+      true,
       true,
       false,
       true,
       true,
       true,
-      true,
-      false,
       true,
       false,
       false,
@@ -94,5 +94,5 @@
       false
     ]
   },
-  "hash": "936e869631f569f2215b9fcc84dfdd188b7918f805c27970983623155aa781aa"
+  "hash": "cedfb82b38fdd0c7681b9873b1008abee4a2f4ca16abad1b837f256d0bf416b1"
 }
