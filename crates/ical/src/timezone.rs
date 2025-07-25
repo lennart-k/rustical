@@ -1,11 +1,10 @@
-use chrono::{Local, NaiveDate, NaiveDateTime, TimeZone, Utc};
+use chrono::{Local, NaiveDate, NaiveDateTime, TimeZone};
 use chrono_tz::Tz;
 use derive_more::{Display, From};
 
 #[derive(Debug, Clone, From, PartialEq, Eq)]
 pub enum CalTimezone {
     Local,
-    Utc,
     Olson(Tz),
 }
 
@@ -13,7 +12,6 @@ impl From<CalTimezone> for rrule::Tz {
     fn from(value: CalTimezone) -> Self {
         match value {
             CalTimezone::Local => Self::LOCAL,
-            CalTimezone::Utc => Self::UTC,
             CalTimezone::Olson(tz) => Self::Tz(tz),
         }
     }
@@ -23,7 +21,6 @@ impl From<rrule::Tz> for CalTimezone {
     fn from(value: rrule::Tz) -> Self {
         match value {
             rrule::Tz::Local(_) => Self::Local,
-            rrule::Tz::Tz(chrono_tz::UTC) => Self::Utc,
             rrule::Tz::Tz(tz) => Self::Olson(tz),
         }
     }
@@ -32,7 +29,6 @@ impl From<rrule::Tz> for CalTimezone {
 #[derive(Debug, Clone, PartialEq, Display)]
 pub enum CalTimezoneOffset {
     Local(chrono::FixedOffset),
-    Utc(chrono::Utc),
     Olson(chrono_tz::TzOffset),
 }
 
@@ -40,7 +36,6 @@ impl chrono::Offset for CalTimezoneOffset {
     fn fix(&self) -> chrono::FixedOffset {
         match self {
             Self::Local(local) => local.fix(),
-            Self::Utc(utc) => utc.fix(),
             Self::Olson(olson) => olson.fix(),
         }
     }
@@ -52,7 +47,6 @@ impl TimeZone for CalTimezone {
     fn from_offset(offset: &Self::Offset) -> Self {
         match offset {
             CalTimezoneOffset::Local(_) => Self::Local,
-            CalTimezoneOffset::Utc(_) => Self::Utc,
             CalTimezoneOffset::Olson(offset) => Self::Olson(Tz::from_offset(offset)),
         }
     }
@@ -62,9 +56,6 @@ impl TimeZone for CalTimezone {
             Self::Local => Local
                 .offset_from_local_date(local)
                 .map(CalTimezoneOffset::Local),
-            Self::Utc => Utc
-                .offset_from_local_date(local)
-                .map(CalTimezoneOffset::Utc),
             Self::Olson(tz) => tz
                 .offset_from_local_date(local)
                 .map(CalTimezoneOffset::Olson),
@@ -79,9 +70,6 @@ impl TimeZone for CalTimezone {
             Self::Local => Local
                 .offset_from_local_datetime(local)
                 .map(CalTimezoneOffset::Local),
-            Self::Utc => Utc
-                .offset_from_local_datetime(local)
-                .map(CalTimezoneOffset::Utc),
             Self::Olson(tz) => tz
                 .offset_from_local_datetime(local)
                 .map(CalTimezoneOffset::Olson),
@@ -91,7 +79,6 @@ impl TimeZone for CalTimezone {
     fn offset_from_utc_datetime(&self, utc: &NaiveDateTime) -> Self::Offset {
         match self {
             Self::Local => CalTimezoneOffset::Local(Local.offset_from_utc_datetime(utc)),
-            Self::Utc => CalTimezoneOffset::Utc(Utc.offset_from_utc_datetime(utc)),
             Self::Olson(tz) => CalTimezoneOffset::Olson(tz.offset_from_utc_datetime(utc)),
         }
     }
@@ -99,7 +86,6 @@ impl TimeZone for CalTimezone {
     fn offset_from_utc_date(&self, utc: &NaiveDate) -> Self::Offset {
         match self {
             Self::Local => CalTimezoneOffset::Local(Local.offset_from_utc_date(utc)),
-            Self::Utc => CalTimezoneOffset::Utc(Utc.offset_from_utc_date(utc)),
             Self::Olson(tz) => CalTimezoneOffset::Olson(tz.offset_from_utc_date(utc)),
         }
     }

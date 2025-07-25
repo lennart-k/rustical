@@ -108,7 +108,7 @@ impl From<DateTime<Local>> for CalDateTime {
 
 impl From<DateTime<Utc>> for CalDateTime {
     fn from(value: DateTime<Utc>) -> Self {
-        CalDateTime::DateTime(value.with_timezone(&CalTimezone::Utc))
+        CalDateTime::DateTime(value.with_timezone(&CalTimezone::Olson(chrono_tz::UTC)))
     }
 }
 
@@ -160,7 +160,7 @@ impl CalDateTime {
     pub fn format(&self) -> String {
         match self {
             Self::DateTime(datetime) => match datetime.timezone() {
-                CalTimezone::Utc => datetime.format(UTC_DATE_TIME).to_string(),
+                CalTimezone::Olson(chrono_tz::UTC) => datetime.format(UTC_DATE_TIME).to_string(),
                 _ => datetime.format(LOCAL_DATE_TIME).to_string(),
             },
             Self::Date(date, _) => date.format(LOCAL_DATE).to_string(),
