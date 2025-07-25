@@ -20,7 +20,6 @@ fn birthday_calendar(addressbook: Addressbook) -> Calendar {
         order: 0,
         description: None,
         color: None,
-        timezone: None,
         timezone_id: None,
         deleted_at: addressbook.deleted_at,
         synctoken: addressbook.synctoken,

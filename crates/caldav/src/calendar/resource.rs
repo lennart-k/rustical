@@ -3,6 +3,7 @@ use crate::Error;
 use crate::calendar::prop::ReportMethod;
 use chrono::{DateTime, Utc};
 use derive_more::derive::{From, Into};
+use ical::IcalParser;
 use rustical_dav::extensions::{
     CommonPropertiesExtension, CommonPropertiesProp, SyncTokenExtension, SyncTokenExtensionProp,
 };
@@ -132,7 +133,9 @@ impl Resource for CalendarResource {
                     CalendarProp::CalendarDescription(self.cal.description.clone())
                 }
                 CalendarPropName::CalendarTimezone => {
-                    CalendarProp::CalendarTimezone(self.cal.timezone.clone())
+                    CalendarProp::CalendarTimezone(self.cal.timezone_id.as_ref().and_then(|tzid| {
+                        vtimezones_rs::VTIMEZONES.get(tzid).map(|tz| tz.to_string())
+                    }))
                 }
                 // chrono_tz uses the IANA database
                 CalendarPropName::TimezoneServiceSet => CalendarProp::TimezoneServiceSet(
@@ -191,23 +194,42 @@ impl Resource for CalendarResource {
                     Ok(())
                 }
                 CalendarProp::CalendarTimezone(timezone) => {
-                    // TODO: Ensure that timezone-id is also updated
-                    // We probably want to prohibit non-IANA timezones
-                    self.cal.timezone = timezone;
+                    if let Some(tz) = timezone {
+                        // TODO: Proper error (calendar-timezone precondition)
+                        let calendar = IcalParser::new(tz.as_bytes())
+                            .next()
+                            .ok_or(rustical_dav::Error::BadRequest(
+                                "No timezone data provided".to_owned(),
+                            ))?
+                            .map_err(|_| {
+                                rustical_dav::Error::BadRequest(
+                                    "No timezone data provided".to_owned(),
+                                )
+                            })?;
+
+                        let timezone =
+                            calendar
+                                .timezones
+                                .first()
+                                .ok_or(rustical_dav::Error::BadRequest(
+                                    "No timezone data provided".to_owned(),
+                                ))?;
+                        let timezone: chrono_tz::Tz = timezone.try_into().map_err(|_| {
+                            rustical_dav::Error::BadRequest("No timezone data provided".to_owned())
+                        })?;
+
+                        self.cal.timezone_id = Some(timezone.name().to_owned());
+                    }
                     Ok(())
                 }
                 CalendarProp::TimezoneServiceSet(_) => Err(rustical_dav::Error::PropReadOnly),
                 CalendarProp::CalendarTimezoneId(timezone_id) => {
                     if let Some(tzid) = &timezone_id {
-                        // Validate timezone id and set timezone accordingly
-                        self.cal.timezone = Some(
-                            vtimezones_rs::VTIMEZONES
-                                .get(tzid)
-                                .ok_or(rustical_dav::Error::BadRequest(format!(
-                                    "Invalid timezone-id: {tzid}"
-                                )))?
-                                .to_string(),
-                        );
+                        if !vtimezones_rs::VTIMEZONES.contains_key(tzid) {
+                            return Err(rustical_dav::Error::BadRequest(format!(
+                                "Invalid timezone-id: {tzid}"
+                            )));
+                        }
                     }
                     self.cal.timezone_id = timezone_id;
                     Ok(())
@@ -248,15 +270,11 @@ impl Resource for CalendarResource {
                     self.cal.description = None;
                     Ok(())
                 }
-                CalendarPropName::CalendarTimezone => {
-                    self.cal.timezone = None;
-                    Ok(())
-                }
-                CalendarPropName::TimezoneServiceSet => Err(rustical_dav::Error::PropReadOnly),
-                CalendarPropName::CalendarTimezoneId => {
+                CalendarPropName::CalendarTimezone | CalendarPropName::CalendarTimezoneId => {
                     self.cal.timezone_id = None;
                     Ok(())
                 }
+                CalendarPropName::TimezoneServiceSet => Err(rustical_dav::Error::PropReadOnly),
                 CalendarPropName::CalendarOrder => {
                     self.cal.order = 0;
                     Ok(())

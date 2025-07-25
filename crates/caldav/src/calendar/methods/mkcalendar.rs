@@ -4,6 +4,7 @@ use crate::calendar::prop::SupportedCalendarComponentSet;
 use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Response};
 use http::{Method, StatusCode};
+use ical::IcalParser;
 use rustical_dav::xml::HrefElement;
 use rustical_ical::CalendarObjectType;
 use rustical_store::auth::Principal;
@@ -82,26 +83,38 @@ pub async fn route_mkcalendar<C: CalendarStore, S: SubscriptionStore>(
         request.displayname = None
     }
 
-    let mut timezone = request.calendar_timezone;
-    if let Some(tzid) = request.calendar_timezone_id.as_ref() {
-        // Validate timezone id and set timezone accordingly
-        timezone = Some(
-            vtimezones_rs::VTIMEZONES
-                .get(tzid)
-                .ok_or(rustical_dav::Error::BadRequest(format!(
-                    "Invalid timezone-id: {tzid}"
-                )))?
-                .to_string(),
-        );
-    }
+    let timezone_id = if let Some(tzid) = request.calendar_timezone_id {
+        Some(tzid)
+    } else if let Some(tz) = request.calendar_timezone {
+        // TODO: Proper error (calendar-timezone precondition)
+        let calendar = IcalParser::new(tz.as_bytes())
+            .next()
+            .ok_or(rustical_dav::Error::BadRequest(
+                "No timezone data provided".to_owned(),
+            ))?
+            .map_err(|_| rustical_dav::Error::BadRequest("No timezone data provided".to_owned()))?;
+
+        let timezone = calendar
+            .timezones
+            .first()
+            .ok_or(rustical_dav::Error::BadRequest(
+                "No timezone data provided".to_owned(),
+            ))?;
+        let timezone: chrono_tz::Tz = timezone
+            .try_into()
+            .map_err(|_| rustical_dav::Error::BadRequest("No timezone data provided".to_owned()))?;
+
+        Some(timezone.name().to_owned())
+    } else {
+        None
+    };
 
     let calendar = Calendar {
         id: cal_id.to_owned(),
         principal: principal.to_owned(),
         order: request.calendar_order.unwrap_or(0),
         displayname: request.displayname,
-        timezone,
-        timezone_id: request.calendar_timezone_id,
+        timezone_id,
         color: request.calendar_color,
         description: request.calendar_description,
         deleted_at: None,

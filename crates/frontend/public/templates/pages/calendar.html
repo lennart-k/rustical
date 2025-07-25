@@ -25,7 +25,7 @@
 {% if let Some(timezone_id) = calendar.timezone_id %}
 <p>{{ timezone_id }}</p>
 {% endif %}
-{% if let Some(timezone) = calendar.timezone %}
+{% if let Some(timezone) = calendar.get_vtimezone() %}
 <textarea rows="16" readonly>{{ timezone }}</textarea>
 {% endif %}
 

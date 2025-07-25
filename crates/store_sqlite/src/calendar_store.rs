@@ -44,7 +44,6 @@ struct CalendarRow {
     order: i64,
     description: Option<String>,
     color: Option<String>,
-    timezone: Option<String>,
     timezone_id: Option<String>,
     deleted_at: Option<NaiveDateTime>,
     synctoken: i64,
@@ -74,7 +73,6 @@ impl From<CalendarRow> for Calendar {
             order: value.order,
             description: value.description,
             color: value.color,
-            timezone: value.timezone,
             timezone_id: value.timezone_id,
             deleted_at: value.deleted_at,
             synctoken: value.synctoken,
@@ -100,7 +98,7 @@ impl SqliteCalendarStore {
     ) -> Result<Calendar, Error> {
         let cal = sqlx::query_as!(
             CalendarRow,
-            r#"SELECT *
+            r#"SELECT principal, id, displayname, "order", description, color, timezone_id, deleted_at, synctoken, subscription_url, push_topic, comp_event, comp_todo, comp_journal
                 FROM calendars
                 WHERE (principal, id) = (?, ?)
                 AND ((deleted_at IS NULL) OR ?) "#,
@@ -120,7 +118,7 @@ impl SqliteCalendarStore {
     ) -> Result<Vec<Calendar>, Error> {
         let cals = sqlx::query_as!(
             CalendarRow,
-            r#"SELECT *
+            r#"SELECT principal, id, displayname, "order", description, color, timezone_id, deleted_at, synctoken, subscription_url, push_topic, comp_event, comp_todo, comp_journal
                 FROM calendars
                 WHERE principal = ? AND deleted_at IS NULL"#,
             principal
@@ -137,7 +135,7 @@ impl SqliteCalendarStore {
     ) -> Result<Vec<Calendar>, Error> {
         let cals = sqlx::query_as!(
             CalendarRow,
-            r#"SELECT *
+            r#"SELECT principal, id, displayname, "order", description, color, timezone_id, deleted_at, synctoken, subscription_url, push_topic, comp_event, comp_todo, comp_journal
                 FROM calendars
                 WHERE principal = ? AND deleted_at IS NOT NULL"#,
             principal
@@ -157,8 +155,8 @@ impl SqliteCalendarStore {
         let comp_journal = calendar.components.contains(&CalendarObjectType::Journal);
 
         sqlx::query!(
-            r#"INSERT INTO calendars (principal, id, displayname, description, "order", color, subscription_url, timezone, timezone_id, push_topic, comp_event, comp_todo, comp_journal)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"#,
+            r#"INSERT INTO calendars (principal, id, displayname, description, "order", color, subscription_url, timezone_id, push_topic, comp_event, comp_todo, comp_journal)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"#,
             calendar.principal,
             calendar.id,
             calendar.displayname,
@@ -166,7 +164,6 @@ impl SqliteCalendarStore {
             calendar.order,
             calendar.color,
             calendar.subscription_url,
-            calendar.timezone,
             calendar.timezone_id,
             calendar.push_topic,
             comp_event, comp_todo, comp_journal
@@ -188,7 +185,7 @@ impl SqliteCalendarStore {
         let comp_journal = calendar.components.contains(&CalendarObjectType::Journal);
 
         let result = sqlx::query!(
-            r#"UPDATE calendars SET principal = ?, id = ?, displayname = ?, description = ?, "order" = ?, color = ?, timezone = ?, timezone_id = ?, push_topic = ?, comp_event = ?, comp_todo = ?, comp_journal = ?
+            r#"UPDATE calendars SET principal = ?, id = ?, displayname = ?, description = ?, "order" = ?, color = ?, timezone_id = ?, push_topic = ?, comp_event = ?, comp_todo = ?, comp_journal = ?
                 WHERE (principal, id) = (?, ?)"#,
             calendar.principal,
             calendar.id,
@@ -196,7 +193,6 @@ impl SqliteCalendarStore {
             calendar.description,
             calendar.order,
             calendar.color,
-            calendar.timezone,
             calendar.timezone_id,
             calendar.push_topic,
             comp_event, comp_todo, comp_journal,

@@ -32,6 +32,7 @@ headers.workspace = true
 tower.workspace = true
 futures-core.workspace = true
 tower-sessions.workspace = true
+vtimezones-rs.workspace = true
 
 [dev-dependencies]
 rstest = { workspace = true }
