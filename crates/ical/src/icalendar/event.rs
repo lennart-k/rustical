@@ -1,18 +1,15 @@
 use crate::Error;
-use crate::{CalDateTime, ComponentMut, parse_duration};
+use crate::{CalDateTime, parse_duration};
 use chrono::{DateTime, Duration, Utc};
-use ical::{
-    generator::IcalEvent,
-    parser::{Component, ical::component::IcalTimeZone},
-    property::Property,
-};
+use ical::parser::ComponentMut;
+use ical::{generator::IcalEvent, parser::Component, property::Property};
 use rrule::{RRule, RRuleSet};
 use std::{collections::HashMap, str::FromStr};
 
 #[derive(Debug, Clone)]
 pub struct EventObject {
     pub event: IcalEvent,
-    pub timezones: HashMap<String, IcalTimeZone>,
+    pub timezones: HashMap<String, Option<chrono_tz::Tz>>,
     pub(crate) ics: String,
 }
 
@@ -128,7 +125,7 @@ impl EventObject {
                 } else {
                     date.format()
                 };
-                let mut ev = self.event.clone();
+                let mut ev = self.event.clone().mutable();
                 ev.remove_property("RRULE");
                 ev.remove_property("RDATE");
                 ev.remove_property("EXDATE");
@@ -163,7 +160,7 @@ impl EventObject {
                         params: dtstart_prop.params,
                     });
                 }
-                events.push(ev);
+                events.push(ev.verify()?);
             }
             Ok(events)
         } else {

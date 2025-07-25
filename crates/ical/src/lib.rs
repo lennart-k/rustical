@@ -1,6 +1,3 @@
-mod property_ext;
-pub use property_ext::*;
-
 mod timestamp;
 mod timezone;
 pub use timestamp::*;

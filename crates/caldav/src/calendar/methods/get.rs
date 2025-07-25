@@ -63,7 +63,6 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
             params: None,
         });
     }
-    let mut ical_calendar = ical_calendar_builder.build();
 
     for object in &objects {
         match object.get_data() {
@@ -73,16 +72,20 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
                 ..
             }) => {
                 timezones.extend(object_timezones);
-                ical_calendar.events.push(event.clone());
+                ical_calendar_builder = ical_calendar_builder.add_event(event.clone());
             }
             CalendarObjectComponent::Todo(TodoObject { todo, .. }) => {
-                ical_calendar.todos.push(todo.clone());
+                ical_calendar_builder = ical_calendar_builder.add_todo(todo.clone());
             }
             CalendarObjectComponent::Journal(JournalObject { journal, .. }) => {
-                ical_calendar.journals.push(journal.clone());
+                ical_calendar_builder = ical_calendar_builder.add_journal(journal.clone());
             }
         }
     }
+
+    let ical_calendar = ical_calendar_builder
+        .build()
+        .map_err(|parser_error| Error::IcalError(parser_error.into()))?;
 
     let mut resp = Response::builder().status(StatusCode::OK);
     let hdrs = resp.headers_mut().unwrap();

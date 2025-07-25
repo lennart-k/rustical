@@ -4,10 +4,7 @@ use crate::Error;
 use chrono::DateTime;
 use chrono::Utc;
 use derive_more::Display;
-use ical::{
-    generator::{Emitter, IcalCalendar},
-    parser::{Component, ical::component::IcalTimeZone},
-};
+use ical::generator::{Emitter, IcalCalendar};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::{collections::HashMap, io::BufReader};
@@ -90,15 +87,11 @@ impl CalendarObject {
             ));
         }
 
-        let timezones: HashMap<String, IcalTimeZone> = cal
+        let timezones: HashMap<String, Option<chrono_tz::Tz>> = cal
             .timezones
             .clone()
             .into_iter()
-            .filter_map(|timezone| {
-                let timezone_prop = timezone.get_property("TZID")?.to_owned();
-                let tzid = timezone_prop.value?;
-                Some((tzid, timezone))
-            })
+            .map(|timezone| (timezone.get_tzid().to_owned(), (&timezone).try_into().ok()))
             .collect();
 
         if let Some(event) = cal.events.first() {
@@ -161,11 +154,7 @@ impl CalendarObject {
     }
 
     pub fn get_component_name(&self) -> &str {
-        match self.data {
-            CalendarObjectComponent::Todo(_) => "VTODO",
-            CalendarObjectComponent::Event(_) => "VEVENT",
-            CalendarObjectComponent::Journal(_) => "VJOURNAL",
-        }
+        self.get_object_type().as_str()
     }
 
     pub fn get_object_type(&self) -> CalendarObjectType {

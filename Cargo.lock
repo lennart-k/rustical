@@ -1598,11 +1598,11 @@ dependencies = [
 [[package]]
 name = "ical"
 version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b7cab7543a8b7729a19e2c04309f902861293dcdae6558dfbeb634454d279f6"
+source = "git+https://github.com/lennart-k/ical-rs#44209d8fbdde7a8f9ec42e90a91a90b2b46ed1f0"
 dependencies = [
+ "chrono-tz",
  "serde",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
 ]
 
 [[package]]

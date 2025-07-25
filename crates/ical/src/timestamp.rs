@@ -1,12 +1,8 @@
 use super::timezone::CalTimezone;
-use crate::IcalProperty;
 use chrono::{DateTime, Datelike, Duration, Local, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use chrono_tz::Tz;
 use derive_more::derive::Deref;
-use ical::{
-    parser::{Component, ical::component::IcalTimeZone},
-    property::Property,
-};
+use ical::property::Property;
 use lazy_static::lazy_static;
 use rustical_xml::{ValueDeserialize, ValueSerialize};
 use std::{borrow::Cow, collections::HashMap, ops::Add};
@@ -136,7 +132,7 @@ impl Add<Duration> for CalDateTime {
 impl CalDateTime {
     pub fn parse_prop(
         prop: &Property,
-        timezones: &HashMap<String, IcalTimeZone>,
+        timezones: &HashMap<String, Option<chrono_tz::Tz>>,
     ) -> Result<Self, CalDateTimeError> {
         let prop_value = prop
             .value
@@ -145,28 +141,9 @@ impl CalDateTime {
                 "empty property".to_owned(),
             ))?;
 
-        // Use the TZID parameter from the property
-        let timezone = if let Some(tzid) = prop.get_tzid() {
+        let timezone = if let Some(tzid) = prop.get_param("TZID") {
             if let Some(timezone) = timezones.get(tzid) {
-                // X-LIC-LOCATION is often used to refer to a standardised timezone from the Olson
-                // database
-                if let Some(olson_name) = timezone
-                    .get_property("X-LIC-LOCATION")
-                    .map(|prop| prop.value.to_owned())
-                    .unwrap_or_default()
-                {
-                    if let Ok(tz) = olson_name.parse::<Tz>() {
-                        Some(tz)
-                    } else {
-                        return Err(CalDateTimeError::InvalidOlson(olson_name));
-                    }
-                } else {
-                    // If the TZID matches a name from the Olson database (e.g. Europe/Berlin) we
-                    // guess that we can just use it
-                    tzid.parse::<Tz>().ok()
-                    // TODO: If None: Too bad, we need to manually parse it
-                    // For now it's just treated as localtime
-                }
+                timezone.to_owned()
             } else {
                 // TZID refers to timezone that does not exist
                 return Err(CalDateTimeError::InvalidTZID(tzid.to_string()));
