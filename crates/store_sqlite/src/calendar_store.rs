@@ -22,7 +22,17 @@ impl TryFrom<CalendarObjectRow> for CalendarObject {
     type Error = rustical_store::Error;
 
     fn try_from(value: CalendarObjectRow) -> Result<Self, Self::Error> {
-        Ok(CalendarObject::from_ics(value.id, value.ics)?)
+        let object = CalendarObject::from_ics(value.ics)?;
+        if object.get_id() != value.id {
+            return Err(rustical_store::Error::IcalError(
+                rustical_ical::Error::InvalidData(format!(
+                    "object_id={} and UID={} don't match",
+                    object.get_id(),
+                    value.id
+                )),
+            ));
+        }
+        Ok(object)
     }
 }
 

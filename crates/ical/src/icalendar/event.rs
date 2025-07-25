@@ -6,11 +6,12 @@ use ical::{generator::IcalEvent, parser::Component, property::Property};
 use rrule::{RRule, RRuleSet};
 use std::{collections::HashMap, str::FromStr};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct EventObject {
     pub event: IcalEvent,
+    // If a timezone is None that means that in the VCALENDAR object there's a timezone defined
+    // with that name but its not from the Olson DB
     pub timezones: HashMap<String, Option<chrono_tz::Tz>>,
-    pub(crate) ics: String,
 }
 
 impl EventObject {
@@ -239,11 +240,7 @@ END:VEVENT\r\n",
 
     #[test]
     fn test_expand_recurrence() {
-        let event = CalendarObject::from_ics(
-            "318ec6503573d9576818daf93dac07317058d95c".to_string(),
-            ICS.to_string(),
-        )
-        .unwrap();
+        let event = CalendarObject::from_ics(ICS.to_string()).unwrap();
         let event = event.event().unwrap();
 
         let events: Vec<String> = event

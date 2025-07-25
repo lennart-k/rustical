@@ -1598,7 +1598,7 @@ dependencies = [
 [[package]]
 name = "ical"
 version = "0.11.0"
-source = "git+https://github.com/lennart-k/ical-rs#a911f2d500f9f422934c5ec6afc94586a8814fb5"
+source = "git+https://github.com/lennart-k/ical-rs#c5fa2217af23ba27ba80295a2c0eb922f08f6c97"
 dependencies = [
  "chrono-tz",
  "serde",

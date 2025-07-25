@@ -78,12 +78,13 @@ pub async fn put_event<C: CalendarStore>(
         true
     };
 
-    let object = match CalendarObject::from_ics(object_id, body) {
+    let object = match CalendarObject::from_ics(body) {
         Ok(obj) => obj,
         Err(_) => {
             return Err(Error::PreconditionFailed(Precondition::ValidCalendarData));
         }
     };
+    assert_eq!(object.get_id(), object_id);
     cal_store
         .put_object(principal, calendar_id, object, overwrite)
         .await?;

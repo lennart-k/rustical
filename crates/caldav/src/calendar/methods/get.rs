@@ -74,10 +74,10 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
                 timezones.extend(object_timezones);
                 ical_calendar_builder = ical_calendar_builder.add_event(event.clone());
             }
-            CalendarObjectComponent::Todo(TodoObject { todo, .. }) => {
+            CalendarObjectComponent::Todo(TodoObject(todo)) => {
                 ical_calendar_builder = ical_calendar_builder.add_todo(todo.clone());
             }
-            CalendarObjectComponent::Journal(JournalObject { journal, .. }) => {
+            CalendarObjectComponent::Journal(JournalObject(journal)) => {
                 ical_calendar_builder = ical_calendar_builder.add_journal(journal.clone());
             }
         }

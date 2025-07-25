@@ -5,6 +5,7 @@ use chrono::DateTime;
 use chrono::Utc;
 use derive_more::Display;
 use ical::generator::{Emitter, IcalCalendar};
+use ical::property::Property;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::{collections::HashMap, io::BufReader};
@@ -58,15 +59,21 @@ pub enum CalendarObjectComponent {
     Journal(JournalObject),
 }
 
-#[derive(Debug, Clone)]
-pub struct CalendarObject {
-    id: String,
+impl Default for CalendarObjectComponent {
+    fn default() -> Self {
+        Self::Event(EventObject::default())
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct CalendarObject<const VERIFIED: bool = true> {
     data: CalendarObjectComponent,
-    cal: IcalCalendar,
+    properties: Vec<Property>,
+    ics: String,
 }
 
 impl CalendarObject {
-    pub fn from_ics(object_id: String, ics: String) -> Result<Self, Error> {
+    pub fn from_ics(ics: String) -> Result<Self, Error> {
         let mut parser = ical::IcalParser::new(BufReader::new(ics.as_bytes()));
         let cal = parser.next().ok_or(Error::MissingCalendar)??;
         if parser.next().is_some() {
@@ -94,41 +101,23 @@ impl CalendarObject {
             .map(|timezone| (timezone.get_tzid().to_owned(), (&timezone).try_into().ok()))
             .collect();
 
-        if let Some(event) = cal.events.first() {
-            return Ok(CalendarObject {
-                id: object_id,
-                cal: cal.clone(),
-                data: CalendarObjectComponent::Event(EventObject {
-                    event: event.clone(),
-                    timezones,
-                    ics,
-                }),
-            });
-        }
-        if let Some(todo) = cal.todos.first() {
-            return Ok(CalendarObject {
-                id: object_id,
-                cal: cal.clone(),
-                data: CalendarObjectComponent::Todo(TodoObject {
-                    todo: todo.clone(),
-                    ics,
-                }),
-            });
-        }
-        if let Some(journal) = cal.journals.first() {
-            return Ok(CalendarObject {
-                id: object_id,
-                cal: cal.clone(),
-                data: CalendarObjectComponent::Journal(JournalObject {
-                    journal: journal.clone(),
-                    ics,
-                }),
-            });
-        }
+        let data = if let Some(event) = cal.events.into_iter().next() {
+            CalendarObjectComponent::Event(EventObject { event, timezones })
+        } else if let Some(todo) = cal.todos.into_iter().next() {
+            CalendarObjectComponent::Todo(todo.into())
+        } else if let Some(journal) = cal.journals.into_iter().next() {
+            CalendarObjectComponent::Journal(journal.into())
+        } else {
+            return Err(Error::InvalidData(
+                "iCalendar component type not supported :(".to_owned(),
+            ));
+        };
 
-        Err(Error::InvalidData(
-            "iCalendar component type not supported :(".to_owned(),
-        ))
+        Ok(Self {
+            data,
+            properties: cal.properties,
+            ics,
+        })
     }
 
     pub fn get_data(&self) -> &CalendarObjectComponent {
@@ -136,21 +125,22 @@ impl CalendarObject {
     }
 
     pub fn get_id(&self) -> &str {
-        &self.id
+        match &self.data {
+            CalendarObjectComponent::Todo(todo) => todo.0.get_uid(),
+            CalendarObjectComponent::Event(event) => event.event.get_uid(),
+            CalendarObjectComponent::Journal(journal) => journal.0.get_uid(),
+        }
     }
+
     pub fn get_etag(&self) -> String {
         let mut hasher = Sha256::new();
-        hasher.update(&self.id);
+        hasher.update(self.get_id());
         hasher.update(self.get_ics());
         format!("\"{:x}\"", hasher.finalize())
     }
 
     pub fn get_ics(&self) -> &str {
-        match &self.data {
-            CalendarObjectComponent::Todo(todo) => &todo.ics,
-            CalendarObjectComponent::Event(event) => &event.ics,
-            CalendarObjectComponent::Journal(journal) => &journal.ics,
-        }
+        &self.ics
     }
 
     pub fn get_component_name(&self) -> &str {
@@ -194,8 +184,11 @@ impl CalendarObject {
         // Only events can be expanded
         match &self.data {
             CalendarObjectComponent::Event(event) => {
-                let mut cal = self.cal.clone();
-                cal.events = event.expand_recurrence(start, end)?;
+                let cal = IcalCalendar {
+                    properties: self.properties.clone(),
+                    events: event.expand_recurrence(start, end)?,
+                    ..Default::default()
+                };
                 Ok(cal.generate())
             }
             _ => Ok(self.get_ics().to_string()),
