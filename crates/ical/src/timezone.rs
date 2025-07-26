@@ -3,21 +3,21 @@ use chrono_tz::Tz;
 use derive_more::{Display, From};
 
 #[derive(Debug, Clone, From, PartialEq, Eq)]
-pub enum CalTimezone {
+pub enum ICalTimezone {
     Local,
     Olson(Tz),
 }
 
-impl From<CalTimezone> for rrule::Tz {
-    fn from(value: CalTimezone) -> Self {
+impl From<ICalTimezone> for rrule::Tz {
+    fn from(value: ICalTimezone) -> Self {
         match value {
-            CalTimezone::Local => Self::LOCAL,
-            CalTimezone::Olson(tz) => Self::Tz(tz),
+            ICalTimezone::Local => Self::LOCAL,
+            ICalTimezone::Olson(tz) => Self::Tz(tz),
         }
     }
 }
 
-impl From<rrule::Tz> for CalTimezone {
+impl From<rrule::Tz> for ICalTimezone {
     fn from(value: rrule::Tz) -> Self {
         match value {
             rrule::Tz::Local(_) => Self::Local,
@@ -41,7 +41,7 @@ impl chrono::Offset for CalTimezoneOffset {
     }
 }
 
-impl TimeZone for CalTimezone {
+impl TimeZone for ICalTimezone {
     type Offset = CalTimezoneOffset;
 
     fn from_offset(offset: &Self::Offset) -> Self {

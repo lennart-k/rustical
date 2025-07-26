@@ -1,5 +1,5 @@
+use crate::CalDateTime;
 use crate::Error;
-use crate::{CalDateTime, parse_duration};
 use chrono::{DateTime, Duration, Utc};
 use ical::parser::ComponentMut;
 use ical::{generator::IcalEvent, parser::Component, property::Property};
@@ -16,7 +16,7 @@ pub struct EventObject {
 
 impl EventObject {
     pub fn get_dtstart(&self) -> Result<Option<CalDateTime>, Error> {
-        if let Some(dtstart) = self.event.get_property("DTSTART") {
+        if let Some(dtstart) = self.event.get_dtstart() {
             Ok(Some(CalDateTime::parse_prop(dtstart, &self.timezones)?))
         } else {
             Ok(None)
@@ -24,7 +24,7 @@ impl EventObject {
     }
 
     pub fn get_dtend(&self) -> Result<Option<CalDateTime>, Error> {
-        if let Some(dtend) = self.event.get_property("DTEND") {
+        if let Some(dtend) = self.event.get_dtend() {
             Ok(Some(CalDateTime::parse_prop(dtend, &self.timezones)?))
         } else {
             Ok(None)
@@ -32,31 +32,19 @@ impl EventObject {
     }
 
     pub fn get_last_occurence(&self) -> Result<Option<CalDateTime>, Error> {
-        if let Some(_rrule) = self.event.get_property("RRULE") {
+        if self.event.get_rrule().is_some() {
             // TODO: understand recurrence rules
             return Ok(None);
         }
 
-        if let Some(dtend) = self.event.get_property("DTEND") {
-            return Ok(Some(CalDateTime::parse_prop(dtend, &self.timezones)?));
+        if let Some(dtend) = self.get_dtend()? {
+            return Ok(Some(dtend));
         };
 
-        let duration = self.get_duration()?.unwrap_or(Duration::days(1));
+        let duration = self.event.get_duration().unwrap_or(Duration::days(1));
 
         let first_occurence = self.get_dtstart()?;
         Ok(first_occurence.map(|first_occurence| first_occurence + duration))
-    }
-
-    pub fn get_duration(&self) -> Result<Option<Duration>, Error> {
-        if let Some(Property {
-            value: Some(duration),
-            ..
-        }) = self.event.get_property("DURATION")
-        {
-            Ok(Some(parse_duration(duration)?))
-        } else {
-            Ok(None)
-        }
     }
 
     pub fn recurrence_ruleset(&self) -> Result<Option<rrule::RRuleSet>, Error> {

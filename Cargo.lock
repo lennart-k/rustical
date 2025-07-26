@@ -1598,9 +1598,12 @@ dependencies = [
 [[package]]
 name = "ical"
 version = "0.11.0"
-source = "git+https://github.com/lennart-k/ical-rs#c5fa2217af23ba27ba80295a2c0eb922f08f6c97"
+source = "git+https://github.com/lennart-k/ical-rs#c1a88dd68d9de79d6f71d6729aa4cb6e587b0d62"
 dependencies = [
+ "chrono",
  "chrono-tz",
+ "lazy_static",
+ "regex",
  "serde",
  "thiserror 2.0.12",
 ]

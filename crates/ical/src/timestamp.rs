@@ -1,4 +1,4 @@
-use super::timezone::CalTimezone;
+use super::timezone::ICalTimezone;
 use chrono::{DateTime, Datelike, Duration, Local, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use chrono_tz::Tz;
 use derive_more::derive::Deref;
@@ -64,8 +64,8 @@ pub enum CalDateTime {
     // Form 2, example: 19980119T070000Z -> UTC
     // Form 3, example: TZID=America/New_York:19980119T020000 -> Olson
     // https://en.wikipedia.org/wiki/Tz_database
-    DateTime(DateTime<CalTimezone>),
-    Date(NaiveDate, CalTimezone),
+    DateTime(DateTime<ICalTimezone>),
+    Date(NaiveDate, ICalTimezone),
 }
 
 impl From<CalDateTime> for DateTime<rrule::Tz> {
@@ -102,13 +102,13 @@ impl Ord for CalDateTime {
 
 impl From<DateTime<Local>> for CalDateTime {
     fn from(value: DateTime<Local>) -> Self {
-        CalDateTime::DateTime(value.with_timezone(&CalTimezone::Local))
+        CalDateTime::DateTime(value.with_timezone(&ICalTimezone::Local))
     }
 }
 
 impl From<DateTime<Utc>> for CalDateTime {
     fn from(value: DateTime<Utc>) -> Self {
-        CalDateTime::DateTime(value.with_timezone(&CalTimezone::Olson(chrono_tz::UTC)))
+        CalDateTime::DateTime(value.with_timezone(&ICalTimezone::Olson(chrono_tz::UTC)))
     }
 }
 
@@ -160,7 +160,7 @@ impl CalDateTime {
     pub fn format(&self) -> String {
         match self {
             Self::DateTime(datetime) => match datetime.timezone() {
-                CalTimezone::Olson(chrono_tz::UTC) => datetime.format(UTC_DATE_TIME).to_string(),
+                ICalTimezone::Olson(chrono_tz::UTC) => datetime.format(UTC_DATE_TIME).to_string(),
                 _ => datetime.format(LOCAL_DATE_TIME).to_string(),
             },
             Self::Date(date, _) => date.format(LOCAL_DATE).to_string(),
@@ -185,7 +185,7 @@ impl CalDateTime {
         matches!(&self, Self::Date(_, _))
     }
 
-    pub fn as_datetime(&self) -> Cow<'_, DateTime<CalTimezone>> {
+    pub fn as_datetime(&self) -> Cow<'_, DateTime<ICalTimezone>> {
         match self {
             Self::DateTime(datetime) => Cow::Borrowed(datetime),
             Self::Date(date, tz) => Cow::Owned(
@@ -209,7 +209,7 @@ impl CalDateTime {
             }
             return Ok(CalDateTime::DateTime(
                 datetime
-                    .and_local_timezone(CalTimezone::Local)
+                    .and_local_timezone(ICalTimezone::Local)
                     .earliest()
                     .ok_or(CalDateTimeError::LocalTimeGap)?,
             ));
@@ -219,8 +219,8 @@ impl CalDateTime {
             return Ok(datetime.and_utc().into());
         }
         let timezone = timezone
-            .map(CalTimezone::Olson)
-            .unwrap_or(CalTimezone::Local);
+            .map(ICalTimezone::Olson)
+            .unwrap_or(ICalTimezone::Local);
         if let Ok(date) = NaiveDate::parse_from_str(value, LOCAL_DATE) {
             return Ok(CalDateTime::Date(date, timezone));
         }
@@ -252,7 +252,7 @@ impl CalDateTime {
                 CalDateTime::Date(
                     NaiveDate::from_ymd_opt(year, month, day)
                         .ok_or(CalDateTimeError::ParseError(value.to_string()))?,
-                    CalTimezone::Local,
+                    ICalTimezone::Local,
                 ),
                 false,
             ));
@@ -264,7 +264,7 @@ impl CalDateTime {
         self.as_datetime().to_utc()
     }
 
-    pub fn timezone(&self) -> CalTimezone {
+    pub fn timezone(&self) -> ICalTimezone {
         match &self {
             CalDateTime::DateTime(datetime) => datetime.timezone(),
             CalDateTime::Date(_, tz) => tz.to_owned(),
@@ -400,7 +400,7 @@ mod tests {
             (
                 CalDateTime::Date(
                     NaiveDate::from_ymd_opt(1985, 4, 12).unwrap(),
-                    crate::CalTimezone::Local
+                    crate::ICalTimezone::Local
                 ),
                 true
             )
@@ -410,7 +410,7 @@ mod tests {
             (
                 CalDateTime::Date(
                     NaiveDate::from_ymd_opt(1985, 4, 12).unwrap(),
-                    crate::CalTimezone::Local
+                    crate::ICalTimezone::Local
                 ),
                 true
             )
@@ -420,7 +420,7 @@ mod tests {
             (
                 CalDateTime::Date(
                     NaiveDate::from_ymd_opt(1972, 4, 12).unwrap(),
-                    crate::CalTimezone::Local
+                    crate::ICalTimezone::Local
                 ),
                 false
             )
