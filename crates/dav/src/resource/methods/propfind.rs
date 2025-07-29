@@ -6,11 +6,7 @@ use crate::resource::Resource;
 use crate::resource::ResourceName;
 use crate::resource::ResourceService;
 use crate::xml::MultistatusElement;
-use crate::xml::PropfindElement;
-use crate::xml::PropfindType;
 use axum::extract::{Extension, OriginalUri, Path, State};
-use rustical_xml::PropName;
-use rustical_xml::XmlDocument;
 use tracing::instrument;
 
 type RSMultistatus<R> = MultistatusElement<
