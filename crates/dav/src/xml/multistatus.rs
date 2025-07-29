@@ -39,8 +39,15 @@ pub enum PropstatWrapper<T: XmlSerialize> {
 // RFC 2518
 // <!ELEMENT response (href, ((href*, status)|(propstat+)),
 // responsedescription?) >
-#[derive(XmlSerialize)]
-#[xml(ns = "crate::namespace::NS_DAV")]
+#[derive(XmlSerialize, XmlRootTag)]
+#[xml(ns = "crate::namespace::NS_DAV", root = b"response")]
+#[xml(ns_prefix(
+    crate::namespace::NS_DAV = b"",
+    crate::namespace::NS_CARDDAV = b"CARD",
+    crate::namespace::NS_CALDAV = b"CAL",
+    crate::namespace::NS_CALENDARSERVER = b"CS",
+    crate::namespace::NS_DAVPUSH = b"PUSH"
+))]
 pub struct ResponseElement<PropstatType: XmlSerialize> {
     pub href: String,
     #[xml(serialize_with = "xml_serialize_optional_status")]
