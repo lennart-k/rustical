@@ -1,14 +1,16 @@
 use crate::Principal;
 use crate::privileges::UserPrivilegeSet;
 use crate::xml::multistatus::{PropTagWrapper, PropstatElement, PropstatWrapper};
-use crate::xml::{PropElement, PropfindType, Resourcetype};
+use crate::xml::{PropElement, PropfindElement, PropfindType, Resourcetype};
 use crate::xml::{TagList, multistatus::ResponseElement};
 use headers::{ETag, IfMatch, IfNoneMatch};
 use http::StatusCode;
 use itertools::Itertools;
 use quick_xml::name::Namespace;
 pub use resource_service::ResourceService;
-use rustical_xml::{EnumVariants, NamespaceOwned, PropName, XmlDeserialize, XmlSerialize};
+use rustical_xml::{
+    EnumVariants, NamespaceOwned, PropName, XmlDeserialize, XmlDocument, XmlSerialize,
+};
 use std::collections::HashSet;
 use std::str::FromStr;
 
@@ -101,6 +103,19 @@ pub trait Resource: Clone + Send + 'static {
         &self,
         principal: &Self::Principal,
     ) -> Result<UserPrivilegeSet, Self::Error>;
+
+    fn parse_propfind(
+        body: &str,
+    ) -> Result<PropfindElement<<Self::Prop as PropName>::Names>, rustical_xml::XmlError> {
+        if !body.is_empty() {
+            PropfindElement::parse_str(body)
+        } else {
+            Ok(PropfindElement {
+                prop: PropfindType::Allprop,
+                include: None,
+            })
+        }
+    }
 
     fn propfind(
         &self,

@@ -58,24 +58,8 @@ pub(crate) async fn route_propfind<R: ResourceService>(
     }
 
     // A request body is optional. If empty we MUST return all props
-    let propfind_self: PropfindElement<<<R::Resource as Resource>::Prop as PropName>::Names> =
-        if !body.is_empty() {
-            PropfindElement::parse_str(body).map_err(Error::XmlError)?
-        } else {
-            PropfindElement {
-                prop: PropfindType::Allprop,
-                include: None,
-            }
-        };
-    let propfind_member: PropfindElement<<<R::MemberType as Resource>::Prop as PropName>::Names> =
-        if !body.is_empty() {
-            PropfindElement::parse_str(body).map_err(Error::XmlError)?
-        } else {
-            PropfindElement {
-                prop: PropfindType::Allprop,
-                include: None,
-            }
-        };
+    let propfind_self = R::Resource::parse_propfind(body).map_err(Error::XmlError)?;
+    let propfind_member = R::MemberType::parse_propfind(body).map_err(Error::XmlError)?;
 
     let mut member_responses = Vec::new();
     if depth != &Depth::Zero {
