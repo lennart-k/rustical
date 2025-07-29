@@ -151,6 +151,7 @@ impl CalDateTime {
         } else {
             // No explicit timezone specified.
             // This is valid and will be localtime or UTC depending on the value
+            // We will stick to this default as documented in https://github.com/lennart-k/rustical/issues/102
             None
         };
 
