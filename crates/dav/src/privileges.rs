@@ -1,9 +1,10 @@
+use itertools::Itertools;
 use quick_xml::name::Namespace;
 use rustical_xml::{XmlDeserialize, XmlSerialize};
 use std::collections::{HashMap, HashSet};
 
 // https://datatracker.ietf.org/doc/html/rfc3744
-#[derive(Debug, Clone, XmlSerialize, XmlDeserialize, Eq, Hash, PartialEq)]
+#[derive(Debug, Clone, XmlSerialize, XmlDeserialize, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub enum UserPrivilege {
     Read,
     Write,
@@ -30,7 +31,7 @@ impl XmlSerialize for UserPrivilegeSet {
         }
 
         FakeUserPrivilegeSet {
-            privileges: self.privileges.iter().cloned().collect(),
+            privileges: self.privileges.iter().cloned().sorted().collect(),
         }
         .serialize(ns, tag, namespaces, writer)
     }
