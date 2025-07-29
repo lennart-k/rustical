@@ -11,7 +11,6 @@ pub use resource_service::ResourceService;
 use rustical_xml::{
     EnumVariants, NamespaceOwned, PropName, XmlDeserialize, XmlDocument, XmlSerialize,
 };
-use std::collections::HashSet;
 use std::str::FromStr;
 
 mod axum_methods;
@@ -131,7 +130,7 @@ pub trait Resource: Clone + Send + 'static {
             path.push('/');
         }
 
-        let (mut props, mut invalid_props): (HashSet<<Self::Prop as PropName>::Names>, Vec<_>) =
+        let (mut props, mut invalid_props): (Vec<<Self::Prop as PropName>::Names>, Vec<_>) =
             match prop {
                 PropfindType::Propname => {
                     let props = Self::list_props()
@@ -156,7 +155,7 @@ pub trait Resource: Clone + Send + 'static {
                     vec![],
                 ),
                 PropfindType::Prop(PropElement(valid_tags, invalid_tags)) => (
-                    valid_tags.iter().cloned().collect(),
+                    valid_tags.iter().unique().cloned().collect(),
                     invalid_tags.to_owned(),
                 ),
             };
