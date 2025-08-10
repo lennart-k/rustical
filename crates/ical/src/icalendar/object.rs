@@ -6,11 +6,12 @@ use chrono::Utc;
 use derive_more::Display;
 use ical::generator::{Emitter, IcalCalendar};
 use ical::property::Property;
+use serde::Deserialize;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::{collections::HashMap, io::BufReader};
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, Display)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Display)]
 // specified in https://datatracker.ietf.org/doc/html/rfc5545#section-3.6
 pub enum CalendarObjectType {
     #[serde(rename = "VEVENT")]

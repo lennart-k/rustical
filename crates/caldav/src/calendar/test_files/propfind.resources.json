@@ -1,0 +1,42 @@
+[
+  {
+    "cal": {
+      "principal": "user",
+      "id": "calendar",
+      "displayname": "Calendar",
+      "order": 0,
+      "description": null,
+      "color": null,
+      "timezone_id": "Europe/Berlin",
+      "deleted_at": null,
+      "synctoken": 12,
+      "subscription_url": null,
+      "push_topic": "b28b41e9-8801-4fc5-ae29-8efb5fadeb36",
+      "components": [
+        "VEVENT",
+        "VTODO"
+      ]
+    },
+    "read_only": true
+  },
+  {
+    "cal": {
+      "principal": "user",
+      "id": "calendar",
+      "displayname": "Calendar",
+      "order": 0,
+      "description": null,
+      "color": null,
+      "timezone_id": "Europe/Berlin",
+      "deleted_at": null,
+      "synctoken": 12,
+      "subscription_url": null,
+      "push_topic": "b28b41e9-8801-4fc5-ae29-8efb5fadeb36",
+      "components": [
+        "VEVENT",
+        "VTODO"
+      ]
+    },
+    "read_only": true
+  }
+]

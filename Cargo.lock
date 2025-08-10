@@ -3093,6 +3093,7 @@ dependencies = [
  "rustical_store_sqlite",
  "rustical_xml",
  "serde",
+ "serde_json",
  "sha2",
  "strum",
  "strum_macros",

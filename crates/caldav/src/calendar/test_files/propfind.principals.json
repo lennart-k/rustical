@@ -1,0 +1,11 @@
+[
+  {
+    "id": "user",
+    "displayname": null,
+    "principal_type": "individual",
+    "password": null,
+    "memberships": [
+      "group"
+    ]
+  }
+]

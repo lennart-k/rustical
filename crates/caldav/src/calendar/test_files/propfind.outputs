@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<response xmlns:CS="http://calendarserver.org/ns/" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns="DAV:" xmlns:PUSH="https://bitfire.at/webdav-push">
+    <href>/caldav/principal/user/calendar/</href>
+    <propstat>
+        <prop>
+            <calendar-color xmlns="http://apple.com/ns/ical/"/>
+            <calendar-description xmlns="urn:ietf:params:xml:ns:caldav"/>
+            <calendar-timezone xmlns="urn:ietf:params:xml:ns:caldav"/>
+            <timezone-service-set xmlns="urn:ietf:params:xml:ns:caldav"/>
+            <calendar-timezone-id xmlns="urn:ietf:params:xml:ns:caldav"/>
+            <calendar-order xmlns="http://apple.com/ns/ical/"/>
+            <supported-calendar-component-set xmlns="urn:ietf:params:xml:ns:caldav"/>
+            <supported-calendar-data xmlns="urn:ietf:params:xml:ns:caldav"/>
+            <max-resource-size xmlns="DAV:"/>
+            <supported-report-set xmlns="DAV:"/>
+            <source xmlns="http://calendarserver.org/ns/"/>
+            <min-date-time xmlns="urn:ietf:params:xml:ns:caldav"/>
+            <max-date-time xmlns="urn:ietf:params:xml:ns:caldav"/>
+            <sync-token xmlns="DAV:"/>
+            <getctag xmlns="http://calendarserver.org/ns/"/>
+            <transports xmlns="https://bitfire.at/webdav-push"/>
+            <topic xmlns="https://bitfire.at/webdav-push"/>
+            <supported-triggers xmlns="https://bitfire.at/webdav-push"/>
+            <resourcetype xmlns="DAV:"/>
+            <displayname xmlns="DAV:"/>
+            <current-user-principal xmlns="DAV:"/>
+            <current-user-privilege-set xmlns="DAV:"/>
+            <owner xmlns="DAV:"/>
+        </prop>
+        <status>HTTP/1.1 200 OK</status>
+    </propstat>
+</response>
+
+
+<?xml version="1.0" encoding="utf-8"?>
+<response xmlns:CS="http://calendarserver.org/ns/" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns="DAV:" xmlns:PUSH="https://bitfire.at/webdav-push">
+    <href>/caldav/principal/user/calendar/</href>
+    <propstat>
+        <prop>
+            <CAL:calendar-timezone>BEGIN:VCALENDAR
+PRODID:-//github.com/lennart-k/vzic-rs//RustiCal Calendar server//EN
+VERSION:2.0
+BEGIN:VTIMEZONE
+TZID:Europe/Berlin
+LAST-MODIFIED:20250723T190331Z
+X-LIC-LOCATION:Europe/Berlin
+X-PROLEPTIC-TZNAME:LMT
+BEGIN:STANDARD
+TZNAME:CET
+TZOFFSETFROM:+005328
+TZOFFSETTO:+0100
+DTSTART:18930401T000000
+END:STANDARD
+BEGIN:DAYLIGHT
+TZNAME:CEST
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+DTSTART:19160430T230000
+RDATE:19400401T020000
+RDATE:19430329T020000
+RDATE:19460414T020000
+RDATE:19470406T030000
+RDATE:19480418T020000
+RDATE:19490410T020000
+RDATE:19800406T020000
+END:DAYLIGHT
+BEGIN:STANDARD
+TZNAME:CET
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+DTSTART:19161001T010000
+RDATE:19421102T030000
+RDATE:19431004T030000
+RDATE:19441002T030000
+RDATE:19451118T030000
+RDATE:19461007T030000
+END:STANDARD
+BEGIN:DAYLIGHT
+TZNAME:CEST
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+DTSTART:19170416T020000
+RRULE:FREQ=YEARLY;BYMONTH=4;BYDAY=3MO;UNTIL=19180415T010000Z
+END:DAYLIGHT
+BEGIN:STANDARD
+TZNAME:CET
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+DTSTART:19170917T030000
+RRULE:FREQ=YEARLY;BYMONTH=9;BYDAY=3MO;UNTIL=19180916T010000Z
+END:STANDARD
+BEGIN:DAYLIGHT
+TZNAME:CEST
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+DTSTART:19440403T020000
+RRULE:FREQ=YEARLY;BYMONTH=4;BYDAY=1MO;UNTIL=19450402T010000Z
+END:DAYLIGHT
+BEGIN:DAYLIGHT
+TZNAME:CEMT
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0300
+DTSTART:19450524T020000
+RDATE:19470511T030000
+END:DAYLIGHT
+BEGIN:DAYLIGHT
+TZNAME:CEST
+TZOFFSETFROM:+0300
+TZOFFSETTO:+0200
+DTSTART:19450924T030000
+RDATE:19470629T030000
+END:DAYLIGHT
+BEGIN:STANDARD
+TZNAME:CET
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0100
+DTSTART:19460101T000000
+RDATE:19800101T000000
+END:STANDARD
+BEGIN:STANDARD
+TZNAME:CET
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+DTSTART:19471005T030000
+RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=1SU;UNTIL=19491002T010000Z
+END:STANDARD
+BEGIN:STANDARD
+TZNAME:CET
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+DTSTART:19800928T030000
+RRULE:FREQ=YEARLY;BYMONTH=9;BYDAY=-1SU;UNTIL=19950924T010000Z
+END:STANDARD
+BEGIN:DAYLIGHT
+TZNAME:CEST
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+DTSTART:19810329T020000
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU
+END:DAYLIGHT
+BEGIN:STANDARD
+TZNAME:CET
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+DTSTART:19961027T030000
+RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
+END:STANDARD
+END:VTIMEZONE
+END:VCALENDAR
+</CAL:calendar-timezone>
+            <CAL:timezone-service-set>
+                <href>https://www.iana.org/time-zones</href>
+            </CAL:timezone-service-set>
+            <CAL:calendar-timezone-id>Europe/Berlin</CAL:calendar-timezone-id>
+            <calendar-order xmlns="http://apple.com/ns/ical/">0</calendar-order>
+            <CAL:supported-calendar-component-set>
+                <CAL:comp name="VEVENT"/>
+                <CAL:comp name="VTODO"/>
+            </CAL:supported-calendar-component-set>
+            <CAL:supported-calendar-data>
+                <CAL:calendar-data content-type="text/calendar" version="2.0"/>
+            </CAL:supported-calendar-data>
+            <max-resource-size>10000000</max-resource-size>
+            <supported-report-set>
+                <supported-report>
+                    <report>
+                        <CAL:calendar-query/>
+                    </report>
+                </supported-report>
+                <supported-report>
+                    <report>
+                        <CAL:calendar-multiget/>
+                    </report>
+                </supported-report>
+                <supported-report>
+                    <report>
+                        <sync-collection/>
+                    </report>
+                </supported-report>
+            </supported-report-set>
+            <CAL:min-date-time>-2621430101T000000Z</CAL:min-date-time>
+            <CAL:max-date-time>+2621421231T235959Z</CAL:max-date-time>
+            <sync-token>github.com/lennart-k/rustical/ns/12</sync-token>
+            <CS:getctag>github.com/lennart-k/rustical/ns/12</CS:getctag>
+            <PUSH:transports>
+                <PUSH:web-push/>
+            </PUSH:transports>
+            <PUSH:topic>b28b41e9-8801-4fc5-ae29-8efb5fadeb36</PUSH:topic>
+            <PUSH:supported-triggers>
+                <PUSH:content-update>
+                    <depth>1</depth>
+                </PUSH:content-update>
+                <PUSH:property-update>
+                    <depth>1</depth>
+                </PUSH:property-update>
+            </PUSH:supported-triggers>
+            <resourcetype>
+                <collection/>
+                <CAL:calendar/>
+            </resourcetype>
+            <displayname>Calendar</displayname>
+            <current-user-principal>
+                <href>/caldav/principal/user/</href>
+            </current-user-principal>
+            <current-user-privilege-set>
+                <privilege>
+                    <read/>
+                </privilege>
+                <privilege>
+                    <read-acl/>
+                </privilege>
+                <privilege>
+                    <read-current-user-privilege-set/>
+                </privilege>
+            </current-user-privilege-set>
+            <owner>
+                <href>/caldav/principal/user/</href>
+            </owner>
+        </prop>
+        <status>HTTP/1.1 200 OK</status>
+    </propstat>
+</response>

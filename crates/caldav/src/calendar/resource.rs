@@ -16,6 +16,7 @@ use rustical_store::Calendar;
 use rustical_store::auth::Principal;
 use rustical_xml::{EnumVariants, PropName};
 use rustical_xml::{XmlDeserialize, XmlSerialize};
+use serde::Deserialize;
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "CalendarPropName")]
@@ -62,7 +63,7 @@ pub enum CalendarPropWrapper {
     Common(CommonPropertiesProp),
 }
 
-#[derive(Clone, Debug, From, Into)]
+#[derive(Clone, Debug, From, Into, Deserialize)]
 pub struct CalendarResource {
     pub cal: Calendar,
     pub read_only: bool,

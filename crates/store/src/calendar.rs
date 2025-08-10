@@ -3,9 +3,9 @@ use std::str::FromStr;
 use crate::synctoken::format_synctoken;
 use chrono::NaiveDateTime;
 use rustical_ical::CalendarObjectType;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Clone, Serialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct Calendar {
     pub principal: String,
     pub id: String,

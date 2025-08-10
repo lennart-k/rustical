@@ -1,14 +1,19 @@
 use std::sync::Arc;
 
-use crate::principal::PrincipalResourceService;
+use crate::{
+    CalDavPrincipalUri,
+    principal::{PrincipalResource, PrincipalResourceService},
+};
 use rstest::rstest;
-use rustical_dav::resource::ResourceService;
+use rustical_dav::resource::{Resource, ResourceService};
+use rustical_store::auth::{Principal, PrincipalType::Individual};
 use rustical_store_sqlite::{
     SqliteStore,
     calendar_store::SqliteCalendarStore,
     principal_store::SqlitePrincipalStore,
     tests::{get_test_calendar_store, get_test_principal_store, get_test_subscription_store},
 };
+use rustical_xml::XmlSerializeRoot;
 
 #[rstest]
 #[tokio::test]
@@ -44,4 +49,35 @@ async fn test_principal_resource(
 }
 
 #[tokio::test]
-async fn test_propfind() {}
+async fn test_propfind() {
+    let propfind = PrincipalResource::parse_propfind(
+        r#"<?xml version="1.0" encoding="UTF-8"?><propfind xmlns="DAV:"><allprop/></propfind>"#,
+    )
+    .unwrap();
+
+    let principal = Principal {
+        id: "user".to_string(),
+        displayname: None,
+        principal_type: Individual,
+        password: None,
+        memberships: vec!["group".to_string()],
+    };
+
+    let resource = PrincipalResource {
+        principal: principal.clone(),
+        members: vec![],
+        simplified_home_set: false,
+    };
+
+    let response = resource
+        .propfind(
+            &format!("/caldav/principal/{}", principal.id),
+            &propfind.prop,
+            propfind.include.as_ref(),
+            &CalDavPrincipalUri("/caldav"),
+            &principal,
+        )
+        .unwrap();
+
+    let output = response.serialize_to_string().unwrap();
+}
