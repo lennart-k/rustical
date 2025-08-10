@@ -126,6 +126,7 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
     router
         .layer(
             SessionManagerLayer::new(session_store)
+                .with_name("rustical_session")
                 .with_secure(true)
                 .with_same_site(SameSite::Strict)
                 .with_expiry(Expiry::OnInactivity(
