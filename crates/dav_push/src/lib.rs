@@ -183,6 +183,7 @@ impl<S: SubscriptionStore> DavPushController<S> {
             header::CONTENT_TYPE,
             HeaderValue::from_static("application/octet-stream"),
         );
+        hdrs.insert("TTL", HeaderValue::from(60));
         client.execute(request).await?;
 
         Ok(())
