@@ -67,7 +67,7 @@ impl Default for CalendarObjectComponent {
 }
 
 #[derive(Debug, Clone, Default)]
-pub struct CalendarObject<const VERIFIED: bool = true> {
+pub struct CalendarObject {
     data: CalendarObjectComponent,
     properties: Vec<Property>,
     ics: String,
