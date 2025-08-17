@@ -45,38 +45,38 @@ pub fn frontend_router<AP: AuthenticationProvider, CS: CalendarStore, AS: Addres
     frontend_config: FrontendConfig,
     oidc_config: Option<OidcConfig>,
 ) -> Router {
-    let mut router = Router::new();
-    router = router
-        .route("/", get(route_root))
-        .route("/user", get(route_get_home))
-        .route("/user/{user}", get(route_user_named::<CS, AS, AP>))
+    let user_router = Router::new()
+        .route("/", get(route_get_home))
+        .route("/{user}", get(route_user_named::<CS, AS, AP>))
         // App token management
-        .route("/user/{user}/app_token", post(route_post_app_token::<AP>))
+        .route("/{user}/app_token", post(route_post_app_token::<AP>))
         .route(
             // POST because HTML5 forms don't support DELETE method
-            "/user/{user}/app_token/{id}/delete",
+            "/{user}/app_token/{id}/delete",
             post(route_delete_app_token::<AP>),
         )
         // Calendar
-        .route("/user/{user}/calendar", get(route_calendars::<CS>))
+        .route("/{user}/calendar", get(route_calendars::<CS>))
+        .route("/{user}/calendar/{calendar}", get(route_calendar::<CS>))
         .route(
-            "/user/{user}/calendar/{calendar}",
-            get(route_calendar::<CS>),
-        )
-        .route(
-            "/user/{user}/calendar/{calendar}/restore",
+            "/{user}/calendar/{calendar}/restore",
             post(route_calendar_restore::<CS>),
         )
         // Addressbook
-        .route("/user/{user}/addressbook", get(route_addressbooks::<AS>))
+        .route("/{user}/addressbook", get(route_addressbooks::<AS>))
         .route(
-            "/user/{user}/addressbook/{addressbook}",
+            "/{user}/addressbook/{addressbook}",
             get(route_addressbook::<AS>),
         )
         .route(
-            "/user/{user}/addressbook/{addressbook}/restore",
+            "/{user}/addressbook/{addressbook}/restore",
             post(route_addressbook_restore::<AS>),
         )
+        .layer(middleware::from_fn(unauthorized_handler));
+
+    let router = Router::new()
+        .route("/", get(route_root))
+        .nest("/user", user_router)
         .route("/login", get(route_get_login).post(route_post_login::<AP>))
         .route("/logout", post(route_post_logout));
 
@@ -109,8 +109,7 @@ pub fn frontend_router<AP: AuthenticationProvider, CS: CalendarStore, AS: Addres
         .layer(Extension(cal_store.clone()))
         .layer(Extension(addr_store.clone()))
         .layer(Extension(frontend_config.clone()))
-        .layer(Extension(oidc_config.clone()))
-        .layer(middleware::from_fn(unauthorized_handler));
+        .layer(Extension(oidc_config.clone()));
 
     Router::new()
         .nest(prefix, router)
