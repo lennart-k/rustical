@@ -13,7 +13,7 @@ use http::StatusCode;
 use rustical_store::auth::AuthenticationProvider;
 use serde::Deserialize;
 use tower_sessions::Session;
-use tracing::instrument;
+use tracing::{instrument, warn};
 use url::Url;
 
 #[derive(Template, WebTemplate)]
@@ -98,6 +98,7 @@ pub async fn route_post_login<AP: AuthenticationProvider>(
         session.insert("user", user.id).await.unwrap();
         Redirect::to(&redirect_uri).into_response()
     } else {
+        warn!("Failed password login attempt as {username}");
         StatusCode::UNAUTHORIZED.into_response()
     }
 }
