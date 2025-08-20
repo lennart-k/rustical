@@ -39,6 +39,11 @@ pub trait AxumMethods: Sized + Send + Sync + 'static {
     }
 
     #[inline]
+    fn import() -> Option<MethodFunction<Self>> {
+        None
+    }
+
+    #[inline]
     fn allow_header() -> Allow {
         let mut allow = vec![
             Method::from_str("PROPFIND").unwrap(),
@@ -66,6 +71,9 @@ pub trait AxumMethods: Sized + Send + Sync + 'static {
         }
         if Self::put().is_some() {
             allow.push(Method::PUT);
+        }
+        if Self::import().is_some() {
+            allow.push(Method::from_str("IMPORT").unwrap());
         }
 
         allow.into_iter().collect()

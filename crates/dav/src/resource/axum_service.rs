@@ -97,6 +97,11 @@ where
                     return svc(self.resource_service.clone(), req);
                 }
             }
+            "IMPORT" => {
+                if let Some(svc) = RS::import() {
+                    return svc(self.resource_service.clone(), req);
+                }
+            }
             _ => {}
         };
         Box::pin(async move {
