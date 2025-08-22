@@ -5,6 +5,7 @@ use chrono::DateTime;
 use chrono::Utc;
 use derive_more::Display;
 use ical::generator::{Emitter, IcalCalendar};
+use ical::parser::ical::component::IcalTimeZone;
 use ical::property::Property;
 use serde::Deserialize;
 use serde::Serialize;
@@ -71,6 +72,7 @@ pub struct CalendarObject {
     data: CalendarObjectComponent,
     properties: Vec<Property>,
     ics: String,
+    vtimezones: HashMap<String, IcalTimeZone>,
 }
 
 impl CalendarObject {
@@ -102,6 +104,13 @@ impl CalendarObject {
             .map(|timezone| (timezone.get_tzid().to_owned(), (&timezone).try_into().ok()))
             .collect();
 
+        let vtimezones = cal
+            .timezones
+            .clone()
+            .into_iter()
+            .map(|timezone| (timezone.get_tzid().to_owned(), timezone))
+            .collect();
+
         let data = if let Some(event) = cal.events.into_iter().next() {
             CalendarObjectComponent::Event(EventObject { event, timezones })
         } else if let Some(todo) = cal.todos.into_iter().next() {
@@ -118,7 +127,12 @@ impl CalendarObject {
             data,
             properties: cal.properties,
             ics,
+            vtimezones,
         })
+    }
+
+    pub fn get_vtimezones(&self) -> &HashMap<String, IcalTimeZone> {
+        &self.vtimezones
     }
 
     pub fn get_data(&self) -> &CalendarObjectComponent {

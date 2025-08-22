@@ -37,6 +37,7 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
         .await?;
 
     let mut timezones = HashMap::new();
+    let mut vtimezones = HashMap::new();
     let objects = cal_store.get_objects(&principal, &calendar_id).await?;
 
     let mut ical_calendar_builder = IcalCalendarBuilder::version("4.0")
@@ -65,6 +66,7 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
     }
 
     for object in &objects {
+        vtimezones.extend(object.get_vtimezones());
         match object.get_data() {
             CalendarObjectComponent::Event(EventObject {
                 event,
@@ -81,6 +83,10 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
                 ical_calendar_builder = ical_calendar_builder.add_journal(journal.clone());
             }
         }
+    }
+
+    for vtimezone in vtimezones.into_values() {
+        ical_calendar_builder = ical_calendar_builder.add_tz(vtimezone.to_owned());
     }
 
     let ical_calendar = ical_calendar_builder
