@@ -44,6 +44,10 @@ pub async fn route_import<AS: AddressbookStore, S: SubscriptionStore>(
         objects.push(card.try_into().unwrap());
     }
 
+    if objects.is_empty() {
+        return Ok((StatusCode::BAD_REQUEST, "empty addressbook data").into_response());
+    }
+
     let addressbook = Addressbook {
         principal,
         id: addressbook_id,
