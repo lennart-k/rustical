@@ -17,10 +17,20 @@ struct AddressObjectRow {
 }
 
 impl TryFrom<AddressObjectRow> for AddressObject {
-    type Error = crate::Error;
+    type Error = rustical_store::Error;
 
     fn try_from(value: AddressObjectRow) -> Result<Self, Self::Error> {
-        Ok(Self::from_vcf(value.id, value.vcf)?)
+        let object = Self::from_vcf(value.vcf)?;
+        if object.get_id() != value.id {
+            return Err(rustical_store::Error::IcalError(
+                rustical_ical::Error::InvalidData(format!(
+                    "object_id={} and UID={} don't match",
+                    object.get_id(),
+                    value.id
+                )),
+            ));
+        }
+        Ok(object)
     }
 }
 
@@ -259,7 +269,7 @@ impl SqliteAddressbookStore {
         .fetch_all(executor)
         .await.map_err(crate::Error::from)?
         .into_iter()
-        .map(|row| row.try_into().map_err(rustical_store::Error::from))
+        .map(|row| row.try_into())
         .collect()
     }
 
@@ -270,7 +280,7 @@ impl SqliteAddressbookStore {
         object_id: &str,
         show_deleted: bool,
     ) -> Result<AddressObject, rustical_store::Error> {
-        Ok(sqlx::query_as!(
+        sqlx::query_as!(
             AddressObjectRow,
             "SELECT id, vcf FROM addressobjects WHERE (principal, addressbook_id, id) = (?, ?, ?) AND ((deleted_at IS NULL) OR ?)",
             principal,
@@ -281,7 +291,7 @@ impl SqliteAddressbookStore {
         .fetch_one(executor)
         .await
         .map_err(crate::Error::from)?
-        .try_into()?)
+        .try_into()
     }
 
     async fn _put_object<'e, E: Executor<'e, Database = Sqlite>>(
@@ -627,20 +637,32 @@ impl AddressbookStore for SqliteAddressbookStore {
     #[instrument(skip(objects))]
     async fn import_addressbook(
         &self,
-        principal: String,
         addressbook: Addressbook,
         objects: Vec<AddressObject>,
+        merge_existing: bool,
     ) -> Result<(), Error> {
         let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
 
-        let addressbook_id = addressbook.id.clone();
-        Self::_insert_addressbook(&mut *tx, addressbook).await?;
+        let existing =
+            match Self::_get_addressbook(&mut *tx, &addressbook.principal, &addressbook.id, true)
+                .await
+            {
+                Ok(addressbook) => Some(addressbook),
+                Err(Error::NotFound) => None,
+                Err(err) => return Err(err),
+            };
+        if existing.is_some() && !merge_existing {
+            return Err(Error::AlreadyExists);
+        }
+        if existing.is_none() {
+            Self::_insert_addressbook(&mut *tx, addressbook.clone()).await?;
+        }
 
         for object in objects {
             Self::_put_object(
                 &mut *tx,
-                principal.clone(),
-                addressbook_id.clone(),
+                addressbook.principal.clone(),
+                addressbook.id.clone(),
                 object,
                 false,
             )

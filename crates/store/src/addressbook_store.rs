@@ -76,8 +76,8 @@ pub trait AddressbookStore: Send + Sync + 'static {
 
     async fn import_addressbook(
         &self,
-        principal: String,
         addressbook: Addressbook,
         objects: Vec<AddressObject>,
+        merge_existing: bool,
     ) -> Result<(), Error>;
 }
