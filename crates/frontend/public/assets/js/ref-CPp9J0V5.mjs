@@ -122,11 +122,7 @@ const o = /* @__PURE__ */ new WeakMap(), n = e$1(class extends f {
     this.rt(this.ct);
   }
 });
-function escapeXml(unsafe) {
-  return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
-}
 export {
-  escapeXml as a,
   e,
   n
 };

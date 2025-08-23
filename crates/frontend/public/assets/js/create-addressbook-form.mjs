@@ -1,6 +1,7 @@
 import { i, x } from "./lit-z6_uA4GX.mjs";
 import { n as n$1, t } from "./property-D0NJdseG.mjs";
-import { e, n, a as escapeXml } from "./index-b86iLJlP.mjs";
+import { e, n } from "./ref-CPp9J0V5.mjs";
+import { e as escapeXml } from "./index-_IB1wMbZ.mjs";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __decorateClass = (decorators, target, key, kind) => {

@@ -1,4 +1,5 @@
 use crate::calendar::methods::get::route_get;
+use crate::calendar::methods::import::route_import;
 use crate::calendar::methods::mkcalendar::route_mkcalendar;
 use crate::calendar::methods::post::route_post;
 use crate::calendar::methods::report::route_report_calendar;
@@ -134,6 +135,13 @@ impl<C: CalendarStore, S: SubscriptionStore> AxumMethods for CalendarResourceSer
     fn post() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
         Some(|state, req| {
             let mut service = Handler::with_state(route_post::<C, S>, state);
+            Box::pin(Service::call(&mut service, req))
+        })
+    }
+
+    fn import() -> Option<rustical_dav::resource::MethodFunction<Self>> {
+        Some(|state, req| {
+            let mut service = Handler::with_state(route_import::<C, S>, state);
             Box::pin(Service::call(&mut service, req))
         })
     }
