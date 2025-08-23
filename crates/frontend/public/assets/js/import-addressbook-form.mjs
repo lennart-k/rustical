@@ -11,11 +11,11 @@ var __decorateClass = (decorators, target, key, kind) => {
   if (kind && result) __defProp(target, key, result);
   return result;
 };
-let ImportCalendarForm = class extends i {
+let ImportAddressbookForm = class extends i {
   constructor() {
     super();
     this.user = "";
-    this.cal_id = self.crypto.randomUUID();
+    this.addressbook_id = self.crypto.randomUUID();
     this.dialog = e();
     this.form = e();
   }
@@ -24,12 +24,12 @@ let ImportCalendarForm = class extends i {
   }
   render() {
     return x`
-      <button @click=${() => this.dialog.value.showModal()}>Import calendar</button>
+      <button @click=${() => this.dialog.value.showModal()}>Import addressbook</button>
       <dialog ${n(this.dialog)}>
-        <h3>Import calendar</h3>
+        <h3>Import addressbook</h3>
         <form @submit=${this.submit} ${n(this.form)}>
           <label>
-            principal (for group calendars)
+            principal (for group addressbook)
             <select name="principal" value=${this.user} @change=${(e2) => this.principal = e2.target.value}>
               <option value=${this.user}>${this.user}</option>
               ${window.rusticalUser.memberships.map((membership) => x`
@@ -40,12 +40,12 @@ let ImportCalendarForm = class extends i {
           <br>
           <label>
             id
-            <input type="text" name="id" value=${this.cal_id} @change=${(e2) => this.cal_id = e2.target.value} />
+            <input type="text" name="id" value=${this.addressbook_id} @change=${(e2) => this.addressbook_id = e2.target.value} />
           </label>
           <br>
           <label>
             file
-            <input type="file" accept="text/calendar" name="file" @change=${(e2) => this.file = e2.target.files[0]} />
+            <input type="file" accept="text/vcard" name="file" @change=${(e2) => this.file = e2.target.files[0]} />
           </label>
           <button type="submit">Import</button>
           <button type="submit" @click=${(event) => {
@@ -64,14 +64,14 @@ let ImportCalendarForm = class extends i {
       alert("Empty principal");
       return;
     }
-    if (!this.cal_id) {
+    if (!this.addressbook_id) {
       alert("Empty id");
       return;
     }
-    let response = await fetch(`/caldav/principal/${this.principal}/${this.cal_id}`, {
+    let response = await fetch(`/carddav/principal/${this.principal}/${this.addressbook_id}`, {
       method: "IMPORT",
       headers: {
-        "Content-Type": "text/calendar"
+        "Content-Type": "text/vcard"
       },
       body: this.file
     });
@@ -85,16 +85,16 @@ let ImportCalendarForm = class extends i {
 };
 __decorateClass([
   n$1()
-], ImportCalendarForm.prototype, "user", 2);
+], ImportAddressbookForm.prototype, "user", 2);
 __decorateClass([
   n$1()
-], ImportCalendarForm.prototype, "principal", 2);
+], ImportAddressbookForm.prototype, "principal", 2);
 __decorateClass([
   n$1()
-], ImportCalendarForm.prototype, "cal_id", 2);
-ImportCalendarForm = __decorateClass([
-  t("import-calendar-form")
-], ImportCalendarForm);
+], ImportAddressbookForm.prototype, "addressbook_id", 2);
+ImportAddressbookForm = __decorateClass([
+  t("import-addressbook-form")
+], ImportAddressbookForm);
 export {
-  ImportCalendarForm
+  ImportAddressbookForm
 };

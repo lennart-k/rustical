@@ -2,8 +2,8 @@ import { html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Ref, createRef, ref } from 'lit/directives/ref.js';
 
-@customElement("import-calendar-form")
-export class ImportCalendarForm extends LitElement {
+@customElement("import-addressbook-form")
+export class ImportAddressbookForm extends LitElement {
   constructor() {
     super()
   }
@@ -17,7 +17,7 @@ export class ImportCalendarForm extends LitElement {
   @property()
   principal: string
   @property()
-  cal_id: string = self.crypto.randomUUID()
+  addressbook_id: string = self.crypto.randomUUID()
 
   dialog: Ref<HTMLDialogElement> = createRef()
   form: Ref<HTMLFormElement> = createRef()
@@ -26,12 +26,12 @@ export class ImportCalendarForm extends LitElement {
 
   override render() {
     return html`
-      <button @click=${() => this.dialog.value.showModal()}>Import calendar</button>
+      <button @click=${() => this.dialog.value.showModal()}>Import addressbook</button>
       <dialog ${ref(this.dialog)}>
-        <h3>Import calendar</h3>
+        <h3>Import addressbook</h3>
         <form @submit=${this.submit} ${ref(this.form)}>
           <label>
-            principal (for group calendars)
+            principal (for group addressbook)
             <select name="principal" value=${this.user} @change=${e => this.principal = e.target.value}>
               <option value=${this.user}>${this.user}</option>
               ${window.rusticalUser.memberships.map(membership => html`
@@ -42,12 +42,12 @@ export class ImportCalendarForm extends LitElement {
           <br>
           <label>
             id
-            <input type="text" name="id" value=${this.cal_id} @change=${e => this.cal_id = e.target.value} />
+            <input type="text" name="id" value=${this.addressbook_id} @change=${e => this.addressbook_id = e.target.value} />
           </label>
           <br>
           <label>
             file
-            <input type="file" accept="text/calendar" name="file" @change=${e => this.file = e.target.files[0]} />
+            <input type="file" accept="text/vcard" name="file" @change=${e => this.file = e.target.files[0]} />
           </label>
           <button type="submit">Import</button>
           <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close(); this.form.value.reset() }} class="cancel">Cancel</button>
@@ -63,14 +63,14 @@ export class ImportCalendarForm extends LitElement {
       alert("Empty principal")
       return
     }
-    if (!this.cal_id) {
+    if (!this.addressbook_id) {
       alert("Empty id")
       return
     }
-    let response = await fetch(`/caldav/principal/${this.principal}/${this.cal_id}`, {
+    let response = await fetch(`/carddav/principal/${this.principal}/${this.addressbook_id}`, {
       method: 'IMPORT',
       headers: {
-        'Content-Type': 'text/calendar'
+        'Content-Type': 'text/vcard'
       },
       body: this.file,
     })
@@ -87,6 +87,6 @@ export class ImportCalendarForm extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'import-calendar-form': ImportCalendarForm
+    'import-addressbook-form': ImportAddressbookForm
   }
 }
