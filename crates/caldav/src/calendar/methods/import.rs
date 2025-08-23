@@ -1,5 +1,3 @@
-use std::{collections::HashMap, io::BufReader};
-
 use crate::Error;
 use crate::calendar::CalendarResourceService;
 use axum::{
@@ -8,11 +6,12 @@ use axum::{
 };
 use http::StatusCode;
 use ical::{
-    generator::{Emitter, IcalCalendar},
-    parser::{Component, ComponentMut, ical::component::IcalTimeZone},
+    generator::Emitter,
+    parser::{Component, ComponentMut},
 };
-use rustical_ical::{CalendarObject, CalendarObjectComponent, CalendarObjectType, EventObject};
+use rustical_ical::{CalendarObject, CalendarObjectType};
 use rustical_store::{Calendar, CalendarStore, SubscriptionStore, auth::Principal};
+use std::io::BufReader;
 use tracing::instrument;
 
 #[instrument(skip(resource_service))]
