@@ -571,6 +571,43 @@ impl CalendarStore for SqliteCalendarStore {
     }
 
     #[instrument]
+    async fn import_calendar(
+        &self,
+        calendar: Calendar,
+        objects: Vec<CalendarObject>,
+        merge_existing: bool,
+    ) -> Result<(), Error> {
+        let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
+
+        let existing_cal =
+            match Self::_get_calendar(&mut *tx, &calendar.principal, &calendar.id, true).await {
+                Ok(cal) => Some(cal),
+                Err(Error::NotFound) => None,
+                Err(err) => return Err(err),
+            };
+        if existing_cal.is_some() && !merge_existing {
+            return Err(Error::AlreadyExists);
+        }
+        if existing_cal.is_none() {
+            Self::_insert_calendar(&mut *tx, calendar.clone()).await?;
+        }
+
+        for object in objects {
+            Self::_put_object(
+                &mut *tx,
+                calendar.principal.clone(),
+                calendar.id.clone(),
+                object,
+                false,
+            )
+            .await?;
+        }
+
+        tx.commit().await.map_err(crate::Error::from)?;
+        Ok(())
+    }
+
+    #[instrument]
     async fn calendar_query(
         &self,
         principal: &str,

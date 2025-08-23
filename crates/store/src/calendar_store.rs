@@ -34,6 +34,12 @@ pub trait CalendarStore: Send + Sync + 'static {
         use_trashbin: bool,
     ) -> Result<(), Error>;
     async fn restore_calendar(&self, principal: &str, name: &str) -> Result<(), Error>;
+    async fn import_calendar(
+        &self,
+        calendar: Calendar,
+        objects: Vec<CalendarObject>,
+        merge_existing: bool,
+    ) -> Result<(), Error>;
 
     async fn sync_changes(
         &self,

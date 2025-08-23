@@ -190,6 +190,24 @@ impl<CS: CalendarStore, BS: CalendarStore> CalendarStore for CombinedCalendarSto
     }
 
     #[inline]
+    async fn import_calendar(
+        &self,
+        calendar: Calendar,
+        objects: Vec<CalendarObject>,
+        merge_existing: bool,
+    ) -> Result<(), Error> {
+        if calendar.id.starts_with(BIRTHDAYS_PREFIX) {
+            self.birthday_store
+                .import_calendar(calendar, objects, merge_existing)
+                .await
+        } else {
+            self.cal_store
+                .import_calendar(calendar, objects, merge_existing)
+                .await
+        }
+    }
+
+    #[inline]
     async fn delete_calendar(
         &self,
         principal: &str,

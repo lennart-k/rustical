@@ -83,6 +83,15 @@ impl<AS: AddressbookStore> CalendarStore for ContactBirthdayStore<AS> {
         Err(Error::ReadOnly)
     }
 
+    async fn import_calendar(
+        &self,
+        _calendar: Calendar,
+        _objects: Vec<CalendarObject>,
+        _merge_existing: bool,
+    ) -> Result<(), Error> {
+        Err(Error::ReadOnly)
+    }
+
     async fn sync_changes(
         &self,
         principal: &str,
