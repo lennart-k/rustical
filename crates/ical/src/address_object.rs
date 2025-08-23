@@ -11,6 +11,7 @@ use std::{collections::HashMap, io::BufReader};
 
 #[derive(Debug, Clone)]
 pub struct AddressObject {
+    id: String,
     vcf: String,
     vcard: VcardContact,
 }
@@ -19,16 +20,21 @@ impl TryFrom<VcardContact> for AddressObject {
     type Error = Error;
 
     fn try_from(vcard: VcardContact) -> Result<Self, Self::Error> {
-        if vcard.get_uid().is_none() {
-            return Err(Error::InvalidData("missing UID".to_owned()));
-        }
+        let uid = vcard
+            .get_uid()
+            .ok_or(Error::InvalidData("missing UID".to_owned()))?
+            .to_owned();
         let vcf = vcard.generate();
-        Ok(Self { vcf, vcard })
+        Ok(Self {
+            vcf,
+            vcard,
+            id: uid,
+        })
     }
 }
 
 impl AddressObject {
-    pub fn from_vcf(vcf: String) -> Result<Self, Error> {
+    pub fn from_vcf(id: String, vcf: String) -> Result<Self, Error> {
         let mut parser = vcard::VcardParser::new(BufReader::new(vcf.as_bytes()));
         let vcard = parser.next().ok_or(Error::MissingContact)??;
         if parser.next().is_some() {
@@ -36,17 +42,11 @@ impl AddressObject {
                 "multiple vcards, only one allowed".to_owned(),
             ));
         }
-
-        if vcard.get_uid().is_none() {
-            return Err(Error::InvalidData("missing UID".to_owned()));
-        }
-        Ok(Self { vcf, vcard })
+        Ok(Self { id, vcf, vcard })
     }
 
     pub fn get_id(&self) -> &str {
-        self.vcard
-            .get_uid()
-            .expect("We've validated before that UID exists")
+        &self.id
     }
 
     pub fn get_etag(&self) -> String {

@@ -86,8 +86,7 @@ pub async fn put_object<AS: AddressbookStore>(
         true
     };
 
-    let object = AddressObject::from_vcf(body)?;
-    assert_eq!(object.get_id(), object_id);
+    let object = AddressObject::from_vcf(object_id, body)?;
     addr_store
         .put_object(principal, addressbook_id, object, overwrite)
         .await?;

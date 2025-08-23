@@ -20,17 +20,7 @@ impl TryFrom<AddressObjectRow> for AddressObject {
     type Error = rustical_store::Error;
 
     fn try_from(value: AddressObjectRow) -> Result<Self, Self::Error> {
-        let object = Self::from_vcf(value.vcf)?;
-        if object.get_id() != value.id {
-            return Err(rustical_store::Error::IcalError(
-                rustical_ical::Error::InvalidData(format!(
-                    "object_id={} and UID={} don't match",
-                    object.get_id(),
-                    value.id
-                )),
-            ));
-        }
-        Ok(object)
+        Ok(Self::from_vcf(value.id, value.vcf)?)
     }
 }
 
