@@ -3040,7 +3040,7 @@ dependencies = [
 
 [[package]]
 name = "rustical"
-version = "0.8.6"
+version = "0.9.0"
 dependencies = [
  "anyhow",
  "argon2",
@@ -3083,7 +3083,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_caldav"
-version = "0.8.6"
+version = "0.9.0"
 dependencies = [
  "async-std",
  "async-trait",
@@ -3123,7 +3123,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_carddav"
-version = "0.8.6"
+version = "0.9.0"
 dependencies = [
  "async-trait",
  "axum",
@@ -3155,7 +3155,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_dav"
-version = "0.8.6"
+version = "0.9.0"
 dependencies = [
  "async-trait",
  "axum",
@@ -3180,7 +3180,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_dav_push"
-version = "0.8.6"
+version = "0.9.0"
 dependencies = [
  "async-trait",
  "axum",
@@ -3205,7 +3205,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_frontend"
-version = "0.8.6"
+version = "0.9.0"
 dependencies = [
  "askama",
  "askama_web",
@@ -3238,7 +3238,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_ical"
-version = "0.8.6"
+version = "0.9.0"
 dependencies = [
  "axum",
  "chrono",
@@ -3256,7 +3256,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_oidc"
-version = "0.8.6"
+version = "0.9.0"
 dependencies = [
  "async-trait",
  "axum",
@@ -3271,7 +3271,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_store"
-version = "0.8.6"
+version = "0.9.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3305,7 +3305,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_store_sqlite"
-version = "0.8.6"
+version = "0.9.0"
 dependencies = [
  "async-trait",
  "chrono",
@@ -3326,7 +3326,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_xml"
-version = "0.8.6"
+version = "0.9.0"
 dependencies = [
  "quick-xml",
  "thiserror 2.0.16",
@@ -4527,9 +4527,9 @@ checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
 
 [[package]]
 name = "url"
-version = "2.5.6"
+version = "2.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "137a3c834eaf7139b73688502f3f1141a0337c5d8e4d9b536f9b8c796e26a7c4"
+checksum = "08bc136a29a3d1758e07a9cca267be308aeebf5cfd5a10f3f67ab2097683ef5b"
 dependencies = [
  "form_urlencoded",
  "idna",
