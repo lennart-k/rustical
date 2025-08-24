@@ -4,9 +4,9 @@
 {% endblock %}
 
 {% block content %}
-{% let name = calendar.displayname.to_owned().unwrap_or(calendar.id.to_owned()) %}
+{% let name = calendar.meta.displayname.to_owned().unwrap_or(calendar.id.to_owned()) %}
 <h1>{{ calendar.principal }}/{{ name }}</h1>
-{% if let Some(description) = calendar.description %}<p>{{ description }}</p>{% endif%}
+{% if let Some(description) = calendar.meta.description %}<p>{{ description }}</p>{% endif%}
 
 {% if let Some(subscription_url) = calendar.subscription_url %}
 <h2>Subscription URL</h2>

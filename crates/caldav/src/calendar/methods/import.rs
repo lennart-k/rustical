@@ -10,7 +10,9 @@ use ical::{
     parser::{Component, ComponentMut},
 };
 use rustical_ical::{CalendarObject, CalendarObjectType};
-use rustical_store::{Calendar, CalendarStore, SubscriptionStore, auth::Principal};
+use rustical_store::{
+    Calendar, CalendarMetadata, CalendarStore, SubscriptionStore, auth::Principal,
+};
 use std::io::BufReader;
 use tracing::instrument;
 
@@ -83,10 +85,12 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
     let new_cal = Calendar {
         principal,
         id: cal_id,
-        displayname,
-        order: 0,
-        description,
-        color: None,
+        meta: CalendarMetadata {
+            displayname,
+            order: 0,
+            description,
+            color: None,
+        },
         timezone_id,
         deleted_at: None,
         synctoken: 0,

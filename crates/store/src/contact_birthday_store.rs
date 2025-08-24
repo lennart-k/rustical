@@ -1,4 +1,6 @@
-use crate::{Addressbook, AddressbookStore, Calendar, CalendarStore, Error};
+use crate::{
+    Addressbook, AddressbookStore, Calendar, CalendarStore, Error, calendar::CalendarMetadata,
+};
 use async_trait::async_trait;
 use derive_more::derive::Constructor;
 use rustical_ical::{AddressObject, CalendarObject, CalendarObjectType};
@@ -14,12 +16,14 @@ fn birthday_calendar(addressbook: Addressbook) -> Calendar {
     Calendar {
         principal: addressbook.principal,
         id: format!("{}{}", BIRTHDAYS_PREFIX, addressbook.id),
-        displayname: addressbook
-            .displayname
-            .map(|name| format!("{name} birthdays")),
-        order: 0,
-        description: None,
-        color: None,
+        meta: CalendarMetadata {
+            displayname: addressbook
+                .displayname
+                .map(|name| format!("{name} birthdays")),
+            order: 0,
+            description: None,
+            color: None,
+        },
         timezone_id: None,
         deleted_at: addressbook.deleted_at,
         synctoken: addressbook.synctoken,

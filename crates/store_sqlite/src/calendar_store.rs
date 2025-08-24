@@ -5,7 +5,7 @@ use derive_more::derive::Constructor;
 use rustical_ical::{CalDateTime, CalendarObject, CalendarObjectType};
 use rustical_store::calendar_store::CalendarQuery;
 use rustical_store::synctoken::format_synctoken;
-use rustical_store::{Calendar, CalendarStore, CollectionMetadata, Error};
+use rustical_store::{Calendar, CalendarMetadata, CalendarStore, CollectionMetadata, Error};
 use rustical_store::{CollectionOperation, CollectionOperationInfo};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};
@@ -69,10 +69,12 @@ impl From<CalendarRow> for Calendar {
         Self {
             principal: value.principal,
             id: value.id,
-            displayname: value.displayname,
-            order: value.order,
-            description: value.description,
-            color: value.color,
+            meta: CalendarMetadata {
+                displayname: value.displayname,
+                order: value.order,
+                description: value.description,
+                color: value.color,
+            },
             timezone_id: value.timezone_id,
             deleted_at: value.deleted_at,
             synctoken: value.synctoken,
@@ -159,10 +161,10 @@ impl SqliteCalendarStore {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"#,
             calendar.principal,
             calendar.id,
-            calendar.displayname,
-            calendar.description,
-            calendar.order,
-            calendar.color,
+            calendar.meta.displayname,
+            calendar.meta.description,
+            calendar.meta.order,
+            calendar.meta.color,
             calendar.subscription_url,
             calendar.timezone_id,
             calendar.push_topic,
@@ -189,10 +191,10 @@ impl SqliteCalendarStore {
                 WHERE (principal, id) = (?, ?)"#,
             calendar.principal,
             calendar.id,
-            calendar.displayname,
-            calendar.description,
-            calendar.order,
-            calendar.color,
+            calendar.meta.displayname,
+            calendar.meta.description,
+            calendar.meta.order,
+            calendar.meta.color,
             calendar.timezone_id,
             calendar.push_topic,
             comp_event, comp_todo, comp_journal,

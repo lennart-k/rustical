@@ -6,13 +6,23 @@ use rustical_ical::CalendarObjectType;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct Calendar {
-    pub principal: String,
-    pub id: String,
+pub struct CalendarMetadata {
+    // Attributes that may be outsourced
     pub displayname: Option<String>,
     pub order: i64,
     pub description: Option<String>,
     pub color: Option<String>,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct Calendar {
+    // Attributes that may be outsourced
+    #[serde(flatten)]
+    pub meta: CalendarMetadata,
+
+    // Common calendar attributes
+    pub principal: String,
+    pub id: String,
     pub timezone_id: Option<String>,
     pub deleted_at: Option<NaiveDateTime>,
     pub synctoken: i64,

@@ -43,24 +43,24 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
     let mut ical_calendar_builder = IcalCalendarBuilder::version("4.0")
         .gregorian()
         .prodid("RustiCal");
-    if calendar.displayname.is_some() {
+    if let Some(displayname) = calendar.meta.displayname {
         ical_calendar_builder = ical_calendar_builder.set(Property {
             name: "X-WR-CALNAME".to_owned(),
-            value: calendar.displayname,
+            value: Some(displayname),
             params: None,
         });
     }
-    if calendar.description.is_some() {
+    if let Some(description) = calendar.meta.description {
         ical_calendar_builder = ical_calendar_builder.set(Property {
             name: "X-WR-CALDESC".to_owned(),
-            value: calendar.description,
+            value: Some(description),
             params: None,
         });
     }
-    if calendar.timezone_id.is_some() {
+    if let Some(timezone_id) = calendar.timezone_id {
         ical_calendar_builder = ical_calendar_builder.set(Property {
             name: "X-WR-TIMEZONE".to_owned(),
-            value: calendar.timezone_id,
+            value: Some(timezone_id),
             params: None,
         });
     }

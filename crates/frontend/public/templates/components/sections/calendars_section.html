@@ -1,13 +1,13 @@
 <h2>{{ user.id }}'s Calendars</h2>
 <ul class="collection-list">
   {% for (meta, calendar) in calendars %}
-  {% let color = calendar.color.to_owned().unwrap_or("transparent".to_owned()) %}
+  {% let color = calendar.meta.color.to_owned().unwrap_or("transparent".to_owned()) %}
   <li class="collection-list-item" style="--color: {{ color }}">
     <a href="/frontend/user/{{ calendar.principal }}/calendar/{{ calendar.id }}"></a>
     <div class="inner">
       <span class="title">
         {%- if calendar.principal != user.id -%}{{ calendar.principal }}/{%- endif -%}
-        {{ calendar.displayname.to_owned().unwrap_or(calendar.id.to_owned()) }}
+        {{ calendar.meta.displayname.to_owned().unwrap_or(calendar.id.to_owned()) }}
         <div class="comps">
           {% for comp in calendar.components %}
           <span>{{ comp }}</span>
@@ -15,7 +15,7 @@
         </div>
       </span>
       <span class="description">
-        {% if let Some(description) = calendar.description %}{{ description }}{% endif %}
+        {% if let Some(description) = calendar.meta.description %}{{ description }}{% endif %}
       </span>
       {% if let Some(subscription_url) = calendar.subscription_url %}
       <span class="subscription-url">{{ subscription_url }}</span>
@@ -29,9 +29,9 @@
           principal="{{ calendar.principal }}"
           cal_id="{{ calendar.id }}"
           timezone_id="{{ calendar.timezone_id.as_deref().unwrap_or_default() }}"
-          displayname="{{ calendar.displayname.as_deref().unwrap_or_default() }}"
-          description="{{ calendar.description.as_deref().unwrap_or_default() }}"
-          color="{{ calendar.color.as_deref().unwrap_or_default() }}"
+          displayname="{{ calendar.meta.displayname.as_deref().unwrap_or_default() }}"
+          description="{{ calendar.meta.description.as_deref().unwrap_or_default() }}"
+          color="{{ calendar.meta.color.as_deref().unwrap_or_default() }}"
           components="{{ calendar.components | json }}"
         ></edit-calendar-form>
         <delete-button trash href="/caldav/principal/{{ calendar.principal }}/{{ calendar.id }}"></delete-button>
@@ -51,13 +51,13 @@
 <h3>Deleted Calendars</h3>
 <ul class="collection-list">
   {% for (meta, calendar) in deleted_calendars %}
-  {% let color = calendar.color.to_owned().unwrap_or("transparent".to_owned()) %}
+  {% let color = calendar.meta.color.to_owned().unwrap_or("transparent".to_owned()) %}
   <li class="collection-list-item" style="--color: {{ color }}">
     <a href="/frontend/user/{{ calendar.principal }}/calendar/{{ calendar.id}}"></a>
     <div class="inner">
       <span class="title">
         {%- if calendar.principal != user.id -%}{{ calendar.principal }}/{%- endif -%}
-        {{ calendar.displayname.to_owned().unwrap_or(calendar.id.to_owned()) }}
+        {{ calendar.meta.displayname.to_owned().unwrap_or(calendar.id.to_owned()) }}
         <div class="comps">
           {% for comp in calendar.components %}
           <span>{{ comp }}</span>
@@ -65,7 +65,7 @@
         </div>
       </span>
       <span class="description">
-        {% if let Some(description) = calendar.description %}{{ description }}{% endif %}
+        {% if let Some(description) = calendar.meta.description %}{{ description }}{% endif %}
       </span>
       <div class="actions">
         <form action="/frontend/user/{{ calendar.principal }}/calendar/{{ calendar.id}}/restore" method="POST"

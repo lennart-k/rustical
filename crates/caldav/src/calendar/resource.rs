@@ -128,10 +128,10 @@ impl Resource for CalendarResource {
         Ok(match prop {
             CalendarPropWrapperName::Calendar(prop) => CalendarPropWrapper::Calendar(match prop {
                 CalendarPropName::CalendarColor => {
-                    CalendarProp::CalendarColor(self.cal.color.clone())
+                    CalendarProp::CalendarColor(self.cal.meta.color.clone())
                 }
                 CalendarPropName::CalendarDescription => {
-                    CalendarProp::CalendarDescription(self.cal.description.clone())
+                    CalendarProp::CalendarDescription(self.cal.meta.description.clone())
                 }
                 CalendarPropName::CalendarTimezone => {
                     CalendarProp::CalendarTimezone(self.cal.timezone_id.as_ref().and_then(|tzid| {
@@ -146,7 +146,7 @@ impl Resource for CalendarResource {
                     CalendarProp::CalendarTimezoneId(self.cal.timezone_id.clone())
                 }
                 CalendarPropName::CalendarOrder => {
-                    CalendarProp::CalendarOrder(Some(self.cal.order))
+                    CalendarProp::CalendarOrder(Some(self.cal.meta.order))
                 }
                 CalendarPropName::SupportedCalendarComponentSet => {
                     CalendarProp::SupportedCalendarComponentSet(self.cal.components.clone().into())
@@ -187,11 +187,11 @@ impl Resource for CalendarResource {
         match prop {
             CalendarPropWrapper::Calendar(prop) => match prop {
                 CalendarProp::CalendarColor(color) => {
-                    self.cal.color = color;
+                    self.cal.meta.color = color;
                     Ok(())
                 }
                 CalendarProp::CalendarDescription(description) => {
-                    self.cal.description = description;
+                    self.cal.meta.description = description;
                     Ok(())
                 }
                 CalendarProp::CalendarTimezone(timezone) => {
@@ -236,7 +236,7 @@ impl Resource for CalendarResource {
                     Ok(())
                 }
                 CalendarProp::CalendarOrder(order) => {
-                    self.cal.order = order.unwrap_or_default();
+                    self.cal.meta.order = order.unwrap_or_default();
                     Ok(())
                 }
                 CalendarProp::SupportedCalendarComponentSet(comp_set) => {
@@ -264,11 +264,11 @@ impl Resource for CalendarResource {
         match prop {
             CalendarPropWrapperName::Calendar(prop) => match prop {
                 CalendarPropName::CalendarColor => {
-                    self.cal.color = None;
+                    self.cal.meta.color = None;
                     Ok(())
                 }
                 CalendarPropName::CalendarDescription => {
-                    self.cal.description = None;
+                    self.cal.meta.description = None;
                     Ok(())
                 }
                 CalendarPropName::CalendarTimezone | CalendarPropName::CalendarTimezoneId => {
@@ -277,7 +277,7 @@ impl Resource for CalendarResource {
                 }
                 CalendarPropName::TimezoneServiceSet => Err(rustical_dav::Error::PropReadOnly),
                 CalendarPropName::CalendarOrder => {
-                    self.cal.order = 0;
+                    self.cal.meta.order = 0;
                     Ok(())
                 }
                 CalendarPropName::SupportedCalendarComponentSet => {
@@ -300,10 +300,10 @@ impl Resource for CalendarResource {
     }
 
     fn get_displayname(&self) -> Option<&str> {
-        self.cal.displayname.as_deref()
+        self.cal.meta.displayname.as_deref()
     }
     fn set_displayname(&mut self, name: Option<String>) -> Result<(), rustical_dav::Error> {
-        self.cal.displayname = name;
+        self.cal.meta.displayname = name;
         Ok(())
     }
 

@@ -8,7 +8,7 @@ use ical::IcalParser;
 use rustical_dav::xml::HrefElement;
 use rustical_ical::CalendarObjectType;
 use rustical_store::auth::Principal;
-use rustical_store::{Calendar, CalendarStore, SubscriptionStore};
+use rustical_store::{Calendar, CalendarMetadata, CalendarStore, SubscriptionStore};
 use rustical_xml::{Unparsed, XmlDeserialize, XmlDocument, XmlRootTag};
 use tracing::instrument;
 
@@ -112,11 +112,13 @@ pub async fn route_mkcalendar<C: CalendarStore, S: SubscriptionStore>(
     let calendar = Calendar {
         id: cal_id.to_owned(),
         principal: principal.to_owned(),
-        order: request.calendar_order.unwrap_or(0),
-        displayname: request.displayname,
+        meta: CalendarMetadata {
+            order: request.calendar_order.unwrap_or(0),
+            displayname: request.displayname,
+            color: request.calendar_color,
+            description: request.calendar_description,
+        },
         timezone_id,
-        color: request.calendar_color,
-        description: request.calendar_description,
         deleted_at: None,
         synctoken: 0,
         subscription_url: request.source.map(|href| href.href),
