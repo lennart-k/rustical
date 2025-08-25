@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 pub struct HttpConfig {
     pub host: String,
     pub port: u16,
+    pub session_cookie_samesite_strict: bool,
 }
 
 impl Default for HttpConfig {
@@ -14,6 +15,7 @@ impl Default for HttpConfig {
         Self {
             host: "0.0.0.0".to_owned(),
             port: 4000,
+            session_cookie_samesite_strict: false,
         }
     }
 }
