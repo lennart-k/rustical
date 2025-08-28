@@ -16,7 +16,7 @@ mod tests {
     use super::{Resourcetype, ResourcetypeInner};
 
     #[derive(XmlSerialize, XmlRootTag)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
         resourcetype: Resourcetype,
     }

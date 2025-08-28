@@ -28,7 +28,7 @@ impl<'a> From<&'a Namespace<'a>> for NamespaceOwned {
 }
 
 impl NamespaceOwned {
-    pub fn as_ref(&self) -> Namespace {
+    pub fn as_ref(&self) -> Namespace<'_> {
         Namespace(&self.0)
     }
 }

@@ -68,7 +68,7 @@ impl NamedStruct {
                 .ns_prefix
                 .iter()
                 .map(|(ns, prefix)| {
-                    quote! { (#ns, #prefix.as_ref()) }
+                    quote! { (#ns, #prefix) }
                 })
                 .collect()
         } else {
@@ -77,9 +77,9 @@ impl NamedStruct {
 
         quote! {
             impl #impl_generics ::rustical_xml::XmlRootTag for #ident #type_generics #where_clause {
-                fn root_tag() -> &'static [u8] { #root }
+                fn root_tag() -> &'static str { #root }
                 fn root_ns() -> Option<::quick_xml::name::Namespace<'static>> { #ns }
-                fn root_ns_prefixes() -> ::std::collections::HashMap<::quick_xml::name::Namespace<'static>, &'static [u8]> {
+                fn root_ns_prefixes() -> ::std::collections::HashMap<::quick_xml::name::Namespace<'static>, &'static str> {
                     ::std::collections::HashMap::from_iter(vec![
                         #(#prefixes),*
                     ])

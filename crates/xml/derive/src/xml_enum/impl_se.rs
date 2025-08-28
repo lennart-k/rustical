@@ -16,8 +16,8 @@ impl Enum {
                 fn serialize(
                     &self,
                     ns: Option<::quick_xml::name::Namespace>,
-                    tag: Option<&[u8]>,
-                    namespaces: &::std::collections::HashMap<::quick_xml::name::Namespace, &[u8]>,
+                    tag: Option<&str>,
+                    namespaces: &::std::collections::HashMap<::quick_xml::name::Namespace, &str>,
                     writer: &mut ::quick_xml::Writer<&mut Vec<u8>>
                 ) -> ::std::io::Result<()> {
                     use ::quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
@@ -25,14 +25,16 @@ impl Enum {
                     let prefix = ns
                         .map(|ns| namespaces.get(&ns))
                         .unwrap_or(None)
-                        .map(|prefix| if !prefix.is_empty() {
-                            [*prefix, b":"].concat()
-                        } else {
-                            vec![]
-                        });
+                         .map(|prefix| {
+                             if !prefix.is_empty() {
+                                format!("{prefix}:")
+                             } else {
+                                String::new()
+                             }
+                         });
                     let has_prefix = prefix.is_some();
                     let tagname = tag.map(|tag| [&prefix.unwrap_or_default(), tag].concat());
-                    let qname = tagname.as_ref().map(|tagname| ::quick_xml::name::QName(tagname));
+                    let qname = tagname.as_ref().map(|tagname| ::quick_xml::name::QName(tagname.as_bytes()));
 
                     const enum_untagged: bool = #enum_untagged;
 

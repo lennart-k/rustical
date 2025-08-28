@@ -111,8 +111,7 @@ impl Enum {
                     Some(ns) => quote! { Some(#ns) },
                     None => quote! { None },
                 };
-                let b_xml_name = variant.xml_name().value();
-                let xml_name = String::from_utf8_lossy(&b_xml_name);
+                let xml_name = variant.xml_name().value();
                 let out = quote! {(#ns, #xml_name)};
 
                 let ident = &variant.variant.ident;
@@ -134,8 +133,7 @@ impl Enum {
 
             let str_to_unit_branches = tagged_variants.iter().map(|variant| {
                 let ident = &variant.variant.ident;
-                let b_xml_name = variant.xml_name().value();
-                let xml_name = String::from_utf8_lossy(&b_xml_name);
+                let xml_name = variant.xml_name().value();
                 if variant.attrs.prop.is_some() {
                     quote! { #xml_name => Ok(Self::#ident (Default::default())) }
                 } else {

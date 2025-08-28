@@ -23,9 +23,9 @@ pub use xml_derive::PropName;
 pub use xml_derive::XmlRootTag;
 
 pub trait XmlRootTag {
-    fn root_tag() -> &'static [u8];
+    fn root_tag() -> &'static str;
     fn root_ns() -> Option<Namespace<'static>>;
-    fn root_ns_prefixes() -> HashMap<Namespace<'static>, &'static [u8]>;
+    fn root_ns_prefixes() -> HashMap<Namespace<'static>, &'static str>;
 }
 
 #[derive(Debug)]

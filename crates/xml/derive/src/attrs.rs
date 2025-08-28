@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
 use darling::{FromDeriveInput, FromField, FromMeta, FromVariant, util::Flag};
-use syn::{Ident, LitByteStr, LitStr};
+use syn::{Ident, LitStr};
 
 #[derive(Debug, Default, FromMeta, Clone)]
 pub struct TagAttrs {
-    pub rename: Option<LitByteStr>,
+    pub rename: Option<LitStr>,
     pub ns: Option<syn::Path>,
 }
 
@@ -30,7 +30,7 @@ pub struct EnumAttrs {
 #[derive(Default, FromDeriveInput, Clone)]
 #[darling(attributes(xml))]
 pub struct StructAttrs {
-    pub root: Option<LitByteStr>,
+    pub root: Option<LitStr>,
     pub ns: Option<syn::Path>,
     #[darling(default)]
     pub ns_prefix: HashMap<syn::Path, LitStr>,

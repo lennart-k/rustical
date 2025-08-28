@@ -17,7 +17,7 @@ pub struct WebPushSubscription {
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
 pub struct SubscriptionPublicKey {
-    #[xml(ty = "attr", rename = b"type")]
+    #[xml(ty = "attr", rename = "type")]
     pub ty: String,
     #[xml(ty = "text")]
     pub key: String,
@@ -33,7 +33,7 @@ pub struct SubscriptionElement {
 pub struct TriggerElement(#[xml(ty = "untagged", flatten)] Vec<Trigger>);
 
 #[derive(XmlDeserialize, XmlRootTag, Clone, Debug, PartialEq)]
-#[xml(root = b"push-register")]
+#[xml(root = "push-register")]
 #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
 pub struct PushRegister {
     #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]

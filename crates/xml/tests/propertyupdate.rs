@@ -36,7 +36,7 @@ fn test_propertyupdate() {
     }
 
     #[derive(XmlDeserialize, XmlRootTag)]
-    #[xml(root = b"propertyupdate")]
+    #[xml(root = "propertyupdate")]
     struct PropertyupdateElement<T: XmlDeserialize> {
         #[xml(ty = "untagged", flatten)]
         #[allow(dead_code)]

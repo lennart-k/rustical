@@ -22,7 +22,7 @@ pub struct MkcolAddressbookProp {
     resourcetype: Option<Resourcetype>,
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     displayname: Option<String>,
-    #[xml(rename = b"addressbook-description")]
+    #[xml(rename = "addressbook-description")]
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     description: Option<String>,
 }
@@ -34,7 +34,7 @@ pub struct PropElement<T: XmlDeserialize> {
 }
 
 #[derive(XmlDeserialize, XmlRootTag, Clone, Debug, PartialEq)]
-#[xml(root = b"mkcol")]
+#[xml(root = "mkcol")]
 #[xml(ns = "rustical_dav::namespace::NS_DAV")]
 struct MkcolRequest {
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]

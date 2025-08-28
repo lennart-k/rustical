@@ -33,7 +33,7 @@ impl NamedStruct {
                 let field_index = field.target_field_index();
                 quote! {
                     ::quick_xml::events::attributes::Attribute {
-                        key: ::quick_xml::name::QName(#field_name),
+                        key: ::quick_xml::name::QName(#field_name.as_bytes()),
                         value: ::std::borrow::Cow::from(::rustical_xml::ValueSerialize::serialize(&self.#field_index).into_bytes())
                     }
                 }
@@ -47,7 +47,7 @@ impl NamedStruct {
                 let field_index = field.target_field_index();
                 quote! {
                     let tag_str = self.#field_index.to_string();
-                    let tag = Some(tag.unwrap_or(tag_str.as_bytes()));
+                    let tag = Some(tag.unwrap_or(tag_str.as_str()));
                 }
             });
 
@@ -90,8 +90,8 @@ impl NamedStruct {
                 fn serialize(
                     &self,
                     ns: Option<::quick_xml::name::Namespace>,
-                    tag: Option<&[u8]>,
-                    namespaces: &::std::collections::HashMap<::quick_xml::name::Namespace, &[u8]>,
+                    tag: Option<&str>,
+                    namespaces: &::std::collections::HashMap<::quick_xml::name::Namespace, &str>,
                     writer: &mut ::quick_xml::Writer<&mut Vec<u8>>
                 ) -> ::std::io::Result<()> {
                     use ::quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
@@ -104,15 +104,15 @@ impl NamedStruct {
                          .unwrap_or(None)
                          .map(|prefix| {
                              if !prefix.is_empty() {
-                                 [*prefix, b":"].concat()
+                                format!("{prefix}:")
                              } else {
-                                 Vec::new()
+                                String::new()
                              }
                          });
                      let has_prefix = prefix.is_some();
                      let tagname = tag.map(|tag| [&prefix.unwrap_or_default(), tag].concat());
-                     let qname = tagname.as_ref().map(|tagname| ::quick_xml::name::QName(tagname));
-                    //
+                     let qname = tagname.as_ref().map(|tagname| ::quick_xml::name::QName(tagname.as_bytes()));
+
                     if let Some(qname) = &qname {
                         let mut bytes_start = BytesStart::from(qname.to_owned());
                         if !has_prefix {

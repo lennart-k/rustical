@@ -35,7 +35,7 @@ impl Field {
     }
 
     /// Field name in XML
-    pub fn xml_name(&self) -> syn::LitByteStr {
+    pub fn xml_name(&self) -> syn::LitStr {
         if let Some(rename) = self.attrs.common.rename.to_owned() {
             rename
         } else {
@@ -43,7 +43,7 @@ impl Field {
                 .field_ident()
                 .as_ref()
                 .expect("unnamed tag fields need a rename attribute");
-            syn::LitByteStr::new(ident.to_string().to_kebab_case().as_bytes(), ident.span())
+            syn::LitStr::new(ident.to_string().to_kebab_case().as_str(), ident.span())
         }
     }
 
@@ -174,6 +174,8 @@ impl Field {
             .map(|ns| quote! { if ns == #ns });
 
         let field_name = self.xml_name();
+        let b_field_name =
+            syn::LitByteStr::new(self.xml_name().value().as_bytes(), field_name.span());
         let builder_field_ident = self.builder_field_ident();
         let deserializer = self.deserializer_type();
         let value = quote! { <#deserializer as rustical_xml::XmlDeserialize>::deserialize(reader, &start, empty)? };
@@ -186,7 +188,7 @@ impl Field {
         };
 
         Some(quote! {
-            (#namespace_match, #field_name) #namespace_condition => { #assignment; }
+            (#namespace_match, #b_field_name) #namespace_condition => { #assignment; }
         })
     }
 
@@ -231,6 +233,8 @@ impl Field {
         }
         let builder_field_ident = self.builder_field_ident();
         let field_name = self.xml_name();
+        let b_field_name =
+            syn::LitByteStr::new(self.xml_name().value().as_bytes(), field_name.span());
 
         let value = wrap_option_if_no_default(
             quote! {
@@ -240,7 +244,7 @@ impl Field {
         );
 
         Some(quote! {
-            #field_name => {
+            #b_field_name => {
                 builder.#builder_field_ident = #value;
             }
         })
@@ -255,7 +259,6 @@ impl Field {
         let value = quote! {
             if let ::quick_xml::name::ResolveResult::Bound(ns) = &ns {
                 Some(ns.into())
-                // Some(rustical_xml::ValueDeserialize::deserialize(&String::from_utf8_lossy(ns.0.as_ref()))?)
             } else {
                 None
             }

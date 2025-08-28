@@ -22,8 +22,8 @@ pub struct PropstatElement<PropType: XmlSerialize> {
 fn xml_serialize_status(
     status: &StatusCode,
     ns: Option<Namespace>,
-    tag: Option<&[u8]>,
-    namespaces: &HashMap<Namespace, &[u8]>,
+    tag: Option<&str>,
+    namespaces: &HashMap<Namespace, &str>,
     writer: &mut quick_xml::Writer<&mut Vec<u8>>,
 ) -> std::io::Result<()> {
     XmlSerialize::serialize(&format!("HTTP/1.1 {}", status), ns, tag, namespaces, writer)
@@ -40,7 +40,7 @@ pub enum PropstatWrapper<T: XmlSerialize> {
 // <!ELEMENT response (href, ((href*, status)|(propstat+)),
 // responsedescription?) >
 #[derive(XmlSerialize, XmlRootTag)]
-#[xml(ns = "crate::namespace::NS_DAV", root = b"response")]
+#[xml(ns = "crate::namespace::NS_DAV", root = "response")]
 #[xml(ns_prefix(
     crate::namespace::NS_DAV = "",
     crate::namespace::NS_CARDDAV = "CARD",
@@ -59,8 +59,8 @@ pub struct ResponseElement<PropstatType: XmlSerialize> {
 fn xml_serialize_optional_status(
     val: &Option<StatusCode>,
     ns: Option<Namespace>,
-    tag: Option<&[u8]>,
-    namespaces: &HashMap<Namespace, &[u8]>,
+    tag: Option<&str>,
+    namespaces: &HashMap<Namespace, &str>,
     writer: &mut quick_xml::Writer<&mut Vec<u8>>,
 ) -> std::io::Result<()> {
     XmlSerialize::serialize(
@@ -86,7 +86,7 @@ impl<PT: XmlSerialize> Default for ResponseElement<PT> {
 // <!ELEMENT multistatus (response+, responsedescription?) >
 // Extended by sync-token as specified in RFC 6578
 #[derive(XmlSerialize, XmlRootTag)]
-#[xml(root = b"multistatus", ns = "crate::namespace::NS_DAV")]
+#[xml(root = "multistatus", ns = "crate::namespace::NS_DAV")]
 #[xml(ns_prefix(
     crate::namespace::NS_DAV = "",
     crate::namespace::NS_CARDDAV = "CARD",
@@ -95,9 +95,9 @@ impl<PT: XmlSerialize> Default for ResponseElement<PT> {
     crate::namespace::NS_DAVPUSH = "PUSH"
 ))]
 pub struct MultistatusElement<PropType: XmlSerialize, MemberPropType: XmlSerialize> {
-    #[xml(rename = b"response", flatten)]
+    #[xml(rename = "response", flatten)]
     pub responses: Vec<ResponseElement<PropType>>,
-    #[xml(rename = b"response", flatten)]
+    #[xml(rename = "response", flatten)]
     pub member_responses: Vec<ResponseElement<MemberPropType>>,
     pub sync_token: Option<String>,
 }

@@ -1,9 +1,9 @@
-use rustical_xml::{de::XmlDocument, XmlDeserialize, XmlRootTag};
+use rustical_xml::{XmlDeserialize, XmlRootTag, de::XmlDocument};
 
 #[test]
 fn test_struct_tagged_enum() {
     #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
-    #[xml(root = b"propfind")]
+    #[xml(root = "propfind")]
     struct Propfind {
         prop: Prop,
     }
@@ -58,7 +58,7 @@ fn test_struct_tagged_enum() {
 #[test]
 fn test_tagged_enum_complex() {
     #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
-    #[xml(root = b"propfind")]
+    #[xml(root = "propfind")]
     struct Propfind {
         prop: PropStruct,
     }
@@ -116,7 +116,7 @@ fn test_enum_document() {
 #[test]
 fn test_untagged_enum() {
     #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
         prop: PropElement,
     }

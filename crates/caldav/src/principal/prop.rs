@@ -16,13 +16,13 @@ pub enum PrincipalProp {
     CalendarUserAddressSet(HrefElement),
 
     // WebDAV Access Control (RFC 3744)
-    #[xml(ns = "rustical_dav::namespace::NS_DAV", rename = b"principal-URL")]
+    #[xml(ns = "rustical_dav::namespace::NS_DAV", rename = "principal-URL")]
     PrincipalUrl(HrefElement),
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     GroupMembership(GroupMembership),
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     GroupMemberSet(GroupMemberSet),
-    #[xml(ns = "rustical_dav::namespace::NS_DAV", rename = b"alternate-URI-set")]
+    #[xml(ns = "rustical_dav::namespace::NS_DAV", rename = "alternate-URI-set")]
     AlternateUriSet,
     // #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     // PrincipalCollectionSet(HrefElement),

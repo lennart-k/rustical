@@ -1,7 +1,7 @@
 use rustical_xml::{XmlRootTag, XmlSerialize};
 
 #[derive(XmlSerialize, XmlRootTag)]
-#[xml(ns = "crate::namespace::NS_DAV", root = b"error")]
+#[xml(ns = "crate::namespace::NS_DAV", root = "error")]
 #[xml(ns_prefix(
     crate::namespace::NS_DAV = "",
     crate::namespace::NS_CARDDAV = "CARD",

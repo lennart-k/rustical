@@ -46,7 +46,7 @@ pub struct PropElement {
 }
 
 #[derive(XmlDeserialize, XmlRootTag, Clone, Debug)]
-#[xml(root = b"mkcalendar")]
+#[xml(root = "mkcalendar")]
 #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
 struct MkcalendarRequest {
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
@@ -54,7 +54,7 @@ struct MkcalendarRequest {
 }
 
 #[derive(XmlDeserialize, XmlRootTag, Clone, Debug)]
-#[xml(root = b"mkcol")]
+#[xml(root = "mkcol")]
 #[xml(ns = "rustical_dav::namespace::NS_DAV")]
 struct MkcolRequest {
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]

@@ -7,7 +7,7 @@ use xml_derive::XmlDeserialize;
 #[test]
 fn test_struct_document() {
     #[derive(Debug, XmlRootTag, XmlSerialize, PartialEq)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
         child: Child,
     }
@@ -30,7 +30,7 @@ fn test_struct_document() {
 #[test]
 fn test_struct_untagged_attr() {
     #[derive(Debug, XmlRootTag, XmlSerialize, PartialEq)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
         #[xml(ty = "attr")]
         name: String,
@@ -57,7 +57,7 @@ fn test_struct_untagged_attr() {
 #[test]
 fn test_struct_value_tagged() {
     #[derive(Debug, XmlRootTag, XmlSerialize, PartialEq)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
         href: String,
         num: usize,
@@ -82,7 +82,7 @@ fn test_struct_value_tagged() {
 #[test]
 fn test_struct_value_untagged() {
     #[derive(Debug, XmlRootTag, XmlSerialize, PartialEq)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
         #[xml(ty = "untagged")]
         href: String,
@@ -103,7 +103,7 @@ fn test_struct_value_untagged() {
 #[test]
 fn test_struct_vec() {
     #[derive(Debug, XmlRootTag, XmlSerialize, PartialEq)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
         #[xml(flatten)]
         href: Vec<String>,
@@ -127,7 +127,7 @@ fn test_struct_vec() {
 #[test]
 fn test_struct_serialize_with() {
     #[derive(Debug, XmlRootTag, XmlSerialize, PartialEq)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
         #[xml(serialize_with = "serialize_href")]
         href: String,
@@ -136,8 +136,8 @@ fn test_struct_serialize_with() {
     fn serialize_href(
         val: &str,
         ns: Option<Namespace>,
-        tag: Option<&[u8]>,
-        namespaces: &HashMap<Namespace, &[u8]>,
+        tag: Option<&str>,
+        namespaces: &HashMap<Namespace, &str>,
         writer: &mut Writer<&mut Vec<u8>>,
     ) -> std::io::Result<()> {
         val.to_uppercase().serialize(ns, tag, namespaces, writer)
@@ -160,7 +160,7 @@ fn test_struct_serialize_with() {
 #[test]
 fn test_struct_tag_list() {
     #[derive(Debug, XmlRootTag, XmlSerialize, XmlDeserialize, PartialEq)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
         #[xml(ty = "untagged", flatten)]
         tags: Vec<Tag>,
@@ -194,9 +194,9 @@ fn test_struct_ns() {
     const NS: Namespace = quick_xml::name::Namespace(b"NS:TEST:");
 
     #[derive(Debug, XmlRootTag, XmlSerialize)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
-        #[xml(ns = "NS", rename = b"okay")]
+        #[xml(ns = "NS", rename = "okay")]
         child: String,
     }
 
@@ -210,7 +210,7 @@ fn test_struct_ns() {
 #[test]
 fn test_struct_tuple() {
     #[derive(Debug, XmlRootTag, XmlSerialize, PartialEq)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
         child: Child,
     }
@@ -230,8 +230,8 @@ fn test_tuple_struct() {
     const NS: Namespace = quick_xml::name::Namespace(b"NS:TEST:");
 
     #[derive(Debug, XmlRootTag, XmlSerialize)]
-    #[xml(root = b"document")]
-    struct Document(#[xml(ns = "NS", rename = b"okay")] String);
+    #[xml(root = "document")]
+    struct Document(#[xml(ns = "NS", rename = "okay")] String);
 
     Document("hello!".to_string())
         .serialize_to_string()
