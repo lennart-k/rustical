@@ -42,11 +42,11 @@ pub enum PropstatWrapper<T: XmlSerialize> {
 #[derive(XmlSerialize, XmlRootTag)]
 #[xml(ns = "crate::namespace::NS_DAV", root = b"response")]
 #[xml(ns_prefix(
-    crate::namespace::NS_DAV = b"",
-    crate::namespace::NS_CARDDAV = b"CARD",
-    crate::namespace::NS_CALDAV = b"CAL",
-    crate::namespace::NS_CALENDARSERVER = b"CS",
-    crate::namespace::NS_DAVPUSH = b"PUSH"
+    crate::namespace::NS_DAV = "",
+    crate::namespace::NS_CARDDAV = "CARD",
+    crate::namespace::NS_CALDAV = "CAL",
+    crate::namespace::NS_CALENDARSERVER = "CS",
+    crate::namespace::NS_DAVPUSH = "PUSH"
 ))]
 pub struct ResponseElement<PropstatType: XmlSerialize> {
     pub href: String,
@@ -88,11 +88,11 @@ impl<PT: XmlSerialize> Default for ResponseElement<PT> {
 #[derive(XmlSerialize, XmlRootTag)]
 #[xml(root = b"multistatus", ns = "crate::namespace::NS_DAV")]
 #[xml(ns_prefix(
-    crate::namespace::NS_DAV = b"",
-    crate::namespace::NS_CARDDAV = b"CARD",
-    crate::namespace::NS_CALDAV = b"CAL",
-    crate::namespace::NS_CALENDARSERVER = b"CS",
-    crate::namespace::NS_DAVPUSH = b"PUSH"
+    crate::namespace::NS_DAV = "",
+    crate::namespace::NS_CARDDAV = "CARD",
+    crate::namespace::NS_CALDAV = "CAL",
+    crate::namespace::NS_CALENDARSERVER = "CS",
+    crate::namespace::NS_DAVPUSH = "PUSH"
 ))]
 pub struct MultistatusElement<PropType: XmlSerialize, MemberPropType: XmlSerialize> {
     #[xml(rename = b"response", flatten)]

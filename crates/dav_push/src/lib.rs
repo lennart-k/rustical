@@ -27,8 +27,8 @@ pub struct ContentUpdate {
 #[derive(XmlSerialize, XmlRootTag, Debug)]
 #[xml(root = b"push-message", ns = "rustical_dav::namespace::NS_DAVPUSH")]
 #[xml(ns_prefix(
-    rustical_dav::namespace::NS_DAVPUSH = b"",
-    rustical_dav::namespace::NS_DAV = b"D",
+    rustical_dav::namespace::NS_DAVPUSH = "",
+    rustical_dav::namespace::NS_DAV = "D",
 ))]
 struct PushMessage {
     #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]

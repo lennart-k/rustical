@@ -75,7 +75,7 @@ impl NamedStruct {
                     } else {
                         b"".to_vec()
                     };
-                    let attr_name = [b"xmlns".as_ref(), &sep, &prefix.value()].concat();
+                    let attr_name = [b"xmlns".as_ref(), &sep, prefix.value().as_bytes()].concat();
                     let a = syn::LitByteStr::new(&attr_name, prefix.span());
                     quote! {
                          bytes_start.push_attribute((#a.as_ref(), #ns.as_ref()));
