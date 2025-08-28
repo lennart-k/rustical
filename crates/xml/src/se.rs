@@ -79,10 +79,8 @@ impl XmlSerialize for () {
         let qname = tagname.as_ref().map(|tagname| QName(tagname));
         if let Some(qname) = &qname {
             let mut bytes_start = BytesStart::from(qname.to_owned());
-            if !has_prefix {
-                if let Some(ns) = &ns {
-                    bytes_start.push_attribute((b"xmlns".as_ref(), ns.as_ref()));
-                }
+            if !has_prefix && let Some(ns) = &ns {
+                bytes_start.push_attribute((b"xmlns".as_ref(), ns.as_ref()));
             }
             writer.write_event(Event::Empty(bytes_start))?;
         }
