@@ -30,7 +30,7 @@ export class EditAddressbookForm extends LitElement {
     return html`
       <button @click=${() => this.dialog.value.showModal()}>Edit addressbook</button>
       <dialog ${ref(this.dialog)}>
-        <h3>Create addressbook</h3>
+        <h3>Edit addressbook</h3>
         <form @submit=${this.submit} ${ref(this.form)}>
           <label>
             Displayname
