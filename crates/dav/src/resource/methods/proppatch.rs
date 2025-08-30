@@ -57,7 +57,7 @@ enum Operation<T: XmlDeserialize> {
 }
 
 #[derive(XmlDeserialize, XmlRootTag, Clone, Debug)]
-#[xml(root = b"propertyupdate")]
+#[xml(root = "propertyupdate")]
 #[xml(ns = "crate::namespace::NS_DAV")]
 struct PropertyupdateElement<T: XmlDeserialize>(#[xml(ty = "untagged", flatten)] Vec<Operation<T>>);
 

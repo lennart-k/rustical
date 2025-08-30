@@ -42,7 +42,7 @@ export class EditCalendarForm extends LitElement {
     return html`
       <button @click=${() => this.dialog.value.showModal()}>Edit calendar</button>
       <dialog ${ref(this.dialog)}>
-        <h3>Create calendar</h3>
+        <h3>Edit calendar</h3>
         <form @submit=${this.submit} ${ref(this.form)}>
           <label>
             Displayname

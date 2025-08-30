@@ -38,6 +38,7 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
     oidc_config: Option<OidcConfig>,
     nextcloud_login_config: NextcloudLoginConfig,
     dav_push_enabled: bool,
+    session_cookie_samesite_strict: bool,
 ) -> Router<()> {
     let combined_cal_store = Arc::new(CombinedCalendarStore::new(
         cal_store.clone(),
@@ -128,7 +129,11 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
             SessionManagerLayer::new(session_store)
                 .with_name("rustical_session")
                 .with_secure(true)
-                .with_same_site(SameSite::Strict)
+                .with_same_site(if session_cookie_samesite_strict {
+                    SameSite::Strict
+                } else {
+                    SameSite::Lax
+                })
                 .with_expiry(Expiry::OnInactivity(
                     tower_sessions::cookie::time::Duration::hours(2),
                 )),

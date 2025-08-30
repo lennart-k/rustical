@@ -14,13 +14,13 @@ impl Variant {
         &self.variant.ident
     }
 
-    pub fn xml_name(&self) -> syn::LitByteStr {
+    pub fn xml_name(&self) -> syn::LitStr {
         self.attrs
             .common
             .rename
             .to_owned()
-            .unwrap_or(syn::LitByteStr::new(
-                self.ident().to_string().to_kebab_case().as_bytes(),
+            .unwrap_or(syn::LitStr::new(
+                self.ident().to_string().to_kebab_case().as_str(),
                 self.ident().span(),
             ))
     }
@@ -75,6 +75,8 @@ impl Variant {
         }
         let ident = self.ident();
         let variant_name = self.xml_name();
+        let b_variant_name =
+            syn::LitByteStr::new(self.xml_name().value().as_bytes(), variant_name.span());
         let deserializer_type = self.deserializer_type();
 
         Some(
@@ -93,7 +95,7 @@ impl Variant {
                         panic!("tuple variants should contain exactly one element");
                     }
                     quote! {
-                        #variant_name => {
+                        #b_variant_name => {
                             let val = Some(<#deserializer_type as ::rustical_xml::XmlDeserialize>::deserialize(reader, start, empty)?);
                             Ok(Self::#ident(val))
                         }
@@ -104,7 +106,7 @@ impl Variant {
                         panic!("tuple variants should contain exactly one element");
                     }
                     quote! {
-                        #variant_name => {
+                        #b_variant_name => {
                             let val = <#deserializer_type as ::rustical_xml::XmlDeserialize>::deserialize(reader, start, empty)?;
                             Ok(Self::#ident(val))
                         }
@@ -112,7 +114,7 @@ impl Variant {
                 }
                 (false, Fields::Unit, _) => {
                     quote! {
-                        #variant_name => {
+                        #b_variant_name => {
                             // Make sure that content is still consumed
                             <() as ::rustical_xml::XmlDeserialize>::deserialize(reader, start, empty)?;
                             Ok(Self::#ident)

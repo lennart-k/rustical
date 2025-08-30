@@ -60,7 +60,7 @@ pub struct NresultsElement(#[xml(ty = "text")] u64);
 // <!ELEMENT sync-collection (sync-token, sync-level, limit?, prop)>
 //    <!-- DAV:limit defined in RFC 5323, Section 5.17 -->
 //    <!-- DAV:prop defined in RFC 4918, Section 14.18 -->
-#[xml(ns = "crate::namespace::NS_DAV", root = b"sync-collection")]
+#[xml(ns = "crate::namespace::NS_DAV", root = "sync-collection")]
 pub struct SyncCollectionRequest<PN: XmlDeserialize> {
     #[xml(ns = "crate::namespace::NS_DAV")]
     pub sync_token: String,

@@ -29,7 +29,7 @@ enum CalendarProp {
     #[allow(dead_code)]
     Getcontenttype(&'static str),
 
-    #[xml(ns = "NS_DAV", rename = b"principal-URL")]
+    #[xml(ns = "NS_DAV", rename = "principal-URL")]
     #[allow(dead_code)]
     PrincipalUrl,
     #[allow(dead_code)]

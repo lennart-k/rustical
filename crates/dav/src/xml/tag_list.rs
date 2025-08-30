@@ -13,8 +13,8 @@ impl XmlSerialize for TagList {
     fn serialize(
         &self,
         ns: Option<Namespace>,
-        tag: Option<&[u8]>,
-        namespaces: &HashMap<Namespace, &[u8]>,
+        tag: Option<&str>,
+        namespaces: &HashMap<Namespace, &str>,
         writer: &mut quick_xml::Writer<&mut Vec<u8>>,
     ) -> std::io::Result<()> {
         let prefix = ns
@@ -22,23 +22,21 @@ impl XmlSerialize for TagList {
             .unwrap_or(None)
             .map(|prefix| {
                 if !prefix.is_empty() {
-                    [*prefix, b":"].concat()
+                    format!("{prefix}:")
                 } else {
-                    Vec::new()
+                    String::new()
                 }
             });
         let has_prefix = prefix.is_some();
         let tagname = tag.map(|tag| [&prefix.unwrap_or_default(), tag].concat());
         let qname = tagname
             .as_ref()
-            .map(|tagname| ::quick_xml::name::QName(tagname));
+            .map(|tagname| ::quick_xml::name::QName(tagname.as_bytes()));
 
         if let Some(qname) = &qname {
             let mut bytes_start = BytesStart::from(qname.to_owned());
-            if !has_prefix {
-                if let Some(ns) = &ns {
-                    bytes_start.push_attribute((b"xmlns".as_ref(), ns.as_ref()));
-                }
+            if !has_prefix && let Some(ns) = &ns {
+                bytes_start.push_attribute((b"xmlns".as_ref(), ns.as_ref()));
             }
             writer.write_event(Event::Start(bytes_start))?;
         }

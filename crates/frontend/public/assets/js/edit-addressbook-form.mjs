@@ -29,7 +29,7 @@ let EditAddressbookForm = class extends i {
     return x`
       <button @click=${() => this.dialog.value.showModal()}>Edit addressbook</button>
       <dialog ${n(this.dialog)}>
-        <h3>Create addressbook</h3>
+        <h3>Edit addressbook</h3>
         <form @submit=${this.submit} ${n(this.form)}>
           <label>
             Displayname

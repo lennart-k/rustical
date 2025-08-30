@@ -556,14 +556,14 @@ impl CalendarStore for SqliteCalendarStore {
         Self::_delete_calendar(&mut *tx, principal, id, use_trashbin).await?;
         tx.commit().await.map_err(crate::Error::from)?;
 
-        if let Some(cal) = cal {
-            if let Err(err) = self.sender.try_send(CollectionOperation {
+        if let Some(cal) = cal
+            && let Err(err) = self.sender.try_send(CollectionOperation {
                 data: CollectionOperationInfo::Delete,
                 topic: cal.push_topic,
-            }) {
-                error!("Push notification about deleted calendar failed: {err}");
-            };
-        }
+            })
+        {
+            error!("Push notification about deleted calendar failed: {err}");
+        };
         Ok(())
     }
 

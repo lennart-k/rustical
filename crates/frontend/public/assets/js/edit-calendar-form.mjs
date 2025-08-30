@@ -30,7 +30,7 @@ let EditCalendarForm = class extends i {
     return x`
       <button @click=${() => this.dialog.value.showModal()}>Edit calendar</button>
       <dialog ${n(this.dialog)}>
-        <h3>Create calendar</h3>
+        <h3>Edit calendar</h3>
         <form @submit=${this.submit} ${n(this.form)}>
           <label>
             Displayname

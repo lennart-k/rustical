@@ -7,7 +7,7 @@ use rustical_xml::XmlError;
 use rustical_xml::XmlRootTag;
 
 #[derive(Debug, Clone, XmlDeserialize, XmlRootTag, PartialEq)]
-#[xml(root = b"propfind", ns = "crate::namespace::NS_DAV")]
+#[xml(root = "propfind", ns = "crate::namespace::NS_DAV")]
 pub struct PropfindElement<PN: XmlDeserialize> {
     #[xml(ty = "untagged")]
     pub prop: PropfindType<PN>,

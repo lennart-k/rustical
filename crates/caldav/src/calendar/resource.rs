@@ -225,12 +225,12 @@ impl Resource for CalendarResource {
                 }
                 CalendarProp::TimezoneServiceSet(_) => Err(rustical_dav::Error::PropReadOnly),
                 CalendarProp::CalendarTimezoneId(timezone_id) => {
-                    if let Some(tzid) = &timezone_id {
-                        if !vtimezones_rs::VTIMEZONES.contains_key(tzid) {
-                            return Err(rustical_dav::Error::BadRequest(format!(
-                                "Invalid timezone-id: {tzid}"
-                            )));
-                        }
+                    if let Some(tzid) = &timezone_id
+                        && !vtimezones_rs::VTIMEZONES.contains_key(tzid)
+                    {
+                        return Err(rustical_dav::Error::BadRequest(format!(
+                            "Invalid timezone-id: {tzid}"
+                        )));
                     }
                     self.cal.timezone_id = timezone_id;
                     Ok(())

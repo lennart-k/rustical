@@ -35,12 +35,12 @@ pub enum Trigger {
 
 #[derive(XmlSerialize, XmlDeserialize, PartialEq, Clone, Debug)]
 pub struct ContentUpdate(
-    #[xml(rename = b"depth", ns = "rustical_dav::namespace::NS_DAV")] pub Depth,
+    #[xml(rename = "depth", ns = "rustical_dav::namespace::NS_DAV")] pub Depth,
 );
 
 #[derive(XmlSerialize, PartialEq, Clone, Debug)]
 pub struct PropertyUpdate(
-    #[xml(rename = b"depth", ns = "rustical_dav::namespace::NS_DAV")] pub Depth,
+    #[xml(rename = "depth", ns = "rustical_dav::namespace::NS_DAV")] pub Depth,
 );
 
 impl XmlDeserialize for PropertyUpdate {
@@ -51,8 +51,8 @@ impl XmlDeserialize for PropertyUpdate {
     ) -> Result<Self, rustical_xml::XmlError> {
         #[derive(XmlDeserialize, PartialEq, Clone, Debug)]
         struct FakePropertyUpdate(
-            #[xml(rename = b"depth", ns = "rustical_dav::namespace::NS_DAV")] pub Depth,
-            #[xml(rename = b"prop", ns = "rustical_dav::namespace::NS_DAV")] pub Unparsed,
+            #[xml(rename = "depth", ns = "rustical_dav::namespace::NS_DAV")] pub Depth,
+            #[xml(rename = "prop", ns = "rustical_dav::namespace::NS_DAV")] pub Unparsed,
         );
         let FakePropertyUpdate(depth, _) = FakePropertyUpdate::deserialize(reader, start, empty)?;
         Ok(Self(depth))

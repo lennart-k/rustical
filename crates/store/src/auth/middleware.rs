@@ -72,12 +72,11 @@ where
         let mut inner = self.inner.clone();
 
         Box::pin(async move {
-            if let Some(session) = request.extensions().get::<Session>() {
-                if let Ok(Some(user_id)) = session.get::<String>("user").await {
-                    if let Ok(Some(user)) = ap.get_principal(&user_id).await {
-                        request.extensions_mut().insert(user);
-                    }
-                }
+            if let Some(session) = request.extensions().get::<Session>()
+                && let Ok(Some(user_id)) = session.get::<String>("user").await
+                && let Ok(Some(user)) = ap.get_principal(&user_id).await
+            {
+                request.extensions_mut().insert(user);
             }
 
             if let Some(auth) = auth_header {

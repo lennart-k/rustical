@@ -108,8 +108,7 @@ impl Enum {
                     Some(ns) => quote! { Some(#ns) },
                     None => quote! { None },
                 };
-                let b_xml_name = variant.xml_name().value();
-                let xml_name = String::from_utf8_lossy(&b_xml_name);
+                let xml_name = variant.xml_name().value();
                 quote! {(#ns, #xml_name)}
             });
 

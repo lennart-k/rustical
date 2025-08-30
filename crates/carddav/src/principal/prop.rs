@@ -8,14 +8,14 @@ use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 #[xml(unit_variants_ident = "PrincipalPropName")]
 pub enum PrincipalProp {
     // WebDAV Access Control (RFC 3744)
-    #[xml(rename = b"principal-URL")]
+    #[xml(rename = "principal-URL")]
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     PrincipalUrl(HrefElement),
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     GroupMembership(GroupMembership),
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     GroupMemberSet(GroupMemberSet),
-    #[xml(ns = "rustical_dav::namespace::NS_DAV", rename = b"alternate-URI-set")]
+    #[xml(ns = "rustical_dav::namespace::NS_DAV", rename = "alternate-URI-set")]
     AlternateUriSet,
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     PrincipalCollectionSet(HrefElement),

@@ -116,6 +116,7 @@ async fn main() -> Result<()> {
                 config.oidc.clone(),
                 config.nextcloud_login.clone(),
                 config.dav_push.enabled,
+                config.http.session_cookie_samesite_strict,
             );
             let app = ServiceExt::<Request>::into_make_service(
                 NormalizePathLayer::trim_trailing_slash().layer(app),

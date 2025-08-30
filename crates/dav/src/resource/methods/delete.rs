@@ -60,11 +60,11 @@ pub async fn route_delete<R: ResourceService>(
             return Err(crate::Error::PreconditionFailed.into());
         }
     }
-    if let Some(if_none_match) = if_none_match {
-        if resource.satisfies_if_none_match(&if_none_match) {
-            // Precondition failed
-            return Err(crate::Error::PreconditionFailed.into());
-        }
+    if let Some(if_none_match) = if_none_match
+        && resource.satisfies_if_none_match(&if_none_match)
+    {
+        // Precondition failed
+        return Err(crate::Error::PreconditionFailed.into());
     }
     resource_service
         .delete_resource(path_components, !no_trash)

@@ -3,7 +3,7 @@ use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
 #[test]
 fn test_struct_value_tagged() {
     #[derive(Debug, XmlRootTag, XmlSerialize, PartialEq)]
-    #[xml(root = b"propfind")]
+    #[xml(root = "propfind")]
     struct Document {
         prop: Prop,
     }

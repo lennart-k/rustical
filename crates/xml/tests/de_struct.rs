@@ -6,7 +6,7 @@ use std::collections::HashSet;
 #[test]
 fn test_struct_text_field() {
     #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
         #[xml(ty = "text")]
         text: String,
@@ -27,7 +27,7 @@ fn test_struct_text_field() {
 #[test]
 fn test_struct_document() {
     #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
         child: Child,
     }
@@ -52,9 +52,9 @@ fn test_struct_document() {
 #[test]
 fn test_struct_rename_field() {
     #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
-        #[xml(rename = b"ok-wow")]
+        #[xml(rename = "ok-wow")]
         child: Child,
     }
 
@@ -78,7 +78,7 @@ fn test_struct_rename_field() {
 #[test]
 fn test_struct_optional_field() {
     #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
         child: Option<Child>,
     }
@@ -96,9 +96,9 @@ fn test_struct_optional_field() {
 #[test]
 fn test_struct_vec() {
     #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
-        #[xml(rename = b"child", flatten)]
+        #[xml(rename = "child", flatten)]
         children: Vec<Child>,
     }
 
@@ -124,9 +124,9 @@ fn test_struct_vec() {
 #[test]
 fn test_struct_set() {
     #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
-        #[xml(rename = b"child", flatten)]
+        #[xml(rename = "child", flatten)]
         children: HashSet<Child>,
     }
 
@@ -154,7 +154,7 @@ fn test_struct_ns() {
     const NS_HELLO: Namespace = Namespace(b"hello");
 
     #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
         #[xml(ns = "NS_HELLO")]
         child: (),
@@ -169,7 +169,7 @@ fn test_struct_attr() {
     const NS_HELLO: Namespace = Namespace(b"hello");
 
     #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
         #[xml(ns = "NS_HELLO")]
         child: (),
@@ -196,7 +196,7 @@ fn test_struct_attr() {
 #[test]
 fn test_struct_generics() {
     #[derive(XmlDeserialize, XmlRootTag)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document<T: XmlDeserialize> {
         #[allow(dead_code)]
         child: T,
@@ -217,7 +217,7 @@ fn test_struct_generics() {
 #[test]
 fn test_struct_unparsed() {
     #[derive(XmlDeserialize, XmlRootTag)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
         #[allow(dead_code)]
         child: Unparsed,
@@ -238,7 +238,7 @@ fn test_struct_unparsed() {
 #[test]
 fn test_xml_values() {
     #[derive(XmlDeserialize, XmlRootTag, PartialEq, Debug)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
         href: String,
     }
@@ -262,7 +262,7 @@ fn test_xml_values() {
 #[test]
 fn test_xml_cdata() {
     #[derive(XmlDeserialize, XmlRootTag, PartialEq, Debug)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
         #[xml(ty = "text")]
         hello: String,
@@ -293,7 +293,7 @@ fn test_xml_cdata() {
 #[test]
 fn test_struct_xml_decl() {
     #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
         child: Child,
     }
@@ -323,7 +323,7 @@ fn test_struct_xml_decl() {
 #[test]
 fn test_struct_tuple() {
     #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
         child: Child,
     }
@@ -348,7 +348,7 @@ fn test_struct_tuple() {
 #[test]
 fn test_struct_untagged_ns() {
     #[derive(Debug, XmlDeserialize, XmlRootTag, PartialEq)]
-    #[xml(root = b"document")]
+    #[xml(root = "document")]
     struct Document {
         #[xml(ty = "untagged")]
         child: Child,

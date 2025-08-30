@@ -20,13 +20,13 @@ impl XmlSerialize for UserPrivilegeSet {
     fn serialize(
         &self,
         ns: Option<Namespace>,
-        tag: Option<&[u8]>,
-        namespaces: &HashMap<Namespace, &[u8]>,
+        tag: Option<&str>,
+        namespaces: &HashMap<Namespace, &str>,
         writer: &mut quick_xml::Writer<&mut Vec<u8>>,
     ) -> std::io::Result<()> {
         #[derive(XmlSerialize)]
         pub struct FakeUserPrivilegeSet {
-            #[xml(rename = b"privilege", flatten)]
+            #[xml(rename = "privilege", flatten)]
             privileges: Vec<UserPrivilege>,
         }
 

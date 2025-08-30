@@ -49,7 +49,7 @@ impl<T: XmlRootTag + XmlDeserialize> XmlDocument for T {
                     let (ns, name) = reader.resolve_element(start.name());
                     let matches = match (Self::root_ns(), &ns, name) {
                         // Wrong tag
-                        (_, _, name) if name.as_ref() != Self::root_tag() => false,
+                        (_, _, name) if name.as_ref() != Self::root_tag().as_bytes() => false,
                         // Wrong namespace
                         (Some(root_ns), ns, _) if &ResolveResult::Bound(root_ns) != ns => false,
                         _ => true,
@@ -60,7 +60,7 @@ impl<T: XmlRootTag + XmlDeserialize> XmlDocument for T {
                             format!("{ns:?}"),
                             String::from_utf8_lossy(name.as_ref()).to_string(),
                             format!("{root_ns:?}"),
-                            String::from_utf8_lossy(Self::root_tag()).to_string(),
+                            Self::root_tag().to_owned(),
                         ));
                     };
 

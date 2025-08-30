@@ -116,19 +116,17 @@ impl CompFilterElement {
         // TODO: Implement prop-filter (and comp-filter?) at some point
 
         if let Some(time_range) = &self.time_range {
-            if let Some(start) = &time_range.start {
-                if let Some(last_occurence) = cal_object.get_last_occurence().unwrap_or(None) {
-                    if start.deref() > &last_occurence.utc() {
-                        return false;
-                    }
-                };
+            if let Some(start) = &time_range.start
+                && let Some(last_occurence) = cal_object.get_last_occurence().unwrap_or(None)
+                && start.deref() > &last_occurence.utc()
+            {
+                return false;
             }
-            if let Some(end) = &time_range.end {
-                if let Some(first_occurence) = cal_object.get_first_occurence().unwrap_or(None) {
-                    if end.deref() < &first_occurence.utc() {
-                        return false;
-                    }
-                };
+            if let Some(end) = &time_range.end
+                && let Some(first_occurence) = cal_object.get_first_occurence().unwrap_or(None)
+                && end.deref() < &first_occurence.utc()
+            {
+                return false;
             }
         }
         true
@@ -156,15 +154,15 @@ impl From<&FilterElement> for CalendarQuery {
         for comp_filter in comp_filter_vcalendar.comp_filter.iter() {
             // A calendar object cannot contain both VEVENT and VTODO, so we only have to handle
             // whatever we get first
-            if matches!(comp_filter.name.as_str(), "VEVENT" | "VTODO") {
-                if let Some(time_range) = &comp_filter.time_range {
-                    let start = time_range.start.as_ref().map(|start| start.date_naive());
-                    let end = time_range.end.as_ref().map(|end| end.date_naive());
-                    return CalendarQuery {
-                        time_start: start,
-                        time_end: end,
-                    };
-                }
+            if matches!(comp_filter.name.as_str(), "VEVENT" | "VTODO")
+                && let Some(time_range) = &comp_filter.time_range
+            {
+                let start = time_range.start.as_ref().map(|start| start.date_naive());
+                let end = time_range.end.as_ref().map(|end| end.date_naive());
+                return CalendarQuery {
+                    time_start: start,
+                    time_end: end,
+                };
             }
         }
         Default::default()

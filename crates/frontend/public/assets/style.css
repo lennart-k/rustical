@@ -290,6 +290,7 @@ ul.collection-list {
       .color-chip {
         background: var(--color);
         grid-area: color-chip;
+        margin-left: 8px;
       }
 
       .actions {
@@ -343,6 +344,17 @@ select {
   &:hover,
   &:focus {
     background: color-mix(in srgb, var(--background-color), var(--dilute-color) 20%);
+  }
+}
+
+form {
+
+  input[type="text"],
+  input[type="password"],
+  input[type="color"],
+  textarea,
+  select {
+    width: 100%;
   }
 }
 
