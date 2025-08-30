@@ -13,6 +13,7 @@ use tower::Service;
 
 #[derive(Clone, RustEmbed, Default)]
 #[folder = "public/assets"]
+#[allow(dead_code)] // Since this is not used with the frontend-dev feature
 pub struct Assets;
 
 #[derive(Clone, Default)]

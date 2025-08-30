@@ -192,20 +192,19 @@ pub async fn route_get_oidc_callback<US: UserStore + Clone>(
         .await
         .map_err(|e| OidcError::UserInfo(e.to_string()))?;
 
-    if let Some(require_group) = &oidc_config.require_group {
-        if !user_info_claims
+    if let Some(require_group) = &oidc_config.require_group
+        && !user_info_claims
             .additional_claims()
             .groups
             .clone()
             .unwrap_or_default()
             .contains(require_group)
-        {
-            return Ok((
-                StatusCode::UNAUTHORIZED,
-                "User is not in an authorized group to use RustiCal",
-            )
-                .into_response());
-        }
+    {
+        return Ok((
+            StatusCode::UNAUTHORIZED,
+            "User is not in an authorized group to use RustiCal",
+        )
+            .into_response());
     }
 
     let user_id = match oidc_config.claim_userid {

@@ -79,5 +79,5 @@ async fn test_propfind() {
         )
         .unwrap();
 
-    let output = response.serialize_to_string().unwrap();
+    let _output = response.serialize_to_string().unwrap();
 }

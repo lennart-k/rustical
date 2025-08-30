@@ -35,10 +35,8 @@ impl XmlSerialize for TagList {
 
         if let Some(qname) = &qname {
             let mut bytes_start = BytesStart::from(qname.to_owned());
-            if !has_prefix {
-                if let Some(ns) = &ns {
-                    bytes_start.push_attribute((b"xmlns".as_ref(), ns.as_ref()));
-                }
+            if !has_prefix && let Some(ns) = &ns {
+                bytes_start.push_attribute((b"xmlns".as_ref(), ns.as_ref()));
             }
             writer.write_event(Event::Start(bytes_start))?;
         }
