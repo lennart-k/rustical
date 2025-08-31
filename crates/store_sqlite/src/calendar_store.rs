@@ -353,7 +353,6 @@ impl SqliteCalendarStore {
         object: CalendarObject,
         overwrite: bool,
     ) -> Result<(), Error> {
-        // TODO: Prevent objects from being commited to a subscription calendar
         let (object_id, ics) = (object.get_id(), object.get_ics());
 
         let first_occurence = object
@@ -669,10 +668,15 @@ impl CalendarStore for SqliteCalendarStore {
         object: CalendarObject,
         overwrite: bool,
     ) -> Result<(), Error> {
-        // TODO: Prevent objects from being commited to a subscription calendar
         let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
 
         let object_id = object.get_id().to_owned();
+
+        let calendar = Self::_get_calendar(&mut *tx, &principal, &cal_id, true).await?;
+        if calendar.subscription_url.is_some() {
+            // We cannot commit an object to a subscription calendar
+            return Err(Error::ReadOnly);
+        }
 
         Self::_put_object(
             &mut *tx,
