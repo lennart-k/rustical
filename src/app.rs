@@ -40,10 +40,9 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
     dav_push_enabled: bool,
     session_cookie_samesite_strict: bool,
 ) -> Router<()> {
-    let combined_cal_store = Arc::new(CombinedCalendarStore::new(
-        cal_store.clone(),
-        ContactBirthdayStore::new(addr_store.clone()).into(),
-    ));
+    let birthday_store = Arc::new(ContactBirthdayStore::new(addr_store.clone()));
+    let combined_cal_store =
+        Arc::new(CombinedCalendarStore::new(cal_store.clone()).with_store(birthday_store));
 
     let mut router = Router::new()
         .merge(caldav_router(

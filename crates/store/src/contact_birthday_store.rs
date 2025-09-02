@@ -1,5 +1,6 @@
 use crate::{
     Addressbook, AddressbookStore, Calendar, CalendarStore, Error, calendar::CalendarMetadata,
+    combined_calendar_store::PrefixedCalendarStore,
 };
 use async_trait::async_trait;
 use derive_more::derive::Constructor;
@@ -11,6 +12,10 @@ pub(crate) const BIRTHDAYS_PREFIX: &str = "_birthdays_";
 
 #[derive(Constructor, Clone)]
 pub struct ContactBirthdayStore<AS: AddressbookStore>(Arc<AS>);
+
+impl<AS: AddressbookStore> PrefixedCalendarStore for ContactBirthdayStore<AS> {
+    const PREFIX: &'static str = BIRTHDAYS_PREFIX;
+}
 
 fn birthday_calendar(addressbook: Addressbook) -> Calendar {
     Calendar {
