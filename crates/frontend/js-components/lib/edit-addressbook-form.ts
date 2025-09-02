@@ -28,7 +28,7 @@ export class EditAddressbookForm extends LitElement {
 
   override render() {
     return html`
-      <button @click=${() => this.dialog.value.showModal()}>Edit addressbook</button>
+      <button @click=${() => this.dialog.value.showModal()}>Edit</button>
       <dialog ${ref(this.dialog)}>
         <h3>Edit addressbook</h3>
         <form @submit=${this.submit} ${ref(this.form)}>

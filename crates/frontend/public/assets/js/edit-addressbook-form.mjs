@@ -27,7 +27,7 @@ let EditAddressbookForm = class extends i {
   }
   render() {
     return x`
-      <button @click=${() => this.dialog.value.showModal()}>Edit addressbook</button>
+      <button @click=${() => this.dialog.value.showModal()}>Edit</button>
       <dialog ${n(this.dialog)}>
         <h3>Edit addressbook</h3>
         <form @submit=${this.submit} ${n(this.form)}>

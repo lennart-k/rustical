@@ -17,7 +17,7 @@ export class DeleteButton extends LitElement {
   }
 
   protected render() {
-    let text = this.trash ? 'Move to trash' : 'Delete'
+    let text = this.trash ? 'Trash' : 'Delete'
     return html`<button class="delete" @click=${e => this._onClick(e)}>${text}</button>`
   }
 
