@@ -5,6 +5,7 @@ members = ["crates/*"]
 version = "0.9.3"
 edition = "2024"
 description = "A CalDAV server"
+documentation = "https://lennart-k.github.io/rustical/"
 repository = "https://github.com/lennart-k/rustical"
 license = "AGPL-3.0-or-later"
 
@@ -16,7 +17,7 @@ description.workspace = true
 repository.workspace = true
 license.workspace = true
 resolver = "2"
-publish = false
+publish = true
 
 [features]
 debug = ["opentelemetry"]

@@ -45,4 +45,5 @@ CMD ["/usr/local/bin/rustical"]
 ENV RUSTICAL_DATA_STORE__SQLITE__DB_URL=/var/lib/rustical/db.sqlite3
 
 LABEL org.opencontainers.image.authors="Lennart K github.com/lennart-k"
+LABEL org.opencontainers.image.licenses="AGPL-3.0-or-later"
 EXPOSE 4000
