@@ -34,12 +34,11 @@ impl Enum {
                          });
                     let has_prefix = prefix.is_some();
                     let tagname = tag.map(|tag| [&prefix.unwrap_or_default(), tag].concat());
-                    let qname = tagname.as_ref().map(|tagname| ::quick_xml::name::QName(tagname.as_bytes()));
 
                     const enum_untagged: bool = #enum_untagged;
 
-                    if let Some(qname) = &qname {
-                        let mut bytes_start = BytesStart::from(qname.to_owned());
+                    if let Some(tagname) = tagname.as_ref() {
+                        let mut bytes_start = BytesStart::new(tagname);
                         if !has_prefix {
                             if let Some(ns) = &ns {
                                 bytes_start.push_attribute((b"xmlns".as_ref(), ns.as_ref()));
@@ -50,8 +49,8 @@ impl Enum {
 
                     #(#variant_serializers);*
 
-                    if let Some(qname) = &qname {
-                        writer.write_event(Event::End(BytesEnd::from(qname.to_owned())))?;
+                    if let Some(tagname) = tagname.as_ref() {
+                        writer.write_event(Event::End(BytesEnd::new(tagname)))?;
                     }
                     Ok(())
                 }

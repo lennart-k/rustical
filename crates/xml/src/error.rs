@@ -8,6 +8,8 @@ pub enum XmlError {
     #[error(transparent)]
     QuickXmlError(#[from] quick_xml::Error),
     #[error(transparent)]
+    QuickXmlEncodingError(#[from] quick_xml::encoding::EncodingError),
+    #[error(transparent)]
     QuickXmlAttrError(#[from] quick_xml::events::attributes::AttrError),
     #[error(transparent)]
     FromUtf8Error(#[from] FromUtf8Error),

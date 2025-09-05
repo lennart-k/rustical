@@ -1,7 +1,7 @@
 use crate::XmlRootTag;
 use quick_xml::{
     events::{BytesStart, Event, attributes::Attribute},
-    name::{Namespace, QName},
+    name::Namespace,
 };
 use std::collections::HashMap;
 pub use xml_derive::XmlSerialize;
@@ -76,9 +76,8 @@ impl XmlSerialize for () {
             });
         let has_prefix = prefix.is_some();
         let tagname = tag.map(|tag| [&prefix.unwrap_or_default(), tag].concat());
-        let qname = tagname.as_ref().map(|tagname| QName(tagname.as_bytes()));
-        if let Some(qname) = &qname {
-            let mut bytes_start = BytesStart::from(qname.to_owned());
+        if let Some(tagname) = tagname.as_ref() {
+            let mut bytes_start = BytesStart::new(tagname);
             if !has_prefix && let Some(ns) = &ns {
                 bytes_start.push_attribute((b"xmlns".as_ref(), ns.as_ref()));
             }

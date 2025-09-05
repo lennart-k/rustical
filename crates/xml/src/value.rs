@@ -1,6 +1,6 @@
 use crate::{XmlDeserialize, XmlError, XmlSerialize};
 use quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
-use quick_xml::name::{Namespace, QName};
+use quick_xml::name::Namespace;
 use std::collections::HashMap;
 use std::num::{ParseFloatError, ParseIntError};
 use std::{convert::Infallible, io::BufRead};
@@ -77,20 +77,23 @@ impl<T: ValueDeserialize> XmlDeserialize for T {
             loop {
                 match reader.read_event_into(&mut buf)? {
                     Event::Text(bytes_text) => {
-                        let text = bytes_text.unescape()?;
-                        if !string.is_empty() {
-                            // Content already written
-                            return Err(XmlError::UnsupportedEvent("content already written"));
-                        }
-                        string = text.to_string();
+                        let text = bytes_text.decode()?;
+                        string.push_str(&text);
                     }
                     Event::CData(cdata) => {
                         let text = String::from_utf8(cdata.to_vec())?;
-                        if !string.is_empty() {
-                            // Content already written
-                            return Err(XmlError::UnsupportedEvent("content already written"));
+                        string.push_str(&text);
+                    }
+                    Event::GeneralRef(gref) => {
+                        if let Some(char) = gref.resolve_char_ref()? {
+                            string.push(char);
+                        } else if let Some(text) =
+                            quick_xml::escape::resolve_xml_entity(&gref.xml_content()?)
+                        {
+                            string.push_str(text);
+                        } else {
+                            return Err(XmlError::UnsupportedEvent("invalid XML ref"));
                         }
-                        string = text;
                     }
                     Event::End(_) => break,
                     Event::Eof => return Err(XmlError::Eof),
@@ -123,17 +126,16 @@ impl<T: ValueSerialize> XmlSerialize for T {
             });
         let has_prefix = prefix.is_some();
         let tagname = tag.map(|tag| [&prefix.unwrap_or_default(), tag].concat());
-        let qname = tagname.as_ref().map(|tagname| QName(tagname.as_bytes()));
-        if let Some(qname) = &qname {
-            let mut bytes_start = BytesStart::from(qname.to_owned());
+        if let Some(tagname) = tagname.as_ref() {
+            let mut bytes_start = BytesStart::new(tagname);
             if !has_prefix && let Some(ns) = &ns {
                 bytes_start.push_attribute((b"xmlns".as_ref(), ns.as_ref()));
             }
             writer.write_event(Event::Start(bytes_start))?;
         }
         writer.write_event(Event::Text(BytesText::new(&self.serialize())))?;
-        if let Some(qname) = &qname {
-            writer.write_event(Event::End(BytesEnd::from(qname.to_owned())))?;
+        if let Some(tagname) = tagname {
+            writer.write_event(Event::End(BytesEnd::new(tagname)))?;
         }
         Ok(())
     }

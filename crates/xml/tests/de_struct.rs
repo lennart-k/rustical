@@ -275,7 +275,7 @@ fn test_xml_cdata() {
         <document>
             <![CDATA[some text]]>
             <href><![CDATA[some stuff]]></href>
-            <okay>&gt;</okay>
+            <okay>nice&gt;text</okay>
         </document>
     "#,
     )
@@ -285,9 +285,23 @@ fn test_xml_cdata() {
         Document {
             hello: "some text".to_owned(),
             href: "some stuff".to_owned(),
-            okay: ">".to_owned()
+            okay: "nice>text".to_owned()
         }
     );
+}
+
+#[test]
+fn test_quickxml_bytesref() {
+    let gt = quick_xml::events::BytesRef::new("gt");
+    assert!(!gt.is_char_ref());
+    let result = if !gt.is_char_ref() {
+        quick_xml::escape::resolve_xml_entity(&gt.xml_content().unwrap())
+            .unwrap()
+            .to_string()
+    } else {
+        gt.xml_content().unwrap().to_string()
+    };
+    assert_eq!(result, ">");
 }
 
 #[test]
@@ -307,14 +321,14 @@ fn test_struct_xml_decl() {
     let doc = Document::parse_str(
         r#"
     <?xml version="1.0" encoding="utf-8"?>
-    <document><child>Hello!</child></document>"#,
+    <document><child>Hello!&amp;</child></document>"#,
     )
     .unwrap();
     assert_eq!(
         doc,
         Document {
             child: Child {
-                text: "Hello!".to_owned()
+                text: "Hello!&".to_owned()
             }
         }
     );

@@ -148,6 +148,8 @@ impl NamedStruct {
                         }
                     }
 
+                    let mut string = String::new();
+
                     if !empty {
                         loop {
                             let event = reader.read_event_into(&mut buf)?;
@@ -167,12 +169,23 @@ impl NamedStruct {
                                     }
                                 }
                                 Event::Text(bytes_text) => {
-                                    let text = bytes_text.unescape()?;
-                                    #(#text_field_branches)*
+                                    let text = bytes_text.decode()?;
+                                    string.push_str(&text);
                                 }
                                 Event::CData(cdata) => {
                                     let text = String::from_utf8(cdata.to_vec())?;
-                                    #(#text_field_branches)*
+                                    string.push_str(&text);
+                                }
+                                Event::GeneralRef(gref) => {
+                                    if let Some(char) = gref.resolve_char_ref()? {
+                                        string.push(char);
+                                    } else if let Some(text) =
+                                        quick_xml::escape::resolve_xml_entity(&gref.xml_content()?)
+                                    {
+                                        string.push_str(text);
+                                    } else {
+                                        return Err(XmlError::UnsupportedEvent("invalid XML ref"));
+                                    }
                                 }
                                 Event::Decl(_) => { /* <?xml ... ?> ignore this */ }
                                 Event::Comment(_) => { /* ignore */ }
@@ -184,6 +197,9 @@ impl NamedStruct {
                             }
                         }
                     }
+
+                    let text = string;
+                    #(#text_field_branches)*
 
                     Ok(Self {
                         #(#builder_field_builds),*

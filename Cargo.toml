@@ -62,7 +62,7 @@ tokio = { version = "1", features = [
 url = "2.5"
 base64 = "0.22"
 thiserror = "2.0"
-quick-xml = { version = "0.37" }
+quick-xml = { version = "0.38" }
 rust-embed = "8.5"
 tower-sessions = "0.14"
 futures-core = "0.3.31"

@@ -66,6 +66,9 @@ impl<PN: XmlDeserialize> XmlDeserialize for PropElement<PN> {
                 Event::Text(_) | Event::CData(_) => {
                     return Err(XmlError::UnsupportedEvent("Not expecting text here"));
                 }
+                Event::GeneralRef(_) => {
+                    return Err(::rustical_xml::XmlError::UnsupportedEvent("GeneralRef"));
+                }
                 Event::Decl(_) | Event::Comment(_) | Event::DocType(_) | Event::PI(_) => { /* ignore */
                 }
                 Event::End(_end) => {

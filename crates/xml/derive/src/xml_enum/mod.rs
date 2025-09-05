@@ -66,6 +66,9 @@ impl Enum {
                             Event::CData(cdata) => {
                                 return Err(::rustical_xml::XmlError::UnsupportedEvent("CDATA"));
                             }
+                            Event::GeneralRef(_) => {
+                                return Err(::rustical_xml::XmlError::UnsupportedEvent("GeneralRef"));
+                            }
                             Event::Decl(_) => { /* <?xml ... ?> ignore this */ }
                             Event::Comment(_) => { /* ignore */ }
                             Event::DocType(_) => { /* ignore */ }
