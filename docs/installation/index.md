@@ -9,7 +9,7 @@ docker run \
   -p 4000:4000 \
   -v YOUR_DATA_DIR:/var/lib/rustical/ \
   -v OPTIONAL_YOUR_CONFIG_TOML:/etc/rustical/config.toml \ # (1)!
-  -e RUSTICAL__CONFIG_OPTION="asd" \  # (2)!
+  -e RUSTICAL_CONFIG_OPTION="asd" \  # (2)!
   ghcr.io/lennart-k/rustical
 ```
 
