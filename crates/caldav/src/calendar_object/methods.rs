@@ -11,7 +11,7 @@ use rustical_ical::CalendarObject;
 use rustical_store::CalendarStore;
 use rustical_store::auth::Principal;
 use std::str::FromStr;
-use tracing::instrument;
+use tracing::{debug, instrument};
 
 #[instrument(skip(cal_store))]
 pub async fn get_event<C: CalendarStore>(
@@ -78,9 +78,10 @@ pub async fn put_event<C: CalendarStore>(
         true
     };
 
-    let object = match CalendarObject::from_ics(body) {
+    let object = match CalendarObject::from_ics(body.clone()) {
         Ok(obj) => obj,
         Err(_) => {
+            debug!("invalid calendar data:\n{body}");
             return Err(Error::PreconditionFailed(Precondition::ValidCalendarData));
         }
     };
