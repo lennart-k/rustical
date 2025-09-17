@@ -9,6 +9,7 @@ use ical::{
     generator::Emitter,
     parser::{Component, ComponentMut},
 };
+use rustical_dav::header::Overwrite;
 use rustical_ical::{CalendarObject, CalendarObjectType};
 use rustical_store::{
     Calendar, CalendarMetadata, CalendarStore, SubscriptionStore, auth::Principal,
@@ -21,6 +22,7 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
     Path((principal, cal_id)): Path<(String, String)>,
     user: Principal,
     State(resource_service): State<CalendarResourceService<C, S>>,
+    overwrite: Overwrite,
     body: String,
 ) -> Result<Response, Error> {
     if !user.is_principal(&principal) {
@@ -100,7 +102,9 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
     };
 
     let cal_store = resource_service.cal_store;
-    cal_store.import_calendar(new_cal, objects, false).await?;
+    cal_store
+        .import_calendar(new_cal, objects, overwrite.is_true())
+        .await?;
 
     Ok(StatusCode::OK.into_response())
 }
