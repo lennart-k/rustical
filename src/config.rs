@@ -8,6 +8,7 @@ pub struct HttpConfig {
     pub host: String,
     pub port: u16,
     pub session_cookie_samesite_strict: bool,
+    pub payload_limit_mb: usize,
 }
 
 impl Default for HttpConfig {
@@ -16,6 +17,7 @@ impl Default for HttpConfig {
             host: "0.0.0.0".to_owned(),
             port: 4000,
             session_cookie_samesite_strict: false,
+            payload_limit_mb: 4,
         }
     }
 }

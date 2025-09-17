@@ -1,7 +1,7 @@
 use crate::config::NextcloudLoginConfig;
 use axum::Router;
 use axum::body::{Body, HttpBody};
-use axum::extract::Request;
+use axum::extract::{DefaultBodyLimit, Request};
 use axum::middleware::Next;
 use axum::response::{Redirect, Response};
 use axum::routing::{any, options};
@@ -39,6 +39,7 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
     nextcloud_login_config: NextcloudLoginConfig,
     dav_push_enabled: bool,
     session_cookie_samesite_strict: bool,
+    payload_limit_mb: usize,
 ) -> Router<()> {
     let birthday_store = Arc::new(ContactBirthdayStore::new(addr_store.clone()));
     let combined_cal_store =
@@ -202,4 +203,5 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
                 response
             },
         ))
+        .layer(DefaultBodyLimit::max(payload_limit_mb * 1000 * 1000))
 }
