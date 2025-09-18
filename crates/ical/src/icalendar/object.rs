@@ -56,18 +56,75 @@ impl rustical_xml::ValueDeserialize for CalendarObjectType {
 
 #[derive(Debug, Clone)]
 pub enum CalendarObjectComponent {
-    Event(EventObject),
-    Todo(TodoObject),
-    Journal(JournalObject),
+    Event(EventObject, Vec<EventObject>),
+    Todo(TodoObject, Vec<TodoObject>),
+    Journal(JournalObject, Vec<JournalObject>),
 }
 
-impl Default for CalendarObjectComponent {
-    fn default() -> Self {
-        Self::Event(EventObject::default())
+impl CalendarObjectComponent {
+    fn from_events(mut events: Vec<EventObject>) -> Result<Self, Error> {
+        let main_event = events
+            .extract_if(.., |event| event.event.get_recurrence_id().is_none())
+            .next()
+            .expect("there must be one main event");
+        let overrides = events;
+        for event in &overrides {
+            if event.get_uid() != main_event.get_uid() {
+                return Err(Error::InvalidData(
+                    "Calendar object contains multiple UIDs".to_owned(),
+                ));
+            }
+            if event.event.get_recurrence_id().is_none() {
+                return Err(Error::InvalidData(
+                    "Calendar object can only contain one main component".to_owned(),
+                ));
+            }
+        }
+        Ok(Self::Event(main_event, overrides))
+    }
+    fn from_todos(mut todos: Vec<TodoObject>) -> Result<Self, Error> {
+        let main_todo = todos
+            .extract_if(.., |todo| todo.0.get_recurrence_id().is_none())
+            .next()
+            .expect("there must be one main event");
+        let overrides = todos;
+        for todo in &overrides {
+            if todo.get_uid() != main_todo.get_uid() {
+                return Err(Error::InvalidData(
+                    "Calendar object contains multiple UIDs".to_owned(),
+                ));
+            }
+            if todo.0.get_recurrence_id().is_none() {
+                return Err(Error::InvalidData(
+                    "Calendar object can only contain one main component".to_owned(),
+                ));
+            }
+        }
+        Ok(Self::Todo(main_todo, overrides))
+    }
+    fn from_journals(mut journals: Vec<JournalObject>) -> Result<Self, Error> {
+        let main_journal = journals
+            .extract_if(.., |journal| journal.0.get_recurrence_id().is_none())
+            .next()
+            .expect("there must be one main event");
+        let overrides = journals;
+        for journal in &overrides {
+            if journal.get_uid() != main_journal.get_uid() {
+                return Err(Error::InvalidData(
+                    "Calendar object contains multiple UIDs".to_owned(),
+                ));
+            }
+            if journal.0.get_recurrence_id().is_none() {
+                return Err(Error::InvalidData(
+                    "Calendar object can only contain one main component".to_owned(),
+                ));
+            }
+        }
+        Ok(Self::Journal(main_journal, overrides))
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct CalendarObject {
     data: CalendarObjectComponent,
     properties: Vec<Property>,
@@ -84,16 +141,16 @@ impl CalendarObject {
                 "multiple calendars, only one allowed".to_owned(),
             ));
         }
-        if cal.events.len()
-            + cal.alarms.len()
-            + cal.todos.len()
-            + cal.journals.len()
-            + cal.free_busys.len()
+
+        if !cal.events.is_empty() as u8
+            + !cal.todos.is_empty() as u8
+            + !cal.journals.is_empty() as u8
+            + !cal.free_busys.is_empty() as u8
             != 1
         {
             // https://datatracker.ietf.org/doc/html/rfc4791#section-4.1
             return Err(Error::InvalidData(
-                "iCalendar object is only allowed to have exactly one component".to_owned(),
+                "iCalendar object must have exactly one component type".to_owned(),
             ));
         }
 
@@ -111,12 +168,27 @@ impl CalendarObject {
             .map(|timezone| (timezone.get_tzid().to_owned(), timezone))
             .collect();
 
-        let data = if let Some(event) = cal.events.into_iter().next() {
-            CalendarObjectComponent::Event(EventObject { event, timezones })
-        } else if let Some(todo) = cal.todos.into_iter().next() {
-            CalendarObjectComponent::Todo(todo.into())
-        } else if let Some(journal) = cal.journals.into_iter().next() {
-            CalendarObjectComponent::Journal(journal.into())
+        let data = if !cal.events.is_empty() {
+            CalendarObjectComponent::from_events(
+                cal.events
+                    .into_iter()
+                    .map(|event| EventObject {
+                        event,
+                        timezones: timezones.clone(),
+                    })
+                    .collect(),
+            )?
+        } else if !cal.todos.is_empty() {
+            CalendarObjectComponent::from_todos(
+                cal.todos.into_iter().map(|todo| todo.into()).collect(),
+            )?
+        } else if !cal.journals.is_empty() {
+            CalendarObjectComponent::from_journals(
+                cal.journals
+                    .into_iter()
+                    .map(|journal| journal.into())
+                    .collect(),
+            )?
         } else {
             return Err(Error::InvalidData(
                 "iCalendar component type not supported :(".to_owned(),
@@ -141,9 +213,11 @@ impl CalendarObject {
 
     pub fn get_id(&self) -> &str {
         match &self.data {
-            CalendarObjectComponent::Todo(todo) => todo.0.get_uid(),
-            CalendarObjectComponent::Event(event) => event.event.get_uid(),
-            CalendarObjectComponent::Journal(journal) => journal.0.get_uid(),
+            // We've made sure before that the first component exists and all components share the
+            // same UID
+            CalendarObjectComponent::Todo(todo, _) => todo.0.get_uid(),
+            CalendarObjectComponent::Event(event, _) => event.event.get_uid(),
+            CalendarObjectComponent::Journal(journal, _) => journal.0.get_uid(),
         }
     }
 
@@ -164,30 +238,37 @@ impl CalendarObject {
 
     pub fn get_object_type(&self) -> CalendarObjectType {
         match self.data {
-            CalendarObjectComponent::Todo(_) => CalendarObjectType::Todo,
-            CalendarObjectComponent::Event(_) => CalendarObjectType::Event,
-            CalendarObjectComponent::Journal(_) => CalendarObjectType::Journal,
+            CalendarObjectComponent::Todo(_, _) => CalendarObjectType::Todo,
+            CalendarObjectComponent::Event(_, _) => CalendarObjectType::Event,
+            CalendarObjectComponent::Journal(_, _) => CalendarObjectType::Journal,
         }
     }
 
     pub fn get_first_occurence(&self) -> Result<Option<CalDateTime>, Error> {
         match &self.data {
-            CalendarObjectComponent::Event(event) => event.get_dtstart(),
+            CalendarObjectComponent::Event(main_event, overrides) => Ok(overrides
+                .iter()
+                .chain([main_event].into_iter())
+                .map(|event| event.get_dtstart())
+                .collect::<Result<Vec<_>, _>>()?
+                .into_iter()
+                .flatten()
+                .min()),
             _ => Ok(None),
         }
     }
 
     pub fn get_last_occurence(&self) -> Result<Option<CalDateTime>, Error> {
         match &self.data {
-            CalendarObjectComponent::Event(event) => event.get_last_occurence(),
+            CalendarObjectComponent::Event(main_event, overrides) => Ok(overrides
+                .iter()
+                .chain([main_event].into_iter())
+                .map(|event| event.get_last_occurence())
+                .collect::<Result<Vec<_>, _>>()?
+                .into_iter()
+                .flatten()
+                .max()),
             _ => Ok(None),
-        }
-    }
-
-    pub fn event(&self) -> Option<&EventObject> {
-        match &self.data {
-            CalendarObjectComponent::Event(event) => Some(event),
-            _ => None,
         }
     }
 
@@ -198,10 +279,10 @@ impl CalendarObject {
     ) -> Result<String, Error> {
         // Only events can be expanded
         match &self.data {
-            CalendarObjectComponent::Event(event) => {
+            CalendarObjectComponent::Event(main_event, overrides) => {
                 let cal = IcalCalendar {
                     properties: self.properties.clone(),
-                    events: event.expand_recurrence(start, end)?,
+                    events: main_event.expand_recurrence(start, end, overrides)?,
                     ..Default::default()
                 };
                 Ok(cal.generate())

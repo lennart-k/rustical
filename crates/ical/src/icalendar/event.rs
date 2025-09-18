@@ -15,6 +15,10 @@ pub struct EventObject {
 }
 
 impl EventObject {
+    pub fn get_uid(&self) -> &str {
+        self.event.get_uid()
+    }
+
     pub fn get_dtstart(&self) -> Result<Option<CalDateTime>, Error> {
         if let Some(dtstart) = self.event.get_dtstart() {
             Ok(Some(CalDateTime::parse_prop(dtstart, &self.timezones)?))
@@ -92,6 +96,7 @@ impl EventObject {
         &self,
         start: Option<DateTime<Utc>>,
         end: Option<DateTime<Utc>>,
+        overrides: &[EventObject],
     ) -> Result<Vec<IcalEvent>, Error> {
         if let Some(mut rrule_set) = self.recurrence_ruleset()? {
             if let Some(start) = start {
@@ -107,13 +112,30 @@ impl EventObject {
                 .get_dtend()?
                 .map(|dtend| dtend.as_datetime().into_owned() - dtstart.as_datetime().into_owned());
 
-            for date in dates {
+            'recurrence: for date in dates {
                 let date = CalDateTime::from(date);
                 let dateformat = if dtstart.is_date() {
                     date.format_date()
                 } else {
                     date.format()
                 };
+
+                for _override in overrides {
+                    if let Some(override_id) = &_override
+                        .event
+                        .get_recurrence_id()
+                        .as_ref()
+                        .expect("overrides have a recurrence id")
+                        .value
+                        && override_id == &dateformat
+                    {
+                        // We have an override for this occurence
+                        //
+                        events.push(_override.event.clone());
+                        continue 'recurrence;
+                    }
+                }
+
                 let mut ev = self.event.clone().mutable();
                 ev.remove_property("RRULE");
                 ev.remove_property("RDATE");
@@ -229,10 +251,18 @@ END:VEVENT\r\n",
     #[test]
     fn test_expand_recurrence() {
         let event = CalendarObject::from_ics(ICS.to_string()).unwrap();
-        let event = event.event().unwrap();
+        let (event, overrides) = if let crate::CalendarObjectComponent::Event(
+            main_event,
+            overrides,
+        ) = event.get_data()
+        {
+            (main_event, overrides)
+        } else {
+            panic!()
+        };
 
         let events: Vec<String> = event
-            .expand_recurrence(None, None)
+            .expand_recurrence(None, None, overrides)
             .unwrap()
             .into_iter()
             .map(|event| Emitter::generate(&event))
