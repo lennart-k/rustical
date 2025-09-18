@@ -68,19 +68,32 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
     for object in &objects {
         vtimezones.extend(object.get_vtimezones());
         match object.get_data() {
-            CalendarObjectComponent::Event(EventObject {
-                event,
-                timezones: object_timezones,
-                ..
-            }) => {
+            CalendarObjectComponent::Event(
+                EventObject {
+                    event,
+                    timezones: object_timezones,
+                    ..
+                },
+                overrides,
+            ) => {
                 timezones.extend(object_timezones);
                 ical_calendar_builder = ical_calendar_builder.add_event(event.clone());
+                for _override in overrides {
+                    ical_calendar_builder =
+                        ical_calendar_builder.add_event(_override.event.clone());
+                }
             }
-            CalendarObjectComponent::Todo(TodoObject(todo)) => {
+            CalendarObjectComponent::Todo(TodoObject(todo), overrides) => {
                 ical_calendar_builder = ical_calendar_builder.add_todo(todo.clone());
+                for _override in overrides {
+                    ical_calendar_builder = ical_calendar_builder.add_todo(_override.0.clone());
+                }
             }
-            CalendarObjectComponent::Journal(JournalObject(journal)) => {
+            CalendarObjectComponent::Journal(JournalObject(journal), overrides) => {
                 ical_calendar_builder = ical_calendar_builder.add_journal(journal.clone());
+                for _override in overrides {
+                    ical_calendar_builder = ical_calendar_builder.add_journal(_override.0.clone());
+                }
             }
         }
     }
