@@ -8,7 +8,7 @@ use http::{HeaderValue, Method, StatusCode, header};
 use ical::generator::{Emitter, IcalCalendarBuilder};
 use ical::property::Property;
 use percent_encoding::{CONTROLS, utf8_percent_encode};
-use rustical_ical::{CalendarObjectComponent, EventObject, JournalObject, TodoObject};
+use rustical_ical::{CalendarObjectComponent, EventObject};
 use rustical_store::{CalendarStore, SubscriptionStore, auth::Principal};
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -83,16 +83,16 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
                         ical_calendar_builder.add_event(_override.event.clone());
                 }
             }
-            CalendarObjectComponent::Todo(TodoObject(todo), overrides) => {
+            CalendarObjectComponent::Todo(todo, overrides) => {
                 ical_calendar_builder = ical_calendar_builder.add_todo(todo.clone());
                 for _override in overrides {
-                    ical_calendar_builder = ical_calendar_builder.add_todo(_override.0.clone());
+                    ical_calendar_builder = ical_calendar_builder.add_todo(_override.clone());
                 }
             }
-            CalendarObjectComponent::Journal(JournalObject(journal), overrides) => {
+            CalendarObjectComponent::Journal(journal, overrides) => {
                 ical_calendar_builder = ical_calendar_builder.add_journal(journal.clone());
                 for _override in overrides {
-                    ical_calendar_builder = ical_calendar_builder.add_journal(_override.0.clone());
+                    ical_calendar_builder = ical_calendar_builder.add_journal(_override.clone());
                 }
             }
         }

@@ -1,11 +1,13 @@
-use super::{EventObject, JournalObject, TodoObject};
+use super::EventObject;
 use crate::CalDateTime;
 use crate::Error;
 use chrono::DateTime;
 use chrono::Utc;
 use derive_more::Display;
 use ical::generator::{Emitter, IcalCalendar};
+use ical::parser::ical::component::IcalJournal;
 use ical::parser::ical::component::IcalTimeZone;
+use ical::parser::ical::component::IcalTodo;
 use ical::property::Property;
 use serde::Deserialize;
 use serde::Serialize;
@@ -57,8 +59,8 @@ impl rustical_xml::ValueDeserialize for CalendarObjectType {
 #[derive(Debug, Clone)]
 pub enum CalendarObjectComponent {
     Event(EventObject, Vec<EventObject>),
-    Todo(TodoObject, Vec<TodoObject>),
-    Journal(JournalObject, Vec<JournalObject>),
+    Todo(IcalTodo, Vec<IcalTodo>),
+    Journal(IcalJournal, Vec<IcalJournal>),
 }
 
 impl CalendarObjectComponent {
@@ -82,9 +84,9 @@ impl CalendarObjectComponent {
         }
         Ok(Self::Event(main_event, overrides))
     }
-    fn from_todos(mut todos: Vec<TodoObject>) -> Result<Self, Error> {
+    fn from_todos(mut todos: Vec<IcalTodo>) -> Result<Self, Error> {
         let main_todo = todos
-            .extract_if(.., |todo| todo.0.get_recurrence_id().is_none())
+            .extract_if(.., |todo| todo.get_recurrence_id().is_none())
             .next()
             .expect("there must be one main event");
         let overrides = todos;
@@ -94,7 +96,7 @@ impl CalendarObjectComponent {
                     "Calendar object contains multiple UIDs".to_owned(),
                 ));
             }
-            if todo.0.get_recurrence_id().is_none() {
+            if todo.get_recurrence_id().is_none() {
                 return Err(Error::InvalidData(
                     "Calendar object can only contain one main component".to_owned(),
                 ));
@@ -102,9 +104,9 @@ impl CalendarObjectComponent {
         }
         Ok(Self::Todo(main_todo, overrides))
     }
-    fn from_journals(mut journals: Vec<JournalObject>) -> Result<Self, Error> {
+    fn from_journals(mut journals: Vec<IcalJournal>) -> Result<Self, Error> {
         let main_journal = journals
-            .extract_if(.., |journal| journal.0.get_recurrence_id().is_none())
+            .extract_if(.., |journal| journal.get_recurrence_id().is_none())
             .next()
             .expect("there must be one main event");
         let overrides = journals;
@@ -114,7 +116,7 @@ impl CalendarObjectComponent {
                     "Calendar object contains multiple UIDs".to_owned(),
                 ));
             }
-            if journal.0.get_recurrence_id().is_none() {
+            if journal.get_recurrence_id().is_none() {
                 return Err(Error::InvalidData(
                     "Calendar object can only contain one main component".to_owned(),
                 ));
@@ -179,16 +181,9 @@ impl CalendarObject {
                     .collect(),
             )?
         } else if !cal.todos.is_empty() {
-            CalendarObjectComponent::from_todos(
-                cal.todos.into_iter().map(|todo| todo.into()).collect(),
-            )?
+            CalendarObjectComponent::from_todos(cal.todos)?
         } else if !cal.journals.is_empty() {
-            CalendarObjectComponent::from_journals(
-                cal.journals
-                    .into_iter()
-                    .map(|journal| journal.into())
-                    .collect(),
-            )?
+            CalendarObjectComponent::from_journals(cal.journals)?
         } else {
             return Err(Error::InvalidData(
                 "iCalendar component type not supported :(".to_owned(),
@@ -215,9 +210,9 @@ impl CalendarObject {
         match &self.data {
             // We've made sure before that the first component exists and all components share the
             // same UID
-            CalendarObjectComponent::Todo(todo, _) => todo.0.get_uid(),
+            CalendarObjectComponent::Todo(todo, _) => todo.get_uid(),
             CalendarObjectComponent::Event(event, _) => event.event.get_uid(),
-            CalendarObjectComponent::Journal(journal, _) => journal.0.get_uid(),
+            CalendarObjectComponent::Journal(journal, _) => journal.get_uid(),
         }
     }
 
