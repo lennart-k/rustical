@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use quote::quote;
 
 use crate::{Field, attrs::FieldType};
@@ -69,6 +70,7 @@ impl NamedStruct {
             self.attrs
                 .ns_prefix
                 .iter()
+                .sorted_by_key(|(_ns, prefix)| prefix.value())
                 .map(|(ns, prefix)| {
                     let attr_name = if prefix.value().is_empty() {
                         "xmlns".to_owned()
