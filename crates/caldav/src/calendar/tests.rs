@@ -4,7 +4,7 @@ use rustical_store::auth::Principal;
 use rustical_xml::XmlSerializeRoot;
 use serde_json::from_str;
 
-// #[tokio::test]
+#[tokio::test]
 async fn test_propfind() {
     let requests: Vec<_> = include_str!("./test_files/propfind.requests")
         .trim()

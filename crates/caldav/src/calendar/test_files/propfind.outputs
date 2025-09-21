@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<response xmlns:CS="http://calendarserver.org/ns/" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns="DAV:" xmlns:PUSH="https://bitfire.at/webdav-push">
+<response xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:PUSH="https://bitfire.at/webdav-push">
     <href>/caldav/principal/user/calendar/</href>
     <propstat>
         <prop>
@@ -33,7 +33,7 @@
 
 
 <?xml version="1.0" encoding="utf-8"?>
-<response xmlns:CS="http://calendarserver.org/ns/" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns="DAV:" xmlns:PUSH="https://bitfire.at/webdav-push">
+<response xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:PUSH="https://bitfire.at/webdav-push">
     <href>/caldav/principal/user/calendar/</href>
     <propstat>
         <prop>
