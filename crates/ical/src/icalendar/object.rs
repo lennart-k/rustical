@@ -63,6 +63,16 @@ pub enum CalendarObjectComponent {
     Journal(IcalJournal, Vec<IcalJournal>),
 }
 
+impl From<&CalendarObjectComponent> for CalendarObjectType {
+    fn from(value: &CalendarObjectComponent) -> Self {
+        match value {
+            CalendarObjectComponent::Event(..) => CalendarObjectType::Event,
+            CalendarObjectComponent::Todo(..) => CalendarObjectType::Todo,
+            CalendarObjectComponent::Journal(..) => CalendarObjectType::Journal,
+        }
+    }
+}
+
 impl CalendarObjectComponent {
     fn from_events(mut events: Vec<EventObject>) -> Result<Self, Error> {
         let main_event = events
@@ -232,11 +242,7 @@ impl CalendarObject {
     }
 
     pub fn get_object_type(&self) -> CalendarObjectType {
-        match self.data {
-            CalendarObjectComponent::Todo(_, _) => CalendarObjectType::Todo,
-            CalendarObjectComponent::Event(_, _) => CalendarObjectType::Event,
-            CalendarObjectComponent::Journal(_, _) => CalendarObjectType::Journal,
-        }
+        (&self.data).into()
     }
 
     pub fn get_first_occurence(&self) -> Result<Option<CalDateTime>, Error> {
