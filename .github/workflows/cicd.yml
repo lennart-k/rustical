@@ -19,7 +19,7 @@ jobs:
         uses: actions-rs/cargo@v1
         continue-on-error: false
         with:
-          command: check
+          command: check --workspace
 
   test:
     name: Test Suite
@@ -39,7 +39,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --all-features
+          args: --all-features --verbose --workspace
 
   coverage:
     name: Test Coverage
