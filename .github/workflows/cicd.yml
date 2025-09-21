@@ -12,6 +12,7 @@ jobs:
     name: Check
     runs-on: ubuntu-latest
     steps:
+      - run: rustup update
       - name: Checkout sources
         uses: actions/checkout@v4
       - run: cargo check
@@ -20,6 +21,7 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     steps:
+      - run: rustup update
       - name: Checkout sources
         uses: actions/checkout@v4
       - run: cargo test --all-features --verbose --workspace
@@ -28,6 +30,7 @@ jobs:
     name: Test Coverage
     runs-on: ubuntu-latest
     steps:
+      - run: rustup update
       - name: Install tarpaulin
         run: cargo install cargo-tarpaulin
 
@@ -41,6 +44,7 @@ jobs:
     name: Lints
     runs-on: ubuntu-latest
     steps:
+      - run: rustup update
       - run: rustup component add rustfmt clippy
 
       - name: Checkout sources
