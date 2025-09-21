@@ -12,3 +12,6 @@ docs:
 
 docs-dev:
   mkdocs serve
+
+coverage:
+  cargo-tarpaulin --workspace
