@@ -35,6 +35,15 @@ async fn test_principal_resource(
         simplified_home_set: false,
     };
 
+    // We don't have any calendars here
+    assert!(
+        service
+            .get_members(&("user".to_owned(),))
+            .await
+            .unwrap()
+            .is_empty()
+    );
+
     assert!(matches!(
         service
             .get_resource(&("invalid-user".to_owned(),), true)
