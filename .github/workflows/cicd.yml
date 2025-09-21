@@ -1,8 +1,11 @@
-on: [push, pull_request]
 name: "CICD"
+on: [push, pull_request]
 permissions:
   contents: read
   pull-requests: write
+
+env:
+  CARGO_TERM_COLOR: always
 
 jobs:
   check:
@@ -10,87 +13,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
-
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-
-      - name: Run cargo check
-        uses: actions-rs/cargo@v1
-        continue-on-error: false
-        with:
-          command: check --workspace
+        uses: actions/checkout@v4
+      - run: cargo check
 
   test:
     name: Test Suite
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
-
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-
-      - name: Run cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all-features --verbose --workspace
+        uses: actions/checkout@v4
+      - run: cargo test --all-features --verbose --workspace
 
   coverage:
     name: Test Coverage
     runs-on: ubuntu-latest
     steps:
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-
       - name: Install tarpaulin
         run: cargo install cargo-tarpaulin
 
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: Run cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: tarpaulin
-          args: --workspace --all-features --exclude xml_derive --coveralls ${{ secrets.COVERALLS_REPO_TOKEN }}
+      - name: Run tarpaulin
+        run: cargo tarpaulin --workspace --all-features --exclude xml_derive --coveralls ${{ secrets.COVERALLS_REPO_TOKEN }}
 
   lints:
     name: Lints
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout sources
-        uses: actions/checkout@v2
+      - run: rustup component add rustfmt clippy
 
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
+      - name: Checkout sources
+        uses: actions/checkout@v4
 
       - name: Run cargo fmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+        run: cargo fmt --all -- --check
 
       - name: Run cargo clippy
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: -- -D warnings
+        run: cargo clippy -- -D warnings
