@@ -14,4 +14,4 @@ docs-dev:
   mkdocs serve
 
 coverage:
-  cargo-tarpaulin --workspace
+  cargo tarpaulin --workspace --exclude xml_derive
