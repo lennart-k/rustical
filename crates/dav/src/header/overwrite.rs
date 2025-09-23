@@ -14,16 +14,12 @@ impl IntoResponse for InvalidOverwriteHeader {
     }
 }
 
-#[derive(Debug, PartialEq, Default)]
-pub enum Overwrite {
-    #[default]
-    T,
-    F,
-}
+#[derive(Debug, PartialEq)]
+pub struct Overwrite(pub bool);
 
-impl Overwrite {
-    pub fn is_true(&self) -> bool {
-        matches!(self, Self::T)
+impl Default for Overwrite {
+    fn default() -> Self {
+        Self(true)
     }
 }
 
@@ -47,9 +43,48 @@ impl TryFrom<&[u8]> for Overwrite {
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         match value {
-            b"T" => Ok(Overwrite::T),
-            b"F" => Ok(Overwrite::F),
+            b"T" => Ok(Self(true)),
+            b"F" => Ok(Self(false)),
             _ => Err(InvalidOverwriteHeader),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use axum::{extract::FromRequestParts, response::IntoResponse};
+    use http::Request;
+
+    use crate::header::Overwrite;
+
+    #[tokio::test]
+    async fn test_overwrite_default() {
+        let request = Request::put("asd").body(()).unwrap();
+        let (mut parts, _) = request.into_parts();
+        let overwrite = Overwrite::from_request_parts(&mut parts, &())
+            .await
+            .unwrap();
+        assert_eq!(
+            Overwrite(true),
+            overwrite,
+            "By default we want to overwrite!"
+        );
+    }
+
+    #[test]
+    fn test_overwrite() {
+        assert_eq!(
+            Overwrite(true),
+            Overwrite::try_from(b"T".as_slice()).unwrap()
+        );
+        assert_eq!(
+            Overwrite(false),
+            Overwrite::try_from(b"F".as_slice()).unwrap()
+        );
+        if let Err(err) = Overwrite::try_from(b"aslkdjlad".as_slice()) {
+            let _ = err.into_response();
+        } else {
+            unreachable!("should return error")
         }
     }
 }

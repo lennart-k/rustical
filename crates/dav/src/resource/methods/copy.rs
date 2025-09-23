@@ -17,7 +17,7 @@ pub(crate) async fn axum_route_copy<R: ResourceService>(
     State(resource_service): State<R>,
     depth: Option<Depth>,
     principal: R::Principal,
-    overwrite: Overwrite,
+    Overwrite(overwrite): Overwrite,
     matched_path: MatchedPath,
     header_map: HeaderMap,
 ) -> Result<Response, R::Error> {
@@ -39,7 +39,7 @@ pub(crate) async fn axum_route_copy<R: ResourceService>(
             .map_err(|_| crate::Error::Forbidden)?;
 
         if resource_service
-            .copy_resource(&path, &dest_path, &principal, overwrite.is_true())
+            .copy_resource(&path, &dest_path, &principal, overwrite)
             .await?
         {
             // Overwritten

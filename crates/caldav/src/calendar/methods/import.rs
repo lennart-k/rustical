@@ -22,7 +22,7 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
     Path((principal, cal_id)): Path<(String, String)>,
     user: Principal,
     State(resource_service): State<CalendarResourceService<C, S>>,
-    overwrite: Overwrite,
+    Overwrite(overwrite): Overwrite,
     body: String,
 ) -> Result<Response, Error> {
     if !user.is_principal(&principal) {
@@ -103,7 +103,7 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
 
     let cal_store = resource_service.cal_store;
     cal_store
-        .import_calendar(new_cal, objects, overwrite.is_true())
+        .import_calendar(new_cal, objects, overwrite)
         .await?;
 
     Ok(StatusCode::OK.into_response())
