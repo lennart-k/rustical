@@ -1,4 +1,4 @@
-import { E } from "./lit-z6_uA4GX.mjs";
+import { E } from "./lit-DkXrt_Iv.mjs";
 /**
  * @license
  * Copyright 2020 Google LLC
@@ -33,17 +33,16 @@ class i {
  * SPDX-License-Identifier: BSD-3-Clause
  */
 const s = (i2, t2) => {
-  var _a;
   const e2 = i2._$AN;
   if (void 0 === e2) return false;
-  for (const i3 of e2) (_a = i3._$AO) == null ? void 0 : _a.call(i3, t2, false), s(i3, t2);
+  for (const i3 of e2) i3._$AO?.(t2, false), s(i3, t2);
   return true;
 }, o$1 = (i2) => {
   let t2, e2;
   do {
     if (void 0 === (t2 = i2._$AM)) break;
     e2 = t2._$AN, e2.delete(i2), i2 = t2;
-  } while (0 === (e2 == null ? void 0 : e2.size));
+  } while (0 === e2?.size);
 }, r = (i2) => {
   for (let t2; t2 = i2._$AM; i2 = t2) {
     let e2 = t2._$AN;
@@ -62,7 +61,7 @@ function n$1(i2, t2 = false, e2 = 0) {
   else s(this, i2);
 }
 const c = (i2) => {
-  i2.type == t.CHILD && (i2._$AP ?? (i2._$AP = n$1), i2._$AQ ?? (i2._$AQ = h$1));
+  i2.type == t.CHILD && (i2._$AP ??= n$1, i2._$AQ ??= h$1);
 };
 class f extends i {
   constructor() {
@@ -72,8 +71,7 @@ class f extends i {
     super._$AT(i2, t2, e2), r(this), this.isConnected = i2._$AU;
   }
   _$AO(i2, t2 = true) {
-    var _a, _b;
-    i2 !== this.isConnected && (this.isConnected = i2, i2 ? (_a = this.reconnected) == null ? void 0 : _a.call(this) : (_b = this.disconnected) == null ? void 0 : _b.call(this)), t2 && (s(this, i2), o$1(this));
+    i2 !== this.isConnected && (this.isConnected = i2, i2 ? this.reconnected?.() : this.disconnected?.()), t2 && (s(this, i2), o$1(this));
   }
   setValue(t2) {
     if (f$1(this._$Ct)) this._$Ct._$AI(t2, this);
@@ -100,9 +98,8 @@ const o = /* @__PURE__ */ new WeakMap(), n = e$1(class extends f {
     return E;
   }
   update(i2, [s2]) {
-    var _a;
     const e2 = s2 !== this.G;
-    return e2 && void 0 !== this.G && this.rt(void 0), (e2 || this.lt !== this.ct) && (this.G = s2, this.ht = (_a = i2.options) == null ? void 0 : _a.host, this.rt(this.ct = i2.element)), E;
+    return e2 && void 0 !== this.G && this.rt(void 0), (e2 || this.lt !== this.ct) && (this.G = s2, this.ht = i2.options?.host, this.rt(this.ct = i2.element)), E;
   }
   rt(t2) {
     if (this.isConnected || (t2 = void 0), "function" == typeof this.G) {
@@ -112,8 +109,7 @@ const o = /* @__PURE__ */ new WeakMap(), n = e$1(class extends f {
     } else this.G.value = t2;
   }
   get lt() {
-    var _a, _b;
-    return "function" == typeof this.G ? (_a = o.get(this.ht ?? globalThis)) == null ? void 0 : _a.get(this.G) : (_b = this.G) == null ? void 0 : _b.value;
+    return "function" == typeof this.G ? o.get(this.ht ?? globalThis)?.get(this.G) : this.G?.value;
   }
   disconnected() {
     this.lt === this.ct && this.rt(void 0);

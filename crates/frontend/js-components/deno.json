@@ -11,9 +11,8 @@
     ]
   },
   "imports": {
-    "@deno/vite-plugin": "npm:@deno/vite-plugin@^1.0.4",
-    "lit": "npm:lit@^3.2.1",
-    "vite": "npm:vite@^6.1.1",
-    "webdav": "npm:webdav@^5.8.0"
+    "@deno/vite-plugin": "npm:@deno/vite-plugin@^1.0.5",
+    "lit": "npm:lit@^3.3.1",
+    "vite": "npm:vite@^7.1.7"
   }
 }

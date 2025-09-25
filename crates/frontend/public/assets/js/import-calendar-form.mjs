@@ -1,6 +1,6 @@
-import { i, x } from "./lit-z6_uA4GX.mjs";
-import { n as n$1, t } from "./property-D0NJdseG.mjs";
-import { e, n } from "./ref-CPp9J0V5.mjs";
+import { i, x } from "./lit-DkXrt_Iv.mjs";
+import { n as n$1, t } from "./property-B8WoKf1Y.mjs";
+import { e, n } from "./ref-BwbQvJBB.mjs";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __decorateClass = (decorators, target, key, kind) => {
@@ -59,7 +59,7 @@ let ImportCalendarForm = class extends i {
   }
   async submit(e2) {
     e2.preventDefault();
-    this.principal || (this.principal = this.user);
+    this.principal ||= this.user;
     if (!this.principal) {
       alert("Empty principal");
       return;

@@ -1,13 +1,13 @@
-import { f, u } from "./lit-z6_uA4GX.mjs";
+import { f, u } from "./lit-DkXrt_Iv.mjs";
 /**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
 const t = (t2) => (e, o2) => {
-  void 0 !== o2 ? o2.addInitializer(() => {
+  void 0 !== o2 ? o2.addInitializer((() => {
     customElements.define(t2, e);
-  }) : customElements.define(t2, e);
+  })) : customElements.define(t2, e);
 };
 /**
  * @license
