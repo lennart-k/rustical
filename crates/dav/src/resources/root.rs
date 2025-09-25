@@ -105,3 +105,33 @@ impl<PRS: ResourceService<Principal = P> + Clone, P: Principal, PURI: PrincipalU
     for RootResourceService<PRS, P, PURI>
 {
 }
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        resource::Resource,
+        resources::{
+            RootResource,
+            test::{TestPrincipal, TestPrincipalUri},
+        },
+    };
+
+    #[test]
+    fn test_root_resource() {
+        let resource = RootResource::<TestPrincipal, TestPrincipal>::default();
+        let propfind = RootResource::<TestPrincipal, TestPrincipal>::parse_propfind(
+            r#"<?xml version="1.0" encoding="UTF-8"?><propfind xmlns="DAV:"><allprop/></propfind>"#,
+        )
+        .unwrap();
+
+        let _response = resource
+            .propfind(
+                "/",
+                &propfind.prop,
+                propfind.include.as_ref(),
+                &TestPrincipalUri,
+                &TestPrincipal("user".to_owned()),
+            )
+            .unwrap();
+    }
+}
