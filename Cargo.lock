@@ -3216,6 +3216,7 @@ dependencies = [
  "serde",
  "thiserror 2.0.16",
  "tower-sessions",
+ "tracing",
 ]
 
 [[package]]

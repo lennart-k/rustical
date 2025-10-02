@@ -17,3 +17,4 @@ axum.workspace = true
 tower-sessions = "0.14"
 axum-extra.workspace = true
 headers.workspace = true
+tracing.workspace = true

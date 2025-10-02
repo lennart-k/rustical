@@ -76,7 +76,10 @@ async fn get_oidc_client(
 > {
     let provider_metadata = CoreProviderMetadata::discover_async(issuer, http_client)
         .await
-        .map_err(|_| OidcError::Other("Failed to discover OpenID provider"))?;
+        .map_err(|err| {
+            tracing::error!("An error occured trying to discover OpenID provider: {err}");
+            OidcError::Other("Failed to discover OpenID provider")
+        })?;
 
     Ok(CoreClient::from_provider_metadata(
         provider_metadata.clone(),
