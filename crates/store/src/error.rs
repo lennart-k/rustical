@@ -1,5 +1,6 @@
 use axum::response::IntoResponse;
 use http::StatusCode;
+use tracing::error;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -43,6 +44,14 @@ impl Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
+        if matches!(
+            self.status_code(),
+            StatusCode::INTERNAL_SERVER_ERROR
+                | StatusCode::PRECONDITION_FAILED
+                | StatusCode::CONFLICT
+        ) {
+            error!("{self}");
+        }
         (self.status_code(), self.to_string()).into_response()
     }
 }

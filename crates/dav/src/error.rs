@@ -1,3 +1,4 @@
+use axum::body::Body;
 use http::StatusCode;
 use rustical_xml::XmlError;
 use thiserror::Error;
@@ -59,7 +60,12 @@ impl Error {
 
 impl axum::response::IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
-        use axum::body::Body;
+        if matches!(
+            self.status_code(),
+            StatusCode::INTERNAL_SERVER_ERROR | StatusCode::PRECONDITION_FAILED
+        ) {
+            error!("{self}");
+        }
 
         let mut resp = axum::response::Response::builder().status(self.status_code());
         if matches!(&self, &Error::Unauthorized) {

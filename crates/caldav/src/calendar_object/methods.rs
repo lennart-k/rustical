@@ -11,7 +11,7 @@ use rustical_ical::CalendarObject;
 use rustical_store::CalendarStore;
 use rustical_store::auth::Principal;
 use std::str::FromStr;
-use tracing::{debug, instrument};
+use tracing::{debug, error, instrument};
 
 #[instrument(skip(cal_store))]
 pub async fn get_event<C: CalendarStore>(
@@ -85,7 +85,14 @@ pub async fn put_event<C: CalendarStore>(
             return Err(Error::PreconditionFailed(Precondition::ValidCalendarData));
         }
     };
-    assert_eq!(object.get_id(), object_id);
+    if object.get_id() != object_id {
+        error!(
+            "Calendar object UID and file name not matching: UID={}, filename={}",
+            object.get_id(),
+            object_id
+        );
+        return Err(Error::PreconditionFailed(Precondition::MatchingUid));
+    }
     cal_store
         .put_object(principal, calendar_id, object, overwrite)
         .await?;

@@ -12,6 +12,8 @@ pub enum Precondition {
     #[error("valid-calendar-data")]
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     ValidCalendarData,
+    #[error("matching-uid")]
+    MatchingUid,
 }
 
 impl IntoResponse for Precondition {
@@ -83,6 +85,12 @@ impl Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
+        if matches!(
+            self.status_code(),
+            StatusCode::INTERNAL_SERVER_ERROR | StatusCode::PRECONDITION_FAILED
+        ) {
+            error!("{self}");
+        }
         (self.status_code(), self.to_string()).into_response()
     }
 }
