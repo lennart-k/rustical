@@ -2989,7 +2989,7 @@ dependencies = [
 
 [[package]]
 name = "rustical"
-version = "0.9.11"
+version = "0.9.12"
 dependencies = [
  "anyhow",
  "argon2",
@@ -3032,7 +3032,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_caldav"
-version = "0.9.11"
+version = "0.9.12"
 dependencies = [
  "async-std",
  "async-trait",
@@ -3072,7 +3072,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_carddav"
-version = "0.9.11"
+version = "0.9.12"
 dependencies = [
  "async-trait",
  "axum",
@@ -3104,7 +3104,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_dav"
-version = "0.9.11"
+version = "0.9.12"
 dependencies = [
  "async-trait",
  "axum",
@@ -3129,7 +3129,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_dav_push"
-version = "0.9.11"
+version = "0.9.12"
 dependencies = [
  "async-trait",
  "axum",
@@ -3154,7 +3154,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_frontend"
-version = "0.9.11"
+version = "0.9.12"
 dependencies = [
  "askama",
  "askama_web",
@@ -3187,7 +3187,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_ical"
-version = "0.9.11"
+version = "0.9.12"
 dependencies = [
  "axum",
  "chrono",
@@ -3205,7 +3205,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_oidc"
-version = "0.9.11"
+version = "0.9.12"
 dependencies = [
  "async-trait",
  "axum",
@@ -3221,7 +3221,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_store"
-version = "0.9.11"
+version = "0.9.12"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3255,7 +3255,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_store_sqlite"
-version = "0.9.11"
+version = "0.9.12"
 dependencies = [
  "async-trait",
  "chrono",
@@ -3276,7 +3276,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_xml"
-version = "0.9.11"
+version = "0.9.12"
 dependencies = [
  "quick-xml",
  "thiserror 2.0.16",
