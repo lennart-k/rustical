@@ -21,6 +21,7 @@ export default defineConfig({
         "lib/edit-addressbook-form.ts",
         "lib/import-addressbook-form.ts",
         "lib/delete-button.ts",
+        "lib/preview-button.ts",
       ],
       output: {
         dir: "../public/assets/js/",

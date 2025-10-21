@@ -21,6 +21,7 @@
       <span class="subscription-url">{{ subscription_url }}</span>
       {% endif %}
       <div class="actions">
+        <preview-button href="/frontend/user/calendar/{{ calendar.principal }}/{{ calendar.id }}"></preview-button>
         <form action="/caldav/principal/{{ calendar.principal }}/{{ calendar.id }}" target="_blank" method="GET">
           <button type="submit">Download</button>
         </form>

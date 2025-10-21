@@ -4,7 +4,7 @@ use axum::body::{Body, HttpBody};
 use axum::extract::{DefaultBodyLimit, Request};
 use axum::middleware::Next;
 use axum::response::{Redirect, Response};
-use axum::routing::{any, options};
+use axum::routing::{any, get, options};
 use axum_extra::TypedHeader;
 use headers::{HeaderMapExt, UserAgent};
 use http::header::CONNECTION;
@@ -98,6 +98,10 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
             resp.body(Body::empty()).unwrap()
         }),
     );
+
+    // health check and metrics
+    router = router
+        .route("/health", get(|| async { "ok" }));
 
     let session_store = MemoryStore::default();
     if frontend_config.enabled {

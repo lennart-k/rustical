@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}RustiCal{% endblock %}</title>
   <link rel="stylesheet" href="/frontend/assets/style.css" />
+  <link rel="stylesheet" href="/frontend/assets/calendar.css" />
   {% block imports %}{% endblock %}
 </head>
 
@@ -14,9 +15,17 @@
   <header>
       <a class="logo" href="/frontend/user">RustiCal</a>
       {% block header_center %}{% endblock %}
-      <form method="POST" action="/frontend/logout" class="logout_form">
-        <button type="submit">Log out</button>
-      </form>
+      <div>
+        <form method="POST" action="/frontend/logout" class="logout_form">
+          <button type="submit">Log out</button>
+        </form>
+        <!-- style switcher -->
+        <select name="theme" id="theme">
+          <option value="modern-dark">Modern-Dark</option>
+          <option value="modern-light" selected>Modern-Light</option>
+          <option value="classic-light">Classic-Light</option>
+        </select>
+      </div>
   </header>
   {% endblock %}
   <div id="app">
@@ -27,4 +36,5 @@
       <a href="/frontend/assets/licenses.html" target="_blank">Open Source Licenses</a>
   </footer>
 </body>
+<script src="/frontend/assets/script.js"></script>
 </html>
