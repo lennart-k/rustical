@@ -9,42 +9,50 @@ pub type MethodFunction<State> =
 
 pub trait AxumMethods: Sized + Send + Sync + 'static {
     #[inline]
-    #[must_use] fn report() -> Option<MethodFunction<Self>> {
+    #[must_use]
+    fn report() -> Option<MethodFunction<Self>> {
         None
     }
 
     #[inline]
-    #[must_use] fn get() -> Option<MethodFunction<Self>> {
+    #[must_use]
+    fn get() -> Option<MethodFunction<Self>> {
         None
     }
 
     #[inline]
-    #[must_use] fn post() -> Option<MethodFunction<Self>> {
+    #[must_use]
+    fn post() -> Option<MethodFunction<Self>> {
         None
     }
 
     #[inline]
-    #[must_use] fn mkcol() -> Option<MethodFunction<Self>> {
+    #[must_use]
+    fn mkcol() -> Option<MethodFunction<Self>> {
         None
     }
 
     #[inline]
-    #[must_use] fn mkcalendar() -> Option<MethodFunction<Self>> {
+    #[must_use]
+    fn mkcalendar() -> Option<MethodFunction<Self>> {
         None
     }
 
     #[inline]
-    #[must_use] fn put() -> Option<MethodFunction<Self>> {
+    #[must_use]
+    fn put() -> Option<MethodFunction<Self>> {
         None
     }
 
     #[inline]
-    #[must_use] fn import() -> Option<MethodFunction<Self>> {
+    #[must_use]
+    fn import() -> Option<MethodFunction<Self>> {
         None
     }
 
     #[inline]
-    #[must_use] fn allow_header() -> Allow {
+    #[must_use]
+    fn allow_header() -> Allow {
         let mut allow = vec![
             Method::from_str("PROPFIND").unwrap(),
             Method::from_str("PROPPATCH").unwrap(),

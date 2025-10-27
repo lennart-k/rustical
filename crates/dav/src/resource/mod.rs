@@ -42,7 +42,8 @@ pub trait Resource: Clone + Send + 'static {
 
     fn get_resourcetype(&self) -> Resourcetype;
 
-    #[must_use] fn list_props() -> Vec<(Option<Namespace<'static>>, &'static str)> {
+    #[must_use]
+    fn list_props() -> Vec<(Option<Namespace<'static>>, &'static str)> {
         Self::Prop::variant_names()
     }
 
@@ -75,27 +76,27 @@ pub trait Resource: Clone + Send + 'static {
     }
 
     fn satisfies_if_match(&self, if_match: &IfMatch) -> bool {
-        if let Some(etag) = self.get_etag() {
-            if let Ok(etag) = ETag::from_str(&etag) {
-                if_match.precondition_passes(&etag)
-            } else {
-                if_match.is_any()
-            }
-        } else {
-            if_match.is_any()
-        }
+        self.get_etag().map_or_else(
+            || if_match.is_any(),
+            |etag| {
+                ETag::from_str(&etag).map_or_else(
+                    |_| if_match.is_any(),
+                    |etag| if_match.precondition_passes(&etag),
+                )
+            },
+        )
     }
 
     fn satisfies_if_none_match(&self, if_none_match: &IfNoneMatch) -> bool {
-        if let Some(etag) = self.get_etag() {
-            if let Ok(etag) = ETag::from_str(&etag) {
-                if_none_match.precondition_passes(&etag)
-            } else {
-                if_none_match != &IfNoneMatch::any()
-            }
-        } else {
-            if_none_match != &IfNoneMatch::any()
-        }
+        self.get_etag().map_or_else(
+            || if_none_match != &IfNoneMatch::any(),
+            |etag| {
+                ETag::from_str(&etag).map_or_else(
+                    |_| if_none_match != &IfNoneMatch::any(),
+                    |etag| if_none_match.precondition_passes(&etag),
+                )
+            },
+        )
     }
 
     fn get_user_privileges(

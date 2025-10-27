@@ -26,7 +26,8 @@ pub enum CalendarObjectType {
 }
 
 impl CalendarObjectType {
-    #[must_use] pub const fn as_str(&self) -> &'static str {
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
         match self {
             Self::Event => "VEVENT",
             Self::Todo => "VTODO",
@@ -208,15 +209,18 @@ impl CalendarObject {
         })
     }
 
-    #[must_use] pub const fn get_vtimezones(&self) -> &HashMap<String, IcalTimeZone> {
+    #[must_use]
+    pub const fn get_vtimezones(&self) -> &HashMap<String, IcalTimeZone> {
         &self.vtimezones
     }
 
-    #[must_use] pub const fn get_data(&self) -> &CalendarObjectComponent {
+    #[must_use]
+    pub const fn get_data(&self) -> &CalendarObjectComponent {
         &self.data
     }
 
-    #[must_use] pub fn get_id(&self) -> &str {
+    #[must_use]
+    pub fn get_id(&self) -> &str {
         match &self.data {
             // We've made sure before that the first component exists and all components share the
             // same UID
@@ -226,22 +230,26 @@ impl CalendarObject {
         }
     }
 
-    #[must_use] pub fn get_etag(&self) -> String {
+    #[must_use]
+    pub fn get_etag(&self) -> String {
         let mut hasher = Sha256::new();
         hasher.update(self.get_id());
         hasher.update(self.get_ics());
         format!("\"{:x}\"", hasher.finalize())
     }
 
-    #[must_use] pub fn get_ics(&self) -> &str {
+    #[must_use]
+    pub fn get_ics(&self) -> &str {
         &self.ics
     }
 
-    #[must_use] pub fn get_component_name(&self) -> &str {
+    #[must_use]
+    pub fn get_component_name(&self) -> &str {
         self.get_object_type().as_str()
     }
 
-    #[must_use] pub fn get_object_type(&self) -> CalendarObjectType {
+    #[must_use]
+    pub fn get_object_type(&self) -> CalendarObjectType {
         (&self.data).into()
     }
 
@@ -249,7 +257,7 @@ impl CalendarObject {
         match &self.data {
             CalendarObjectComponent::Event(main_event, overrides) => Ok(overrides
                 .iter()
-                .chain([main_event].into_iter())
+                .chain(std::iter::once(main_event))
                 .map(super::event::EventObject::get_dtstart)
                 .collect::<Result<Vec<_>, _>>()?
                 .into_iter()
@@ -263,7 +271,7 @@ impl CalendarObject {
         match &self.data {
             CalendarObjectComponent::Event(main_event, overrides) => Ok(overrides
                 .iter()
-                .chain([main_event].into_iter())
+                .chain(std::iter::once(main_event))
                 .map(super::event::EventObject::get_last_occurence)
                 .collect::<Result<Vec<_>, _>>()?
                 .into_iter()

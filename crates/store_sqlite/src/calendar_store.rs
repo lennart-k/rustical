@@ -213,21 +213,25 @@ impl SqliteCalendarStore {
         id: &str,
         use_trashbin: bool,
     ) -> Result<(), Error> {
-        if use_trashbin { sqlx::query!(
-            r#"UPDATE calendars SET deleted_at = datetime() WHERE (principal, id) = (?, ?)"#,
-            principal,
-            id
-        )
-        .execute(executor)
-        .await
-        .map_err(crate::Error::from)? } else { sqlx::query!(
-            r#"DELETE FROM calendars WHERE (principal, id) = (?, ?)"#,
-            principal,
-            id
-        )
-        .execute(executor)
-        .await
-        .map_err(crate::Error::from)? };
+        if use_trashbin {
+            sqlx::query!(
+                r#"UPDATE calendars SET deleted_at = datetime() WHERE (principal, id) = (?, ?)"#,
+                principal,
+                id
+            )
+            .execute(executor)
+            .await
+            .map_err(crate::Error::from)?
+        } else {
+            sqlx::query!(
+                r#"DELETE FROM calendars WHERE (principal, id) = (?, ?)"#,
+                principal,
+                id
+            )
+            .execute(executor)
+            .await
+            .map_err(crate::Error::from)?
+        };
         Ok(())
     }
 
@@ -476,9 +480,7 @@ impl SqliteCalendarStore {
         let mut objects = vec![];
         let mut deleted_objects = vec![];
 
-        let new_synctoken = changes
-            .last()
-            .map_or(0, |&Row { synctoken, .. }| synctoken);
+        let new_synctoken = changes.last().map_or(0, |&Row { synctoken, .. }| synctoken);
 
         for Row { object_id, .. } in changes {
             match Self::_get_object(&mut *conn, principal, cal_id, &object_id, false).await {

@@ -47,7 +47,8 @@ pub struct UserPrivilegeSet {
 }
 
 impl UserPrivilegeSet {
-    #[must_use] pub fn has(&self, privilege: &UserPrivilege) -> bool {
+    #[must_use]
+    pub fn has(&self, privilege: &UserPrivilege) -> bool {
         if (privilege == &UserPrivilege::WriteProperties
             || privilege == &UserPrivilege::WriteContent)
             && self.privileges.contains(&UserPrivilege::Write)
@@ -57,13 +58,15 @@ impl UserPrivilegeSet {
         self.privileges.contains(privilege) || self.privileges.contains(&UserPrivilege::All)
     }
 
-    #[must_use] pub fn all() -> Self {
+    #[must_use]
+    pub fn all() -> Self {
         Self {
             privileges: HashSet::from([UserPrivilege::All]),
         }
     }
 
-    #[must_use] pub fn owner_only(is_owner: bool) -> Self {
+    #[must_use]
+    pub fn owner_only(is_owner: bool) -> Self {
         if is_owner {
             Self::all()
         } else {
@@ -71,7 +74,8 @@ impl UserPrivilegeSet {
         }
     }
 
-    #[must_use] pub fn owner_read(is_owner: bool) -> Self {
+    #[must_use]
+    pub fn owner_read(is_owner: bool) -> Self {
         if is_owner {
             Self::read_only()
         } else {
@@ -79,7 +83,8 @@ impl UserPrivilegeSet {
         }
     }
 
-    #[must_use] pub fn owner_write_properties(is_owner: bool) -> Self {
+    #[must_use]
+    pub fn owner_write_properties(is_owner: bool) -> Self {
         // Content is read-only but we can write properties
         if is_owner {
             Self::write_properties()
@@ -88,7 +93,8 @@ impl UserPrivilegeSet {
         }
     }
 
-    #[must_use] pub fn read_only() -> Self {
+    #[must_use]
+    pub fn read_only() -> Self {
         Self {
             privileges: HashSet::from([
                 UserPrivilege::Read,
@@ -98,7 +104,8 @@ impl UserPrivilegeSet {
         }
     }
 
-    #[must_use] pub fn write_properties() -> Self {
+    #[must_use]
+    pub fn write_properties() -> Self {
         Self {
             privileges: HashSet::from([
                 UserPrivilege::Read,

@@ -48,7 +48,7 @@ pub fn frontend_router<AP: AuthenticationProvider, CS: CalendarStore, AS: Addres
 ) -> Router {
     let user_router = Router::new()
         .route("/", get(route_get_home))
-        .route("/{user}", get(route_user_named::<CS, AS, AP>))
+        .route("/{user}", get(route_user_named::<AP>))
         // App token management
         .route("/{user}/app_token", post(route_post_app_token::<AP>))
         .route(

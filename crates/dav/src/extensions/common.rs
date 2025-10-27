@@ -6,7 +6,7 @@ use crate::{
 };
 use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, PropName, EnumVariants)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, PropName, EnumVariants)]
 #[xml(unit_variants_ident = "CommonPropertiesPropName")]
 pub enum CommonPropertiesProp {
     // WebDAV (RFC 2518)
@@ -39,9 +39,9 @@ pub trait CommonPropertiesExtension: Resource {
             CommonPropertiesPropName::Resourcetype => {
                 CommonPropertiesProp::Resourcetype(self.get_resourcetype())
             }
-            CommonPropertiesPropName::Displayname => {
-                CommonPropertiesProp::Displayname(self.get_displayname().map(std::string::ToString::to_string))
-            }
+            CommonPropertiesPropName::Displayname => CommonPropertiesProp::Displayname(
+                self.get_displayname().map(std::string::ToString::to_string),
+            ),
             CommonPropertiesPropName::CurrentUserPrincipal => {
                 CommonPropertiesProp::CurrentUserPrincipal(
                     principal_uri.principal_uri(principal.get_id()).into(),

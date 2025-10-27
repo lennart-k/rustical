@@ -32,7 +32,6 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
         return Err(crate::Error::Unauthorized);
     }
 
-    let mut timezones = HashMap::new();
     let mut vtimezones = HashMap::new();
     let objects = cal_store.get_objects(&principal, &calendar_id).await?;
 
@@ -64,31 +63,23 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
     for object in &objects {
         vtimezones.extend(object.get_vtimezones());
         match object.get_data() {
-            CalendarObjectComponent::Event(
-                EventObject {
-                    event,
-                    timezones: object_timezones,
-                    ..
-                },
-                overrides,
-            ) => {
-                timezones.extend(object_timezones);
+            CalendarObjectComponent::Event(EventObject { event, .. }, overrides) => {
                 ical_calendar_builder = ical_calendar_builder.add_event(event.clone());
-                for _override in overrides {
+                for ev_override in overrides {
                     ical_calendar_builder =
-                        ical_calendar_builder.add_event(_override.event.clone());
+                        ical_calendar_builder.add_event(ev_override.event.clone());
                 }
             }
             CalendarObjectComponent::Todo(todo, overrides) => {
                 ical_calendar_builder = ical_calendar_builder.add_todo(todo.clone());
-                for _override in overrides {
-                    ical_calendar_builder = ical_calendar_builder.add_todo(_override.clone());
+                for ev_override in overrides {
+                    ical_calendar_builder = ical_calendar_builder.add_todo(ev_override.clone());
                 }
             }
             CalendarObjectComponent::Journal(journal, overrides) => {
                 ical_calendar_builder = ical_calendar_builder.add_journal(journal.clone());
-                for _override in overrides {
-                    ical_calendar_builder = ical_calendar_builder.add_journal(_override.clone());
+                for ev_override in overrides {
+                    ical_calendar_builder = ical_calendar_builder.add_journal(ev_override.clone());
                 }
             }
         }

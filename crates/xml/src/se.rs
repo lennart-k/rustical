@@ -26,11 +26,8 @@ impl<T: XmlSerialize> XmlSerialize for Option<T> {
         namespaces: &HashMap<Namespace, &str>,
         writer: &mut quick_xml::Writer<&mut Vec<u8>>,
     ) -> std::io::Result<()> {
-        if let Some(some) = self {
-            some.serialize(ns, tag, namespaces, writer)
-        } else {
-            Ok(())
-        }
+        self.as_ref()
+            .map_or(Ok(()), |some| some.serialize(ns, tag, namespaces, writer))
     }
 
     fn attributes<'a>(&self) -> Option<Vec<Attribute<'a>>> {
@@ -64,15 +61,13 @@ impl XmlSerialize for () {
         namespaces: &HashMap<Namespace, &str>,
         writer: &mut quick_xml::Writer<&mut Vec<u8>>,
     ) -> std::io::Result<()> {
-        let prefix = ns
-            .and_then(|ns| namespaces.get(&ns))
-            .map(|prefix| {
-                if prefix.is_empty() {
-                    String::new()
-                } else {
-                    [*prefix, ":"].concat()
-                }
-            });
+        let prefix = ns.and_then(|ns| namespaces.get(&ns)).map(|prefix| {
+            if prefix.is_empty() {
+                String::new()
+            } else {
+                [*prefix, ":"].concat()
+            }
+        });
         let has_prefix = prefix.is_some();
         let tagname = tag.map(|tag| [&prefix.unwrap_or_default(), tag].concat());
         if let Some(tagname) = tagname.as_ref() {

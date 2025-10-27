@@ -36,11 +36,9 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore>(
                 }
             } else {
                 not_found.push(href.to_owned());
-                continue;
             }
         } else {
             not_found.push(href.to_owned());
-            continue;
         }
     }
 

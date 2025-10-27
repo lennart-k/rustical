@@ -17,7 +17,7 @@ pub enum CalendarObjectProp {
     CalendarData(String),
 }
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "CalendarObjectPropWrapperName", untagged)]
 pub enum CalendarObjectPropWrapper {
     CalendarObject(CalendarObjectProp),

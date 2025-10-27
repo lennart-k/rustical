@@ -37,7 +37,7 @@ pub enum PrincipalProp {
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone)]
 pub struct CalendarHomeSet(#[xml(ty = "untagged", flatten)] pub Vec<HrefElement>);
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "PrincipalPropWrapperName", untagged)]
 pub enum PrincipalPropWrapper {
     Principal(PrincipalProp),

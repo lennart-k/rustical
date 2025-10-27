@@ -59,7 +59,7 @@ impl Resource for AddressbookResource {
             AddressbookPropWrapperName::Addressbook(prop) => {
                 AddressbookPropWrapper::Addressbook(match prop {
                     AddressbookPropName::MaxResourceSize => {
-                        AddressbookProp::MaxResourceSize(10000000)
+                        AddressbookProp::MaxResourceSize(10_000_000)
                     }
                     AddressbookPropName::SupportedReportSet => {
                         AddressbookProp::SupportedReportSet(SupportedReportSet::all())
@@ -92,9 +92,11 @@ impl Resource for AddressbookResource {
                     self.0.description = description;
                     Ok(())
                 }
-                AddressbookProp::MaxResourceSize(_) => Err(rustical_dav::Error::PropReadOnly),
-                AddressbookProp::SupportedReportSet(_) => Err(rustical_dav::Error::PropReadOnly),
-                AddressbookProp::SupportedAddressData(_) => Err(rustical_dav::Error::PropReadOnly),
+                AddressbookProp::MaxResourceSize(_)
+                | AddressbookProp::SupportedReportSet(_)
+                | AddressbookProp::SupportedAddressData(_) => {
+                    Err(rustical_dav::Error::PropReadOnly)
+                }
             },
             AddressbookPropWrapper::SyncToken(prop) => SyncTokenExtension::set_prop(self, prop),
             AddressbookPropWrapper::DavPush(prop) => DavPushExtension::set_prop(self, prop),
@@ -112,9 +114,11 @@ impl Resource for AddressbookResource {
                     self.0.description = None;
                     Ok(())
                 }
-                AddressbookPropName::MaxResourceSize => Err(rustical_dav::Error::PropReadOnly),
-                AddressbookPropName::SupportedReportSet => Err(rustical_dav::Error::PropReadOnly),
-                AddressbookPropName::SupportedAddressData => Err(rustical_dav::Error::PropReadOnly),
+                AddressbookPropName::MaxResourceSize
+                | AddressbookPropName::SupportedReportSet
+                | AddressbookPropName::SupportedAddressData => {
+                    Err(rustical_dav::Error::PropReadOnly)
+                }
             },
             AddressbookPropWrapperName::SyncToken(prop) => {
                 SyncTokenExtension::remove_prop(self, prop)

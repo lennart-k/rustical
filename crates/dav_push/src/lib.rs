@@ -1,4 +1,5 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery)]
+#![allow(clippy::missing_errors_doc)]
 mod extension;
 mod prop;
 pub mod register;
@@ -69,6 +70,7 @@ impl<S: SubscriptionStore> DavPushController<S> {
         }
     }
 
+    #[allow(clippy::cognitive_complexity)]
     async fn send_message(&self, message: CollectionOperation) {
         let subscriptions = match self.sub_store.get_subscriptions(&message.topic).await {
             Ok(subs) => subs,

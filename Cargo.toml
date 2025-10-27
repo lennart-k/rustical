@@ -48,7 +48,6 @@ pbkdf2 = { version = "0.12", features = ["simple"] }
 rand_core = { version = "0.9", features = ["std"] }
 chrono = { version = "0.4", features = ["serde"] }
 regex = "1.10"
-lazy_static = "1.5"
 rstest = "0.26"
 rstest_reuse = "0.7"
 sha2 = "0.10"

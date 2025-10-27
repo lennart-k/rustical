@@ -42,8 +42,8 @@ pub async fn route_calendar_restore<CS: CalendarStore>(
         return Ok(StatusCode::UNAUTHORIZED.into_response());
     }
     store.restore_calendar(&owner, &cal_id).await?;
-    Ok(match referer {
-        Some(referer) => Redirect::to(&referer.to_string()).into_response(),
-        None => (StatusCode::CREATED, "Restored").into_response(),
-    })
+    Ok(referer.map_or_else(
+        || (StatusCode::CREATED, "Restored").into_response(),
+        |referer| Redirect::to(&referer.to_string()).into_response(),
+    ))
 }

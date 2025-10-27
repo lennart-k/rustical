@@ -85,10 +85,11 @@ impl<S: Send + Sync> FromRequestParts<S> for Depth {
         parts: &mut axum::http::request::Parts,
         _state: &S,
     ) -> Result<Self, Self::Rejection> {
-        if let Some(depth_header) = parts.headers.get("Depth") {
-            depth_header.as_bytes().try_into()
-        } else {
-            Ok(Self::Zero)
-        }
+        parts
+            .headers
+            .get("Depth")
+            .map_or(Ok(Self::Zero), |depth_header| {
+                depth_header.as_bytes().try_into()
+            })
     }
 }

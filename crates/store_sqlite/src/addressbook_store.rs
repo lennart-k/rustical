@@ -141,10 +141,12 @@ impl SqliteAddressbookStore {
         if use_trashbin {
             sqlx::query!(
                 r#"UPDATE addressbooks SET deleted_at = datetime() WHERE (principal, id) = (?, ?)"#,
-                principal, addressbook_id
+                principal,
+                addressbook_id
             )
             .execute(executor)
-            .await.map_err(crate::Error::from)?;
+            .await
+            .map_err(crate::Error::from)?;
         } else {
             sqlx::query!(
                 r#"DELETE FROM addressbooks WHERE (principal, id) = (?, ?)"#,
@@ -203,9 +205,7 @@ impl SqliteAddressbookStore {
         let mut objects = vec![];
         let mut deleted_objects = vec![];
 
-        let new_synctoken = changes
-            .last()
-            .map_or(0, |&Row { synctoken, .. }| synctoken);
+        let new_synctoken = changes.last().map_or(0, |&Row { synctoken, .. }| synctoken);
 
         for Row { object_id, .. } in changes {
             match Self::_get_object(&mut *conn, principal, addressbook_id, &object_id, false).await

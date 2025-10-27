@@ -19,6 +19,7 @@ pub struct PropstatElement<PropType: XmlSerialize> {
     pub status: StatusCode,
 }
 
+#[allow(clippy::trivially_copy_pass_by_ref)]
 fn xml_serialize_status(
     status: &StatusCode,
     ns: Option<Namespace>,
@@ -56,6 +57,7 @@ pub struct ResponseElement<PropstatType: XmlSerialize> {
     pub propstat: Vec<PropstatWrapper<PropstatType>>,
 }
 
+#[allow(clippy::trivially_copy_pass_by_ref, clippy::ref_option)]
 fn xml_serialize_optional_status(
     val: &Option<StatusCode>,
     ns: Option<Namespace>,

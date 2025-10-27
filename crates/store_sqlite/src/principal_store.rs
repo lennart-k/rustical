@@ -195,9 +195,8 @@ impl AuthenticationProvider for SqlitePrincipalStore {
             Some(user) => user,
             None => return Ok(None),
         };
-        let password = match &user.password {
-            Some(password) => password,
-            None => return Ok(None),
+        let Some(password) = &user.password else {
+            return Ok(None);
         };
 
         if password_auth::verify_password(password_input, password.as_ref()).is_ok() {

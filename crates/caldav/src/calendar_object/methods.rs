@@ -78,7 +78,7 @@ pub async fn put_event<C: CalendarStore>(
         true
     };
 
-    let object = if let Ok(obj) = CalendarObject::from_ics(body.clone()) { obj } else {
+    let Ok(object) = CalendarObject::from_ics(body.clone()) else {
         debug!("invalid calendar data:\n{body}");
         return Err(Error::PreconditionFailed(Precondition::ValidCalendarData));
     };

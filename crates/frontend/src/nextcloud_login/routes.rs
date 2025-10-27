@@ -27,20 +27,22 @@ pub async fn post_nextcloud_login(
     let token = uuid::Uuid::new_v4().to_string();
 
     let app_name = user_agent.to_string();
-    let mut flows = state.flows.write().await;
-    // Flows must not last longer than 10 minutes
-    // We also enforce that condition here to prevent a memory leak where unpolled flows would
-    // never be cleaned up
-    flows.retain(|_, flow| Utc::now() - flow.created_at < Duration::minutes(10));
-    flows.insert(
-        flow_id.clone(),
-        NextcloudFlow {
-            app_name: app_name.clone(),
-            created_at: Utc::now(),
-            token: token.clone(),
-            response: None,
-        },
-    );
+    {
+        let mut flows = state.flows.write().await;
+        // Flows must not last longer than 10 minutes
+        // We also enforce that condition here to prevent a memory leak where unpolled flows would
+        // never be cleaned up
+        flows.retain(|_, flow| Utc::now() - flow.created_at < Duration::minutes(10));
+        flows.insert(
+            flow_id.clone(),
+            NextcloudFlow {
+                app_name: app_name.clone(),
+                created_at: Utc::now(),
+                token: token.clone(),
+                response: None,
+            },
+        );
+    }
     Json(NextcloudLoginResponse {
         login: format!("https://{host}/index.php/login/v2/flow/{flow_id}"),
         poll: NextcloudLoginPoll {
@@ -56,6 +58,7 @@ pub struct NextcloudPollForm {
     token: String,
 }
 
+#[allow(clippy::significant_drop_tightening)]
 pub async fn post_nextcloud_poll<AP: AuthenticationProvider>(
     Extension(state): Extension<Arc<NextcloudFlows>>,
     Path(flow_id): Path<String>,

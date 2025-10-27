@@ -10,7 +10,8 @@ pub struct SupportedReportSet<T: XmlSerialize + 'static> {
 }
 
 impl<T: XmlSerialize + Clone + 'static> SupportedReportSet<T> {
-    #[must_use] pub fn new(methods: Vec<T>) -> Self {
+    #[must_use]
+    pub fn new(methods: Vec<T>) -> Self {
         Self {
             supported_report: methods
                 .into_iter()

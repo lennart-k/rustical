@@ -33,7 +33,7 @@ mod tests {
                 PropFilterElement, TextMatchElement,
             },
         },
-        calendar_object::{CalendarObjectPropName, CalendarObjectPropWrapperName},
+        calendar_object::{CalendarData, CalendarObjectPropName, CalendarObjectPropWrapperName},
     };
 
     #[test]
@@ -76,7 +76,7 @@ mod tests {
                             CalendarObjectPropName::Getetag,
                         ),
                         CalendarObjectPropWrapperName::CalendarObject(
-                            CalendarObjectPropName::CalendarData(Default::default())
+                            CalendarObjectPropName::CalendarData(CalendarData::default())
                         ),
                     ],
                     vec![]
@@ -115,6 +115,6 @@ mod tests {
                 timezone: None,
                 timezone_id: None
             }
-        )
+        );
     }
 }

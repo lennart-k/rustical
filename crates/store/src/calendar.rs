@@ -32,17 +32,20 @@ pub struct Calendar {
 }
 
 impl Calendar {
-    #[must_use] pub fn format_synctoken(&self) -> String {
+    #[must_use]
+    pub fn format_synctoken(&self) -> String {
         format_synctoken(self.synctoken)
     }
 
-    #[must_use] pub fn get_timezone(&self) -> Option<chrono_tz::Tz> {
+    #[must_use]
+    pub fn get_timezone(&self) -> Option<chrono_tz::Tz> {
         self.timezone_id
             .as_ref()
             .and_then(|tzid| chrono_tz::Tz::from_str(tzid).ok())
     }
 
-    #[must_use] pub fn get_vtimezone(&self) -> Option<&'static str> {
+    #[must_use]
+    pub fn get_vtimezone(&self) -> Option<&'static str> {
         self.timezone_id
             .as_ref()
             .and_then(|tzid| vtimezones_rs::VTIMEZONES.get(tzid).copied())

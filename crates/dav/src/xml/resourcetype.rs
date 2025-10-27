@@ -40,6 +40,6 @@ mod tests {
         <calendar-color xmlns="http://calendarserver.org/ns/"/>
     </resourcetype>
 </document>"#
-        )
+        );
     }
 }

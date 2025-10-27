@@ -3,14 +3,11 @@ use chrono::{DateTime, Datelike, Duration, Local, NaiveDate, NaiveDateTime, Naiv
 use chrono_tz::Tz;
 use derive_more::derive::Deref;
 use ical::property::Property;
-use lazy_static::lazy_static;
 use rustical_xml::{ValueDeserialize, ValueSerialize};
-use std::{borrow::Cow, collections::HashMap, ops::Add};
+use std::{borrow::Cow, collections::HashMap, ops::Add, sync::LazyLock};
 
-lazy_static! {
-    static ref RE_VCARD_DATE_MM_DD: regex::Regex =
-        regex::Regex::new(r"^--(?<m>\d{2})(?<d>\d{2})$").unwrap();
-}
+static RE_VCARD_DATE_MM_DD: LazyLock<regex::Regex> =
+    LazyLock::new(|| regex::Regex::new(r"^--(?<m>\d{2})(?<d>\d{2})$").unwrap());
 
 const LOCAL_DATE_TIME: &str = "%Y%m%dT%H%M%S";
 const UTC_DATE_TIME: &str = "%Y%m%dT%H%M%SZ";
@@ -137,9 +134,7 @@ impl CalDateTime {
         let prop_value = prop
             .value
             .as_ref()
-            .ok_or(CalDateTimeError::InvalidDatetimeFormat(
-                "empty property".to_owned(),
-            ))?;
+            .ok_or_else(|| CalDateTimeError::InvalidDatetimeFormat("empty property".into()))?;
 
         let timezone = if let Some(tzid) = prop.get_param("TZID") {
             if let Some(timezone) = timezones.get(tzid) {
@@ -158,7 +153,8 @@ impl CalDateTime {
         Self::parse(prop_value, timezone)
     }
 
-    #[must_use] pub fn format(&self) -> String {
+    #[must_use]
+    pub fn format(&self) -> String {
         match self {
             Self::DateTime(datetime) => match datetime.timezone() {
                 ICalTimezone::Olson(chrono_tz::UTC) => datetime.format(UTC_DATE_TIME).to_string(),
@@ -168,25 +164,29 @@ impl CalDateTime {
         }
     }
 
-    #[must_use] pub fn format_date(&self) -> String {
+    #[must_use]
+    pub fn format_date(&self) -> String {
         match self {
             Self::DateTime(datetime) => datetime.format(LOCAL_DATE).to_string(),
             Self::Date(date, _) => date.format(LOCAL_DATE).to_string(),
         }
     }
 
-    #[must_use] pub fn date(&self) -> NaiveDate {
+    #[must_use]
+    pub fn date(&self) -> NaiveDate {
         match self {
             Self::DateTime(datetime) => datetime.date_naive(),
             Self::Date(date, _) => date.to_owned(),
         }
     }
 
-    #[must_use] pub const fn is_date(&self) -> bool {
+    #[must_use]
+    pub const fn is_date(&self) -> bool {
         matches!(&self, Self::Date(_, _))
     }
 
-    #[must_use] pub fn as_datetime(&self) -> Cow<'_, DateTime<ICalTimezone>> {
+    #[must_use]
+    pub fn as_datetime(&self) -> Cow<'_, DateTime<ICalTimezone>> {
         match self {
             Self::DateTime(datetime) => Cow::Borrowed(datetime),
             Self::Date(date, tz) => Cow::Owned(
@@ -219,8 +219,7 @@ impl CalDateTime {
         if let Ok(datetime) = NaiveDateTime::parse_from_str(value, UTC_DATE_TIME) {
             return Ok(datetime.and_utc().into());
         }
-        let timezone = timezone
-            .map_or(ICalTimezone::Local, ICalTimezone::Olson);
+        let timezone = timezone.map_or(ICalTimezone::Local, ICalTimezone::Olson);
         if let Ok(date) = NaiveDate::parse_from_str(value, LOCAL_DATE) {
             return Ok(Self::Date(date, timezone));
         }
@@ -251,7 +250,7 @@ impl CalDateTime {
             return Ok((
                 Self::Date(
                     NaiveDate::from_ymd_opt(year, month, day)
-                        .ok_or(CalDateTimeError::ParseError(value.to_string()))?,
+                        .ok_or_else(|| CalDateTimeError::ParseError(value.to_string()))?,
                     ICalTimezone::Local,
                 ),
                 false,
@@ -260,11 +259,13 @@ impl CalDateTime {
         Err(CalDateTimeError::InvalidDatetimeFormat(value.to_string()))
     }
 
-    #[must_use] pub fn utc(&self) -> DateTime<Utc> {
+    #[must_use]
+    pub fn utc(&self) -> DateTime<Utc> {
         self.as_datetime().to_utc()
     }
 
-    #[must_use] pub fn timezone(&self) -> ICalTimezone {
+    #[must_use]
+    pub fn timezone(&self) -> ICalTimezone {
         match &self {
             Self::DateTime(datetime) => datetime.timezone(),
             Self::Date(_, tz) => tz.to_owned(),
@@ -349,9 +350,7 @@ impl Datelike for CalDateTime {
     fn with_month0(&self, month0: u32) -> Option<Self> {
         match &self {
             Self::DateTime(datetime) => Some(Self::DateTime(datetime.with_month0(month0)?)),
-            Self::Date(date, tz) => {
-                Some(Self::Date(date.with_month0(month0)?, tz.to_owned()))
-            }
+            Self::Date(date, tz) => Some(Self::Date(date.with_month0(month0)?, tz.to_owned())),
         }
     }
     fn with_day(&self, day: u32) -> Option<Self> {
@@ -368,22 +367,14 @@ impl Datelike for CalDateTime {
     }
     fn with_ordinal(&self, ordinal: u32) -> Option<Self> {
         match &self {
-            Self::DateTime(datetime) => {
-                Some(Self::DateTime(datetime.with_ordinal(ordinal)?))
-            }
-            Self::Date(date, tz) => {
-                Some(Self::Date(date.with_ordinal(ordinal)?, tz.to_owned()))
-            }
+            Self::DateTime(datetime) => Some(Self::DateTime(datetime.with_ordinal(ordinal)?)),
+            Self::Date(date, tz) => Some(Self::Date(date.with_ordinal(ordinal)?, tz.to_owned())),
         }
     }
     fn with_ordinal0(&self, ordinal0: u32) -> Option<Self> {
         match &self {
-            Self::DateTime(datetime) => {
-                Some(Self::DateTime(datetime.with_ordinal0(ordinal0)?))
-            }
-            Self::Date(date, tz) => {
-                Some(Self::Date(date.with_ordinal0(ordinal0)?, tz.to_owned()))
-            }
+            Self::DateTime(datetime) => Some(Self::DateTime(datetime.with_ordinal0(ordinal0)?)),
+            Self::Date(date, tz) => Some(Self::Date(date.with_ordinal0(ordinal0)?, tz.to_owned())),
         }
     }
 }

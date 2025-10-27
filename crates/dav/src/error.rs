@@ -35,9 +35,9 @@ pub enum Error {
 }
 
 impl Error {
-    #[must_use] pub const fn status_code(&self) -> StatusCode {
+    #[must_use]
+    pub const fn status_code(&self) -> StatusCode {
         match self {
-            Self::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::BadRequest(_) => StatusCode::BAD_REQUEST,
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
@@ -52,7 +52,7 @@ impl Error {
             },
             Self::PropReadOnly => StatusCode::CONFLICT,
             Self::PreconditionFailed => StatusCode::PRECONDITION_FAILED,
-            Self::IOError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::InternalError | Self::IOError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::Forbidden => StatusCode::FORBIDDEN,
         }
     }

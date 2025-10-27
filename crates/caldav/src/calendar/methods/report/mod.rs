@@ -43,9 +43,9 @@ pub(crate) enum ReportRequest {
 impl ReportRequest {
     const fn props(&self) -> &PropfindType<CalendarObjectPropWrapperName> {
         match &self {
-            Self::CalendarMultiget(CalendarMultigetRequest { prop, .. }) => prop,
-            Self::CalendarQuery(CalendarQueryRequest { prop, .. }) => prop,
-            Self::SyncCollection(SyncCollectionRequest { prop, .. }) => prop,
+            Self::CalendarMultiget(CalendarMultigetRequest { prop, .. })
+            | Self::CalendarQuery(CalendarQueryRequest { prop, .. })
+            | Self::SyncCollection(SyncCollectionRequest { prop, .. }) => prop,
         }
     }
 }
@@ -184,7 +184,7 @@ mod tests {
                     "/caldav/user/user/6f787542-5256-401a-8db97003260da/ae7a998fdfd1d84a20391168962c62b".to_owned()
                 ]
             })
-        )
+        );
     }
 
     #[test]
@@ -241,7 +241,7 @@ mod tests {
                 timezone: None,
                 timezone_id: None,
             })
-        )
+        );
     }
 
     #[test]
@@ -269,6 +269,6 @@ mod tests {
                     "/caldav/user/user/6f787542-5256-401a-8db97003260da/ae7a998fdfd1d84a20391168962c62b".to_owned()
                 ]
             })
-        )
+        );
     }
 }

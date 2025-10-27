@@ -20,6 +20,7 @@ impl CombinedCalendarStore {
         }
     }
 
+    #[must_use]
     pub fn with_store<CS: PrefixedCalendarStore>(mut self, store: Arc<CS>) -> Self {
         let store: Arc<dyn CalendarStore> = store;
         self.stores.insert(CS::PREFIX, store);
@@ -30,8 +31,7 @@ impl CombinedCalendarStore {
         self.stores
             .iter()
             .find(|&(prefix, _store)| id.starts_with(prefix))
-            .map(|(_prefix, store)| store.clone())
-            .unwrap_or(self.default.clone())
+            .map_or_else(|| self.default.clone(), |(_prefix, store)| store.clone())
     }
 }
 

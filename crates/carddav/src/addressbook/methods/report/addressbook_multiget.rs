@@ -47,11 +47,9 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
                 }
             } else {
                 not_found.push(href.to_owned());
-                continue;
             }
         } else {
             not_found.push(href.to_owned());
-            continue;
         }
     }
 

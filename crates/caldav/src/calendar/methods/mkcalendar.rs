@@ -89,17 +89,12 @@ pub async fn route_mkcalendar<C: CalendarStore, S: SubscriptionStore>(
         // TODO: Proper error (calendar-timezone precondition)
         let calendar = IcalParser::new(tz.as_bytes())
             .next()
-            .ok_or(rustical_dav::Error::BadRequest(
-                "No timezone data provided".to_owned(),
-            ))?
+            .ok_or_else(|| rustical_dav::Error::BadRequest("No timezone data provided".to_owned()))?
             .map_err(|_| rustical_dav::Error::BadRequest("No timezone data provided".to_owned()))?;
 
-        let timezone = calendar
-            .timezones
-            .first()
-            .ok_or(rustical_dav::Error::BadRequest(
-                "No timezone data provided".to_owned(),
-            ))?;
+        let timezone = calendar.timezones.first().ok_or_else(|| {
+            rustical_dav::Error::BadRequest("No timezone data provided".to_owned())
+        })?;
         let timezone: chrono_tz::Tz = timezone
             .try_into()
             .map_err(|_| rustical_dav::Error::BadRequest("No timezone data provided".to_owned()))?;
@@ -123,14 +118,16 @@ pub async fn route_mkcalendar<C: CalendarStore, S: SubscriptionStore>(
         synctoken: 0,
         subscription_url: request.source.map(|href| href.href),
         push_topic: uuid::Uuid::new_v4().to_string(),
-        components: request
-            .supported_calendar_component_set
-            .map(Into::into)
-            .unwrap_or(vec![
-                CalendarObjectType::Event,
-                CalendarObjectType::Todo,
-                CalendarObjectType::Journal,
-            ]),
+        components: request.supported_calendar_component_set.map_or_else(
+            || {
+                vec![
+                    CalendarObjectType::Event,
+                    CalendarObjectType::Todo,
+                    CalendarObjectType::Journal,
+                ]
+            },
+            Into::into,
+        ),
     };
 
     cal_store.insert_calendar(calendar).await?;

@@ -6,7 +6,7 @@ use rustical_dav_push::DavPushExtensionProp;
 use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 use strum_macros::VariantArray;
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "AddressbookPropName")]
 pub enum AddressbookProp {
     // CardDAV (RFC 6352)
@@ -20,7 +20,7 @@ pub enum AddressbookProp {
     MaxResourceSize(i64),
 }
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "AddressbookPropWrapperName", untagged)]
 pub enum AddressbookPropWrapper {
     Addressbook(AddressbookProp),

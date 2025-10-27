@@ -24,10 +24,12 @@ pub enum Error {
 }
 
 impl Error {
-    #[must_use] pub const fn status_code(&self) -> StatusCode {
+    #[must_use]
+    pub const fn status_code(&self) -> StatusCode {
         match self {
-            Self::InvalidData(_) => StatusCode::BAD_REQUEST,
-            Self::MissingCalendar | Self::MissingContact => StatusCode::BAD_REQUEST,
+            Self::InvalidData(_) | Self::MissingCalendar | Self::MissingContact => {
+                StatusCode::BAD_REQUEST
+            }
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

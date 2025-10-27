@@ -1,4 +1,7 @@
-use super::prop::{CalendarObjectPropWrapper, CalendarObjectPropWrapperName, CalendarObjectPropName, CalendarObjectProp, CalendarData};
+use super::prop::{
+    CalendarData, CalendarObjectProp, CalendarObjectPropName, CalendarObjectPropWrapper,
+    CalendarObjectPropWrapperName,
+};
 use crate::Error;
 use derive_more::derive::{From, Into};
 use rustical_dav::{

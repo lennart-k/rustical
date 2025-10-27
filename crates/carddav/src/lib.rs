@@ -1,4 +1,5 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery)]
+#![allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]
 use axum::response::Redirect;
 use axum::routing::any;
 use axum::{Extension, Router};
@@ -37,20 +38,15 @@ pub fn carddav_router<AP: AuthenticationProvider, A: AddressbookStore, S: Subscr
     store: Arc<A>,
     subscription_store: Arc<S>,
 ) -> Router {
-    let principal_service = PrincipalResourceService::new(
-        store,
-        auth_provider.clone(),
-        subscription_store,
-    );
+    let principal_service =
+        PrincipalResourceService::new(store, auth_provider.clone(), subscription_store);
     Router::new()
         .nest(
             prefix,
-            RootResourceService::<_, Principal, CardDavPrincipalUri>::new(
-                principal_service,
-            )
-            .axum_router()
-            .layer(AuthenticationLayer::new(auth_provider))
-            .layer(Extension(CardDavPrincipalUri(prefix))),
+            RootResourceService::<_, Principal, CardDavPrincipalUri>::new(principal_service)
+                .axum_router()
+                .layer(AuthenticationLayer::new(auth_provider))
+                .layer(Extension(CardDavPrincipalUri(prefix))),
         )
         .route(
             "/.well-known/carddav",

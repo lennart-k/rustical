@@ -36,7 +36,7 @@ pub struct TextMatchElement {
     pub(crate) negate_condition: Option<String>,
 }
 
-#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
 #[allow(dead_code)]
 // https://www.rfc-editor.org/rfc/rfc4791#section-9.7.2
 pub struct PropFilterElement {
@@ -76,7 +76,7 @@ impl CompFilterElement {
         let comp_vcal = self.name == "VCALENDAR";
         match (self.is_not_defined, comp_vcal) {
             // Client wants VCALENDAR to not exist but we are a VCALENDAR
-            (Some(()), true) => return false,
+            (Some(()), true) |
             // Client is asking for something different than a vcalendar
             (None, false) => return false,
             _ => {}
@@ -106,7 +106,7 @@ impl CompFilterElement {
         let comp_name_matches = self.name == cal_object.get_component_name();
         match (self.is_not_defined, comp_name_matches) {
             // Client wants VCALENDAR to not exist but we are a VCALENDAR
-            (Some(()), true) => return false,
+            (Some(()), true) |
             // Client is asking for something different than a vcalendar
             (None, false) => return false,
             _ => {}
@@ -164,7 +164,7 @@ impl From<&FilterElement> for CalendarQuery {
                 };
             }
         }
-        Default::default()
+        Self::default()
     }
 }
 
@@ -184,10 +184,6 @@ pub struct CalendarQueryRequest {
 
 impl From<&CalendarQueryRequest> for CalendarQuery {
     fn from(value: &CalendarQueryRequest) -> Self {
-        value
-            .filter
-            .as_ref()
-            .map(Self::from)
-            .unwrap_or_default()
+        value.filter.as_ref().map(Self::from).unwrap_or_default()
     }
 }

@@ -8,7 +8,8 @@ pub struct HrefElement {
 }
 
 impl HrefElement {
-    #[must_use] pub const fn new(href: String) -> Self {
+    #[must_use]
+    pub const fn new(href: String) -> Self {
         Self { href }
     }
 }

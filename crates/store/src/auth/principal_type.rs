@@ -36,7 +36,8 @@ impl TryFrom<&str> for PrincipalType {
 }
 
 impl PrincipalType {
-    #[must_use] pub const fn as_str(&self) -> &'static str {
+    #[must_use]
+    pub const fn as_str(&self) -> &'static str {
         match self {
             Self::Individual => "INDIVIDUAL",
             Self::Group => "GROUP",

@@ -7,7 +7,7 @@ pub enum Transport {
     WebPush,
 }
 
-#[derive(Debug, Clone, XmlSerialize, PartialEq)]
+#[derive(Debug, Clone, XmlSerialize, PartialEq, Eq)]
 pub struct Transports {
     #[xml(flatten, ty = "untagged")]
     #[xml(ns = "crate::namespace::NS_DAVPUSH")]
@@ -22,10 +22,10 @@ impl Default for Transports {
     }
 }
 
-#[derive(XmlSerialize, XmlDeserialize, PartialEq, Clone)]
+#[derive(XmlSerialize, XmlDeserialize, PartialEq, Eq, Clone)]
 pub struct SupportedTriggers(#[xml(flatten, ty = "untagged")] pub Vec<Trigger>);
 
-#[derive(XmlSerialize, XmlDeserialize, PartialEq, Debug, Clone)]
+#[derive(XmlSerialize, XmlDeserialize, PartialEq, Eq, Debug, Clone)]
 pub enum Trigger {
     #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
     ContentUpdate(ContentUpdate),

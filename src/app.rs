@@ -28,7 +28,11 @@ use tower_sessions::{Expiry, MemoryStore, SessionManagerLayer};
 use tracing::Span;
 use tracing::field::display;
 
-#[allow(clippy::too_many_arguments)]
+#[allow(
+    clippy::too_many_arguments,
+    clippy::too_many_lines,
+    clippy::cognitive_complexity
+)]
 pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
     addr_store: Arc<AS>,
     cal_store: Arc<CS>,
@@ -36,7 +40,7 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
     auth_provider: Arc<impl AuthenticationProvider>,
     frontend_config: FrontendConfig,
     oidc_config: Option<OidcConfig>,
-    nextcloud_login_config: NextcloudLoginConfig,
+    nextcloud_login_config: &NextcloudLoginConfig,
     dav_push_enabled: bool,
     session_cookie_samesite_strict: bool,
     payload_limit_mb: usize,

@@ -10,10 +10,7 @@ use axum::{
 use axum_extra::{TypedHeader, extract::Host};
 use headers::UserAgent;
 use http::StatusCode;
-use rustical_store::{
-    AddressbookStore, CalendarStore,
-    auth::{AppToken, AuthenticationProvider, Principal},
-};
+use rustical_store::auth::{AppToken, AuthenticationProvider, Principal};
 
 use crate::pages::user::{Section, UserPage};
 
@@ -32,14 +29,8 @@ pub struct ProfileSection {
     pub davx5_hostname: Option<String>,
 }
 
-pub async fn route_user_named<
-    CS: CalendarStore,
-    AS: AddressbookStore,
-    AP: AuthenticationProvider,
->(
+pub async fn route_user_named<AP: AuthenticationProvider>(
     Path(user_id): Path<String>,
-    Extension(cal_store): Extension<Arc<CS>>,
-    Extension(addr_store): Extension<Arc<AS>>,
     Extension(auth_provider): Extension<Arc<AP>>,
     TypedHeader(user_agent): TypedHeader<UserAgent>,
     Host(host): Host,
@@ -47,26 +38,6 @@ pub async fn route_user_named<
 ) -> impl IntoResponse {
     if user_id != user.id {
         return StatusCode::UNAUTHORIZED.into_response();
-    }
-
-    let mut calendars = vec![];
-    for group in user.memberships() {
-        calendars.extend(cal_store.get_calendars(group).await.unwrap());
-    }
-
-    let mut deleted_calendars = vec![];
-    for group in user.memberships() {
-        deleted_calendars.extend(cal_store.get_deleted_calendars(group).await.unwrap());
-    }
-
-    let mut addressbooks = vec![];
-    for group in user.memberships() {
-        addressbooks.extend(addr_store.get_addressbooks(group).await.unwrap());
-    }
-
-    let mut deleted_addressbooks = vec![];
-    for group in user.memberships() {
-        deleted_addressbooks.extend(addr_store.get_deleted_addressbooks(group).await.unwrap());
     }
 
     let is_apple = user_agent.as_str().contains("Apple") || user_agent.as_str().contains("Mac OS");

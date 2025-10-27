@@ -49,7 +49,8 @@ pub async fn route_post<AS: AddressbookStore, S: SubscriptionStore>(
         push_resource: request
             .subscription
             .web_push_subscription
-            .push_resource.clone(),
+            .push_resource
+            .clone(),
         topic: addressbook_resource.0.push_topic,
         expiration: expires.naive_local(),
         public_key: request

@@ -114,15 +114,13 @@ impl<T: ValueSerialize> XmlSerialize for T {
         namespaces: &HashMap<Namespace, &str>,
         writer: &mut quick_xml::Writer<&mut Vec<u8>>,
     ) -> std::io::Result<()> {
-        let prefix = ns
-            .and_then(|ns| namespaces.get(&ns))
-            .map(|prefix| {
-                if prefix.is_empty() {
-                    String::new()
-                } else {
-                    [*prefix, ":"].concat()
-                }
-            });
+        let prefix = ns.and_then(|ns| namespaces.get(&ns)).map(|prefix| {
+            if prefix.is_empty() {
+                String::new()
+            } else {
+                [*prefix, ":"].concat()
+            }
+        });
         let has_prefix = prefix.is_some();
         let tagname = tag.map(|tag| [&prefix.unwrap_or_default(), tag].concat());
         if let Some(tagname) = tagname.as_ref() {

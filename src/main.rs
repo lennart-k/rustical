@@ -115,7 +115,7 @@ async fn main() -> Result<()> {
                 principal_store.clone(),
                 config.frontend.clone(),
                 config.oidc.clone(),
-                config.nextcloud_login.clone(),
+                &config.nextcloud_login,
                 config.dav_push.enabled,
                 config.http.session_cookie_samesite_strict,
                 config.http.payload_limit_mb,
