@@ -78,7 +78,7 @@ async fn get_data_stores(
     })
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<()> {
     let args = Args::parse();
 
