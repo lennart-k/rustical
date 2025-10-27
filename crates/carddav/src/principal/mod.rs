@@ -20,7 +20,7 @@ pub struct PrincipalResource {
 
 impl ResourceName for PrincipalResource {
     fn get_name(&self) -> String {
-        self.principal.id.to_owned()
+        self.principal.id.clone()
     }
 }
 

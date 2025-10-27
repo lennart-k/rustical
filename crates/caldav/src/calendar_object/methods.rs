@@ -78,12 +78,9 @@ pub async fn put_event<C: CalendarStore>(
         true
     };
 
-    let object = match CalendarObject::from_ics(body.clone()) {
-        Ok(obj) => obj,
-        Err(_) => {
-            debug!("invalid calendar data:\n{body}");
-            return Err(Error::PreconditionFailed(Precondition::ValidCalendarData));
-        }
+    let object = if let Ok(obj) = CalendarObject::from_ics(body.clone()) { obj } else {
+        debug!("invalid calendar data:\n{body}");
+        return Err(Error::PreconditionFailed(Precondition::ValidCalendarData));
     };
     if object.get_id() != object_id {
         error!(

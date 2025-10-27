@@ -26,7 +26,7 @@ pub struct SqliteStore {
 }
 
 impl SqliteStore {
-    pub fn new(db: SqlitePool) -> Self {
+    #[must_use] pub const fn new(db: SqlitePool) -> Self {
         Self { db }
     }
 }

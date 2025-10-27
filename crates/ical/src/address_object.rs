@@ -45,32 +45,32 @@ impl AddressObject {
         Ok(Self { id, vcf, vcard })
     }
 
-    pub fn get_id(&self) -> &str {
+    #[must_use] pub fn get_id(&self) -> &str {
         &self.id
     }
 
-    pub fn get_etag(&self) -> String {
+    #[must_use] pub fn get_etag(&self) -> String {
         let mut hasher = Sha256::new();
         hasher.update(self.get_id());
         hasher.update(self.get_vcf());
         format!("\"{:x}\"", hasher.finalize())
     }
 
-    pub fn get_vcf(&self) -> &str {
+    #[must_use] pub fn get_vcf(&self) -> &str {
         &self.vcf
     }
 
-    pub fn get_anniversary(&self) -> Option<(CalDateTime, bool)> {
+    #[must_use] pub fn get_anniversary(&self) -> Option<(CalDateTime, bool)> {
         let prop = self.vcard.get_property("ANNIVERSARY")?.value.as_deref()?;
         CalDateTime::parse_vcard(prop).ok()
     }
 
-    pub fn get_birthday(&self) -> Option<(CalDateTime, bool)> {
+    #[must_use] pub fn get_birthday(&self) -> Option<(CalDateTime, bool)> {
         let prop = self.vcard.get_property("BDAY")?.value.as_deref()?;
         CalDateTime::parse_vcard(prop).ok()
     }
 
-    pub fn get_full_name(&self) -> Option<&str> {
+    #[must_use] pub fn get_full_name(&self) -> Option<&str> {
         let prop = self.vcard.get_property("FN")?;
         prop.value.as_deref()
     }
@@ -94,7 +94,7 @@ impl AddressObject {
 
                 let year_suffix = year.map(|year| format!(" ({year})")).unwrap_or_default();
                 Some(CalendarObject::from_ics(format!(
-                    r#"BEGIN:VCALENDAR
+                    r"BEGIN:VCALENDAR
 VERSION:2.0
 CALSCALE:GREGORIAN
 PRODID:-//github.com/lennart-k/rustical birthday calendar//EN
@@ -111,7 +111,7 @@ ACTION:DISPLAY
 DESCRIPTION:💍 {fullname}{year_suffix}
 END:VALARM
 END:VEVENT
-END:VCALENDAR"#,
+END:VCALENDAR",
                 ))?)
             } else {
                 None
@@ -135,7 +135,7 @@ END:VCALENDAR"#,
 
                 let year_suffix = year.map(|year| format!(" ({year})")).unwrap_or_default();
                 Some(CalendarObject::from_ics(format!(
-                    r#"BEGIN:VCALENDAR
+                    r"BEGIN:VCALENDAR
 VERSION:2.0
 CALSCALE:GREGORIAN
 PRODID:-//github.com/lennart-k/rustical birthday calendar//EN
@@ -152,7 +152,7 @@ ACTION:DISPLAY
 DESCRIPTION:🎂 {fullname}{year_suffix}
 END:VALARM
 END:VEVENT
-END:VCALENDAR"#,
+END:VCALENDAR",
                 ))?)
             } else {
                 None

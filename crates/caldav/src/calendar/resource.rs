@@ -71,7 +71,7 @@ pub struct CalendarResource {
 
 impl ResourceName for CalendarResource {
     fn get_name(&self) -> String {
-        self.cal.id.to_owned()
+        self.cal.id.clone()
     }
 }
 
@@ -89,7 +89,7 @@ impl SyncTokenExtension for CalendarResource {
 
 impl DavPushExtension for CalendarResource {
     fn get_topic(&self) -> String {
-        self.cal.push_topic.to_owned()
+        self.cal.push_topic.clone()
     }
 }
 
@@ -135,7 +135,7 @@ impl Resource for CalendarResource {
                 }
                 CalendarPropName::CalendarTimezone => {
                     CalendarProp::CalendarTimezone(self.cal.timezone_id.as_ref().and_then(|tzid| {
-                        vtimezones_rs::VTIMEZONES.get(tzid).map(|tz| tz.to_string())
+                        vtimezones_rs::VTIMEZONES.get(tzid).map(|tz| (*tz).to_string())
                     }))
                 }
                 // chrono_tz uses the IANA database
@@ -159,7 +159,7 @@ impl Resource for CalendarResource {
                     CalendarProp::SupportedReportSet(SupportedReportSet::all())
                 }
                 CalendarPropName::Source => CalendarProp::Source(
-                    self.cal.subscription_url.to_owned().map(HrefElement::from),
+                    self.cal.subscription_url.clone().map(HrefElement::from),
                 ),
                 CalendarPropName::MinDateTime => {
                     CalendarProp::MinDateTime(CalDateTime::from(DateTime::<Utc>::MIN_UTC).format())

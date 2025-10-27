@@ -35,7 +35,7 @@ pub enum Error {
 }
 
 impl Error {
-    pub fn status_code(&self) -> StatusCode {
+    #[must_use] pub const fn status_code(&self) -> StatusCode {
         match self {
             Self::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
             Self::NotFound => StatusCode::NOT_FOUND,
@@ -50,8 +50,8 @@ impl Error {
                 | XmlError::InvalidValue(_) => StatusCode::UNPROCESSABLE_ENTITY,
                 _ => StatusCode::BAD_REQUEST,
             },
-            Error::PropReadOnly => StatusCode::CONFLICT,
-            Error::PreconditionFailed => StatusCode::PRECONDITION_FAILED,
+            Self::PropReadOnly => StatusCode::CONFLICT,
+            Self::PreconditionFailed => StatusCode::PRECONDITION_FAILED,
             Self::IOError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::Forbidden => StatusCode::FORBIDDEN,
         }
@@ -68,7 +68,7 @@ impl axum::response::IntoResponse for Error {
         }
 
         let mut resp = axum::response::Response::builder().status(self.status_code());
-        if matches!(&self, &Error::Unauthorized) {
+        if matches!(&self, &Self::Unauthorized) {
             resp.headers_mut()
                 .expect("This must always work")
                 .insert("WWW-Authenticate", "Basic".parse().unwrap());

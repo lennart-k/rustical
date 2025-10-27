@@ -19,7 +19,7 @@ impl IntoResponse for InvalidDepthHeader {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Depth {
     Zero,
     One,
@@ -29,9 +29,9 @@ pub enum Depth {
 impl ValueSerialize for Depth {
     fn serialize(&self) -> String {
         match self {
-            Depth::Zero => "0",
-            Depth::One => "1",
-            Depth::Infinity => "infinity",
+            Self::Zero => "0",
+            Self::One => "1",
+            Self::Infinity => "infinity",
         }
         .to_owned()
     }
@@ -55,9 +55,9 @@ impl TryFrom<&[u8]> for Depth {
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         match value {
-            b"0" => Ok(Depth::Zero),
-            b"1" => Ok(Depth::One),
-            b"Infinity" | b"infinity" => Ok(Depth::Infinity),
+            b"0" => Ok(Self::Zero),
+            b"1" => Ok(Self::One),
+            b"Infinity" | b"infinity" => Ok(Self::Infinity),
             _ => Err(InvalidDepthHeader),
         }
     }

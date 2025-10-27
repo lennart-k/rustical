@@ -24,7 +24,7 @@ pub enum Error {
 }
 
 impl Error {
-    pub fn status_code(&self) -> StatusCode {
+    #[must_use] pub const fn status_code(&self) -> StatusCode {
         match self {
             Self::InvalidData(_) => StatusCode::BAD_REQUEST,
             Self::MissingCalendar | Self::MissingContact => StatusCode::BAD_REQUEST,

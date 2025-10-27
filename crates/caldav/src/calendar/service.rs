@@ -35,7 +35,7 @@ impl<C: CalendarStore, S: SubscriptionStore> Clone for CalendarResourceService<C
 }
 
 impl<C: CalendarStore, S: SubscriptionStore> CalendarResourceService<C, S> {
-    pub fn new(cal_store: Arc<C>, sub_store: Arc<S>) -> Self {
+    pub const fn new(cal_store: Arc<C>, sub_store: Arc<S>) -> Self {
         Self {
             cal_store,
             sub_store,

@@ -26,11 +26,11 @@ pub enum CalendarObjectType {
 }
 
 impl CalendarObjectType {
-    pub fn as_str(&self) -> &'static str {
+    #[must_use] pub const fn as_str(&self) -> &'static str {
         match self {
-            CalendarObjectType::Event => "VEVENT",
-            CalendarObjectType::Todo => "VTODO",
-            CalendarObjectType::Journal => "VJOURNAL",
+            Self::Event => "VEVENT",
+            Self::Todo => "VTODO",
+            Self::Journal => "VJOURNAL",
         }
     }
 }
@@ -66,9 +66,9 @@ pub enum CalendarObjectComponent {
 impl From<&CalendarObjectComponent> for CalendarObjectType {
     fn from(value: &CalendarObjectComponent) -> Self {
         match value {
-            CalendarObjectComponent::Event(..) => CalendarObjectType::Event,
-            CalendarObjectComponent::Todo(..) => CalendarObjectType::Todo,
-            CalendarObjectComponent::Journal(..) => CalendarObjectType::Journal,
+            CalendarObjectComponent::Event(..) => Self::Event,
+            CalendarObjectComponent::Todo(..) => Self::Todo,
+            CalendarObjectComponent::Journal(..) => Self::Journal,
         }
     }
 }
@@ -154,10 +154,10 @@ impl CalendarObject {
             ));
         }
 
-        if !cal.events.is_empty() as u8
-            + !cal.todos.is_empty() as u8
-            + !cal.journals.is_empty() as u8
-            + !cal.free_busys.is_empty() as u8
+        if u8::from(!cal.events.is_empty())
+            + u8::from(!cal.todos.is_empty())
+            + u8::from(!cal.journals.is_empty())
+            + u8::from(!cal.free_busys.is_empty())
             != 1
         {
             // https://datatracker.ietf.org/doc/html/rfc4791#section-4.1
@@ -208,15 +208,15 @@ impl CalendarObject {
         })
     }
 
-    pub fn get_vtimezones(&self) -> &HashMap<String, IcalTimeZone> {
+    #[must_use] pub const fn get_vtimezones(&self) -> &HashMap<String, IcalTimeZone> {
         &self.vtimezones
     }
 
-    pub fn get_data(&self) -> &CalendarObjectComponent {
+    #[must_use] pub const fn get_data(&self) -> &CalendarObjectComponent {
         &self.data
     }
 
-    pub fn get_id(&self) -> &str {
+    #[must_use] pub fn get_id(&self) -> &str {
         match &self.data {
             // We've made sure before that the first component exists and all components share the
             // same UID
@@ -226,22 +226,22 @@ impl CalendarObject {
         }
     }
 
-    pub fn get_etag(&self) -> String {
+    #[must_use] pub fn get_etag(&self) -> String {
         let mut hasher = Sha256::new();
         hasher.update(self.get_id());
         hasher.update(self.get_ics());
         format!("\"{:x}\"", hasher.finalize())
     }
 
-    pub fn get_ics(&self) -> &str {
+    #[must_use] pub fn get_ics(&self) -> &str {
         &self.ics
     }
 
-    pub fn get_component_name(&self) -> &str {
+    #[must_use] pub fn get_component_name(&self) -> &str {
         self.get_object_type().as_str()
     }
 
-    pub fn get_object_type(&self) -> CalendarObjectType {
+    #[must_use] pub fn get_object_type(&self) -> CalendarObjectType {
         (&self.data).into()
     }
 
@@ -250,7 +250,7 @@ impl CalendarObject {
             CalendarObjectComponent::Event(main_event, overrides) => Ok(overrides
                 .iter()
                 .chain([main_event].into_iter())
-                .map(|event| event.get_dtstart())
+                .map(super::event::EventObject::get_dtstart)
                 .collect::<Result<Vec<_>, _>>()?
                 .into_iter()
                 .flatten()
@@ -264,7 +264,7 @@ impl CalendarObject {
             CalendarObjectComponent::Event(main_event, overrides) => Ok(overrides
                 .iter()
                 .chain([main_event].into_iter())
-                .map(|event| event.get_last_occurence())
+                .map(super::event::EventObject::get_last_occurence)
                 .collect::<Result<Vec<_>, _>>()?
                 .into_iter()
                 .flatten()

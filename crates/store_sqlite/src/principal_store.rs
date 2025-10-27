@@ -25,7 +25,7 @@ impl TryFrom<PrincipalRow> for Principal {
     type Error = Error;
 
     fn try_from(value: PrincipalRow) -> Result<Self, Self::Error> {
-        Ok(Principal {
+        Ok(Self {
             id: value.id,
             displayname: value.displayname,
             password: value.password_hash.map(Secret::from),

@@ -15,7 +15,7 @@ pub struct EventObject {
 }
 
 impl EventObject {
-    pub fn get_uid(&self) -> &str {
+    #[must_use] pub fn get_uid(&self) -> &str {
         self.event.get_uid()
     }
 
@@ -43,7 +43,7 @@ impl EventObject {
 
         if let Some(dtend) = self.get_dtend()? {
             return Ok(Some(dtend));
-        };
+        }
 
         let duration = self.event.get_duration().unwrap_or(Duration::days(1));
 
@@ -96,7 +96,7 @@ impl EventObject {
         &self,
         start: Option<DateTime<Utc>>,
         end: Option<DateTime<Utc>>,
-        overrides: &[EventObject],
+        overrides: &[Self],
     ) -> Result<Vec<IcalEvent>, Error> {
         if let Some(mut rrule_set) = self.recurrence_ruleset()? {
             if let Some(start) = start {
@@ -150,7 +150,7 @@ impl EventObject {
 
                 ev.set_property(Property {
                     name: "RECURRENCE-ID".to_string(),
-                    value: Some(dateformat.to_owned()),
+                    value: Some(dateformat.clone()),
                     params: None,
                 });
                 ev.set_property(Property {

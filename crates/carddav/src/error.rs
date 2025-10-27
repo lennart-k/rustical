@@ -30,20 +30,20 @@ pub enum Error {
 }
 
 impl Error {
-    pub fn status_code(&self) -> StatusCode {
+    #[must_use] pub const fn status_code(&self) -> StatusCode {
         match self {
-            Error::StoreError(err) => match err {
+            Self::StoreError(err) => match err {
                 rustical_store::Error::NotFound => StatusCode::NOT_FOUND,
                 rustical_store::Error::AlreadyExists => StatusCode::CONFLICT,
                 rustical_store::Error::ReadOnly => StatusCode::FORBIDDEN,
                 _ => StatusCode::INTERNAL_SERVER_ERROR,
             },
-            Error::ChronoParseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            Error::DavError(err) => err.status_code(),
-            Error::Unauthorized => StatusCode::UNAUTHORIZED,
-            Error::XmlDecodeError(_) => StatusCode::BAD_REQUEST,
-            Error::NotImplemented => StatusCode::INTERNAL_SERVER_ERROR,
-            Error::NotFound => StatusCode::NOT_FOUND,
+            Self::ChronoParseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::DavError(err) => err.status_code(),
+            Self::Unauthorized => StatusCode::UNAUTHORIZED,
+            Self::XmlDecodeError(_) => StatusCode::BAD_REQUEST,
+            Self::NotImplemented => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::NotFound => StatusCode::NOT_FOUND,
             Self::IcalError(err) => err.status_code(),
         }
     }

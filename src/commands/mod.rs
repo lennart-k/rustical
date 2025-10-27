@@ -1,5 +1,6 @@
 use crate::config::{
-    Config, DataStoreConfig, DavPushConfig, HttpConfig, SqliteDataStoreConfig, TracingConfig,
+    Config, DataStoreConfig, DavPushConfig, HttpConfig, NextcloudLoginConfig,
+    SqliteDataStoreConfig, TracingConfig,
 };
 use clap::Parser;
 use rustical_frontend::FrontendConfig;
@@ -23,7 +24,7 @@ pub fn cmd_gen_config(_args: GenConfigArgs) -> anyhow::Result<()> {
         },
         oidc: None,
         dav_push: DavPushConfig::default(),
-        nextcloud_login: Default::default(),
+        nextcloud_login: NextcloudLoginConfig::default(),
     };
     let generated_config = toml::to_string(&config)?;
     println!("{generated_config}");

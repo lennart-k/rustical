@@ -40,7 +40,7 @@ pub trait CommonPropertiesExtension: Resource {
                 CommonPropertiesProp::Resourcetype(self.get_resourcetype())
             }
             CommonPropertiesPropName::Displayname => {
-                CommonPropertiesProp::Displayname(self.get_displayname().map(|s| s.to_string()))
+                CommonPropertiesProp::Displayname(self.get_displayname().map(std::string::ToString::to_string))
             }
             CommonPropertiesPropName::CurrentUserPrincipal => {
                 CommonPropertiesProp::CurrentUserPrincipal(

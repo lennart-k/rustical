@@ -38,8 +38,8 @@ pub fn caldav_router<AP: AuthenticationProvider, C: CalendarStore, S: Subscripti
         prefix,
         RootResourceService::<_, Principal, CalDavPrincipalUri>::new(PrincipalResourceService {
             auth_provider: auth_provider.clone(),
-            sub_store: subscription_store.clone(),
-            cal_store: store.clone(),
+            sub_store: subscription_store,
+            cal_store: store,
             simplified_home_set,
         })
         .axum_router()

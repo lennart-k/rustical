@@ -14,7 +14,7 @@ impl IntoResponse for InvalidOverwriteHeader {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Overwrite(pub bool);
 
 impl Default for Overwrite {

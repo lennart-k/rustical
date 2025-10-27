@@ -23,7 +23,7 @@ impl<AP: AuthenticationProvider> Clone for AuthenticationLayer<AP> {
 }
 
 impl<AP: AuthenticationProvider> AuthenticationLayer<AP> {
-    pub fn new(auth_provider: Arc<AP>) -> Self {
+    pub const fn new(auth_provider: Arc<AP>) -> Self {
         Self { auth_provider }
     }
 }

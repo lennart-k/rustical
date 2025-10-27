@@ -34,7 +34,7 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> Clon
 impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore>
     PrincipalResourceService<A, AP, S>
 {
-    pub fn new(addr_store: Arc<A>, auth_provider: Arc<AP>, sub_store: Arc<S>) -> Self {
+    pub const fn new(addr_store: Arc<A>, auth_provider: Arc<AP>, sub_store: Arc<S>) -> Self {
         Self {
             addr_store,
             auth_provider,

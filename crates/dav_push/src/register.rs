@@ -15,7 +15,7 @@ pub struct WebPushSubscription {
     pub auth_secret: String,
 }
 
-#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
 pub struct SubscriptionPublicKey {
     #[xml(ty = "attr", rename = "type")]
     pub ty: String,

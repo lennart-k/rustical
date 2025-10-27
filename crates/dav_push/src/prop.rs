@@ -1,7 +1,7 @@
 use rustical_dav::header::Depth;
 use rustical_xml::{Unparsed, XmlDeserialize, XmlSerialize};
 
-#[derive(Debug, Clone, XmlSerialize, PartialEq)]
+#[derive(Debug, Clone, XmlSerialize, PartialEq, Eq)]
 pub enum Transport {
     #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
     WebPush,
@@ -33,12 +33,12 @@ pub enum Trigger {
     PropertyUpdate(PropertyUpdate),
 }
 
-#[derive(XmlSerialize, XmlDeserialize, PartialEq, Clone, Debug)]
+#[derive(XmlSerialize, XmlDeserialize, PartialEq, Eq, Clone, Debug)]
 pub struct ContentUpdate(
     #[xml(rename = "depth", ns = "rustical_dav::namespace::NS_DAV")] pub Depth,
 );
 
-#[derive(XmlSerialize, PartialEq, Clone, Debug)]
+#[derive(XmlSerialize, PartialEq, Eq, Clone, Debug)]
 pub struct PropertyUpdate(
     #[xml(rename = "depth", ns = "rustical_dav::namespace::NS_DAV")] pub Depth,
 );

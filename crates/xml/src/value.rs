@@ -60,7 +60,7 @@ impl_value_parse!(usize);
 
 impl ValueSerialize for &str {
     fn serialize(&self) -> String {
-        self.to_string()
+        (*self).to_string()
     }
 }
 
@@ -98,7 +98,7 @@ impl<T: ValueDeserialize> XmlDeserialize for T {
                     Event::End(_) => break,
                     Event::Eof => return Err(XmlError::Eof),
                     _ => return Err(XmlError::UnsupportedEvent("todo")),
-                };
+                }
             }
         }
 
@@ -115,13 +115,12 @@ impl<T: ValueSerialize> XmlSerialize for T {
         writer: &mut quick_xml::Writer<&mut Vec<u8>>,
     ) -> std::io::Result<()> {
         let prefix = ns
-            .map(|ns| namespaces.get(&ns))
-            .unwrap_or(None)
+            .and_then(|ns| namespaces.get(&ns))
             .map(|prefix| {
-                if !prefix.is_empty() {
-                    [*prefix, ":"].concat()
-                } else {
+                if prefix.is_empty() {
                     String::new()
+                } else {
+                    [*prefix, ":"].concat()
                 }
             });
         let has_prefix = prefix.is_some();

@@ -13,7 +13,7 @@ use rustical_ical::AddressObject;
 use rustical_store::{AddressbookStore, auth::Principal};
 use rustical_xml::XmlDeserialize;
 
-#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
 #[allow(dead_code)]
 #[xml(ns = "rustical_dav::namespace::NS_DAV")]
 pub struct AddressbookMultigetRequest {
@@ -35,7 +35,7 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
 
     for href in &addressbook_multiget.href {
         if let Some(filename) = href.strip_prefix(path) {
-            let filename = filename.trim_start_matches("/");
+            let filename = filename.trim_start_matches('/');
             if let Some(object_id) = filename.strip_suffix(".vcf") {
                 match store
                     .get_object(principal, addressbook_id, object_id, false)
@@ -44,7 +44,7 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
                     Ok(object) => result.push(object),
                     Err(rustical_store::Error::NotFound) => not_found.push(href.to_owned()),
                     Err(err) => return Err(err.into()),
-                };
+                }
             } else {
                 not_found.push(href.to_owned());
                 continue;

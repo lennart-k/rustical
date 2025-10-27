@@ -40,7 +40,7 @@ pub struct AppleConfig {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub(crate) struct PostAppTokenForm {
+pub struct PostAppTokenForm {
     name: String,
     #[serde(default)]
     apple: bool,
@@ -57,7 +57,7 @@ pub async fn route_post_app_token<AP: AuthenticationProvider>(
     assert_eq!(user_id, user.id);
     let token = generate_app_token();
     let mut token_id = auth_provider
-        .add_app_token(&user.id, name.to_owned(), token.clone())
+        .add_app_token(&user.id, name.clone(), token.clone())
         .await?;
     // Get first 4 characters of token identifier
     token_id.truncate(4);
@@ -70,7 +70,7 @@ pub async fn route_post_app_token<AP: AuthenticationProvider>(
             hostname: hostname.clone(),
             caldav_principal_url: format!("https://{hostname}/caldav-compat/principal/{user_id}"),
             carddav_principal_url: format!("https://{hostname}/carddav/principal/{user_id}"),
-            user: user.id.to_owned(),
+            user: user.id.clone(),
             token,
             caldav_profile_uuid: Uuid::new_v4(),
             carddav_profile_uuid: Uuid::new_v4(),

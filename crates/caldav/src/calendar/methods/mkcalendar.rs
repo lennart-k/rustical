@@ -79,8 +79,8 @@ pub async fn route_mkcalendar<C: CalendarStore, S: SubscriptionStore>(
         _ => unreachable!("We never call with another method"),
     };
 
-    if let Some("") = request.displayname.as_deref() {
-        request.displayname = None
+    if request.displayname.as_deref() == Some("") {
+        request.displayname = None;
     }
 
     let timezone_id = if let Some(tzid) = request.calendar_timezone_id {
@@ -110,8 +110,8 @@ pub async fn route_mkcalendar<C: CalendarStore, S: SubscriptionStore>(
     };
 
     let calendar = Calendar {
-        id: cal_id.to_owned(),
-        principal: principal.to_owned(),
+        id: cal_id.clone(),
+        principal: principal.clone(),
         meta: CalendarMetadata {
             order: request.calendar_order.unwrap_or(0),
             displayname: request.displayname,

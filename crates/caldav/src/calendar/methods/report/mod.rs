@@ -41,11 +41,11 @@ pub(crate) enum ReportRequest {
 }
 
 impl ReportRequest {
-    fn props(&self) -> &PropfindType<CalendarObjectPropWrapperName> {
+    const fn props(&self) -> &PropfindType<CalendarObjectPropWrapperName> {
         match &self {
-            ReportRequest::CalendarMultiget(CalendarMultigetRequest { prop, .. }) => prop,
-            ReportRequest::CalendarQuery(CalendarQueryRequest { prop, .. }) => prop,
-            ReportRequest::SyncCollection(SyncCollectionRequest { prop, .. }) => prop,
+            Self::CalendarMultiget(CalendarMultigetRequest { prop, .. }) => prop,
+            Self::CalendarQuery(CalendarQueryRequest { prop, .. }) => prop,
+            Self::SyncCollection(SyncCollectionRequest { prop, .. }) => prop,
         }
     }
 }

@@ -62,13 +62,13 @@ impl<T: XmlRootTag + XmlDeserialize> XmlDocument for T {
                             format!("{root_ns:?}"),
                             Self::root_tag().to_owned(),
                         ));
-                    };
+                    }
 
                     return Self::deserialize(&mut reader, &start, empty);
                 }
                 Event::Eof => return Err(XmlError::Eof),
                 _ => return Err(XmlError::UnsupportedEvent("unknown, todo")),
-            };
+            }
         }
     }
 }
@@ -88,7 +88,7 @@ impl XmlDeserialize for () {
                 Event::End(e) if e.name() == start.name() => return Ok(()),
                 Event::Eof => return Err(XmlError::Eof),
                 _ => {}
-            };
+            }
         }
     }
 }

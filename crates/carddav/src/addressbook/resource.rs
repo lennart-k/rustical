@@ -17,7 +17,7 @@ pub struct AddressbookResource(pub(crate) Addressbook);
 
 impl ResourceName for AddressbookResource {
     fn get_name(&self) -> String {
-        self.0.id.to_owned()
+        self.0.id.clone()
     }
 }
 
@@ -29,7 +29,7 @@ impl SyncTokenExtension for AddressbookResource {
 
 impl DavPushExtension for AddressbookResource {
     fn get_topic(&self) -> String {
-        self.0.push_topic.to_owned()
+        self.0.push_topic.clone()
     }
 }
 
@@ -65,7 +65,7 @@ impl Resource for AddressbookResource {
                         AddressbookProp::SupportedReportSet(SupportedReportSet::all())
                     }
                     AddressbookPropName::AddressbookDescription => {
-                        AddressbookProp::AddressbookDescription(self.0.description.to_owned())
+                        AddressbookProp::AddressbookDescription(self.0.description.clone())
                     }
                     AddressbookPropName::SupportedAddressData => {
                         AddressbookProp::SupportedAddressData(SupportedAddressData::default())

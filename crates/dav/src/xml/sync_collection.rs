@@ -2,7 +2,7 @@ use rustical_xml::{ValueDeserialize, ValueSerialize, XmlDeserialize, XmlRootTag}
 
 use super::PropfindType;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SyncLevel {
     One,
     Infinity,
@@ -25,15 +25,15 @@ impl ValueDeserialize for SyncLevel {
 impl ValueSerialize for SyncLevel {
     fn serialize(&self) -> String {
         match self {
-            SyncLevel::One => "1",
-            SyncLevel::Infinity => "Infinity",
+            Self::One => "1",
+            Self::Infinity => "Infinity",
         }
         .to_owned()
     }
 }
 
 // https://datatracker.ietf.org/doc/html/rfc5323#section-5.17
-#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
 pub struct LimitElement {
     #[xml(ns = "crate::namespace::NS_DAV")]
     pub nresults: NresultsElement,
@@ -53,7 +53,7 @@ impl From<LimitElement> for u64 {
     }
 }
 
-#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
 pub struct NresultsElement(#[xml(ty = "text")] u64);
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq, XmlRootTag)]

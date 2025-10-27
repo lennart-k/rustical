@@ -29,7 +29,7 @@ pub enum AddressbookPropWrapper {
     Common(CommonPropertiesProp),
 }
 
-#[derive(Debug, Clone, XmlSerialize, PartialEq)]
+#[derive(Debug, Clone, XmlSerialize, PartialEq, Eq)]
 pub struct AddressDataType {
     #[xml(ty = "attr")]
     pub content_type: &'static str,
@@ -37,7 +37,7 @@ pub struct AddressDataType {
     pub version: &'static str,
 }
 
-#[derive(Debug, Clone, XmlSerialize, PartialEq)]
+#[derive(Debug, Clone, XmlSerialize, PartialEq, Eq)]
 pub struct SupportedAddressData {
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV", flatten)]
     address_data_type: &'static [AddressDataType],
@@ -60,7 +60,7 @@ impl Default for SupportedAddressData {
     }
 }
 
-#[derive(Debug, Clone, XmlSerialize, PartialEq, VariantArray)]
+#[derive(Debug, Clone, XmlSerialize, PartialEq, Eq, VariantArray)]
 pub enum ReportMethod {
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     AddressbookMultiget,

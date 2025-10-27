@@ -42,7 +42,7 @@ pub trait Resource: Clone + Send + 'static {
 
     fn get_resourcetype(&self) -> Resourcetype;
 
-    fn list_props() -> Vec<(Option<Namespace<'static>>, &'static str)> {
+    #[must_use] fn list_props() -> Vec<(Option<Namespace<'static>>, &'static str)> {
         Self::Prop::variant_names()
     }
 
@@ -106,13 +106,13 @@ pub trait Resource: Clone + Send + 'static {
     fn parse_propfind(
         body: &str,
     ) -> Result<PropfindElement<<Self::Prop as PropName>::Names>, rustical_xml::XmlError> {
-        if !body.is_empty() {
-            PropfindElement::parse_str(body)
-        } else {
+        if body.is_empty() {
             Ok(PropfindElement {
                 prop: PropfindType::Allprop,
                 include: None,
             })
+        } else {
+            PropfindElement::parse_str(body)
         }
     }
 
@@ -139,7 +139,7 @@ pub trait Resource: Clone + Send + 'static {
                         .collect_vec();
 
                     return Ok(ResponseElement {
-                        href: path.to_owned(),
+                        href: path.clone(),
                         propstat: vec![PropstatWrapper::TagList(PropstatElement {
                             prop: TagList::from(props),
                             status: StatusCode::OK,
@@ -181,7 +181,7 @@ pub trait Resource: Clone + Send + 'static {
             }));
         }
         Ok(ResponseElement {
-            href: path.to_owned(),
+            href: path.clone(),
             propstat: propstats,
             ..Default::default()
         })

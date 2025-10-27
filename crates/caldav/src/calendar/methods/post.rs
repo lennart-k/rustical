@@ -49,12 +49,11 @@ pub async fn route_post<C: CalendarStore, S: SubscriptionStore>(
     };
 
     let subscription = Subscription {
-        id: sub_id.to_owned(),
+        id: sub_id.clone(),
         push_resource: request
             .subscription
             .web_push_subscription
-            .push_resource
-            .to_owned(),
+            .push_resource.clone(),
         topic: calendar_resource.cal.push_topic,
         expiration: expires.naive_local(),
         public_key: request

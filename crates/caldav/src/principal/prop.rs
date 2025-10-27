@@ -6,7 +6,7 @@ use rustical_store::auth::PrincipalType;
 use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 use strum_macros::VariantArray;
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "PrincipalPropName")]
 pub enum PrincipalProp {
     // Scheduling Extensions to CalDAV (RFC 6638)
@@ -34,7 +34,7 @@ pub enum PrincipalProp {
     CalendarHomeSet(CalendarHomeSet),
 }
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone)]
 pub struct CalendarHomeSet(#[xml(ty = "untagged", flatten)] pub Vec<HrefElement>);
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
@@ -44,7 +44,7 @@ pub enum PrincipalPropWrapper {
     Common(CommonPropertiesProp),
 }
 
-#[derive(XmlSerialize, PartialEq, Clone, VariantArray)]
+#[derive(XmlSerialize, PartialEq, Eq, Clone, VariantArray)]
 pub enum ReportMethod {
     // We don't actually support principal-match
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]

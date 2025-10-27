@@ -1,7 +1,7 @@
 use rustical_dav::extensions::CommonPropertiesProp;
 use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "AddressObjectPropName")]
 pub enum AddressObjectProp {
     // WebDAV (RFC 2518)

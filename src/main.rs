@@ -66,7 +66,7 @@ async fn get_data_stores(
             let addressbook_store = Arc::new(SqliteAddressbookStore::new(db.clone(), send.clone()));
             let cal_store = Arc::new(SqliteCalendarStore::new(db.clone(), send));
             let subscription_store = Arc::new(SqliteStore::new(db.clone()));
-            let principal_store = Arc::new(SqlitePrincipalStore::new(db.clone()));
+            let principal_store = Arc::new(SqlitePrincipalStore::new(db));
             (
                 addressbook_store,
                 cal_store,
@@ -128,7 +128,7 @@ async fn main() -> Result<()> {
             let listener = tokio::net::TcpListener::bind(&address).await?;
             tasks.push(tokio::spawn(async move {
                 info!("RustiCal serving on http://{address}");
-                axum::serve(listener, app).await.unwrap()
+                axum::serve(listener, app).await.unwrap();
             }));
 
             for task in tasks {

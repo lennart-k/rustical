@@ -38,15 +38,15 @@ pub fn carddav_router<AP: AuthenticationProvider, A: AddressbookStore, S: Subscr
     subscription_store: Arc<S>,
 ) -> Router {
     let principal_service = PrincipalResourceService::new(
-        store.clone(),
+        store,
         auth_provider.clone(),
-        subscription_store.clone(),
+        subscription_store,
     );
     Router::new()
         .nest(
             prefix,
             RootResourceService::<_, Principal, CardDavPrincipalUri>::new(
-                principal_service.clone(),
+                principal_service,
             )
             .axum_router()
             .layer(AuthenticationLayer::new(auth_provider))

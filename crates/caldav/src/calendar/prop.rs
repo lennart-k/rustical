@@ -3,13 +3,13 @@ use rustical_ical::CalendarObjectType;
 use rustical_xml::{XmlDeserialize, XmlSerialize};
 use strum_macros::VariantArray;
 
-#[derive(Debug, Clone, XmlSerialize, XmlDeserialize, PartialEq, From, Into)]
+#[derive(Debug, Clone, XmlSerialize, XmlDeserialize, PartialEq, Eq, From, Into)]
 pub struct SupportedCalendarComponent {
     #[xml(ty = "attr")]
     pub name: CalendarObjectType,
 }
 
-#[derive(Debug, Clone, XmlSerialize, XmlDeserialize, PartialEq)]
+#[derive(Debug, Clone, XmlSerialize, XmlDeserialize, PartialEq, Eq)]
 pub struct SupportedCalendarComponentSet {
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV", flatten)]
     pub comp: Vec<SupportedCalendarComponent>,
@@ -36,7 +36,7 @@ impl From<SupportedCalendarComponentSet> for Vec<CalendarObjectType> {
     }
 }
 
-#[derive(Debug, Clone, XmlSerialize, PartialEq)]
+#[derive(Debug, Clone, XmlSerialize, PartialEq, Eq)]
 pub struct CalendarData {
     #[xml(ty = "attr")]
     content_type: String,
@@ -53,13 +53,13 @@ impl Default for CalendarData {
     }
 }
 
-#[derive(Debug, Clone, XmlSerialize, Default, PartialEq)]
+#[derive(Debug, Clone, XmlSerialize, Default, PartialEq, Eq)]
 pub struct SupportedCalendarData {
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     calendar_data: CalendarData,
 }
 
-#[derive(Debug, Clone, XmlSerialize, PartialEq, VariantArray)]
+#[derive(Debug, Clone, XmlSerialize, PartialEq, Eq, VariantArray)]
 pub enum ReportMethod {
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     CalendarQuery,

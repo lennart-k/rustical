@@ -4,7 +4,7 @@ use rustical_dav::{
 };
 use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "PrincipalPropName")]
 pub enum PrincipalProp {
     // WebDAV Access Control (RFC 3744)
@@ -27,7 +27,7 @@ pub enum PrincipalProp {
     PrincipalAddress(Option<HrefElement>),
 }
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone)]
 pub struct AddressbookHomeSet(#[xml(ty = "untagged", flatten)] pub Vec<HrefElement>);
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]

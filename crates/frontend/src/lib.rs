@@ -106,11 +106,11 @@ pub fn frontend_router<AP: AuthenticationProvider, CS: CalendarStore, AS: Addres
 
     router = router
         .layer(AuthenticationLayer::new(auth_provider.clone()))
-        .layer(Extension(auth_provider.clone()))
-        .layer(Extension(cal_store.clone()))
-        .layer(Extension(addr_store.clone()))
-        .layer(Extension(frontend_config.clone()))
-        .layer(Extension(oidc_config.clone()));
+        .layer(Extension(auth_provider))
+        .layer(Extension(cal_store))
+        .layer(Extension(addr_store))
+        .layer(Extension(frontend_config))
+        .layer(Extension(oidc_config));
 
     Router::new()
         .nest(prefix, router)

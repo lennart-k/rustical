@@ -26,10 +26,10 @@ pub(crate) enum ReportRequest {
 }
 
 impl ReportRequest {
-    fn props(&self) -> &PropfindType<AddressObjectPropWrapperName> {
+    const fn props(&self) -> &PropfindType<AddressObjectPropWrapperName> {
         match self {
-            ReportRequest::AddressbookMultiget(AddressbookMultigetRequest { prop, .. }) => prop,
-            ReportRequest::SyncCollection(SyncCollectionRequest { prop, .. }) => prop,
+            Self::AddressbookMultiget(AddressbookMultigetRequest { prop, .. }) => prop,
+            Self::SyncCollection(SyncCollectionRequest { prop, .. }) => prop,
         }
     }
 }

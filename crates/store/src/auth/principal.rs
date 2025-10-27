@@ -35,7 +35,7 @@ impl Principal {
     /// Returns true if the user is either
     /// - the principal itself
     /// - has full access to the prinicpal (is member)
-    pub fn is_principal(&self, principal: &str) -> bool {
+    #[must_use] pub fn is_principal(&self, principal: &str) -> bool {
         if self.id == principal {
             return true;
         }

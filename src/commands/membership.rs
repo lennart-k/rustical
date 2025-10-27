@@ -38,9 +38,9 @@ pub async fn handle_membership_command(
     MembershipArgs { command }: MembershipArgs,
 ) -> anyhow::Result<()> {
     let id = match &command {
-        MembershipCommand::Assign(AssignArgs { id, .. }) => id,
-        MembershipCommand::Remove(RemoveArgs { id, .. }) => id,
-        MembershipCommand::List(ListArgs { id }) => id,
+        MembershipCommand::Assign(AssignArgs { id, .. })
+        | MembershipCommand::Remove(RemoveArgs { id, .. })
+        | MembershipCommand::List(ListArgs { id }) => id,
     };
 
     match &command {

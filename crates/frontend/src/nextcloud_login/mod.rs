@@ -58,6 +58,6 @@ pub fn nextcloud_login_router<AP: AuthenticationProvider>(auth_provider: Arc<AP>
         .route("/", post(post_nextcloud_login))
         .layer(Extension(nextcloud_flows))
         .layer(Extension(auth_provider.clone()))
-        .layer(AuthenticationLayer::new(auth_provider.clone()))
+        .layer(AuthenticationLayer::new(auth_provider))
         .layer(middleware::from_fn(unauthorized_handler))
 }

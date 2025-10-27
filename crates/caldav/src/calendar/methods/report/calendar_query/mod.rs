@@ -3,7 +3,7 @@ use rustical_ical::CalendarObject;
 use rustical_store::CalendarStore;
 
 mod elements;
-pub(crate) use elements::*;
+pub use elements::*;
 
 pub async fn get_objects_calendar_query<C: CalendarStore>(
     cal_query: &CalendarQueryRequest,

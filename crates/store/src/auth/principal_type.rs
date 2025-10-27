@@ -3,8 +3,8 @@ use std::fmt::Display;
 use rustical_xml::ValueSerialize;
 use serde::{Deserialize, Serialize};
 
-/// https://datatracker.ietf.org/doc/html/rfc5545#section-3.2.3
-#[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq, clap::ValueEnum)]
+/// <https://datatracker.ietf.org/doc/html/rfc5545#section-3.2.3>
+#[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq, Eq, clap::ValueEnum)]
 #[serde(rename_all = "lowercase")]
 pub enum PrincipalType {
     #[default]
@@ -36,13 +36,13 @@ impl TryFrom<&str> for PrincipalType {
 }
 
 impl PrincipalType {
-    pub fn as_str(&self) -> &'static str {
+    #[must_use] pub const fn as_str(&self) -> &'static str {
         match self {
-            PrincipalType::Individual => "INDIVIDUAL",
-            PrincipalType::Group => "GROUP",
-            PrincipalType::Resource => "RESOURCE",
-            PrincipalType::Room => "ROOM",
-            PrincipalType::Unknown => "UNKNOWN",
+            Self::Individual => "INDIVIDUAL",
+            Self::Group => "GROUP",
+            Self::Resource => "RESOURCE",
+            Self::Room => "ROOM",
+            Self::Unknown => "UNKNOWN",
         }
     }
 }

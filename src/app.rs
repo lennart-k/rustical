@@ -43,7 +43,7 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
 ) -> Router<()> {
     let birthday_store = Arc::new(ContactBirthdayStore::new(addr_store.clone()));
     let combined_cal_store =
-        Arc::new(CombinedCalendarStore::new(cal_store.clone()).with_store(birthday_store));
+        Arc::new(CombinedCalendarStore::new(cal_store).with_store(birthday_store));
 
     let mut router = Router::new()
         .merge(caldav_router(
@@ -104,24 +104,19 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
         router = router.merge(frontend_router(
             "/frontend",
             auth_provider.clone(),
-            combined_cal_store.clone(),
-            addr_store.clone(),
+            combined_cal_store,
+            addr_store,
             frontend_config,
             oidc_config,
         ));
     }
 
     if nextcloud_login_config.enabled {
-        router = router.nest(
-            "/index.php/login/v2",
-            nextcloud_login_router(auth_provider.clone()),
-        );
+        router = router.nest("/index.php/login/v2", nextcloud_login_router(auth_provider));
     }
 
     if dav_push_enabled {
-        router = router.merge(rustical_dav_push::subscription_service(
-            subscription_store.clone(),
-        ));
+        router = router.merge(rustical_dav_push::subscription_service(subscription_store));
     }
 
     router
@@ -178,11 +173,11 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
                                 tracing::error!("client error");
                             }
                         }
-                    };
+                    }
                 })
                 .on_failure(
                     |_error: ServerErrorsFailureClass, _latency: Duration, _span: &Span| {
-                        tracing::error!("something went wrong")
+                        tracing::error!("something went wrong");
                     },
                 ),
         )
