@@ -1,3 +1,4 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 mod extension;
 mod prop;
 pub mod register;

@@ -1,3 +1,4 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 use crate::config::Config;
 use anyhow::Result;
 use app::make_app;

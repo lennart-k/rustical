@@ -1,3 +1,4 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 use axum::response::Redirect;
 use axum::routing::any;
 use axum::{Extension, Router};

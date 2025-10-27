@@ -1,3 +1,4 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 use axum::{Extension, Router};
 use derive_more::Constructor;
 use principal::PrincipalResourceService;

@@ -1,3 +1,4 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 use quick_xml::name::Namespace;
 use std::collections::HashMap;
 use std::hash::Hash;

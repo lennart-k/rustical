@@ -1,3 +1,4 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 mod timestamp;
 mod timezone;
 pub use timestamp::*;

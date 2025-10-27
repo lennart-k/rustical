@@ -1,3 +1,4 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 pub mod error;
 pub mod extensions;
 pub mod header;

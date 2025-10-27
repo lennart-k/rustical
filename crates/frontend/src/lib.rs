@@ -1,3 +1,4 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 use axum::{
     Extension, RequestExt, Router,
     body::Body,
