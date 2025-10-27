@@ -1,4 +1,5 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery)]
+use crate::commands::health::{HealthArgs, cmd_health};
 use crate::config::Config;
 use anyhow::Result;
 use app::make_app;
@@ -45,6 +46,10 @@ struct Args {
 enum Command {
     GenConfig(commands::GenConfigArgs),
     Principals(PrincipalsArgs),
+    #[command(
+        about = "Healthcheck for running instance (Used for HEALTHCHECK in Docker container)"
+    )]
+    Health(HealthArgs),
 }
 
 async fn get_data_stores(
@@ -85,6 +90,13 @@ async fn main() -> Result<()> {
     match args.command {
         Some(Command::GenConfig(gen_config_args)) => cmd_gen_config(gen_config_args)?,
         Some(Command::Principals(principals_args)) => cmd_principals(principals_args).await?,
+        Some(Command::Health(health_args)) => {
+            let config: Config = Figment::new()
+                .merge(Toml::file(&args.config_file))
+                .merge(Env::prefixed("RUSTICAL_").split("__"))
+                .extract()?;
+            cmd_health(config.http, health_args).await?;
+        }
         None => {
             let config: Config = Figment::new()
                 .merge(Toml::file(&args.config_file))

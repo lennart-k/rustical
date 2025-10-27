@@ -50,6 +50,8 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
         Arc::new(CombinedCalendarStore::new(cal_store).with_store(birthday_store));
 
     let mut router = Router::new()
+        // endpoint to be used by healthcheck to see if rustical is online
+        .route("/ping", axum::routing::get(async || "Pong!"))
         .merge(caldav_router(
             "/caldav",
             auth_provider.clone(),

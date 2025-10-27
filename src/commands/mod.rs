@@ -5,7 +5,8 @@ use crate::config::{
 use clap::Parser;
 use rustical_frontend::FrontendConfig;
 
-mod membership;
+pub mod health;
+pub mod membership;
 pub mod principals;
 
 #[derive(Debug, Parser)]
