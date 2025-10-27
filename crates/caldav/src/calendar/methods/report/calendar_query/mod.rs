@@ -4,6 +4,7 @@ use rustical_store::CalendarStore;
 
 mod elements;
 pub(crate) use elements::*;
+mod comp_filter;
 
 pub async fn get_objects_calendar_query<C: CalendarStore>(
     cal_query: &CalendarQueryRequest,
