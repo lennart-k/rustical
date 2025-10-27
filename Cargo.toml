@@ -35,7 +35,7 @@ opentelemetry = [
 debug = 0
 
 [workspace.dependencies]
-matchit = "0.8"
+matchit = "0.9"
 uuid = { version = "1.11", features = ["v4", "fast-rng"] }
 async-trait = "0.1"
 axum = "0.8"
@@ -138,7 +138,7 @@ reqwest = { version = "0.12", features = [
 ], default-features = false }
 openidconnect = "4.0"
 clap = { version = "4.5", features = ["derive", "env"] }
-matchit-serde = { git = "https://github.com/lennart-k/matchit-serde", rev = "f0591d13" }
+matchit-serde = { git = "https://github.com/lennart-k/matchit-serde", rev = "e18e65d7" }
 vtimezones-rs = "0.2"
 ece = { version = "2.3", default-features = false, features = [
   "backend-openssl",
