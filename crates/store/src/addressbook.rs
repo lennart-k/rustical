@@ -14,6 +14,7 @@ pub struct Addressbook {
 }
 
 impl Addressbook {
+    #[must_use]
     pub fn format_synctoken(&self) -> String {
         format_synctoken(self.synctoken)
     }

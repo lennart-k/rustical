@@ -26,7 +26,7 @@ pub struct AddressbookResourceService<AS: AddressbookStore, S: SubscriptionStore
 }
 
 impl<A: AddressbookStore, S: SubscriptionStore> AddressbookResourceService<A, S> {
-    pub fn new(addr_store: Arc<A>, sub_store: Arc<S>) -> Self {
+    pub const fn new(addr_store: Arc<A>, sub_store: Arc<S>) -> Self {
         Self {
             addr_store,
             sub_store,

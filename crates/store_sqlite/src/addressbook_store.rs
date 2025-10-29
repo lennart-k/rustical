@@ -138,26 +138,25 @@ impl SqliteAddressbookStore {
         addressbook_id: &str,
         use_trashbin: bool,
     ) -> Result<(), rustical_store::Error> {
-        match use_trashbin {
-            true => {
-                sqlx::query!(
-                    r#"UPDATE addressbooks SET deleted_at = datetime() WHERE (principal, id) = (?, ?)"#,
-                    principal, addressbook_id
-                )
-                .execute(executor)
-                .await.map_err(crate::Error::from)?;
-            }
-            false => {
-                sqlx::query!(
-                    r#"DELETE FROM addressbooks WHERE (principal, id) = (?, ?)"#,
-                    principal,
-                    addressbook_id
-                )
-                .execute(executor)
-                .await
-                .map_err(crate::Error::from)?;
-            }
-        };
+        if use_trashbin {
+            sqlx::query!(
+                r#"UPDATE addressbooks SET deleted_at = datetime() WHERE (principal, id) = (?, ?)"#,
+                principal,
+                addressbook_id
+            )
+            .execute(executor)
+            .await
+            .map_err(crate::Error::from)?;
+        } else {
+            sqlx::query!(
+                r#"DELETE FROM addressbooks WHERE (principal, id) = (?, ?)"#,
+                principal,
+                addressbook_id
+            )
+            .execute(executor)
+            .await
+            .map_err(crate::Error::from)?;
+        }
 
         Ok(())
     }
@@ -206,10 +205,7 @@ impl SqliteAddressbookStore {
         let mut objects = vec![];
         let mut deleted_objects = vec![];
 
-        let new_synctoken = changes
-            .last()
-            .map(|&Row { synctoken, .. }| synctoken)
-            .unwrap_or(0);
+        let new_synctoken = changes.last().map_or(0, |&Row { synctoken, .. }| synctoken);
 
         for Row { object_id, .. } in changes {
             match Self::_get_object(&mut *conn, principal, addressbook_id, &object_id, false).await
@@ -259,7 +255,7 @@ impl SqliteAddressbookStore {
         .fetch_all(executor)
         .await.map_err(crate::Error::from)?
         .into_iter()
-        .map(|row| row.try_into())
+        .map(std::convert::TryInto::try_into)
         .collect()
     }
 
@@ -325,28 +321,25 @@ impl SqliteAddressbookStore {
         object_id: &str,
         use_trashbin: bool,
     ) -> Result<(), rustical_store::Error> {
-        match use_trashbin {
-            true => {
-                sqlx::query!(
-                    "UPDATE addressobjects SET deleted_at = datetime(), updated_at = datetime() WHERE (principal, addressbook_id, id) = (?, ?, ?)",
-                    principal,
-                    addressbook_id,
-                    object_id
-                )
-                .execute(executor)
-                .await.map_err(crate::Error::from)?;
-            }
-            false => {
-                sqlx::query!(
-                    "DELETE FROM addressobjects WHERE addressbook_id = ? AND id = ?",
-                    addressbook_id,
-                    object_id
-                )
-                .execute(executor)
-                .await
-                .map_err(crate::Error::from)?;
-            }
-        };
+        if use_trashbin {
+            sqlx::query!(
+                "UPDATE addressobjects SET deleted_at = datetime(), updated_at = datetime() WHERE (principal, addressbook_id, id) = (?, ?, ?)",
+                principal,
+                addressbook_id,
+                object_id
+            )
+            .execute(executor)
+            .await.map_err(crate::Error::from)?;
+        } else {
+            sqlx::query!(
+                "DELETE FROM addressobjects WHERE addressbook_id = ? AND id = ?",
+                addressbook_id,
+                object_id
+            )
+            .execute(executor)
+            .await
+            .map_err(crate::Error::from)?;
+        }
         Ok(())
     }
 
@@ -440,7 +433,7 @@ impl AddressbookStore for SqliteAddressbookStore {
             })
         {
             error!("Push notification about deleted addressbook failed: {err}");
-        };
+        }
 
         Ok(())
     }
@@ -474,9 +467,9 @@ impl AddressbookStore for SqliteAddressbookStore {
         let mut deleted_sizes = vec![];
         for (size, deleted) in Self::_list_objects(&self.db, principal, addressbook_id).await? {
             if deleted {
-                deleted_sizes.push(size)
+                deleted_sizes.push(size);
             } else {
-                sizes.push(size)
+                sizes.push(size);
             }
         }
         Ok(CollectionMetadata {
@@ -521,8 +514,8 @@ impl AddressbookStore for SqliteAddressbookStore {
 
         Self::_put_object(
             &mut *tx,
-            principal.to_owned(),
-            addressbook_id.to_owned(),
+            principal.clone(),
+            addressbook_id.clone(),
             object,
             overwrite,
         )
@@ -548,7 +541,7 @@ impl AddressbookStore for SqliteAddressbookStore {
                 .push_topic,
         }) {
             error!("Push notification about deleted addressbook failed: {err}");
-        };
+        }
 
         Ok(())
     }
@@ -585,7 +578,7 @@ impl AddressbookStore for SqliteAddressbookStore {
                 .push_topic,
         }) {
             error!("Push notification about deleted addressbook failed: {err}");
-        };
+        }
         Ok(())
     }
 
@@ -619,7 +612,7 @@ impl AddressbookStore for SqliteAddressbookStore {
                 .push_topic,
         }) {
             error!("Push notification about deleted addressbook failed: {err}");
-        };
+        }
 
         Ok(())
     }

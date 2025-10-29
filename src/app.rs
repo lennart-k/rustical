@@ -28,7 +28,11 @@ use tower_sessions::{Expiry, MemoryStore, SessionManagerLayer};
 use tracing::Span;
 use tracing::field::display;
 
-#[allow(clippy::too_many_arguments)]
+#[allow(
+    clippy::too_many_arguments,
+    clippy::too_many_lines,
+    clippy::cognitive_complexity
+)]
 pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
     addr_store: Arc<AS>,
     cal_store: Arc<CS>,
@@ -36,16 +40,18 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
     auth_provider: Arc<impl AuthenticationProvider>,
     frontend_config: FrontendConfig,
     oidc_config: Option<OidcConfig>,
-    nextcloud_login_config: NextcloudLoginConfig,
+    nextcloud_login_config: &NextcloudLoginConfig,
     dav_push_enabled: bool,
     session_cookie_samesite_strict: bool,
     payload_limit_mb: usize,
 ) -> Router<()> {
     let birthday_store = Arc::new(ContactBirthdayStore::new(addr_store.clone()));
     let combined_cal_store =
-        Arc::new(CombinedCalendarStore::new(cal_store.clone()).with_store(birthday_store));
+        Arc::new(CombinedCalendarStore::new(cal_store).with_store(birthday_store));
 
     let mut router = Router::new()
+        // endpoint to be used by healthcheck to see if rustical is online
+        .route("/ping", axum::routing::get(async || "Pong!"))
         .merge(caldav_router(
             "/caldav",
             auth_provider.clone(),
@@ -108,24 +114,19 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
         router = router.merge(frontend_router(
             "/frontend",
             auth_provider.clone(),
-            combined_cal_store.clone(),
-            addr_store.clone(),
+            combined_cal_store,
+            addr_store,
             frontend_config,
             oidc_config,
         ));
     }
 
     if nextcloud_login_config.enabled {
-        router = router.nest(
-            "/index.php/login/v2",
-            nextcloud_login_router(auth_provider.clone()),
-        );
+        router = router.nest("/index.php/login/v2", nextcloud_login_router(auth_provider));
     }
 
     if dav_push_enabled {
-        router = router.merge(rustical_dav_push::subscription_service(
-            subscription_store.clone(),
-        ));
+        router = router.merge(rustical_dav_push::subscription_service(subscription_store));
     }
 
     router
@@ -182,11 +183,11 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
                                 tracing::error!("client error");
                             }
                         }
-                    };
+                    }
                 })
                 .on_failure(
                     |_error: ServerErrorsFailureClass, _latency: Duration, _span: &Span| {
-                        tracing::error!("something went wrong")
+                        tracing::error!("something went wrong");
                     },
                 ),
         )

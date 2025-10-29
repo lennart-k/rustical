@@ -14,7 +14,7 @@ impl IntoResponse for InvalidOverwriteHeader {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Overwrite(pub bool);
 
 impl Default for Overwrite {
@@ -30,11 +30,10 @@ impl<S: Send + Sync> FromRequestParts<S> for Overwrite {
         parts: &mut axum::http::request::Parts,
         _state: &S,
     ) -> Result<Self, Self::Rejection> {
-        if let Some(overwrite_header) = parts.headers.get("Overwrite") {
-            overwrite_header.as_bytes().try_into()
-        } else {
-            Ok(Self::default())
-        }
+        parts.headers.get("Overwrite").map_or_else(
+            || Ok(Self::default()),
+            |overwrite_header| overwrite_header.as_bytes().try_into(),
+        )
     }
 }
 
@@ -60,7 +59,7 @@ mod tests {
     #[tokio::test]
     async fn test_overwrite_default() {
         let request = Request::put("asd").body(()).unwrap();
-        let (mut parts, _) = request.into_parts();
+        let (mut parts, ()) = request.into_parts();
         let overwrite = Overwrite::from_request_parts(&mut parts, &())
             .await
             .unwrap();

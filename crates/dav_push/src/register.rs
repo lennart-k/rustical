@@ -1,7 +1,7 @@
 use crate::Trigger;
 use rustical_xml::{XmlDeserialize, XmlRootTag, XmlSerialize};
 
-#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
 #[xml(ns = "crate::namespace::NS_DAVPUSH")]
 pub struct WebPushSubscription {
     #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
@@ -15,7 +15,7 @@ pub struct WebPushSubscription {
     pub auth_secret: String,
 }
 
-#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
 pub struct SubscriptionPublicKey {
     #[xml(ty = "attr", rename = "type")]
     pub ty: String,
@@ -23,16 +23,16 @@ pub struct SubscriptionPublicKey {
     pub key: String,
 }
 
-#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
 pub struct SubscriptionElement {
     #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
     pub web_push_subscription: WebPushSubscription,
 }
 
-#[derive(XmlDeserialize, XmlSerialize, Clone, Debug, PartialEq)]
+#[derive(XmlDeserialize, XmlSerialize, Clone, Debug, PartialEq, Eq)]
 pub struct TriggerElement(#[xml(ty = "untagged", flatten)] Vec<Trigger>);
 
-#[derive(XmlDeserialize, XmlRootTag, Clone, Debug, PartialEq)]
+#[derive(XmlDeserialize, XmlRootTag, Clone, Debug, PartialEq, Eq)]
 #[xml(root = "push-register")]
 #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
 pub struct PushRegister {
@@ -100,6 +100,6 @@ mod tests {
                     Trigger::PropertyUpdate(PropertyUpdate(Depth::Zero)),
                 ]))
             }
-        )
+        );
     }
 }

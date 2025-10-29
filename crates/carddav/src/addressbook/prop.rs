@@ -6,7 +6,7 @@ use rustical_dav_push::DavPushExtensionProp;
 use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 use strum_macros::VariantArray;
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "AddressbookPropName")]
 pub enum AddressbookProp {
     // CardDAV (RFC 6352)
@@ -20,7 +20,7 @@ pub enum AddressbookProp {
     MaxResourceSize(i64),
 }
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "AddressbookPropWrapperName", untagged)]
 pub enum AddressbookPropWrapper {
     Addressbook(AddressbookProp),
@@ -29,7 +29,7 @@ pub enum AddressbookPropWrapper {
     Common(CommonPropertiesProp),
 }
 
-#[derive(Debug, Clone, XmlSerialize, PartialEq)]
+#[derive(Debug, Clone, XmlSerialize, PartialEq, Eq)]
 pub struct AddressDataType {
     #[xml(ty = "attr")]
     pub content_type: &'static str,
@@ -37,7 +37,7 @@ pub struct AddressDataType {
     pub version: &'static str,
 }
 
-#[derive(Debug, Clone, XmlSerialize, PartialEq)]
+#[derive(Debug, Clone, XmlSerialize, PartialEq, Eq)]
 pub struct SupportedAddressData {
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV", flatten)]
     address_data_type: &'static [AddressDataType],
@@ -60,7 +60,7 @@ impl Default for SupportedAddressData {
     }
 }
 
-#[derive(Debug, Clone, XmlSerialize, PartialEq, VariantArray)]
+#[derive(Debug, Clone, XmlSerialize, PartialEq, Eq, VariantArray)]
 pub enum ReportMethod {
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     AddressbookMultiget,

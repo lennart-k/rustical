@@ -1,3 +1,4 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 use axum::{
     Extension, RequestExt, Router,
     body::Body,
@@ -47,7 +48,7 @@ pub fn frontend_router<AP: AuthenticationProvider, CS: CalendarStore, AS: Addres
 ) -> Router {
     let user_router = Router::new()
         .route("/", get(route_get_home))
-        .route("/{user}", get(route_user_named::<CS, AS, AP>))
+        .route("/{user}", get(route_user_named::<AP>))
         // App token management
         .route("/{user}/app_token", post(route_post_app_token::<AP>))
         .route(
@@ -106,11 +107,11 @@ pub fn frontend_router<AP: AuthenticationProvider, CS: CalendarStore, AS: Addres
 
     router = router
         .layer(AuthenticationLayer::new(auth_provider.clone()))
-        .layer(Extension(auth_provider.clone()))
-        .layer(Extension(cal_store.clone()))
-        .layer(Extension(addr_store.clone()))
-        .layer(Extension(frontend_config.clone()))
-        .layer(Extension(oidc_config.clone()));
+        .layer(Extension(auth_provider))
+        .layer(Extension(cal_store))
+        .layer(Extension(addr_store))
+        .layer(Extension(frontend_config))
+        .layer(Extension(oidc_config));
 
     Router::new()
         .nest(prefix, router)

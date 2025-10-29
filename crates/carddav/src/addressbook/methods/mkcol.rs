@@ -8,7 +8,7 @@ use rustical_store::{Addressbook, AddressbookStore, SubscriptionStore, auth::Pri
 use rustical_xml::{XmlDeserialize, XmlDocument, XmlRootTag};
 use tracing::instrument;
 
-#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Resourcetype {
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     addressbook: Option<()>,
@@ -16,7 +16,7 @@ pub struct Resourcetype {
     collection: Option<()>,
 }
 
-#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
 pub struct MkcolAddressbookProp {
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     resourcetype: Option<Resourcetype>,
@@ -27,7 +27,7 @@ pub struct MkcolAddressbookProp {
     description: Option<String>,
 }
 
-#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
 pub struct PropElement<T: XmlDeserialize> {
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     prop: T,
@@ -53,13 +53,13 @@ pub async fn route_mkcol<AS: AddressbookStore, S: SubscriptionStore>(
     }
 
     let mut request = MkcolRequest::parse_str(&body)?.set.prop;
-    if let Some("") = request.displayname.as_deref() {
-        request.displayname = None
+    if request.displayname.as_deref() == Some("") {
+        request.displayname = None;
     }
 
     let addressbook = Addressbook {
-        id: addressbook_id.to_owned(),
-        principal: principal.to_owned(),
+        id: addressbook_id.clone(),
+        principal: principal.clone(),
         displayname: request.displayname,
         description: request.description,
         deleted_at: None,
@@ -127,6 +127,6 @@ mod tests {
                     }
                 }
             }
-        )
+        );
     }
 }

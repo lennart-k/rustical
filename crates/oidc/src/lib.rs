@@ -1,3 +1,5 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
+#![allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]
 use axum::{
     Extension, Form,
     extract::Query,
@@ -82,7 +84,7 @@ async fn get_oidc_client(
         })?;
 
     Ok(CoreClient::from_provider_metadata(
-        provider_metadata.clone(),
+        provider_metadata,
         client_id.clone(),
         client_secret.clone(),
     )

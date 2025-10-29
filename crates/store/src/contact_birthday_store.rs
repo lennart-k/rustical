@@ -8,7 +8,7 @@ use rustical_ical::{AddressObject, CalendarObject, CalendarObjectType};
 use sha2::{Digest, Sha256};
 use std::{collections::HashMap, sync::Arc};
 
-pub(crate) const BIRTHDAYS_PREFIX: &str = "_birthdays_";
+pub const BIRTHDAYS_PREFIX: &str = "_birthdays_";
 
 #[derive(Constructor, Clone)]
 pub struct ContactBirthdayStore<AS: AddressbookStore>(Arc<AS>);
@@ -43,7 +43,7 @@ fn birthday_calendar(addressbook: Addressbook) -> Calendar {
     }
 }
 
-/// Objects are all prefixed with BIRTHDAYS_PREFIX
+/// Objects are all prefixed with `BIRTHDAYS_PREFIX`
 #[async_trait]
 impl<AS: AddressbookStore> CalendarStore for ContactBirthdayStore<AS> {
     async fn get_calendar(
@@ -165,7 +165,7 @@ impl<AS: AddressbookStore> CalendarStore for ContactBirthdayStore<AS> {
         let cal_id = cal_id
             .strip_prefix(BIRTHDAYS_PREFIX)
             .ok_or(Error::NotFound)?;
-        let (addressobject_id, date_type) = object_id.rsplit_once("-").ok_or(Error::NotFound)?;
+        let (addressobject_id, date_type) = object_id.rsplit_once('-').ok_or(Error::NotFound)?;
         self.0
             .get_object(principal, cal_id, addressobject_id, show_deleted)
             .await?

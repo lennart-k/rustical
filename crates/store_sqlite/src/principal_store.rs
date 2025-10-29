@@ -25,7 +25,7 @@ impl TryFrom<PrincipalRow> for Principal {
     type Error = Error;
 
     fn try_from(value: PrincipalRow) -> Result<Self, Self::Error> {
-        Ok(Principal {
+        Ok(Self {
             id: value.id,
             displayname: value.displayname,
             password: value.password_hash.map(Secret::from),
@@ -195,9 +195,8 @@ impl AuthenticationProvider for SqlitePrincipalStore {
             Some(user) => user,
             None => return Ok(None),
         };
-        let password = match &user.password {
-            Some(password) => password,
-            None => return Ok(None),
+        let Some(password) = &user.password else {
+            return Ok(None);
         };
 
         if password_auth::verify_password(password_input, password.as_ref()).is_ok() {

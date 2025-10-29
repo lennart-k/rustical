@@ -6,7 +6,7 @@ use quick_xml::{
 use rustical_xml::{NamespaceOwned, XmlSerialize};
 use std::collections::HashMap;
 
-#[derive(Clone, Debug, PartialEq, From)]
+#[derive(Clone, Debug, PartialEq, Eq, From)]
 pub struct TagList(Vec<(Option<NamespaceOwned>, String)>);
 
 impl XmlSerialize for TagList {
@@ -17,16 +17,13 @@ impl XmlSerialize for TagList {
         namespaces: &HashMap<Namespace, &str>,
         writer: &mut quick_xml::Writer<&mut Vec<u8>>,
     ) -> std::io::Result<()> {
-        let prefix = ns
-            .map(|ns| namespaces.get(&ns))
-            .unwrap_or(None)
-            .map(|prefix| {
-                if !prefix.is_empty() {
-                    format!("{prefix}:")
-                } else {
-                    String::new()
-                }
-            });
+        let prefix = ns.and_then(|ns| namespaces.get(&ns)).map(|prefix| {
+            if prefix.is_empty() {
+                String::new()
+            } else {
+                format!("{prefix}:")
+            }
+        });
         let has_prefix = prefix.is_some();
         let tagname = tag.map(|tag| [&prefix.unwrap_or_default(), tag].concat());
 

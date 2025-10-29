@@ -1,3 +1,5 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
+#![allow(clippy::missing_errors_doc)]
 mod extension;
 mod prop;
 pub mod register;
@@ -68,6 +70,7 @@ impl<S: SubscriptionStore> DavPushController<S> {
         }
     }
 
+    #[allow(clippy::cognitive_complexity)]
     async fn send_message(&self, message: CollectionOperation) {
         let subscriptions = match self.sub_store.get_subscriptions(&message.topic).await {
             Ok(subs) => subs,
@@ -124,7 +127,7 @@ impl<S: SubscriptionStore> DavPushController<S> {
                         subsciption.id, subsciption.topic
                     );
                     self.try_delete_subscription(&subsciption.id).await;
-                };
+                }
             }
 
             if let Err(err) = self.send_payload(&payload, &subsciption).await {
@@ -206,7 +209,7 @@ enum NotifierError {
 
 impl NotifierError {
     // Decide whether the error should cause the subscription to be removed
-    pub fn is_permament_error(&self) -> bool {
+    pub const fn is_permament_error(&self) -> bool {
         match self {
             Self::InvalidPublicKeyType(_)
             | Self::InvalidEndpointUrl(_)

@@ -22,7 +22,7 @@ impl TryFrom<CalendarObjectRow> for CalendarObject {
     type Error = rustical_store::Error;
 
     fn try_from(value: CalendarObjectRow) -> Result<Self, Self::Error> {
-        let object = CalendarObject::from_ics(value.ics)?;
+        let object = Self::from_ics(value.ics)?;
         if object.get_id() != value.id {
             return Err(rustical_store::Error::IcalError(
                 rustical_ical::Error::InvalidData(format!(
@@ -213,23 +213,24 @@ impl SqliteCalendarStore {
         id: &str,
         use_trashbin: bool,
     ) -> Result<(), Error> {
-        match use_trashbin {
-            true => sqlx::query!(
+        if use_trashbin {
+            sqlx::query!(
                 r#"UPDATE calendars SET deleted_at = datetime() WHERE (principal, id) = (?, ?)"#,
                 principal,
                 id
             )
             .execute(executor)
             .await
-            .map_err(crate::Error::from)?,
-            false => sqlx::query!(
+            .map_err(crate::Error::from)?
+        } else {
+            sqlx::query!(
                 r#"DELETE FROM calendars WHERE (principal, id) = (?, ?)"#,
                 principal,
                 id
             )
             .execute(executor)
             .await
-            .map_err(crate::Error::from)?,
+            .map_err(crate::Error::from)?
         };
         Ok(())
     }
@@ -286,7 +287,7 @@ impl SqliteCalendarStore {
         .fetch_all(executor)
         .await.map_err(crate::Error::from)?
         .into_iter()
-        .map(|row| row.try_into())
+        .map(std::convert::TryInto::try_into)
         .collect()
     }
 
@@ -320,7 +321,7 @@ impl SqliteCalendarStore {
         .await
         .map_err(crate::Error::from)?
         .into_iter()
-        .map(|row| row.try_into())
+        .map(std::convert::TryInto::try_into)
         .collect()
     }
 
@@ -411,28 +412,25 @@ impl SqliteCalendarStore {
         id: &str,
         use_trashbin: bool,
     ) -> Result<(), Error> {
-        match use_trashbin {
-            true => {
-                sqlx::query!(
-                    "UPDATE calendarobjects SET deleted_at = datetime(), updated_at = datetime() WHERE (principal, cal_id, id) = (?, ?, ?)",
-                    principal,
-                    cal_id,
-                    id
-                )
-                .execute(executor)
-                .await.map_err(crate::Error::from)?;
-            }
-            false => {
-                sqlx::query!(
-                    "DELETE FROM calendarobjects WHERE cal_id = ? AND id = ?",
-                    cal_id,
-                    id
-                )
-                .execute(executor)
-                .await
-                .map_err(crate::Error::from)?;
-            }
-        };
+        if use_trashbin {
+            sqlx::query!(
+                "UPDATE calendarobjects SET deleted_at = datetime(), updated_at = datetime() WHERE (principal, cal_id, id) = (?, ?, ?)",
+                principal,
+                cal_id,
+                id
+            )
+            .execute(executor)
+            .await.map_err(crate::Error::from)?;
+        } else {
+            sqlx::query!(
+                "DELETE FROM calendarobjects WHERE cal_id = ? AND id = ?",
+                cal_id,
+                id
+            )
+            .execute(executor)
+            .await
+            .map_err(crate::Error::from)?;
+        }
         Ok(())
     }
 
@@ -482,10 +480,7 @@ impl SqliteCalendarStore {
         let mut objects = vec![];
         let mut deleted_objects = vec![];
 
-        let new_synctoken = changes
-            .last()
-            .map(|&Row { synctoken, .. }| synctoken)
-            .unwrap_or(0);
+        let new_synctoken = changes.last().map_or(0, |&Row { synctoken, .. }| synctoken);
 
         for Row { object_id, .. } in changes {
             match Self::_get_object(&mut *conn, principal, cal_id, &object_id, false).await {
@@ -562,7 +557,7 @@ impl CalendarStore for SqliteCalendarStore {
             })
         {
             error!("Push notification about deleted calendar failed: {err}");
-        };
+        }
         Ok(())
     }
 
@@ -627,9 +622,9 @@ impl CalendarStore for SqliteCalendarStore {
         let mut deleted_sizes = vec![];
         for (size, deleted) in Self::_list_objects(&self.db, principal, cal_id).await? {
             if deleted {
-                deleted_sizes.push(size)
+                deleted_sizes.push(size);
             } else {
-                sizes.push(size)
+                sizes.push(size);
             }
         }
         Ok(CollectionMetadata {
@@ -680,8 +675,8 @@ impl CalendarStore for SqliteCalendarStore {
 
         Self::_put_object(
             &mut *tx,
-            principal.to_owned(),
-            cal_id.to_owned(),
+            principal.clone(),
+            cal_id.clone(),
             object,
             overwrite,
         )
@@ -706,7 +701,7 @@ impl CalendarStore for SqliteCalendarStore {
                 .push_topic,
         }) {
             error!("Push notification about deleted calendar failed: {err}");
-        };
+        }
         Ok(())
     }
 
@@ -731,7 +726,7 @@ impl CalendarStore for SqliteCalendarStore {
             topic: self.get_calendar(principal, cal_id, true).await?.push_topic,
         }) {
             error!("Push notification about deleted calendar failed: {err}");
-        };
+        }
         Ok(())
     }
 
@@ -756,7 +751,7 @@ impl CalendarStore for SqliteCalendarStore {
             topic: self.get_calendar(principal, cal_id, true).await?.push_topic,
         }) {
             error!("Push notification about deleted calendar failed: {err}");
-        };
+        }
         Ok(())
     }
 

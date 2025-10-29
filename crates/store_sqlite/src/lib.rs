@@ -1,3 +1,5 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
+#![allow(clippy::missing_errors_doc)]
 pub use error::Error;
 use serde::Serialize;
 use sqlx::{Pool, Sqlite, SqlitePool, sqlite::SqliteConnectOptions};
@@ -25,7 +27,8 @@ pub struct SqliteStore {
 }
 
 impl SqliteStore {
-    pub fn new(db: SqlitePool) -> Self {
+    #[must_use]
+    pub const fn new(db: SqlitePool) -> Self {
         Self { db }
     }
 }

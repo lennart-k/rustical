@@ -1,9 +1,9 @@
 use rustical_xml::XmlSerialize;
 
-#[derive(Debug, Clone, PartialEq, XmlSerialize)]
+#[derive(Debug, Clone, PartialEq, Eq, XmlSerialize)]
 pub struct Resourcetype(#[xml(flatten, ty = "untagged")] pub &'static [ResourcetypeInner]);
 
-#[derive(Debug, Clone, PartialEq, XmlSerialize)]
+#[derive(Debug, Clone, PartialEq, Eq, XmlSerialize)]
 pub struct ResourcetypeInner(
     #[xml(ty = "namespace")] pub Option<quick_xml::name::Namespace<'static>>,
     #[xml(ty = "tag_name")] pub &'static str,
@@ -40,6 +40,6 @@ mod tests {
         <calendar-color xmlns="http://calendarserver.org/ns/"/>
     </resourcetype>
 </document>"#
-        )
+        );
     }
 }

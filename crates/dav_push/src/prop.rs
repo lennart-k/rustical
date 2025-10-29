@@ -1,13 +1,13 @@
 use rustical_dav::header::Depth;
 use rustical_xml::{Unparsed, XmlDeserialize, XmlSerialize};
 
-#[derive(Debug, Clone, XmlSerialize, PartialEq)]
+#[derive(Debug, Clone, XmlSerialize, PartialEq, Eq)]
 pub enum Transport {
     #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
     WebPush,
 }
 
-#[derive(Debug, Clone, XmlSerialize, PartialEq)]
+#[derive(Debug, Clone, XmlSerialize, PartialEq, Eq)]
 pub struct Transports {
     #[xml(flatten, ty = "untagged")]
     #[xml(ns = "crate::namespace::NS_DAVPUSH")]
@@ -22,10 +22,10 @@ impl Default for Transports {
     }
 }
 
-#[derive(XmlSerialize, XmlDeserialize, PartialEq, Clone)]
+#[derive(XmlSerialize, XmlDeserialize, PartialEq, Eq, Clone)]
 pub struct SupportedTriggers(#[xml(flatten, ty = "untagged")] pub Vec<Trigger>);
 
-#[derive(XmlSerialize, XmlDeserialize, PartialEq, Debug, Clone)]
+#[derive(XmlSerialize, XmlDeserialize, PartialEq, Eq, Debug, Clone)]
 pub enum Trigger {
     #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
     ContentUpdate(ContentUpdate),
@@ -33,12 +33,12 @@ pub enum Trigger {
     PropertyUpdate(PropertyUpdate),
 }
 
-#[derive(XmlSerialize, XmlDeserialize, PartialEq, Clone, Debug)]
+#[derive(XmlSerialize, XmlDeserialize, PartialEq, Eq, Clone, Debug)]
 pub struct ContentUpdate(
     #[xml(rename = "depth", ns = "rustical_dav::namespace::NS_DAV")] pub Depth,
 );
 
-#[derive(XmlSerialize, PartialEq, Clone, Debug)]
+#[derive(XmlSerialize, PartialEq, Eq, Clone, Debug)]
 pub struct PropertyUpdate(
     #[xml(rename = "depth", ns = "rustical_dav::namespace::NS_DAV")] pub Depth,
 );

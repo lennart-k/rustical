@@ -140,7 +140,7 @@ pub async fn cmd_principals(args: PrincipalsArgs) -> anyhow::Result<()> {
                         .unwrap()
                         .to_string()
                         .into(),
-                )
+                );
             }
             if name.is_some() {
                 principal.displayname = name;
@@ -152,7 +152,7 @@ pub async fn cmd_principals(args: PrincipalsArgs) -> anyhow::Result<()> {
             println!("Principal {id} updated");
         }
         Command::Membership(args) => {
-            handle_membership_command(principal_store.as_ref(), args).await?
+            handle_membership_command(principal_store.as_ref(), args).await?;
         }
     }
     Ok(())

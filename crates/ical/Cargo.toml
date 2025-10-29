@@ -15,7 +15,6 @@ thiserror.workspace = true
 derive_more.workspace = true
 rustical_xml.workspace = true
 ical.workspace = true
-lazy_static.workspace = true
 regex.workspace = true
 rrule.workspace = true
 serde.workspace = true

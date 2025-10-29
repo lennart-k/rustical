@@ -8,7 +8,7 @@ use futures_core::future::BoxFuture;
 use headers::{ContentType, ETag, HeaderMapExt};
 use http::{Method, StatusCode};
 use rust_embed::RustEmbed;
-use std::{convert::Infallible, marker::PhantomData, str::FromStr};
+use std::{borrow::Cow, convert::Infallible, marker::PhantomData, str::FromStr};
 use tower::Service;
 
 #[derive(Clone, RustEmbed, Default)]
@@ -16,6 +16,7 @@ use tower::Service;
 #[allow(dead_code)] // Since this is not used with the frontend-dev feature
 pub struct Assets;
 
+#[allow(dead_code)]
 #[derive(Clone, Default)]
 pub struct EmbedService<E>
 where
@@ -41,6 +42,7 @@ where
     }
 
     #[inline]
+    #[allow(clippy::similar_names)]
     fn call(&mut self, mut req: Request) -> Self::Future {
         Box::pin(async move {
             if req.method() != Method::GET && req.method() != Method::HEAD {
@@ -60,7 +62,7 @@ where
                     let mime = mime_guess::from_path(path).first_or_octet_stream();
 
                     let body = if req.method() == Method::HEAD {
-                        Default::default()
+                        Cow::default()
                     } else {
                         data
                     };

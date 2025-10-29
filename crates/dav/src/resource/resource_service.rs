@@ -76,10 +76,7 @@ pub trait ResourceService: Clone + Sized + Send + Sync + AxumMethods + 'static {
         Err(crate::Error::Forbidden.into())
     }
 
-    fn axum_service(self) -> AxumService<Self>
-    where
-        Self: AxumMethods,
-    {
+    fn axum_service(self) -> AxumService<Self> {
         AxumService::new(self)
     }
 

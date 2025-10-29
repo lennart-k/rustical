@@ -15,7 +15,7 @@ type RSMultistatus<R> = MultistatusElement<
 >;
 
 #[instrument(skip(path, resource_service, puri))]
-pub(crate) async fn axum_route_propfind<R: ResourceService>(
+pub async fn axum_route_propfind<R: ResourceService>(
     Path(path): Path<R::PathComponents>,
     State(resource_service): State<R>,
     depth: Depth,
@@ -36,7 +36,7 @@ pub(crate) async fn axum_route_propfind<R: ResourceService>(
     .await
 }
 
-pub(crate) async fn route_propfind<R: ResourceService>(
+pub async fn route_propfind<R: ResourceService>(
     path_components: &R::PathComponents,
     path: &str,
     body: &str,

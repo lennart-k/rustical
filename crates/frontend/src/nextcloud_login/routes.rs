@@ -18,7 +18,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tracing::instrument;
 
-pub(crate) async fn post_nextcloud_login(
+pub async fn post_nextcloud_login(
     Extension(state): Extension<Arc<NextcloudFlows>>,
     TypedHeader(user_agent): TypedHeader<UserAgent>,
     Host(host): Host,
@@ -27,20 +27,22 @@ pub(crate) async fn post_nextcloud_login(
     let token = uuid::Uuid::new_v4().to_string();
 
     let app_name = user_agent.to_string();
-    let mut flows = state.flows.write().await;
-    // Flows must not last longer than 10 minutes
-    // We also enforce that condition here to prevent a memory leak where unpolled flows would
-    // never be cleaned up
-    flows.retain(|_, flow| Utc::now() - flow.created_at < Duration::minutes(10));
-    flows.insert(
-        flow_id.clone(),
-        NextcloudFlow {
-            app_name: app_name.to_owned(),
-            created_at: Utc::now(),
-            token: token.to_owned(),
-            response: None,
-        },
-    );
+    {
+        let mut flows = state.flows.write().await;
+        // Flows must not last longer than 10 minutes
+        // We also enforce that condition here to prevent a memory leak where unpolled flows would
+        // never be cleaned up
+        flows.retain(|_, flow| Utc::now() - flow.created_at < Duration::minutes(10));
+        flows.insert(
+            flow_id.clone(),
+            NextcloudFlow {
+                app_name: app_name.clone(),
+                created_at: Utc::now(),
+                token: token.clone(),
+                response: None,
+            },
+        );
+    }
     Json(NextcloudLoginResponse {
         login: format!("https://{host}/index.php/login/v2/flow/{flow_id}"),
         poll: NextcloudLoginPoll {
@@ -52,11 +54,12 @@ pub(crate) async fn post_nextcloud_login(
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct NextcloudPollForm {
+pub struct NextcloudPollForm {
     token: String,
 }
 
-pub(crate) async fn post_nextcloud_poll<AP: AuthenticationProvider>(
+#[allow(clippy::significant_drop_tightening)]
+pub async fn post_nextcloud_poll<AP: AuthenticationProvider>(
     Extension(state): Extension<Arc<NextcloudFlows>>,
     Path(flow_id): Path<String>,
     Extension(auth_provider): Extension<Arc<AP>>,
@@ -75,8 +78,8 @@ pub(crate) async fn post_nextcloud_poll<AP: AuthenticationProvider>(
             auth_provider
                 .add_app_token(
                     &response.login_name,
-                    flow.app_name.to_owned(),
-                    response.app_password.to_owned(),
+                    flow.app_name.clone(),
+                    response.app_password.clone(),
                 )
                 .await?;
             flows.remove(&flow_id);
@@ -98,7 +101,7 @@ struct NextcloudLoginPage {
 }
 
 #[instrument(skip(state))]
-pub(crate) async fn get_nextcloud_flow(
+pub async fn get_nextcloud_flow(
     Extension(state): Extension<Arc<NextcloudFlows>>,
     Path(flow_id): Path<String>,
     user: Principal,
@@ -107,7 +110,7 @@ pub(crate) async fn get_nextcloud_flow(
         Ok(Html(
             NextcloudLoginPage {
                 username: user.displayname.unwrap_or(user.id),
-                app_name: flow.app_name.to_owned(),
+                app_name: flow.app_name.clone(),
             }
             .render()
             .unwrap(),
@@ -119,7 +122,7 @@ pub(crate) async fn get_nextcloud_flow(
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub(crate) struct NextcloudAuthorizeForm {
+pub struct NextcloudAuthorizeForm {
     app_name: String,
 }
 
@@ -130,7 +133,7 @@ struct NextcloudLoginSuccessPage {
 }
 
 #[instrument(skip(state))]
-pub(crate) async fn post_nextcloud_flow(
+pub async fn post_nextcloud_flow(
     user: Principal,
     Extension(state): Extension<Arc<NextcloudFlows>>,
     Path(flow_id): Path<String>,
@@ -141,12 +144,12 @@ pub(crate) async fn post_nextcloud_flow(
         flow.app_name = form.app_name;
         flow.response = Some(NextcloudSuccessResponse {
             server: format!("https://{host}"),
-            login_name: user.id.to_owned(),
+            login_name: user.id.clone(),
             app_password: generate_app_token(),
         });
         Ok(Html(
             NextcloudLoginSuccessPage {
-                app_name: flow.app_name.to_owned(),
+                app_name: flow.app_name.clone(),
             }
             .render()
             .unwrap(),

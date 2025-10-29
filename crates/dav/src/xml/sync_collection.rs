@@ -2,7 +2,7 @@ use rustical_xml::{ValueDeserialize, ValueSerialize, XmlDeserialize, XmlRootTag}
 
 use super::PropfindType;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SyncLevel {
     One,
     Infinity,
@@ -25,15 +25,15 @@ impl ValueDeserialize for SyncLevel {
 impl ValueSerialize for SyncLevel {
     fn serialize(&self) -> String {
         match self {
-            SyncLevel::One => "1",
-            SyncLevel::Infinity => "Infinity",
+            Self::One => "1",
+            Self::Infinity => "Infinity",
         }
         .to_owned()
     }
 }
 
 // https://datatracker.ietf.org/doc/html/rfc5323#section-5.17
-#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
 pub struct LimitElement {
     #[xml(ns = "crate::namespace::NS_DAV")]
     pub nresults: NresultsElement,
@@ -53,10 +53,10 @@ impl From<LimitElement> for u64 {
     }
 }
 
-#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
 pub struct NresultsElement(#[xml(ty = "text")] u64);
 
-#[derive(XmlDeserialize, Clone, Debug, PartialEq, XmlRootTag)]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq, XmlRootTag)]
 // <!ELEMENT sync-collection (sync-token, sync-level, limit?, prop)>
 //    <!-- DAV:limit defined in RFC 5323, Section 5.17 -->
 //    <!-- DAV:prop defined in RFC 4918, Section 14.18 -->
@@ -106,11 +106,11 @@ mod tests {
         assert_eq!(
             request,
             SyncCollectionRequest {
-                sync_token: "".to_owned(),
+                sync_token: String::new(),
                 sync_level: SyncLevel::One,
                 prop: PropfindType::Prop(PropElement(vec![TestPropName::Getetag], vec![])),
                 limit: Some(100.into())
             }
-        )
+        );
     }
 }

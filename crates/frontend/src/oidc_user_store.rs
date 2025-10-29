@@ -1,8 +1,7 @@
-use std::sync::Arc;
-
 use async_trait::async_trait;
 use rustical_oidc::UserStore;
-use rustical_store::auth::{AuthenticationProvider, Principal};
+use rustical_store::auth::{AuthenticationProvider, Principal, PrincipalType};
+use std::sync::Arc;
 
 pub struct OidcUserStore<AP: AuthenticationProvider>(pub Arc<AP>);
 
@@ -26,7 +25,7 @@ impl<AP: AuthenticationProvider> UserStore for OidcUserStore<AP> {
                 Principal {
                     id: id.to_owned(),
                     displayname: None,
-                    principal_type: Default::default(),
+                    principal_type: PrincipalType::default(),
                     password: None,
                     memberships: vec![],
                 },

@@ -15,6 +15,7 @@ pub struct EventObject {
 }
 
 impl EventObject {
+    #[must_use]
     pub fn get_uid(&self) -> &str {
         self.event.get_uid()
     }
@@ -43,7 +44,7 @@ impl EventObject {
 
         if let Some(dtend) = self.get_dtend()? {
             return Ok(Some(dtend));
-        };
+        }
 
         let duration = self.event.get_duration().unwrap_or(Duration::days(1));
 
@@ -70,9 +71,9 @@ impl EventObject {
         for prop in &self.event.properties {
             rrule_set = match prop.name.as_str() {
                 "RRULE" => {
-                    let rrule = RRule::from_str(prop.value.as_ref().ok_or(Error::RRuleError(
-                        rrule::ParseError::MissingDateGenerationRules.into(),
-                    ))?)?
+                    let rrule = RRule::from_str(prop.value.as_ref().ok_or_else(|| {
+                        Error::RRuleError(rrule::ParseError::MissingDateGenerationRules.into())
+                    })?)?
                     .validate(dtstart)
                     .unwrap();
                     rrule_set.rrule(rrule)
@@ -96,7 +97,7 @@ impl EventObject {
         &self,
         start: Option<DateTime<Utc>>,
         end: Option<DateTime<Utc>>,
-        overrides: &[EventObject],
+        overrides: &[Self],
     ) -> Result<Vec<IcalEvent>, Error> {
         if let Some(mut rrule_set) = self.recurrence_ruleset()? {
             if let Some(start) = start {
@@ -120,8 +121,8 @@ impl EventObject {
                     date.format()
                 };
 
-                for _override in overrides {
-                    if let Some(override_id) = &_override
+                for ev_override in overrides {
+                    if let Some(override_id) = &ev_override
                         .event
                         .get_recurrence_id()
                         .as_ref()
@@ -131,7 +132,7 @@ impl EventObject {
                     {
                         // We have an override for this occurence
                         //
-                        events.push(_override.event.clone());
+                        events.push(ev_override.event.clone());
                         continue 'recurrence;
                     }
                 }
@@ -150,7 +151,7 @@ impl EventObject {
 
                 ev.set_property(Property {
                     name: "RECURRENCE-ID".to_string(),
-                    value: Some(dateformat.to_owned()),
+                    value: Some(dateformat.clone()),
                     params: None,
                 });
                 ev.set_property(Property {
@@ -185,7 +186,7 @@ mod tests {
     use crate::CalendarObject;
     use ical::generator::Emitter;
 
-    const ICS: &str = r#"BEGIN:VCALENDAR
+    const ICS: &str = r"BEGIN:VCALENDAR
 CALSCALE:GREGORIAN
 VERSION:2.0
 BEGIN:VTIMEZONE
@@ -203,7 +204,7 @@ SUMMARY:weekly stuff
 TRANSP:OPAQUE
 RRULE:FREQ=WEEKLY;COUNT=4;INTERVAL=2;BYDAY=TU,TH,SU
 END:VEVENT
-END:VCALENDAR"#;
+END:VCALENDAR";
 
     const EXPANDED: [&str; 4] = [
         "BEGIN:VEVENT\r
@@ -251,13 +252,7 @@ END:VEVENT\r\n",
     #[test]
     fn test_expand_recurrence() {
         let event = CalendarObject::from_ics(ICS.to_string()).unwrap();
-        let (event, overrides) = if let crate::CalendarObjectComponent::Event(
-            main_event,
-            overrides,
-        ) = event.get_data()
-        {
-            (main_event, overrides)
-        } else {
+        let crate::CalendarObjectComponent::Event(event, overrides) = event.get_data() else {
             panic!()
         };
 

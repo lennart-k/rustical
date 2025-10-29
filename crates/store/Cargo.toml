@@ -15,7 +15,6 @@ sha2 = { workspace = true }
 ical = { workspace = true }
 chrono = { workspace = true }
 regex = { workspace = true }
-lazy_static = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 chrono-tz = { workspace = true }
