@@ -23,7 +23,13 @@
   padding: 8px 16px;
   background-color: var(--primary-color);
   color: var(--text-on-primary-color);
+  stroke: var(--text-on-primary-color);
   border: none;
+  
+  svg {
+    margin-bottom: -5px;
+    max-height: 20px;
+  }
 }
 
 .nav-btn:hover {

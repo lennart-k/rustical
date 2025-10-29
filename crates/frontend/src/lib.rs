@@ -58,7 +58,7 @@ pub fn frontend_router<AP: AuthenticationProvider, CS: CalendarStore, AS: Addres
         // Calendar
         .route("/{user}/calendar", get(route_calendars::<CS>))
         .route("/{user}/calendar/{calendar}", get(route_calendar::<CS>))
-        .route("/calendar/{user}/{calendar}", get(preview_calendar::<CS>))
+        .route("/{user}/calendar/{calendar}/preview", get(preview_calendar::<CS>))
         .route(
             "/{user}/calendar/{calendar}/restore",
             post(route_calendar_restore::<CS>),

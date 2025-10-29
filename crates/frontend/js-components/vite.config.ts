@@ -22,6 +22,7 @@ export default defineConfig({
         "lib/import-addressbook-form.ts",
         "lib/delete-button.ts",
         "lib/preview-button.ts",
+        "lib/theme-selector.ts",
       ],
       output: {
         dir: "../public/assets/js/",

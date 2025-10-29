@@ -13,16 +13,6 @@
   --hover-color: #2980b9;
   --event-bg: black;
   --event-text: white;
-  --event-text-color: calc(
-    (
-        (
-            (
-                (var(--event-bg-r) * 299) + (var(--event-bg-g) * 587) +
-                  (var(--event-bg-b) * 114)
-              ) / 1000
-          ) - 128
-      ) * -1000
-  );
 }
 
 @media (prefers-color-scheme: dark) {
@@ -512,6 +502,8 @@ dialog {
   border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 32px;
+  justify-self: center;
+  align-self: center;
 }
 
 dialog::backdrop {

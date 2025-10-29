@@ -4,27 +4,20 @@
 {% endblock %}
 
 {% block content %}
-
-    <link rel="stylesheet" href="calendar.css">
-    <style>
-
-    </style>
-
-
     <div class="calendar-container">
         <div class="calendar-header">
-            <h2>{{ title }}</h2>
+            <h2>{{ content.get_title() }}</h2>
 
             <!-- Navigation buttons -->
             <div class="nav-buttons">
                 <div class="nav-group" style="display: flex; gap: 10px; justify-content: start;">
-                    <a href="{{ prev }}">
+                    <a href="{{ content.get_link_prev() }}">
                         <button class="nav-btn prev-week">
                             <span class="btn-icon-left"></span>
                             <span>Prev</span>
                         </button>
                     </a>
-                    <a href="{{ next }}">
+                    <a href="{{ content.get_link_next() }}">
                         <button class="nav-btn next-week">
                             <span>Next</span>
                             <span class="btn-icon-right"></span>
@@ -32,120 +25,40 @@
                     </a>
                 </div>
                 <div class="nav-group" style="display: flex; gap: 10px;">
-                    <a href="{{ today }}">
+                    <a href="{{ content.get_link_today() }}">
                         <button class="nav-btn today">
-                            <span>Today</span>
-                            <span class="btn-icon-today"></span>
+                            <span>{% include "icons/calendar-check.svg" %} Today</span>
                         </button>
                     </a>
                 </div>
             </div>
         </div>
 
+{% if let Some(week_view) = content.as_any().downcast_ref::<CalendarPageWeek>() %}
         <div class="calendar-grid-week">
             <!-- Day headers -->
-            {{ header_days|safe }}
 
-            <div class="time-header" style="grid-row: 2; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 3; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 4; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 5; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 6; grid-column: 1;">1:00</div>
-            <div class="time-header" style="grid-row: 7; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 8; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 9; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 10; grid-column: 1;">2:00</div>
-            <div class="time-header" style="grid-row: 11; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 12; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 13; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 14; grid-column: 1;">3:00</div>
-            <div class="time-header" style="grid-row: 15; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 16; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 17; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 18; grid-column: 1;">4:00</div>
-            <div class="time-header" style="grid-row: 19; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 20; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 21; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 22; grid-column: 1;">5:00</div>
-            <div class="time-header" style="grid-row: 23; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 24; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 25; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 26; grid-column: 1;">6:00</div>
-            <div class="time-header" style="grid-row: 27; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 28; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 29; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 30; grid-column: 1;">7:00</div>
-            <div class="time-header" style="grid-row: 31; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 32; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 33; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 34; grid-column: 1;">8:00</div>
-            <div class="time-header" style="grid-row: 35; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 36; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 37; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 38; grid-column: 1;">9:00</div>
-            <div class="time-header" style="grid-row: 39; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 40; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 41; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 42; grid-column: 1;">10:00</div>
-            <div class="time-header" style="grid-row: 43; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 44; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 45; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 46; grid-column: 1;">11:00</div>
-            <div class="time-header" style="grid-row: 47; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 48; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 49; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 50; grid-column: 1;">12:00</div>
-            <div class="time-header" style="grid-row: 51; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 52; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 53; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 54; grid-column: 1;">13:00</div>
-            <div class="time-header" style="grid-row: 55; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 56; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 57; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 58; grid-column: 1;">14:00</div>
-            <div class="time-header" style="grid-row: 59; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 60; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 61; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 62; grid-column: 1;">15:00</div>
-            <div class="time-header" style="grid-row: 63; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 64; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 65; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 66; grid-column: 1;">16:00</div>
-            <div class="time-header" style="grid-row: 67; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 68; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 69; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 70; grid-column: 1;">17:00</div>
-            <div class="time-header" style="grid-row: 71; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 72; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 73; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 74; grid-column: 1;">18:00</div>
-            <div class="time-header" style="grid-row: 75; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 76; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 77; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 78; grid-column: 1;">19:00</div>
-            <div class="time-header" style="grid-row: 79; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 80; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 81; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 82; grid-column: 1;">20:00</div>
-            <div class="time-header" style="grid-row: 83; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 84; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 85; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 86; grid-column: 1;">21:00</div>
-            <div class="time-header" style="grid-row: 87; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 88; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 89; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 90; grid-column: 1;">22:00</div>
-            <div class="time-header" style="grid-row: 91; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 92; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 93; grid-column: 1;"></div>
-            <div class="time-header" style="z-index: 6; grid-row: 94; grid-column: 1;">23:00</div>
-            <div class="time-header" style="grid-row: 95; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 96; grid-column: 1;"></div>
-            <div class="time-header" style="grid-row: 97; grid-column: 1;"></div>
+            <div class="day-header">Time<br><span></span></div>
+            {% for day in week_view.days %}
+                <div class="day-header">{{day.week_day}}<br><span>{{day.day}}</span></div>
+            {% endfor %}
 
-            {{ events|safe }}
+            {% for timeslot in week_view.timeslots %}
+                <div class="time-header" style="z-index: {{ timeslot.z_index }}; grid-row: {{ timeslot.grid_row }}; grid-column: 1;">{{timeslot.text}}</div>
+            {% endfor %}
+
+            {% for event in week_view.events %}
+                <div class="week-view-event" style="margin-left: {{event.margin_left}}%; width: {{event.width}}%; grid-column: {{event.grid_column}}; grid-row: {{event.grid_row_start}}/{{event.grid_row_end}}; z-index: {{event.z_index}};">
+                    <div class="week-view-event-div" style="--event-bg-r: {{event.bg_color_r}}; --event-bg-g: {{event.bg_color_g}}; --event-bg-b:{{event.bg_color_b}}">
+                        <div class="week-view-event-title">{{event.title}}</div>
+                        <div class="week-view-event-date">{{event.date}}</div>
+                        <div class="week-view-event-time">{{event.time}}</div>
+                    </div>
+                </div>
+            {% endfor %}
         </div>
-    </div>
+{% endif %}
 
+    </div>
 
 {%endblock %}

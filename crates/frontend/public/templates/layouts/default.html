@@ -8,9 +8,19 @@
   <link rel="stylesheet" href="/frontend/assets/style.css" />
   <link rel="stylesheet" href="/frontend/assets/calendar.css" />
   {% block imports %}{% endblock %}
+  <script type="module" src="/frontend/assets/js/theme-selector.mjs" async></script>
 </head>
-
 <body>
+  <script>
+    // apply the theme already here before the page is rendered
+    // the theme selector component takes to long and leads flickering when it is loaded
+    const savedTheme = localStorage.getItem("theme");
+    console.log("saved theme", savedTheme);
+    if (savedTheme) {
+      document.body.className = savedTheme;
+      document.documentElement.setAttribute("data-theme", savedTheme);
+    }
+  </script>
   {% block header %}
   <header>
       <a class="logo" href="/frontend/user">RustiCal</a>
@@ -19,12 +29,7 @@
         <form method="POST" action="/frontend/logout" class="logout_form">
           <button type="submit">Log out</button>
         </form>
-        <!-- style switcher -->
-        <select name="theme" id="theme">
-          <option value="modern-dark">Modern-Dark</option>
-          <option value="modern-light" selected>Modern-Light</option>
-          <option value="classic-light">Classic-Light</option>
-        </select>
+        <theme-selector style="min-width: 100px;"></theme-selector>
       </div>
   </header>
   {% endblock %}
@@ -36,5 +41,4 @@
       <a href="/frontend/assets/licenses.html" target="_blank">Open Source Licenses</a>
   </footer>
 </body>
-<script src="/frontend/assets/script.js"></script>
 </html>
