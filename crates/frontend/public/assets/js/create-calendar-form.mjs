@@ -2,6 +2,7 @@ import { i, x } from "./lit-DkXrt_Iv.mjs";
 import { n as n$1, t } from "./property-B8WoKf1Y.mjs";
 import { e, n } from "./ref-BwbQvJBB.mjs";
 import { e as escapeXml } from "./index-_IB1wMbZ.mjs";
+import { a as allowed_timezones } from "./allowed-timezones-BbTv_FpW.mjs";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __decorateClass = (decorators, target, key, kind) => {
@@ -59,7 +60,14 @@ let CreateCalendarForm = class extends i {
           <br>
           <label>
             Timezone (optional)
-            <input type="text" name="timezone" .value=${this.timezone_id} @change=${(e2) => this.timezone_id = e2.target.value} />
+            <input type="text" name="timezone" list="timezone-list" .value=${this.timezone_id} @change=${(e2) => this.timezone_id = e2.target.value} />
+            <datalist id="timezone-list">
+              ${allowed_timezones.map((timezone) => {
+      x`
+              <option>${timezone}</option>
+              `;
+    })}
+            </datalist>
           </label>
           <br>
           <label>

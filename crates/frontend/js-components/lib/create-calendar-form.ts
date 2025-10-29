@@ -2,6 +2,7 @@ import { html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Ref, createRef, ref } from 'lit/directives/ref.js';
 import { escapeXml } from ".";
+import { allowed_timezones } from "./allowed-timezones";
 
 @customElement("create-calendar-form")
 export class CreateCalendarForm extends LitElement {
@@ -65,7 +66,14 @@ export class CreateCalendarForm extends LitElement {
           <br>
           <label>
             Timezone (optional)
-            <input type="text" name="timezone" .value=${this.timezone_id} @change=${e => this.timezone_id = e.target.value} />
+            <input type="text" name="timezone" list="timezone-list" .value=${this.timezone_id} @change=${e => this.timezone_id = e.target.value} />
+            <datalist id="timezone-list">
+              ${allowed_timezones.map(timezone => {
+              html`
+              <option>${timezone}</option>
+              `
+            })}
+            </datalist>
           </label>
           <br>
           <label>
