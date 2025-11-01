@@ -12,8 +12,6 @@ pub enum Precondition {
     #[error("valid-calendar-data")]
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     ValidCalendarData,
-    #[error("matching-uid")]
-    MatchingUid,
 }
 
 impl IntoResponse for Precondition {

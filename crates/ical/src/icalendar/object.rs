@@ -64,6 +64,19 @@ pub enum CalendarObjectComponent {
     Journal(IcalJournal, Vec<IcalJournal>),
 }
 
+impl CalendarObjectComponent {
+    #[must_use]
+    pub fn get_uid(&self) -> &str {
+        match &self {
+            // We've made sure before that the first component exists and all components share the
+            // same UID
+            Self::Todo(todo, _) => todo.get_uid(),
+            Self::Event(event, _) => event.event.get_uid(),
+            Self::Journal(journal, _) => journal.get_uid(),
+        }
+    }
+}
+
 impl From<&CalendarObjectComponent> for CalendarObjectType {
     fn from(value: &CalendarObjectComponent) -> Self {
         match value {
@@ -141,12 +154,13 @@ impl CalendarObjectComponent {
 pub struct CalendarObject {
     data: CalendarObjectComponent,
     properties: Vec<Property>,
+    id: String,
     ics: String,
     vtimezones: HashMap<String, IcalTimeZone>,
 }
 
 impl CalendarObject {
-    pub fn from_ics(ics: String) -> Result<Self, Error> {
+    pub fn from_ics(ics: String, id: Option<String>) -> Result<Self, Error> {
         let mut parser = ical::IcalParser::new(BufReader::new(ics.as_bytes()));
         let cal = parser.next().ok_or(Error::MissingCalendar)??;
         if parser.next().is_some() {
@@ -202,6 +216,7 @@ impl CalendarObject {
         };
 
         Ok(Self {
+            id: id.unwrap_or_else(|| data.get_uid().to_owned()),
             data,
             properties: cal.properties,
             ics,
@@ -221,13 +236,12 @@ impl CalendarObject {
 
     #[must_use]
     pub fn get_uid(&self) -> &str {
-        match &self.data {
-            // We've made sure before that the first component exists and all components share the
-            // same UID
-            CalendarObjectComponent::Todo(todo, _) => todo.get_uid(),
-            CalendarObjectComponent::Event(event, _) => event.event.get_uid(),
-            CalendarObjectComponent::Journal(journal, _) => journal.get_uid(),
-        }
+        self.data.get_uid()
+    }
+
+    #[must_use]
+    pub fn get_id(&self) -> &str {
+        &self.id
     }
 
     #[must_use]

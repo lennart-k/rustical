@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id, uid, ics FROM calendarobjects\n                WHERE principal = ? AND cal_id = ? AND deleted_at IS NULL\n                    AND (last_occurence IS NULL OR ? IS NULL OR last_occurence >= date(?))\n                    AND (first_occurence IS NULL OR ? IS NULL OR first_occurence <= date(?))\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "uid",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "ics",
+        "ordinal": 2,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "3a29efff3d3f6e1e05595d1a2d095af5fc963572c90bd10a6616af78757f8c39"
+}

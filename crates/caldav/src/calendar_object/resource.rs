@@ -21,7 +21,7 @@ pub struct CalendarObjectResource {
 
 impl ResourceName for CalendarObjectResource {
     fn get_name(&self) -> String {
-        format!("{}.ics", self.object.get_uid())
+        format!("{}.ics", self.object.get_id())
     }
 }
 
