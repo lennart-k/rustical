@@ -82,10 +82,10 @@ pub async fn put_event<C: CalendarStore>(
         debug!("invalid calendar data:\n{body}");
         return Err(Error::PreconditionFailed(Precondition::ValidCalendarData));
     };
-    if object.get_id() != object_id {
+    if object.get_uid() != object_id {
         error!(
             "Calendar object UID and file name not matching: UID={}, filename={}",
-            object.get_id(),
+            object.get_uid(),
             object_id
         );
         return Err(Error::PreconditionFailed(Precondition::MatchingUid));

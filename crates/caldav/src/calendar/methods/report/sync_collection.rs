@@ -33,7 +33,7 @@ pub async fn handle_sync_collection<C: CalendarStore>(
 
     let mut responses = Vec::new();
     for object in new_objects {
-        let path = format!("{}/{}.ics", path, object.get_id());
+        let path = format!("{}/{}.ics", path, object.get_uid());
         responses.push(
             CalendarObjectResource {
                 object,

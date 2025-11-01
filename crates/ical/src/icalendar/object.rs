@@ -220,7 +220,7 @@ impl CalendarObject {
     }
 
     #[must_use]
-    pub fn get_id(&self) -> &str {
+    pub fn get_uid(&self) -> &str {
         match &self.data {
             // We've made sure before that the first component exists and all components share the
             // same UID
@@ -233,7 +233,7 @@ impl CalendarObject {
     #[must_use]
     pub fn get_etag(&self) -> String {
         let mut hasher = Sha256::new();
-        hasher.update(self.get_id());
+        hasher.update(self.get_uid());
         hasher.update(self.get_ics());
         format!("\"{:x}\"", hasher.finalize())
     }

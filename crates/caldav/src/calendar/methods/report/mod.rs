@@ -61,7 +61,7 @@ fn objects_response(
 ) -> Result<MultistatusElement<CalendarObjectPropWrapper, String>, Error> {
     let mut responses = Vec::new();
     for object in objects {
-        let path = format!("{}/{}.ics", path, object.get_id());
+        let path = format!("{}/{}.ics", path, object.get_uid());
         responses.push(
             CalendarObjectResource {
                 object,

@@ -24,11 +24,11 @@ impl TryFrom<CalendarObjectRow> for CalendarObject {
 
     fn try_from(value: CalendarObjectRow) -> Result<Self, Self::Error> {
         let object = Self::from_ics(value.ics)?;
-        if object.get_id() != value.id {
+        if object.get_uid() != value.id {
             return Err(rustical_store::Error::IcalError(
                 rustical_ical::Error::InvalidData(format!(
                     "object_id={} and UID={} don't match",
-                    object.get_id(),
+                    object.get_uid(),
                     value.id
                 )),
             ));
@@ -355,7 +355,7 @@ impl SqliteCalendarStore {
         object: CalendarObject,
         overwrite: bool,
     ) -> Result<(), Error> {
-        let (object_id, ics) = (object.get_id(), object.get_ics());
+        let (object_id, ics) = (object.get_uid(), object.get_ics());
 
         let first_occurence = object
             .get_first_occurence()
@@ -678,7 +678,7 @@ impl CalendarStore for SqliteCalendarStore {
             .await
             .map_err(crate::Error::from)?;
 
-        let object_id = object.get_id().to_owned();
+        let object_id = object.get_uid().to_owned();
 
         let calendar = Self::_get_calendar(&mut *tx, &principal, &cal_id, true).await?;
         if calendar.subscription_url.is_some() {
