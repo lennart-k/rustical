@@ -121,7 +121,7 @@ rustical_ical = { path = "./crates/ical/" }
 chrono-tz = "0.10"
 chrono-humanize = "0.2"
 rand = "0.9"
-axum-extra = { version = "0.10", features = ["typed-header"] }
+axum-extra = { version = "0.12", features = ["typed-header"] }
 rrule = "0.14"
 argon2 = "0.5"
 rpassword = "7.3"
