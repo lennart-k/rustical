@@ -1,4 +1,5 @@
 use super::ChangeOperation;
+use crate::BEGIN_IMMEDIATE;
 use async_trait::async_trait;
 use derive_more::derive::Constructor;
 use rustical_ical::AddressObject;
@@ -414,7 +415,11 @@ impl AddressbookStore for SqliteAddressbookStore {
         addressbook_id: &str,
         use_trashbin: bool,
     ) -> Result<(), rustical_store::Error> {
-        let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
 
         let addressbook =
             match Self::_get_addressbook(&mut *tx, principal, addressbook_id, use_trashbin).await {
@@ -508,7 +513,11 @@ impl AddressbookStore for SqliteAddressbookStore {
         object: AddressObject,
         overwrite: bool,
     ) -> Result<(), rustical_store::Error> {
-        let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
 
         let object_id = object.get_id().to_owned();
 
@@ -554,7 +563,11 @@ impl AddressbookStore for SqliteAddressbookStore {
         object_id: &str,
         use_trashbin: bool,
     ) -> Result<(), rustical_store::Error> {
-        let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
 
         Self::_delete_object(&mut *tx, principal, addressbook_id, object_id, use_trashbin).await?;
 
@@ -589,7 +602,11 @@ impl AddressbookStore for SqliteAddressbookStore {
         addressbook_id: &str,
         object_id: &str,
     ) -> Result<(), rustical_store::Error> {
-        let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
 
         Self::_restore_object(&mut *tx, principal, addressbook_id, object_id).await?;
 
@@ -624,7 +641,11 @@ impl AddressbookStore for SqliteAddressbookStore {
         objects: Vec<AddressObject>,
         merge_existing: bool,
     ) -> Result<(), Error> {
-        let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
 
         let existing =
             match Self::_get_addressbook(&mut *tx, &addressbook.principal, &addressbook.id, true)

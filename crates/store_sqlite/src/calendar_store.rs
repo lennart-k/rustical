@@ -1,4 +1,5 @@
 use super::ChangeOperation;
+use crate::BEGIN_IMMEDIATE;
 use async_trait::async_trait;
 use chrono::TimeDelta;
 use derive_more::derive::Constructor;
@@ -539,7 +540,11 @@ impl CalendarStore for SqliteCalendarStore {
         id: &str,
         use_trashbin: bool,
     ) -> Result<(), Error> {
-        let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
 
         let cal = match Self::_get_calendar(&mut *tx, principal, id, true).await {
             Ok(cal) => Some(cal),
@@ -573,7 +578,11 @@ impl CalendarStore for SqliteCalendarStore {
         objects: Vec<CalendarObject>,
         merge_existing: bool,
     ) -> Result<(), Error> {
-        let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
 
         let existing_cal =
             match Self::_get_calendar(&mut *tx, &calendar.principal, &calendar.id, true).await {
@@ -663,7 +672,11 @@ impl CalendarStore for SqliteCalendarStore {
         object: CalendarObject,
         overwrite: bool,
     ) -> Result<(), Error> {
-        let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
 
         let object_id = object.get_id().to_owned();
 
@@ -713,7 +726,11 @@ impl CalendarStore for SqliteCalendarStore {
         id: &str,
         use_trashbin: bool,
     ) -> Result<(), Error> {
-        let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
 
         Self::_delete_object(&mut *tx, principal, cal_id, id, use_trashbin).await?;
 
@@ -737,7 +754,11 @@ impl CalendarStore for SqliteCalendarStore {
         cal_id: &str,
         object_id: &str,
     ) -> Result<(), Error> {
-        let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
 
         Self::_restore_object(&mut *tx, principal, cal_id, object_id).await?;
 
