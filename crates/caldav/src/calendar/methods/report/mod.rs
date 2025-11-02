@@ -27,7 +27,7 @@ use sync_collection::handle_sync_collection;
 use tracing::instrument;
 
 mod calendar_multiget;
-mod calendar_query;
+pub mod calendar_query;
 mod sync_collection;
 
 #[derive(XmlDeserialize, XmlDocument, Clone, Debug, PartialEq)]

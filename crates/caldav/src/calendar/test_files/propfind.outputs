@@ -11,6 +11,7 @@
             <calendar-order xmlns="http://apple.com/ns/ical/"/>
             <supported-calendar-component-set xmlns="urn:ietf:params:xml:ns:caldav"/>
             <supported-calendar-data xmlns="urn:ietf:params:xml:ns:caldav"/>
+            <supported-collation-set xmlns="urn:ietf:params:xml:ns:caldav"/>
             <max-resource-size xmlns="DAV:"/>
             <supported-report-set xmlns="DAV:"/>
             <source xmlns="http://calendarserver.org/ns/"/>
@@ -160,6 +161,10 @@ END:VCALENDAR
             <CAL:supported-calendar-data>
                 <CAL:calendar-data content-type="text/calendar" version="2.0"/>
             </CAL:supported-calendar-data>
+            <CAL:supported-collation-set>
+                <CAL:supported-collation>i;ascii-casemap</CAL:supported-collation>
+                <CAL:supported-collation>i;octet</CAL:supported-collation>
+            </CAL:supported-collation-set>
             <max-resource-size>10000000</max-resource-size>
             <supported-report-set>
                 <supported-report>

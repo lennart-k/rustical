@@ -148,6 +148,34 @@ impl CalendarObjectComponent {
         }
         Ok(Self::Journal(main_journal, overrides))
     }
+
+    pub fn get_first_occurence(&self) -> Result<Option<CalDateTime>, Error> {
+        match &self {
+            Self::Event(main_event, overrides) => Ok(overrides
+                .iter()
+                .chain(std::iter::once(main_event))
+                .map(super::event::EventObject::get_dtstart)
+                .collect::<Result<Vec<_>, _>>()?
+                .into_iter()
+                .flatten()
+                .min()),
+            _ => Ok(None),
+        }
+    }
+
+    pub fn get_last_occurence(&self) -> Result<Option<CalDateTime>, Error> {
+        match &self {
+            Self::Event(main_event, overrides) => Ok(overrides
+                .iter()
+                .chain(std::iter::once(main_event))
+                .map(super::event::EventObject::get_last_occurence)
+                .collect::<Result<Vec<_>, _>>()?
+                .into_iter()
+                .flatten()
+                .max()),
+            _ => Ok(None),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -268,31 +296,11 @@ impl CalendarObject {
     }
 
     pub fn get_first_occurence(&self) -> Result<Option<CalDateTime>, Error> {
-        match &self.data {
-            CalendarObjectComponent::Event(main_event, overrides) => Ok(overrides
-                .iter()
-                .chain(std::iter::once(main_event))
-                .map(super::event::EventObject::get_dtstart)
-                .collect::<Result<Vec<_>, _>>()?
-                .into_iter()
-                .flatten()
-                .min()),
-            _ => Ok(None),
-        }
+        self.data.get_first_occurence()
     }
 
     pub fn get_last_occurence(&self) -> Result<Option<CalDateTime>, Error> {
-        match &self.data {
-            CalendarObjectComponent::Event(main_event, overrides) => Ok(overrides
-                .iter()
-                .chain(std::iter::once(main_event))
-                .map(super::event::EventObject::get_last_occurence)
-                .collect::<Result<Vec<_>, _>>()?
-                .into_iter()
-                .flatten()
-                .max()),
-            _ => Ok(None),
-        }
+        self.data.get_last_occurence()
     }
 
     pub fn expand_recurrence(
@@ -312,5 +320,12 @@ impl CalendarObject {
             }
             _ => Ok(self.get_ics().to_string()),
         }
+    }
+
+    #[must_use]
+    pub fn get_property(&self, name: &str) -> Option<&Property> {
+        self.properties
+            .iter()
+            .find(|property| property.name == name)
     }
 }
