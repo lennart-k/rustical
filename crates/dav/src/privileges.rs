@@ -41,12 +41,13 @@ impl XmlSerialize for UserPrivilegeSet {
     }
 }
 
-#[derive(Debug, Clone, Default, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct UserPrivilegeSet {
     privileges: HashSet<UserPrivilege>,
 }
 
 impl UserPrivilegeSet {
+    #[must_use]
     pub fn has(&self, privilege: &UserPrivilege) -> bool {
         if (privilege == &UserPrivilege::WriteProperties
             || privilege == &UserPrivilege::WriteContent)
@@ -57,12 +58,14 @@ impl UserPrivilegeSet {
         self.privileges.contains(privilege) || self.privileges.contains(&UserPrivilege::All)
     }
 
+    #[must_use]
     pub fn all() -> Self {
         Self {
             privileges: HashSet::from([UserPrivilege::All]),
         }
     }
 
+    #[must_use]
     pub fn owner_only(is_owner: bool) -> Self {
         if is_owner {
             Self::all()
@@ -71,6 +74,7 @@ impl UserPrivilegeSet {
         }
     }
 
+    #[must_use]
     pub fn owner_read(is_owner: bool) -> Self {
         if is_owner {
             Self::read_only()
@@ -79,6 +83,7 @@ impl UserPrivilegeSet {
         }
     }
 
+    #[must_use]
     pub fn owner_write_properties(is_owner: bool) -> Self {
         // Content is read-only but we can write properties
         if is_owner {
@@ -88,6 +93,7 @@ impl UserPrivilegeSet {
         }
     }
 
+    #[must_use]
     pub fn read_only() -> Self {
         Self {
             privileges: HashSet::from([
@@ -98,6 +104,7 @@ impl UserPrivilegeSet {
         }
     }
 
+    #[must_use]
     pub fn write_properties() -> Self {
         Self {
             privileges: HashSet::from([

@@ -5,10 +5,11 @@ use quick_xml::events::BytesStart;
 use crate::{XmlDeserialize, XmlError};
 
 // TODO: actually implement
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Unparsed(BytesStart<'static>);
 
 impl Unparsed {
+    #[must_use]
     pub fn tag_name(&self) -> String {
         // TODO: respect namespace?
         String::from_utf8_lossy(self.0.local_name().as_ref()).to_string()

@@ -22,7 +22,7 @@ impl TryFrom<VcardContact> for AddressObject {
     fn try_from(vcard: VcardContact) -> Result<Self, Self::Error> {
         let uid = vcard
             .get_uid()
-            .ok_or(Error::InvalidData("missing UID".to_owned()))?
+            .ok_or_else(|| Error::InvalidData("missing UID".to_owned()))?
             .to_owned();
         let vcf = vcard.generate();
         Ok(Self {
@@ -45,10 +45,12 @@ impl AddressObject {
         Ok(Self { id, vcf, vcard })
     }
 
+    #[must_use]
     pub fn get_id(&self) -> &str {
         &self.id
     }
 
+    #[must_use]
     pub fn get_etag(&self) -> String {
         let mut hasher = Sha256::new();
         hasher.update(self.get_id());
@@ -56,20 +58,24 @@ impl AddressObject {
         format!("\"{:x}\"", hasher.finalize())
     }
 
+    #[must_use]
     pub fn get_vcf(&self) -> &str {
         &self.vcf
     }
 
+    #[must_use]
     pub fn get_anniversary(&self) -> Option<(CalDateTime, bool)> {
         let prop = self.vcard.get_property("ANNIVERSARY")?.value.as_deref()?;
         CalDateTime::parse_vcard(prop).ok()
     }
 
+    #[must_use]
     pub fn get_birthday(&self) -> Option<(CalDateTime, bool)> {
         let prop = self.vcard.get_property("BDAY")?.value.as_deref()?;
         CalDateTime::parse_vcard(prop).ok()
     }
 
+    #[must_use]
     pub fn get_full_name(&self) -> Option<&str> {
         let prop = self.vcard.get_property("FN")?;
         prop.value.as_deref()
@@ -78,9 +84,7 @@ impl AddressObject {
     pub fn get_anniversary_object(&self) -> Result<Option<CalendarObject>, Error> {
         Ok(
             if let Some((anniversary, contains_year)) = self.get_anniversary() {
-                let fullname = if let Some(name) = self.get_full_name() {
-                    name
-                } else {
+                let Some(fullname) = self.get_full_name() else {
                     return Ok(None);
                 };
                 let anniversary = anniversary.date();
@@ -93,8 +97,9 @@ impl AddressObject {
                 let uid = format!("{}-anniversary", self.get_id());
 
                 let year_suffix = year.map(|year| format!(" ({year})")).unwrap_or_default();
-                Some(CalendarObject::from_ics(format!(
-                    r#"BEGIN:VCALENDAR
+                Some(CalendarObject::from_ics(
+                    format!(
+                        r"BEGIN:VCALENDAR
 VERSION:2.0
 CALSCALE:GREGORIAN
 PRODID:-//github.com/lennart-k/rustical birthday calendar//EN
@@ -111,8 +116,10 @@ ACTION:DISPLAY
 DESCRIPTION:💍 {fullname}{year_suffix}
 END:VALARM
 END:VEVENT
-END:VCALENDAR"#,
-                ))?)
+END:VCALENDAR",
+                    ),
+                    None,
+                )?)
             } else {
                 None
             },
@@ -122,9 +129,7 @@ END:VCALENDAR"#,
     pub fn get_birthday_object(&self) -> Result<Option<CalendarObject>, Error> {
         Ok(
             if let Some((birthday, contains_year)) = self.get_birthday() {
-                let fullname = if let Some(name) = self.get_full_name() {
-                    name
-                } else {
+                let Some(fullname) = self.get_full_name() else {
                     return Ok(None);
                 };
                 let birthday = birthday.date();
@@ -134,8 +139,9 @@ END:VCALENDAR"#,
                 let uid = format!("{}-birthday", self.get_id());
 
                 let year_suffix = year.map(|year| format!(" ({year})")).unwrap_or_default();
-                Some(CalendarObject::from_ics(format!(
-                    r#"BEGIN:VCALENDAR
+                Some(CalendarObject::from_ics(
+                    format!(
+                        r"BEGIN:VCALENDAR
 VERSION:2.0
 CALSCALE:GREGORIAN
 PRODID:-//github.com/lennart-k/rustical birthday calendar//EN
@@ -152,8 +158,10 @@ ACTION:DISPLAY
 DESCRIPTION:🎂 {fullname}{year_suffix}
 END:VALARM
 END:VEVENT
-END:VCALENDAR"#,
-                ))?)
+END:VCALENDAR",
+                    ),
+                    None,
+                )?)
             } else {
                 None
             },

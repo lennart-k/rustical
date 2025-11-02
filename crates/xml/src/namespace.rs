@@ -1,6 +1,6 @@
 use quick_xml::name::Namespace;
 
-#[derive(Debug, Clone, Default, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct NamespaceOwned(pub Vec<u8>);
 
 impl<'a> From<Namespace<'a>> for NamespaceOwned {
@@ -28,6 +28,7 @@ impl<'a> From<&'a Namespace<'a>> for NamespaceOwned {
 }
 
 impl NamespaceOwned {
+    #[must_use]
     pub fn as_ref(&self) -> Namespace<'_> {
         Namespace(&self.0)
     }

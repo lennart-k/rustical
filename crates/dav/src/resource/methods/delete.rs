@@ -7,7 +7,7 @@ use axum_extra::TypedHeader;
 use headers::{IfMatch, IfNoneMatch};
 use http::HeaderMap;
 
-pub(crate) async fn axum_route_delete<R: ResourceService>(
+pub async fn axum_route_delete<R: ResourceService>(
     Path(path): Path<R::PathComponents>,
     State(resource_service): State<R>,
     principal: R::Principal,
@@ -24,8 +24,7 @@ pub(crate) async fn axum_route_delete<R: ResourceService>(
     }
     let no_trash = header_map
         .get("X-No-Trashbin")
-        .map(|val| matches!(val.to_str(), Ok("1")))
-        .unwrap_or(false);
+        .is_some_and(|val| matches!(val.to_str(), Ok("1")));
     route_delete(
         &path,
         &principal,

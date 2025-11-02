@@ -61,7 +61,7 @@ enum Operation<T: XmlDeserialize> {
 #[xml(ns = "crate::namespace::NS_DAV")]
 struct PropertyupdateElement<T: XmlDeserialize>(#[xml(ty = "untagged", flatten)] Vec<Operation<T>>);
 
-pub(crate) async fn axum_route_proppatch<R: ResourceService>(
+pub async fn axum_route_proppatch<R: ResourceService>(
     Path(path): Path<R::PathComponents>,
     State(resource_service): State<R>,
     principal: R::Principal,
@@ -71,7 +71,7 @@ pub(crate) async fn axum_route_proppatch<R: ResourceService>(
     route_proppatch(&path, uri.path(), &body, &principal, &resource_service).await
 }
 
-pub(crate) async fn route_proppatch<R: ResourceService>(
+pub async fn route_proppatch<R: ResourceService>(
     path_components: &R::PathComponents,
     path: &str,
     body: &str,
@@ -96,7 +96,7 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
     let mut props_conflict = Vec::new();
     let mut props_not_found = Vec::new();
 
-    for operation in operations.into_iter() {
+    for operation in operations {
         match operation {
             Operation::Set(SetPropertyElement {
                 prop: SetPropertyPropWrapperWrapper(properties),
@@ -113,7 +113,7 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
                                 Err(Error::PropReadOnly) => props_conflict
                                     .push((ns.map(NamespaceOwned::from), propname.to_owned())),
                                 Err(err) => return Err(err.into()),
-                            };
+                            }
                         }
                         SetPropertyPropWrapper::Invalid(invalid) => {
                             let propname = invalid.tag_name();
@@ -131,7 +131,7 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
                                 // This happens in following cases:
                                 // - read-only properties with #[serde(skip_deserializing)]
                                 // - internal properties
-                                props_conflict.push(full_propname)
+                                props_conflict.push(full_propname);
                             } else {
                                 props_not_found.push((None, propname));
                             }
@@ -154,7 +154,7 @@ pub(crate) async fn route_proppatch<R: ResourceService>(
                         },
                         // I guess removing a nonexisting property should be successful :)
                         Err(_) => props_ok.push((None, propname)),
-                    };
+                    }
                 }
             }
         }

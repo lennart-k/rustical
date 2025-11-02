@@ -4,10 +4,10 @@ use rustical_ical::CalendarObject;
 use rustical_store::CalendarStore;
 use rustical_xml::XmlDeserialize;
 
-#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
+#[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
 #[allow(dead_code)]
 // <!ELEMENT calendar-query ((DAV:allprop | DAV:propname | DAV:prop)?, href+)>
-pub(crate) struct CalendarMultigetRequest {
+pub struct CalendarMultigetRequest {
     #[xml(ty = "untagged")]
     pub(crate) prop: PropfindType<CalendarObjectPropWrapperName>,
     #[xml(flatten)]
@@ -27,20 +27,18 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore>(
 
     for href in &cal_query.href {
         if let Some(filename) = href.strip_prefix(path) {
-            let filename = filename.trim_start_matches("/");
+            let filename = filename.trim_start_matches('/');
             if let Some(object_id) = filename.strip_suffix(".ics") {
                 match store.get_object(principal, cal_id, object_id, false).await {
                     Ok(object) => result.push(object),
                     Err(rustical_store::Error::NotFound) => not_found.push(href.to_owned()),
                     Err(err) => return Err(err.into()),
-                };
+                }
             } else {
                 not_found.push(href.to_owned());
-                continue;
             }
         } else {
             not_found.push(href.to_owned());
-            continue;
         }
     }
 

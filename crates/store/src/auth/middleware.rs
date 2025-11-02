@@ -23,7 +23,7 @@ impl<AP: AuthenticationProvider> Clone for AuthenticationLayer<AP> {
 }
 
 impl<AP: AuthenticationProvider> AuthenticationLayer<AP> {
-    pub fn new(auth_provider: Arc<AP>) -> Self {
+    pub const fn new(auth_provider: Arc<AP>) -> Self {
         Self { auth_provider }
     }
 }
@@ -53,9 +53,9 @@ impl<S: Clone, AP: AuthenticationProvider> Clone for AuthenticationMiddleware<S,
     }
 }
 
-impl<S: Clone, AP: AuthenticationProvider> Service<Request> for AuthenticationMiddleware<S, AP>
+impl<S, AP: AuthenticationProvider> Service<Request> for AuthenticationMiddleware<S, AP>
 where
-    S: Service<Request, Response = Response> + Send + 'static,
+    S: Service<Request, Response = Response> + Send + Clone + 'static,
     S::Future: Send + 'static,
 {
     type Response = S::Response;

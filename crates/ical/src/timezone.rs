@@ -26,7 +26,7 @@ impl From<rrule::Tz> for ICalTimezone {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Display)]
+#[derive(Debug, Clone, PartialEq, Eq, Display)]
 pub enum CalTimezoneOffset {
     Local(chrono::FixedOffset),
     Olson(chrono_tz::TzOffset),

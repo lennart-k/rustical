@@ -23,7 +23,7 @@ pub struct AxumService<RS: ResourceService + AxumMethods> {
 }
 
 impl<RS: ResourceService + AxumMethods> AxumService<RS> {
-    pub fn new(resource_service: RS) -> Self {
+    pub const fn new(resource_service: RS) -> Self {
         Self { resource_service }
     }
 }
@@ -103,7 +103,7 @@ where
                 }
             }
             _ => {}
-        };
+        }
         Box::pin(async move {
             Ok(Response::builder()
                 .status(StatusCode::METHOD_NOT_ALLOWED)

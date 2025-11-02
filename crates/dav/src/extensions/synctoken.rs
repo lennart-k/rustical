@@ -1,6 +1,6 @@
 use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, PropName, EnumVariants)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, PropName, EnumVariants)]
 #[xml(unit_variants_ident = "SyncTokenExtensionPropName")]
 pub enum SyncTokenExtensionProp {
     // Collection Synchronization (RFC 6578)

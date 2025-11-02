@@ -18,7 +18,7 @@ use rustical_xml::{EnumVariants, PropName};
 use rustical_xml::{XmlDeserialize, XmlSerialize};
 use serde::Deserialize;
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "CalendarPropName")]
 pub enum CalendarProp {
     // CalDAV (RFC 4791)
@@ -54,7 +54,7 @@ pub enum CalendarProp {
     MaxDateTime(String),
 }
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Clone, EnumVariants, PropName)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "CalendarPropWrapperName", untagged)]
 pub enum CalendarPropWrapper {
     Calendar(CalendarProp),
@@ -71,7 +71,7 @@ pub struct CalendarResource {
 
 impl ResourceName for CalendarResource {
     fn get_name(&self) -> String {
-        self.cal.id.to_owned()
+        self.cal.id.clone()
     }
 }
 
@@ -89,7 +89,7 @@ impl SyncTokenExtension for CalendarResource {
 
 impl DavPushExtension for CalendarResource {
     fn get_topic(&self) -> String {
-        self.cal.push_topic.to_owned()
+        self.cal.push_topic.clone()
     }
 }
 
@@ -135,7 +135,9 @@ impl Resource for CalendarResource {
                 }
                 CalendarPropName::CalendarTimezone => {
                     CalendarProp::CalendarTimezone(self.cal.timezone_id.as_ref().and_then(|tzid| {
-                        vtimezones_rs::VTIMEZONES.get(tzid).map(|tz| tz.to_string())
+                        vtimezones_rs::VTIMEZONES
+                            .get(tzid)
+                            .map(|tz| (*tz).to_string())
                     }))
                 }
                 // chrono_tz uses the IANA database
@@ -154,13 +156,13 @@ impl Resource for CalendarResource {
                 CalendarPropName::SupportedCalendarData => {
                     CalendarProp::SupportedCalendarData(SupportedCalendarData::default())
                 }
-                CalendarPropName::MaxResourceSize => CalendarProp::MaxResourceSize(10000000),
+                CalendarPropName::MaxResourceSize => CalendarProp::MaxResourceSize(10_000_000),
                 CalendarPropName::SupportedReportSet => {
                     CalendarProp::SupportedReportSet(SupportedReportSet::all())
                 }
-                CalendarPropName::Source => CalendarProp::Source(
-                    self.cal.subscription_url.to_owned().map(HrefElement::from),
-                ),
+                CalendarPropName::Source => {
+                    CalendarProp::Source(self.cal.subscription_url.clone().map(HrefElement::from))
+                }
                 CalendarPropName::MinDateTime => {
                     CalendarProp::MinDateTime(CalDateTime::from(DateTime::<Utc>::MIN_UTC).format())
                 }
@@ -199,22 +201,20 @@ impl Resource for CalendarResource {
                         // TODO: Proper error (calendar-timezone precondition)
                         let calendar = IcalParser::new(tz.as_bytes())
                             .next()
-                            .ok_or(rustical_dav::Error::BadRequest(
-                                "No timezone data provided".to_owned(),
-                            ))?
+                            .ok_or_else(|| {
+                                rustical_dav::Error::BadRequest(
+                                    "No timezone data provided".to_owned(),
+                                )
+                            })?
                             .map_err(|_| {
                                 rustical_dav::Error::BadRequest(
                                     "No timezone data provided".to_owned(),
                                 )
                             })?;
 
-                        let timezone =
-                            calendar
-                                .timezones
-                                .first()
-                                .ok_or(rustical_dav::Error::BadRequest(
-                                    "No timezone data provided".to_owned(),
-                                ))?;
+                        let timezone = calendar.timezones.first().ok_or_else(|| {
+                            rustical_dav::Error::BadRequest("No timezone data provided".to_owned())
+                        })?;
                         let timezone: chrono_tz::Tz = timezone.try_into().map_err(|_| {
                             rustical_dav::Error::BadRequest("No timezone data provided".to_owned())
                         })?;
@@ -223,7 +223,6 @@ impl Resource for CalendarResource {
                     }
                     Ok(())
                 }
-                CalendarProp::TimezoneServiceSet(_) => Err(rustical_dav::Error::PropReadOnly),
                 CalendarProp::CalendarTimezoneId(timezone_id) => {
                     if let Some(tzid) = &timezone_id
                         && !vtimezones_rs::VTIMEZONES.contains_key(tzid)
@@ -243,13 +242,13 @@ impl Resource for CalendarResource {
                     self.cal.components = comp_set.into();
                     Ok(())
                 }
-                CalendarProp::SupportedCalendarData(_) => Err(rustical_dav::Error::PropReadOnly),
-                CalendarProp::MaxResourceSize(_) => Err(rustical_dav::Error::PropReadOnly),
-                CalendarProp::SupportedReportSet(_) => Err(rustical_dav::Error::PropReadOnly),
-                // Converting between a calendar subscription calendar and a normal one would be weird
-                CalendarProp::Source(_) => Err(rustical_dav::Error::PropReadOnly),
-                CalendarProp::MinDateTime(_) => Err(rustical_dav::Error::PropReadOnly),
-                CalendarProp::MaxDateTime(_) => Err(rustical_dav::Error::PropReadOnly),
+                CalendarProp::TimezoneServiceSet(_)
+                | CalendarProp::SupportedCalendarData(_)
+                | CalendarProp::MaxResourceSize(_)
+                | CalendarProp::SupportedReportSet(_)
+                | CalendarProp::Source(_)
+                | CalendarProp::MinDateTime(_)
+                | CalendarProp::MaxDateTime(_) => Err(rustical_dav::Error::PropReadOnly),
             },
             CalendarPropWrapper::SyncToken(prop) => SyncTokenExtension::set_prop(self, prop),
             CalendarPropWrapper::DavPush(prop) => DavPushExtension::set_prop(self, prop),
@@ -275,7 +274,6 @@ impl Resource for CalendarResource {
                     self.cal.timezone_id = None;
                     Ok(())
                 }
-                CalendarPropName::TimezoneServiceSet => Err(rustical_dav::Error::PropReadOnly),
                 CalendarPropName::CalendarOrder => {
                     self.cal.meta.order = 0;
                     Ok(())
@@ -283,13 +281,13 @@ impl Resource for CalendarResource {
                 CalendarPropName::SupportedCalendarComponentSet => {
                     Err(rustical_dav::Error::PropReadOnly)
                 }
-                CalendarPropName::SupportedCalendarData => Err(rustical_dav::Error::PropReadOnly),
-                CalendarPropName::MaxResourceSize => Err(rustical_dav::Error::PropReadOnly),
-                CalendarPropName::SupportedReportSet => Err(rustical_dav::Error::PropReadOnly),
-                // Converting a calendar subscription calendar into a normal one would be weird
-                CalendarPropName::Source => Err(rustical_dav::Error::PropReadOnly),
-                CalendarPropName::MinDateTime => Err(rustical_dav::Error::PropReadOnly),
-                CalendarPropName::MaxDateTime => Err(rustical_dav::Error::PropReadOnly),
+                CalendarPropName::TimezoneServiceSet
+                | CalendarPropName::SupportedCalendarData
+                | CalendarPropName::MaxResourceSize
+                | CalendarPropName::SupportedReportSet
+                | CalendarPropName::Source
+                | CalendarPropName::MinDateTime
+                | CalendarPropName::MaxDateTime => Err(rustical_dav::Error::PropReadOnly),
             },
             CalendarPropWrapperName::SyncToken(prop) => SyncTokenExtension::remove_prop(self, prop),
             CalendarPropWrapperName::DavPush(prop) => DavPushExtension::remove_prop(self, prop),

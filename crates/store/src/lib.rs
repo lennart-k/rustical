@@ -1,3 +1,4 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 pub mod addressbook;
 pub mod addressbook_store;
 pub mod calendar_store;

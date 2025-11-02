@@ -45,13 +45,13 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
     // Extract calendar metadata
     let displayname = cal
         .get_property("X-WR-CALNAME")
-        .and_then(|prop| prop.value.to_owned());
+        .and_then(|prop| prop.value.clone());
     let description = cal
         .get_property("X-WR-CALDESC")
-        .and_then(|prop| prop.value.to_owned());
+        .and_then(|prop| prop.value.clone());
     let timezone_id = cal
         .get_property("X-WR-TIMEZONE")
-        .and_then(|prop| prop.value.to_owned());
+        .and_then(|prop| prop.value.clone());
     // These properties should not appear in the expanded calendar objects
     cal.remove_property("X-WR-CALNAME");
     cal.remove_property("X-WR-CALDESC");
@@ -82,7 +82,7 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
     let objects = expanded_cals
         .into_iter()
         .map(|cal| cal.generate())
-        .map(CalendarObject::from_ics)
+        .map(|ics| CalendarObject::from_ics(ics, None))
         .collect::<Result<Vec<_>, _>>()?;
     let new_cal = Calendar {
         principal,

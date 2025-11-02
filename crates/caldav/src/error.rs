@@ -12,8 +12,6 @@ pub enum Precondition {
     #[error("valid-calendar-data")]
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     ValidCalendarData,
-    #[error("matching-uid")]
-    MatchingUid,
 }
 
 impl IntoResponse for Precondition {
@@ -62,23 +60,23 @@ pub enum Error {
 }
 
 impl Error {
+    #[must_use]
     pub fn status_code(&self) -> StatusCode {
         match self {
-            Error::StoreError(err) => match err {
+            Self::StoreError(err) => match err {
                 rustical_store::Error::NotFound => StatusCode::NOT_FOUND,
                 rustical_store::Error::AlreadyExists => StatusCode::CONFLICT,
                 rustical_store::Error::ReadOnly => StatusCode::FORBIDDEN,
                 _ => StatusCode::INTERNAL_SERVER_ERROR,
             },
-            Error::ChronoParseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            Error::DavError(err) => StatusCode::try_from(err.status_code().as_u16())
+            Self::DavError(err) => StatusCode::try_from(err.status_code().as_u16())
                 .expect("Just converting between versions"),
-            Error::Unauthorized => StatusCode::UNAUTHORIZED,
-            Error::XmlDecodeError(_) => StatusCode::BAD_REQUEST,
-            Error::NotImplemented => StatusCode::INTERNAL_SERVER_ERROR,
-            Error::NotFound => StatusCode::NOT_FOUND,
-            Error::IcalError(err) => err.status_code(),
-            Error::PreconditionFailed(_err) => StatusCode::PRECONDITION_FAILED,
+            Self::Unauthorized => StatusCode::UNAUTHORIZED,
+            Self::XmlDecodeError(_) => StatusCode::BAD_REQUEST,
+            Self::ChronoParseError(_) | Self::NotImplemented => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::NotFound => StatusCode::NOT_FOUND,
+            Self::IcalError(err) => err.status_code(),
+            Self::PreconditionFailed(_err) => StatusCode::PRECONDITION_FAILED,
         }
     }
 }

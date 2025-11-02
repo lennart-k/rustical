@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "REPLACE INTO calendarobjects (principal, cal_id, id, uid, ics, first_occurence, last_occurence, etag, object_type) VALUES (?, ?, ?, ?, ?, date(?), date(?), ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 9
+    },
+    "nullable": []
+  },
+  "hash": "a68a1b96189b854a7ba2a3cd866ba583af5ad84bc1cd8b20cb805e9ce3bad820"
+}

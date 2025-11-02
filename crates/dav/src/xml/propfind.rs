@@ -6,7 +6,7 @@ use rustical_xml::XmlDeserialize;
 use rustical_xml::XmlError;
 use rustical_xml::XmlRootTag;
 
-#[derive(Debug, Clone, XmlDeserialize, XmlRootTag, PartialEq)]
+#[derive(Debug, Clone, XmlDeserialize, XmlRootTag, PartialEq, Eq)]
 #[xml(root = "propfind", ns = "crate::namespace::NS_DAV")]
 pub struct PropfindElement<PN: XmlDeserialize> {
     #[xml(ty = "untagged")]
@@ -15,7 +15,7 @@ pub struct PropfindElement<PN: XmlDeserialize> {
     pub include: Option<PropElement<PN>>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PropElement<PN: XmlDeserialize>(
     // valid
     pub Vec<PN>,
@@ -82,7 +82,7 @@ impl<PN: XmlDeserialize> XmlDeserialize for PropElement<PN> {
     }
 }
 
-#[derive(Debug, Clone, XmlDeserialize, PartialEq)]
+#[derive(Debug, Clone, XmlDeserialize, PartialEq, Eq)]
 pub enum PropfindType<PN: XmlDeserialize> {
     #[xml(ns = "crate::namespace::NS_DAV")]
     Propname,

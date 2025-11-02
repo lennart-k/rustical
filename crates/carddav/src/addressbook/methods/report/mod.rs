@@ -26,10 +26,10 @@ pub(crate) enum ReportRequest {
 }
 
 impl ReportRequest {
-    fn props(&self) -> &PropfindType<AddressObjectPropWrapperName> {
+    const fn props(&self) -> &PropfindType<AddressObjectPropWrapperName> {
         match self {
-            ReportRequest::AddressbookMultiget(AddressbookMultigetRequest { prop, .. }) => prop,
-            ReportRequest::SyncCollection(SyncCollectionRequest { prop, .. }) => prop,
+            Self::AddressbookMultiget(AddressbookMultigetRequest { prop, .. })
+            | Self::SyncCollection(SyncCollectionRequest { prop, .. }) => prop,
         }
     }
 }
@@ -101,7 +101,7 @@ mod tests {
         assert_eq!(
             report_request,
             ReportRequest::SyncCollection(SyncCollectionRequest {
-                sync_token: "".to_owned(),
+                sync_token: String::new(),
                 sync_level: SyncLevel::One,
                 prop: rustical_dav::xml::PropfindType::Prop(PropElement(
                     vec![AddressObjectPropWrapperName::AddressObject(
@@ -111,7 +111,7 @@ mod tests {
                 )),
                 limit: None
             })
-        )
+        );
     }
 
     #[test]
@@ -142,6 +142,6 @@ mod tests {
                     "/carddav/user/user/6f787542-5256-401a-8db97003260da/ae7a998fdfd1d84a20391168962c62b".to_owned()
                 ]
             })
-        )
+        );
     }
 }

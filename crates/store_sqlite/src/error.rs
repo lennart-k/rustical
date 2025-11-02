@@ -15,16 +15,16 @@ pub enum Error {
 impl From<sqlx::Error> for Error {
     fn from(value: sqlx::Error) -> Self {
         match value {
-            sqlx::Error::RowNotFound => Error::StoreError(rustical_store::Error::NotFound),
+            sqlx::Error::RowNotFound => Self::StoreError(rustical_store::Error::NotFound),
             sqlx::Error::Database(err) => {
                 if err.is_unique_violation() {
                     warn!("{err:?}");
-                    Error::StoreError(rustical_store::Error::AlreadyExists)
+                    Self::StoreError(rustical_store::Error::AlreadyExists)
                 } else {
-                    Error::SqlxError(sqlx::Error::Database(err))
+                    Self::SqlxError(sqlx::Error::Database(err))
                 }
             }
-            err => Error::SqlxError(err),
+            err => Self::SqlxError(err),
         }
     }
 }

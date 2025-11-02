@@ -12,7 +12,7 @@ use serde::Deserialize;
 use tracing::instrument;
 
 #[instrument(skip(path, resource_service,))]
-pub(crate) async fn axum_route_move<R: ResourceService>(
+pub async fn axum_route_move<R: ResourceService>(
     Path(path): Path<R::PathComponents>,
     State(resource_service): State<R>,
     depth: Option<Depth>,

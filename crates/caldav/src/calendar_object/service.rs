@@ -35,7 +35,7 @@ impl<C: CalendarStore> Clone for CalendarObjectResourceService<C> {
 }
 
 impl<C: CalendarStore> CalendarObjectResourceService<C> {
-    pub fn new(cal_store: Arc<C>) -> Self {
+    pub const fn new(cal_store: Arc<C>) -> Self {
         Self { cal_store }
     }
 }
@@ -106,9 +106,8 @@ where
     D: Deserializer<'de>,
 {
     let name: String = Deserialize::deserialize(deserializer)?;
-    if let Some(object_id) = name.strip_suffix(".ics") {
-        Ok(object_id.to_owned())
-    } else {
-        Err(serde::de::Error::custom("Missing .ics extension"))
-    }
+    name.strip_suffix(".ics").map_or_else(
+        || Err(serde::de::Error::custom("Missing .ics extension")),
+        |object_id| Ok(object_id.to_owned()),
+    )
 }

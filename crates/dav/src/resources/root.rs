@@ -63,7 +63,7 @@ pub struct RootResourceService<PRS: ResourceService + Clone, P: Principal, PURI:
 impl<PRS: ResourceService + Clone, P: Principal, PURI: PrincipalUri>
     RootResourceService<PRS, P, PURI>
 {
-    pub fn new(principal_resource_service: PRS) -> Self {
+    pub const fn new(principal_resource_service: PRS) -> Self {
         Self(principal_resource_service, PhantomData, PhantomData)
     }
 }
@@ -88,7 +88,7 @@ where
 
     async fn get_resource(
         &self,
-        _: &(),
+        (): &(),
         _show_deleted: bool,
     ) -> Result<Self::Resource, Self::Error> {
         Ok(RootResource::<PRS::Resource, P>::default())

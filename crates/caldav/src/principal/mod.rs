@@ -24,7 +24,7 @@ pub struct PrincipalResource {
 
 impl ResourceName for PrincipalResource {
     fn get_name(&self) -> String {
-        self.principal.id.to_owned()
+        self.principal.id.clone()
     }
 }
 
@@ -56,7 +56,7 @@ impl Resource for PrincipalResource {
             PrincipalPropWrapperName::Principal(prop) => {
                 PrincipalPropWrapper::Principal(match prop {
                     PrincipalPropName::CalendarUserType => {
-                        PrincipalProp::CalendarUserType(self.principal.principal_type.to_owned())
+                        PrincipalProp::CalendarUserType(self.principal.principal_type.clone())
                     }
                     PrincipalPropName::PrincipalUrl => {
                         PrincipalProp::PrincipalUrl(principal_url.into())

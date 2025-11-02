@@ -1,3 +1,5 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
+#![allow(clippy::missing_errors_doc)]
 pub use error::Error;
 use serde::Serialize;
 use sqlx::{Pool, Sqlite, SqlitePool, sqlite::SqliteConnectOptions};
@@ -7,6 +9,9 @@ pub mod calendar_store;
 pub mod error;
 pub mod principal_store;
 pub mod subscription_store;
+
+// Begin statement for write transactions
+pub const BEGIN_IMMEDIATE: &str = "BEGIN IMMEDIATE";
 
 #[cfg(any(test, feature = "test"))]
 pub mod tests;
@@ -25,7 +30,8 @@ pub struct SqliteStore {
 }
 
 impl SqliteStore {
-    pub fn new(db: SqlitePool) -> Self {
+    #[must_use]
+    pub const fn new(db: SqlitePool) -> Self {
         Self { db }
     }
 }

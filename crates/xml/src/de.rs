@@ -18,10 +18,7 @@ pub trait XmlDocument: XmlDeserialize {
     fn parse<R: BufRead>(reader: quick_xml::NsReader<R>) -> Result<Self, XmlError>;
 
     #[inline]
-    fn parse_reader<R: BufRead>(input: R) -> Result<Self, XmlError>
-    where
-        Self: XmlDeserialize,
-    {
+    fn parse_reader<R: BufRead>(input: R) -> Result<Self, XmlError> {
         let mut reader = quick_xml::NsReader::from_reader(input);
         reader.config_mut().trim_text(true);
         Self::parse(reader)
@@ -43,8 +40,7 @@ impl<T: XmlRootTag + XmlDeserialize> XmlDocument for T {
             let event = reader.read_event_into(&mut buf)?;
             let empty = matches!(event, Event::Empty(_));
             match event {
-                Event::Decl(_) => { /* <?xml ... ?> ignore this */ }
-                Event::Comment(_) => { /*  ignore this */ }
+                Event::Decl(_) | Event::Comment(_) => { /*  ignore this */ }
                 Event::Start(start) | Event::Empty(start) => {
                     let (ns, name) = reader.resolve_element(start.name());
                     let matches = match (Self::root_ns(), &ns, name) {
@@ -62,13 +58,13 @@ impl<T: XmlRootTag + XmlDeserialize> XmlDocument for T {
                             format!("{root_ns:?}"),
                             Self::root_tag().to_owned(),
                         ));
-                    };
+                    }
 
                     return Self::deserialize(&mut reader, &start, empty);
                 }
                 Event::Eof => return Err(XmlError::Eof),
                 _ => return Err(XmlError::UnsupportedEvent("unknown, todo")),
-            };
+            }
         }
     }
 }
@@ -88,7 +84,7 @@ impl XmlDeserialize for () {
                 Event::End(e) if e.name() == start.name() => return Ok(()),
                 Event::Eof => return Err(XmlError::Eof),
                 _ => {}
-            };
+            }
         }
     }
 }

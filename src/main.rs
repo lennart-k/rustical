@@ -1,3 +1,5 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
+use crate::commands::health::{HealthArgs, cmd_health};
 use crate::config::Config;
 use anyhow::Result;
 use app::make_app;
@@ -44,6 +46,10 @@ struct Args {
 enum Command {
     GenConfig(commands::GenConfigArgs),
     Principals(PrincipalsArgs),
+    #[command(
+        about = "Healthcheck for running instance (Used for HEALTHCHECK in Docker container)"
+    )]
+    Health(HealthArgs),
 }
 
 async fn get_data_stores(
@@ -65,7 +71,7 @@ async fn get_data_stores(
             let addressbook_store = Arc::new(SqliteAddressbookStore::new(db.clone(), send.clone()));
             let cal_store = Arc::new(SqliteCalendarStore::new(db.clone(), send));
             let subscription_store = Arc::new(SqliteStore::new(db.clone()));
-            let principal_store = Arc::new(SqlitePrincipalStore::new(db.clone()));
+            let principal_store = Arc::new(SqlitePrincipalStore::new(db));
             (
                 addressbook_store,
                 cal_store,
@@ -77,13 +83,20 @@ async fn get_data_stores(
     })
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<()> {
     let args = Args::parse();
 
     match args.command {
         Some(Command::GenConfig(gen_config_args)) => cmd_gen_config(gen_config_args)?,
         Some(Command::Principals(principals_args)) => cmd_principals(principals_args).await?,
+        Some(Command::Health(health_args)) => {
+            let config: Config = Figment::new()
+                .merge(Toml::file(&args.config_file))
+                .merge(Env::prefixed("RUSTICAL_").split("__"))
+                .extract()?;
+            cmd_health(config.http, health_args).await?;
+        }
         None => {
             let config: Config = Figment::new()
                 .merge(Toml::file(&args.config_file))
@@ -114,7 +127,7 @@ async fn main() -> Result<()> {
                 principal_store.clone(),
                 config.frontend.clone(),
                 config.oidc.clone(),
-                config.nextcloud_login.clone(),
+                &config.nextcloud_login,
                 config.dav_push.enabled,
                 config.http.session_cookie_samesite_strict,
                 config.http.payload_limit_mb,
@@ -127,7 +140,7 @@ async fn main() -> Result<()> {
             let listener = tokio::net::TcpListener::bind(&address).await?;
             tasks.push(tokio::spawn(async move {
                 info!("RustiCal serving on http://{address}");
-                axum::serve(listener, app).await.unwrap()
+                axum::serve(listener, app).await.unwrap();
             }));
 
             for task in tasks {
