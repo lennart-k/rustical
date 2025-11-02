@@ -88,3 +88,45 @@ impl From<&CalendarQueryRequest> for CalendarQuery {
         value.filter.as_ref().map(Self::from).unwrap_or_default()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::calendar::methods::report::calendar_query::{
+        CompFilterElement, FilterElement, TimeRangeElement,
+    };
+    use chrono::{NaiveDate, TimeZone, Utc};
+    use rustical_ical::UtcDateTime;
+    use rustical_store::calendar_store::CalendarQuery;
+
+    #[test]
+    fn test_filter_element_calendar_query() {
+        let filter = FilterElement {
+            comp_filter: CompFilterElement {
+                name: "VCALENDAR".to_string(),
+                is_not_defined: None,
+                time_range: None,
+                prop_filter: vec![],
+                comp_filter: vec![CompFilterElement {
+                    name: "VEVENT".to_string(),
+                    is_not_defined: None,
+                    time_range: Some(TimeRangeElement {
+                        start: Some(UtcDateTime(
+                            Utc.with_ymd_and_hms(2024, 4, 1, 0, 0, 0).unwrap(),
+                        )),
+                        end: Some(UtcDateTime(
+                            Utc.with_ymd_and_hms(2024, 8, 1, 0, 0, 0).unwrap(),
+                        )),
+                    }),
+                    prop_filter: vec![],
+                    comp_filter: vec![],
+                }],
+            },
+        };
+        let derived_query: CalendarQuery = (&filter).into();
+        let query = CalendarQuery {
+            time_start: Some(NaiveDate::from_ymd_opt(2024, 4, 1).unwrap()),
+            time_end: Some(NaiveDate::from_ymd_opt(2024, 8, 1).unwrap()),
+        };
+        assert_eq!(derived_query, query);
+    }
+}

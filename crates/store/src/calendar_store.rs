@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use chrono::NaiveDate;
 use rustical_ical::CalendarObject;
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct CalendarQuery {
     pub time_start: Option<NaiveDate>,
     pub time_end: Option<NaiveDate>,
