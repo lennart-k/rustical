@@ -1,6 +1,6 @@
 use super::prop::{SupportedCalendarComponentSet, SupportedCalendarData};
 use crate::Error;
-use crate::calendar::prop::ReportMethod;
+use crate::calendar::prop::{ReportMethod, SupportedCollationSet};
 use chrono::{DateTime, Utc};
 use derive_more::derive::{From, Into};
 use ical::IcalParser;
@@ -39,6 +39,8 @@ pub enum CalendarProp {
     SupportedCalendarComponentSet(SupportedCalendarComponentSet),
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV", skip_deserializing)]
     SupportedCalendarData(SupportedCalendarData),
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV", skip_deserializing)]
+    SupportedCollationSet(SupportedCollationSet),
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
     MaxResourceSize(i64),
     #[xml(skip_deserializing)]
@@ -156,6 +158,9 @@ impl Resource for CalendarResource {
                 CalendarPropName::SupportedCalendarData => {
                     CalendarProp::SupportedCalendarData(SupportedCalendarData::default())
                 }
+                CalendarPropName::SupportedCollationSet => {
+                    CalendarProp::SupportedCollationSet(SupportedCollationSet::default())
+                }
                 CalendarPropName::MaxResourceSize => CalendarProp::MaxResourceSize(10_000_000),
                 CalendarPropName::SupportedReportSet => {
                     CalendarProp::SupportedReportSet(SupportedReportSet::all())
@@ -244,6 +249,7 @@ impl Resource for CalendarResource {
                 }
                 CalendarProp::TimezoneServiceSet(_)
                 | CalendarProp::SupportedCalendarData(_)
+                | CalendarProp::SupportedCollationSet(_)
                 | CalendarProp::MaxResourceSize(_)
                 | CalendarProp::SupportedReportSet(_)
                 | CalendarProp::Source(_)
@@ -283,6 +289,7 @@ impl Resource for CalendarResource {
                 }
                 CalendarPropName::TimezoneServiceSet
                 | CalendarPropName::SupportedCalendarData
+                | CalendarPropName::SupportedCollationSet
                 | CalendarPropName::MaxResourceSize
                 | CalendarPropName::SupportedReportSet
                 | CalendarPropName::Source

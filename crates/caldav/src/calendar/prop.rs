@@ -3,6 +3,8 @@ use rustical_ical::CalendarObjectType;
 use rustical_xml::{XmlDeserialize, XmlSerialize};
 use strum_macros::VariantArray;
 
+use crate::calendar::methods::report::calendar_query::text_match::TextCollation;
+
 #[derive(Debug, Clone, XmlSerialize, XmlDeserialize, PartialEq, Eq, From, Into)]
 pub struct SupportedCalendarComponent {
     #[xml(ty = "attr")]
@@ -33,6 +35,28 @@ impl From<SupportedCalendarComponentSet> for Vec<CalendarObjectType> {
             .into_iter()
             .map(CalendarObjectType::from)
             .collect()
+    }
+}
+
+#[derive(Debug, Clone, XmlSerialize, XmlDeserialize, PartialEq, Eq, From, Into)]
+pub struct SupportedCollation(#[xml(ty = "text")] pub TextCollation);
+
+#[derive(Debug, Clone, XmlSerialize, XmlDeserialize, PartialEq, Eq)]
+pub struct SupportedCollationSet(
+    #[xml(
+        ns = "rustical_dav::namespace::NS_CALDAV",
+        flatten,
+        rename = "supported-collation"
+    )]
+    pub Vec<SupportedCollation>,
+);
+
+impl Default for SupportedCollationSet {
+    fn default() -> Self {
+        Self(vec![
+            SupportedCollation(TextCollation::AsciiCasemap),
+            SupportedCollation(TextCollation::Octet),
+        ])
     }
 }
 

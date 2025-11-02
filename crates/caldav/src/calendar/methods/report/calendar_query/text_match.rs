@@ -10,6 +10,7 @@ pub enum TextCollation {
 
 impl TextCollation {
     // Check whether a haystack contains a needle respecting the collation
+    #[must_use]
     pub fn match_text(&self, needle: &str, haystack: &str) -> bool {
         match self {
             // https://datatracker.ietf.org/doc/html/rfc4790#section-9.2
@@ -17,6 +18,15 @@ impl TextCollation {
                 .to_ascii_uppercase()
                 .contains(&needle.to_ascii_uppercase()),
             Self::Octet => haystack.contains(needle),
+        }
+    }
+}
+
+impl AsRef<str> for TextCollation {
+    fn as_ref(&self) -> &str {
+        match self {
+            Self::AsciiCasemap => "i;ascii-casemap",
+            Self::Octet => "i;octet",
         }
     }
 }
@@ -60,6 +70,7 @@ pub struct TextMatchElement {
 }
 
 impl TextMatchElement {
+    #[must_use]
     pub fn match_property(&self, property: &Property) -> bool {
         let Self {
             collation,
