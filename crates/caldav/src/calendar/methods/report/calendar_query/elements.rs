@@ -42,6 +42,7 @@ pub struct FilterElement {
 }
 
 impl FilterElement {
+    #[must_use]
     pub fn matches(&self, cal_object: &CalendarObject) -> bool {
         cal_object.matches(&self.comp_filter)
     }
