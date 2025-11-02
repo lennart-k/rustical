@@ -64,28 +64,10 @@ impl PropFilterElement {
             return true;
         }
 
-        if let Some(TextMatchElement {
-            collation: _collation,
-            negate_condition,
-            needle,
-        }) = &self.text_match
+        if let Some(text_match) = &self.text_match
+            && !text_match.match_property(property)
         {
-            let mut matches = property
-                .value
-                .as_ref()
-                .is_some_and(|haystack| haystack.contains(needle));
-            match negate_condition.as_deref() {
-                None | Some("no") => {}
-                Some("yes") => {
-                    matches = !matches;
-                }
-                // Invalid value
-                _ => return false,
-            }
-
-            if !matches {
-                return false;
-            }
+            return false;
         }
 
         // TODO: param-filter

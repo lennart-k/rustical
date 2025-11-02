@@ -139,8 +139,10 @@ mod tests {
     use rustical_ical::{CalendarObject, UtcDateTime};
 
     use crate::calendar::methods::report::calendar_query::{
-        CompFilterable, TextMatchElement, TimeRangeElement, comp_filter::CompFilterElement,
+        CompFilterable, TextMatchElement, TimeRangeElement,
+        comp_filter::CompFilterElement,
         prop_filter::PropFilterElement,
+        text_match::{NegateCondition, TextCollation},
     };
 
     const ICS: &str = r"BEGIN:VCALENDAR
@@ -217,8 +219,8 @@ END:VCALENDAR";
                     time_range: None,
                     text_match: Some(TextMatchElement {
                         needle: "2.0".to_string(),
-                        collation: None,
-                        negate_condition: None,
+                        collation: TextCollation::default(),
+                        negate_condition: NegateCondition::default(),
                     }),
                     param_filter: vec![],
                 },
@@ -239,8 +241,8 @@ END:VCALENDAR";
                     name: "SUMMARY".to_string(),
                     time_range: None,
                     text_match: Some(TextMatchElement {
-                        collation: None,
-                        negate_condition: None,
+                        collation: TextCollation::default(),
+                        negate_condition: NegateCondition(false),
                         needle: "weekly".to_string(),
                     }),
                     param_filter: vec![],
@@ -326,8 +328,8 @@ END:VCALENDAR";
                     name: "TZID".to_string(),
                     time_range: None,
                     text_match: Some(TextMatchElement {
-                        collation: None,
-                        negate_condition: None,
+                        collation: TextCollation::AsciiCasemap,
+                        negate_condition: NegateCondition::default(),
                         needle: "Europe/Berlin".to_string(),
                     }),
                     param_filter: vec![],

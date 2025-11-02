@@ -5,11 +5,14 @@ use rustical_store::CalendarStore;
 mod comp_filter;
 mod elements;
 mod prop_filter;
+pub mod text_match;
 #[allow(unused_imports)]
 pub use comp_filter::{CompFilterElement, CompFilterable};
 pub use elements::*;
 #[allow(unused_imports)]
 pub use prop_filter::{PropFilterElement, PropFilterable};
+#[allow(unused_imports)]
+pub use text_match::TextMatchElement;
 
 pub async fn get_objects_calendar_query<C: CalendarStore>(
     cal_query: &CalendarQueryRequest,
@@ -36,7 +39,9 @@ mod tests {
             ReportRequest,
             calendar_query::{
                 CalendarQueryRequest, FilterElement, ParamFilterElement, TextMatchElement,
-                comp_filter::CompFilterElement, prop_filter::PropFilterElement,
+                comp_filter::CompFilterElement,
+                prop_filter::PropFilterElement,
+                text_match::{NegateCondition, TextCollation},
             },
         },
         calendar_object::{CalendarData, CalendarObjectPropName, CalendarObjectPropWrapperName},
@@ -96,8 +101,8 @@ mod tests {
                             prop_filter: vec![PropFilterElement {
                                 name: "ATTENDEE".to_owned(),
                                 text_match: Some(TextMatchElement {
-                                    collation: Some("i;ascii-casemap".to_owned()),
-                                    negate_condition: None,
+                                    collation: TextCollation::AsciiCasemap,
+                                    negate_condition: NegateCondition(false),
                                     needle: "mailto:lisa@example.com".to_string()
                                 }),
                                 is_not_defined: None,
@@ -105,8 +110,8 @@ mod tests {
                                     is_not_defined: None,
                                     name: "PARTSTAT".to_owned(),
                                     text_match: Some(TextMatchElement {
-                                        collation: Some("i;ascii-casemap".to_owned()),
-                                        negate_condition: None,
+                                        collation: TextCollation::AsciiCasemap,
+                                        negate_condition: NegateCondition(false),
                                         needle: "NEEDS-ACTION".to_string()
                                     }),
                                 }],

@@ -1,5 +1,8 @@
 use crate::{
-    calendar::methods::report::calendar_query::comp_filter::{CompFilterElement, CompFilterable},
+    calendar::methods::report::calendar_query::{
+        TextMatchElement,
+        comp_filter::{CompFilterElement, CompFilterable},
+    },
     calendar_object::CalendarObjectPropWrapperName,
 };
 use rustical_dav::xml::PropfindType;
@@ -27,18 +30,6 @@ pub struct ParamFilterElement {
 
     #[xml(ty = "attr")]
     pub(crate) name: String,
-}
-
-#[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
-#[allow(dead_code)]
-pub struct TextMatchElement {
-    #[xml(ty = "attr")]
-    pub(crate) collation: Option<String>,
-    #[xml(ty = "attr")]
-    // "yes" or "no", default: "no"
-    pub(crate) negate_condition: Option<String>,
-    #[xml(ty = "text")]
-    pub(crate) needle: String,
 }
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
