@@ -2,6 +2,7 @@ use crate::calendar::methods::report::calendar_query::{
     TimeRangeElement,
     prop_filter::{PropFilterElement, PropFilterable},
 };
+use ical::parser::ical::component::IcalTimeZone;
 use rustical_ical::{CalendarObject, CalendarObjectComponent, CalendarObjectType};
 use rustical_xml::XmlDeserialize;
 
@@ -77,7 +78,31 @@ impl CompFilterable for CalendarObject {
     }
 
     fn match_subcomponents(&self, comp_filter: &CompFilterElement) -> bool {
-        self.get_data().matches(comp_filter)
+        let mut matches = self
+            .get_vtimezones()
+            .values()
+            .map(|tz| tz.matches(comp_filter))
+            .chain([self.get_data().matches(comp_filter)]);
+
+        if comp_filter.is_not_defined.is_some() {
+            matches.all(|x| x)
+        } else {
+            matches.any(|x| x)
+        }
+    }
+}
+
+impl CompFilterable for IcalTimeZone {
+    fn get_comp_name(&self) -> &'static str {
+        "VTIMEZONE"
+    }
+
+    fn match_time_range(&self, _time_range: &TimeRangeElement) -> bool {
+        false
+    }
+
+    fn match_subcomponents(&self, _comp_filter: &CompFilterElement) -> bool {
+        true
     }
 }
 
@@ -280,6 +305,39 @@ END:VCALENDAR";
         assert!(
             !object.matches(&comp_filter),
             "event should not lie in time range"
+        );
+    }
+
+    #[test]
+    fn test_match_timezone() {
+        let object = CalendarObject::from_ics(ICS.to_string(), None).unwrap();
+
+        let comp_filter = CompFilterElement {
+            is_not_defined: None,
+            name: "VCALENDAR".to_string(),
+            time_range: None,
+            prop_filter: vec![],
+            comp_filter: vec![CompFilterElement {
+                name: "VTIMEZONE".to_string(),
+                is_not_defined: None,
+                time_range: None,
+                prop_filter: vec![PropFilterElement {
+                    is_not_defined: None,
+                    name: "TZID".to_string(),
+                    time_range: None,
+                    text_match: Some(TextMatchElement {
+                        collation: None,
+                        negate_condition: None,
+                        needle: "Europe/Berlin".to_string(),
+                    }),
+                    param_filter: vec![],
+                }],
+                comp_filter: vec![],
+            }],
+        };
+        assert!(
+            object.matches(&comp_filter),
+            "Timezone should be Europe/Berlin"
         );
     }
 }

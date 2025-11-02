@@ -4,7 +4,7 @@ use ical::{
     generator::{IcalCalendar, IcalEvent},
     parser::{
         Component,
-        ical::component::{IcalJournal, IcalTodo},
+        ical::component::{IcalJournal, IcalTimeZone, IcalTodo},
     },
     property::Property,
 };
@@ -123,6 +123,12 @@ impl PropFilterable for IcalJournal {
 }
 
 impl PropFilterable for IcalCalendar {
+    fn get_property(&self, name: &str) -> Option<&Property> {
+        Component::get_property(self, name)
+    }
+}
+
+impl PropFilterable for IcalTimeZone {
     fn get_property(&self, name: &str) -> Option<&Property> {
         Component::get_property(self, name)
     }
