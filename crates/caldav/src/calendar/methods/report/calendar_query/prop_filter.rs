@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use ical::{
     generator::{IcalCalendar, IcalEvent},
     parser::{
@@ -6,7 +8,7 @@ use ical::{
     },
     property::Property,
 };
-use rustical_ical::{CalendarObject, CalendarObjectComponent};
+use rustical_ical::{CalDateTime, CalendarObject, CalendarObjectComponent, UtcDateTime};
 use rustical_xml::XmlDeserialize;
 
 use crate::calendar::methods::report::calendar_query::{
@@ -43,8 +45,22 @@ impl PropFilterElement {
             (false, Some(property)) => property
         };
 
-        if let Some(_time_range) = &self.time_range {
-            // TODO: implement
+        if let Some(TimeRangeElement { start, end }) = &self.time_range {
+            // TODO: Respect timezones
+            let Ok(timestamp) = CalDateTime::parse_prop(property, &HashMap::default()) else {
+                return false;
+            };
+            let timestamp = timestamp.utc();
+            if let Some(UtcDateTime(start)) = start
+                && start > &timestamp
+            {
+                return false;
+            }
+            if let Some(UtcDateTime(end)) = end
+                && end < &timestamp
+            {
+                return false;
+            }
             return true;
         }
 
