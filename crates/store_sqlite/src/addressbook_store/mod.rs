@@ -11,6 +11,8 @@ use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};
 use tokio::sync::mpsc::Sender;
 use tracing::{error, instrument};
 
+pub mod birthday_calendar;
+
 #[derive(Debug, Clone)]
 struct AddressObjectRow {
     id: String,
@@ -116,7 +118,7 @@ impl SqliteAddressbookStore {
 
     async fn _insert_addressbook<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
-        addressbook: Addressbook,
+        addressbook: &Addressbook,
     ) -> Result<(), rustical_store::Error> {
         sqlx::query!(
             r#"INSERT INTO addressbooks (principal, id, displayname, description, push_topic)
@@ -283,9 +285,9 @@ impl SqliteAddressbookStore {
 
     async fn _put_object<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
-        principal: String,
-        addressbook_id: String,
-        object: AddressObject,
+        principal: &str,
+        addressbook_id: &str,
+        object: &AddressObject,
         overwrite: bool,
     ) -> Result<(), rustical_store::Error> {
         let (object_id, vcf) = (object.get_id(), object.get_vcf());
@@ -405,7 +407,15 @@ impl AddressbookStore for SqliteAddressbookStore {
         &self,
         addressbook: Addressbook,
     ) -> Result<(), rustical_store::Error> {
-        Self::_insert_addressbook(&self.db, addressbook).await
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
+        Self::_insert_addressbook(&mut *tx, &addressbook).await?;
+        Self::_insert_birthday_calendar(&mut *tx, addressbook).await?;
+        tx.commit().await.map_err(crate::Error::from)?;
+        Ok(())
     }
 
     #[instrument]
@@ -521,14 +531,7 @@ impl AddressbookStore for SqliteAddressbookStore {
 
         let object_id = object.get_id().to_owned();
 
-        Self::_put_object(
-            &mut *tx,
-            principal.clone(),
-            addressbook_id.clone(),
-            object,
-            overwrite,
-        )
-        .await?;
+        Self::_put_object(&mut *tx, &principal, &addressbook_id, &object, overwrite).await?;
 
         let sync_token = log_object_operation(
             &mut tx,
@@ -659,15 +662,15 @@ impl AddressbookStore for SqliteAddressbookStore {
             return Err(Error::AlreadyExists);
         }
         if existing.is_none() {
-            Self::_insert_addressbook(&mut *tx, addressbook.clone()).await?;
+            Self::_insert_addressbook(&mut *tx, &addressbook).await?;
         }
 
         for object in objects {
             Self::_put_object(
                 &mut *tx,
-                addressbook.principal.clone(),
-                addressbook.id.clone(),
-                object,
+                &addressbook.principal,
+                &addressbook.id,
+                &object,
                 false,
             )
             .await?;
