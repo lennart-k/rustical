@@ -4,7 +4,12 @@ use rustical_store::CalendarStore;
 
 mod comp_filter;
 mod elements;
+mod prop_filter;
+#[allow(unused_imports)]
+pub use comp_filter::{CompFilterElement, CompFilterable};
 pub use elements::*;
+#[allow(unused_imports)]
+pub use prop_filter::{PropFilterElement, PropFilterable};
 
 pub async fn get_objects_calendar_query<C: CalendarStore>(
     cal_query: &CalendarQueryRequest,
@@ -30,8 +35,8 @@ mod tests {
         calendar::methods::report::{
             ReportRequest,
             calendar_query::{
-                CalendarQueryRequest, CompFilterElement, FilterElement, ParamFilterElement,
-                PropFilterElement, TextMatchElement,
+                CalendarQueryRequest, FilterElement, ParamFilterElement, TextMatchElement,
+                comp_filter::CompFilterElement, prop_filter::PropFilterElement,
             },
         },
         calendar_object::{CalendarData, CalendarObjectPropName, CalendarObjectPropWrapperName},
@@ -91,16 +96,18 @@ mod tests {
                             prop_filter: vec![PropFilterElement {
                                 name: "ATTENDEE".to_owned(),
                                 text_match: Some(TextMatchElement {
-                                    collation: "i;ascii-casemap".to_owned(),
-                                    negate_condition: None
+                                    collation: Some("i;ascii-casemap".to_owned()),
+                                    negate_condition: None,
+                                    needle: "mailto:lisa@example.com".to_string()
                                 }),
                                 is_not_defined: None,
                                 param_filter: vec![ParamFilterElement {
                                     is_not_defined: None,
                                     name: "PARTSTAT".to_owned(),
                                     text_match: Some(TextMatchElement {
-                                        collation: "i;ascii-casemap".to_owned(),
-                                        negate_condition: None
+                                        collation: Some("i;ascii-casemap".to_owned()),
+                                        negate_condition: None,
+                                        needle: "NEEDS-ACTION".to_string()
                                     }),
                                 }],
                                 time_range: None
