@@ -98,5 +98,6 @@ pub trait CalendarStore: Send + Sync + 'static {
         object_id: &str,
     ) -> Result<(), Error>;
 
+    // read_only refers to objects, metadata may still be updated
     fn is_read_only(&self, cal_id: &str) -> bool;
 }
