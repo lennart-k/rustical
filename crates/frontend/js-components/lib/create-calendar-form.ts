@@ -7,6 +7,11 @@ import { escapeXml } from ".";
 export class CreateCalendarForm extends LitElement {
   constructor() {
     super()
+    this.fetchTimezones()
+  }
+
+  async fetchTimezones() {
+    this.timezones = await getTimezones()
   }
 
   protected override createRenderRoot() {
@@ -36,6 +41,8 @@ export class CreateCalendarForm extends LitElement {
 
   dialog: Ref<HTMLDialogElement> = createRef()
   form: Ref<HTMLFormElement> = createRef()
+  @property()
+  timezones: Array<String> = []
 
   override render() {
     return html`
@@ -65,7 +72,12 @@ export class CreateCalendarForm extends LitElement {
           <br>
           <label>
             Timezone (optional)
-            <input type="text" name="timezone" .value=${this.timezone_id} @change=${e => this.timezone_id = e.target.value} />
+            <select name="timezone" .value=${this.timezone_id} @change=${e => this.timezone_id = e.target.value}>
+              <option value="">No timezone</option>
+              ${this.timezones.map(timezone => html`
+                <option value=${timezone} ?selected=${timezone === this.timezone_id}>${timezone}</option>
+              `)}
+            </select>
           </label>
           <br>
           <label>

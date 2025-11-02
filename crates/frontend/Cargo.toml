@@ -39,3 +39,6 @@ headers.workspace = true
 tower-sessions.workspace = true
 percent-encoding.workspace = true
 tower-http = { workspace = true, optional = true }
+vtimezones-rs.workspace = true
+serde_json.workspace = true
+itertools.workspace = true

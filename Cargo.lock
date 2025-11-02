@@ -3152,6 +3152,7 @@ dependencies = [
  "headers",
  "hex",
  "http",
+ "itertools 0.14.0",
  "mime_guess",
  "percent-encoding",
  "rand 0.9.2",
@@ -3160,6 +3161,7 @@ dependencies = [
  "rustical_oidc",
  "rustical_store",
  "serde",
+ "serde_json",
  "thiserror 2.0.17",
  "tokio",
  "tower",
@@ -3168,6 +3170,7 @@ dependencies = [
  "tracing",
  "url",
  "uuid",
+ "vtimezones-rs",
 ]
 
 [[package]]
