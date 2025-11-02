@@ -17,6 +17,8 @@ jobs:
         with:
           python-version: 3.x
 
+      - run: rustup update
+
       - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
 
       - name: Set up build cache
