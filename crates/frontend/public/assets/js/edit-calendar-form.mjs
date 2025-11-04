@@ -2,6 +2,18 @@ import { i, x } from "./lit-DkXrt_Iv.mjs";
 import { n as n$1, t } from "./property-B8WoKf1Y.mjs";
 import { e, n } from "./ref-BwbQvJBB.mjs";
 import { e as escapeXml } from "./index-_IB1wMbZ.mjs";
+let timezonesPromise = null;
+async function getTimezones() {
+  timezonesPromise ||= new Promise(async (resolve, reject) => {
+    try {
+      let response = await fetch("/frontend/_timezones.json");
+      resolve(await response.json());
+    } catch (e2) {
+      reject(e2);
+    }
+  });
+  return await timezonesPromise;
+}
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __decorateClass = (decorators, target, key, kind) => {
@@ -22,6 +34,11 @@ let EditCalendarForm = class extends i {
     this.components = /* @__PURE__ */ new Set();
     this.dialog = e();
     this.form = e();
+    this.timezones = [];
+    this.fetchTimezones();
+  }
+  async fetchTimezones() {
+    this.timezones = await getTimezones();
   }
   createRenderRoot() {
     return this;
@@ -39,7 +56,12 @@ let EditCalendarForm = class extends i {
           <br>
           <label>
             Timezone (optional)
-            <input type="text" name="timezone" .value=${this.timezone_id} @change=${(e2) => this.timezone_id = e2.target.value} />
+            <select name="timezone" .value=${this.timezone_id} @change=${(e2) => this.timezone_id = e2.target.value}>
+              <option value="">No timezone</option>
+              ${this.timezones.map((timezone) => x`
+                <option value=${timezone} ?selected=${timezone === this.timezone_id}>${timezone}</option>
+              `)}
+            </select>
           </label>
           <br>
           <label>
@@ -150,6 +172,9 @@ __decorateClass([
     }
   })
 ], EditCalendarForm.prototype, "components", 2);
+__decorateClass([
+  n$1()
+], EditCalendarForm.prototype, "timezones", 2);
 EditCalendarForm = __decorateClass([
   t("edit-calendar-form")
 ], EditCalendarForm);

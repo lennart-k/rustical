@@ -27,6 +27,11 @@ let CreateCalendarForm = class extends i {
     this.components = /* @__PURE__ */ new Set();
     this.dialog = e();
     this.form = e();
+    this.timezones = [];
+    this.fetchTimezones();
+  }
+  async fetchTimezones() {
+    this.timezones = await getTimezones();
   }
   createRenderRoot() {
     return this;
@@ -59,7 +64,12 @@ let CreateCalendarForm = class extends i {
           <br>
           <label>
             Timezone (optional)
-            <input type="text" name="timezone" .value=${this.timezone_id} @change=${(e2) => this.timezone_id = e2.target.value} />
+            <select name="timezone" .value=${this.timezone_id} @change=${(e2) => this.timezone_id = e2.target.value}>
+              <option value="">No timezone</option>
+              ${this.timezones.map((timezone) => x`
+                <option value=${timezone} ?selected=${timezone === this.timezone_id}>${timezone}</option>
+              `)}
+            </select>
           </label>
           <br>
           <label>
@@ -179,6 +189,9 @@ __decorateClass([
 __decorateClass([
   n$1()
 ], CreateCalendarForm.prototype, "components", 2);
+__decorateClass([
+  n$1()
+], CreateCalendarForm.prototype, "timezones", 2);
 CreateCalendarForm = __decorateClass([
   t("create-calendar-form")
 ], CreateCalendarForm);

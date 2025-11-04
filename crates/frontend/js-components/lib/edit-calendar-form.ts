@@ -2,11 +2,17 @@ import { html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Ref, createRef, ref } from 'lit/directives/ref.js';
 import { escapeXml } from ".";
+import { getTimezones } from "./timezones.ts";
 
 @customElement("edit-calendar-form")
 export class EditCalendarForm extends LitElement {
   constructor() {
     super()
+    this.fetchTimezones()
+  }
+
+  async fetchTimezones() {
+    this.timezones = await getTimezones()
   }
 
   protected override createRenderRoot() {
@@ -36,7 +42,8 @@ export class EditCalendarForm extends LitElement {
 
   dialog: Ref<HTMLDialogElement> = createRef()
   form: Ref<HTMLFormElement> = createRef()
-
+  @property()
+  timezones: Array<String> = []
 
   override render() {
     return html`
@@ -51,7 +58,12 @@ export class EditCalendarForm extends LitElement {
           <br>
           <label>
             Timezone (optional)
-            <input type="text" name="timezone" .value=${this.timezone_id} @change=${e => this.timezone_id = e.target.value} />
+            <select name="timezone" .value=${this.timezone_id} @change=${e => this.timezone_id = e.target.value}>
+              <option value="">No timezone</option>
+              ${this.timezones.map(timezone => html`
+                <option value=${timezone} ?selected=${timezone === this.timezone_id}>${timezone}</option>
+              `)}
+            </select>
           </label>
           <br>
           <label>

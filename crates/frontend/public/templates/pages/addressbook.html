@@ -8,6 +8,7 @@
 <h1>{{ name }}</h1>
 {% if let Some(description) = addressbook.description %}<p>{{ description }}</p>{% endif%}
 
-<pre>{{ addressbook|json }}</pre>
+<h2>Debug information</h2>
+<pre>{{ addressbook|json(2) }}</pre>
 
 {% endblock %}
