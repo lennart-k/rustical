@@ -105,7 +105,7 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
         }),
     );
 
-    // health check and metrics
+    // health check
     router = router
         .route("/health", get(|| async { "ok" }));
 
