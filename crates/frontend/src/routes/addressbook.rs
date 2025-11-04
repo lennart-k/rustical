@@ -12,10 +12,19 @@ use headers::Referer;
 use http::StatusCode;
 use rustical_store::{Addressbook, AddressbookStore, auth::Principal};
 
+use crate::pages::DefaultLayoutData;
+
 #[derive(Template, WebTemplate)]
 #[template(path = "pages/addressbook.html")]
 struct AddressbookPage {
     addressbook: Addressbook,
+    user: Principal,
+}
+
+impl DefaultLayoutData for AddressbookPage {
+    fn get_user(&self) -> Option<&Principal> {
+        Some(&self.user)
+    }
 }
 
 pub async fn route_addressbook<AS: AddressbookStore>(
@@ -28,6 +37,7 @@ pub async fn route_addressbook<AS: AddressbookStore>(
     }
     Ok(AddressbookPage {
         addressbook: store.get_addressbook(&owner, &addrbook_id, true).await?,
+        user,
     }
     .into_response())
 }

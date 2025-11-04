@@ -1,5 +1,4 @@
-use std::sync::Arc;
-
+use crate::pages::DefaultLayoutData;
 use askama::Template;
 use askama_web::WebTemplate;
 use axum::{
@@ -11,11 +10,19 @@ use axum_extra::TypedHeader;
 use headers::Referer;
 use http::StatusCode;
 use rustical_store::{Calendar, CalendarStore, auth::Principal};
+use std::sync::Arc;
 
 #[derive(Template, WebTemplate)]
 #[template(path = "pages/calendar.html")]
 struct CalendarPage {
     calendar: Calendar,
+    user: Principal,
+}
+
+impl DefaultLayoutData for CalendarPage {
+    fn get_user(&self) -> Option<&Principal> {
+        Some(&self.user)
+    }
 }
 
 pub async fn route_calendar<C: CalendarStore>(
@@ -28,6 +35,7 @@ pub async fn route_calendar<C: CalendarStore>(
     }
     Ok(CalendarPage {
         calendar: store.get_calendar(&owner, &cal_id, true).await?,
+        user,
     }
     .into_response())
 }

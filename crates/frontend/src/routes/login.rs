@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::{FrontendConfig, OidcConfig};
+use crate::{FrontendConfig, OidcConfig, pages::DefaultLayoutData};
 use askama::Template;
 use askama_web::WebTemplate;
 use axum::{
@@ -22,6 +22,12 @@ struct LoginPage<'a> {
     redirect_uri: Option<String>,
     oidc_data: Option<OidcProviderData<'a>>,
     allow_password_login: bool,
+}
+
+impl DefaultLayoutData for LoginPage<'_> {
+    fn get_user(&self) -> Option<&rustical_store::auth::Principal> {
+        None
+    }
 }
 
 struct OidcProviderData<'a> {
