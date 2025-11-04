@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM birthday_calendars WHERE (principal, id) = (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "cadc4ac16b7ac22b71c91ab36ad9dbb1dec943798d795fcbc811f4c651fea02a"
+}
