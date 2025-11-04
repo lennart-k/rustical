@@ -144,6 +144,50 @@ impl SqliteAddressbookStore {
         Ok(())
     }
 
+    async fn _delete_birthday_calendar<'e, E: Executor<'e, Database = Sqlite>>(
+        executor: E,
+        principal: &str,
+        id: &str,
+        use_trashbin: bool,
+    ) -> Result<(), Error> {
+        if use_trashbin {
+            sqlx::query!(
+                r#"UPDATE birthday_calendars SET deleted_at = datetime() WHERE (principal, id) = (?, ?)"#,
+                principal,
+                id
+            )
+            .execute(executor)
+            .await
+            .map_err(crate::Error::from)?
+        } else {
+            sqlx::query!(
+                r#"DELETE FROM birthday_calendars WHERE (principal, id) = (?, ?)"#,
+                principal,
+                id
+            )
+            .execute(executor)
+            .await
+            .map_err(crate::Error::from)?
+        };
+        Ok(())
+    }
+
+    async fn _restore_birthday_calendar<'e, E: Executor<'e, Database = Sqlite>>(
+        executor: E,
+        principal: &str,
+        id: &str,
+    ) -> Result<(), Error> {
+        sqlx::query!(
+            r"UPDATE birthday_calendars SET deleted_at = NULL WHERE (principal, id) = (?, ?)",
+            principal,
+            id
+        )
+        .execute(executor)
+        .await
+        .map_err(crate::Error::from)?;
+        Ok(())
+    }
+
     #[instrument]
     async fn _update_birthday_calendar<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
@@ -218,16 +262,22 @@ impl CalendarStore for SqliteAddressbookStore {
     #[instrument]
     async fn delete_calendar(
         &self,
-        _principal: &str,
-        _name: &str,
-        _use_trashbin: bool,
+        principal: &str,
+        id: &str,
+        use_trashbin: bool,
     ) -> Result<(), Error> {
-        Err(Error::ReadOnly)
+        let Some(id) = id.strip_prefix(BIRTHDAYS_PREFIX) else {
+            return Ok(());
+        };
+        Self::_delete_birthday_calendar(&self.db, principal, id, use_trashbin).await
     }
 
     #[instrument]
-    async fn restore_calendar(&self, _principal: &str, _name: &str) -> Result<(), Error> {
-        Err(Error::ReadOnly)
+    async fn restore_calendar(&self, principal: &str, id: &str) -> Result<(), Error> {
+        let Some(id) = id.strip_prefix(BIRTHDAYS_PREFIX) else {
+            return Err(Error::NotFound);
+        };
+        Self::_restore_birthday_calendar(&self.db, principal, id).await
     }
 
     #[instrument]
