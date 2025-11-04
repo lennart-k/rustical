@@ -97,8 +97,9 @@ impl AddressObject {
                 let uid = format!("{}-anniversary", self.get_id());
 
                 let year_suffix = year.map(|year| format!(" ({year})")).unwrap_or_default();
-                Some(CalendarObject::from_ics(format!(
-                    r"BEGIN:VCALENDAR
+                Some(CalendarObject::from_ics(
+                    format!(
+                        r"BEGIN:VCALENDAR
 VERSION:2.0
 CALSCALE:GREGORIAN
 PRODID:-//github.com/lennart-k/rustical birthday calendar//EN
@@ -116,7 +117,9 @@ DESCRIPTION:💍 {fullname}{year_suffix}
 END:VALARM
 END:VEVENT
 END:VCALENDAR",
-                ))?)
+                    ),
+                    None,
+                )?)
             } else {
                 None
             },
@@ -136,8 +139,9 @@ END:VCALENDAR",
                 let uid = format!("{}-birthday", self.get_id());
 
                 let year_suffix = year.map(|year| format!(" ({year})")).unwrap_or_default();
-                Some(CalendarObject::from_ics(format!(
-                    r"BEGIN:VCALENDAR
+                Some(CalendarObject::from_ics(
+                    format!(
+                        r"BEGIN:VCALENDAR
 VERSION:2.0
 CALSCALE:GREGORIAN
 PRODID:-//github.com/lennart-k/rustical birthday calendar//EN
@@ -155,7 +159,9 @@ DESCRIPTION:🎂 {fullname}{year_suffix}
 END:VALARM
 END:VEVENT
 END:VCALENDAR",
-                ))?)
+                    ),
+                    None,
+                )?)
             } else {
                 None
             },

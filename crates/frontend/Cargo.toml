@@ -17,7 +17,6 @@ http.workspace = true
 axum.workspace = true
 askama.workspace = true
 askama_web.workspace = true
-askama_escape.workspace = true
 async-trait.workspace = true
 serde.workspace = true
 thiserror.workspace = true
@@ -44,3 +43,6 @@ percent-encoding.workspace = true
 tower-http = { workspace = true, optional = true }
 rrule.workspace = true
 ical.workspace = true
+vtimezones-rs.workspace = true
+serde_json.workspace = true
+itertools.workspace = true

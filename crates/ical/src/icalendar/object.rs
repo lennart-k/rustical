@@ -64,6 +64,19 @@ pub enum CalendarObjectComponent {
     Journal(IcalJournal, Vec<IcalJournal>),
 }
 
+impl CalendarObjectComponent {
+    #[must_use]
+    pub fn get_uid(&self) -> &str {
+        match &self {
+            // We've made sure before that the first component exists and all components share the
+            // same UID
+            Self::Todo(todo, _) => todo.get_uid(),
+            Self::Event(event, _) => event.event.get_uid(),
+            Self::Journal(journal, _) => journal.get_uid(),
+        }
+    }
+}
+
 impl From<&CalendarObjectComponent> for CalendarObjectType {
     fn from(value: &CalendarObjectComponent) -> Self {
         match value {
@@ -135,18 +148,47 @@ impl CalendarObjectComponent {
         }
         Ok(Self::Journal(main_journal, overrides))
     }
+
+    pub fn get_first_occurence(&self) -> Result<Option<CalDateTime>, Error> {
+        match &self {
+            Self::Event(main_event, overrides) => Ok(overrides
+                .iter()
+                .chain(std::iter::once(main_event))
+                .map(super::event::EventObject::get_dtstart)
+                .collect::<Result<Vec<_>, _>>()?
+                .into_iter()
+                .flatten()
+                .min()),
+            _ => Ok(None),
+        }
+    }
+
+    pub fn get_last_occurence(&self) -> Result<Option<CalDateTime>, Error> {
+        match &self {
+            Self::Event(main_event, overrides) => Ok(overrides
+                .iter()
+                .chain(std::iter::once(main_event))
+                .map(super::event::EventObject::get_last_occurence)
+                .collect::<Result<Vec<_>, _>>()?
+                .into_iter()
+                .flatten()
+                .max()),
+            _ => Ok(None),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct CalendarObject {
     data: CalendarObjectComponent,
     properties: Vec<Property>,
+    id: String,
     ics: String,
     vtimezones: HashMap<String, IcalTimeZone>,
 }
 
 impl CalendarObject {
-    pub fn from_ics(ics: String) -> Result<Self, Error> {
+    pub fn from_ics(ics: String, id: Option<String>) -> Result<Self, Error> {
         let mut parser = ical::IcalParser::new(BufReader::new(ics.as_bytes()));
         let cal = parser.next().ok_or(Error::MissingCalendar)??;
         if parser.next().is_some() {
@@ -202,6 +244,7 @@ impl CalendarObject {
         };
 
         Ok(Self {
+            id: id.unwrap_or_else(|| data.get_uid().to_owned()),
             data,
             properties: cal.properties,
             ics,
@@ -220,20 +263,19 @@ impl CalendarObject {
     }
 
     #[must_use]
+    pub fn get_uid(&self) -> &str {
+        self.data.get_uid()
+    }
+
+    #[must_use]
     pub fn get_id(&self) -> &str {
-        match &self.data {
-            // We've made sure before that the first component exists and all components share the
-            // same UID
-            CalendarObjectComponent::Todo(todo, _) => todo.get_uid(),
-            CalendarObjectComponent::Event(event, _) => event.event.get_uid(),
-            CalendarObjectComponent::Journal(journal, _) => journal.get_uid(),
-        }
+        &self.id
     }
 
     #[must_use]
     pub fn get_etag(&self) -> String {
         let mut hasher = Sha256::new();
-        hasher.update(self.get_id());
+        hasher.update(self.get_uid());
         hasher.update(self.get_ics());
         format!("\"{:x}\"", hasher.finalize())
     }
@@ -254,31 +296,11 @@ impl CalendarObject {
     }
 
     pub fn get_first_occurence(&self) -> Result<Option<CalDateTime>, Error> {
-        match &self.data {
-            CalendarObjectComponent::Event(main_event, overrides) => Ok(overrides
-                .iter()
-                .chain(std::iter::once(main_event))
-                .map(super::event::EventObject::get_dtstart)
-                .collect::<Result<Vec<_>, _>>()?
-                .into_iter()
-                .flatten()
-                .min()),
-            _ => Ok(None),
-        }
+        self.data.get_first_occurence()
     }
 
     pub fn get_last_occurence(&self) -> Result<Option<CalDateTime>, Error> {
-        match &self.data {
-            CalendarObjectComponent::Event(main_event, overrides) => Ok(overrides
-                .iter()
-                .chain(std::iter::once(main_event))
-                .map(super::event::EventObject::get_last_occurence)
-                .collect::<Result<Vec<_>, _>>()?
-                .into_iter()
-                .flatten()
-                .max()),
-            _ => Ok(None),
-        }
+        self.data.get_last_occurence()
     }
 
     pub fn expand_recurrence(
@@ -298,5 +320,12 @@ impl CalendarObject {
             }
             _ => Ok(self.get_ics().to_string()),
         }
+    }
+
+    #[must_use]
+    pub fn get_property(&self, name: &str) -> Option<&Property> {
+        self.properties
+            .iter()
+            .find(|property| property.name == name)
     }
 }

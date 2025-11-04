@@ -1,9 +1,8 @@
-use std::str::FromStr;
-
 use crate::synctoken::format_synctoken;
 use chrono::NaiveDateTime;
 use rustical_ical::CalendarObjectType;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct CalendarMetadata {

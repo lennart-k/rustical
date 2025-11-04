@@ -25,6 +25,6 @@ END:VCALENDAR
 
 #[test]
 fn parse_calendar_object() {
-    let object = CalendarObject::from_ics(MULTI_VEVENT.to_string()).unwrap();
+    let object = CalendarObject::from_ics(MULTI_VEVENT.to_string(), None).unwrap();
     object.expand_recurrence(None, None).unwrap();
 }

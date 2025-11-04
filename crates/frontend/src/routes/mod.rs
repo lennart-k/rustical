@@ -5,4 +5,5 @@ pub mod calendar;
 pub mod calendar_preview;
 pub mod calendars;
 pub mod login;
+pub mod timezones;
 pub mod user;

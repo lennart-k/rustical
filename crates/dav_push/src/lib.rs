@@ -59,7 +59,7 @@ impl<S: SubscriptionStore> DavPushController<S> {
             let mut latest_messages = HashMap::new();
             for message in messages {
                 if matches!(message.data, CollectionOperationInfo::Content { .. }) {
-                    latest_messages.insert(message.topic.to_string(), message);
+                    latest_messages.insert(message.topic.clone(), message);
                 }
             }
             let messages = latest_messages.into_values();
@@ -156,12 +156,13 @@ impl<S: SubscriptionStore> DavPushController<S> {
     ) -> Result<(), NotifierError> {
         if subsciption.public_key_type != "p256dh" {
             return Err(NotifierError::InvalidPublicKeyType(
-                subsciption.public_key_type.to_string(),
+                subsciption.public_key_type.clone(),
             ));
         }
-        let endpoint = subsciption.push_resource.parse().map_err(|_| {
-            NotifierError::InvalidEndpointUrl(subsciption.push_resource.to_string())
-        })?;
+        let endpoint = subsciption
+            .push_resource
+            .parse()
+            .map_err(|_| NotifierError::InvalidEndpointUrl(subsciption.push_resource.clone()))?;
         let ua_public = base64::engine::general_purpose::URL_SAFE_NO_PAD
             .decode(&subsciption.public_key)
             .map_err(|_| NotifierError::InvalidKeyEncoding)?;

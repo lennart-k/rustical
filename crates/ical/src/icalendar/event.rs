@@ -251,7 +251,7 @@ END:VEVENT\r\n",
 
     #[test]
     fn test_expand_recurrence() {
-        let event = CalendarObject::from_ics(ICS.to_string()).unwrap();
+        let event = CalendarObject::from_ics(ICS.to_string(), None).unwrap();
         let crate::CalendarObjectComponent::Event(event, overrides) = event.get_data() else {
             panic!()
         };

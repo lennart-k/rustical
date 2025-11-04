@@ -2,7 +2,7 @@
 members = ["crates/*"]
 
 [workspace.package]
-version = "0.9.13"
+version = "0.10.1"
 edition = "2024"
 description = "A CalDAV server"
 documentation = "https://lennart-k.github.io/rustical/"
@@ -79,7 +79,6 @@ derive_more = { version = "2.0", features = [
 ] }
 askama = { version = "0.14", features = ["serde_json"] }
 askama_web = { version = "0.14.0", features = ["axum-0.8"] }
-askama_escape = "0.13.0"
 sqlx = { version = "0.8", default-features = false, features = [
   "sqlx-sqlite",
   "uuid",
@@ -122,7 +121,7 @@ rustical_ical = { path = "./crates/ical/" }
 chrono-tz = "0.10"
 chrono-humanize = "0.2"
 rand = "0.9"
-axum-extra = { version = "0.10", features = ["typed-header"] }
+axum-extra = { version = "0.12", features = ["typed-header"] }
 rrule = { version="0.14", features=["exrule"] }
 argon2 = "0.5"
 rpassword = "7.3"

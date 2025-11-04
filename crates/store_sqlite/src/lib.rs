@@ -10,6 +10,9 @@ pub mod error;
 pub mod principal_store;
 pub mod subscription_store;
 
+// Begin statement for write transactions
+pub const BEGIN_IMMEDIATE: &str = "BEGIN IMMEDIATE";
+
 #[cfg(any(test, feature = "test"))]
 pub mod tests;
 

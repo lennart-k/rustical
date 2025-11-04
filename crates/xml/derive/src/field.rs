@@ -313,7 +313,7 @@ impl Field {
                 }
             }),
             (FieldType::Text, false) => Some(quote! {
-                writer.write_event(Event::Text(BytesText::new(&self.#target_field_index)))?;
+                writer.write_event(Event::Text(BytesText::new(self.#target_field_index.as_ref())))?;
             }),
             (FieldType::Tag, true) => {
                 let field_name = self.xml_name();

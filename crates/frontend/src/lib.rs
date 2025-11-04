@@ -33,6 +33,7 @@ use crate::routes::{
     app_token::{route_delete_app_token, route_post_app_token},
     calendar::{route_calendar, route_calendar_restore},
     login::{route_get_login, route_post_login, route_post_logout},
+    timezones::route_timezones,
     user::{route_get_home, route_root, route_user_named},
 };
 #[cfg(not(feature = "dev"))]
@@ -80,7 +81,11 @@ pub fn frontend_router<AP: AuthenticationProvider, CS: CalendarStore, AS: Addres
         .route("/", get(route_root))
         .nest("/user", user_router)
         .route("/login", get(route_get_login).post(route_post_login::<AP>))
-        .route("/logout", post(route_post_logout));
+        .route("/logout", post(route_post_logout))
+        .route(
+            "/_timezones.json",
+            get(route_timezones).head(route_timezones),
+        );
 
     #[cfg(not(feature = "dev"))]
     let mut router = router.route_service("/assets/{*file}", EmbedService::<Assets>::default());
