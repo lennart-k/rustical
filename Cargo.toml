@@ -3,6 +3,7 @@ members = ["crates/*"]
 
 [workspace.package]
 version = "0.10.1"
+rust-version = "1.91"
 edition = "2024"
 description = "A CalDAV server"
 documentation = "https://lennart-k.github.io/rustical/"
@@ -12,6 +13,7 @@ license = "AGPL-3.0-or-later"
 [package]
 name = "rustical"
 version.workspace = true
+rust-version.workspace = true
 edition.workspace = true
 description.workspace = true
 repository.workspace = true
@@ -35,6 +37,17 @@ opentelemetry = [
 debug = 0
 
 [workspace.dependencies]
+rustical_dav = { path = "./crates/dav/" }
+rustical_dav_push = { path = "./crates/dav_push/" }
+rustical_store = { path = "./crates/store/" }
+rustical_store_sqlite = { path = "./crates/store_sqlite/" }
+rustical_caldav = { path = "./crates/caldav/" }
+rustical_carddav = { path = "./crates/carddav/" }
+rustical_frontend = { path = "./crates/frontend/" }
+rustical_xml = { path = "./crates/xml/" }
+rustical_oidc = { path = "./crates/oidc/" }
+rustical_ical = { path = "./crates/ical/" }
+
 matchit = "0.9"
 uuid = { version = "1.11", features = ["v4", "fast-rng"] }
 async-trait = "0.1"
@@ -108,16 +121,6 @@ tower-http = { version = "0.6", features = [
   "catch-panic",
 ] }
 percent-encoding = "2.3"
-rustical_dav = { path = "./crates/dav/" }
-rustical_dav_push = { path = "./crates/dav_push/" }
-rustical_store = { path = "./crates/store/" }
-rustical_store_sqlite = { path = "./crates/store_sqlite/" }
-rustical_caldav = { path = "./crates/caldav/" }
-rustical_carddav = { path = "./crates/carddav/" }
-rustical_frontend = { path = "./crates/frontend/" }
-rustical_xml = { path = "./crates/xml/" }
-rustical_oidc = { path = "./crates/oidc/" }
-rustical_ical = { path = "./crates/ical/" }
 chrono-tz = "0.10"
 chrono-humanize = "0.2"
 rand = "0.9"
@@ -147,19 +150,19 @@ openssl = { version = "0.10", features = ["vendored"] }
 async-std = { version = "1.13", features = ["attributes"] }
 
 [dependencies]
-rustical_store = { workspace = true }
-rustical_store_sqlite = { workspace = true }
-rustical_caldav = { workspace = true }
+rustical_store.workspace = true
+rustical_store_sqlite.workspace = true
+rustical_caldav.workspace = true
 rustical_carddav.workspace = true
-rustical_frontend = { workspace = true }
-toml = { workspace = true }
-serde = { workspace = true }
-tokio = { workspace = true }
-tracing = { workspace = true }
-anyhow = { workspace = true }
+rustical_frontend.workspace = true
+toml.workspace = true
+serde.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+anyhow.workspace = true
 clap.workspace = true
-sqlx = { workspace = true }
-async-trait = { workspace = true }
+sqlx.workspace = true
+async-trait.workspace = true
 uuid.workspace = true
 axum.workspace = true
 
