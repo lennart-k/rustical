@@ -106,8 +106,7 @@ pub fn make_app<AS: AddressbookStore, CS: CalendarStore, S: SubscriptionStore>(
     );
 
     // health check
-    router = router
-        .route("/health", get(|| async { "ok" }));
+    router = router.route("/health", get(|| async { "ok" }));
 
     let session_store = MemoryStore::default();
     if frontend_config.enabled {

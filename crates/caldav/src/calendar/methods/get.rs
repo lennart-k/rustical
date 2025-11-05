@@ -3,6 +3,7 @@ use crate::calendar::CalendarResourceService;
 use axum::body::Body;
 use axum::extract::State;
 use axum::{extract::Path, response::Response};
+use chrono::NaiveDate;
 use headers::{ContentType, HeaderMapExt};
 use http::{HeaderValue, Method, StatusCode, header};
 use ical::generator::{Emitter, IcalCalendarBuilder};
@@ -14,8 +15,6 @@ use rustical_store::{CalendarStore, SubscriptionStore, auth::Principal};
 use std::collections::HashMap;
 use std::str::FromStr;
 use tracing::instrument;
-use chrono::NaiveDate;
-
 
 // Todo add a generic function to fetch calendar events and data without the need to use the caldav api
 pub async fn get_calendar_objects<C: CalendarStore>(
@@ -29,7 +28,9 @@ pub async fn get_calendar_objects<C: CalendarStore>(
         time_start: Some(start),
         time_end: Some(end),
     };
-    let objects = store.calendar_query(&principal, &calendar_id, query).await?;
+    let objects = store
+        .calendar_query(&principal, &calendar_id, query)
+        .await?;
 
     Ok(objects)
 }
