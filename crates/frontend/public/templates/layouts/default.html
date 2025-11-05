@@ -25,12 +25,11 @@
   <header>
       <a class="logo" href="/frontend/user">RustiCal</a>
       {% block header_center %}{% endblock %}
-      <div>
+      {% if self.get_user().is_some() %}
         <form method="POST" action="/frontend/logout" class="logout_form">
           <button type="submit">Log out</button>
         </form>
-        <theme-selector style="min-width: 100px;"></theme-selector>
-      </div>
+      {% endif %}
   </header>
   {% endblock %}
   <div id="app">

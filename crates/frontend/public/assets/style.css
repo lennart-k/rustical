@@ -151,8 +151,6 @@ header {
   nav {
     display: flex;
 
-    border-radius: 12px;
-
     a {
       text-decoration: none;
       margin: 4px 8px;
@@ -441,19 +439,6 @@ ul.collection-list {
         margin: 8px initial;
       }
 
-      .comps {
-        display: inline;
-
-        span {
-          margin: 0 2px;
-          background: var(--primary-color);
-          color: var(--text-on-primary-color);
-          font-size: 0.8em;
-          padding: 3px 8px;
-          border-radius: 12px;
-        }
-      }
-
       .description {
         grid-area: description;
         white-space: nowrap;
@@ -582,4 +567,17 @@ svg.icon {
   stroke-width: 2px;
   color: var(--text-on-background-color);
   stroke: var(--text-on-background-color);
+}
+
+.component-chips {
+  display: inline;
+
+  span.chip {
+    margin: 0 2px;
+    background: var(--primary-color);
+    color: var(--text-on-primary-color);
+    font-size: .8em;
+    padding: 3px 8px;
+    border-radius: 12px;
+  }
 }

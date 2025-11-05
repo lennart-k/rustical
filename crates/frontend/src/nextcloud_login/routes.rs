@@ -2,7 +2,7 @@ use super::{
     NextcloudFlow, NextcloudFlows, NextcloudLoginPoll, NextcloudLoginResponse,
     NextcloudSuccessResponse,
 };
-use crate::routes::app_token::generate_app_token;
+use crate::{pages::DefaultLayoutData, routes::app_token::generate_app_token};
 use askama::Template;
 use axum::{
     Extension, Form, Json,
@@ -100,6 +100,12 @@ struct NextcloudLoginPage {
     app_name: String,
 }
 
+impl DefaultLayoutData for NextcloudLoginPage {
+    fn get_user(&self) -> Option<&Principal> {
+        None
+    }
+}
+
 #[instrument(skip(state))]
 pub async fn get_nextcloud_flow(
     Extension(state): Extension<Arc<NextcloudFlows>>,
@@ -130,6 +136,13 @@ pub struct NextcloudAuthorizeForm {
 #[template(path = "pages/nextcloud_login/success.html")]
 struct NextcloudLoginSuccessPage {
     app_name: String,
+    user: Principal,
+}
+
+impl DefaultLayoutData for NextcloudLoginSuccessPage {
+    fn get_user(&self) -> Option<&Principal> {
+        Some(&self.user)
+    }
 }
 
 #[instrument(skip(state))]
@@ -150,6 +163,7 @@ pub async fn post_nextcloud_flow(
         Ok(Html(
             NextcloudLoginSuccessPage {
                 app_name: flow.app_name.clone(),
+                user,
             }
             .render()
             .unwrap(),

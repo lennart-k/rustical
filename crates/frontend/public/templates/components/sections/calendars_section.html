@@ -8,9 +8,9 @@
       <span class="title">
         {%- if calendar.principal != user.id -%}{{ calendar.principal }}/{%- endif -%}
         {{ calendar.meta.displayname.to_owned().unwrap_or(calendar.id.to_owned()) }}
-        <div class="comps">
+        <div class="component-chips">
           {% for comp in calendar.components %}
-          <span>{{ comp }}</span>
+          <span class="chip">{{ comp }}</span>
           {% endfor %}
         </div>
       </span>
@@ -59,9 +59,9 @@
       <span class="title">
         {%- if calendar.principal != user.id -%}{{ calendar.principal }}/{%- endif -%}
         {{ calendar.meta.displayname.to_owned().unwrap_or(calendar.id.to_owned()) }}
-        <div class="comps">
+        <div class="component-chips">
           {% for comp in calendar.components %}
-          <span>{{ comp }}</span>
+          <span class="chip">{{ comp }}</span>
           {% endfor %}
         </div>
       </span>

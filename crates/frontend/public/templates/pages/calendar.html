@@ -5,7 +5,15 @@
 
 {% block content %}
 {% let name = calendar.meta.displayname.to_owned().unwrap_or(calendar.id.to_owned()) %}
-<h1>{{ calendar.principal }}/{{ name }}</h1>
+<h1>
+  {{ calendar.principal }}/{{ name }}
+  <div class="component-chips">
+    {% for comp in calendar.components %}
+    <span class="chip">{{ comp }}</span>
+    {% endfor %}
+  </div>
+
+</h1>
 {% if let Some(description) = calendar.meta.description %}<p>{{ description }}</p>{% endif%}
 
 {% if let Some(subscription_url) = calendar.subscription_url %}
@@ -13,19 +21,7 @@
 <a href="{{ subscription_url }}">{{ subscription_url }}</a>
 {% endif %}
 
-<h2>Components</h2>
-<ul>
-  {% for comp in calendar.components %}
-  <li>{{ comp.as_str() }}</li>
-  {% endfor %}
-</ul>
-
-<h2>Timezone</h2>
-
-{% if let Some(timezone_id) = calendar.timezone_id %}
-<p>{{ timezone_id }}</p>
-{% endif %}
-
-<pre>{{ calendar|json }}</pre>
+<h2>Debug information</h2>
+<pre>{{ calendar|json(2) }}</pre>
 
 {%endblock %}
