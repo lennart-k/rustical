@@ -1,0 +1,74 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT principal, id, displayname, description, \"order\", color, timezone_id, deleted_at, addr_synctoken, push_topic\n                FROM birthday_calendars\n                INNER JOIN (\n                    SELECT principal AS addr_principal,\n                        id AS addr_id,\n                        synctoken AS addr_synctoken\n                    FROM addressbooks\n                    ) ON (principal, id) = (addr_principal, addr_id)\n                WHERE (principal, id) = (?, ?)\n                AND ((deleted_at IS NULL) OR ?)\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "principal",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "id",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "displayname",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "description",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "order",
+        "ordinal": 4,
+        "type_info": "Integer"
+      },
+      {
+        "name": "color",
+        "ordinal": 5,
+        "type_info": "Text"
+      },
+      {
+        "name": "timezone_id",
+        "ordinal": 6,
+        "type_info": "Text"
+      },
+      {
+        "name": "deleted_at",
+        "ordinal": 7,
+        "type_info": "Datetime"
+      },
+      {
+        "name": "addr_synctoken",
+        "ordinal": 8,
+        "type_info": "Integer"
+      },
+      {
+        "name": "push_topic",
+        "ordinal": 9,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "525fc4eab8a0f3eacff7e3c78ce809943f817abf8c8f9ae50073924bccdea2dc"
+}

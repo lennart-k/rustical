@@ -11,7 +11,6 @@ publish = false
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 serde = { workspace = true }
-sha2 = { workspace = true }
 ical = { workspace = true }
 chrono = { workspace = true }
 regex = { workspace = true }

@@ -13,7 +13,9 @@ use figment::Figment;
 use figment::providers::{Env, Format, Toml};
 use rustical_dav_push::DavPushController;
 use rustical_store::auth::AuthenticationProvider;
-use rustical_store::{AddressbookStore, CalendarStore, CollectionOperation, SubscriptionStore};
+use rustical_store::{
+    AddressbookStore, CalendarStore, CollectionOperation, PrefixedCalendarStore, SubscriptionStore,
+};
 use rustical_store_sqlite::addressbook_store::SqliteAddressbookStore;
 use rustical_store_sqlite::calendar_store::SqliteCalendarStore;
 use rustical_store_sqlite::principal_store::SqlitePrincipalStore;
@@ -56,7 +58,7 @@ async fn get_data_stores(
     migrate: bool,
     config: &DataStoreConfig,
 ) -> Result<(
-    Arc<impl AddressbookStore>,
+    Arc<impl AddressbookStore + PrefixedCalendarStore>,
     Arc<impl CalendarStore>,
     Arc<impl SubscriptionStore>,
     Arc<impl AuthenticationProvider>,
