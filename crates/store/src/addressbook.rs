@@ -2,7 +2,7 @@ use crate::synctoken::format_synctoken;
 use chrono::NaiveDateTime;
 use serde::Serialize;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct Addressbook {
     pub id: String,
     pub principal: String,

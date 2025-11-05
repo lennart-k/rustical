@@ -4,7 +4,7 @@ use rustical_ical::CalendarObjectType;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CalendarMetadata {
     // Attributes that may be outsourced
     pub displayname: Option<String>,
@@ -13,7 +13,7 @@ pub struct CalendarMetadata {
     pub color: Option<String>,
 }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Calendar {
     // Attributes that may be outsourced
     #[serde(flatten)]

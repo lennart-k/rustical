@@ -8,6 +8,9 @@ use tokio::sync::OnceCell;
 
 static DB: OnceCell<SqlitePool> = OnceCell::const_new();
 
+mod addressbook_store;
+mod calendar_store;
+
 async fn get_test_db() -> SqlitePool {
     DB.get_or_init(async || {
         let db = SqlitePool::connect("sqlite::memory:").await.unwrap();

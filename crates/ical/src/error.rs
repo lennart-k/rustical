@@ -2,7 +2,7 @@ use axum::{http::StatusCode, response::IntoResponse};
 
 use crate::CalDateTimeError;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
 pub enum Error {
     #[error("Invalid ics/vcf input: {0}")]
     InvalidData(String),
