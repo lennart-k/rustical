@@ -2,6 +2,7 @@ import { html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Ref, createRef, ref } from 'lit/directives/ref.js';
 import { escapeXml } from ".";
+import { getTimezones } from "./timezones.ts";
 
 @customElement("create-calendar-form")
 export class CreateCalendarForm extends LitElement {
