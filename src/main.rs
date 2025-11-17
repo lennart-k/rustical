@@ -69,7 +69,9 @@ async fn get_data_stores(
             let (send, recv) = tokio::sync::mpsc::channel(1000);
 
             let addressbook_store = Arc::new(SqliteAddressbookStore::new(db.clone(), send.clone()));
+            addressbook_store.repair_orphans().await?;
             let cal_store = Arc::new(SqliteCalendarStore::new(db.clone(), send));
+            cal_store.repair_orphans().await?;
             let subscription_store = Arc::new(SqliteStore::new(db.clone()));
             let principal_store = Arc::new(SqlitePrincipalStore::new(db));
             (

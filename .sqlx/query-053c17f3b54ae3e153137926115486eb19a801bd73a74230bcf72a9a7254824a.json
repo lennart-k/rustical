@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT principal, cal_id, id, (deleted_at IS NOT NULL) AS \"deleted: bool\"\n                    FROM calendarobjects\n                    WHERE (principal, cal_id, id) NOT IN (\n                        SELECT DISTINCT principal, cal_id, object_id FROM calendarobjectchangelog\n                    )\n                ;\n                ",
+  "describe": {
+    "columns": [
+      {
+        "name": "principal",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "cal_id",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "id",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "deleted: bool",
+        "ordinal": 3,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "053c17f3b54ae3e153137926115486eb19a801bd73a74230bcf72a9a7254824a"
+}

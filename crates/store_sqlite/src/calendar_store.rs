@@ -11,7 +11,7 @@ use rustical_store::{CollectionOperation, CollectionOperationInfo};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};
 use tokio::sync::mpsc::Sender;
-use tracing::{error, instrument};
+use tracing::{error, instrument, warn};
 
 #[derive(Debug, Clone)]
 struct CalendarObjectRow {
@@ -94,6 +94,53 @@ pub struct SqliteCalendarStore {
 }
 
 impl SqliteCalendarStore {
+    // Commit "orphaned" objects to the changelog table
+    pub async fn repair_orphans(&self) -> Result<(), Error> {
+        struct Row {
+            principal: String,
+            cal_id: String,
+            id: String,
+            deleted: bool,
+        }
+
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
+
+        let rows = sqlx::query_as!(
+            Row,
+            r#"
+                SELECT principal, cal_id, id, (deleted_at IS NOT NULL) AS "deleted: bool"
+                    FROM calendarobjects
+                    WHERE (principal, cal_id, id) NOT IN (
+                        SELECT DISTINCT principal, cal_id, object_id FROM calendarobjectchangelog
+                    )
+                ;
+                "#,
+        )
+        .fetch_all(&mut *tx)
+        .await
+        .map_err(crate::Error::from)?;
+
+        for row in rows {
+            let operation = if row.deleted {
+                ChangeOperation::Delete
+            } else {
+                ChangeOperation::Add
+            };
+            warn!(
+                "Commiting orphaned calendar object ({},{},{}), deleted={}",
+                &row.principal, &row.cal_id, &row.id, &row.deleted
+            );
+            log_object_operation(&mut tx, &row.principal, &row.cal_id, &row.id, operation).await?;
+        }
+        tx.commit().await.map_err(crate::Error::from)?;
+
+        Ok(())
+    }
+
     async fn _get_calendar<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
