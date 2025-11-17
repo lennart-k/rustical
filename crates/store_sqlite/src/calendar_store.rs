@@ -627,7 +627,7 @@ impl CalendarStore for SqliteCalendarStore {
                     .push_topic,
             })
         {
-            error!("Push notification about deleted calendar failed: {err}");
+            error!("Push notification about imported calendar failed: {err}");
         }
         Ok(())
     }

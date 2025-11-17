@@ -90,9 +90,9 @@ impl SqliteAddressbookStore {
 
     async fn _update_addressbook<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
-        principal: String,
-        id: String,
-        addressbook: Addressbook,
+        principal: &str,
+        id: &str,
+        addressbook: &Addressbook,
     ) -> Result<(), rustical_store::Error> {
         let result = sqlx::query!(
             r#"UPDATE addressbooks SET principal = ?, id = ?, displayname = ?, description = ?, push_topic = ?
@@ -116,7 +116,7 @@ impl SqliteAddressbookStore {
 
     async fn _insert_addressbook<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
-        addressbook: Addressbook,
+        addressbook: &Addressbook,
     ) -> Result<(), rustical_store::Error> {
         sqlx::query!(
             r#"INSERT INTO addressbooks (principal, id, displayname, description, push_topic)
@@ -283,9 +283,9 @@ impl SqliteAddressbookStore {
 
     async fn _put_object<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
-        principal: String,
-        addressbook_id: String,
-        object: AddressObject,
+        principal: &str,
+        addressbook_id: &str,
+        object: &AddressObject,
         overwrite: bool,
     ) -> Result<(), rustical_store::Error> {
         let (object_id, vcf) = (object.get_id(), object.get_vcf());
@@ -397,7 +397,7 @@ impl AddressbookStore for SqliteAddressbookStore {
         id: String,
         addressbook: Addressbook,
     ) -> Result<(), rustical_store::Error> {
-        Self::_update_addressbook(&self.db, principal, id, addressbook).await
+        Self::_update_addressbook(&self.db, &principal, &id, &addressbook).await
     }
 
     #[instrument]
@@ -405,7 +405,7 @@ impl AddressbookStore for SqliteAddressbookStore {
         &self,
         addressbook: Addressbook,
     ) -> Result<(), rustical_store::Error> {
-        Self::_insert_addressbook(&self.db, addressbook).await
+        Self::_insert_addressbook(&self.db, &addressbook).await
     }
 
     #[instrument]
@@ -521,14 +521,7 @@ impl AddressbookStore for SqliteAddressbookStore {
 
         let object_id = object.get_id().to_owned();
 
-        Self::_put_object(
-            &mut *tx,
-            principal.clone(),
-            addressbook_id.clone(),
-            object,
-            overwrite,
-        )
-        .await?;
+        Self::_put_object(&mut *tx, &principal, &addressbook_id, &object, overwrite).await?;
 
         let sync_token = log_object_operation(
             &mut tx,
@@ -659,21 +652,44 @@ impl AddressbookStore for SqliteAddressbookStore {
             return Err(Error::AlreadyExists);
         }
         if existing.is_none() {
-            Self::_insert_addressbook(&mut *tx, addressbook.clone()).await?;
+            Self::_insert_addressbook(&mut *tx, &addressbook).await?;
         }
 
+        let mut sync_token = None;
         for object in objects {
             Self::_put_object(
                 &mut *tx,
-                addressbook.principal.clone(),
-                addressbook.id.clone(),
-                object,
+                &addressbook.principal,
+                &addressbook.id,
+                &object,
                 false,
             )
             .await?;
+
+            sync_token = Some(
+                log_object_operation(
+                    &mut tx,
+                    &addressbook.principal,
+                    &addressbook.id,
+                    object.get_id(),
+                    ChangeOperation::Add,
+                )
+                .await?,
+            );
         }
 
         tx.commit().await.map_err(crate::Error::from)?;
+        if let Some(sync_token) = sync_token
+            && let Err(err) = self.sender.try_send(CollectionOperation {
+                data: CollectionOperationInfo::Content { sync_token },
+                topic: self
+                    .get_addressbook(&addressbook.principal, &addressbook.id, true)
+                    .await?
+                    .push_topic,
+            })
+        {
+            error!("Push notification about imported addressbook failed: {err}");
+        }
         Ok(())
     }
 }
@@ -685,7 +701,7 @@ async fn log_object_operation(
     addressbook_id: &str,
     object_id: &str,
     operation: ChangeOperation,
-) -> Result<String, sqlx::Error> {
+) -> Result<String, Error> {
     struct Synctoken {
         synctoken: i64,
     }
@@ -700,7 +716,8 @@ async fn log_object_operation(
         addressbook_id
     )
     .fetch_one(&mut **tx)
-    .await?;
+    .await
+    .map_err(crate::Error::from)?;
 
     sqlx::query!(
         r#"
@@ -714,6 +731,7 @@ async fn log_object_operation(
         operation
     )
     .execute(&mut **tx)
-    .await?;
+    .await
+    .map_err(crate::Error::from)?;
     Ok(format_synctoken(synctoken))
 }
