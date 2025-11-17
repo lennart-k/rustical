@@ -675,7 +675,7 @@ impl AddressbookStore for SqliteAddressbookStore {
                 .await?
                 .push_topic,
         }) {
-            error!("Push notification about deleted addressbook failed: {err}");
+            error!("Push notification about restored addressbook object failed: {err}");
         }
 
         Ok(())

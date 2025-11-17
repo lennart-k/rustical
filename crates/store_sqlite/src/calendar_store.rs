@@ -831,7 +831,7 @@ impl CalendarStore for SqliteCalendarStore {
             data: CollectionOperationInfo::Content { sync_token },
             topic: self.get_calendar(principal, cal_id, true).await?.push_topic,
         }) {
-            error!("Push notification about deleted calendar failed: {err}");
+            error!("Push notification about restored calendar object failed: {err}");
         }
         Ok(())
     }
