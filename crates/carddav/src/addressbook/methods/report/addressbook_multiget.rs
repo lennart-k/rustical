@@ -34,7 +34,9 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
     let mut not_found = vec![];
 
     for href in &addressbook_multiget.href {
-        if let Some(filename) = href.strip_prefix(path) {
+        if let Ok(href) = percent_encoding::percent_decode_str(href).decode_utf8()
+            && let Some(filename) = href.strip_prefix(path)
+        {
             let filename = filename.trim_start_matches('/');
             if let Some(object_id) = filename.strip_suffix(".vcf") {
                 match store
@@ -42,11 +44,11 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
                     .await
                 {
                     Ok(object) => result.push(object),
-                    Err(rustical_store::Error::NotFound) => not_found.push(href.to_owned()),
+                    Err(rustical_store::Error::NotFound) => not_found.push(href.to_string()),
                     Err(err) => return Err(err.into()),
                 }
             } else {
-                not_found.push(href.to_owned());
+                not_found.push(href.to_string());
             }
         } else {
             not_found.push(href.to_owned());

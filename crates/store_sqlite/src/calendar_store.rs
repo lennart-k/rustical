@@ -795,6 +795,7 @@ impl CalendarStore for SqliteCalendarStore {
 }
 
 // Logs an operation to the events
+// TODO: Log multiple updates
 async fn log_object_operation(
     tx: &mut Transaction<'_, Sqlite>,
     principal: &str,
