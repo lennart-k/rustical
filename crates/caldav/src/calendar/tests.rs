@@ -39,9 +39,7 @@ async fn test_propfind() {
                 .unwrap()
                 .trim()
                 .replace("\r\n", "\n");
-            println!("{output}");
-            println!("{}, {} \n\n\n", output.len(), expected_output.len());
-            assert_eq!(output, expected_output);
+            similar_asserts::assert_eq!(output, expected_output);
         }
     }
 }

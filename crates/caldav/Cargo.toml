@@ -45,3 +45,4 @@ tower-http.workspace = true
 strum.workspace = true
 strum_macros.workspace = true
 vtimezones-rs.workspace = true
+similar-asserts.workspace = true
