@@ -39,7 +39,7 @@ async fn test_propfind() {
                 .unwrap()
                 .trim()
                 .replace("\r\n", "\n");
-            similar_asserts::assert_eq!(output, expected_output);
+            similar_asserts::assert_eq!(expected_output, output);
         }
     }
 }
