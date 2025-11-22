@@ -11,7 +11,7 @@ use rustical_store::{CollectionOperation, CollectionOperationInfo};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};
 use tokio::sync::mpsc::Sender;
-use tracing::{error, instrument};
+use tracing::{error, instrument, warn};
 
 #[derive(Debug, Clone)]
 struct CalendarObjectRow {
@@ -94,6 +94,53 @@ pub struct SqliteCalendarStore {
 }
 
 impl SqliteCalendarStore {
+    // Commit "orphaned" objects to the changelog table
+    pub async fn repair_orphans(&self) -> Result<(), Error> {
+        struct Row {
+            principal: String,
+            cal_id: String,
+            id: String,
+            deleted: bool,
+        }
+
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
+
+        let rows = sqlx::query_as!(
+            Row,
+            r#"
+                SELECT principal, cal_id, id, (deleted_at IS NOT NULL) AS "deleted: bool"
+                    FROM calendarobjects
+                    WHERE (principal, cal_id, id) NOT IN (
+                        SELECT DISTINCT principal, cal_id, object_id FROM calendarobjectchangelog
+                    )
+                ;
+                "#,
+        )
+        .fetch_all(&mut *tx)
+        .await
+        .map_err(crate::Error::from)?;
+
+        for row in rows {
+            let operation = if row.deleted {
+                ChangeOperation::Delete
+            } else {
+                ChangeOperation::Add
+            };
+            warn!(
+                "Commiting orphaned calendar object ({},{},{}), deleted={}",
+                &row.principal, &row.cal_id, &row.id, &row.deleted
+            );
+            log_object_operation(&mut tx, &row.principal, &row.cal_id, &row.id, operation).await?;
+        }
+        tx.commit().await.map_err(crate::Error::from)?;
+
+        Ok(())
+    }
+
     async fn _get_calendar<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
@@ -351,9 +398,9 @@ impl SqliteCalendarStore {
     #[instrument]
     async fn _put_object<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
-        principal: String,
-        cal_id: String,
-        object: CalendarObject,
+        principal: &str,
+        cal_id: &str,
+        object: &CalendarObject,
         overwrite: bool,
     ) -> Result<(), Error> {
         let (object_id, uid, ics) = (object.get_id(), object.get_uid(), object.get_ics());
@@ -600,18 +647,35 @@ impl CalendarStore for SqliteCalendarStore {
             Self::_insert_calendar(&mut *tx, calendar.clone()).await?;
         }
 
+        let mut sync_token = None;
         for object in objects {
-            Self::_put_object(
-                &mut *tx,
-                calendar.principal.clone(),
-                calendar.id.clone(),
-                object,
-                false,
-            )
-            .await?;
+            Self::_put_object(&mut *tx, &calendar.principal, &calendar.id, &object, false).await?;
+
+            sync_token = Some(
+                log_object_operation(
+                    &mut tx,
+                    &calendar.principal,
+                    &calendar.id,
+                    object.get_id(),
+                    ChangeOperation::Add,
+                )
+                .await?,
+            );
         }
 
         tx.commit().await.map_err(crate::Error::from)?;
+
+        if let Some(sync_token) = sync_token
+            && let Err(err) = self.sender.try_send(CollectionOperation {
+                data: CollectionOperationInfo::Content { sync_token },
+                topic: self
+                    .get_calendar(&calendar.principal, &calendar.id, true)
+                    .await?
+                    .push_topic,
+            })
+        {
+            error!("Push notification about imported calendar failed: {err}");
+        }
         Ok(())
     }
 
@@ -689,14 +753,7 @@ impl CalendarStore for SqliteCalendarStore {
             return Err(Error::ReadOnly);
         }
 
-        Self::_put_object(
-            &mut *tx,
-            principal.clone(),
-            cal_id.clone(),
-            object,
-            overwrite,
-        )
-        .await?;
+        Self::_put_object(&mut *tx, &principal, &cal_id, &object, overwrite).await?;
 
         let sync_token = log_object_operation(
             &mut tx,
@@ -774,7 +831,7 @@ impl CalendarStore for SqliteCalendarStore {
             data: CollectionOperationInfo::Content { sync_token },
             topic: self.get_calendar(principal, cal_id, true).await?.push_topic,
         }) {
-            error!("Push notification about deleted calendar failed: {err}");
+            error!("Push notification about restored calendar object failed: {err}");
         }
         Ok(())
     }
@@ -795,6 +852,7 @@ impl CalendarStore for SqliteCalendarStore {
 }
 
 // Logs an operation to the events
+// TODO: Log multiple updates
 async fn log_object_operation(
     tx: &mut Transaction<'_, Sqlite>,
     principal: &str,

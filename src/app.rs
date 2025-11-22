@@ -178,7 +178,9 @@ pub fn make_app<
                                 tracing::debug!("unauthorized");
                             }
                             StatusCode::NOT_FOUND => {
-                                tracing::warn!("client error");
+                                // Clients like GNOME Calendar will try to reach /remote.php/webdav
+                                // quite often clogging up the logs
+                                tracing::info!("client error");
                             }
                             _ => {
                                 tracing::error!("client error");

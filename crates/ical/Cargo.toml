@@ -1,6 +1,7 @@
 [package]
 name = "rustical_ical"
 version.workspace = true
+rust-version.workspace = true
 edition.workspace = true
 description.workspace = true
 repository.workspace = true

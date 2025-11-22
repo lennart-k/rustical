@@ -41,6 +41,11 @@ impl Error {
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
+
+    #[must_use]
+    pub const fn is_not_found(&self) -> bool {
+        matches!(self, Self::NotFound)
+    }
 }
 
 impl IntoResponse for Error {

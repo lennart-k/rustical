@@ -13,7 +13,7 @@ const LOCAL_DATE_TIME: &str = "%Y%m%dT%H%M%S";
 const UTC_DATE_TIME: &str = "%Y%m%dT%H%M%SZ";
 pub const LOCAL_DATE: &str = "%Y%m%d";
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
 pub enum CalDateTimeError {
     #[error(
         "Timezone has X-LIC-LOCATION property to specify a timezone from the Olson database, however its value {0} is invalid"

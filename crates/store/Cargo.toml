@@ -1,6 +1,7 @@
 [package]
 name = "rustical_store"
 version.workspace = true
+rust-version.workspace = true
 edition.workspace = true
 description.workspace = true
 repository.workspace = true
@@ -8,15 +9,16 @@ license.workspace = true
 publish = false
 
 [dependencies]
-anyhow = { workspace = true }
-async-trait = { workspace = true }
-serde = { workspace = true }
-ical = { workspace = true }
-chrono = { workspace = true }
-regex = { workspace = true }
-thiserror = { workspace = true }
-tracing = { workspace = true }
-chrono-tz = { workspace = true }
+anyhow.workspace = true
+async-trait.workspace = true
+serde.workspace = true
+sha2.workspace = true
+ical.workspace = true
+chrono.workspace = true
+regex.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+chrono-tz.workspace = true
 derive_more = { workspace = true, features = ["as_ref"] }
 rustical_xml.workspace = true
 tokio.workspace = true
@@ -33,7 +35,7 @@ tower-sessions.workspace = true
 vtimezones-rs.workspace = true
 
 [dev-dependencies]
-rstest = { workspace = true }
-rstest_reuse = { workspace = true }
+rstest.workspace = true
+rstest_reuse.workspace = true
 rustical_store_sqlite.workspace = true
 tokio.workspace = true

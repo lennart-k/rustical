@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT principal, addressbook_id, id, (deleted_at IS NOT NULL) AS \"deleted: bool\"\n                    FROM addressobjects\n                    WHERE (principal, addressbook_id, id) NOT IN (\n                        SELECT DISTINCT principal, addressbook_id, object_id FROM addressobjectchangelog\n                    )\n                ;\n                ",
+  "describe": {
+    "columns": [
+      {
+        "name": "principal",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "addressbook_id",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "id",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "deleted: bool",
+        "ordinal": 3,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "c138b1143ac04af4930266ffae0990e82005911c11a683ad565e92335e085f4d"
+}

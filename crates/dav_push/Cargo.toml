@@ -1,6 +1,7 @@
 [package]
 name = "rustical_dav_push"
 version.workspace = true
+rust-version.workspace = true
 edition.workspace = true
 description.workspace = true
 repository.workspace = true
@@ -9,15 +10,15 @@ publish = false
 
 [dependencies]
 rustical_xml.workspace = true
-async-trait = { workspace = true }
-futures-util = { workspace = true }
-quick-xml = { workspace = true }
-serde = { workspace = true }
-thiserror = { workspace = true }
-itertools = { workspace = true }
-log = { workspace = true }
-derive_more = { workspace = true }
-tracing = { workspace = true }
+async-trait.workspace = true
+futures-util.workspace = true
+quick-xml.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+itertools.workspace = true
+log.workspace = true
+derive_more.workspace = true
+tracing.workspace = true
 reqwest.workspace = true
 tokio.workspace = true
 rustical_dav.workspace = true
