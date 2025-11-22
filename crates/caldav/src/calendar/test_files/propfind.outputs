@@ -212,6 +212,9 @@ END:VCALENDAR
                     <read/>
                 </privilege>
                 <privilege>
+                    <write-properties/>
+                </privilege>
+                <privilege>
                     <read-acl/>
                 </privilege>
                 <privilege>
