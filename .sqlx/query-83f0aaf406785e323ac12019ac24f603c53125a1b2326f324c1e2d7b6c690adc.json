@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE birthday_calendars SET deleted_at = datetime() WHERE (principal, id) = (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "83f0aaf406785e323ac12019ac24f603c53125a1b2326f324c1e2d7b6c690adc"
+}
