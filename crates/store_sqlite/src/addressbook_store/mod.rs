@@ -467,7 +467,7 @@ impl AddressbookStore for SqliteAddressbookStore {
             .await
             .map_err(crate::Error::from)?;
         Self::_insert_addressbook(&mut *tx, &addressbook).await?;
-        Self::_insert_birthday_calendar(&mut *tx, addressbook).await?;
+        Self::_insert_birthday_calendar(&mut *tx, &addressbook).await?;
         tx.commit().await.map_err(crate::Error::from)?;
         Ok(())
     }

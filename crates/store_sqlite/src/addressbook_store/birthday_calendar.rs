@@ -118,15 +118,16 @@ impl SqliteAddressbookStore {
     #[instrument]
     pub async fn _insert_birthday_calendar<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
-        addressbook: Addressbook,
+        addressbook: &Addressbook,
     ) -> Result<(), rustical_store::Error> {
         let birthday_name = addressbook
             .displayname
+            .as_ref()
             .map(|name| format!("{name} birthdays"));
         let birthday_push_topic = {
             let mut hasher = Sha256::new();
             hasher.update("birthdays");
-            hasher.update(addressbook.push_topic);
+            hasher.update(&addressbook.push_topic);
             format!("{:x}", hasher.finalize())
         };
 

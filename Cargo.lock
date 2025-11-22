@@ -3230,6 +3230,7 @@ dependencies = [
  "rustical_store_sqlite",
  "rustical_xml",
  "serde",
+ "sha2",
  "thiserror 2.0.17",
  "tokio",
  "tower",
