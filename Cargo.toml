@@ -47,6 +47,8 @@ rustical_frontend = { path = "./crates/frontend/" }
 rustical_xml = { path = "./crates/xml/" }
 rustical_oidc = { path = "./crates/oidc/" }
 rustical_ical = { path = "./crates/ical/" }
+rustical_webhooks = { path = "./crates/webhooks/" }
+rustical_types = { path = "./crates/types/" }
 
 matchit = "0.9"
 uuid = { version = "1.11", features = ["v4", "fast-rng"] }
@@ -155,6 +157,8 @@ rustical_store_sqlite.workspace = true
 rustical_caldav.workspace = true
 rustical_carddav.workspace = true
 rustical_frontend.workspace = true
+rustical_webhooks.workspace = true
+rustical_types.workspace = true
 toml.workspace = true
 serde.workspace = true
 tokio.workspace = true
