@@ -2,7 +2,7 @@ use axum::{
     Router,
     extract::{Path, State},
     response::{IntoResponse, Response},
-    routing::{delete, post},
+    routing::{delete, post, get},
 };
 use http::StatusCode;
 use rustical_store::{ WebhookSubscriptionStore};
@@ -55,10 +55,28 @@ async fn handle_upsert<S: WebhookSubscriptionStore>(
     Ok((status, Json(body)).into_response())
 }
 
+async fn handle_get<S: WebhookSubscriptionStore>(
+    State(store): State<Arc<S>>,
+    Path(id): Path<String>,
+) -> Result<Response, rustical_store::Error> {
+    let sub = store.get_subscription(&id).await?;
+    Ok((StatusCode::OK, Json(sub)).into_response())
+}
+
+async fn handle_list<S: WebhookSubscriptionStore>(
+    State(store): State<Arc<S>>,
+    Path((resource_type, resource_id)): Path<(String, String)>,
+) -> Result<Response, rustical_store::Error> {
+    let subs = store.get_subscriptions(&resource_type, &resource_id).await?;
+    Ok((StatusCode::OK, Json(json!({"subscriptions": subs}))).into_response())
+}
+
 // public function to create the webhook subscription router
 pub fn webhook_subscription_router<S: WebhookSubscriptionStore>(store: Arc<S>) -> Router {
     Router::new()
         .route("/webhooks/subscriptions/upsert", post(handle_upsert::<S>))
         .route("/webhooks/subscriptions/delete/:id", delete(handle_delete::<S>))
+        .route("/webhooks/subscriptions/id/:id", get(handle_get::<S>))
+        .route("/webhooks/subscriptions/:resource_type/:resource_id", get(handle_list::<S>))
         .with_state(store)
 }
