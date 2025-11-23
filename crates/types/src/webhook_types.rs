@@ -1,4 +1,5 @@
 use serde_json::{json, Value};
+use serde::{Serialize, Deserialize};
 
 #[derive(Debug)]
 pub enum WebhookEvent {
@@ -36,7 +37,7 @@ pub enum WebhookEvent {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct WebhookSubscription {
     pub id: String,
     pub resource_type: String,

@@ -3268,6 +3268,7 @@ dependencies = [
 name = "rustical_types"
 version = "0.10.5"
 dependencies = [
+ "serde",
  "serde_json",
 ]
 
