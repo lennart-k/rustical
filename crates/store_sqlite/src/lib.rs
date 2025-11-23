@@ -9,6 +9,7 @@ pub mod calendar_store;
 pub mod error;
 pub mod principal_store;
 pub mod subscription_store;
+pub mod webhook_subscription_store;
 
 // Begin statement for write transactions
 pub const BEGIN_IMMEDIATE: &str = "BEGIN IMMEDIATE";

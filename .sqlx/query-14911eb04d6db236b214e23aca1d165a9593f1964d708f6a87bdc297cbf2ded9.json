@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT OR REPLACE INTO webhook_subscriptions (id, target_url, resource_type, resource_id, secret_key) VALUES (?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 5
+    },
+    "nullable": []
+  },
+  "hash": "14911eb04d6db236b214e23aca1d165a9593f1964d708f6a87bdc297cbf2ded9"
+}
