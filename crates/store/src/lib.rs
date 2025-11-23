@@ -10,6 +10,7 @@ mod combined_calendar_store;
 mod contact_birthday_store;
 mod secret;
 mod subscription_store;
+mod webhook_subscription_store;
 pub mod synctoken;
 
 #[cfg(test)]
@@ -21,7 +22,7 @@ pub use combined_calendar_store::CombinedCalendarStore;
 pub use contact_birthday_store::ContactBirthdayStore;
 pub use secret::Secret;
 pub use subscription_store::*;
-
+pub use webhook_subscription_store::*;
 pub use addressbook::Addressbook;
 pub use calendar::{Calendar, CalendarMetadata};
 

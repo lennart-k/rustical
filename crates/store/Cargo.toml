@@ -25,6 +25,7 @@ tokio.workspace = true
 clap.workspace = true
 rustical_dav.workspace = true
 rustical_ical.workspace = true
+rustical_types.workspace = true
 axum.workspace = true
 http.workspace = true
 rrule.workspace = true
