@@ -64,6 +64,20 @@ impl Default for DavPushConfig {
         }
     }
 }
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, default)]
+pub struct WebhookConfig {
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+}
+
+impl Default for WebhookConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(deny_unknown_fields, default)]
@@ -91,6 +105,8 @@ pub struct Config {
     pub tracing: TracingConfig,
     #[serde(default)]
     pub dav_push: DavPushConfig,
+    #[serde(default)]
+    pub webhook: WebhookConfig,
     #[serde(default)]
     pub nextcloud_login: NextcloudLoginConfig,
 }
