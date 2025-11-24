@@ -26,7 +26,6 @@ let EditWebhooksForm = class extends i {
     this.resource_id = "";
     this.subscriptions = [];
     this.editingId = null;
-    this.id = "";
     this.target_url = "";
     this.secret_key = "";
     this.dialog = e();
@@ -48,7 +47,6 @@ let EditWebhooksForm = class extends i {
           <table>
             <thead>
               <tr>
-                <th>ID</th>
                 <th>Target URL</th>
                 <th>Secret?</th>
                 <th>Actions</th>
@@ -57,7 +55,6 @@ let EditWebhooksForm = class extends i {
             <tbody>
               ${this.subscriptions.map((sub) => x`
                 <tr>
-                  <td>${sub.id}</td>
                   <td>${sub.target_url}</td>
                   <td>${sub.secret_key ? "Yes" : "No"}</td>
                   <td>
@@ -71,20 +68,16 @@ let EditWebhooksForm = class extends i {
         <hr>
         <h4>${this.editingId ? "Edit subscription" : "Create subscription"}</h4>
         <form @submit=${this.submit} ${n$1(this.form)}>
-          <label>
-            ID
-            <input type="text" name="id" .value=${this.id} ?disabled=${this.editingId !== null} @input=${(e2) => this.id = e2.target.value} required />
-          </label>
-          <br>
+          <!-- ID removed from form -->
           <label>
             Target URL
             <input type="url" name="target_url" .value=${this.target_url} @input=${(e2) => this.target_url = e2.target.value} required />
           </label>
           <br>
-          <label>
-            Secret (optional)
-            <input type="text" name="secret_key" .value=${this.secret_key} @input=${(e2) => this.secret_key = e2.target.value} />
-          </label>
+            <label>
+              Secret (optional)
+              <input type="text" name="secret_key" .value=${this.secret_key} @input=${(e2) => this.secret_key = e2.target.value} />
+            </label>
           <br>
           <button type="submit">${this.editingId ? "Update" : "Create"}</button>
           <button @click=${(e2) => {
@@ -111,13 +104,11 @@ let EditWebhooksForm = class extends i {
   }
   startEdit(sub) {
     this.editingId = sub.id;
-    this.id = sub.id;
     this.target_url = sub.target_url;
     this.secret_key = sub.secret_key || "";
   }
   clearForm() {
     this.editingId = null;
-    this.id = "";
     this.target_url = "";
     this.secret_key = "";
   }
@@ -133,10 +124,6 @@ let EditWebhooksForm = class extends i {
   }
   async submit(e2) {
     e2.preventDefault();
-    if (!this.id) {
-      alert("Missing id");
-      return;
-    }
     if (!this.target_url) {
       alert("Missing target url");
       return;
@@ -146,12 +133,12 @@ let EditWebhooksForm = class extends i {
       return;
     }
     const payload = {
-      id: this.id,
       target_url: this.target_url,
       resource_type: this.resource_type,
       resource_id: this.resource_id,
       secret_key: this.secret_key ? this.secret_key : null
     };
+    if (this.editingId) payload.id = this.editingId;
     const resp = await fetch("/webhooks/subscriptions/upsert", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -161,8 +148,9 @@ let EditWebhooksForm = class extends i {
       alert(`Upsert failed: ${resp.status} ${await resp.text()}`);
       return;
     }
+    const j = await resp.json();
+    if (!this.editingId) this.editingId = j.id;
     await this.load();
-    this.editingId = this.id;
   }
 };
 __decorateClass([
@@ -177,9 +165,6 @@ __decorateClass([
 __decorateClass([
   r()
 ], EditWebhooksForm.prototype, "editingId", 2);
-__decorateClass([
-  r()
-], EditWebhooksForm.prototype, "id", 2);
 __decorateClass([
   r()
 ], EditWebhooksForm.prototype, "target_url", 2);
