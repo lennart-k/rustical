@@ -150,7 +150,6 @@ ece = { version = "2.3", default-features = false, features = [
 ] }
 openssl = { version = "0.10", features = ["vendored"] }
 async-std = { version = "1.13", features = ["attributes"] }
-uuid = { version = "1", features = ["v4"] }
 
 [dependencies]
 rustical_store.workspace = true
