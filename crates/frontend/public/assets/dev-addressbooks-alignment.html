@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Addressbooks Alignment Demo</title>
+  <link rel="stylesheet" href="./style.css" />
+  <style>
+    body { padding: 16px; font-family: system-ui, sans-serif; }
+    h2 { margin-top: 0; }
+    ul.collection-list { list-style: none; padding: 0; }
+    li.collection-list-item { margin: 12px 0; border: 1px solid var(--border-color, #ccc); border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h2>demo-user's Addressbooks (Alignment Test)</h2>
+  <ul class="collection-list">
+    <!-- Addressbook 1 -->
+    <li class="collection-list-item">
+      <a href="#"></a>
+      <div class="inner">
+        <span class="title">contacts</span>
+        <span class="description">Personal contacts</span>
+        <div class="actions">
+          <form action="#" method="GET"><button type="submit">Download</button></form>
+          <edit-addressbook-form
+            principal="demo-user"
+            addr_id="contacts"
+            displayname="Contacts"
+            description="Personal contacts"
+          ></edit-addressbook-form>
+          <edit-webhooks-form resource_type="addressbook" resource_id="contacts"></edit-webhooks-form>
+          <delete-button trash href="#"></delete-button>
+        </div>
+        <div class="metadata">120 (48 KB) objects, 2 (1 KB) deleted</div>
+      </div>
+    </li>
+    <!-- Addressbook 2 -->
+    <li class="collection-list-item">
+      <a href="#"></a>
+      <div class="inner">
+        <span class="title">team</span>
+        <span class="description">Team shared contacts</span>
+        <div class="actions">
+          <form action="#" method="GET"><button type="submit">Download</button></form>
+          <edit-addressbook-form
+            principal="demo-user"
+            addr_id="team"
+            displayname="Team"
+            description="Team shared contacts"
+          ></edit-addressbook-form>
+          <edit-webhooks-form resource_type="addressbook" resource_id="team"></edit-webhooks-form>
+          <delete-button trash href="#"></delete-button>
+        </div>
+        <div class="metadata">45 (10 KB) objects, 0 deleted</div>
+      </div>
+    </li>
+  </ul>
+
+  <!-- Scripts -->
+  <script type="module" src="./js/edit-addressbook-form.mjs"></script>
+  <script type="module" src="./js/edit-webhooks-form.mjs"></script>
+  <script type="module" src="./js/delete-button.mjs"></script>
+  <script type="module">
+    // Mock fetch for addressbook and webhook interactions
+    const origFetch = window.fetch.bind(window);
+    window.fetch = async (url, opts = {}) => {
+      if (url.startsWith('/carddav/principal/')) {
+        return new Response('OK', { status: 200 });
+      }
+      if (url.startsWith('/webhooks/subscriptions/')) {
+        if (url.includes('/upsert')) {
+          const body = JSON.parse(opts.body || '{}');
+          return new Response(JSON.stringify({ id: body.id || 'generated-id', updated: false, status: 'created' }), { status: 201 });
+        }
+        if (url.includes('/delete/')) {
+          return new Response('Unregistered', { status: 204 });
+        }
+        const parts = url.split('/');
+        const resource_type = parts[3];
+        const resource_id = parts[4];
+        return new Response(JSON.stringify({ subscriptions: [] }), { status: 200 });
+      }
+      return origFetch(url, opts);
+    };
+  </script>
+</body>
+</html>
