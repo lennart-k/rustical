@@ -22,3 +22,4 @@ axum.workspace = true
 http.workspace = true
 reqwest.workspace = true
 rustical_types.workspace = true
+uuid.workspace = true

@@ -19,7 +19,6 @@ export class EditWebhooksForm extends LitElement {
 
   @state() subscriptions: WebhookSubscription[] = []
   @state() editingId: string | null = null
-  @state() id: string = ''
   @state() target_url: string = ''
   @state() secret_key: string = ''
 
@@ -59,11 +58,12 @@ export class EditWebhooksForm extends LitElement {
         <hr>
         <h4>${this.editingId ? 'Edit subscription' : 'Create subscription'}</h4>
         <form @submit=${this.submit} ${ref(this.form)}>
-          <label>
-            ID
-            <input type="text" name="id" .value=${this.id} ?disabled=${this.editingId !== null} @input=${(e: any) => this.id = e.target.value} required />
-          </label>
-          <br>
+          ${this.editingId ? html`
+            <div>
+              <label>ID
+                <input type="text" .value=${this.editingId} disabled />
+              </label>
+            </div>` : ''}
           <label>
             Target URL
             <input type="url" name="target_url" .value=${this.target_url} @input=${(e: any) => this.target_url = e.target.value} required />
@@ -95,14 +95,12 @@ export class EditWebhooksForm extends LitElement {
 
   startEdit(sub: WebhookSubscription) {
     this.editingId = sub.id
-    this.id = sub.id
     this.target_url = sub.target_url
     this.secret_key = sub.secret_key || ''
   }
 
   clearForm() {
     this.editingId = null
-    this.id = ''
     this.target_url = ''
     this.secret_key = ''
   }
@@ -120,16 +118,15 @@ export class EditWebhooksForm extends LitElement {
 
   async submit(e: SubmitEvent) {
     e.preventDefault()
-    if (!this.id) { alert('Missing id'); return }
     if (!this.target_url) { alert('Missing target url'); return }
     if (!this.resource_type || !this.resource_id) { alert('Missing resource info'); return }
-    const payload = {
-      id: this.id,
+    const payload: any = {
       target_url: this.target_url,
       resource_type: this.resource_type,
       resource_id: this.resource_id,
       secret_key: this.secret_key ? this.secret_key : null
     }
+    if (this.editingId) payload.id = this.editingId;
     const resp = await fetch('/webhooks/subscriptions/upsert', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -139,8 +136,9 @@ export class EditWebhooksForm extends LitElement {
       alert(`Upsert failed: ${resp.status} ${await resp.text()}`)
       return
     }
+    const j = await resp.json()
+    if (!this.editingId) this.editingId = j.id; // capture new generated id
     await this.load()
-    this.editingId = this.id // remain in edit mode
   }
 }
 

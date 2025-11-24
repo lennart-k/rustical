@@ -11,6 +11,7 @@ use serde_json::json;
 use serde::Deserialize;
 use axum::extract::Json;
 use rustical_types::WebhookSubscription;
+use uuid::Uuid;
 
 async fn handle_delete<S: WebhookSubscriptionStore>(
     State(store): State<Arc<S>>,
@@ -23,7 +24,7 @@ async fn handle_delete<S: WebhookSubscriptionStore>(
 
 #[derive(Deserialize)]
 struct UpsertPayload {
-    id: String,
+    id: Option<String>,
     target_url: String,
     resource_type: String,
     resource_id: String,
@@ -34,17 +35,14 @@ async fn handle_upsert<S: WebhookSubscriptionStore>(
     State(store): State<Arc<S>>,
     Json(payload): Json<UpsertPayload>,
 ) -> Result<Response, rustical_store::Error> {
-
+    let id = payload.id.unwrap_or_else(|| Uuid::new_v4().to_string());
     let subscription = WebhookSubscription {
-        id: payload.id,
+        id: id.clone(),
         target_url: payload.target_url,
         resource_type: payload.resource_type,
         resource_id: payload.resource_id,
         secret_key: payload.secret_key,
     };
-
-    let id = subscription.id.clone(); 
-
     let already_exists = store.upsert_subscription(subscription).await?;
     let status = if already_exists { StatusCode::OK } else { StatusCode::CREATED };
     let body = json!({
