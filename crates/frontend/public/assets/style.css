@@ -135,6 +135,7 @@ button,
 }
 
 input[type="text"],
+input[type="url"],
 input[type="password"] {
   border: 1px solid black;
   border-radius: 8px;
@@ -283,6 +284,16 @@ ul.collection-list {
         width: fit-content;
         display: flex;
         gap: 12px;
+        align-items: center; /* vertically center mixed element types */
+      }
+
+      .actions form,
+      .actions edit-calendar-form,
+      .actions edit-webhooks-form,
+      .actions delete-button { /* remove default block spacing that shifts button */
+        margin: 0;
+        display: flex;
+        align-items: center;
       }
     }
 
@@ -306,6 +317,30 @@ dialog::backdrop {
   background: color-mix(in srgb, var(--background-color), transparent 50%);
 }
 
+/* Explicit non-nested selectors to ensure alignment applies even without CSS nesting support */
+.inner .actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.inner .actions form {
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.inner .actions > * {
+  display: flex;
+  align-items: center;
+}
+
+.inner .actions button {
+  align-self: center;
+  margin: 0;
+}
+
+
 footer {
   display: flex;
   justify-content: center;
@@ -315,6 +350,7 @@ footer {
 }
 
 input[type="text"],
+input[type="url"],
 input[type="password"],
 input[type="color"],
 select {
@@ -335,6 +371,7 @@ form {
 
   input[type="text"],
   input[type="password"],
+  input[type="url"],
   input[type="color"],
   textarea,
   select {

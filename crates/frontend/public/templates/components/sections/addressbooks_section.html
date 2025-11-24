@@ -22,6 +22,7 @@
           displayname="{{ addressbook.displayname.as_deref().unwrap_or_default() }}"
           description="{{ addressbook.description.as_deref().unwrap_or_default() }}"
         ></edit-addressbook-form>
+        <edit-webhooks-form resource_type="addressbook" resource_id="{{ addressbook.id }}"></edit-webhooks-form>
         <delete-button trash
           href="/carddav/principal/{{ addressbook.principal }}/{{ addressbook.id }}"></delete-button>
       </div>

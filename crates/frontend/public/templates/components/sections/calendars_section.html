@@ -34,6 +34,7 @@
           color="{{ calendar.meta.color.as_deref().unwrap_or_default() }}"
           components="{{ calendar.components | json }}"
         ></edit-calendar-form>
+        <edit-webhooks-form resource_type="calendar" resource_id="{{ calendar.id }}"></edit-webhooks-form>
         <delete-button trash href="/caldav/principal/{{ calendar.principal }}/{{ calendar.id }}"></delete-button>
         {% endif %}
       </div>

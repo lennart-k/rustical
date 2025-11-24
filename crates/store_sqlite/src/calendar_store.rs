@@ -12,6 +12,7 @@ use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};
 use tokio::sync::mpsc::Sender;
 use tracing::{error, instrument, warn};
+use rustical_types::WebhookEvent;
 
 #[derive(Debug, Clone)]
 struct CalendarObjectRow {
@@ -91,6 +92,7 @@ impl From<CalendarRow> for Calendar {
 pub struct SqliteCalendarStore {
     db: SqlitePool,
     sender: Sender<CollectionOperation>,
+    webhook_sender: Sender<WebhookEvent>,
 }
 
 impl SqliteCalendarStore {
@@ -452,6 +454,7 @@ impl SqliteCalendarStore {
         .await
         .map_err(crate::Error::from)?;
 
+
         Ok(())
     }
 
@@ -482,6 +485,7 @@ impl SqliteCalendarStore {
             .await
             .map_err(crate::Error::from)?;
         }
+
         Ok(())
     }
 
@@ -500,6 +504,7 @@ impl SqliteCalendarStore {
         )
         .execute(executor)
         .await.map_err(crate::Error::from)?;
+
         Ok(())
     }
 
@@ -775,6 +780,14 @@ impl CalendarStore for SqliteCalendarStore {
         }) {
             error!("Push notification about deleted calendar failed: {err}");
         }
+
+        let _ = self.webhook_sender.send(WebhookEvent::CalendarObjectUpsert {
+            resource_id: cal_id.to_string(),
+            object_uid: object_id.to_string(),
+            timestamp: chrono::Utc::now().timestamp(),
+            ics_data: object.get_ics().to_string(),
+        }).await;
+
         Ok(())
     }
 
@@ -804,6 +817,12 @@ impl CalendarStore for SqliteCalendarStore {
         }) {
             error!("Push notification about deleted calendar failed: {err}");
         }
+
+        let _ = self.webhook_sender.send(WebhookEvent::CalendarObjectDelete {
+            resource_id: cal_id.to_string(),
+            object_uid: id.to_string(),
+            timestamp: chrono::Utc::now().timestamp(),
+        }).await;
         Ok(())
     }
 
@@ -833,6 +852,12 @@ impl CalendarStore for SqliteCalendarStore {
         }) {
             error!("Push notification about restored calendar object failed: {err}");
         }
+
+        let _ = self.webhook_sender.send(WebhookEvent::CalendarObjectRestore {
+            resource_id: cal_id.to_string(),
+            object_uid: object_id.to_string(),
+            timestamp: chrono::Utc::now().timestamp(),
+        }).await;
         Ok(())
     }
 

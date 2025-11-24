@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Webhook Subscriptions Test</title>
+  <link rel="stylesheet" href="./style.css" />
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 1rem; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 0.4rem; font-size: 0.9rem; }
+    dialog { border: 1px solid #666; padding: 1rem; }
+    button { margin-right: 0.25rem; }
+  </style>
+</head>
+<body>
+  <h1>Standalone Webhooks Component Demo</h1>
+  <p>This page mocks the backend API so you can test the UI without running the full server.</p>
+
+  <edit-webhooks-form resource_type="calendar" resource_id="demo-cal"></edit-webhooks-form>
+
+  <script type="module" src="./js/edit-webhooks-form.mjs"></script>
+  <script type="module">
+    // Simple in-memory mock store
+    const store = new Map();
+    // Seed example data
+    store.set('sub-1', { id: 'sub-1', target_url: 'https://example.com/hook1', resource_type: 'calendar', resource_id: 'demo-cal', secret_key: null });
+    store.set('sub-2', { id: 'sub-2', target_url: 'https://example.com/hook2', resource_type: 'calendar', resource_id: 'demo-cal', secret_key: 'sekret' });
+
+    const delay = ms => new Promise(r => setTimeout(r, ms));
+
+    const origFetch = window.fetch.bind(window);
+    window.fetch = async (url, opts = {}) => {
+      const { method = 'GET' } = opts;
+      // List
+      const listMatch = url.match(/\/webhooks\/subscriptions\/([^/]+)\/([^/]+)/);
+      if (method === 'GET' && listMatch) {
+        const [, resource_type, resource_id] = listMatch;
+        const subs = Array.from(store.values()).filter(s => s.resource_type === resource_type && s.resource_id === resource_id);
+        return new Response(JSON.stringify({ subscriptions: subs }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      // Get by id
+      const getMatch = url.match(/\/webhooks\/subscriptions\/id\/([^/]+)/);
+      if (method === 'GET' && getMatch) {
+        const [, id] = getMatch;
+        if (!store.has(id)) return new Response('Not found', { status: 404 });
+        return new Response(JSON.stringify(store.get(id)), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      // Upsert
+      if (method === 'POST' && url === '/webhooks/subscriptions/upsert') {
+        const body = JSON.parse(opts.body || '{}');
+        store.set(body.id, body);
+        return new Response(JSON.stringify({ id: body.id, updated: true, status: 'updated' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      // Delete
+      const delMatch = url.match(/\/webhooks\/subscriptions\/delete\/([^/]+)/);
+      if (method === 'DELETE' && delMatch) {
+        const [, id] = delMatch;
+        store.delete(id);
+        return new Response('Unregistered', { status: 204 });
+      }
+      return origFetch(url, opts);
+    };
+  </script>
+</body>
+</html>

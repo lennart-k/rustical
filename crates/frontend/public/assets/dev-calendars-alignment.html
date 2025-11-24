@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Calendars Alignment Demo</title>
+  <link rel="stylesheet" href="./style.css" />
+  <style>
+    body { padding: 16px; font-family: system-ui, sans-serif; }
+    h2 { margin-top: 0; }
+    ul.collection-list { list-style: none; padding: 0; }
+    li.collection-list-item { margin: 12px 0; border: 1px solid var(--border-color, #ccc); border-radius: 8px; }
+    .color-chip { border-radius: 0 8px 8px 0; }
+  </style>
+</head>
+<body>
+  <h2>demo-user's Calendars (Alignment Test)</h2>
+  <ul class="collection-list">
+    <!-- Calendar 1 -->
+    <li class="collection-list-item" style="--color: #3b82f6;">
+      <a href="#"></a>
+      <div class="inner">
+        <span class="title">work-calendar
+          <div class="component-chips"><span class="chip">VEVENT</span><span class="chip">VTODO</span></div>
+        </span>
+        <span class="description">Work related events</span>
+        <div class="actions">
+          <form action="#" method="GET"><button type="submit">Download</button></form>
+          <edit-calendar-form
+            principal="demo-user"
+            cal_id="work"
+            timezone_id="UTC"
+            displayname="Work Calendar"
+            description="Work related events"
+            color="#3b82f6"
+            components='["VEVENT","VTODO"]'
+          ></edit-calendar-form>
+          <edit-webhooks-form resource_type="calendar" resource_id="work"></edit-webhooks-form>
+          <delete-button trash href="#"></delete-button>
+        </div>
+        <div class="metadata">42 (12 KB) objects, 0 deleted</div>
+        <div class="color-chip"></div>
+      </div>
+    </li>
+    <!-- Calendar 2 -->
+    <li class="collection-list-item" style="--color: #10b981;">
+      <a href="#"></a>
+      <div class="inner">
+        <span class="title">personal-calendar
+          <div class="component-chips"><span class="chip">VEVENT</span></div>
+        </span>
+        <span class="description">Personal events</span>
+        <div class="actions">
+          <form action="#" method="GET"><button type="submit">Download</button></form>
+          <edit-calendar-form
+            principal="demo-user"
+            cal_id="personal"
+            timezone_id="Europe/Berlin"
+            displayname="Personal Calendar"
+            description="Personal events"
+            color="#10b981"
+            components='["VEVENT"]'
+          ></edit-calendar-form>
+          <edit-webhooks-form resource_type="calendar" resource_id="personal"></edit-webhooks-form>
+          <delete-button trash href="#"></delete-button>
+        </div>
+        <div class="metadata">15 (4 KB) objects, 1 (0.2 KB) deleted</div>
+        <div class="color-chip"></div>
+      </div>
+    </li>
+  </ul>
+
+  <!-- Scripts -->
+  <script type="module" src="./js/edit-calendar-form.mjs"></script>
+  <script type="module" src="./js/edit-webhooks-form.mjs"></script>
+  <script type="module" src="./js/delete-button.mjs"></script>
+  <script type="module">
+    // Mock fetch so forms don't error.
+    const origFetch = window.fetch.bind(window);
+    window.fetch = async (url, opts = {}) => {
+      if (url.startsWith('/caldav/principal/')) {
+        return new Response('OK', { status: 200 });
+      }
+      if (url.startsWith('/webhooks/subscriptions/')) {
+        if (url.includes('/upsert')) {
+          const body = JSON.parse(opts.body || '{}');
+          return new Response(JSON.stringify({ id: body.id || 'generated-id', updated: false, status: 'created' }), { status: 201 });
+        }
+        if (url.includes('/delete/')) {
+          return new Response('Unregistered', { status: 204 });
+        }
+        // list endpoint pattern /webhooks/subscriptions/:resource_type/:resource_id
+        const parts = url.split('/');
+        const resource_type = parts[3];
+        const resource_id = parts[4];
+        return new Response(JSON.stringify({ subscriptions: [] }), { status: 200 });
+      }
+      return origFetch(url, opts);
+    };
+  </script>
+</body>
+</html>

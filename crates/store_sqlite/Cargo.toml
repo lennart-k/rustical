@@ -29,4 +29,5 @@ password-hash.workspace = true
 uuid.workspace = true
 pbkdf2.workspace = true
 rustical_ical.workspace = true
+rustical_types.workspace = true
 rstest = { workspace = true, optional = true }

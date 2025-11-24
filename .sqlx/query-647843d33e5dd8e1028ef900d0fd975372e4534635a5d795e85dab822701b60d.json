@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id, target_url, resource_type, resource_id, secret_key\n                FROM webhook_subscriptions\n                WHERE (id) = (?)",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "target_url",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "resource_type",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "resource_id",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "secret_key",
+        "ordinal": 4,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "647843d33e5dd8e1028ef900d0fd975372e4534635a5d795e85dab822701b60d"
+}

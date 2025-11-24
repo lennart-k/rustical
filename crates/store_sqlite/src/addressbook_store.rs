@@ -11,6 +11,8 @@ use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};
 use tokio::sync::mpsc::Sender;
 use tracing::{error, instrument, warn};
 
+use rustical_types::WebhookEvent;
+
 #[derive(Debug, Clone)]
 struct AddressObjectRow {
     id: String,
@@ -29,6 +31,7 @@ impl TryFrom<AddressObjectRow> for AddressObject {
 pub struct SqliteAddressbookStore {
     db: SqlitePool,
     sender: Sender<CollectionOperation>,
+    webhook_sender: Sender<WebhookEvent>,
 }
 
 impl SqliteAddressbookStore {
@@ -341,6 +344,7 @@ impl SqliteAddressbookStore {
         addressbook_id: &str,
         object: &AddressObject,
         overwrite: bool,
+        webhook_send: tokio::sync::mpsc::Sender<WebhookEvent>,
     ) -> Result<(), rustical_store::Error> {
         let (object_id, vcf) = (object.get_id(), object.get_vcf());
 
@@ -366,6 +370,12 @@ impl SqliteAddressbookStore {
         .await
         .map_err(crate::Error::from)?;
 
+        let _ = webhook_send.send(WebhookEvent::AddressbookObjectUpsert {
+            resource_id: addressbook_id.to_string(),
+            object_uid: object_id.to_string(),
+            timestamp: chrono::Utc::now().timestamp(),
+            vcf_data: vcf.to_string(),
+        }).await;
         Ok(())
     }
 
@@ -375,6 +385,7 @@ impl SqliteAddressbookStore {
         addressbook_id: &str,
         object_id: &str,
         use_trashbin: bool,
+        webhook_send: tokio::sync::mpsc::Sender<WebhookEvent>,
     ) -> Result<(), rustical_store::Error> {
         if use_trashbin {
             sqlx::query!(
@@ -395,6 +406,12 @@ impl SqliteAddressbookStore {
             .await
             .map_err(crate::Error::from)?;
         }
+
+        let _ = webhook_send.send(WebhookEvent::AddressbookObjectDelete {
+            resource_id: addressbook_id.to_string(),
+            object_uid: object_id.to_string(),
+            timestamp: chrono::Utc::now().timestamp(),
+        }).await;
         Ok(())
     }
 
@@ -403,6 +420,7 @@ impl SqliteAddressbookStore {
         principal: &str,
         addressbook_id: &str,
         object_id: &str,
+        webhook_send: tokio::sync::mpsc::Sender<WebhookEvent>,
     ) -> Result<(), rustical_store::Error> {
         sqlx::query!(
             r#"UPDATE addressobjects SET deleted_at = NULL, updated_at = datetime() WHERE (principal, addressbook_id, id) = (?, ?, ?)"#,
@@ -412,6 +430,14 @@ impl SqliteAddressbookStore {
         )
         .execute(executor)
         .await.map_err(crate::Error::from)?;
+        
+        
+
+        let _ = webhook_send.send(WebhookEvent::AddressbookObjectRestore {
+            resource_id: addressbook_id.to_string(),
+            object_uid: object_id.to_string(),
+            timestamp: chrono::Utc::now().timestamp(),
+        }).await;
         Ok(())
     }
 }
@@ -575,7 +601,7 @@ impl AddressbookStore for SqliteAddressbookStore {
 
         let object_id = object.get_id().to_owned();
 
-        Self::_put_object(&mut *tx, &principal, &addressbook_id, &object, overwrite).await?;
+        Self::_put_object(&mut *tx, &principal, &addressbook_id, &object, overwrite, self.webhook_sender.clone()).await?;
 
         let sync_token = log_object_operation(
             &mut tx,
@@ -616,7 +642,7 @@ impl AddressbookStore for SqliteAddressbookStore {
             .await
             .map_err(crate::Error::from)?;
 
-        Self::_delete_object(&mut *tx, principal, addressbook_id, object_id, use_trashbin).await?;
+        Self::_delete_object(&mut *tx, principal, addressbook_id, object_id, use_trashbin, self.webhook_sender.clone()).await?;
 
         let sync_token = log_object_operation(
             &mut tx,
@@ -655,7 +681,7 @@ impl AddressbookStore for SqliteAddressbookStore {
             .await
             .map_err(crate::Error::from)?;
 
-        Self::_restore_object(&mut *tx, principal, addressbook_id, object_id).await?;
+        Self::_restore_object(&mut *tx, principal, addressbook_id, object_id, self.webhook_sender.clone()).await?;
 
         let sync_token = log_object_operation(
             &mut tx,
@@ -717,6 +743,7 @@ impl AddressbookStore for SqliteAddressbookStore {
                 &addressbook.id,
                 &object,
                 false,
+                self.webhook_sender.clone(),
             )
             .await?;
 

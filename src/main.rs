@@ -13,11 +13,13 @@ use figment::Figment;
 use figment::providers::{Env, Format, Toml};
 use rustical_dav_push::DavPushController;
 use rustical_store::auth::AuthenticationProvider;
-use rustical_store::{AddressbookStore, CalendarStore, CollectionOperation, SubscriptionStore};
+use rustical_store::{AddressbookStore, CalendarStore, CollectionOperation, SubscriptionStore, WebhookSubscriptionStore};
 use rustical_store_sqlite::addressbook_store::SqliteAddressbookStore;
 use rustical_store_sqlite::calendar_store::SqliteCalendarStore;
 use rustical_store_sqlite::principal_store::SqlitePrincipalStore;
 use rustical_store_sqlite::{SqliteStore, create_db_pool};
+use rustical_types::WebhookEvent;
+use rustical_webhooks::controller::WebhookController;
 use setup_tracing::setup_tracing;
 use std::sync::Arc;
 use tokio::sync::mpsc::Receiver;
@@ -59,27 +61,34 @@ async fn get_data_stores(
     Arc<impl AddressbookStore>,
     Arc<impl CalendarStore>,
     Arc<impl SubscriptionStore>,
+    Arc<impl WebhookSubscriptionStore>,
     Arc<impl AuthenticationProvider>,
     Receiver<CollectionOperation>,
+    Receiver<WebhookEvent>,
 )> {
     Ok(match &config {
         DataStoreConfig::Sqlite(SqliteDataStoreConfig { db_url }) => {
             let db = create_db_pool(db_url, migrate).await?;
             // Channel to watch for changes (for DAV Push)
             let (send, recv) = tokio::sync::mpsc::channel(1000);
+            // Channel to send webhook events
+            let (webhook_send, webhook_recv) = tokio::sync::mpsc::channel::<WebhookEvent>(1000);
 
-            let addressbook_store = Arc::new(SqliteAddressbookStore::new(db.clone(), send.clone()));
+            let addressbook_store = Arc::new(SqliteAddressbookStore::new(db.clone(), send.clone(), webhook_send.clone()));
             addressbook_store.repair_orphans().await?;
-            let cal_store = Arc::new(SqliteCalendarStore::new(db.clone(), send));
+            let cal_store = Arc::new(SqliteCalendarStore::new(db.clone(), send, webhook_send.clone()));
             cal_store.repair_orphans().await?;
             let subscription_store = Arc::new(SqliteStore::new(db.clone()));
+            let webhook_subscription_store = Arc::new(SqliteStore::new(db.clone()));
             let principal_store = Arc::new(SqlitePrincipalStore::new(db));
             (
                 addressbook_store,
                 cal_store,
                 subscription_store,
+                webhook_subscription_store,
                 principal_store,
                 recv,
+                webhook_recv
             )
         }
     })
@@ -107,7 +116,7 @@ async fn main() -> Result<()> {
 
             setup_tracing(&config.tracing);
 
-            let (addr_store, cal_store, subscription_store, principal_store, update_recv) =
+            let (addr_store, cal_store, subscription_store, webhook_subscription_store, principal_store, update_recv, webhook_recv) =
                 get_data_stores(!args.no_migrations, &config.data_store).await?;
 
             let mut tasks = vec![];
@@ -122,15 +131,27 @@ async fn main() -> Result<()> {
                 }));
             }
 
+            if config.webhook.enabled {
+                let webhook_controller = WebhookController::new(
+                    webhook_recv,
+                    webhook_subscription_store.clone(),
+                );
+                tasks.push(tokio::spawn(async move {
+                    webhook_controller.run().await;
+                }));
+            }   
+
             let app = make_app(
                 addr_store.clone(),
                 cal_store.clone(),
                 subscription_store.clone(),
+                webhook_subscription_store.clone(),
                 principal_store.clone(),
                 config.frontend.clone(),
                 config.oidc.clone(),
                 &config.nextcloud_login,
                 config.dav_push.enabled,
+                config.webhook.enabled, 
                 config.http.session_cookie_samesite_strict,
                 config.http.payload_limit_mb,
             );

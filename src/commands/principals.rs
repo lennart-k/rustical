@@ -64,7 +64,7 @@ pub async fn cmd_principals(args: PrincipalsArgs) -> anyhow::Result<()> {
         .merge(Env::prefixed("RUSTICAL_").split("__"))
         .extract()?;
 
-    let (_, _, _, principal_store, _) = get_data_stores(true, &config.data_store).await?;
+    let (_, _, _, _, principal_store, _, _) = get_data_stores(true, &config.data_store).await?;
 
     match args.command {
         Command::List => {

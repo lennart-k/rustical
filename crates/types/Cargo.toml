@@ -1,0 +1,13 @@
+[package]
+name = "rustical_types"
+version.workspace = true
+rust-version.workspace = true
+edition.workspace = true
+description.workspace = true
+repository.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+serde_json.workspace = true
+serde.workspace = true
