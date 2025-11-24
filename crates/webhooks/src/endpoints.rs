@@ -75,8 +75,8 @@ async fn handle_list<S: WebhookSubscriptionStore>(
 pub fn webhook_subscription_router<S: WebhookSubscriptionStore>(store: Arc<S>) -> Router {
     Router::new()
         .route("/webhooks/subscriptions/upsert", post(handle_upsert::<S>))
-        .route("/webhooks/subscriptions/delete/:id", delete(handle_delete::<S>))
-        .route("/webhooks/subscriptions/id/:id", get(handle_get::<S>))
-        .route("/webhooks/subscriptions/:resource_type/:resource_id", get(handle_list::<S>))
+        .route("/webhooks/subscriptions/delete/{id}", delete(handle_delete::<S>))
+        .route("/webhooks/subscriptions/id/{id}", get(handle_get::<S>))
+        .route("/webhooks/subscriptions/{resource_type}/{resource_id}", get(handle_list::<S>))
         .with_state(store)
 }
