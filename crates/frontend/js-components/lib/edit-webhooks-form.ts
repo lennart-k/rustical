@@ -35,7 +35,6 @@ export class EditWebhooksForm extends LitElement {
           <table>
             <thead>
               <tr>
-                <th>ID</th>
                 <th>Target URL</th>
                 <th>Secret?</th>
                 <th>Actions</th>
@@ -44,7 +43,6 @@ export class EditWebhooksForm extends LitElement {
             <tbody>
               ${this.subscriptions.map(sub => html`
                 <tr>
-                  <td>${sub.id}</td>
                   <td>${sub.target_url}</td>
                   <td>${sub.secret_key ? 'Yes' : 'No'}</td>
                   <td>
@@ -58,21 +56,16 @@ export class EditWebhooksForm extends LitElement {
         <hr>
         <h4>${this.editingId ? 'Edit subscription' : 'Create subscription'}</h4>
         <form @submit=${this.submit} ${ref(this.form)}>
-          ${this.editingId ? html`
-            <div>
-              <label>ID
-                <input type="text" .value=${this.editingId} disabled />
-              </label>
-            </div>` : ''}
+          <!-- ID removed from form -->
           <label>
             Target URL
             <input type="url" name="target_url" .value=${this.target_url} @input=${(e: any) => this.target_url = e.target.value} required />
           </label>
           <br>
-          <label>
-            Secret (optional)
-            <input type="text" name="secret_key" .value=${this.secret_key} @input=${(e: any) => this.secret_key = e.target.value} />
-          </label>
+            <label>
+              Secret (optional)
+              <input type="text" name="secret_key" .value=${this.secret_key} @input=${(e: any) => this.secret_key = e.target.value} />
+            </label>
           <br>
           <button type="submit">${this.editingId ? 'Update' : 'Create'}</button>
           <button @click=${(e: Event) => { e.preventDefault(); this.clearForm(); }} type="button">New</button>
