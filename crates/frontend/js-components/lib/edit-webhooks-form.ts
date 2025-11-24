@@ -30,20 +30,11 @@ export class EditWebhooksForm extends LitElement {
       <button @click=${() => { this.dialog.value.showModal(); this.load(); }}>Webhooks</button>
       <dialog ${ref(this.dialog)}>
         <style>
-          form label {
-            display:block;
-            margin:.75rem 0 .25rem;
-            font-weight:600;
-          }
-          form input[type=url],
-          form input[type=text] {
-            display:block;
-            width:100%;
-            box-sizing:border-box;
-            padding:.45rem .55rem;
-            margin:0;
-          }
-          form button { margin-right:.5rem; margin-top:.75rem; }
+          form .field { margin-bottom: .85rem; }
+          form .field label { display:block; font-weight:600; margin-bottom:.35rem; }
+          form .field input[type=url],
+          form .field input[type=text] { display:block; width:100%; box-sizing:border-box; padding:.45rem .55rem; }
+          form .actions-row { margin-top:.5rem; display:flex; gap:.5rem; flex-wrap:wrap; }
         </style>
         <h3>Manage webhooks</h3>
         <div class="subscriptions">
@@ -72,13 +63,19 @@ export class EditWebhooksForm extends LitElement {
         <hr>
         <h4>${this.editingId ? 'Edit subscription' : 'Create subscription'}</h4>
         <form @submit=${this.submit} ${ref(this.form)}>
-          <label>Target URL</label>
-          <input type="url" name="target_url" .value=${this.target_url} @input=${(e: any) => this.target_url = e.target.value} required />
-          <label>Secret (optional)</label>
-          <input type="text" name="secret_key" .value=${this.secret_key} @input=${(e: any) => this.secret_key = e.target.value} />
-          <button type="submit">${this.editingId ? 'Update' : 'Create'}</button>
-          <button @click=${(e: Event) => { e.preventDefault(); this.clearForm(); }} type="button">New</button>
-          <button @click=${(e: Event) => { e.preventDefault(); this.dialog.value.close(); }} type="button" class="cancel">Close</button>
+          <div class="field">
+            <label>Target URL</label>
+            <input type="url" name="target_url" .value=${this.target_url} @input=${(e: any) => this.target_url = e.target.value} required />
+          </div>
+          <div class="field">
+            <label>Secret (optional)</label>
+            <input type="text" name="secret_key" .value=${this.secret_key} @input=${(e: any) => this.secret_key = e.target.value} />
+          </div>
+          <div class="actions-row">
+            <button type="submit">${this.editingId ? 'Update' : 'Create'}</button>
+            <button @click=${(e: Event) => { e.preventDefault(); this.clearForm(); }} type="button">New</button>
+            <button @click=${(e: Event) => { e.preventDefault(); this.dialog.value.close(); }} type="button" class="cancel">Close</button>
+          </div>
         </form>
       </dialog>
     `

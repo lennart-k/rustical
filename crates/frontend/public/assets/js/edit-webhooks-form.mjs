@@ -42,20 +42,11 @@ let EditWebhooksForm = class extends i {
     }}>Webhooks</button>
       <dialog ${n$1(this.dialog)}>
         <style>
-          form label {
-            display:block;
-            margin:.75rem 0 .25rem;
-            font-weight:600;
-          }
-          form input[type=url],
-          form input[type=text] {
-            display:block;
-            width:100%;
-            box-sizing:border-box;
-            padding:.45rem .55rem;
-            margin:0;
-          }
-          form button { margin-right:.5rem; margin-top:.75rem; }
+          form .field { margin-bottom: .85rem; }
+          form .field label { display:block; font-weight:600; margin-bottom:.35rem; }
+          form .field input[type=url],
+          form .field input[type=text] { display:block; width:100%; box-sizing:border-box; padding:.45rem .55rem; }
+          form .actions-row { margin-top:.5rem; display:flex; gap:.5rem; flex-wrap:wrap; }
         </style>
         <h3>Manage webhooks</h3>
         <div class="subscriptions">
@@ -84,19 +75,25 @@ let EditWebhooksForm = class extends i {
         <hr>
         <h4>${this.editingId ? "Edit subscription" : "Create subscription"}</h4>
         <form @submit=${this.submit} ${n$1(this.form)}>
-          <label>Target URL</label>
-          <input type="url" name="target_url" .value=${this.target_url} @input=${(e2) => this.target_url = e2.target.value} required />
-          <label>Secret (optional)</label>
-          <input type="text" name="secret_key" .value=${this.secret_key} @input=${(e2) => this.secret_key = e2.target.value} />
-          <button type="submit">${this.editingId ? "Update" : "Create"}</button>
-          <button @click=${(e2) => {
+          <div class="field">
+            <label>Target URL</label>
+            <input type="url" name="target_url" .value=${this.target_url} @input=${(e2) => this.target_url = e2.target.value} required />
+          </div>
+          <div class="field">
+            <label>Secret (optional)</label>
+            <input type="text" name="secret_key" .value=${this.secret_key} @input=${(e2) => this.secret_key = e2.target.value} />
+          </div>
+          <div class="actions-row">
+            <button type="submit">${this.editingId ? "Update" : "Create"}</button>
+            <button @click=${(e2) => {
       e2.preventDefault();
       this.clearForm();
     }} type="button">New</button>
-          <button @click=${(e2) => {
+            <button @click=${(e2) => {
       e2.preventDefault();
       this.dialog.value.close();
     }} type="button" class="cancel">Close</button>
+          </div>
         </form>
       </dialog>
     `;
