@@ -41,6 +41,22 @@ let EditWebhooksForm = class extends i {
       this.load();
     }}>Webhooks</button>
       <dialog ${n$1(this.dialog)}>
+        <style>
+          form label {
+            display:block;
+            margin:.75rem 0 .25rem;
+            font-weight:600;
+          }
+          form input[type=url],
+          form input[type=text] {
+            display:block;
+            width:100%;
+            box-sizing:border-box;
+            padding:.45rem .55rem;
+            margin:0;
+          }
+          form button { margin-right:.5rem; margin-top:.75rem; }
+        </style>
         <h3>Manage webhooks</h3>
         <div class="subscriptions">
           ${this.subscriptions.length ? x`
@@ -68,17 +84,10 @@ let EditWebhooksForm = class extends i {
         <hr>
         <h4>${this.editingId ? "Edit subscription" : "Create subscription"}</h4>
         <form @submit=${this.submit} ${n$1(this.form)}>
-          <!-- ID removed from form -->
-          <label>
-            Target URL
-            <input type="url" name="target_url" .value=${this.target_url} @input=${(e2) => this.target_url = e2.target.value} required />
-          </label>
-          <br>
-            <label>
-              Secret (optional)
-              <input type="text" name="secret_key" .value=${this.secret_key} @input=${(e2) => this.secret_key = e2.target.value} />
-            </label>
-          <br>
+          <label>Target URL</label>
+          <input type="url" name="target_url" .value=${this.target_url} @input=${(e2) => this.target_url = e2.target.value} required />
+          <label>Secret (optional)</label>
+          <input type="text" name="secret_key" .value=${this.secret_key} @input=${(e2) => this.secret_key = e2.target.value} />
           <button type="submit">${this.editingId ? "Update" : "Create"}</button>
           <button @click=${(e2) => {
       e2.preventDefault();
