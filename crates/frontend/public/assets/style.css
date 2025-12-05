@@ -53,6 +53,11 @@ a {
   color: var(--text-on-background-color);
 }
 
+a,
+button {
+  cursor: pointer;
+}
+
 header {
   background: var(--background-darker);
   min-height: 60px;
@@ -239,10 +244,8 @@ ul.collection-list {
       z-index: 1;
       pointer-events: none;
 
-      a,
       button {
         pointer-events: all;
-        cursor: pointer;
       }
 
       .title {
