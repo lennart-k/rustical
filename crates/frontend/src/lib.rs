@@ -12,7 +12,7 @@ use http::{Method, StatusCode};
 use routes::{addressbooks::route_addressbooks, calendars::route_calendars};
 use rustical_oidc::{OidcConfig, OidcServiceConfig, route_get_oidc_callback, route_post_oidc};
 use rustical_store::{
-    AddressbookStore, CalendarStore,
+    AddressbookStore, CalendarStore, PrefixedCalendarStore,
     auth::{AuthenticationProvider, middleware::AuthenticationLayer},
 };
 use std::sync::Arc;
@@ -39,7 +39,11 @@ use crate::routes::{
 #[cfg(not(feature = "dev"))]
 use assets::{Assets, EmbedService};
 
-pub fn frontend_router<AP: AuthenticationProvider, CS: CalendarStore, AS: AddressbookStore>(
+pub fn frontend_router<
+    AP: AuthenticationProvider,
+    CS: CalendarStore,
+    AS: AddressbookStore + PrefixedCalendarStore,
+>(
     prefix: &'static str,
     auth_provider: Arc<AP>,
     cal_store: Arc<CS>,
