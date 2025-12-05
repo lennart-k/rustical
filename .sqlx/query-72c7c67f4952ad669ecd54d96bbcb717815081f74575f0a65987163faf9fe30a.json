@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO birthday_calendars (principal, id, displayname, description, \"order\", color, push_topic)\n                VALUES (?, ?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 7
+    },
+    "nullable": []
+  },
+  "hash": "72c7c67f4952ad669ecd54d96bbcb717815081f74575f0a65987163faf9fe30a"
+}
