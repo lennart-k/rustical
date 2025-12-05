@@ -115,11 +115,8 @@ impl SqliteAddressbookStore {
         .map_err(crate::Error::from).map(|cals| cals.into_iter().map(BirthdayCalendarJoinRow::into).collect())?)
     }
 
-    #[instrument]
-    pub async fn _insert_birthday_calendar<'e, E: Executor<'e, Database = Sqlite>>(
-        executor: E,
-        addressbook: &Addressbook,
-    ) -> Result<(), rustical_store::Error> {
+    #[must_use]
+    pub fn default_birthday_calendar(addressbook: Addressbook) -> Calendar {
         let birthday_name = addressbook
             .displayname
             .as_ref()
@@ -130,14 +127,44 @@ impl SqliteAddressbookStore {
             hasher.update(&addressbook.push_topic);
             format!("{:x}", hasher.finalize())
         };
+        Calendar {
+            principal: addressbook.principal,
+            meta: CalendarMetadata {
+                displayname: birthday_name,
+                order: 0,
+                description: None,
+                color: None,
+            },
+            id: format!("{}{}", Self::PREFIX, addressbook.id),
+            components: vec![CalendarObjectType::Event],
+            timezone_id: None,
+            deleted_at: None,
+            synctoken: Default::default(),
+            subscription_url: None,
+            push_topic: birthday_push_topic,
+        }
+    }
+
+    #[instrument]
+    pub async fn _insert_birthday_calendar<'e, E: Executor<'e, Database = Sqlite>>(
+        executor: E,
+        calendar: &Calendar,
+    ) -> Result<(), rustical_store::Error> {
+        let id = calendar
+            .id
+            .strip_prefix(BIRTHDAYS_PREFIX)
+            .ok_or(Error::NotFound)?;
 
         sqlx::query!(
-            r#"INSERT INTO birthday_calendars (principal, id, displayname, push_topic)
-                VALUES (?, ?, ?, ?)"#,
-            addressbook.principal,
-            addressbook.id,
-            birthday_name,
-            birthday_push_topic,
+            r#"INSERT INTO birthday_calendars (principal, id, displayname, description, "order", color, push_topic)
+                VALUES (?, ?, ?, ?, ?, ?, ?)"#,
+            calendar.principal,
+            id,
+            calendar.meta.displayname,
+            calendar.meta.description,
+            calendar.meta.order,
+            calendar.meta.color,
+            calendar.push_topic,
         )
         .execute(executor)
         .await
@@ -256,8 +283,8 @@ impl CalendarStore for SqliteAddressbookStore {
     }
 
     #[instrument]
-    async fn insert_calendar(&self, _calendar: Calendar) -> Result<(), Error> {
-        Err(Error::ReadOnly)
+    async fn insert_calendar(&self, calendar: Calendar) -> Result<(), Error> {
+        Self::_insert_birthday_calendar(&self.db, &calendar).await
     }
 
     #[instrument]
