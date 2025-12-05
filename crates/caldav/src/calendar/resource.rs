@@ -188,9 +188,6 @@ impl Resource for CalendarResource {
     }
 
     fn set_prop(&mut self, prop: Self::Prop) -> Result<(), rustical_dav::Error> {
-        if self.read_only {
-            return Err(rustical_dav::Error::PropReadOnly);
-        }
         match prop {
             CalendarPropWrapper::Calendar(prop) => match prop {
                 CalendarProp::CalendarColor(color) => {
@@ -263,9 +260,6 @@ impl Resource for CalendarResource {
     }
 
     fn remove_prop(&mut self, prop: &CalendarPropWrapperName) -> Result<(), rustical_dav::Error> {
-        if self.read_only {
-            return Err(rustical_dav::Error::PropReadOnly);
-        }
         match prop {
             CalendarPropWrapperName::Calendar(prop) => match prop {
                 CalendarPropName::CalendarColor => {
