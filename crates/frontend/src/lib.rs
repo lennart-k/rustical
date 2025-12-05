@@ -9,7 +9,10 @@ use axum::{
 };
 use headers::{ContentType, HeaderMapExt};
 use http::{Method, StatusCode};
-use routes::{addressbooks::route_addressbooks, calendars::route_calendars};
+use routes::{
+    addressbooks::route_addressbooks, calendar_preview::preview_calendar,
+    calendars::route_calendars,
+};
 use rustical_oidc::{OidcConfig, OidcServiceConfig, route_get_oidc_callback, route_post_oidc};
 use rustical_store::{
     AddressbookStore, CalendarStore, PrefixedCalendarStore,
@@ -64,6 +67,10 @@ pub fn frontend_router<
         // Calendar
         .route("/{user}/calendar", get(route_calendars::<CS>))
         .route("/{user}/calendar/{calendar}", get(route_calendar::<CS>))
+        .route(
+            "/{user}/calendar/{calendar}/preview",
+            get(preview_calendar::<CS>),
+        )
         .route(
             "/{user}/calendar/{calendar}/restore",
             post(route_calendar_restore::<CS>),
