@@ -1,6 +1,6 @@
 <h2>{{user.id }}'s Addressbooks</h2>
 <ul class="collection-list">
-  {% for (meta, addressbook) in addressbooks %}
+  {% for (meta, birthday_cal, addressbook) in addressbooks %}
   <li class="collection-list-item">
     <a href="/frontend/user/{{ addressbook.principal }}/addressbook/{{ addressbook.id}}"></a>
     <div class="inner">
@@ -24,9 +24,17 @@
         ></edit-addressbook-form>
         <delete-button trash
           href="/carddav/principal/{{ addressbook.principal }}/{{ addressbook.id }}"></delete-button>
+        {% if !birthday_cal.is_some() %}
+        <create-birthday-calendar-form
+          principal="{{ addressbook.principal }}"
+          addr_id="{{ addressbook.id }}"
+          displayname="{{ addressbook.displayname.as_deref().unwrap_or_default() }} birthdays"
+        ></create-birthday-calendar-form>
+        {% endif %}
       </div>
       <div class="metadata">
         {{ meta.len }} ({{ meta.size | filesizeformat }}) objects, {{ meta.deleted_len }} ({{ meta.deleted_size | filesizeformat }}) deleted objects
+        {{ birthday_cal.is_some() }}
       </div>
     </div>
   </li>
@@ -37,7 +45,7 @@
 {%if !deleted_addressbooks.is_empty() %}
 <h3>Deleted Addressbooks</h3>
 <ul class="collection-list">
-  {% for (meta, addressbook) in deleted_addressbooks %}
+  {% for (meta, birthday_cal, addressbook) in deleted_addressbooks %}
   <li class="collection-list-item">
     <a href="/frontend/user/{{ addressbook.principal }}/addressbook/{{ addressbook.id}}"></a>
     <div class="inner">

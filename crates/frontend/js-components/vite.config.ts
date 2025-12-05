@@ -14,6 +14,7 @@ export default defineConfig({
 
     rollupOptions: {
       input: [
+        "lib/create-birthday-calendar-form.ts",
         "lib/create-calendar-form.ts",
         "lib/edit-calendar-form.ts",
         "lib/import-calendar-form.ts",

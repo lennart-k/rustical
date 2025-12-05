@@ -11,6 +11,8 @@ use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};
 use tokio::sync::mpsc::Sender;
 use tracing::{error, instrument, warn};
 
+pub mod birthday_calendar;
+
 #[derive(Debug, Clone)]
 struct AddressObjectRow {
     id: String,
@@ -459,7 +461,16 @@ impl AddressbookStore for SqliteAddressbookStore {
         &self,
         addressbook: Addressbook,
     ) -> Result<(), rustical_store::Error> {
-        Self::_insert_addressbook(&self.db, &addressbook).await
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
+        Self::_insert_addressbook(&mut *tx, &addressbook).await?;
+        let birthday_cal = Self::default_birthday_calendar(addressbook);
+        Self::_insert_birthday_calendar(&mut *tx, &birthday_cal).await?;
+        tx.commit().await.map_err(crate::Error::from)?;
+        Ok(())
     }
 
     #[instrument]

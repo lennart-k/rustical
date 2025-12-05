@@ -3327,6 +3327,7 @@ dependencies = [
  "rustical_ical",
  "rustical_store",
  "serde",
+ "sha2",
  "sqlx",
  "thiserror 2.0.17",
  "tokio",

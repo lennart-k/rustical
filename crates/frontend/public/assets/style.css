@@ -285,6 +285,7 @@ ul.collection-list {
         grid-area: actions;
         width: fit-content;
         display: flex;
+        flex-wrap: wrap;
         gap: 12px;
       }
     }

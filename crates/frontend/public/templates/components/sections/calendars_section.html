@@ -24,7 +24,6 @@
         <form action="/caldav/principal/{{ calendar.principal }}/{{ calendar.id }}" target="_blank" method="GET">
           <button type="submit">Download</button>
         </form>
-        {% if !calendar.id.starts_with("_birthdays_") %}
         <edit-calendar-form
           principal="{{ calendar.principal }}"
           cal_id="{{ calendar.id }}"
@@ -35,7 +34,6 @@
           components="{{ calendar.components | json }}"
         ></edit-calendar-form>
         <delete-button trash href="/caldav/principal/{{ calendar.principal }}/{{ calendar.id }}"></delete-button>
-        {% endif %}
       </div>
       <div class="metadata">
         {{ meta.len }} ({{ meta.size | filesizeformat }}) objects, {{ meta.deleted_len }} ({{ meta.deleted_size | filesizeformat }}) deleted objects
