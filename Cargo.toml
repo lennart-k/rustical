@@ -151,6 +151,11 @@ async-std = { version = "1.13", features = ["attributes"] }
 similar-asserts = "1.7"
 insta = "1.44"
 
+[dev-dependencies]
+rstest.workspace = true
+rustical_store_sqlite = { workspace = true, features = ["test"] }
+insta.workspace = true
+
 [dependencies]
 rustical_store.workspace = true
 rustical_store_sqlite.workspace = true

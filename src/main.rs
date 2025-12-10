@@ -31,6 +31,8 @@ mod app;
 mod commands;
 mod config;
 mod setup_tracing;
+#[cfg(test)]
+mod tests;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
