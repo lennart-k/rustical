@@ -1,6 +1,5 @@
 ---
 source: crates/caldav/src/principal/tests.rs
-assertion_line: 93
 expression: response.serialize_to_string().unwrap()
 ---
 <?xml version="1.0" encoding="utf-8"?>
