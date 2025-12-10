@@ -37,7 +37,7 @@ impl SubscriptionStore for SqliteStore {
             Err(err) => return Err(err),
         };
         sqlx::query!(
-            r#"INSERT OR REPLACE INTO davpush_subscriptions (id, topic, expiration, push_resource, public_key, public_key_type, auth_secret) VALUES (?, ?, ?, ?, ?, ?, ?)"#,
+            r#"REPLACE INTO davpush_subscriptions (id, topic, expiration, push_resource, public_key, public_key_type, auth_secret) VALUES (?, ?, ?, ?, ?, ?, ?)"#,
             sub.id,
             sub.topic,
             sub.expiration,
