@@ -1,0 +1,125 @@
+---
+source: crates/carddav/src/principal/tests.rs
+expression: response
+---
+ResponseElement {
+    href: "/carddav/principal/user/",
+    status: None,
+    propstat: [
+        Normal(
+            PropstatElement {
+                prop: PropTagWrapper(
+                    [
+                        Principal(
+                            PrincipalUrl(
+                                HrefElement {
+                                    href: "/carddav/principal/user/",
+                                },
+                            ),
+                        ),
+                        Principal(
+                            GroupMembership(
+                                GroupMembership(
+                                    [
+                                        HrefElement {
+                                            href: "/carddav/principal/group/",
+                                        },
+                                    ],
+                                ),
+                            ),
+                        ),
+                        Principal(
+                            GroupMemberSet(
+                                GroupMemberSet(
+                                    [],
+                                ),
+                            ),
+                        ),
+                        Principal(
+                            AlternateUriSet,
+                        ),
+                        Principal(
+                            PrincipalCollectionSet(
+                                HrefElement {
+                                    href: "/carddav/principal/",
+                                },
+                            ),
+                        ),
+                        Principal(
+                            AddressbookHomeSet(
+                                AddressbookHomeSet(
+                                    [
+                                        HrefElement {
+                                            href: "/carddav/principal/group/",
+                                        },
+                                        HrefElement {
+                                            href: "/carddav/principal/user/",
+                                        },
+                                    ],
+                                ),
+                            ),
+                        ),
+                        Principal(
+                            PrincipalAddress(
+                                None,
+                            ),
+                        ),
+                        Common(
+                            Resourcetype(
+                                Resourcetype(
+                                    [
+                                        ResourcetypeInner(
+                                            Some(
+                                                Namespace("DAV:"),
+                                            ),
+                                            "collection",
+                                        ),
+                                        ResourcetypeInner(
+                                            Some(
+                                                Namespace("DAV:"),
+                                            ),
+                                            "principal",
+                                        ),
+                                    ],
+                                ),
+                            ),
+                        ),
+                        Common(
+                            Displayname(
+                                Some(
+                                    "user",
+                                ),
+                            ),
+                        ),
+                        Common(
+                            CurrentUserPrincipal(
+                                HrefElement {
+                                    href: "/carddav/principal/user/",
+                                },
+                            ),
+                        ),
+                        Common(
+                            CurrentUserPrivilegeSet(
+                                UserPrivilegeSet {
+                                    privileges: {
+                                        All,
+                                    },
+                                },
+                            ),
+                        ),
+                        Common(
+                            Owner(
+                                Some(
+                                    HrefElement {
+                                        href: "/carddav/principal/user/",
+                                    },
+                                ),
+                            ),
+                        ),
+                    ],
+                ),
+                status: 200,
+            },
+        ),
+    ],
+}

@@ -11,11 +11,13 @@ mod service;
 pub use service::*;
 mod prop;
 pub use prop::*;
+#[cfg(test)]
+pub mod tests;
 
 #[derive(Debug, Clone)]
 pub struct PrincipalResource {
-    principal: Principal,
-    members: Vec<String>,
+    pub principal: Principal,
+    pub members: Vec<String>,
 }
 
 impl ResourceName for PrincipalResource {

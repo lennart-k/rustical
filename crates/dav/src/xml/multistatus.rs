@@ -3,9 +3,9 @@ use headers::{CacheControl, ContentType, HeaderMapExt};
 use http::StatusCode;
 use quick_xml::name::Namespace;
 use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Debug};
 
-#[derive(XmlSerialize)]
+#[derive(XmlSerialize, Debug)]
 pub struct PropTagWrapper<T: XmlSerialize>(#[xml(flatten, ty = "untagged")] pub Vec<T>);
 
 // RFC 2518
@@ -30,7 +30,7 @@ fn xml_serialize_status(
     XmlSerialize::serialize(&format!("HTTP/1.1 {status}"), ns, tag, namespaces, writer)
 }
 
-#[derive(XmlSerialize)]
+#[derive(XmlSerialize, Debug)]
 #[xml(untagged)]
 pub enum PropstatWrapper<T: XmlSerialize> {
     Normal(PropstatElement<PropTagWrapper<T>>),
@@ -40,7 +40,7 @@ pub enum PropstatWrapper<T: XmlSerialize> {
 // RFC 2518
 // <!ELEMENT response (href, ((href*, status)|(propstat+)),
 // responsedescription?) >
-#[derive(XmlSerialize, XmlRootTag)]
+#[derive(XmlSerialize, XmlRootTag, Debug)]
 #[xml(ns = "crate::namespace::NS_DAV", root = "response")]
 #[xml(ns_prefix(
     crate::namespace::NS_DAV = "",

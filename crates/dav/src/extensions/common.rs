@@ -6,7 +6,7 @@ use crate::{
 };
 use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, PropName, EnumVariants)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Debug, Clone, PropName, EnumVariants)]
 #[xml(unit_variants_ident = "CommonPropertiesPropName")]
 pub enum CommonPropertiesProp {
     // WebDAV (RFC 2518)
