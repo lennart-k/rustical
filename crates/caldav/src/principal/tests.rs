@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     CalDavPrincipalUri,
     principal::{PrincipalResource, PrincipalResourceService},
@@ -14,6 +12,7 @@ use rustical_store_sqlite::{
     tests::{get_test_calendar_store, get_test_principal_store, get_test_subscription_store},
 };
 use rustical_xml::XmlSerializeRoot;
+use std::sync::Arc;
 
 #[rstest]
 #[tokio::test]
@@ -64,6 +63,8 @@ async fn test_propfind() {
     )
     .unwrap();
 
+    insta::assert_debug_snapshot!(propfind);
+
     let principal = Principal {
         id: "user".to_string(),
         displayname: None,
@@ -88,5 +89,6 @@ async fn test_propfind() {
         )
         .unwrap();
 
-    let _output = response.serialize_to_string().unwrap();
+    insta::assert_debug_snapshot!(response);
+    insta::assert_snapshot!(response.serialize_to_string().unwrap());
 }

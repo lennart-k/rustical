@@ -22,7 +22,7 @@ impl Default for Transports {
     }
 }
 
-#[derive(XmlSerialize, XmlDeserialize, PartialEq, Eq, Clone)]
+#[derive(XmlSerialize, XmlDeserialize, PartialEq, Eq, Clone, Debug)]
 pub struct SupportedTriggers(#[xml(flatten, ty = "untagged")] pub Vec<Trigger>);
 
 #[derive(XmlSerialize, XmlDeserialize, PartialEq, Eq, Debug, Clone)]

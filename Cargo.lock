@@ -3115,6 +3115,7 @@ dependencies = [
  "headers",
  "http",
  "ical",
+ "insta",
  "percent-encoding",
  "quick-xml",
  "rstest",

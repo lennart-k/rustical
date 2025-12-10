@@ -1,0 +1,59 @@
+---
+source: crates/carddav/src/addressbook/tests.rs
+expression: response.serialize_to_string().unwrap()
+---
+<?xml version="1.0" encoding="utf-8"?>
+<response xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:PUSH="https://bitfire.at/webdav-push">
+    <href>/carddav/principal/user/yeet/</href>
+    <propstat>
+        <prop>
+            <CARD:supported-address-data>
+                <CARD:address-data-type content-type="text/vcard" version="3.0"/>
+                <CARD:address-data-type content-type="text/vcard" version="4.0"/>
+            </CARD:supported-address-data>
+            <supported-report-set>
+                <supported-report>
+                    <report>
+                        <CARD:addressbook-multiget/>
+                    </report>
+                </supported-report>
+                <supported-report>
+                    <report>
+                        <sync-collection/>
+                    </report>
+                </supported-report>
+            </supported-report-set>
+            <max-resource-size>10000000</max-resource-size>
+            <sync-token>github.com/lennart-k/rustical/ns/0</sync-token>
+            <CS:getctag>github.com/lennart-k/rustical/ns/0</CS:getctag>
+            <PUSH:transports>
+                <PUSH:web-push/>
+            </PUSH:transports>
+            <PUSH:topic>asdasd</PUSH:topic>
+            <PUSH:supported-triggers>
+                <PUSH:content-update>
+                    <depth>1</depth>
+                </PUSH:content-update>
+                <PUSH:property-update>
+                    <depth>1</depth>
+                </PUSH:property-update>
+            </PUSH:supported-triggers>
+            <resourcetype>
+                <collection/>
+                <CARD:addressbook/>
+            </resourcetype>
+            <current-user-principal>
+                <href>/carddav/principal/user/</href>
+            </current-user-principal>
+            <current-user-privilege-set>
+                <privilege>
+                    <all/>
+                </privilege>
+            </current-user-privilege-set>
+            <owner>
+                <href>/carddav/principal/user/</href>
+            </owner>
+        </prop>
+        <status>HTTP/1.1 200 OK</status>
+    </propstat>
+</response>

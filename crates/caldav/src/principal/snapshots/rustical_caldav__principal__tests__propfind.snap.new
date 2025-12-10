@@ -1,0 +1,9 @@
+---
+source: crates/caldav/src/principal/tests.rs
+assertion_line: 66
+expression: propfind
+---
+PropfindElement {
+    prop: Allprop,
+    include: None,
+}

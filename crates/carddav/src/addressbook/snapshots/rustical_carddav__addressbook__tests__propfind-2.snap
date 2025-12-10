@@ -1,0 +1,151 @@
+---
+source: crates/carddav/src/addressbook/tests.rs
+expression: response
+---
+ResponseElement {
+    href: "/carddav/principal/user/yeet/",
+    status: None,
+    propstat: [
+        Normal(
+            PropstatElement {
+                prop: PropTagWrapper(
+                    [
+                        Addressbook(
+                            AddressbookDescription(
+                                None,
+                            ),
+                        ),
+                        Addressbook(
+                            SupportedAddressData(
+                                SupportedAddressData {
+                                    address_data_type: [
+                                        AddressDataType {
+                                            content_type: "text/vcard",
+                                            version: "3.0",
+                                        },
+                                        AddressDataType {
+                                            content_type: "text/vcard",
+                                            version: "4.0",
+                                        },
+                                    ],
+                                },
+                            ),
+                        ),
+                        Addressbook(
+                            SupportedReportSet(
+                                SupportedReportSet {
+                                    supported_report: [
+                                        ReportWrapper {
+                                            report: AddressbookMultiget,
+                                        },
+                                        ReportWrapper {
+                                            report: SyncCollection,
+                                        },
+                                    ],
+                                },
+                            ),
+                        ),
+                        Addressbook(
+                            MaxResourceSize(
+                                10000000,
+                            ),
+                        ),
+                        SyncToken(
+                            SyncToken(
+                                "github.com/lennart-k/rustical/ns/0",
+                            ),
+                        ),
+                        SyncToken(
+                            Getctag(
+                                "github.com/lennart-k/rustical/ns/0",
+                            ),
+                        ),
+                        DavPush(
+                            Transports(
+                                Transports {
+                                    transports: [
+                                        WebPush,
+                                    ],
+                                },
+                            ),
+                        ),
+                        DavPush(
+                            Topic(
+                                "asdasd",
+                            ),
+                        ),
+                        DavPush(
+                            SupportedTriggers(
+                                SupportedTriggers(
+                                    [
+                                        ContentUpdate(
+                                            ContentUpdate(
+                                                One,
+                                            ),
+                                        ),
+                                        PropertyUpdate(
+                                            PropertyUpdate(
+                                                One,
+                                            ),
+                                        ),
+                                    ],
+                                ),
+                            ),
+                        ),
+                        Common(
+                            Resourcetype(
+                                Resourcetype(
+                                    [
+                                        ResourcetypeInner(
+                                            Some(
+                                                Namespace("DAV:"),
+                                            ),
+                                            "collection",
+                                        ),
+                                        ResourcetypeInner(
+                                            Some(
+                                                Namespace("urn:ietf:params:xml:ns:carddav"),
+                                            ),
+                                            "addressbook",
+                                        ),
+                                    ],
+                                ),
+                            ),
+                        ),
+                        Common(
+                            Displayname(
+                                None,
+                            ),
+                        ),
+                        Common(
+                            CurrentUserPrincipal(
+                                HrefElement {
+                                    href: "/carddav/principal/user/",
+                                },
+                            ),
+                        ),
+                        Common(
+                            CurrentUserPrivilegeSet(
+                                UserPrivilegeSet {
+                                    privileges: {
+                                        All,
+                                    },
+                                },
+                            ),
+                        ),
+                        Common(
+                            Owner(
+                                Some(
+                                    HrefElement {
+                                        href: "/carddav/principal/user/",
+                                    },
+                                ),
+                            ),
+                        ),
+                    ],
+                ),
+                status: 200,
+            },
+        ),
+    ],
+}

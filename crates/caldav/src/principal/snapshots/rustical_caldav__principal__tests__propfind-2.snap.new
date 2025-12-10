@@ -1,0 +1,137 @@
+---
+source: crates/caldav/src/principal/tests.rs
+assertion_line: 92
+expression: response
+---
+ResponseElement {
+    href: "/caldav/principal/user/",
+    status: None,
+    propstat: [
+        Normal(
+            PropstatElement {
+                prop: PropTagWrapper(
+                    [
+                        Principal(
+                            CalendarUserType(
+                                Individual,
+                            ),
+                        ),
+                        Principal(
+                            CalendarUserAddressSet(
+                                HrefElement {
+                                    href: "/caldav/principal/user/",
+                                },
+                            ),
+                        ),
+                        Principal(
+                            PrincipalUrl(
+                                HrefElement {
+                                    href: "/caldav/principal/user/",
+                                },
+                            ),
+                        ),
+                        Principal(
+                            GroupMembership(
+                                GroupMembership(
+                                    [
+                                        HrefElement {
+                                            href: "/caldav/principal/group/",
+                                        },
+                                    ],
+                                ),
+                            ),
+                        ),
+                        Principal(
+                            GroupMemberSet(
+                                GroupMemberSet(
+                                    [],
+                                ),
+                            ),
+                        ),
+                        Principal(
+                            AlternateUriSet,
+                        ),
+                        Principal(
+                            SupportedReportSet(
+                                SupportedReportSet {
+                                    supported_report: [
+                                        ReportWrapper {
+                                            report: PrincipalMatch,
+                                        },
+                                    ],
+                                },
+                            ),
+                        ),
+                        Principal(
+                            CalendarHomeSet(
+                                CalendarHomeSet(
+                                    [
+                                        HrefElement {
+                                            href: "/caldav/principal/group/",
+                                        },
+                                        HrefElement {
+                                            href: "/caldav/principal/user/",
+                                        },
+                                    ],
+                                ),
+                            ),
+                        ),
+                        Common(
+                            Resourcetype(
+                                Resourcetype(
+                                    [
+                                        ResourcetypeInner(
+                                            Some(
+                                                Namespace("DAV:"),
+                                            ),
+                                            "collection",
+                                        ),
+                                        ResourcetypeInner(
+                                            Some(
+                                                Namespace("DAV:"),
+                                            ),
+                                            "principal",
+                                        ),
+                                    ],
+                                ),
+                            ),
+                        ),
+                        Common(
+                            Displayname(
+                                Some(
+                                    "user",
+                                ),
+                            ),
+                        ),
+                        Common(
+                            CurrentUserPrincipal(
+                                HrefElement {
+                                    href: "/caldav/principal/user/",
+                                },
+                            ),
+                        ),
+                        Common(
+                            CurrentUserPrivilegeSet(
+                                UserPrivilegeSet {
+                                    privileges: {
+                                        All,
+                                    },
+                                },
+                            ),
+                        ),
+                        Common(
+                            Owner(
+                                Some(
+                                    HrefElement {
+                                        href: "/caldav/principal/user/",
+                                    },
+                                ),
+                            ),
+                        ),
+                    ],
+                ),
+                status: 200,
+            },
+        ),
+    ],
+}

@@ -2,7 +2,7 @@ use crate::{ContentUpdate, PropertyUpdate, SupportedTriggers, Transports, Trigge
 use rustical_dav::header::Depth;
 use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, PropName, EnumVariants)]
+#[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, PropName, EnumVariants, Debug)]
 #[xml(unit_variants_ident = "DavPushExtensionPropName")]
 pub enum DavPushExtensionProp {
     // WebDav Push
