@@ -36,27 +36,27 @@ export class CreateAddressbookForm extends LitElement {
         <form @submit=${this.submit} ${ref(this.form)}>
           <label>
             principal (for group addressbooks)
-            <select name="principal" value=${this.user} @change=${e => this.principal = e.target.value}>
-              <option value=${this.user}>${this.user}</option>
+            <select .value=${this.user} @change=${e => this.principal = e.target.value}>
+              <option .value=${this.user}>${this.user}</option>
               ${window.rusticalUser.memberships.map(membership => html`
-                <option value=${membership}>${membership}</option>
+                <option .value=${membership}>${membership}</option>
               `)}
             </select>
           </label>
           <br>
           <label>
             id
-            <input type="text" name="id" value=${this.addr_id} @change=${e => this.addr_id = e.target.value} />
+            <input type="text" .value=${this.addr_id} @change=${e => this.addr_id = e.target.value} />
           </label>
           <br>
           <label>
             Displayname
-            <input type="text" name="displayname" value=${this.displayname} @change=${e => this.displayname = e.target.value} />
+            <input type="text" .value=${this.displayname} @change=${e => this.displayname = e.target.value} />
           </label>
           <br>
           <label>
             Description
-            <input type="text" name="description" @change=${e => this.description = e.target.value} />
+            <input type="text" .value=${this.description} @change=${e => this.description = e.target.value} />
           </label>
           <br>
           <button type="submit">Create</button>

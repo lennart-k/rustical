@@ -53,12 +53,12 @@ export class EditCalendarForm extends LitElement {
         <form @submit=${this.submit} ${ref(this.form)}>
           <label>
             Displayname
-            <input type="text" name="displayname" .value=${this.displayname} @change=${e => this.displayname = e.target.value} />
+            <input type="text" required .value=${this.displayname} @change=${e => this.displayname = e.target.value} />
           </label>
           <br>
           <label>
             Timezone (optional)
-            <select name="timezone" .value=${this.timezone_id} @change=${e => this.timezone_id = e.target.value}>
+            <select .value=${this.timezone_id} @change=${e => this.timezone_id = e.target.value}>
               <option value="">No timezone</option>
               ${this.timezones.map(timezone => html`
                 <option value=${timezone} ?selected=${timezone === this.timezone_id}>${timezone}</option>
@@ -68,18 +68,18 @@ export class EditCalendarForm extends LitElement {
           <br>
           <label>
             Description
-            <input type="text" name="description" .value=${this.description} @change=${e => this.description = e.target.value} />
+            <input type="text" .value=${this.description} @change=${e => this.description = e.target.value} />
           </label>
           <br>
           <label>
             Color
-            <input type="color" name="color" .value=${this.color} @change=${e => this.color = e.target.value} />
+            <input type="color" .value=${this.color} @change=${e => this.color = e.target.value} />
           </label>
           <br>
           ${["VEVENT", "VTODO", "VJOURNAL"].map(comp => html`
             <label>
               Support ${comp}
-              <input type="checkbox" value=${comp} ?checked=${this.components.has(comp)} @change=${e => e.target.checked ? this.components.add(e.target.value) : this.components.delete(e.target.value)} />
+              <input type="checkbox" .value=${comp} ?checked=${this.components.has(comp)} @change=${e => e.target.checked ? this.components.add(e.target.value) : this.components.delete(e.target.value)} />
             </label>
             <br>
           `)}

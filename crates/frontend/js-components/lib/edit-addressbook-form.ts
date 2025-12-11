@@ -34,12 +34,12 @@ export class EditAddressbookForm extends LitElement {
         <form @submit=${this.submit} ${ref(this.form)}>
           <label>
             Displayname
-            <input type="text" name="displayname" .value=${this.displayname} @change=${e => this.displayname = e.target.value} />
+            <input type="text" .value=${this.displayname} @change=${e => this.displayname = e.target.value} />
           </label>
           <br>
           <label>
             Description
-            <input type="text" name="description" .value=${this.description} @change=${e => this.description = e.target.value} />
+            <input type="text" .value=${this.description} @change=${e => this.description = e.target.value} />
           </label>
           <br>
           <button type="submit">Submit</button>

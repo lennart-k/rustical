@@ -1,7 +1,7 @@
-import { i, x } from "./lit-DkXrt_Iv.mjs";
-import { n as n$1, t } from "./property-B8WoKf1Y.mjs";
-import { e, n } from "./ref-BwbQvJBB.mjs";
-import { e as escapeXml } from "./index-_IB1wMbZ.mjs";
+import { i, x } from "./lit-DKg0et_P.mjs";
+import { n as n$1, t } from "./property-C8WJQOrH.mjs";
+import { e, n } from "./ref-BivNNNRN.mjs";
+import { e as escapeXml } from "./index-fgowJCc1.mjs";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __decorateClass = (decorators, target, key, kind) => {
@@ -34,27 +34,27 @@ let CreateAddressbookForm = class extends i {
         <form @submit=${this.submit} ${n(this.form)}>
           <label>
             principal (for group addressbooks)
-            <select name="principal" value=${this.user} @change=${(e2) => this.principal = e2.target.value}>
-              <option value=${this.user}>${this.user}</option>
+            <select .value=${this.user} @change=${(e2) => this.principal = e2.target.value}>
+              <option .value=${this.user}>${this.user}</option>
               ${window.rusticalUser.memberships.map((membership) => x`
-                <option value=${membership}>${membership}</option>
+                <option .value=${membership}>${membership}</option>
               `)}
             </select>
           </label>
           <br>
           <label>
             id
-            <input type="text" name="id" value=${this.addr_id} @change=${(e2) => this.addr_id = e2.target.value} />
+            <input type="text" .value=${this.addr_id} @change=${(e2) => this.addr_id = e2.target.value} />
           </label>
           <br>
           <label>
             Displayname
-            <input type="text" name="displayname" value=${this.displayname} @change=${(e2) => this.displayname = e2.target.value} />
+            <input type="text" .value=${this.displayname} @change=${(e2) => this.displayname = e2.target.value} />
           </label>
           <br>
           <label>
             Description
-            <input type="text" name="description" @change=${(e2) => this.description = e2.target.value} />
+            <input type="text" .value=${this.description} @change=${(e2) => this.description = e2.target.value} />
           </label>
           <br>
           <button type="submit">Create</button>

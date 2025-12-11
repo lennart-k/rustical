@@ -1,7 +1,7 @@
-import { i, x } from "./lit-DkXrt_Iv.mjs";
-import { n as n$1, t } from "./property-B8WoKf1Y.mjs";
-import { e, n } from "./ref-BwbQvJBB.mjs";
-import { e as escapeXml } from "./index-_IB1wMbZ.mjs";
+import { i, x } from "./lit-DKg0et_P.mjs";
+import { n as n$1, t } from "./property-C8WJQOrH.mjs";
+import { e, n } from "./ref-BivNNNRN.mjs";
+import { S as SVG_ICON_CALENDAR, a as SVG_ICON_INTERNET, e as escapeXml } from "./index-fgowJCc1.mjs";
 import { g as getTimezones } from "./timezones-B0vBBzCP.mjs";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -17,19 +17,23 @@ let CreateCalendarForm = class extends i {
   constructor() {
     super();
     this.user = "";
-    this.principal = "";
+    this.dialog = e();
+    this.form = e();
+    this.timezones = [];
+    this.resetForm();
+    this.fetchTimezones();
+  }
+  resetForm() {
+    this.form.value?.reset();
+    this.principal = this.user;
     this.cal_id = self.crypto.randomUUID();
     this.displayname = "";
     this.description = "";
     this.timezone_id = "";
     this.color = "";
     this.isSubscription = false;
-    this.subscriptionUrl = "";
-    this.components = /* @__PURE__ */ new Set();
-    this.dialog = e();
-    this.form = e();
-    this.timezones = [];
-    this.fetchTimezones();
+    this.subscriptionUrl = null;
+    this.components = /* @__PURE__ */ new Set(["VEVENT", "VTODO"]);
   }
   async fetchTimezones() {
     this.timezones = await getTimezones();
@@ -39,13 +43,13 @@ let CreateCalendarForm = class extends i {
   }
   render() {
     return x`
-      <button @click=${() => this.dialog.value.showModal()}>Create calendar</button>
-      <dialog ${n(this.dialog)}>
+      <button @click=${(e2) => this.dialog.value.showModal()}>Create calendar</button>
+      <dialog ${n(this.dialog)} @close=${(e2) => this.resetForm()}>
         <h3>Create calendar</h3>
         <form @submit=${this.submit} ${n(this.form)}>
           <label>
             principal (for group calendars)
-            <select name="principal" value=${this.user} @change=${(e2) => this.principal = e2.target.value}>
+            <select required value=${this.user} @change=${(e2) => this.principal = e2.target.value}>
               <option value=${this.user}>${this.user}</option>
               ${window.rusticalUser.memberships.map((membership) => x`
                 <option value=${membership}>${membership}</option>
@@ -55,17 +59,17 @@ let CreateCalendarForm = class extends i {
           <br>
           <label>
             id
-            <input type="text" name="id" value=${this.cal_id} @change=${(e2) => this.cal_id = e2.target.value} />
+            <input type="text" required .value=${this.cal_id} @change=${(e2) => this.cal_id = e2.target.value} />
           </label>
           <br>
           <label>
             Displayname
-            <input type="text" name="displayname" value=${this.displayname} @change=${(e2) => this.displayname = e2.target.value} />
+            <input type="text" required .value=${this.displayname} @change=${(e2) => this.displayname = e2.target.value} />
           </label>
           <br>
           <label>
             Timezone (optional)
-            <select name="timezone" .value=${this.timezone_id} @change=${(e2) => this.timezone_id = e2.target.value}>
+            <select .value=${this.timezone_id} @change=${(e2) => this.timezone_id = e2.target.value}>
               <option value="">No timezone</option>
               ${this.timezones.map((timezone) => x`
                 <option value=${timezone} ?selected=${timezone === this.timezone_id}>${timezone}</option>
@@ -75,48 +79,59 @@ let CreateCalendarForm = class extends i {
           <br>
           <label>
             Description
-            <input type="text" name="description" @change=${(e2) => this.description = e2.target.value} />
+            <input type="text" .value=${this.description} @change=${(e2) => this.description = e2.target.value} />
           </label>
           <br>
           <label>
             Color
-            <input type="color" name="color"  @change=${(e2) => this.color = e2.target.value} />
+            <input type="color" .value=${this.color} @change=${(e2) => this.color = e2.target.value} />
           </label>
           <br>
           <br>
-          <label>
-            Calendar is subscription to external calendar
-            <input type="checkbox" name="is_subscription" @change=${(e2) => this.isSubscription = e2.target.checked}  />
-          </label>
+          <label>Type</label>
+          <div class="tab-radio">
+            <label>
+              <input type="radio" name="type" .checked=${!this.isSubscription} @change=${(e2) => this.isSubscription = false}></input>
+              ${SVG_ICON_CALENDAR}
+              Calendar
+            </label>
+            <label>
+              <input type="radio" name="type" .checked=${this.isSubscription} @change=${(e2) => this.isSubscription = true}></input>
+              ${SVG_ICON_INTERNET}
+              webCal Subscription
+            </label>
+          </div>
           <br>
           ${this.isSubscription ? x`
             <label>
               Subscription URL
-              <input type="text" name="subscription_url" @change=${(e2) => this.subscriptionUrl = e2.target.value}  />
+              <input type="text" pattern="https://.*" .required=${this.isSubscription} .value=${this.subscriptionUrl} @change=${(e2) => this.subscriptionUrl = e2.target.value}  />
             </label>
+            <br>
             <br>
           ` : x``}
-          <br>
-          ${["VEVENT", "VTODO", "VJOURNAL"].map((comp) => x`
-            <label>
-              Support ${comp}
-              <input type="checkbox" value=${comp} @change=${(e2) => e2.target.checked ? this.components.add(e2.target.value) : this.components.delete(e2.target.value)} />
-            </label>
-            <br>
-          `)}
+
+          <label>Components</label>
+          <div>
+            ${["VEVENT", "VTODO", "VJOURNAL"].map((comp) => x`
+              <label>
+                Support ${comp}
+                <input type="checkbox" .value=${comp} @change=${(e2) => e2.target.checked ? this.components.add(e2.target.value) : this.components.delete(e2.target.value)} .checked=${this.components.has(comp)} />
+              </label>
+              <br>
+            `)}
+          </div>
           <br>
           <button type="submit">Create</button>
           <button type="submit" @click=${(event) => {
       event.preventDefault();
       this.dialog.value.close();
-      this.form.value.reset();
     }} class="cancel">Cancel</button>
       </form>
       </dialog>
         `;
   }
   async submit(e2) {
-    console.log(this.displayname);
     e2.preventDefault();
     if (!this.cal_id) {
       alert("Empty id");
@@ -128,6 +143,10 @@ let CreateCalendarForm = class extends i {
     }
     if (!this.components.size) {
       alert("No calendar components selected");
+      return;
+    }
+    if (this.isSubscription && !this.subscriptionUrl) {
+      alert("Invalid subscription url");
       return;
     }
     let response = await fetch(`/caldav/principal/${this.principal || this.user}/${this.cal_id}`, {

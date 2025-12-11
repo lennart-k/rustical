@@ -338,6 +338,7 @@ select {
 form {
 
   input[type="text"],
+  input[type="url"],
   input[type="password"],
   input[type="color"],
   textarea,
@@ -362,5 +363,59 @@ svg.icon {
     font-size: .8em;
     padding: 3px 8px;
     border-radius: 12px;
+  }
+}
+
+.tab-radio {
+  display: flex;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+
+  background: color-mix(in srgb, var(--background-color), var(--dilute-color) 10%);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-on-background-color);
+  margin: 2px;
+
+  label {
+    padding: 10px;
+    background: color-mix(in srgb, var(--background-color), var(--dilute-color) 10%);
+    border-radius: 12px;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    svg {
+      margin-right: 4px;
+    }
+
+    input {
+      appearance: none;
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      inset: 0;
+      pointer-events: none;
+    }
+  }
+
+  label:hover {
+    background: color-mix(in srgb, var(--background-color), var(--dilute-color) 15%);
+  }
+
+  label:has(input:focus-visible) {
+    outline: medium auto currentColor;
+    outline: medium auto invert;
+    outline: 5px auto -webkit-focus-ring-color;
+
+    input {
+      outline: none;
+    }
+  }
+
+  label:has(input:checked) {
+    background: color-mix(in srgb, var(--background-color), var(--dilute-color) 20%);
   }
 }

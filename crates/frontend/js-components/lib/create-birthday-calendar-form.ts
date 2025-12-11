@@ -34,17 +34,17 @@ export class CreateCalendarForm extends LitElement {
         <form @submit=${this.submit} ${ref(this.form)}>
           <label>
             Displayname
-            <input type="text" name="displayname" value=${this.displayname} @change=${e => this.displayname = e.target.value} />
+            <input type="text" .value=${this.displayname} required @change=${e => this.displayname = e.target.value} />
           </label>
           <br>
           <label>
             Description
-            <input type="text" name="description" @change=${e => this.description = e.target.value} />
+            <input type="text" .value=${this.description} @change=${e => this.description = e.target.value} />
           </label>
           <br>
           <label>
             Color
-            <input type="color" name="color"  @change=${e => this.color = e.target.value} />
+            <input type="color" .value=${this.color} @change=${e => this.color = e.target.value} />
           </label>
           <br>
           <button type="submit">Create</button>

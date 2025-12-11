@@ -1,7 +1,7 @@
-import { i, x } from "./lit-DkXrt_Iv.mjs";
-import { n as n$1, t } from "./property-B8WoKf1Y.mjs";
-import { e, n } from "./ref-BwbQvJBB.mjs";
-import { e as escapeXml } from "./index-_IB1wMbZ.mjs";
+import { i, x } from "./lit-DKg0et_P.mjs";
+import { n as n$1, t } from "./property-C8WJQOrH.mjs";
+import { e, n } from "./ref-BivNNNRN.mjs";
+import { e as escapeXml } from "./index-fgowJCc1.mjs";
 import { g as getTimezones } from "./timezones-B0vBBzCP.mjs";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -40,12 +40,12 @@ let EditCalendarForm = class extends i {
         <form @submit=${this.submit} ${n(this.form)}>
           <label>
             Displayname
-            <input type="text" name="displayname" .value=${this.displayname} @change=${(e2) => this.displayname = e2.target.value} />
+            <input type="text" required .value=${this.displayname} @change=${(e2) => this.displayname = e2.target.value} />
           </label>
           <br>
           <label>
             Timezone (optional)
-            <select name="timezone" .value=${this.timezone_id} @change=${(e2) => this.timezone_id = e2.target.value}>
+            <select .value=${this.timezone_id} @change=${(e2) => this.timezone_id = e2.target.value}>
               <option value="">No timezone</option>
               ${this.timezones.map((timezone) => x`
                 <option value=${timezone} ?selected=${timezone === this.timezone_id}>${timezone}</option>
@@ -55,18 +55,18 @@ let EditCalendarForm = class extends i {
           <br>
           <label>
             Description
-            <input type="text" name="description" .value=${this.description} @change=${(e2) => this.description = e2.target.value} />
+            <input type="text" .value=${this.description} @change=${(e2) => this.description = e2.target.value} />
           </label>
           <br>
           <label>
             Color
-            <input type="color" name="color" .value=${this.color} @change=${(e2) => this.color = e2.target.value} />
+            <input type="color" .value=${this.color} @change=${(e2) => this.color = e2.target.value} />
           </label>
           <br>
           ${["VEVENT", "VTODO", "VJOURNAL"].map((comp) => x`
             <label>
               Support ${comp}
-              <input type="checkbox" value=${comp} ?checked=${this.components.has(comp)} @change=${(e2) => e2.target.checked ? this.components.add(e2.target.value) : this.components.delete(e2.target.value)} />
+              <input type="checkbox" .value=${comp} ?checked=${this.components.has(comp)} @change=${(e2) => e2.target.checked ? this.components.add(e2.target.value) : this.components.delete(e2.target.value)} />
             </label>
             <br>
           `)}

@@ -1,14 +1,28 @@
 import { html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { Ref, createRef, ref } from 'lit/directives/ref.js';
-import { escapeXml } from ".";
+import { escapeXml, SVG_ICON_CALENDAR, SVG_ICON_INTERNET } from ".";
 import { getTimezones } from "./timezones.ts";
 
 @customElement("create-calendar-form")
 export class CreateCalendarForm extends LitElement {
   constructor() {
     super()
+    this.resetForm()
     this.fetchTimezones()
+  }
+
+  resetForm() {
+    this.form.value?.reset()
+    this.principal = this.user
+    this.cal_id = self.crypto.randomUUID()
+    this.displayname = ''
+    this.description = ''
+    this.timezone_id = ''
+    this.color = ''
+    this.isSubscription = false
+    this.subscriptionUrl = null
+    this.components = new Set(["VEVENT", "VTODO"])
   }
 
   async fetchTimezones() {
@@ -22,23 +36,23 @@ export class CreateCalendarForm extends LitElement {
   @property()
   user: string = ''
   @property()
-  principal: string = ''
+  principal: string
   @property()
-  cal_id: string = self.crypto.randomUUID()
+  cal_id: string
   @property()
-  displayname: string = ''
+  displayname: string
   @property()
-  description: string = ''
+  description: string
   @property()
-  timezone_id: string = ''
+  timezone_id: string
   @property()
-  color: string = ''
+  color: string
   @property()
-  isSubscription: boolean = false
+  isSubscription: boolean
   @property()
-  subscriptionUrl: string = ''
+  subscriptionUrl: string
   @property()
-  components: Set<"VEVENT" | "VTODO" | "VJOURNAL"> = new Set()
+  components: Set<"VEVENT" | "VTODO" | "VJOURNAL">
 
   dialog: Ref<HTMLDialogElement> = createRef()
   form: Ref<HTMLFormElement> = createRef()
@@ -47,13 +61,13 @@ export class CreateCalendarForm extends LitElement {
 
   override render() {
     return html`
-      <button @click=${() => this.dialog.value.showModal()}>Create calendar</button>
-      <dialog ${ref(this.dialog)}>
+      <button @click=${e => this.dialog.value.showModal()}>Create calendar</button>
+      <dialog ${ref(this.dialog)} @close=${e => this.resetForm()}>
         <h3>Create calendar</h3>
         <form @submit=${this.submit} ${ref(this.form)}>
           <label>
             principal (for group calendars)
-            <select name="principal" value=${this.user} @change=${e => this.principal = e.target.value}>
+            <select required value=${this.user} @change=${e => this.principal = e.target.value}>
               <option value=${this.user}>${this.user}</option>
               ${window.rusticalUser.memberships.map(membership => html`
                 <option value=${membership}>${membership}</option>
@@ -63,17 +77,17 @@ export class CreateCalendarForm extends LitElement {
           <br>
           <label>
             id
-            <input type="text" name="id" value=${this.cal_id} @change=${e => this.cal_id = e.target.value} />
+            <input type="text" required .value=${this.cal_id} @change=${e => this.cal_id = e.target.value} />
           </label>
           <br>
           <label>
             Displayname
-            <input type="text" name="displayname" value=${this.displayname} @change=${e => this.displayname = e.target.value} />
+            <input type="text" required .value=${this.displayname} @change=${e => this.displayname = e.target.value} />
           </label>
           <br>
           <label>
             Timezone (optional)
-            <select name="timezone" .value=${this.timezone_id} @change=${e => this.timezone_id = e.target.value}>
+            <select .value=${this.timezone_id} @change=${e => this.timezone_id = e.target.value}>
               <option value="">No timezone</option>
               ${this.timezones.map(timezone => html`
                 <option value=${timezone} ?selected=${timezone === this.timezone_id}>${timezone}</option>
@@ -83,45 +97,57 @@ export class CreateCalendarForm extends LitElement {
           <br>
           <label>
             Description
-            <input type="text" name="description" @change=${e => this.description = e.target.value} />
+            <input type="text" .value=${this.description} @change=${e => this.description = e.target.value} />
           </label>
           <br>
           <label>
             Color
-            <input type="color" name="color"  @change=${e => this.color = e.target.value} />
+            <input type="color" .value=${this.color} @change=${e => this.color = e.target.value} />
           </label>
           <br>
           <br>
-          <label>
-            Calendar is subscription to external calendar
-            <input type="checkbox" name="is_subscription" @change=${e => this.isSubscription = e.target.checked}  />
-          </label>
+          <label>Type</label>
+          <div class="tab-radio">
+            <label>
+              <input type="radio" name="type" .checked=${!this.isSubscription} @change=${e => this.isSubscription = false}></input>
+              ${SVG_ICON_CALENDAR}
+              Calendar
+            </label>
+            <label>
+              <input type="radio" name="type" .checked=${this.isSubscription} @change=${e => this.isSubscription = true}></input>
+              ${SVG_ICON_INTERNET}
+              webCal Subscription
+            </label>
+          </div>
           <br>
           ${this.isSubscription ? html`
             <label>
               Subscription URL
-              <input type="text" name="subscription_url" @change=${e => this.subscriptionUrl = e.target.value}  />
+              <input type="text" pattern="https://.*" .required=${this.isSubscription} .value=${this.subscriptionUrl} @change=${e => this.subscriptionUrl = e.target.value}  />
             </label>
+            <br>
             <br>
           `: html``}
-          <br>
-          ${["VEVENT", "VTODO", "VJOURNAL"].map(comp => html`
-            <label>
-              Support ${comp}
-              <input type="checkbox" value=${comp} @change=${e => e.target.checked ? this.components.add(e.target.value) : this.components.delete(e.target.value)} />
-            </label>
-            <br>
-          `)}
+
+          <label>Components</label>
+          <div>
+            ${["VEVENT", "VTODO", "VJOURNAL"].map(comp => html`
+              <label>
+                Support ${comp}
+                <input type="checkbox" .value=${comp} @change=${e => e.target.checked ? this.components.add(e.target.value) : this.components.delete(e.target.value)} .checked=${this.components.has(comp)} />
+              </label>
+              <br>
+            `)}
+          </div>
           <br>
           <button type="submit">Create</button>
-          <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close(); this.form.value.reset() }} class="cancel">Cancel</button>
+          <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close();}} class="cancel">Cancel</button>
       </form>
       </dialog>
         `
   }
 
   async submit(e: SubmitEvent) {
-    console.log(this.displayname)
     e.preventDefault()
     if (!this.cal_id) {
       alert("Empty id")
@@ -133,6 +159,10 @@ export class CreateCalendarForm extends LitElement {
     }
     if (!this.components.size) {
       alert("No calendar components selected")
+      return
+    }
+    if (this.isSubscription && !this.subscriptionUrl) {
+      alert("Invalid subscription url")
       return
     }
 
