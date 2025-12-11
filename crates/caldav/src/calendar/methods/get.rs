@@ -3,17 +3,39 @@ use crate::calendar::CalendarResourceService;
 use axum::body::Body;
 use axum::extract::State;
 use axum::{extract::Path, response::Response};
+use chrono::NaiveDate;
 use headers::{ContentType, HeaderMapExt};
 use http::{HeaderValue, Method, StatusCode, header};
 use ical::generator::{Emitter, IcalCalendarBuilder};
 use ical::property::Property;
 use percent_encoding::{CONTROLS, utf8_percent_encode};
-use rustical_ical::{CalendarObjectComponent, EventObject};
+use rustical_ical::{CalendarObject, CalendarObjectComponent, EventObject};
+use rustical_store::calendar_store::CalendarQuery;
 use rustical_store::{CalendarStore, SubscriptionStore, auth::Principal};
 use std::collections::HashMap;
 use std::str::FromStr;
 use tracing::instrument;
 
+// Todo add a generic function to fetch calendar events and data without the need to use the caldav api
+pub async fn get_calendar_objects<C: CalendarStore>(
+    principal: &str,
+    calendar_id: &str,
+    start: NaiveDate,
+    end: NaiveDate,
+    store: &C,
+) -> Result<Vec<CalendarObject>, Error> {
+    let query = CalendarQuery {
+        time_start: Some(start),
+        time_end: Some(end),
+    };
+    let objects = store
+        .calendar_query(&principal, &calendar_id, query)
+        .await?;
+
+    Ok(objects)
+}
+
+// Get data when using the CalDAV API
 #[instrument(skip(cal_store))]
 pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
     Path((principal, calendar_id)): Path<(String, String)>,

@@ -1,0 +1,64 @@
+{% extends "layouts/default.html" %}
+
+{% block imports %}
+{% endblock %}
+
+{% block content %}
+    <div class="calendar-container">
+        <div class="calendar-header">
+            <h2>{{ content.get_title() }}</h2>
+
+            <!-- Navigation buttons -->
+            <div class="nav-buttons">
+                <div class="nav-group" style="display: flex; gap: 10px; justify-content: start;">
+                    <a href="{{ content.get_link_prev() }}">
+                        <button class="nav-btn prev-week">
+                            <span class="btn-icon-left"></span>
+                            <span>Prev</span>
+                        </button>
+                    </a>
+                    <a href="{{ content.get_link_next() }}">
+                        <button class="nav-btn next-week">
+                            <span>Next</span>
+                            <span class="btn-icon-right"></span>
+                        </button>
+                    </a>
+                </div>
+                <div class="nav-group" style="display: flex; gap: 10px;">
+                    <a href="{{ content.get_link_today() }}">
+                        <button class="nav-btn today">
+                            <span>{% include "icons/calendar-check.svg" %} Today</span>
+                        </button>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+{% if let Some(week_view) = content.as_any().downcast_ref::<CalendarPageWeek>() %}
+        <div class="calendar-grid-week">
+            <!-- Day headers -->
+
+            <div class="day-header">Time<br><span></span></div>
+            {% for day in week_view.days %}
+                <div class="day-header">{{day.week_day}}<br><span>{{day.day}}</span></div>
+            {% endfor %}
+
+            {% for timeslot in week_view.timeslots %}
+                <div class="time-header" style="z-index: {{ timeslot.z_index }}; grid-row: {{ timeslot.grid_row }}; grid-column: 1;">{{timeslot.text}}</div>
+            {% endfor %}
+
+            {% for event in week_view.events %}
+                <div class="week-view-event" style="margin-left: {{event.margin_left}}%; width: {{event.width}}%; grid-column: {{event.grid_column}}; grid-row: {{event.grid_row_start}}/{{event.grid_row_end}}; z-index: {{event.z_index}};">
+                    <div class="week-view-event-div" style="--event-bg-r: {{event.bg_color_r}}; --event-bg-g: {{event.bg_color_g}}; --event-bg-b:{{event.bg_color_b}}">
+                        <div class="week-view-event-title">{{event.title}}</div>
+                        <div class="week-view-event-date">{{event.date}}</div>
+                        <div class="week-view-event-time">{{event.time}}</div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+{% endif %}
+
+    </div>
+
+{%endblock %}
