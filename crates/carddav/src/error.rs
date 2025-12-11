@@ -1,6 +1,5 @@
 use axum::response::IntoResponse;
 use http::StatusCode;
-use tracing::error;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
