@@ -16,6 +16,7 @@ pub struct CompFilterElement {
     pub(crate) time_range: Option<TimeRangeElement>,
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV", flatten)]
     pub(crate) prop_filter: Vec<PropFilterElement>,
+    #[allow(clippy::use_self)]
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV", flatten)]
     pub(crate) comp_filter: Vec<CompFilterElement>,
 
