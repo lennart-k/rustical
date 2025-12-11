@@ -32,23 +32,25 @@ export class ImportAddressbookForm extends LitElement {
         <form @submit=${this.submit} ${ref(this.form)}>
           <label>
             principal (for group addressbook)
-            <select name="principal" value=${this.user} @change=${e => this.principal = e.target.value}>
-              <option value=${this.user}>${this.user}</option>
+            <select name="principal" required .value=${this.user} @change=${e => this.principal = e.target.value}>
+              <option .value=${this.user}>${this.user}</option>
               ${window.rusticalUser.memberships.map(membership => html`
-                <option value=${membership}>${membership}</option>
+                <option .value=${membership}>${membership}</option>
               `)}
             </select>
           </label>
           <br>
           <label>
             id
-            <input type="text" name="id" value=${this.addressbook_id} @change=${e => this.addressbook_id = e.target.value} />
+            <input type="text" required .value=${this.addressbook_id} @change=${e => this.addressbook_id = e.target.value} />
           </label>
           <br>
           <label>
             file
-            <input type="file" accept="text/vcard" name="file" @change=${e => this.file = e.target.files[0]} />
+            <input type="file" accept="text/vcard" required @change=${e => this.file = e.target.files[0]} />
           </label>
+          <br>
+          <br>
           <button type="submit">Import</button>
           <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close(); this.form.value.reset() }} class="cancel">Cancel</button>
       </form>

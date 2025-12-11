@@ -341,6 +341,7 @@ form {
   input[type="url"],
   input[type="password"],
   input[type="color"],
+  input[type="file"],
   textarea,
   select {
     width: 100%;
