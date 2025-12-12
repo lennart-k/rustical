@@ -109,5 +109,11 @@ async fn test_caldav_principal(
     let response = app.clone().oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::MULTI_STATUS);
     let body = response.extract_string().await;
-    insta::assert_snapshot!(body);
+    insta::with_settings!({
+        filters => vec![
+            (r"<PUSH:topic>[0-9a-f-]+</PUSH:topic>", "[PUSH_TOPIC]")
+        ]
+    }, {
+        insta::assert_snapshot!(body);
+    });
 }

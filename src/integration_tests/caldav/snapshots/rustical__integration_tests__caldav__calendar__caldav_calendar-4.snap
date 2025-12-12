@@ -163,7 +163,7 @@ END:VCALENDAR
                 <PUSH:transports>
                     <PUSH:web-push/>
                 </PUSH:transports>
-                <PUSH:topic>89828c25-cc5c-481a-bb3b-cde435cf9393</PUSH:topic>
+                [PUSH_TOPIC]
                 <PUSH:supported-triggers>
                     <PUSH:content-update>
                         <depth>1</depth>
