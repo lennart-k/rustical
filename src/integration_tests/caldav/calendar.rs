@@ -58,7 +58,7 @@ async fn test_caldav_calendar(
     let app = app.await;
     let cal_store = cal_store.await;
 
-    let calendar_meta = CalendarMetadata {
+    let mut calendar_meta = CalendarMetadata {
         displayname: Some("Calendar".to_string()),
         description: Some("Description".to_string()),
         color: Some("#00FF00".to_string()),
@@ -132,6 +132,46 @@ async fn test_caldav_calendar(
     }, {
         insta::assert_snapshot!(body);
     });
+
+    let proppatch_request: &str = r#"
+    <propertyupdate xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav">
+        <set>
+            <prop>
+                <displayname>New Displayname</displayname>
+                <CAL:calendar-description>Test</CAL:calendar-description>
+            </prop>
+        </set>
+        <remove>
+            <prop>
+                <CAL:calendar-description />
+            </prop>
+        </remove>
+    </propertyupdate>
+    "#;
+    let mut request = Request::builder()
+        .method("PROPPATCH")
+        .uri(&url)
+        .body(Body::from(proppatch_request))
+        .unwrap();
+    request
+        .headers_mut()
+        .typed_insert(Authorization::basic("user", "pass"));
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::MULTI_STATUS);
+    let body = response.extract_string().await;
+    insta::assert_snapshot!(body);
+
+    calendar_meta.displayname = Some("New Displayname".to_string());
+    calendar_meta.description = None;
+
+    assert_eq!(
+        cal_store
+            .get_calendar(principal, cal_id, false)
+            .await
+            .unwrap()
+            .meta,
+        calendar_meta
+    );
 
     let mut request = Request::builder()
         .method("DELETE")
