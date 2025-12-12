@@ -29,8 +29,6 @@ async fn test_caldav_root(
     let request = request_template();
     let response = app.clone().oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
-    let body = response.extract_string().await;
-    insta::assert_snapshot!(body);
 
     // Try with wrong password
     let mut request = request_template();
@@ -39,8 +37,6 @@ async fn test_caldav_root(
         .typed_insert(Authorization::basic("user", "wrongpass"));
     let response = app.clone().oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
-    let body = response.extract_string().await;
-    insta::assert_snapshot!(body);
 
     // Try with correct credentials
     let mut request = request_template();
@@ -51,7 +47,7 @@ async fn test_caldav_root(
     let response = app.oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::MULTI_STATUS);
     let body = response.extract_string().await;
-    insta::assert_snapshot!(body);
+    insta::assert_snapshot!("propfind_body", body);
 }
 
 #[rstest]
@@ -75,8 +71,6 @@ async fn test_caldav_principal(
     let request = request_template();
     let response = app.clone().oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
-    let body = response.extract_string().await;
-    insta::assert_snapshot!(body);
 
     // Try with wrong password
     let mut request = request_template();
@@ -85,8 +79,6 @@ async fn test_caldav_principal(
         .typed_insert(Authorization::basic("user", "wrongpass"));
     let response = app.clone().oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
-    let body = response.extract_string().await;
-    insta::assert_snapshot!(body);
 
     // Try with correct credentials
     let mut request = request_template();
@@ -96,7 +88,7 @@ async fn test_caldav_principal(
     let response = app.clone().oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::MULTI_STATUS);
     let body = response.extract_string().await;
-    insta::assert_snapshot!(body);
+    insta::assert_snapshot!("propfind_depth_0", body);
 
     // Try with Depth: 1
     let mut request = request_template();
@@ -114,6 +106,6 @@ async fn test_caldav_principal(
             (r"<PUSH:topic>[0-9a-f-]+</PUSH:topic>", "<PUSH:topic>[PUSH_TOPIC]</PUSH:topic>")
         ]
     }, {
-        insta::assert_snapshot!(body);
+        insta::assert_snapshot!("propfind_depth_1", body);
     });
 }

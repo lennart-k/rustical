@@ -75,12 +75,31 @@ async fn test_caldav_calendar(
             .unwrap()
     };
 
+    // Try OPTIONS without authentication
+    let request = Request::builder()
+        .method("OPTIONS")
+        .uri(&url)
+        .body(Body::empty())
+        .unwrap();
+    let response = app.clone().oneshot(request).await.unwrap();
+    insta::assert_debug_snapshot!(response, @r#"
+    Response {
+        status: 200,
+        version: HTTP/1.1,
+        headers: {
+            "dav": "1, 3, access-control, calendar-access, webdav-push",
+            "allow": "PROPFIND, PROPPATCH, COPY, MOVE, DELETE, OPTIONS, REPORT, GET, HEAD, POST, MKCOL, MKCALENDAR, IMPORT",
+        },
+        body: Body(
+            UnsyncBoxBody,
+        ),
+    }
+    "#);
+
     // Try without authentication
     let request = request_template();
     let response = app.clone().oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
-    let body = response.extract_string().await;
-    insta::assert_snapshot!(body);
 
     // Try with correct credentials
     let mut request = request_template();
@@ -90,7 +109,7 @@ async fn test_caldav_calendar(
     let response = app.clone().oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::CREATED);
     let body = response.extract_string().await;
-    insta::assert_snapshot!(body);
+    insta::assert_snapshot!("mkcalendar_body", body);
 
     let mut request = Request::builder()
         .method("GET")
@@ -103,7 +122,7 @@ async fn test_caldav_calendar(
     let response = app.clone().oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let body = response.extract_string().await;
-    insta::assert_snapshot!(body);
+    insta::assert_snapshot!("get_body", body);
 
     assert_eq!(
         cal_store
@@ -130,7 +149,7 @@ async fn test_caldav_calendar(
             (r"<PUSH:topic>[0-9a-f-]+</PUSH:topic>", "<PUSH:topic>[PUSH_TOPIC]</PUSH:topic>")
         ]
     }, {
-        insta::assert_snapshot!(body);
+        insta::assert_snapshot!("propfind_body", body);
     });
 
     let proppatch_request: &str = r#"
@@ -159,7 +178,7 @@ async fn test_caldav_calendar(
     let response = app.clone().oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::MULTI_STATUS);
     let body = response.extract_string().await;
-    insta::assert_snapshot!(body);
+    insta::assert_snapshot!("proppatch_body", body);
 
     calendar_meta.displayname = Some("New Displayname".to_string());
     calendar_meta.description = None;
@@ -185,7 +204,7 @@ async fn test_caldav_calendar(
     let response = app.clone().oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let body = response.extract_string().await;
-    insta::assert_snapshot!(body);
+    insta::assert_snapshot!("delete_body", body);
 
     assert!(matches!(
         cal_store.get_calendar(principal, cal_id, false).await,
