@@ -5,7 +5,7 @@ import { escapeXml } from ".";
 import { getTimezones } from "./timezones.ts";
 
 @customElement("create-birthday-calendar-form")
-export class CreateCalendarForm extends LitElement {
+export class CreateBirthdayCalendarForm extends LitElement {
   protected override createRenderRoot() {
     return this
   }
