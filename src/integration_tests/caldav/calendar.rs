@@ -152,4 +152,3 @@ async fn test_caldav_calendar(
         Err(rustical_store::Error::NotFound)
     ));
 }
-
