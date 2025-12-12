@@ -6,6 +6,8 @@ use http::{HeaderValue, StatusCode};
 use rstest::rstest;
 use tower::ServiceExt;
 
+mod calendar;
+
 #[rstest]
 #[tokio::test]
 async fn test_caldav_root(

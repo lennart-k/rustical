@@ -1,55 +1,9 @@
 ---
-source: src/integration_tests/caldav/mod.rs
+source: src/integration_tests/caldav/calendar.rs
 expression: body
 ---
 <?xml version="1.0" encoding="utf-8"?>
 <multistatus xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:PUSH="https://bitfire.at/webdav-push">
-    <response xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:PUSH="https://bitfire.at/webdav-push">
-        <href>/caldav/principal/user/</href>
-        <propstat>
-            <prop>
-                <CAL:calendar-user-type>INDIVIDUAL</CAL:calendar-user-type>
-                <CAL:calendar-user-address-set>
-                    <href>/caldav/principal/user/</href>
-                </CAL:calendar-user-address-set>
-                <principal-URL>
-                    <href>/caldav/principal/user/</href>
-                </principal-URL>
-                <group-membership>
-                </group-membership>
-                <group-member-set>
-                </group-member-set>
-                <alternate-URI-set/>
-                <supported-report-set>
-                    <supported-report>
-                        <report>
-                            <principal-match/>
-                        </report>
-                    </supported-report>
-                </supported-report-set>
-                <CAL:calendar-home-set>
-                    <href>/caldav/principal/user/</href>
-                </CAL:calendar-home-set>
-                <resourcetype>
-                    <collection/>
-                    <principal/>
-                </resourcetype>
-                <displayname>user</displayname>
-                <current-user-principal>
-                    <href>/caldav/principal/user/</href>
-                </current-user-principal>
-                <current-user-privilege-set>
-                    <privilege>
-                        <all/>
-                    </privilege>
-                </current-user-privilege-set>
-                <owner>
-                    <href>/caldav/principal/user/</href>
-                </owner>
-            </prop>
-            <status>HTTP/1.1 200 OK</status>
-        </propstat>
-    </response>
     <response xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:PUSH="https://bitfire.at/webdav-push">
         <href>/caldav/principal/user/calendar/</href>
         <propstat>

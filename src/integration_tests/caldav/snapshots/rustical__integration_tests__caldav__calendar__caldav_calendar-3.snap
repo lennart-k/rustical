@@ -1,0 +1,12 @@
+---
+source: src/integration_tests/caldav/calendar.rs
+expression: body
+---
+BEGIN:VCALENDAR
+VERSION:4.0
+CALSCALE:GREGORIAN
+PRODID:RustiCal
+X-WR-CALNAME:Amazing Calendar
+X-WR-CALDESC:Description
+X-WR-TIMEZONE:Europe/Berlin
+END:VCALENDAR
