@@ -111,7 +111,7 @@ async fn test_caldav_principal(
     let body = response.extract_string().await;
     insta::with_settings!({
         filters => vec![
-            (r"<PUSH:topic>[0-9a-f-]+</PUSH:topic>", "[PUSH_TOPIC]")
+            (r"<PUSH:topic>[0-9a-f-]+</PUSH:topic>", "<PUSH:topic>[PUSH_TOPIC]</PUSH:topic>")
         ]
     }, {
         insta::assert_snapshot!(body);

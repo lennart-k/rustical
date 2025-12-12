@@ -8,7 +8,7 @@ expression: body
         <href>/caldav/principal/user/calendar/</href>
         <propstat>
             <prop>
-                <calendar-color xmlns="http://apple.com/ns/ical/">#FFF8DCFF</calendar-color>
+                <calendar-color xmlns="http://apple.com/ns/ical/">#00FF00</calendar-color>
                 <CAL:calendar-description>Description</CAL:calendar-description>
                 <CAL:calendar-timezone>BEGIN:VCALENDAR
 PRODID:-//github.com/lennart-k/vzic-rs//RustiCal Calendar server//EN
@@ -163,7 +163,7 @@ END:VCALENDAR
                 <PUSH:transports>
                     <PUSH:web-push/>
                 </PUSH:transports>
-                [PUSH_TOPIC]
+                <PUSH:topic>[PUSH_TOPIC]</PUSH:topic>
                 <PUSH:supported-triggers>
                     <PUSH:content-update>
                         <depth>1</depth>
@@ -176,7 +176,7 @@ END:VCALENDAR
                     <collection/>
                     <CAL:calendar/>
                 </resourcetype>
-                <displayname>Amazing Calendar</displayname>
+                <displayname>Calendar</displayname>
                 <current-user-principal>
                     <href>/caldav/principal/user/</href>
                 </current-user-principal>
