@@ -1,0 +1,27 @@
+---
+source: src/integration_tests/caldav/mod.rs
+expression: body
+---
+<?xml version="1.0" encoding="utf-8"?>
+<multistatus xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:PUSH="https://bitfire.at/webdav-push">
+    <response xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:PUSH="https://bitfire.at/webdav-push">
+        <href>/caldav/</href>
+        <propstat>
+            <prop>
+                <resourcetype>
+                    <collection/>
+                </resourcetype>
+                <displayname>RustiCal DAV root</displayname>
+                <current-user-principal>
+                    <href>/caldav/principal/user/</href>
+                </current-user-principal>
+                <current-user-privilege-set>
+                    <privilege>
+                        <all/>
+                    </privilege>
+                </current-user-privilege-set>
+            </prop>
+            <status>HTTP/1.1 200 OK</status>
+        </propstat>
+    </response>
+</multistatus>
