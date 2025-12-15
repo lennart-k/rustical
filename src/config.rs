@@ -14,7 +14,7 @@ pub struct HttpConfig {
 impl Default for HttpConfig {
     fn default() -> Self {
         Self {
-            host: "0.0.0.0".to_owned(),
+            host: "[::]".to_owned(),
             port: 4000,
             session_cookie_samesite_strict: false,
             payload_limit_mb: 4,
