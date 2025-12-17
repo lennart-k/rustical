@@ -152,7 +152,7 @@ impl EventObject {
                 ev.set_property(Property {
                     name: "RECURRENCE-ID".to_string(),
                     value: Some(dateformat.clone()),
-                    params: None,
+                    params: vec![],
                 });
                 ev.set_property(Property {
                     name: "DTSTART".to_string(),

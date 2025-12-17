@@ -36,7 +36,7 @@ pub async fn route_import<AS: AddressbookStore, S: SubscriptionStore>(
             card_mut.set_property(Property {
                 name: "UID".to_owned(),
                 value: Some(uuid::Uuid::new_v4().to_string()),
-                params: None,
+                params: vec![],
             });
             card = card_mut.verify().unwrap();
         }

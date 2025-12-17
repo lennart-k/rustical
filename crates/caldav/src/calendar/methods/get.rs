@@ -42,21 +42,21 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
         ical_calendar_builder = ical_calendar_builder.set(Property {
             name: "X-WR-CALNAME".to_owned(),
             value: Some(displayname),
-            params: None,
+            params: vec![],
         });
     }
     if let Some(description) = calendar.meta.description {
         ical_calendar_builder = ical_calendar_builder.set(Property {
             name: "X-WR-CALDESC".to_owned(),
             value: Some(description),
-            params: None,
+            params: vec![],
         });
     }
     if let Some(timezone_id) = calendar.timezone_id {
         ical_calendar_builder = ical_calendar_builder.set(Property {
             name: "X-WR-TIMEZONE".to_owned(),
             value: Some(timezone_id),
-            params: None,
+            params: vec![],
         });
     }
 
