@@ -36,7 +36,7 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
     let mut vtimezones = HashMap::new();
     let objects = cal_store.get_objects(&principal, &calendar_id).await?;
 
-    let mut ical_calendar_builder = IcalCalendarBuilder::version("4.0")
+    let mut ical_calendar_builder = IcalCalendarBuilder::version("2.0")
         .gregorian()
         .prodid("RustiCal");
     if let Some(displayname) = calendar.meta.displayname {
@@ -65,30 +65,24 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
         vtimezones.extend(object.get_vtimezones());
         match object.get_data() {
             CalendarObjectComponent::Event(EventObject { event, .. }, overrides) => {
-                ical_calendar_builder = ical_calendar_builder.add_event(event.clone());
-                for ev_override in overrides {
-                    ical_calendar_builder =
-                        ical_calendar_builder.add_event(ev_override.event.clone());
-                }
+                ical_calendar_builder = ical_calendar_builder
+                    .add_event(event.clone())
+                    .add_events(overrides.iter().map(|ev| ev.event.clone()));
             }
             CalendarObjectComponent::Todo(todo, overrides) => {
-                ical_calendar_builder = ical_calendar_builder.add_todo(todo.clone());
-                for ev_override in overrides {
-                    ical_calendar_builder = ical_calendar_builder.add_todo(ev_override.clone());
-                }
+                ical_calendar_builder = ical_calendar_builder
+                    .add_todo(todo.clone())
+                    .add_todos(overrides.iter().cloned());
             }
             CalendarObjectComponent::Journal(journal, overrides) => {
-                ical_calendar_builder = ical_calendar_builder.add_journal(journal.clone());
-                for ev_override in overrides {
-                    ical_calendar_builder = ical_calendar_builder.add_journal(ev_override.clone());
-                }
+                ical_calendar_builder = ical_calendar_builder
+                    .add_journal(journal.clone())
+                    .add_journals(overrides.iter().cloned());
             }
         }
     }
 
-    for vtimezone in vtimezones.into_values() {
-        ical_calendar_builder = ical_calendar_builder.add_tz(vtimezone.to_owned());
-    }
+    ical_calendar_builder = ical_calendar_builder.add_timezones(vtimezones.into_values().cloned());
 
     let ical_calendar = ical_calendar_builder
         .build()
