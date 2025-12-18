@@ -50,7 +50,7 @@ pub async fn get_object<AS: AddressbookStore>(
     let mut resp = Response::builder().status(StatusCode::OK);
     let hdrs = resp.headers_mut().unwrap();
     hdrs.typed_insert(ETag::from_str(&object.get_etag()).unwrap());
-    hdrs.typed_insert(ContentType::from_str("text/vcard").unwrap());
+    hdrs.typed_insert(ContentType::from_str("text/vcard; charset=utf-8").unwrap());
     if matches!(method, Method::HEAD) {
         Ok(resp.body(Body::empty()).unwrap())
     } else {

@@ -90,7 +90,7 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
 
     let mut resp = Response::builder().status(StatusCode::OK);
     let hdrs = resp.headers_mut().unwrap();
-    hdrs.typed_insert(ContentType::from_str("text/calendar").unwrap());
+    hdrs.typed_insert(ContentType::from_str("text/calendar; charset=utf-8").unwrap());
 
     let filename = format!("{}_{}.ics", calendar.principal, calendar.id);
     let filename = utf8_percent_encode(&filename, CONTROLS);

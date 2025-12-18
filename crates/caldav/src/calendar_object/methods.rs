@@ -42,7 +42,7 @@ pub async fn get_event<C: CalendarStore>(
     let mut resp = Response::builder().status(StatusCode::OK);
     let hdrs = resp.headers_mut().unwrap();
     hdrs.typed_insert(ETag::from_str(&event.get_etag()).unwrap());
-    hdrs.typed_insert(ContentType::from_str("text/calendar").unwrap());
+    hdrs.typed_insert(ContentType::from_str("text/calendar; charset=utf-8").unwrap());
     if matches!(method, Method::HEAD) {
         Ok(resp.body(Body::empty()).unwrap())
     } else {
