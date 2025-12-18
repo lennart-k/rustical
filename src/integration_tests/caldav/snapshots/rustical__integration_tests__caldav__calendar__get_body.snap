@@ -3,7 +3,7 @@ source: src/integration_tests/caldav/calendar.rs
 expression: body
 ---
 BEGIN:VCALENDAR
-VERSION:4.0
+VERSION:2.0
 CALSCALE:GREGORIAN
 PRODID:RustiCal
 X-WR-CALNAME:Calendar
