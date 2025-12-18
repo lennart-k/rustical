@@ -99,85 +99,85 @@ impl EventObject {
         end: Option<DateTime<Utc>>,
         overrides: &[Self],
     ) -> Result<Vec<IcalEvent>, Error> {
-        if let Some(mut rrule_set) = self.recurrence_ruleset()? {
-            if let Some(start) = start {
-                rrule_set = rrule_set.after(start.with_timezone(&rrule::Tz::UTC));
-            }
-            if let Some(end) = end {
-                rrule_set = rrule_set.before(end.with_timezone(&rrule::Tz::UTC));
-            }
-            let mut events = vec![];
-            let dates = rrule_set.all(2048).dates;
-            let dtstart = self.get_dtstart()?.expect("We must have a DTSTART here");
-            let computed_duration = self
-                .get_dtend()?
-                .map(|dtend| dtend.as_datetime().into_owned() - dtstart.as_datetime().into_owned());
+        let Some(mut rrule_set) = self.recurrence_ruleset()? else {
+            return Ok(vec![self.event.clone()]);
+        };
 
-            'recurrence: for date in dates {
-                let date = CalDateTime::from(date);
-                let dateformat = if dtstart.is_date() {
-                    date.format_date()
-                } else {
-                    date.format()
-                };
-
-                for ev_override in overrides {
-                    if let Some(override_id) = &ev_override
-                        .event
-                        .get_recurrence_id()
-                        .as_ref()
-                        .expect("overrides have a recurrence id")
-                        .value
-                        && override_id == &dateformat
-                    {
-                        // We have an override for this occurence
-                        //
-                        events.push(ev_override.event.clone());
-                        continue 'recurrence;
-                    }
-                }
-
-                let mut ev = self.event.clone().mutable();
-                ev.remove_property("RRULE");
-                ev.remove_property("RDATE");
-                ev.remove_property("EXDATE");
-                ev.remove_property("EXRULE");
-                let dtstart_prop = ev
-                    .get_property("DTSTART")
-                    .expect("We must have a DTSTART here")
-                    .clone();
-                ev.remove_property("DTSTART");
-                ev.remove_property("DTEND");
-
-                ev.set_property(Property {
-                    name: "RECURRENCE-ID".to_string(),
-                    value: Some(dateformat.clone()),
-                    params: vec![],
-                });
-                ev.set_property(Property {
-                    name: "DTSTART".to_string(),
-                    value: Some(dateformat),
-                    params: dtstart_prop.params.clone(),
-                });
-                if let Some(duration) = computed_duration {
-                    let dtend = date + duration;
-                    let dtendformat = if dtstart.is_date() {
-                        dtend.format_date()
-                    } else {
-                        dtend.format()
-                    };
-                    ev.set_property(Property {
-                        name: "DTEND".to_string(),
-                        value: Some(dtendformat),
-                        params: dtstart_prop.params,
-                    });
-                }
-                events.push(ev.verify()?);
-            }
-            Ok(events)
-        } else {
-            Ok(vec![self.event.clone()])
+        if let Some(start) = start {
+            rrule_set = rrule_set.after(start.with_timezone(&rrule::Tz::UTC));
         }
+        if let Some(end) = end {
+            rrule_set = rrule_set.before(end.with_timezone(&rrule::Tz::UTC));
+        }
+        let mut events = vec![];
+        let dates = rrule_set.all(2048).dates;
+        let dtstart = self.get_dtstart()?.expect("We must have a DTSTART here");
+        let computed_duration = self
+            .get_dtend()?
+            .map(|dtend| dtend.as_datetime().into_owned() - dtstart.as_datetime().as_ref());
+
+        'recurrence: for date in dates {
+            let date = CalDateTime::from(date);
+            let dateformat = if dtstart.is_date() {
+                date.format_date()
+            } else {
+                date.format()
+            };
+
+            for ev_override in overrides {
+                if let Some(override_id) = &ev_override
+                    .event
+                    .get_recurrence_id()
+                    .as_ref()
+                    .expect("overrides have a recurrence id")
+                    .value
+                    && override_id == &dateformat
+                {
+                    // We have an override for this occurence
+                    //
+                    events.push(ev_override.event.clone());
+                    continue 'recurrence;
+                }
+            }
+
+            let mut ev = self.event.clone().mutable();
+            ev.remove_property("RRULE");
+            ev.remove_property("RDATE");
+            ev.remove_property("EXDATE");
+            ev.remove_property("EXRULE");
+            let dtstart_prop = ev
+                .get_property("DTSTART")
+                .expect("We must have a DTSTART here")
+                .clone();
+            ev.remove_property("DTSTART");
+            ev.remove_property("DTEND");
+
+            ev.set_property(Property {
+                name: "RECURRENCE-ID".to_string(),
+                value: Some(dateformat.clone()),
+                params: vec![],
+            });
+            ev.set_property(Property {
+                name: "DTSTART".to_string(),
+                value: Some(dateformat),
+                params: dtstart_prop.params.clone(),
+            });
+            if let Some(duration) = computed_duration {
+                let dtend = date + duration;
+                let dtendformat = if dtstart.is_date() {
+                    dtend.format_date()
+                } else {
+                    dtend.format()
+                };
+                ev.set_property(Property {
+                    name: "DTEND".to_string(),
+                    value: Some(dtendformat),
+                    params: dtstart_prop.params,
+                });
+            }
+            events.push(ev.verify()?);
+        }
+        Ok(events)
     }
 }
 
