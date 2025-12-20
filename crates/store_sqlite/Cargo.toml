@@ -11,8 +11,13 @@ publish = false
 [features]
 test = ["dep:rstest"]
 
+[[bench]]
+name = "insert_calendar_object"
+harness = false
+
 [dev-dependencies]
 rstest.workspace = true
+criterion.workspace = true
 
 [dependencies]
 tokio.workspace = true

@@ -32,7 +32,6 @@ opentelemetry = [
   "dep:tracing-opentelemetry",
 ]
 
-
 [profile.dev]
 debug = 0
 
@@ -149,6 +148,7 @@ openssl = { version = "0.10", features = ["vendored"] }
 async-std = { version = "1.13", features = ["attributes"] }
 similar-asserts = "1.7"
 insta = { version = "1.44", features = ["filters"] }
+criterion = { version = "0.8", features = ["async_tokio"] }
 
 [dev-dependencies]
 rstest.workspace = true
