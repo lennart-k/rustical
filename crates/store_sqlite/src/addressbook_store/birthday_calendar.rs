@@ -394,11 +394,11 @@ impl CalendarStore for SqliteAddressbookStore {
     }
 
     #[instrument]
-    async fn put_object(
+    async fn put_objects(
         &self,
         _principal: String,
         _cal_id: String,
-        _object: CalendarObject,
+        _objects: Vec<CalendarObject>,
         _overwrite: bool,
     ) -> Result<(), Error> {
         Err(Error::ReadOnly)

@@ -77,13 +77,23 @@ pub trait CalendarStore: Send + Sync + 'static {
         object_id: &str,
         show_deleted: bool,
     ) -> Result<CalendarObject, Error>;
+    async fn put_objects(
+        &self,
+        principal: String,
+        cal_id: String,
+        objects: Vec<CalendarObject>,
+        overwrite: bool,
+    ) -> Result<(), Error>;
     async fn put_object(
         &self,
         principal: String,
         cal_id: String,
         object: CalendarObject,
         overwrite: bool,
-    ) -> Result<(), Error>;
+    ) -> Result<(), Error> {
+        self.put_objects(principal, cal_id, vec![object], overwrite)
+            .await
+    }
     async fn delete_object(
         &self,
         principal: &str,

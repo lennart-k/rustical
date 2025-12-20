@@ -776,11 +776,11 @@ impl CalendarStore for SqliteCalendarStore {
     }
 
     #[instrument]
-    async fn put_object(
+    async fn put_objects(
         &self,
         principal: String,
         cal_id: String,
-        object: CalendarObject,
+        objects: Vec<CalendarObject>,
         overwrite: bool,
     ) -> Result<(), Error> {
         let mut tx = self
@@ -789,33 +789,37 @@ impl CalendarStore for SqliteCalendarStore {
             .await
             .map_err(crate::Error::from)?;
 
-        let object_id = object.get_id().to_owned();
-
         let calendar = Self::_get_calendar(&mut *tx, &principal, &cal_id, true).await?;
         if calendar.subscription_url.is_some() {
             // We cannot commit an object to a subscription calendar
             return Err(Error::ReadOnly);
         }
 
-        Self::_put_object(&mut *tx, &principal, &cal_id, &object, overwrite).await?;
-
-        let sync_token = Self::log_object_operation(
-            &mut tx,
-            &principal,
-            &cal_id,
-            &object_id,
-            ChangeOperation::Add,
-        )
-        .await?;
+        let mut sync_token = None;
+        for object in objects {
+            sync_token = Some(
+                Self::log_object_operation(
+                    &mut tx,
+                    &principal,
+                    &cal_id,
+                    object.get_id(),
+                    ChangeOperation::Add,
+                )
+                .await?,
+            );
+            Self::_put_object(&mut *tx, &principal, &cal_id, &object, overwrite).await?;
+        }
 
         tx.commit().await.map_err(crate::Error::from)?;
 
-        self.send_push_notification(
-            CollectionOperationInfo::Content { sync_token },
-            self.get_calendar(&principal, &cal_id, true)
-                .await?
-                .push_topic,
-        );
+        if let Some(sync_token) = sync_token {
+            self.send_push_notification(
+                CollectionOperationInfo::Content { sync_token },
+                self.get_calendar(&principal, &cal_id, true)
+                    .await?
+                    .push_topic,
+            );
+        }
         Ok(())
     }
 

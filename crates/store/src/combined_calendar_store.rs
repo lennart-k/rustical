@@ -147,15 +147,15 @@ impl CalendarStore for CombinedCalendarStore {
             .await
     }
 
-    async fn put_object(
+    async fn put_objects(
         &self,
         principal: String,
         cal_id: String,
-        object: rustical_ical::CalendarObject,
+        objects: Vec<rustical_ical::CalendarObject>,
         overwrite: bool,
     ) -> Result<(), crate::Error> {
         self.store_for_id(&cal_id)
-            .put_object(principal, cal_id, object, overwrite)
+            .put_objects(principal, cal_id, objects, overwrite)
             .await
     }
 
