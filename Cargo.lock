@@ -563,9 +563,9 @@ checksum = "37b2a672a2cb129a2e41c10b1224bb368f9f37a2b16b612598138befd7b37eb5"
 
 [[package]]
 name = "cc"
-version = "1.2.49"
+version = "1.2.50"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "90583009037521a116abf44494efecd645ba48b6622457080f080b85544e2215"
+checksum = "9f50d563227a1c37cc0a263f64eca3334388c01c5e4c4861a9def205c614383c"
 dependencies = [
  "find-msvc-tools",
  "shlex",
@@ -1761,14 +1761,13 @@ dependencies = [
 [[package]]
 name = "ical"
 version = "0.11.0"
-source = "git+https://github.com/lennart-k/ical-rs#8698980a24cbf5dbf711f3edbb8a3ea9540b89eb"
+source = "git+https://github.com/lennart-k/ical-rs#d384dd45495722d69c7f76d62a54a8d6481e90ee"
 dependencies = [
  "chrono",
  "chrono-tz",
  "itertools 0.14.0",
  "lazy_static",
  "regex",
- "serde",
  "thiserror 2.0.17",
 ]
 
