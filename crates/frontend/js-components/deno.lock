@@ -1,14 +1,14 @@
 {
   "version": "5",
   "specifiers": {
-    "npm:@deno/vite-plugin@^1.0.5": "1.0.5_vite@7.3.0__picomatch@4.0.3",
+    "npm:@deno/vite-plugin@^1.0.6": "1.0.6_vite@7.3.0__picomatch@4.0.3",
     "npm:lit@^3.3.1": "3.3.1",
     "npm:vite@*": "7.3.0_picomatch@4.0.3",
     "npm:vite@^7.3.0": "7.3.0_picomatch@4.0.3"
   },
   "npm": {
-    "@deno/vite-plugin@1.0.5_vite@7.3.0__picomatch@4.0.3": {
-      "integrity": "sha512-tLja5n4dyMhcze1NzvSs2iiriBymfBlDCZIrjMTxb9O2ru0gvmV6mn5oBD2teNw5Sd92cj3YJzKwsAs8tMJXlg==",
+    "@deno/vite-plugin@1.0.6_vite@7.3.0__picomatch@4.0.3": {
+      "integrity": "sha512-Sh5XqvFuKAwjARTesi0n6xRpEXm1V0UeqKh+SxIrexCofxOaieNDMqXZD02RiZCg0mrJ43V8eCMuVrDfq6mLmg==",
       "dependencies": [
         "vite"
       ]
@@ -415,7 +415,7 @@
   },
   "workspace": {
     "dependencies": [
-      "npm:@deno/vite-plugin@^1.0.5",
+      "npm:@deno/vite-plugin@^1.0.6",
       "npm:lit@^3.3.1",
       "npm:vite@^7.3.0"
     ]
