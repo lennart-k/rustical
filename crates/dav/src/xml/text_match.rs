@@ -64,9 +64,9 @@ pub struct TextMatchElement {
     #[xml(ty = "attr", default = "Default::default")]
     pub collation: TextCollation,
     #[xml(ty = "attr", default = "Default::default")]
-    pub(crate) negate_condition: NegateCondition,
+    pub negate_condition: NegateCondition,
     #[xml(ty = "text")]
-    pub(crate) needle: String,
+    pub needle: String,
 }
 
 impl TextMatchElement {
@@ -90,7 +90,7 @@ impl TextMatchElement {
 
 #[cfg(test)]
 mod tests {
-    use crate::calendar::methods::report::calendar_query::text_match::TextCollation;
+    use super::TextCollation;
 
     #[test]
     fn test_collation() {

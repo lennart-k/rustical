@@ -1,9 +1,8 @@
 use derive_more::derive::{From, Into};
+use rustical_dav::xml::TextCollation;
 use rustical_ical::CalendarObjectType;
 use rustical_xml::{XmlDeserialize, XmlSerialize};
 use strum_macros::VariantArray;
-
-use crate::calendar::methods::report::calendar_query::text_match::TextCollation;
 
 #[derive(Debug, Clone, XmlSerialize, XmlDeserialize, PartialEq, Eq, From, Into)]
 pub struct SupportedCalendarComponent {

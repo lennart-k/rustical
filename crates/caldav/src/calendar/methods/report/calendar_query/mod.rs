@@ -5,14 +5,11 @@ use rustical_store::CalendarStore;
 mod comp_filter;
 mod elements;
 mod prop_filter;
-pub mod text_match;
 #[allow(unused_imports)]
 pub use comp_filter::{CompFilterElement, CompFilterable};
 pub use elements::*;
 #[allow(unused_imports)]
 pub use prop_filter::{PropFilterElement, PropFilterable};
-#[allow(unused_imports)]
-pub use text_match::TextMatchElement;
 
 pub async fn get_objects_calendar_query<C: CalendarStore>(
     cal_query: &CalendarQueryRequest,
@@ -31,21 +28,16 @@ pub async fn get_objects_calendar_query<C: CalendarStore>(
 
 #[cfg(test)]
 mod tests {
-    use rustical_dav::xml::PropElement;
-    use rustical_xml::XmlDocument;
-
+    use super::{
+        CalendarQueryRequest, FilterElement, ParamFilterElement, comp_filter::CompFilterElement,
+        prop_filter::PropFilterElement,
+    };
     use crate::{
-        calendar::methods::report::{
-            ReportRequest,
-            calendar_query::{
-                CalendarQueryRequest, FilterElement, ParamFilterElement, TextMatchElement,
-                comp_filter::CompFilterElement,
-                prop_filter::PropFilterElement,
-                text_match::{NegateCondition, TextCollation},
-            },
-        },
+        calendar::methods::report::ReportRequest,
         calendar_object::{CalendarData, CalendarObjectPropName, CalendarObjectPropWrapperName},
     };
+    use rustical_dav::xml::{NegateCondition, PropElement, TextCollation, TextMatchElement};
+    use rustical_xml::XmlDocument;
 
     #[test]
     fn calendar_query_7_8_7() {

@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-
+use super::{ParamFilterElement, TimeRangeElement};
 use ical::{
     generator::{IcalCalendar, IcalEvent},
     parser::{
@@ -8,12 +7,10 @@ use ical::{
     },
     property::Property,
 };
+use rustical_dav::xml::TextMatchElement;
 use rustical_ical::{CalDateTime, CalendarObject, CalendarObjectComponent, UtcDateTime};
 use rustical_xml::XmlDeserialize;
-
-use crate::calendar::methods::report::calendar_query::{
-    ParamFilterElement, TextMatchElement, TimeRangeElement,
-};
+use std::collections::HashMap;
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
 #[allow(dead_code)]

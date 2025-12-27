@@ -36,7 +36,7 @@ opentelemetry = [
 debug = 0
 
 [workspace.dependencies]
-rustical_dav = { path = "./crates/dav/" }
+rustical_dav = { path = "./crates/dav/", features = ["ical"] }
 rustical_dav_push = { path = "./crates/dav_push/" }
 rustical_store = { path = "./crates/store/" }
 rustical_store_sqlite = { path = "./crates/store_sqlite/" }

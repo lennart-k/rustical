@@ -1,11 +1,6 @@
-use crate::{
-    calendar::methods::report::calendar_query::{
-        TextMatchElement,
-        comp_filter::{CompFilterElement, CompFilterable},
-    },
-    calendar_object::CalendarObjectPropWrapperName,
-};
-use rustical_dav::xml::PropfindType;
+use super::comp_filter::{CompFilterElement, CompFilterable};
+use crate::calendar_object::CalendarObjectPropWrapperName;
+use rustical_dav::xml::{PropfindType, TextMatchElement};
 use rustical_ical::{CalendarObject, UtcDateTime};
 use rustical_store::calendar_store::CalendarQuery;
 use rustical_xml::XmlDeserialize;

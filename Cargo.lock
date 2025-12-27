@@ -3390,6 +3390,7 @@ dependencies = [
  "futures-util",
  "headers",
  "http",
+ "ical",
  "itertools 0.14.0",
  "log",
  "matchit 0.9.0",

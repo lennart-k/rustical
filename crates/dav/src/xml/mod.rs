@@ -15,3 +15,7 @@ mod report_set;
 pub use report_set::SupportedReportSet;
 mod group;
 pub use group::*;
+#[cfg(feature = "ical")]
+mod text_match;
+#[cfg(feature = "ical")]
+pub use text_match::*;

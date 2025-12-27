@@ -137,13 +137,11 @@ impl CompFilterable for CalendarObjectComponent {
 #[cfg(test)]
 mod tests {
     use chrono::{TimeZone, Utc};
+    use rustical_dav::xml::{NegateCondition, TextCollation, TextMatchElement};
     use rustical_ical::{CalendarObject, UtcDateTime};
 
     use crate::calendar::methods::report::calendar_query::{
-        CompFilterable, TextMatchElement, TimeRangeElement,
-        comp_filter::CompFilterElement,
-        prop_filter::PropFilterElement,
-        text_match::{NegateCondition, TextCollation},
+        CompFilterElement, CompFilterable, PropFilterElement, TimeRangeElement,
     };
 
     const ICS: &str = r"BEGIN:VCALENDAR
