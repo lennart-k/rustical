@@ -22,7 +22,7 @@ base64.workspace = true
 serde.workspace = true
 tokio.workspace = true
 url.workspace = true
-rustical_dav.workspace = true
+rustical_dav = { workspace = true, features = ["ical"] }
 rustical_store.workspace = true
 chrono.workspace = true
 rustical_xml.workspace = true
