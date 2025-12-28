@@ -89,8 +89,8 @@ derive_more = { version = "2.1", features = [
   "constructor",
   "display",
 ] }
-askama = { version = "0.14", features = ["serde_json"] }
-askama_web = { version = "0.14", features = ["axum-0.8"] }
+askama = { version = "0.15", features = ["serde_json"] }
+askama_web = { version = "0.15", features = ["axum-0.8"] }
 sqlx = { version = "0.8", default-features = false, features = [
   "sqlx-sqlite",
   "uuid",
