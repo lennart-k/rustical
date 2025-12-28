@@ -37,7 +37,7 @@ pub trait CalendarStore: Send + Sync + 'static {
     async fn import_calendar(
         &self,
         calendar: Calendar,
-        objects: Vec<CalendarObject>,
+        objects: Vec<(String, CalendarObject)>,
         merge_existing: bool,
     ) -> Result<(), Error>;
 
@@ -46,7 +46,7 @@ pub trait CalendarStore: Send + Sync + 'static {
         principal: &str,
         cal_id: &str,
         synctoken: i64,
-    ) -> Result<(Vec<CalendarObject>, Vec<String>, i64), Error>;
+    ) -> Result<(Vec<(String, CalendarObject)>, Vec<String>, i64), Error>;
 
     /// Since the <calendar-query> rules are rather complex this function
     /// is only meant to do some prefiltering
@@ -55,7 +55,7 @@ pub trait CalendarStore: Send + Sync + 'static {
         principal: &str,
         cal_id: &str,
         _query: CalendarQuery,
-    ) -> Result<Vec<CalendarObject>, Error> {
+    ) -> Result<Vec<(String, CalendarObject)>, Error> {
         self.get_objects(principal, cal_id).await
     }
 
@@ -69,7 +69,7 @@ pub trait CalendarStore: Send + Sync + 'static {
         &self,
         principal: &str,
         cal_id: &str,
-    ) -> Result<Vec<CalendarObject>, Error>;
+    ) -> Result<Vec<(String, CalendarObject)>, Error>;
     async fn get_object(
         &self,
         principal: &str,
@@ -81,14 +81,14 @@ pub trait CalendarStore: Send + Sync + 'static {
         &self,
         principal: String,
         cal_id: String,
-        objects: Vec<CalendarObject>,
+        objects: Vec<(String, CalendarObject)>,
         overwrite: bool,
     ) -> Result<(), Error>;
     async fn put_object(
         &self,
         principal: String,
         cal_id: String,
-        object: CalendarObject,
+        object: (String, CalendarObject),
         overwrite: bool,
     ) -> Result<(), Error> {
         self.put_objects(principal, cal_id, vec![object], overwrite)

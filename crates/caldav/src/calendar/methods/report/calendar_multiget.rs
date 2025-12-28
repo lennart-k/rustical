@@ -21,7 +21,7 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore>(
     principal: &str,
     cal_id: &str,
     store: &C,
-) -> Result<(Vec<CalendarObject>, Vec<String>), Error> {
+) -> Result<(Vec<(String, CalendarObject)>, Vec<String>), Error> {
     let mut result = vec![];
     let mut not_found = vec![];
 
@@ -32,7 +32,7 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore>(
             let filename = filename.trim_start_matches('/');
             if let Some(object_id) = filename.strip_suffix(".ics") {
                 match store.get_object(principal, cal_id, object_id, false).await {
-                    Ok(object) => result.push(object),
+                    Ok(object) => result.push((object_id.to_owned(), object)),
                     Err(rustical_store::Error::NotFound) => not_found.push(href.to_string()),
                     Err(err) => return Err(err.into()),
                 }

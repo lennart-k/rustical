@@ -78,12 +78,12 @@ pub async fn put_event<C: CalendarStore>(
         true
     };
 
-    let Ok(object) = CalendarObject::from_ics(body.clone(), Some(object_id)) else {
+    let Ok(object) = CalendarObject::from_ics(body.clone()) else {
         debug!("invalid calendar data:\n{body}");
         return Err(Error::PreconditionFailed(Precondition::ValidCalendarData));
     };
     cal_store
-        .put_object(principal, calendar_id, object, overwrite)
+        .put_object(principal, calendar_id, (object_id, object), overwrite)
         .await?;
 
     Ok(StatusCode::CREATED.into_response())

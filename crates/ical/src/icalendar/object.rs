@@ -8,13 +8,12 @@ use std::io::BufReader;
 
 #[derive(Debug, Clone)]
 pub struct CalendarObject {
-    id: String,
     ics: String,
     inner: IcalCalendarObject,
 }
 
 impl CalendarObject {
-    pub fn from_ics(ics: String, id: Option<String>) -> Result<Self, Error> {
+    pub fn from_ics(ics: String) -> Result<Self, Error> {
         let mut parser = ical::IcalObjectParser::new(BufReader::new(ics.as_bytes()));
         let cal = parser.next().ok_or(Error::MissingCalendar)??;
         if parser.next().is_some() {
@@ -23,21 +22,12 @@ impl CalendarObject {
             ));
         }
 
-        Ok(Self {
-            id: id.unwrap_or_else(|| cal.get_uid().to_owned()),
-            ics,
-            inner: cal,
-        })
+        Ok(Self { ics, inner: cal })
     }
 
     #[must_use]
     pub const fn get_inner(&self) -> &IcalCalendarObject {
         &self.inner
-    }
-
-    #[must_use]
-    pub fn get_id(&self) -> &str {
-        &self.id
     }
 
     #[must_use]

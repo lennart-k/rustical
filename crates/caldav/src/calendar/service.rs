@@ -78,9 +78,10 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
             .get_objects(principal, cal_id)
             .await?
             .into_iter()
-            .map(|object| CalendarObjectResource {
+            .map(|(object_id, object)| CalendarObjectResource {
                 object,
                 principal: principal.to_owned(),
+                object_id,
             })
             .collect())
     }

@@ -34,10 +34,14 @@ fn benchmark(c: &mut Criterion) {
         cal_store
     });
 
-    let object = CalendarObject::from_ics(include_str!("ical_event.ics").to_owned(), None).unwrap();
+    let object = CalendarObject::from_ics(include_str!("ical_event.ics").to_owned()).unwrap();
 
     let batch_size = 1000;
-    let objects: Vec<_> = std::iter::repeat_n(object.clone(), batch_size).collect();
+    let objects: Vec<_> = std::iter::repeat_n(
+        (object.get_inner().get_uid().to_owned(), object.clone()),
+        batch_size,
+    )
+    .collect();
 
     c.bench_function("put_batch", |b| {
         b.to_async(&runtime).iter(async || {
@@ -54,7 +58,12 @@ fn benchmark(c: &mut Criterion) {
             // yeet
             for _ in 0..1000 {
                 cal_store
-                    .put_object("user".to_owned(), "okwow".to_owned(), object.clone(), true)
+                    .put_object(
+                        "user".to_owned(),
+                        "okwow".to_owned(),
+                        (object.get_inner().get_uid().to_owned(), object.clone()),
+                        true,
+                    )
                     .await
                     .unwrap();
             }

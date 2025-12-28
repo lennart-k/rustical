@@ -82,7 +82,10 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
     let objects = expanded_cals
         .into_iter()
         .map(|cal| cal.generate())
-        .map(|ics| CalendarObject::from_ics(ics, None))
+        .map(|ics| {
+            CalendarObject::from_ics(ics)
+                .map(|object| (object.get_inner().get_uid().to_owned(), object))
+        })
         .collect::<Result<Vec<_>, _>>()?;
     let new_cal = Calendar {
         principal,

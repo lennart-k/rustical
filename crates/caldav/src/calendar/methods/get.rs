@@ -61,7 +61,7 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
         });
     }
 
-    for object in &objects {
+    for (_object_id, object) in &objects {
         vtimezones.extend(object.get_inner().get_vtimezones());
         match object.get_inner().get_inner() {
             CalendarInnerData::Event(main, overrides) => {

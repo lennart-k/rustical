@@ -17,12 +17,13 @@ use rustical_store::auth::Principal;
 #[derive(Clone, From, Into)]
 pub struct CalendarObjectResource {
     pub object: CalendarObject,
+    pub object_id: String,
     pub principal: String,
 }
 
 impl ResourceName for CalendarObjectResource {
     fn get_name(&self) -> String {
-        format!("{}.ics", self.object.get_id())
+        format!("{}.ics", self.object_id)
     }
 }
 

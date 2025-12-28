@@ -7,7 +7,7 @@ use ical::parser::{
 };
 use ical::types::CalDate;
 use sha2::{Digest, Sha256};
-use std::{collections::HashMap, io::BufReader};
+use std::io::BufReader;
 
 #[derive(Debug, Clone)]
 pub struct AddressObject {
@@ -93,9 +93,8 @@ impl AddressObject {
                 let uid = format!("{}-anniversary", self.get_id());
 
                 let year_suffix = year.map(|year| format!(" ({year})")).unwrap_or_default();
-                Some(CalendarObject::from_ics(
-                    format!(
-                        r"BEGIN:VCALENDAR
+                Some(CalendarObject::from_ics(format!(
+                    r"BEGIN:VCALENDAR
 VERSION:2.0
 CALSCALE:GREGORIAN
 PRODID:-//github.com/lennart-k/rustical birthday calendar//EN
@@ -113,9 +112,7 @@ DESCRIPTION:💍 {fullname}{year_suffix}
 END:VALARM
 END:VEVENT
 END:VCALENDAR",
-                    ),
-                    None,
-                )?)
+                ))?)
             } else {
                 None
             },
@@ -134,9 +131,8 @@ END:VCALENDAR",
                 let uid = format!("{}-birthday", self.get_id());
 
                 let year_suffix = year.map(|year| format!(" ({year})")).unwrap_or_default();
-                Some(CalendarObject::from_ics(
-                    format!(
-                        r"BEGIN:VCALENDAR
+                Some(CalendarObject::from_ics(format!(
+                    r"BEGIN:VCALENDAR
 VERSION:2.0
 CALSCALE:GREGORIAN
 PRODID:-//github.com/lennart-k/rustical birthday calendar//EN
@@ -154,9 +150,7 @@ DESCRIPTION:🎂 {fullname}{year_suffix}
 END:VALARM
 END:VEVENT
 END:VCALENDAR",
-                    ),
-                    None,
-                )?)
+                ))?)
             } else {
                 None
             },
@@ -164,13 +158,13 @@ END:VCALENDAR",
     }
 
     /// Get significant dates associated with this address object
-    pub fn get_significant_dates(&self) -> Result<HashMap<&'static str, CalendarObject>, Error> {
-        let mut out = HashMap::new();
+    pub fn get_significant_dates(&self) -> Result<Vec<(String, CalendarObject)>, Error> {
+        let mut out = vec![];
         if let Some(birthday) = self.get_birthday_object()? {
-            out.insert("birthday", birthday);
+            out.push((birthday.get_inner().get_uid().to_owned(), birthday));
         }
         if let Some(anniversary) = self.get_anniversary_object()? {
-            out.insert("anniversary", anniversary);
+            out.push((anniversary.get_inner().get_uid().to_owned(), anniversary));
         }
         Ok(out)
     }
