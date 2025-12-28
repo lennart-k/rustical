@@ -1,6 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse};
-
-use crate::CalDateTimeError;
+use ical::types::CalDateTimeError;
 
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
 pub enum Error {

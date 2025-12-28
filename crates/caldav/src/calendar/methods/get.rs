@@ -6,10 +6,10 @@ use axum::{extract::Path, response::Response};
 use headers::{ContentType, HeaderMapExt};
 use http::{HeaderValue, Method, StatusCode, header};
 use ical::builder::calendar::IcalCalendarBuilder;
+use ical::component::CalendarInnerData;
 use ical::generator::Emitter;
 use ical::property::Property;
 use percent_encoding::{CONTROLS, utf8_percent_encode};
-use rustical_ical::{CalendarObjectComponent, EventObject};
 use rustical_store::{CalendarStore, SubscriptionStore, auth::Principal};
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -62,21 +62,21 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
     }
 
     for object in &objects {
-        vtimezones.extend(object.get_vtimezones());
-        match object.get_data() {
-            CalendarObjectComponent::Event(EventObject { event, .. }, overrides) => {
+        vtimezones.extend(object.get_inner().get_vtimezones());
+        match object.get_inner().get_inner() {
+            CalendarInnerData::Event(main, overrides) => {
                 ical_calendar_builder = ical_calendar_builder
-                    .add_event(event.clone())
-                    .add_events(overrides.iter().map(|ev| ev.event.clone()));
+                    .add_event(main.clone())
+                    .add_events(overrides.iter().cloned());
             }
-            CalendarObjectComponent::Todo(todo, overrides) => {
+            CalendarInnerData::Todo(main, overrides) => {
                 ical_calendar_builder = ical_calendar_builder
-                    .add_todo(todo.clone())
+                    .add_todo(main.clone())
                     .add_todos(overrides.iter().cloned());
             }
-            CalendarObjectComponent::Journal(journal, overrides) => {
+            CalendarInnerData::Journal(main, overrides) => {
                 ical_calendar_builder = ical_calendar_builder
-                    .add_journal(journal.clone())
+                    .add_journal(main.clone())
                     .add_journals(overrides.iter().cloned());
             }
         }

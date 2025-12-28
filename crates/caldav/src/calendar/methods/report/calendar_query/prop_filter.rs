@@ -1,14 +1,16 @@
 use super::{ParamFilterElement, TimeRangeElement};
 use ical::{
+    component::{CalendarInnerData, IcalCalendarObject},
     generator::{IcalCalendar, IcalEvent},
     parser::{
         Component,
         ical::component::{IcalJournal, IcalTimeZone, IcalTodo},
     },
     property::Property,
+    types::CalDateTime,
 };
 use rustical_dav::xml::TextMatchElement;
-use rustical_ical::{CalDateTime, CalendarObject, CalendarObjectComponent, UtcDateTime};
+use rustical_ical::{CalendarObject, UtcDateTime};
 use rustical_xml::XmlDeserialize;
 use std::collections::HashMap;
 
@@ -79,7 +81,7 @@ pub trait PropFilterable {
 
 impl PropFilterable for CalendarObject {
     fn get_property(&self, name: &str) -> Option<&Property> {
-        Self::get_property(self, name)
+        self.get_property(name)
     }
 }
 
@@ -113,12 +115,12 @@ impl PropFilterable for IcalTimeZone {
     }
 }
 
-impl PropFilterable for CalendarObjectComponent {
+impl PropFilterable for IcalCalendarObject {
     fn get_property(&self, name: &str) -> Option<&Property> {
-        match self {
-            Self::Event(event, _) => PropFilterable::get_property(&event.event, name),
-            Self::Todo(todo, _) => PropFilterable::get_property(todo, name),
-            Self::Journal(journal, _) => PropFilterable::get_property(journal, name),
+        match self.get_inner() {
+            CalendarInnerData::Event(event, _) => PropFilterable::get_property(event, name),
+            CalendarInnerData::Todo(todo, _) => PropFilterable::get_property(todo, name),
+            CalendarInnerData::Journal(journal, _) => PropFilterable::get_property(journal, name),
         }
     }
 }

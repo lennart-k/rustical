@@ -4,6 +4,7 @@ use super::prop::{
 };
 use crate::Error;
 use derive_more::derive::{From, Into};
+use ical::generator::Emitter;
 use rustical_dav::{
     extensions::CommonPropertiesExtension,
     privileges::UserPrivilegeSet,
@@ -52,10 +53,14 @@ impl Resource for CalendarObjectResource {
                     }
                     CalendarObjectPropName::CalendarData(CalendarData { expand, .. }) => {
                         CalendarObjectProp::CalendarData(if let Some(expand) = expand.as_ref() {
-                            self.object.expand_recurrence(
-                                Some(expand.start.to_utc()),
-                                Some(expand.end.to_utc()),
-                            )?
+                            self.object
+                                .get_inner()
+                                .expand_recurrence(
+                                    Some(expand.start.to_utc()),
+                                    Some(expand.end.to_utc()),
+                                )
+                                .map_err(rustical_ical::Error::ParserError)?
+                                .generate()
                         } else {
                             self.object.get_ics().to_owned()
                         })

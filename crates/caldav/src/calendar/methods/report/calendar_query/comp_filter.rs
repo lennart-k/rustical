@@ -2,8 +2,8 @@ use crate::calendar::methods::report::calendar_query::{
     TimeRangeElement,
     prop_filter::{PropFilterElement, PropFilterable},
 };
-use ical::parser::ical::component::IcalTimeZone;
-use rustical_ical::{CalendarObject, CalendarObjectComponent, CalendarObjectType};
+use ical::{component::IcalCalendarObject, parser::ical::component::IcalTimeZone};
+use rustical_ical::{CalendarObject, CalendarObjectType};
 use rustical_xml::XmlDeserialize;
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
@@ -80,10 +80,11 @@ impl CompFilterable for CalendarObject {
 
     fn match_subcomponents(&self, comp_filter: &CompFilterElement) -> bool {
         let mut matches = self
+            .get_inner()
             .get_vtimezones()
             .values()
             .map(|tz| tz.matches(comp_filter))
-            .chain([self.get_data().matches(comp_filter)]);
+            .chain([self.matches(comp_filter)]);
 
         if comp_filter.is_not_defined.is_some() {
             matches.all(|x| x)
@@ -107,7 +108,7 @@ impl CompFilterable for IcalTimeZone {
     }
 }
 
-impl CompFilterable for CalendarObjectComponent {
+impl CompFilterable for IcalCalendarObject {
     fn get_comp_name(&self) -> &'static str {
         CalendarObjectType::from(self).as_str()
     }
@@ -120,7 +121,7 @@ impl CompFilterable for CalendarObjectComponent {
             return false;
         }
         if let Some(end) = &time_range.end
-            && let Some(first_occurence) = self.get_first_occurence().unwrap_or(None)
+            && let Some(first_occurence) = self.get_dtstart().unwrap_or(None)
             && **end < first_occurence.utc()
         {
             return false;

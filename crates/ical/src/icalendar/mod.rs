@@ -1,5 +1,5 @@
-mod event;
 mod object;
+mod object_type;
 
-pub use event::*;
 pub use object::*;
+pub use object_type::*;

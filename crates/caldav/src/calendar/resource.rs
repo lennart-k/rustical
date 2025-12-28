@@ -4,6 +4,7 @@ use crate::calendar::prop::{ReportMethod, SupportedCollationSet};
 use chrono::{DateTime, Utc};
 use derive_more::derive::{From, Into};
 use ical::IcalParser;
+use ical::types::CalDateTime;
 use rustical_dav::extensions::{
     CommonPropertiesExtension, CommonPropertiesProp, SyncTokenExtension, SyncTokenExtensionProp,
 };
@@ -11,7 +12,6 @@ use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner, SupportedReportSet};
 use rustical_dav_push::{DavPushExtension, DavPushExtensionProp};
-use rustical_ical::CalDateTime;
 use rustical_store::Calendar;
 use rustical_store::auth::Principal;
 use rustical_xml::{EnumVariants, PropName};

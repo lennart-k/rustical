@@ -3,7 +3,8 @@ use crate::BEGIN_IMMEDIATE;
 use async_trait::async_trait;
 use chrono::TimeDelta;
 use derive_more::derive::Constructor;
-use rustical_ical::{CalDateTime, CalendarObject, CalendarObjectType};
+use ical::types::CalDateOrDateTime;
+use rustical_ical::{CalendarObject, CalendarObjectType};
 use rustical_store::calendar_store::CalendarQuery;
 use rustical_store::synctoken::format_synctoken;
 use rustical_store::{Calendar, CalendarMetadata, CalendarStore, CollectionMetadata, Error};
@@ -25,12 +26,12 @@ impl TryFrom<CalendarObjectRow> for CalendarObject {
 
     fn try_from(value: CalendarObjectRow) -> Result<Self, Self::Error> {
         let object = Self::from_ics(value.ics, Some(value.id))?;
-        if object.get_uid() != value.uid {
+        if object.get_inner().get_uid() != value.uid {
             return Err(rustical_store::Error::IcalError(
                 rustical_ical::Error::InvalidData(format!(
                     "uid={} and UID={} don't match",
                     value.uid,
-                    object.get_uid()
+                    object.get_inner().get_uid()
                 )),
             ));
         }
@@ -455,20 +456,26 @@ impl SqliteCalendarStore {
         object: &CalendarObject,
         overwrite: bool,
     ) -> Result<(), Error> {
-        let (object_id, uid, ics) = (object.get_id(), object.get_uid(), object.get_ics());
+        let (object_id, uid, ics) = (
+            object.get_id(),
+            object.get_inner().get_uid(),
+            object.get_ics(),
+        );
 
         let first_occurence = object
-            .get_first_occurence()
+            .get_inner()
+            .get_dtstart()
             .ok()
             .flatten()
             .as_ref()
-            .map(CalDateTime::date);
+            .map(CalDateOrDateTime::date_floor);
         let last_occurence = object
+            .get_inner()
             .get_last_occurence()
             .ok()
             .flatten()
             .as_ref()
-            .map(CalDateTime::date);
+            .map(CalDateOrDateTime::date_ceil);
         let etag = object.get_etag();
         let object_type = object.get_object_type() as u8;
 

@@ -1,4 +1,3 @@
-use crate::{CalDateTime, LOCAL_DATE};
 use crate::{CalendarObject, Error};
 use chrono::Datelike;
 use ical::generator::Emitter;
@@ -6,6 +5,7 @@ use ical::parser::{
     Component,
     vcard::{self, component::VcardContact},
 };
+use ical::types::CalDate;
 use sha2::{Digest, Sha256};
 use std::{collections::HashMap, io::BufReader};
 
@@ -64,15 +64,15 @@ impl AddressObject {
     }
 
     #[must_use]
-    pub fn get_anniversary(&self) -> Option<(CalDateTime, bool)> {
+    pub fn get_anniversary(&self) -> Option<(CalDate, bool)> {
         let prop = self.vcard.get_property("ANNIVERSARY")?.value.as_deref()?;
-        CalDateTime::parse_vcard(prop).ok()
+        CalDate::parse_vcard(prop).ok()
     }
 
     #[must_use]
-    pub fn get_birthday(&self) -> Option<(CalDateTime, bool)> {
+    pub fn get_birthday(&self) -> Option<(CalDate, bool)> {
         let prop = self.vcard.get_property("BDAY")?.value.as_deref()?;
-        CalDateTime::parse_vcard(prop).ok()
+        CalDate::parse_vcard(prop).ok()
     }
 
     #[must_use]
@@ -87,13 +87,9 @@ impl AddressObject {
                 let Some(fullname) = self.get_full_name() else {
                     return Ok(None);
                 };
-                let anniversary = anniversary.date();
                 let year = contains_year.then_some(anniversary.year());
-                let anniversary_start = anniversary.format(LOCAL_DATE);
-                let anniversary_end = anniversary
-                    .succ_opt()
-                    .unwrap_or(anniversary)
-                    .format(LOCAL_DATE);
+                let anniversary_start = anniversary.format();
+                let anniversary_end = anniversary.succ_opt().unwrap_or(anniversary).format();
                 let uid = format!("{}-anniversary", self.get_id());
 
                 let year_suffix = year.map(|year| format!(" ({year})")).unwrap_or_default();
@@ -132,10 +128,9 @@ END:VCALENDAR",
                 let Some(fullname) = self.get_full_name() else {
                     return Ok(None);
                 };
-                let birthday = birthday.date();
                 let year = contains_year.then_some(birthday.year());
-                let birthday_start = birthday.format(LOCAL_DATE);
-                let birthday_end = birthday.succ_opt().unwrap_or(birthday).format(LOCAL_DATE);
+                let birthday_start = birthday.format();
+                let birthday_end = birthday.succ_opt().unwrap_or(birthday).format();
                 let uid = format!("{}-birthday", self.get_id());
 
                 let year_suffix = year.map(|year| format!(" ({year})")).unwrap_or_default();
