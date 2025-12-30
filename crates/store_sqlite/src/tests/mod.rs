@@ -2,10 +2,7 @@ use crate::{
     SqliteStore, addressbook_store::SqliteAddressbookStore, calendar_store::SqliteCalendarStore,
     principal_store::SqlitePrincipalStore,
 };
-use rustical_store::{
-    Secret,
-    auth::{AuthenticationProvider, Principal, PrincipalType},
-};
+use rustical_store::auth::{AuthenticationProvider, Principal, PrincipalType};
 use sqlx::SqlitePool;
 use tokio::sync::OnceCell;
 
