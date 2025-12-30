@@ -5,10 +5,11 @@ use axum::{
     extract::Query,
     response::{IntoResponse, Redirect, Response},
 };
-use axum_extra::extract::Host;
+use axum_extra::TypedHeader;
 pub use config::OidcConfig;
 use config::UserIdClaim;
 use error::OidcError;
+use headers::Host;
 use openidconnect::{
     AuthenticationFlow, AuthorizationCode, CsrfToken, EndpointMaybeSet, EndpointNotSet,
     EndpointSet, IssuerUrl, Nonce, OAuth2TokenResponse, PkceCodeChallenge, PkceCodeVerifier,
@@ -100,10 +101,12 @@ pub struct GetOidcForm {
 pub async fn route_post_oidc(
     Extension(oidc_config): Extension<OidcConfig>,
     session: Session,
-    Host(host): Host,
+    TypedHeader(host): TypedHeader<Host>,
     Form(GetOidcForm { redirect_uri }): Form<GetOidcForm>,
 ) -> Result<Response, OidcError> {
+    dbg!(&host);
     let callback_uri = format!("https://{host}/frontend/login/oidc/callback");
+    dbg!(&callback_uri);
 
     let http_client = get_http_client();
     let oidc_client = get_oidc_client(
@@ -155,7 +158,7 @@ pub async fn route_get_oidc_callback<US: UserStore + Clone>(
     Extension(service_config): Extension<OidcServiceConfig>,
     session: Session,
     Query(AuthCallbackQuery { code, iss, state }): Query<AuthCallbackQuery>,
-    Host(host): Host,
+    TypedHeader(host): TypedHeader<Host>,
 ) -> Result<Response, OidcError> {
     let callback_uri = format!("https://{host}/frontend/login/oidc/callback");
 

@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{FrontendConfig, OidcConfig, pages::DefaultLayoutData};
 use askama::Template;
 use askama_web::WebTemplate;
@@ -8,10 +6,12 @@ use axum::{
     extract::Query,
     response::{IntoResponse, Redirect, Response},
 };
-use axum_extra::extract::Host;
+use axum_extra::TypedHeader;
+use headers::Host;
 use http::StatusCode;
 use rustical_store::auth::AuthenticationProvider;
 use serde::Deserialize;
+use std::sync::Arc;
 use tower_sessions::Session;
 use tracing::{instrument, warn};
 use url::Url;
@@ -73,7 +73,7 @@ pub async fn route_post_login<AP: AuthenticationProvider>(
     Extension(auth_provider): Extension<Arc<AP>>,
     Extension(config): Extension<FrontendConfig>,
     session: Session,
-    Host(host): Host,
+    TypedHeader(host): TypedHeader<Host>,
     Form(PostLoginForm {
         username,
         password,

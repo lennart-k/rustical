@@ -7,8 +7,8 @@ use axum::{
     extract::Path,
     response::{IntoResponse, Redirect, Response},
 };
-use axum_extra::extract::Host;
-use headers::{ContentType, HeaderMapExt};
+use axum_extra::TypedHeader;
+use headers::{ContentType, HeaderMapExt, Host};
 use http::{HeaderValue, StatusCode, header};
 use percent_encoding::{CONTROLS, utf8_percent_encode};
 use rand::{Rng, distr::Alphanumeric};
@@ -50,7 +50,7 @@ pub async fn route_post_app_token<AP: AuthenticationProvider>(
     user: Principal,
     Extension(auth_provider): Extension<Arc<AP>>,
     Path(user_id): Path<String>,
-    Host(hostname): Host,
+    TypedHeader(host): TypedHeader<Host>,
     Form(PostAppTokenForm { apple, name }): Form<PostAppTokenForm>,
 ) -> Result<Response, rustical_store::Error> {
     assert!(!name.is_empty());
@@ -66,10 +66,10 @@ pub async fn route_post_app_token<AP: AuthenticationProvider>(
     if apple {
         let profile = AppleConfig {
             token_name: name,
-            account_description: format!("{}@{}", &user.id, &hostname),
-            hostname: hostname.clone(),
-            caldav_principal_url: format!("https://{hostname}/caldav-compat/principal/{user_id}"),
-            carddav_principal_url: format!("https://{hostname}/carddav/principal/{user_id}"),
+            account_description: format!("{}@{}", &user.id, &host),
+            hostname: host.to_string(),
+            caldav_principal_url: format!("https://{host}/caldav-compat/principal/{user_id}"),
+            carddav_principal_url: format!("https://{host}/carddav/principal/{user_id}"),
             user: user.id.clone(),
             token,
             caldav_profile_uuid: Uuid::new_v4(),
