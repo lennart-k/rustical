@@ -3,57 +3,57 @@ source: crates/carddav/src/addressbook/tests.rs
 expression: response.serialize_to_string().unwrap()
 ---
 <?xml version="1.0" encoding="utf-8"?>
-<response xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:PUSH="https://bitfire.at/webdav-push">
+<response xmlns="DAV:">
     <href>/carddav/principal/user/yeet/</href>
     <propstat>
-        <prop>
-            <CARD:supported-address-data>
-                <CARD:address-data-type content-type="text/vcard" version="3.0"/>
-                <CARD:address-data-type content-type="text/vcard" version="4.0"/>
-            </CARD:supported-address-data>
-            <supported-report-set>
-                <supported-report>
-                    <report>
-                        <CARD:addressbook-multiget/>
+        <prop xmlns="DAV:">
+            <supported-address-data xmlns="urn:ietf:params:xml:ns:carddav">
+                <address-data-type xmlns="urn:ietf:params:xml:ns:carddav" content-type="text/vcard" version="3.0"/>
+                <address-data-type xmlns="urn:ietf:params:xml:ns:carddav" content-type="text/vcard" version="4.0"/>
+            </supported-address-data>
+            <supported-report-set xmlns="DAV:">
+                <supported-report xmlns="DAV:">
+                    <report xmlns="DAV:">
+                        <addressbook-multiget xmlns="urn:ietf:params:xml:ns:carddav"/>
                     </report>
                 </supported-report>
-                <supported-report>
-                    <report>
-                        <sync-collection/>
+                <supported-report xmlns="DAV:">
+                    <report xmlns="DAV:">
+                        <sync-collection xmlns="DAV:"/>
                     </report>
                 </supported-report>
             </supported-report-set>
-            <max-resource-size>10000000</max-resource-size>
-            <sync-token>github.com/lennart-k/rustical/ns/0</sync-token>
-            <CS:getctag>github.com/lennart-k/rustical/ns/0</CS:getctag>
-            <PUSH:transports>
-                <PUSH:web-push/>
-            </PUSH:transports>
-            <PUSH:topic>asdasd</PUSH:topic>
-            <PUSH:supported-triggers>
-                <PUSH:content-update>
-                    <depth>1</depth>
-                </PUSH:content-update>
-                <PUSH:property-update>
-                    <depth>1</depth>
-                </PUSH:property-update>
-            </PUSH:supported-triggers>
-            <resourcetype>
-                <collection/>
-                <CARD:addressbook/>
+            <max-resource-size xmlns="DAV:">10000000</max-resource-size>
+            <sync-token xmlns="DAV:">github.com/lennart-k/rustical/ns/0</sync-token>
+            <getctag xmlns="http://calendarserver.org/ns/">github.com/lennart-k/rustical/ns/0</getctag>
+            <transports xmlns="https://bitfire.at/webdav-push">
+                <web-push xmlns="https://bitfire.at/webdav-push"/>
+            </transports>
+            <topic xmlns="https://bitfire.at/webdav-push">asdasd</topic>
+            <supported-triggers xmlns="https://bitfire.at/webdav-push">
+                <content-update xmlns="https://bitfire.at/webdav-push">
+                    <depth xmlns="DAV:">1</depth>
+                </content-update>
+                <property-update xmlns="https://bitfire.at/webdav-push">
+                    <depth xmlns="DAV:">1</depth>
+                </property-update>
+            </supported-triggers>
+            <resourcetype xmlns="DAV:">
+                <collection xmlns="DAV:"/>
+                <addressbook xmlns="urn:ietf:params:xml:ns:carddav"/>
             </resourcetype>
-            <current-user-principal>
-                <href>/carddav/principal/user/</href>
+            <current-user-principal xmlns="DAV:">
+                <href xmlns="DAV:">/carddav/principal/user/</href>
             </current-user-principal>
-            <current-user-privilege-set>
+            <current-user-privilege-set xmlns="DAV:">
                 <privilege>
                     <all/>
                 </privilege>
             </current-user-privilege-set>
-            <owner>
-                <href>/carddav/principal/user/</href>
+            <owner xmlns="DAV:">
+                <href xmlns="DAV:">/carddav/principal/user/</href>
             </owner>
         </prop>
-        <status>HTTP/1.1 200 OK</status>
+        <status xmlns="DAV:">HTTP/1.1 200 OK</status>
     </propstat>
 </response>

@@ -3,43 +3,43 @@ source: crates/carddav/src/principal/tests.rs
 expression: response.serialize_to_string().unwrap()
 ---
 <?xml version="1.0" encoding="utf-8"?>
-<response xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:PUSH="https://bitfire.at/webdav-push">
+<response xmlns="DAV:">
     <href>/carddav/principal/user/</href>
     <propstat>
-        <prop>
-            <principal-URL>
-                <href>/carddav/principal/user/</href>
+        <prop xmlns="DAV:">
+            <principal-URL xmlns="DAV:">
+                <href xmlns="DAV:">/carddav/principal/user/</href>
             </principal-URL>
-            <group-membership>
-                <href>/carddav/principal/group/</href>
+            <group-membership xmlns="DAV:">
+                <href xmlns="DAV:">/carddav/principal/group/</href>
             </group-membership>
-            <group-member-set>
+            <group-member-set xmlns="DAV:">
             </group-member-set>
-            <alternate-URI-set/>
-            <principal-collection-set>
-                <href>/carddav/principal/</href>
+            <alternate-URI-set xmlns="DAV:"/>
+            <principal-collection-set xmlns="DAV:">
+                <href xmlns="DAV:">/carddav/principal/</href>
             </principal-collection-set>
-            <CARD:addressbook-home-set>
-                <href>/carddav/principal/group/</href>
-                <href>/carddav/principal/user/</href>
-            </CARD:addressbook-home-set>
-            <resourcetype>
-                <collection/>
-                <principal/>
+            <addressbook-home-set xmlns="urn:ietf:params:xml:ns:carddav">
+                <href xmlns="DAV:">/carddav/principal/group/</href>
+                <href xmlns="DAV:">/carddav/principal/user/</href>
+            </addressbook-home-set>
+            <resourcetype xmlns="DAV:">
+                <collection xmlns="DAV:"/>
+                <principal xmlns="DAV:"/>
             </resourcetype>
-            <displayname>user</displayname>
-            <current-user-principal>
-                <href>/carddav/principal/user/</href>
+            <displayname xmlns="DAV:">user</displayname>
+            <current-user-principal xmlns="DAV:">
+                <href xmlns="DAV:">/carddav/principal/user/</href>
             </current-user-principal>
-            <current-user-privilege-set>
+            <current-user-privilege-set xmlns="DAV:">
                 <privilege>
                     <all/>
                 </privilege>
             </current-user-privilege-set>
-            <owner>
-                <href>/carddav/principal/user/</href>
+            <owner xmlns="DAV:">
+                <href xmlns="DAV:">/carddav/principal/user/</href>
             </owner>
         </prop>
-        <status>HTTP/1.1 200 OK</status>
+        <status xmlns="DAV:">HTTP/1.1 200 OK</status>
     </propstat>
 </response>

@@ -1,0 +1,37 @@
+---
+source: crates/caldav/src/calendar/tests.rs
+expression: output
+---
+<?xml version="1.0" encoding="utf-8"?>
+<response xmlns="DAV:">
+    <href>/caldav/principal/user/calendar/</href>
+    <propstat>
+        <prop xmlns="DAV:">
+            <calendar-color xmlns="http://apple.com/ns/ical/"/>
+            <calendar-description xmlns="urn:ietf:params:xml:ns:caldav"/>
+            <calendar-timezone xmlns="urn:ietf:params:xml:ns:caldav"/>
+            <timezone-service-set xmlns="urn:ietf:params:xml:ns:caldav"/>
+            <calendar-timezone-id xmlns="urn:ietf:params:xml:ns:caldav"/>
+            <calendar-order xmlns="http://apple.com/ns/ical/"/>
+            <supported-calendar-component-set xmlns="urn:ietf:params:xml:ns:caldav"/>
+            <supported-calendar-data xmlns="urn:ietf:params:xml:ns:caldav"/>
+            <supported-collation-set xmlns="urn:ietf:params:xml:ns:caldav"/>
+            <max-resource-size xmlns="DAV:"/>
+            <supported-report-set xmlns="DAV:"/>
+            <source xmlns="http://calendarserver.org/ns/"/>
+            <min-date-time xmlns="urn:ietf:params:xml:ns:caldav"/>
+            <max-date-time xmlns="urn:ietf:params:xml:ns:caldav"/>
+            <sync-token xmlns="DAV:"/>
+            <getctag xmlns="http://calendarserver.org/ns/"/>
+            <transports xmlns="https://bitfire.at/webdav-push"/>
+            <topic xmlns="https://bitfire.at/webdav-push"/>
+            <supported-triggers xmlns="https://bitfire.at/webdav-push"/>
+            <resourcetype xmlns="DAV:"/>
+            <displayname xmlns="DAV:"/>
+            <current-user-principal xmlns="DAV:"/>
+            <current-user-privilege-set xmlns="DAV:"/>
+            <owner xmlns="DAV:"/>
+        </prop>
+        <status xmlns="DAV:">HTTP/1.1 200 OK</status>
+    </propstat>
+</response>

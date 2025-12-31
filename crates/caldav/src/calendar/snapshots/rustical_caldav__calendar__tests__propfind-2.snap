@@ -1,0 +1,199 @@
+---
+source: crates/caldav/src/calendar/tests.rs
+expression: output
+---
+<?xml version="1.0" encoding="utf-8"?>
+<response xmlns="DAV:">
+    <href>/caldav/principal/user/calendar/</href>
+    <propstat>
+        <prop xmlns="DAV:">
+            <calendar-timezone xmlns="urn:ietf:params:xml:ns:caldav">BEGIN:VCALENDAR
+PRODID:-//github.com/lennart-k/vzic-rs//RustiCal Calendar server//EN
+VERSION:2.0
+BEGIN:VTIMEZONE
+TZID:Europe/Berlin
+LAST-MODIFIED:20250723T190331Z
+X-LIC-LOCATION:Europe/Berlin
+X-PROLEPTIC-TZNAME:LMT
+BEGIN:STANDARD
+TZNAME:CET
+TZOFFSETFROM:+005328
+TZOFFSETTO:+0100
+DTSTART:18930401T000000
+END:STANDARD
+BEGIN:DAYLIGHT
+TZNAME:CEST
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+DTSTART:19160430T230000
+RDATE:19400401T020000
+RDATE:19430329T020000
+RDATE:19460414T020000
+RDATE:19470406T030000
+RDATE:19480418T020000
+RDATE:19490410T020000
+RDATE:19800406T020000
+END:DAYLIGHT
+BEGIN:STANDARD
+TZNAME:CET
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+DTSTART:19161001T010000
+RDATE:19421102T030000
+RDATE:19431004T030000
+RDATE:19441002T030000
+RDATE:19451118T030000
+RDATE:19461007T030000
+END:STANDARD
+BEGIN:DAYLIGHT
+TZNAME:CEST
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+DTSTART:19170416T020000
+RRULE:FREQ=YEARLY;BYMONTH=4;BYDAY=3MO;UNTIL=19180415T010000Z
+END:DAYLIGHT
+BEGIN:STANDARD
+TZNAME:CET
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+DTSTART:19170917T030000
+RRULE:FREQ=YEARLY;BYMONTH=9;BYDAY=3MO;UNTIL=19180916T010000Z
+END:STANDARD
+BEGIN:DAYLIGHT
+TZNAME:CEST
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+DTSTART:19440403T020000
+RRULE:FREQ=YEARLY;BYMONTH=4;BYDAY=1MO;UNTIL=19450402T010000Z
+END:DAYLIGHT
+BEGIN:DAYLIGHT
+TZNAME:CEMT
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0300
+DTSTART:19450524T020000
+RDATE:19470511T030000
+END:DAYLIGHT
+BEGIN:DAYLIGHT
+TZNAME:CEST
+TZOFFSETFROM:+0300
+TZOFFSETTO:+0200
+DTSTART:19450924T030000
+RDATE:19470629T030000
+END:DAYLIGHT
+BEGIN:STANDARD
+TZNAME:CET
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0100
+DTSTART:19460101T000000
+RDATE:19800101T000000
+END:STANDARD
+BEGIN:STANDARD
+TZNAME:CET
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+DTSTART:19471005T030000
+RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=1SU;UNTIL=19491002T010000Z
+END:STANDARD
+BEGIN:STANDARD
+TZNAME:CET
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+DTSTART:19800928T030000
+RRULE:FREQ=YEARLY;BYMONTH=9;BYDAY=-1SU;UNTIL=19950924T010000Z
+END:STANDARD
+BEGIN:DAYLIGHT
+TZNAME:CEST
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+DTSTART:19810329T020000
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU
+END:DAYLIGHT
+BEGIN:STANDARD
+TZNAME:CET
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+DTSTART:19961027T030000
+RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
+END:STANDARD
+END:VTIMEZONE
+END:VCALENDAR
+</calendar-timezone>
+            <timezone-service-set xmlns="urn:ietf:params:xml:ns:caldav">
+                <href xmlns="DAV:">https://www.iana.org/time-zones</href>
+            </timezone-service-set>
+            <calendar-timezone-id xmlns="urn:ietf:params:xml:ns:caldav">Europe/Berlin</calendar-timezone-id>
+            <calendar-order xmlns="http://apple.com/ns/ical/">0</calendar-order>
+            <supported-calendar-component-set xmlns="urn:ietf:params:xml:ns:caldav">
+                <comp xmlns="urn:ietf:params:xml:ns:caldav" name="VEVENT"/>
+                <comp xmlns="urn:ietf:params:xml:ns:caldav" name="VTODO"/>
+            </supported-calendar-component-set>
+            <supported-calendar-data xmlns="urn:ietf:params:xml:ns:caldav">
+                <calendar-data xmlns="urn:ietf:params:xml:ns:caldav" content-type="text/calendar" version="2.0"/>
+            </supported-calendar-data>
+            <supported-collation-set xmlns="urn:ietf:params:xml:ns:caldav">
+                <supported-collation xmlns="urn:ietf:params:xml:ns:caldav">i;ascii-casemap</supported-collation>
+                <supported-collation xmlns="urn:ietf:params:xml:ns:caldav">i;octet</supported-collation>
+            </supported-collation-set>
+            <max-resource-size xmlns="DAV:">10000000</max-resource-size>
+            <supported-report-set xmlns="DAV:">
+                <supported-report xmlns="DAV:">
+                    <report xmlns="DAV:">
+                        <calendar-query xmlns="urn:ietf:params:xml:ns:caldav"/>
+                    </report>
+                </supported-report>
+                <supported-report xmlns="DAV:">
+                    <report xmlns="DAV:">
+                        <calendar-multiget xmlns="urn:ietf:params:xml:ns:caldav"/>
+                    </report>
+                </supported-report>
+                <supported-report xmlns="DAV:">
+                    <report xmlns="DAV:">
+                        <sync-collection xmlns="DAV:"/>
+                    </report>
+                </supported-report>
+            </supported-report-set>
+            <min-date-time xmlns="urn:ietf:params:xml:ns:caldav">-2621430101T000000Z</min-date-time>
+            <max-date-time xmlns="urn:ietf:params:xml:ns:caldav">+2621421231T235959Z</max-date-time>
+            <sync-token xmlns="DAV:">github.com/lennart-k/rustical/ns/12</sync-token>
+            <getctag xmlns="http://calendarserver.org/ns/">github.com/lennart-k/rustical/ns/12</getctag>
+            <transports xmlns="https://bitfire.at/webdav-push">
+                <web-push xmlns="https://bitfire.at/webdav-push"/>
+            </transports>
+            <topic xmlns="https://bitfire.at/webdav-push">b28b41e9-8801-4fc5-ae29-8efb5fadeb36</topic>
+            <supported-triggers xmlns="https://bitfire.at/webdav-push">
+                <content-update xmlns="https://bitfire.at/webdav-push">
+                    <depth xmlns="DAV:">1</depth>
+                </content-update>
+                <property-update xmlns="https://bitfire.at/webdav-push">
+                    <depth xmlns="DAV:">1</depth>
+                </property-update>
+            </supported-triggers>
+            <resourcetype xmlns="DAV:">
+                <collection xmlns="DAV:"/>
+                <calendar xmlns="urn:ietf:params:xml:ns:caldav"/>
+            </resourcetype>
+            <displayname xmlns="DAV:">Calendar</displayname>
+            <current-user-principal xmlns="DAV:">
+                <href xmlns="DAV:">/caldav/principal/user/</href>
+            </current-user-principal>
+            <current-user-privilege-set xmlns="DAV:">
+                <privilege>
+                    <read/>
+                </privilege>
+                <privilege>
+                    <write-properties/>
+                </privilege>
+                <privilege>
+                    <read-acl/>
+                </privilege>
+                <privilege>
+                    <read-current-user-privilege-set/>
+                </privilege>
+            </current-user-privilege-set>
+            <owner xmlns="DAV:">
+                <href xmlns="DAV:">/caldav/principal/user/</href>
+            </owner>
+        </prop>
+        <status xmlns="DAV:">HTTP/1.1 200 OK</status>
+    </propstat>
+</response>

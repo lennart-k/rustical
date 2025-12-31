@@ -14,14 +14,9 @@ async fn test_propfind() {
         from_str(include_str!("./test_files/propfind.principals.json")).unwrap();
     let resources: Vec<CalendarResource> =
         from_str(include_str!("./test_files/propfind.resources.json")).unwrap();
-    let outputs: Vec<_> = include_str!("./test_files/propfind.outputs")
-        .trim()
-        .split("\n\n")
-        .collect();
 
     for principal in principals {
-        for ((request, resource), &expected_output) in requests.iter().zip(&resources).zip(&outputs)
-        {
+        for (request, resource) in requests.iter().zip(&resources) {
             let propfind = CalendarResource::parse_propfind(request).unwrap();
 
             let response = resource
@@ -33,13 +28,12 @@ async fn test_propfind() {
                     &principal,
                 )
                 .unwrap();
-            let expected_output = expected_output.trim();
             let output = response
                 .serialize_to_string()
                 .unwrap()
                 .trim()
                 .replace("\r\n", "\n");
-            similar_asserts::assert_eq!(expected_output, output);
+            insta::assert_snapshot!(output);
         }
     }
 }
