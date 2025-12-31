@@ -7,6 +7,9 @@ pub use prop_filter::{PropFilterElement, PropFilterable};
 use rustical_ical::AddressObject;
 use rustical_store::AddressbookStore;
 
+#[cfg(test)]
+mod tests;
+
 pub async fn get_objects_addressbook_query<AS: AddressbookStore>(
     addr_query: &AddressbookQueryRequest,
     principal: &str,
