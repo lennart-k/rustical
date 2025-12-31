@@ -75,7 +75,9 @@ nav:
   - OpenID Connect: setup/oidc.md
   - Developers:
       - developers/index.md
-      - Relevant RFCs: developers/rfcs.md
+      - Relevant RFCs:
+          - developers/rfcs.md
+          - RFC 6352: developers/rfcs/rfc6352.md
       - Frontend: developers/frontend.md
       - Debugging: developers/debugging.md
   - Cargo docs: /rustical/_crate/rustical/
