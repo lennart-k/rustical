@@ -192,3 +192,256 @@ async fn test_carddav_addressbook(
         Err(rustical_store::Error::NotFound)
     ));
 }
+
+#[rstest]
+#[tokio::test]
+async fn test_mkcol_rfc6352_6_3_1_1(
+    #[from(test_store_context)]
+    #[future]
+    context: TestStoreContext,
+) {
+    let context = context.await;
+    let app = get_app(context.clone());
+    let addr_store = context.addr_store;
+
+    let (displayname, description) = (
+        "Lisa's Contacts".to_owned(),
+        "My primary address book.".to_owned(),
+    );
+    let (principal, addr_id) = ("user", "contacts");
+    let url = format!("/carddav/principal/{principal}/{addr_id}");
+
+    let mut request = Request::builder()
+        .method("MKCOL")
+        .uri(&url)
+        .body(Body::from(format!(
+            r#"<?xml version="1.0" encoding="utf-8" ?>
+   <D:mkcol xmlns:D="DAV:"
+                 xmlns:C="urn:ietf:params:xml:ns:carddav">
+     <D:set>
+       <D:prop>
+         <D:resourcetype>
+           <D:collection/>
+           <C:addressbook/>
+         </D:resourcetype>
+         <D:displayname>{displayname}</D:displayname>
+         <C:addressbook-description xml:lang="en"
+   >{description}</C:addressbook-description>
+       </D:prop>
+     </D:set>
+   </D:mkcol>"#
+        )))
+        .unwrap();
+    request
+        .headers_mut()
+        .typed_insert(Authorization::basic("user", "pass"));
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::CREATED);
+    let body = response.extract_string().await;
+    insta::assert_snapshot!("mkcol_body", body);
+    let saved_addressbook = addr_store
+        .get_addressbook(principal, addr_id, false)
+        .await
+        .unwrap();
+    assert_eq!(
+        (
+            saved_addressbook.displayname.unwrap(),
+            saved_addressbook.description.unwrap()
+        ),
+        (displayname, description)
+    );
+
+    let vcard = r"BEGIN:VCARD
+VERSION:3.0
+FN:Cyrus Daboo
+N:Daboo;Cyrus
+ADR;TYPE=POSTAL:;2822 Email HQ;Suite 2821;RFCVille;PA;15213;USA
+EMAIL;TYPE=INTERNET,PREF:cyrus@example.com
+NICKNAME:me
+NOTE:Example VCard.
+ORG:Self Employed
+TEL;TYPE=WORK,VOICE:412 605 0499
+TEL;TYPE=FAX:412 605 0705
+URL:http://www.example.com
+UID:1234-5678-9000-1
+END:VCARD
+        ";
+
+    let mut request = Request::builder()
+        .method("PUT")
+        .uri(format!("{url}/newcard.vcf"))
+        .header("If-None-Match", "*")
+        .header("Content-Type", "text/vcard")
+        .body(Body::from(vcard))
+        .unwrap();
+    request
+        .headers_mut()
+        .typed_insert(Authorization::basic("user", "pass"));
+
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::CREATED);
+    let etag = response.headers().get("ETag").unwrap();
+
+    // This should overwrite
+    let mut request = Request::builder()
+        .method("PUT")
+        .uri(format!("{url}/newcard.vcf"))
+        .header("If-None-Match", "\"somearbitraryetag\"")
+        .header("Content-Type", "text/vcard")
+        .body(Body::from(vcard))
+        .unwrap();
+    request
+        .headers_mut()
+        .typed_insert(Authorization::basic("user", "pass"));
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::CREATED);
+
+    let mut request = Request::builder()
+        .method("PUT")
+        .uri(format!("{url}/newcard.vcf"))
+        .header("If-None-Match", etag)
+        .header("Content-Type", "text/vcard")
+        .body(Body::from(vcard))
+        .unwrap();
+    request
+        .headers_mut()
+        .typed_insert(Authorization::basic("user", "pass"));
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::CONFLICT);
+
+    let mut request = Request::builder()
+        .method("PUT")
+        .uri(format!("{url}/newcard.vcf"))
+        .header("If-None-Match", "*")
+        .header("Content-Type", "text/vcard")
+        .body(Body::from(vcard))
+        .unwrap();
+    request
+        .headers_mut()
+        .typed_insert(Authorization::basic("user", "pass"));
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::CONFLICT);
+}
+
+#[rstest]
+#[tokio::test]
+async fn test_rfc6352_8_7_1(
+    #[from(test_store_context)]
+    #[future]
+    context: TestStoreContext,
+) {
+    let context = context.await;
+    let app = get_app(context.clone());
+    let addr_store = context.addr_store;
+
+    let (displayname, description) = (
+        "Lisa's Contacts".to_owned(),
+        "My primary address book.".to_owned(),
+    );
+    let (principal, addr_id) = ("user", "contacts");
+    let url = format!("/carddav/principal/{principal}/{addr_id}");
+
+    let mut request = Request::builder()
+        .method("MKCOL")
+        .uri(&url)
+        .body(Body::from(format!(
+            r#"<?xml version="1.0" encoding="utf-8" ?>
+   <D:mkcol xmlns:D="DAV:"
+                 xmlns:C="urn:ietf:params:xml:ns:carddav">
+     <D:set>
+       <D:prop>
+         <D:resourcetype>
+           <D:collection/>
+           <C:addressbook/>
+         </D:resourcetype>
+         <D:displayname>{displayname}</D:displayname>
+         <C:addressbook-description xml:lang="en"
+   >{description}</C:addressbook-description>
+       </D:prop>
+     </D:set>
+   </D:mkcol>"#
+        )))
+        .unwrap();
+    request
+        .headers_mut()
+        .typed_insert(Authorization::basic("user", "pass"));
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::CREATED);
+    let body = response.extract_string().await;
+    insta::assert_snapshot!("mkcol_body", body);
+    let saved_addressbook = addr_store
+        .get_addressbook(principal, addr_id, false)
+        .await
+        .unwrap();
+    assert_eq!(
+        (
+            saved_addressbook.displayname.unwrap(),
+            saved_addressbook.description.unwrap()
+        ),
+        (displayname, description)
+    );
+
+    let vcard = r"BEGIN:VCARD
+VERSION:3.0
+FN:Cyrus Daboo
+N:Daboo;Cyrus
+ADR;TYPE=POSTAL:;2822 Email HQ;Suite 2821;RFCVille;PA;15213;USA
+EMAIL;TYPE=INTERNET,PREF:cyrus@example.com
+NICKNAME:me
+NOTE:Example VCard.
+ORG:Self Employed
+TEL;TYPE=WORK,VOICE:412 605 0499
+TEL;TYPE=FAX:412 605 0705
+URL:http://www.example.com
+UID:1234-5678-9000-1
+END:VCARD
+        ";
+
+    let mut request = Request::builder()
+        .method("PUT")
+        .uri(format!("{url}/newcard.vcf"))
+        .header("If-None-Match", "*")
+        .header("Content-Type", "text/vcard")
+        .body(Body::from(vcard))
+        .unwrap();
+    request
+        .headers_mut()
+        .typed_insert(Authorization::basic("user", "pass"));
+
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::CREATED);
+
+    let mut request = Request::builder()
+        .method("REPORT")
+        .uri(&url)
+        .header("Depth", "infinity")
+        .header("Content-Type", "text/xml; charset=\"utf-8\"")
+        .body(Body::from(format!(
+            r#"
+            <?xml version="1.0" encoding="utf-8" ?>
+            <C:addressbook-multiget xmlns:D="DAV:"
+                                    xmlns:C="urn:ietf:params:xml:ns:carddav">
+                <D:prop>
+                <D:getetag/>
+                <C:address-data>
+                    <C:prop name="VERSION"/>
+                    <C:prop name="UID"/>
+                    <C:prop name="NICKNAME"/>
+                    <C:prop name="EMAIL"/>
+                    <C:prop name="FN"/>
+                </C:address-data>
+                </D:prop>
+                <D:href>{url}/newcard.vcf</D:href>
+                <D:href>/home/bernard/addressbook/vcf1.vcf</D:href>
+            </C:addressbook-multiget>
+        "#
+        )))
+        .unwrap();
+    request
+        .headers_mut()
+        .typed_insert(Authorization::basic("user", "pass"));
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::MULTI_STATUS);
+    let body = response.extract_string().await;
+    insta::assert_snapshot!("multiget_body", body);
+}
