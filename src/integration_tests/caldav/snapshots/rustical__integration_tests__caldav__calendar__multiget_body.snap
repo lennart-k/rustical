@@ -1,0 +1,20 @@
+---
+source: src/integration_tests/caldav/calendar.rs
+expression: body
+---
+<?xml version="1.0" encoding="utf-8"?>
+<multistatus xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:PUSH="https://bitfire.at/webdav-push">
+    <response>
+        <href>/caldav/principal/user/calendar/qwue23489.ics</href>
+        <propstat>
+            <prop>
+                <getetag>&quot;aea50382a7775bb9742bfec277382e3a260b6066f503b5f5ae34548d7215ee46&quot;</getetag>
+            </prop>
+            <status>HTTP/1.1 200 OK</status>
+        </propstat>
+    </response>
+    <response>
+        <href>/home/bernard/addressbook/vcf1.vcf</href>
+        <status>HTTP/1.1 404 Not Found</status>
+    </response>
+</multistatus>

@@ -8,6 +8,7 @@ use rustical_store_sqlite::tests::{TestStoreContext, test_store_context};
 use tower::ServiceExt;
 
 mod calendar;
+mod calendar_import;
 
 #[rstest]
 #[tokio::test]
