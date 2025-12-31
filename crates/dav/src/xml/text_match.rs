@@ -147,7 +147,7 @@ mod tests {
         assert!(MatchType::Contains.match_text(&TextCollation::AsciiCasemap, "GrüN", "grün"));
         assert!(MatchType::Contains.match_text(&TextCollation::AsciiCasemap, "GrüN", "grün"));
         assert!(MatchType::StartsWith.match_text(&TextCollation::Octet, "hello", "hello you"));
-        assert!(MatchType::EndsWith.match_text(&TextCollation::Octet, "joe", "joe mama"));
+        assert!(MatchType::EndsWith.match_text(&TextCollation::Octet, "mama", "joe mama"));
         assert!(MatchType::Equals.match_text(&TextCollation::UnicodeCasemap, "GrÜN", "grün"));
     }
 }
