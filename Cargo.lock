@@ -3490,9 +3490,11 @@ dependencies = [
  "ical",
  "regex",
  "rrule",
+ "rstest",
  "rustical_xml",
  "serde",
  "sha2",
+ "similar-asserts",
  "thiserror 2.0.17",
 ]
 

@@ -21,3 +21,5 @@ rrule.workspace = true
 serde.workspace = true
 sha2.workspace = true
 axum.workspace = true
+rstest.workspace = true
+similar-asserts.workspace = true

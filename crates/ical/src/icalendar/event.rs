@@ -67,6 +67,8 @@ impl EventObject {
         };
 
         let mut rrule_set = RRuleSet::new(dtstart);
+        // TODO: Make nice, this is just a bodge to get correct behaviour
+        let mut empty = true;
 
         for prop in &self.event.properties {
             rrule_set = match prop.name.as_str() {
@@ -76,49 +78,63 @@ impl EventObject {
                     })?)?
                     .validate(dtstart)
                     .unwrap();
+                    empty = false;
                     rrule_set.rrule(rrule)
                 }
                 "RDATE" => {
                     let rdate = CalDateTime::parse_prop(prop, &self.timezones)?.into();
+                    empty = false;
                     rrule_set.rdate(rdate)
                 }
                 "EXDATE" => {
                     let exdate = CalDateTime::parse_prop(prop, &self.timezones)?.into();
+                    empty = false;
                     rrule_set.exdate(exdate)
                 }
                 _ => rrule_set,
             }
         }
+        if empty {
+            return Ok(None);
+        }
 
         Ok(Some(rrule_set))
     }
 
+    // The returned calendar components MUST NOT use recurrence
+    // properties (i.e., EXDATE, EXRULE, RDATE, and RRULE) and MUST NOT
+    // have reference to or include VTIMEZONE components.  Date and local
+    // time with reference to time zone information MUST be converted
+    // into date with UTC time.
     pub fn expand_recurrence(
         &self,
         start: Option<DateTime<Utc>>,
         end: Option<DateTime<Utc>>,
         overrides: &[Self],
     ) -> Result<Vec<IcalEvent>, Error> {
-        let Some(mut rrule_set) = self.recurrence_ruleset()? else {
-            return Ok(vec![self.event.clone()]);
-        };
+        let mut events = vec![];
+        let dtstart = self.get_dtstart()?.expect("We must have a DTSTART here");
+        let computed_duration = self
+            .get_dtend()?
+            .map(|dtend| dtend.as_datetime().into_owned() - dtstart.as_datetime().as_ref());
 
+        let Some(mut rrule_set) = self.recurrence_ruleset()? else {
+            // If ruleset empty simply return main event AND all overrides
+            return Ok(std::iter::once(self.clone())
+                .chain(overrides.iter().cloned())
+                .map(|event| event.event)
+                .collect());
+        };
         if let Some(start) = start {
             rrule_set = rrule_set.after(start.with_timezone(&rrule::Tz::UTC));
         }
         if let Some(end) = end {
             rrule_set = rrule_set.before(end.with_timezone(&rrule::Tz::UTC));
         }
-        let mut events = vec![];
         let dates = rrule_set.all(2048).dates;
-        let dtstart = self.get_dtstart()?.expect("We must have a DTSTART here");
-        let computed_duration = self
-            .get_dtend()?
-            .map(|dtend| dtend.as_datetime().into_owned() - dtstart.as_datetime().as_ref());
-
         'recurrence: for date in dates {
-            let date = CalDateTime::from(date);
-            let dateformat = if dtstart.is_date() {
+            let date = CalDateTime::from(date.to_utc());
+            let recurrence_id = if dtstart.is_date() {
                 date.format_date()
             } else {
                 date.format()
@@ -131,7 +147,7 @@ impl EventObject {
                     .as_ref()
                     .expect("overrides have a recurrence id")
                     .value
-                    && override_id == &dateformat
+                    && override_id == &recurrence_id
                 {
                     // We have an override for this occurence
                     //
@@ -154,13 +170,13 @@ impl EventObject {
 
             ev.set_property(Property {
                 name: "RECURRENCE-ID".to_string(),
-                value: Some(dateformat.clone()),
+                value: Some(recurrence_id.clone()),
                 params: vec![],
             });
             ev.set_property(Property {
                 name: "DTSTART".to_string(),
-                value: Some(dateformat),
-                params: dtstart_prop.params.clone(),
+                value: Some(recurrence_id),
+                params: vec![],
             });
             if let Some(duration) = computed_duration {
                 let dtend = date + duration;
@@ -183,10 +199,12 @@ impl EventObject {
 
 #[cfg(test)]
 mod tests {
-    use crate::CalendarObject;
+    use crate::{CalDateTime, CalendarObject};
+    use chrono::{DateTime, Utc};
     use ical::generator::Emitter;
+    use rstest::rstest;
 
-    const ICS: &str = r"BEGIN:VCALENDAR
+    const ICS_1: &str = r"BEGIN:VCALENDAR
 CALSCALE:GREGORIAN
 VERSION:2.0
 BEGIN:VTIMEZONE
@@ -206,16 +224,16 @@ RRULE:FREQ=WEEKLY;COUNT=4;INTERVAL=2;BYDAY=TU,TH,SU
 END:VEVENT
 END:VCALENDAR";
 
-    const EXPANDED: [&str; 4] = [
+    const EXPANDED_1: &[&str] = &[
         "BEGIN:VEVENT\r
 UID:318ec6503573d9576818daf93dac07317058d95c\r
 DTSTAMP:20250502T132758Z\r
 SEQUENCE:2\r
 SUMMARY:weekly stuff\r
 TRANSP:OPAQUE\r
-RECURRENCE-ID:20250506T090000\r
-DTSTART;TZID=Europe/Berlin:20250506T090000\r
-DTEND;TZID=Europe/Berlin:20250506T092500\r
+RECURRENCE-ID:20250506T070000Z\r
+DTSTART:20250506T070000Z\r
+DTEND:20250506T072500Z\r
 END:VEVENT\r\n",
         "BEGIN:VEVENT\r
 UID:318ec6503573d9576818daf93dac07317058d95c\r
@@ -223,9 +241,9 @@ DTSTAMP:20250502T132758Z\r
 SEQUENCE:2\r
 SUMMARY:weekly stuff\r
 TRANSP:OPAQUE\r
-RECURRENCE-ID:20250508T090000\r
-DTSTART;TZID=Europe/Berlin:20250508T090000\r
-DTEND;TZID=Europe/Berlin:20250508T092500\r
+RECURRENCE-ID:20250508T070000Z\r
+DTSTART:20250508T070000Z\r
+DTEND:20250508T072500Z\r
 END:VEVENT\r\n",
         "BEGIN:VEVENT\r
 UID:318ec6503573d9576818daf93dac07317058d95c\r
@@ -234,8 +252,8 @@ SEQUENCE:2\r
 SUMMARY:weekly stuff\r
 TRANSP:OPAQUE\r
 RECURRENCE-ID:20250511T090000\r
-DTSTART;TZID=Europe/Berlin:20250511T090000\r
-DTEND;TZID=Europe/Berlin:20250511T092500\r
+DTSTART:20250511T070000Z\r
+DTEND:20250511T072500Z\r
 END:VEVENT\r\n",
         "BEGIN:VEVENT\r
 UID:318ec6503573d9576818daf93dac07317058d95c\r
@@ -244,25 +262,124 @@ SEQUENCE:2\r
 SUMMARY:weekly stuff\r
 TRANSP:OPAQUE\r
 RECURRENCE-ID:20250520T090000\r
-DTSTART;TZID=Europe/Berlin:20250520T090000\r
-DTEND;TZID=Europe/Berlin:20250520T092500\r
+DTSTA:20250520T070000Z\r
+DTEND:20250520T072500Z\r
 END:VEVENT\r\n",
     ];
 
-    #[test]
-    fn test_expand_recurrence() {
-        let event = CalendarObject::from_ics(ICS.to_string(), None).unwrap();
+    const ICS_2: &str = r"BEGIN:VCALENDAR
+CALSCALE:GREGORIAN
+VERSION:2.0
+BEGIN:VTIMEZONE
+TZID:US/Eastern
+END:VTIMEZONE
+BEGIN:VEVENT
+DTSTAMP:20060206T001121Z
+DTSTART;TZID=US/Eastern:20060102T120000
+DURATION:PT1H
+RRULE:FREQ=DAILY;COUNT=5
+SUMMARY:Event #2
+UID:abcd2
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20060206T001121Z
+DTSTART;TZID=US/Eastern:20060104T140000
+DURATION:PT1H
+RECURRENCE-ID;TZID=US/Eastern:20060104T120000
+SUMMARY:Event #2 bis
+UID:abcd2
+END:VEVENT
+END:VCALENDAR
+";
+
+    const EXPANDED_2: &[&str] = &[
+        "BEGIN:VEVENT\r
+DTSTAMP:20060206T001121Z\r
+DURATION:PT1H\r
+SUMMARY:Event #2\r
+UID:abcd2\r
+RECURRENCE-ID:20060103T170000\r
+DTSTART:20060103T170000\r
+END:VEVENT\r\n",
+        "BEGIN:VEVENT\r
+DTSTAMP:20060206T001121Z\r
+DURATION:PT1H\r
+SUMMARY:Event #2 bis\r
+UID:abcd2\r
+RECURRENCE-ID:20060104T170000\r
+DTSTART:20060104T190000\r
+END:VEVENT\r
+END:VCALENDAR\r\n",
+    ];
+
+    const ICS_3: &str = r"BEGIN:VCALENDAR
+CALSCALE:GREGORIAN
+VERSION:2.0
+BEGIN:VTIMEZONE
+TZID:US/Eastern
+END:VTIMEZONE
+BEGIN:VEVENT
+ATTENDEE;PARTSTAT=ACCEPTED;ROLE=CHAIR:mailto:cyrus@example.com
+ATTENDEE;PARTSTAT=NEEDS-ACTION:mailto:lisa@example.com
+DTSTAMP:20060206T001220Z
+DTSTART;TZID=US/Eastern:20060104T100000
+DURATION:PT1H
+LAST-MODIFIED:20060206T001330Z
+ORGANIZER:mailto:cyrus@example.com
+SEQUENCE:1
+STATUS:TENTATIVE
+SUMMARY:Event #3
+UID:abcd3
+END:VEVENT
+END:VCALENDAR
+";
+
+    const EXPANDED_3: &[&str] = &["BEGIN:VEVENT
+ATTENDEE;PARTSTAT=ACCEPTED;ROLE=CHAIR:mailto:cyrus@example.com
+ATTENDEE;PARTSTAT=NEEDS-ACTION:mailto:lisa@example.com
+DTSTAMP:20060206T001220Z
+DTSTART:20060104T150000
+DURATION:PT1H
+LAST-MODIFIED:20060206T001330Z
+ORGANIZER:mailto:cyrus@example.com
+SEQUENCE:1
+STATUS:TENTATIVE
+SUMMARY:Event #3
+UID:abcd3
+X-ABC-GUID:E1CX5Dr-0007ym-Hz@example.com
+END:VEVENT"];
+
+    #[rstest]
+    #[case(ICS_1, EXPANDED_1, None, None)]
+    // from https://datatracker.ietf.org/doc/html/rfc4791#section-7.8.3
+    #[case(ICS_2, EXPANDED_2,
+        Some(CalDateTime::parse("20060103T000000Z", Some(chrono_tz::US::Eastern)).unwrap().utc()),
+        Some(CalDateTime::parse("20060105T000000Z", Some(chrono_tz::US::Eastern)).unwrap().utc())
+    )]
+    #[case(ICS_3, EXPANDED_3,
+        Some(CalDateTime::parse("20060103T000000Z", Some(chrono_tz::US::Eastern)).unwrap().utc()),
+        Some(CalDateTime::parse("20060105T000000Z", Some(chrono_tz::US::Eastern)).unwrap().utc())
+    )]
+    fn test_expand_recurrence(
+        #[case] ics: &'static str,
+        #[case] expanded: &[&str],
+        #[case] from: Option<DateTime<Utc>>,
+        #[case] to: Option<DateTime<Utc>>,
+    ) {
+        let event = CalendarObject::from_ics(ics.to_string(), None).unwrap();
         let crate::CalendarObjectComponent::Event(event, overrides) = event.get_data() else {
             panic!()
         };
 
         let events: Vec<String> = event
-            .expand_recurrence(None, None, overrides)
+            .expand_recurrence(from, to, overrides)
             .unwrap()
             .into_iter()
             .map(|event| Emitter::generate(&event))
             .collect();
-        assert_eq!(events.as_slice()[0], EXPANDED[0]);
-        assert_eq!(events.as_slice(), &EXPANDED);
+        assert_eq!(events.len(), expanded.len());
+        for (output, reference) in events.iter().zip(expanded) {
+            similar_asserts::assert_eq!(output, reference);
+        }
     }
 }

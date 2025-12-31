@@ -1,0 +1,98 @@
+---
+source: src/integration_tests/caldav/calendar_report.rs
+expression: body
+---
+<?xml version="1.0" encoding="utf-8"?>
+<multistatus xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:PUSH="https://bitfire.at/webdav-push">
+    <response>
+        <href>/caldav/principal/user/calendar/abcd2.ics</href>
+        <propstat>
+            <prop>
+                <CAL:calendar-data>BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Example Corp.//CalDAV Client//EN
+BEGIN:VTIMEZONE
+LAST-MODIFIED:20040110T032845Z
+TZID:US/Eastern
+BEGIN:DAYLIGHT
+DTSTART:20000404T020000
+RRULE:FREQ=YEARLY;BYDAY=1SU;BYMONTH=4
+TZNAME:EDT
+TZOFFSETFROM:-0500
+TZOFFSETTO:-0400
+END:DAYLIGHT
+BEGIN:STANDARD
+DTSTART:20001026T020000
+RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10
+TZNAME:EST
+TZOFFSETFROM:-0400
+TZOFFSETTO:-0500
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+DTSTAMP:20060206T001121Z
+DTSTART;TZID=US/Eastern:20060102T120000
+DURATION:PT1H
+RRULE:FREQ=DAILY;COUNT=5
+SUMMARY:Event #2
+UID:abcd2
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20060206T001121Z
+DTSTART;TZID=US/Eastern:20060104T140000
+DURATION:PT1H
+RECURRENCE-ID;TZID=US/Eastern:20060104T120000
+SUMMARY:Event #2 bis
+UID:abcd2
+END:VEVENT
+END:VCALENDAR
+</CAL:calendar-data>
+            </prop>
+            <status>HTTP/1.1 200 OK</status>
+        </propstat>
+    </response>
+    <response>
+        <href>/caldav/principal/user/calendar/abcd3.ics</href>
+        <propstat>
+            <prop>
+                <CAL:calendar-data>BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Example Corp.//CalDAV Client//EN
+BEGIN:VTIMEZONE
+LAST-MODIFIED:20040110T032845Z
+TZID:US/Eastern
+BEGIN:DAYLIGHT
+DTSTART:20000404T020000
+RRULE:FREQ=YEARLY;BYDAY=1SU;BYMONTH=4
+TZNAME:EDT
+TZOFFSETFROM:-0500
+TZOFFSETTO:-0400
+END:DAYLIGHT
+BEGIN:STANDARD
+DTSTART:20001026T020000
+RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10
+TZNAME:EST
+TZOFFSETFROM:-0400
+TZOFFSETTO:-0500
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+ATTENDEE;PARTSTAT=ACCEPTED;ROLE=CHAIR:mailto:cyrus@example.com
+ATTENDEE;PARTSTAT=NEEDS-ACTION:mailto:lisa@example.com
+DTSTAMP:20060206T001220Z
+DTSTART;TZID=US/Eastern:20060104T100000
+DURATION:PT1H
+LAST-MODIFIED:20060206T001330Z
+ORGANIZER:mailto:cyrus@example.com
+SEQUENCE:1
+STATUS:TENTATIVE
+SUMMARY:Event #3
+UID:abcd3
+END:VEVENT
+END:VCALENDAR
+</CAL:calendar-data>
+            </prop>
+            <status>HTTP/1.1 200 OK</status>
+        </propstat>
+    </response>
+</multistatus>

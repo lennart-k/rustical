@@ -198,6 +198,14 @@ impl CalDateTime {
         }
     }
 
+    #[must_use]
+    pub fn with_timezone(&self, tz: &ICalTimezone) -> Self {
+        match self {
+            Self::DateTime(datetime) => Self::DateTime(datetime.with_timezone(tz)),
+            Self::Date(date, _) => Self::Date(date.to_owned(), tz.to_owned()),
+        }
+    }
+
     pub fn parse(value: &str, timezone: Option<Tz>) -> Result<Self, CalDateTimeError> {
         if let Ok(datetime) = NaiveDateTime::parse_from_str(value, LOCAL_DATE_TIME) {
             if let Some(timezone) = timezone {

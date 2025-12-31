@@ -9,6 +9,7 @@ use tower::ServiceExt;
 
 mod calendar;
 mod calendar_import;
+mod calendar_report;
 
 #[rstest]
 #[tokio::test]
