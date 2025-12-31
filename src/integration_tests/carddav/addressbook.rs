@@ -4,7 +4,7 @@ use axum::extract::Request;
 use headers::{Authorization, HeaderMapExt};
 use http::{HeaderValue, StatusCode};
 use rstest::rstest;
-use rustical_store::{Addressbook, AddressbookStore};
+use rustical_store::AddressbookStore;
 use rustical_store_sqlite::tests::{TestStoreContext, test_store_context};
 use tower::ServiceExt;
 
