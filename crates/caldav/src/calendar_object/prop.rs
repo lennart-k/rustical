@@ -1,6 +1,6 @@
 use rustical_dav::extensions::CommonPropertiesProp;
 use rustical_ical::UtcDateTime;
-use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
+use rustical_xml::{EnumVariants, PropName, Unparsed, XmlDeserialize, XmlSerialize};
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "CalendarObjectPropName")]
@@ -35,7 +35,9 @@ pub struct ExpandElement {
 #[derive(XmlDeserialize, Clone, Debug, PartialEq, Default, Eq, Hash)]
 pub struct CalendarData {
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
-    pub(crate) comp: Option<()>,
+    pub(crate) comp: Option<Unparsed>,
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
+    pub(crate) prop: Option<Unparsed>,
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     pub(crate) expand: Option<ExpandElement>,
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]

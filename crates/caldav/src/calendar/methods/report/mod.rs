@@ -174,7 +174,7 @@ mod tests {
                 prop: rustical_dav::xml::PropfindType::Prop(PropElement(vec![
                     CalendarObjectPropWrapperName::CalendarObject(CalendarObjectPropName::Getetag),
                     CalendarObjectPropWrapperName::CalendarObject(CalendarObjectPropName::CalendarData(
-                        CalendarData { comp: None, expand: Some(ExpandElement {
+                        CalendarData { comp: None, prop: None, expand: Some(ExpandElement {
                         start: <UtcDateTime as ValueDeserialize>::deserialize("20250426T220000Z").unwrap(),
                         end: <UtcDateTime as ValueDeserialize>::deserialize("20250503T220000Z").unwrap(),
                     }), limit_recurrence_set: None, limit_freebusy_set: None }
