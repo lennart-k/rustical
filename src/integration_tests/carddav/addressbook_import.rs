@@ -63,5 +63,11 @@ END:VCARD",
     let response = app.clone().oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let body = response.extract_string().await;
-    insta::assert_snapshot!("get_body", body);
+    insta::with_settings!({
+        filters => vec![
+            (r"UID:.+", "UID:[UID]")
+        ]
+    }, {
+        insta::assert_snapshot!("get_body", body);
+    });
 }
