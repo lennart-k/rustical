@@ -5,6 +5,8 @@ use rustical_store::CalendarStore;
 mod comp_filter;
 mod elements;
 mod prop_filter;
+#[cfg(test)]
+mod tests;
 #[allow(unused_imports)]
 pub use comp_filter::{CompFilterElement, CompFilterable};
 pub use elements::*;
@@ -27,7 +29,7 @@ pub async fn get_objects_calendar_query<C: CalendarStore>(
 }
 
 #[cfg(test)]
-mod tests {
+mod xml_tests {
     use super::{
         CalendarQueryRequest, FilterElement, ParamFilterElement, comp_filter::CompFilterElement,
         prop_filter::PropFilterElement,
@@ -51,16 +53,16 @@ mod tests {
                     <C:calendar-data/>
                 </D:prop>
                 <C:filter>
-                <C:comp-filter name="VCALENDAR">
-                    <C:comp-filter name="VEVENT">
-                        <C:prop-filter name="ATTENDEE">
-                            <C:text-match collation="i;ascii-casemap">mailto:lisa@example.com</C:text-match>
-                            <C:param-filter name="PARTSTAT">
-                                <C:text-match collation="i;ascii-casemap">NEEDS-ACTION</C:text-match>
-                            </C:param-filter>
-                        </C:prop-filter>
+                    <C:comp-filter name="VCALENDAR">
+                        <C:comp-filter name="VEVENT">
+                            <C:prop-filter name="ATTENDEE">
+                                <C:text-match collation="i;ascii-casemap">mailto:lisa@example.com</C:text-match>
+                                <C:param-filter name="PARTSTAT">
+                                    <C:text-match collation="i;ascii-casemap">NEEDS-ACTION</C:text-match>
+                                </C:param-filter>
+                            </C:prop-filter>
+                        </C:comp-filter>
                     </C:comp-filter>
-                </C:comp-filter>
                 </C:filter>
             </C:calendar-query>
         "#;

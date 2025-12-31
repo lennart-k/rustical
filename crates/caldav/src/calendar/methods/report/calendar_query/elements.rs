@@ -4,7 +4,7 @@ use ical::property::Property;
 use rustical_dav::xml::{PropfindType, TextMatchElement};
 use rustical_ical::{CalendarObject, UtcDateTime};
 use rustical_store::calendar_store::CalendarQuery;
-use rustical_xml::XmlDeserialize;
+use rustical_xml::{XmlDeserialize, XmlRootTag};
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
 #[allow(dead_code)]
@@ -45,7 +45,8 @@ impl ParamFilterElement {
     }
 }
 
-#[derive(XmlDeserialize, Clone, Debug, PartialEq)]
+#[derive(XmlDeserialize, XmlRootTag, Clone, Debug, PartialEq)]
+#[xml(root = "filter", ns = "rustical_dav::namespace::NS_CALDAV")]
 #[allow(dead_code)]
 // https://datatracker.ietf.org/doc/html/rfc4791#section-9.7
 pub struct FilterElement {
