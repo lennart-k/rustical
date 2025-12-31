@@ -70,6 +70,7 @@ pub enum MatchType {
 }
 
 impl MatchType {
+    #[must_use]
     pub fn match_text(&self, collation: &TextCollation, needle: &str, haystack: &str) -> bool {
         let haystack = collation.normalise(haystack);
         let needle = collation.normalise(needle);
