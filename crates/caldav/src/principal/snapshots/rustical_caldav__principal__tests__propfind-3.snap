@@ -3,51 +3,51 @@ source: crates/caldav/src/principal/tests.rs
 expression: response.serialize_to_string().unwrap()
 ---
 <?xml version="1.0" encoding="utf-8"?>
-<response xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:PUSH="https://bitfire.at/webdav-push">
+<response xmlns="DAV:">
     <href>/caldav/principal/user/</href>
     <propstat>
-        <prop>
-            <CAL:calendar-user-type>INDIVIDUAL</CAL:calendar-user-type>
-            <CAL:calendar-user-address-set>
-                <href>/caldav/principal/user/</href>
-            </CAL:calendar-user-address-set>
-            <principal-URL>
-                <href>/caldav/principal/user/</href>
+        <prop xmlns="DAV:">
+            <calendar-user-type xmlns="urn:ietf:params:xml:ns:caldav">INDIVIDUAL</calendar-user-type>
+            <calendar-user-address-set xmlns="urn:ietf:params:xml:ns:caldav">
+                <href xmlns="DAV:">/caldav/principal/user/</href>
+            </calendar-user-address-set>
+            <principal-URL xmlns="DAV:">
+                <href xmlns="DAV:">/caldav/principal/user/</href>
             </principal-URL>
-            <group-membership>
-                <href>/caldav/principal/group/</href>
+            <group-membership xmlns="DAV:">
+                <href xmlns="DAV:">/caldav/principal/group/</href>
             </group-membership>
-            <group-member-set>
+            <group-member-set xmlns="DAV:">
             </group-member-set>
-            <alternate-URI-set/>
-            <supported-report-set>
-                <supported-report>
-                    <report>
-                        <principal-match/>
+            <alternate-URI-set xmlns="DAV:"/>
+            <supported-report-set xmlns="DAV:">
+                <supported-report xmlns="DAV:">
+                    <report xmlns="DAV:">
+                        <principal-match xmlns="DAV:"/>
                     </report>
                 </supported-report>
             </supported-report-set>
-            <CAL:calendar-home-set>
-                <href>/caldav/principal/group/</href>
-                <href>/caldav/principal/user/</href>
-            </CAL:calendar-home-set>
-            <resourcetype>
-                <collection/>
-                <principal/>
+            <calendar-home-set xmlns="urn:ietf:params:xml:ns:caldav">
+                <href xmlns="DAV:">/caldav/principal/group/</href>
+                <href xmlns="DAV:">/caldav/principal/user/</href>
+            </calendar-home-set>
+            <resourcetype xmlns="DAV:">
+                <collection xmlns="DAV:"/>
+                <principal xmlns="DAV:"/>
             </resourcetype>
-            <displayname>user</displayname>
-            <current-user-principal>
-                <href>/caldav/principal/user/</href>
+            <displayname xmlns="DAV:">user</displayname>
+            <current-user-principal xmlns="DAV:">
+                <href xmlns="DAV:">/caldav/principal/user/</href>
             </current-user-principal>
-            <current-user-privilege-set>
+            <current-user-privilege-set xmlns="DAV:">
                 <privilege>
                     <all/>
                 </privilege>
             </current-user-privilege-set>
-            <owner>
-                <href>/caldav/principal/user/</href>
+            <owner xmlns="DAV:">
+                <href xmlns="DAV:">/caldav/principal/user/</href>
             </owner>
         </prop>
-        <status>HTTP/1.1 200 OK</status>
+        <status xmlns="DAV:">HTTP/1.1 200 OK</status>
     </propstat>
 </response>

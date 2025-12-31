@@ -36,7 +36,9 @@ mod tests {
         calendar::methods::report::ReportRequest,
         calendar_object::{CalendarData, CalendarObjectPropName, CalendarObjectPropWrapperName},
     };
-    use rustical_dav::xml::{NegateCondition, PropElement, TextCollation, TextMatchElement};
+    use rustical_dav::xml::{
+        MatchType, NegateCondition, PropElement, TextCollation, TextMatchElement,
+    };
     use rustical_xml::XmlDocument;
 
     #[test]
@@ -93,6 +95,7 @@ mod tests {
                             prop_filter: vec![PropFilterElement {
                                 name: "ATTENDEE".to_owned(),
                                 text_match: Some(TextMatchElement {
+                                    match_type: MatchType::Contains,
                                     collation: TextCollation::AsciiCasemap,
                                     negate_condition: NegateCondition(false),
                                     needle: "mailto:lisa@example.com".to_string()
@@ -102,6 +105,7 @@ mod tests {
                                     is_not_defined: None,
                                     name: "PARTSTAT".to_owned(),
                                     text_match: Some(TextMatchElement {
+                                        match_type: MatchType::Contains,
                                         collation: TextCollation::AsciiCasemap,
                                         negate_condition: NegateCondition(false),
                                         needle: "NEEDS-ACTION".to_string()

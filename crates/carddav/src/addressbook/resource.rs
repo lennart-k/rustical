@@ -2,6 +2,7 @@ use super::prop::SupportedAddressData;
 use crate::Error;
 use crate::addressbook::prop::{
     AddressbookProp, AddressbookPropName, AddressbookPropWrapper, AddressbookPropWrapperName,
+    SupportedCollationSet,
 };
 use derive_more::derive::{From, Into};
 use rustical_dav::extensions::{CommonPropertiesExtension, SyncTokenExtension};
@@ -11,13 +12,14 @@ use rustical_dav::xml::{Resourcetype, ResourcetypeInner, SupportedReportSet};
 use rustical_dav_push::DavPushExtension;
 use rustical_store::Addressbook;
 use rustical_store::auth::Principal;
+use std::borrow::Cow;
 
 #[derive(Clone, Debug, From, Into)]
 pub struct AddressbookResource(pub(crate) Addressbook);
 
 impl ResourceName for AddressbookResource {
-    fn get_name(&self) -> String {
-        self.0.id.clone()
+    fn get_name(&self) -> Cow<'_, str> {
+        Cow::from(&self.0.id)
     }
 }
 
@@ -61,6 +63,9 @@ impl Resource for AddressbookResource {
                     AddressbookPropName::MaxResourceSize => {
                         AddressbookProp::MaxResourceSize(10_000_000)
                     }
+                    AddressbookPropName::SupportedCollationSet => {
+                        AddressbookProp::SupportedCollationSet(SupportedCollationSet::default())
+                    }
                     AddressbookPropName::SupportedReportSet => {
                         AddressbookProp::SupportedReportSet(SupportedReportSet::all())
                     }
@@ -93,6 +98,7 @@ impl Resource for AddressbookResource {
                     Ok(())
                 }
                 AddressbookProp::MaxResourceSize(_)
+                | AddressbookProp::SupportedCollationSet(_)
                 | AddressbookProp::SupportedReportSet(_)
                 | AddressbookProp::SupportedAddressData(_) => {
                     Err(rustical_dav::Error::PropReadOnly)
@@ -115,6 +121,7 @@ impl Resource for AddressbookResource {
                     Ok(())
                 }
                 AddressbookPropName::MaxResourceSize
+                | AddressbookPropName::SupportedCollationSet
                 | AddressbookPropName::SupportedReportSet
                 | AddressbookPropName::SupportedAddressData => {
                     Err(rustical_dav::Error::PropReadOnly)

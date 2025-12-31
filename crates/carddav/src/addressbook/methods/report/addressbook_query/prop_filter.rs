@@ -35,7 +35,7 @@ pub struct PropFilterElement {
 impl PropFilterElement {
     pub fn match_component(&self, comp: &impl PropFilterable) -> bool {
         let property = comp.get_property(&self.name);
-        let _property = match (self.is_not_defined.is_some(), property) {
+        let property = match (self.is_not_defined.is_some(), property) {
             // We are the component that's not supposed to be defined
             (true, Some(_))
             // We don't match
@@ -45,22 +45,28 @@ impl PropFilterElement {
             (false, Some(property)) => property
         };
 
-        let _allof = match (self.allof.is_some(), self.anyof.is_some()) {
+        let allof = match (self.allof.is_some(), self.anyof.is_some()) {
             (true, false) => true,
             (false, _) => false,
             (true, true) => panic!("wat"),
         };
 
-        // TODO: IMPLEMENT
-        // if let Some(text_match) = &self.text_match
-        //     && !text_match.match_property(property)
-        // {
-        //     return false;
-        // }
+        let text_matches = self
+            .text_match
+            .iter()
+            .map(|text_match| text_match.match_property(property));
 
-        // TODO: param-filter
+        let param_matches = self
+            .param_filter
+            .iter()
+            .map(|param_filter| param_filter.match_property(property));
+        let mut matches = text_matches.chain(param_matches);
 
-        true
+        if allof {
+            matches.all(|a| a)
+        } else {
+            matches.any(|a| a)
+        }
     }
 }
 

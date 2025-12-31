@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::{
     Error,
     address_object::{
@@ -22,8 +24,8 @@ pub struct AddressObjectResource {
 }
 
 impl ResourceName for AddressObjectResource {
-    fn get_name(&self) -> String {
-        format!("{}.vcf", self.object.get_id())
+    fn get_name(&self) -> Cow<'_, str> {
+        Cow::from(format!("{}.vcf", self.object.get_id()))
     }
 }
 

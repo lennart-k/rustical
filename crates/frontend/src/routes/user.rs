@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use crate::pages::user::{Section, UserPage};
 use askama::Template;
 use askama_web::WebTemplate;
 use axum::{
@@ -7,12 +8,10 @@ use axum::{
     extract::Path,
     response::{IntoResponse, Redirect},
 };
-use axum_extra::{TypedHeader, extract::Host};
-use headers::UserAgent;
+use axum_extra::TypedHeader;
+use headers::{Host, UserAgent};
 use http::StatusCode;
 use rustical_store::auth::{AppToken, AuthenticationProvider, Principal};
-
-use crate::pages::user::{Section, UserPage};
 
 impl Section for ProfileSection {
     fn name() -> &'static str {
@@ -33,7 +32,7 @@ pub async fn route_user_named<AP: AuthenticationProvider>(
     Path(user_id): Path<String>,
     Extension(auth_provider): Extension<Arc<AP>>,
     TypedHeader(user_agent): TypedHeader<UserAgent>,
-    Host(host): Host,
+    TypedHeader(host): TypedHeader<Host>,
     user: Principal,
 ) -> impl IntoResponse {
     if user_id != user.id {
@@ -41,7 +40,10 @@ pub async fn route_user_named<AP: AuthenticationProvider>(
     }
 
     let is_apple = user_agent.as_str().contains("Apple") || user_agent.as_str().contains("Mac OS");
-    let davx5_hostname = user_agent.as_str().contains("Android").then_some(host);
+    let davx5_hostname = user_agent
+        .as_str()
+        .contains("Android")
+        .then_some(host.to_string());
 
     UserPage {
         section: ProfileSection {

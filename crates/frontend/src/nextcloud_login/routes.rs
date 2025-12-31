@@ -9,9 +9,9 @@ use axum::{
     extract::Path,
     response::{Html, IntoResponse, Response},
 };
-use axum_extra::{TypedHeader, extract::Host};
+use axum_extra::TypedHeader;
 use chrono::{Duration, Utc};
-use headers::UserAgent;
+use headers::{Host, UserAgent};
 use http::StatusCode;
 use rustical_store::auth::{AuthenticationProvider, Principal};
 use serde::{Deserialize, Serialize};
@@ -21,7 +21,7 @@ use tracing::instrument;
 pub async fn post_nextcloud_login(
     Extension(state): Extension<Arc<NextcloudFlows>>,
     TypedHeader(user_agent): TypedHeader<UserAgent>,
-    Host(host): Host,
+    TypedHeader(host): TypedHeader<Host>,
 ) -> Json<NextcloudLoginResponse> {
     let flow_id = uuid::Uuid::new_v4().to_string();
     let token = uuid::Uuid::new_v4().to_string();
@@ -150,7 +150,7 @@ pub async fn post_nextcloud_flow(
     user: Principal,
     Extension(state): Extension<Arc<NextcloudFlows>>,
     Path(flow_id): Path<String>,
-    Host(host): Host,
+    TypedHeader(host): TypedHeader<Host>,
     Form(form): Form<NextcloudAuthorizeForm>,
 ) -> Result<Response, rustical_store::Error> {
     if let Some(flow) = state.flows.write().await.get_mut(&flow_id) {

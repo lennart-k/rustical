@@ -32,6 +32,23 @@ ResponseElement {
                             ),
                         ),
                         Addressbook(
+                            SupportedCollationSet(
+                                SupportedCollationSet(
+                                    [
+                                        SupportedCollation(
+                                            AsciiCasemap,
+                                        ),
+                                        SupportedCollation(
+                                            UnicodeCasemap,
+                                        ),
+                                        SupportedCollation(
+                                            Octet,
+                                        ),
+                                    ],
+                                ),
+                            ),
+                        ),
+                        Addressbook(
                             SupportedReportSet(
                                 SupportedReportSet {
                                     supported_report: [

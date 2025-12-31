@@ -1,6 +1,7 @@
+use derive_more::{From, Into};
 use rustical_dav::{
     extensions::{CommonPropertiesProp, SyncTokenExtensionProp},
-    xml::SupportedReportSet,
+    xml::{SupportedReportSet, TextCollation},
 };
 use rustical_dav_push::DavPushExtensionProp;
 use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
@@ -14,6 +15,8 @@ pub enum AddressbookProp {
     AddressbookDescription(Option<String>),
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV", skip_deserializing)]
     SupportedAddressData(SupportedAddressData),
+    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV", skip_deserializing)]
+    SupportedCollationSet(SupportedCollationSet),
     #[xml(ns = "rustical_dav::namespace::NS_DAV", skip_deserializing)]
     SupportedReportSet(SupportedReportSet<ReportMethod>),
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
@@ -57,6 +60,29 @@ impl Default for SupportedAddressData {
                 },
             ],
         }
+    }
+}
+
+#[derive(Debug, Clone, XmlSerialize, XmlDeserialize, PartialEq, Eq, From, Into)]
+pub struct SupportedCollation(#[xml(ty = "text")] pub TextCollation);
+
+#[derive(Debug, Clone, XmlSerialize, XmlDeserialize, PartialEq, Eq)]
+pub struct SupportedCollationSet(
+    #[xml(
+        ns = "rustical_dav::namespace::NS_CARDDAV",
+        flatten,
+        rename = "supported-collation"
+    )]
+    pub Vec<SupportedCollation>,
+);
+
+impl Default for SupportedCollationSet {
+    fn default() -> Self {
+        Self(vec![
+            SupportedCollation(TextCollation::AsciiCasemap),
+            SupportedCollation(TextCollation::UnicodeCasemap),
+            SupportedCollation(TextCollation::Octet),
+        ])
     }
 }
 

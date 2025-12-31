@@ -42,13 +42,6 @@ pub enum PropstatWrapper<T: XmlSerialize> {
 // responsedescription?) >
 #[derive(XmlSerialize, XmlRootTag, Debug)]
 #[xml(ns = "crate::namespace::NS_DAV", root = "response")]
-#[xml(ns_prefix(
-    crate::namespace::NS_DAV = "",
-    crate::namespace::NS_CARDDAV = "CARD",
-    crate::namespace::NS_CALDAV = "CAL",
-    crate::namespace::NS_CALENDARSERVER = "CS",
-    crate::namespace::NS_DAVPUSH = "PUSH"
-))]
 pub struct ResponseElement<PropstatType: XmlSerialize> {
     pub href: String,
     #[xml(serialize_with = "xml_serialize_optional_status")]

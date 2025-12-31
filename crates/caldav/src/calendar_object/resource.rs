@@ -13,6 +13,7 @@ use rustical_dav::{
 };
 use rustical_ical::CalendarObject;
 use rustical_store::auth::Principal;
+use std::borrow::Cow;
 
 #[derive(Clone, From, Into)]
 pub struct CalendarObjectResource {
@@ -22,8 +23,8 @@ pub struct CalendarObjectResource {
 }
 
 impl ResourceName for CalendarObjectResource {
-    fn get_name(&self) -> String {
-        format!("{}.ics", self.object_id)
+    fn get_name(&self) -> Cow<'_, str> {
+        Cow::from(format!("{}.ics", self.object_id))
     }
 }
 

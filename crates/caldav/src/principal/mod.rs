@@ -6,6 +6,7 @@ use rustical_dav::xml::{
     GroupMemberSet, GroupMembership, Resourcetype, ResourcetypeInner, SupportedReportSet,
 };
 use rustical_store::auth::Principal;
+use std::borrow::Cow;
 
 mod service;
 pub use service::*;
@@ -23,8 +24,8 @@ pub struct PrincipalResource {
 }
 
 impl ResourceName for PrincipalResource {
-    fn get_name(&self) -> String {
-        self.principal.id.clone()
+    fn get_name(&self) -> Cow<'_, str> {
+        Cow::from(&self.principal.id)
     }
 }
 

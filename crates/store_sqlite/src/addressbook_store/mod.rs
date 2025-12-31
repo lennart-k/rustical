@@ -27,7 +27,7 @@ impl TryFrom<AddressObjectRow> for AddressObject {
     }
 }
 
-#[derive(Debug, Constructor)]
+#[derive(Debug, Clone, Constructor)]
 pub struct SqliteAddressbookStore {
     db: SqlitePool,
     sender: Sender<CollectionOperation>,

@@ -3,44 +3,24 @@ use axum::extract::Request;
 use axum::{body::Body, response::Response};
 use rstest::rstest;
 use rustical_frontend::FrontendConfig;
-use rustical_store_sqlite::{
-    SqliteStore,
-    addressbook_store::SqliteAddressbookStore,
-    calendar_store::SqliteCalendarStore,
-    principal_store::SqlitePrincipalStore,
-    tests::{
-        get_test_addressbook_store, get_test_calendar_store, get_test_principal_store,
-        get_test_subscription_store,
-    },
-};
+use rustical_store_sqlite::tests::{TestStoreContext, test_store_context};
 use std::sync::Arc;
 use tower::ServiceExt;
 
-#[rstest::fixture]
-pub async fn get_app(
-    #[from(get_test_calendar_store)]
-    #[future]
-    cal_store: SqliteCalendarStore,
-    #[from(get_test_addressbook_store)]
-    #[future]
-    addr_store: SqliteAddressbookStore,
-    #[from(get_test_principal_store)]
-    #[future]
-    principal_store: SqlitePrincipalStore,
-    #[from(get_test_subscription_store)]
-    #[future]
-    sub_store: SqliteStore,
-) -> axum::Router {
-    let addr_store = Arc::new(addr_store.await);
-    let cal_store = Arc::new(cal_store.await);
-    let sub_store = Arc::new(sub_store.await);
-    let principal_store = Arc::new(principal_store.await);
-
-    make_app(
+pub fn get_app(context: TestStoreContext) -> axum::Router {
+    let TestStoreContext {
         addr_store,
         cal_store,
-        sub_store,
         principal_store,
+        sub_store,
+        ..
+    } = context;
+
+    make_app(
+        Arc::new(addr_store),
+        Arc::new(cal_store),
+        Arc::new(sub_store),
+        Arc::new(principal_store),
         FrontendConfig {
             enabled: true,
             allow_password_login: true,
@@ -70,11 +50,11 @@ impl ResponseExtractString for Response {
 #[rstest]
 #[tokio::test]
 async fn test_ping(
-    #[from(get_app)]
+    #[from(test_store_context)]
     #[future]
-    app: axum::Router,
+    context: TestStoreContext,
 ) {
-    let app = app.await;
+    let app = get_app(context.await);
 
     let response = app
         .oneshot(Request::builder().uri("/ping").body(Body::empty()).unwrap())
