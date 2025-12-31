@@ -30,18 +30,8 @@ pub struct PropFilterElement {
 }
 
 impl PropFilterElement {
-    pub fn match_component(&self, comp: &impl PropFilterable) -> bool {
-        let property = comp.get_property(&self.name);
-        let property = match (self.is_not_defined.is_some(), property) {
-            // We are the component that's not supposed to be defined
-            (true, Some(_))
-            // We don't match
-            | (false, None) => return false,
-            // We shall not be and indeed we aren't
-            (true, None) => return true,
-            (false, Some(property)) => property
-        };
-
+    #[must_use]
+    pub fn match_property(&self, property: &Property) -> bool {
         if let Some(TimeRangeElement { start, end }) = &self.time_range {
             // TODO: Respect timezones
             let Ok(timestamp) = CalDateTime::parse_prop(property, &HashMap::default()) else {
@@ -77,54 +67,65 @@ impl PropFilterElement {
 
         true
     }
+
+    pub fn match_component(&self, comp: &impl PropFilterable) -> bool {
+        let properties = comp.get_named_properties(&self.name);
+        if self.is_not_defined.is_some() {
+            return properties.is_empty();
+        }
+
+        // The filter matches when one property instance matches
+        // Example where this matters: We have multiple attendees and want to match one
+        properties.iter().any(|prop| self.match_property(prop))
+    }
 }
 
 pub trait PropFilterable {
-    fn get_property(&self, name: &str) -> Option<&Property>;
+    fn get_named_properties(&self, name: &str) -> Vec<&Property>;
 }
 
 impl PropFilterable for CalendarObject {
-    fn get_property(&self, name: &str) -> Option<&Property> {
-        Self::get_property(self, name)
+    fn get_named_properties(&self, name: &str) -> Vec<&Property> {
+        Self::get_named_properties(self, name)
     }
 }
 
 impl PropFilterable for IcalEvent {
-    fn get_property(&self, name: &str) -> Option<&Property> {
-        Component::get_property(self, name)
+    fn get_named_properties(&self, name: &str) -> Vec<&Property> {
+        Component::get_named_properties(self, name)
     }
 }
 
 impl PropFilterable for IcalTodo {
-    fn get_property(&self, name: &str) -> Option<&Property> {
-        Component::get_property(self, name)
+    fn get_named_properties(&self, name: &str) -> Vec<&Property> {
+        Component::get_named_properties(self, name)
     }
 }
 
 impl PropFilterable for IcalJournal {
-    fn get_property(&self, name: &str) -> Option<&Property> {
-        Component::get_property(self, name)
+    fn get_named_properties(&self, name: &str) -> Vec<&Property> {
+        Component::get_named_properties(self, name)
     }
 }
 
 impl PropFilterable for IcalCalendar {
-    fn get_property(&self, name: &str) -> Option<&Property> {
-        Component::get_property(self, name)
+    fn get_named_properties(&self, name: &str) -> Vec<&Property> {
+        Component::get_named_properties(self, name)
     }
 }
 
 impl PropFilterable for IcalTimeZone {
-    fn get_property(&self, name: &str) -> Option<&Property> {
-        Component::get_property(self, name)
+    fn get_named_properties(&self, name: &str) -> Vec<&Property> {
+        Component::get_named_properties(self, name)
     }
 }
 
 impl PropFilterable for CalendarObjectComponent {
-    fn get_property(&self, name: &str) -> Option<&Property> {
+    fn get_named_properties(&self, name: &str) -> Vec<&Property> {
         match self {
-            Self::Event(event, _) => PropFilterable::get_property(&event.event, name),
-            Self::Todo(todo, _) => PropFilterable::get_property(todo, name),
-            Self::Journal(journal, _) => PropFilterable::get_property(journal, name),
+            Self::Event(event, _) => PropFilterable::get_named_properties(&event.event, name),
+            Self::Todo(todo, _) => PropFilterable::get_named_properties(todo, name),
+            Self::Journal(journal, _) => PropFilterable::get_named_properties(journal, name),
         }
     }
 }

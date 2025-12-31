@@ -33,18 +33,8 @@ pub struct PropFilterElement {
 }
 
 impl PropFilterElement {
-    pub fn match_component(&self, comp: &impl PropFilterable) -> bool {
-        let property = comp.get_property(&self.name);
-        let property = match (self.is_not_defined.is_some(), property) {
-            // We are the component that's not supposed to be defined
-            (true, Some(_))
-            // We don't match
-            | (false, None) => return false,
-            // We shall not be and indeed we aren't
-            (true, None) => return true,
-            (false, Some(property)) => property
-        };
-
+    #[must_use]
+    pub fn match_property(&self, property: &Property) -> bool {
         let allof = match (self.allof.is_some(), self.anyof.is_some()) {
             (true, false) => true,
             (false, _) => false,
@@ -68,14 +58,24 @@ impl PropFilterElement {
             matches.any(|a| a)
         }
     }
+
+    pub fn match_component(&self, comp: &impl PropFilterable) -> bool {
+        let properties = comp.get_named_properties(&self.name);
+        if self.is_not_defined.is_some() {
+            return properties.is_empty();
+        }
+
+        // The filter matches when one property instance matches
+        properties.iter().any(|prop| self.match_property(prop))
+    }
 }
 
 pub trait PropFilterable {
-    fn get_property(&self, name: &str) -> Option<&Property>;
+    fn get_named_properties(&self, name: &str) -> Vec<&Property>;
 }
 
 impl PropFilterable for AddressObject {
-    fn get_property(&self, name: &str) -> Option<&Property> {
-        self.get_vcard().get_property(name)
+    fn get_named_properties(&self, name: &str) -> Vec<&Property> {
+        self.get_vcard().get_named_properties(name)
     }
 }

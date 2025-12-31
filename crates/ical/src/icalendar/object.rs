@@ -328,4 +328,12 @@ impl CalendarObject {
             .iter()
             .find(|property| property.name == name)
     }
+
+    #[must_use]
+    pub fn get_named_properties(&self, name: &str) -> Vec<&Property> {
+        self.properties
+            .iter()
+            .filter(|property| property.name == name)
+            .collect()
+    }
 }
