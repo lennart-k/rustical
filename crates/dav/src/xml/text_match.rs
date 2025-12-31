@@ -115,7 +115,7 @@ pub struct TextMatchElement {
 
 impl TextMatchElement {
     #[must_use]
-    pub fn match_property(&self, property: &Property) -> bool {
+    pub fn match_text(&self, haystack: &str) -> bool {
         let Self {
             collation,
             negate_condition,
@@ -123,13 +123,14 @@ impl TextMatchElement {
             match_type,
         } = self;
 
-        let matches = property
-            .value
-            .as_ref()
-            .is_some_and(|haystack| match_type.match_text(collation, needle, haystack));
-
+        let matches = match_type.match_text(collation, needle, haystack);
         // XOR
         negate_condition.0 ^ matches
+    }
+    #[must_use]
+    pub fn match_property(&self, property: &Property) -> bool {
+        let text = property.value.as_deref().unwrap_or("");
+        self.match_text(text)
     }
 }
 
