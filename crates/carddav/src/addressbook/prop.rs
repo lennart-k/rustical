@@ -19,7 +19,7 @@ pub enum AddressbookProp {
     SupportedCollationSet(SupportedCollationSet),
     #[xml(ns = "rustical_dav::namespace::NS_DAV", skip_deserializing)]
     SupportedReportSet(SupportedReportSet<ReportMethod>),
-    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
+    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     MaxResourceSize(i64),
 }
 

@@ -30,7 +30,7 @@ expression: body
                         </report>
                     </supported-report>
                 </supported-report-set>
-                <max-resource-size>10000000</max-resource-size>
+                <CARD:max-resource-size>10000000</CARD:max-resource-size>
                 <sync-token>github.com/lennart-k/rustical/ns/0</sync-token>
                 <CS:getctag>github.com/lennart-k/rustical/ns/0</CS:getctag>
                 <PUSH:transports>

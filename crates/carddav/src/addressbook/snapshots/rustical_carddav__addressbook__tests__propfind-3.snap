@@ -28,7 +28,7 @@ expression: response.serialize_to_string().unwrap()
                     </report>
                 </supported-report>
             </supported-report-set>
-            <max-resource-size xmlns="DAV:">10000000</max-resource-size>
+            <max-resource-size xmlns="urn:ietf:params:xml:ns:carddav">10000000</max-resource-size>
             <sync-token xmlns="DAV:">github.com/lennart-k/rustical/ns/0</sync-token>
             <getctag xmlns="http://calendarserver.org/ns/">github.com/lennart-k/rustical/ns/0</getctag>
             <transports xmlns="https://bitfire.at/webdav-push">
