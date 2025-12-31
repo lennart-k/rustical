@@ -134,9 +134,8 @@ impl TextMatchElement {
 
 #[cfg(test)]
 mod tests {
-    use crate::xml::MatchType;
-
     use super::TextCollation;
+    use crate::xml::MatchType;
 
     #[test]
     fn test_collation() {
