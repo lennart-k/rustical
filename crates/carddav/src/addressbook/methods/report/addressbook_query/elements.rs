@@ -2,10 +2,11 @@ use crate::{
     address_object::AddressObjectPropWrapperName,
     addressbook::methods::report::addressbook_query::PropFilterElement,
 };
+use derive_more::{From, Into};
 use ical::property::Property;
 use rustical_dav::xml::{PropfindType, TextMatchElement};
 use rustical_ical::{AddressObject, UtcDateTime};
-use rustical_xml::XmlDeserialize;
+use rustical_xml::{ValueDeserialize, XmlDeserialize, XmlRootTag};
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
 #[allow(dead_code)]
@@ -46,18 +47,34 @@ impl ParamFilterElement {
     }
 }
 
-#[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
-#[allow(dead_code)]
+#[derive(Clone, Debug, PartialEq, Eq, Default, From, Into)]
+pub struct Allof(pub bool);
+
+impl ValueDeserialize for Allof {
+    fn deserialize(val: &str) -> Result<Self, rustical_xml::XmlError> {
+        Ok(Self(match val {
+            "allof" => true,
+            "anyof" => false,
+            _ => {
+                return Err(rustical_xml::XmlError::InvalidVariant(format!(
+                    "Invalid test parameter: {val}"
+                )));
+            }
+        }))
+    }
+}
+
 //  <!ELEMENT filter (prop-filter*)>
 //  <!ATTLIST filter test (anyof | allof) "anyof">
 //  <!-- test value:
 //              anyof logical OR for prop-filter matches
 //              allof logical AND for prop-filter matches -->
+#[derive(XmlDeserialize, XmlRootTag, Clone, Debug, PartialEq, Eq)]
+#[xml(root = "filter", ns = "rustical_dav::namespace::NS_CARDDAV")]
+#[allow(dead_code)]
 pub struct FilterElement {
-    #[xml(ty = "attr")]
-    pub anyof: Option<String>,
-    #[xml(ty = "attr")]
-    pub allof: Option<String>,
+    #[xml(ty = "attr", default = "Default::default")]
+    pub test: Allof,
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV", flatten)]
     pub(crate) prop_filter: Vec<PropFilterElement>,
 }
@@ -65,11 +82,7 @@ pub struct FilterElement {
 impl FilterElement {
     #[must_use]
     pub fn matches(&self, addr_object: &AddressObject) -> bool {
-        let allof = match (self.allof.is_some(), self.anyof.is_some()) {
-            (true, false) => true,
-            (false, _) => false,
-            (true, true) => panic!("wat"),
-        };
+        let Allof(allof) = self.test;
         let mut results = self
             .prop_filter
             .iter()

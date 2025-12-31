@@ -1,4 +1,4 @@
-use super::ParamFilterElement;
+use super::{Allof, ParamFilterElement};
 use ical::{parser::Component, property::Property};
 use rustical_dav::xml::TextMatchElement;
 use rustical_ical::AddressObject;
@@ -22,25 +22,17 @@ pub struct PropFilterElement {
     pub(crate) text_match: Vec<TextMatchElement>,
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV", flatten)]
     pub(crate) param_filter: Vec<ParamFilterElement>,
+    #[xml(ty = "attr", default = "Default::default")]
+    pub test: Allof,
 
     #[xml(ty = "attr")]
     pub(crate) name: String,
-
-    #[xml(ty = "attr")]
-    pub anyof: Option<String>,
-    #[xml(ty = "attr")]
-    pub allof: Option<String>,
 }
 
 impl PropFilterElement {
     #[must_use]
     pub fn match_property(&self, property: &Property) -> bool {
-        let allof = match (self.allof.is_some(), self.anyof.is_some()) {
-            (true, false) => true,
-            (false, _) => false,
-            (true, true) => panic!("wat"),
-        };
-
+        let Allof(allof) = self.test;
         let text_matches = self
             .text_match
             .iter()

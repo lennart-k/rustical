@@ -158,7 +158,9 @@ mod tests {
     use super::*;
     use crate::{
         address_object::AddressObjectPropName,
-        addressbook::methods::report::addressbook_query::{FilterElement, PropFilterElement},
+        addressbook::methods::report::addressbook_query::{
+            Allof, FilterElement, PropFilterElement,
+        },
     };
     use rustical_dav::xml::{PropElement, sync_collection::SyncLevel};
 
@@ -250,15 +252,13 @@ mod tests {
                     vec![]
                 )),
                 filter: FilterElement {
-                    anyof: None,
-                    allof: None,
+                    test: Allof::default(),
                     prop_filter: vec![PropFilterElement {
                         name: "FN".to_owned(),
                         is_not_defined: None,
                         text_match: vec![],
                         param_filter: vec![],
-                        allof: None,
-                        anyof: None
+                        test: Allof::default()
                     }]
                 }
             })

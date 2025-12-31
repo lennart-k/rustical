@@ -1,8 +1,7 @@
+use super::FilterElement;
 use rstest::rstest;
 use rustical_ical::CalendarObject;
 use rustical_xml::XmlDocument;
-
-use crate::calendar::methods::report::calendar_query::FilterElement;
 
 const ICS_1: &str = r"BEGIN:VCALENDAR
 VERSION:2.0
