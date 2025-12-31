@@ -16,7 +16,6 @@ async fn test_import(
 ) {
     let context = context.await;
     let app = get_app(context.clone());
-    let addr_store = context.addr_store;
 
     let (principal, addr_id) = ("user", "contacts");
     let url = format!("/carddav/principal/{principal}/{addr_id}");
