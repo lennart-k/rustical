@@ -38,11 +38,15 @@ END:VCALENDAR
 ";
 
 #[rstest]
+#[case(0, ICAL)]
+#[case(1, include_str!("resources/rfc4791_appb.ics"))]
 #[tokio::test]
 async fn test_import(
     #[from(test_store_context)]
     #[future]
     context: TestStoreContext,
+    #[case] case: usize,
+    #[case] ical: &'static str,
 ) {
     let context = context.await;
     let app = get_app(context.clone());
@@ -54,7 +58,7 @@ async fn test_import(
         Request::builder()
             .method("IMPORT")
             .uri(&url)
-            .body(Body::from(ICAL))
+            .body(Body::from(ical))
             .unwrap()
     };
 
@@ -71,7 +75,7 @@ async fn test_import(
     let response = app.clone().oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
     let body = response.extract_string().await;
-    insta::assert_snapshot!("import_body", body);
+    insta::assert_snapshot!(format!("{case}_import_body"), body);
 
     let mut request = Request::builder()
         .method("GET")
@@ -89,6 +93,6 @@ async fn test_import(
             (r"UID:.+", "UID:[UID]")
         ]
     }, {
-        insta::assert_snapshot!("get_body", body);
+        insta::assert_snapshot!(format!("{case}_get_body"), body);
     });
 }
