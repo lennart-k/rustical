@@ -105,4 +105,30 @@ pub struct AddressbookQueryRequest {
     pub prop: PropfindType<AddressObjectPropWrapperName>,
     #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
     pub(crate) filter: FilterElement,
+    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
+    pub(crate) limit: Option<LimitElement>,
 }
+
+// https://datatracker.ietf.org/doc/html/rfc5323#section-5.17
+#[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
+pub struct LimitElement {
+    #[xml(ns = "rustical_dav::namespace::NS_CARDDAV")]
+    pub nresults: NresultsElement,
+}
+
+impl From<u64> for LimitElement {
+    fn from(value: u64) -> Self {
+        Self {
+            nresults: NresultsElement(value),
+        }
+    }
+}
+
+impl From<LimitElement> for u64 {
+    fn from(value: LimitElement) -> Self {
+        value.nresults.0
+    }
+}
+
+#[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
+pub struct NresultsElement(#[xml(ty = "text")] pub u64);
