@@ -132,6 +132,7 @@ END:VCALENDAR
             </supported-calendar-data>
             <supported-collation-set xmlns="urn:ietf:params:xml:ns:caldav">
                 <supported-collation xmlns="urn:ietf:params:xml:ns:caldav">i;ascii-casemap</supported-collation>
+                <supported-collation xmlns="urn:ietf:params:xml:ns:caldav">i;unicode-casemap</supported-collation>
                 <supported-collation xmlns="urn:ietf:params:xml:ns:caldav">i;octet</supported-collation>
             </supported-collation-set>
             <max-resource-size xmlns="DAV:">10000000</max-resource-size>

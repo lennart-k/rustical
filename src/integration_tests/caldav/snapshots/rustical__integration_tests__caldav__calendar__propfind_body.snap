@@ -136,6 +136,7 @@ END:VCALENDAR
                 </CAL:supported-calendar-data>
                 <CAL:supported-collation-set>
                     <CAL:supported-collation>i;ascii-casemap</CAL:supported-collation>
+                    <CAL:supported-collation>i;unicode-casemap</CAL:supported-collation>
                     <CAL:supported-collation>i;octet</CAL:supported-collation>
                 </CAL:supported-collation-set>
                 <max-resource-size>10000000</max-resource-size>

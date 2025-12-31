@@ -137,7 +137,7 @@ impl CompFilterable for CalendarObjectComponent {
 #[cfg(test)]
 mod tests {
     use chrono::{TimeZone, Utc};
-    use rustical_dav::xml::{NegateCondition, TextCollation, TextMatchElement};
+    use rustical_dav::xml::{MatchType, NegateCondition, TextCollation, TextMatchElement};
     use rustical_ical::{CalendarObject, UtcDateTime};
 
     use crate::calendar::methods::report::calendar_query::{
@@ -217,6 +217,7 @@ END:VCALENDAR";
                     name: "VERSION".to_string(),
                     time_range: None,
                     text_match: Some(TextMatchElement {
+                        match_type: MatchType::Contains,
                         needle: "2.0".to_string(),
                         collation: TextCollation::default(),
                         negate_condition: NegateCondition::default(),
@@ -240,6 +241,7 @@ END:VCALENDAR";
                     name: "SUMMARY".to_string(),
                     time_range: None,
                     text_match: Some(TextMatchElement {
+                        match_type: MatchType::Contains,
                         collation: TextCollation::default(),
                         negate_condition: NegateCondition(false),
                         needle: "weekly".to_string(),
@@ -327,6 +329,7 @@ END:VCALENDAR";
                     name: "TZID".to_string(),
                     time_range: None,
                     text_match: Some(TextMatchElement {
+                        match_type: MatchType::Contains,
                         collation: TextCollation::AsciiCasemap,
                         negate_condition: NegateCondition::default(),
                         needle: "Europe/Berlin".to_string(),

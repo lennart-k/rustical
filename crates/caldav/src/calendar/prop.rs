@@ -54,6 +54,7 @@ impl Default for SupportedCollationSet {
     fn default() -> Self {
         Self(vec![
             SupportedCollation(TextCollation::AsciiCasemap),
+            SupportedCollation(TextCollation::UnicodeCasemap),
             SupportedCollation(TextCollation::Octet),
         ])
     }
