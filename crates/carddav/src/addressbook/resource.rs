@@ -2,6 +2,7 @@ use super::prop::SupportedAddressData;
 use crate::Error;
 use crate::addressbook::prop::{
     AddressbookProp, AddressbookPropName, AddressbookPropWrapper, AddressbookPropWrapperName,
+    SupportedCollationSet,
 };
 use derive_more::derive::{From, Into};
 use rustical_dav::extensions::{CommonPropertiesExtension, SyncTokenExtension};
@@ -62,6 +63,9 @@ impl Resource for AddressbookResource {
                     AddressbookPropName::MaxResourceSize => {
                         AddressbookProp::MaxResourceSize(10_000_000)
                     }
+                    AddressbookPropName::SupportedCollationSet => {
+                        AddressbookProp::SupportedCollationSet(SupportedCollationSet::default())
+                    }
                     AddressbookPropName::SupportedReportSet => {
                         AddressbookProp::SupportedReportSet(SupportedReportSet::all())
                     }
@@ -94,6 +98,7 @@ impl Resource for AddressbookResource {
                     Ok(())
                 }
                 AddressbookProp::MaxResourceSize(_)
+                | AddressbookProp::SupportedCollationSet(_)
                 | AddressbookProp::SupportedReportSet(_)
                 | AddressbookProp::SupportedAddressData(_) => {
                     Err(rustical_dav::Error::PropReadOnly)
@@ -116,6 +121,7 @@ impl Resource for AddressbookResource {
                     Ok(())
                 }
                 AddressbookPropName::MaxResourceSize
+                | AddressbookPropName::SupportedCollationSet
                 | AddressbookPropName::SupportedReportSet
                 | AddressbookPropName::SupportedAddressData => {
                     Err(rustical_dav::Error::PropReadOnly)

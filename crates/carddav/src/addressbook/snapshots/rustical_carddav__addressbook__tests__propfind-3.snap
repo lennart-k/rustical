@@ -11,6 +11,11 @@ expression: response.serialize_to_string().unwrap()
                 <address-data-type xmlns="urn:ietf:params:xml:ns:carddav" content-type="text/vcard" version="3.0"/>
                 <address-data-type xmlns="urn:ietf:params:xml:ns:carddav" content-type="text/vcard" version="4.0"/>
             </supported-address-data>
+            <supported-collation-set xmlns="urn:ietf:params:xml:ns:carddav">
+                <supported-collation xmlns="urn:ietf:params:xml:ns:carddav">i;ascii-casemap</supported-collation>
+                <supported-collation xmlns="urn:ietf:params:xml:ns:carddav">i;unicode-casemap</supported-collation>
+                <supported-collation xmlns="urn:ietf:params:xml:ns:carddav">i;octet</supported-collation>
+            </supported-collation-set>
             <supported-report-set xmlns="DAV:">
                 <supported-report xmlns="DAV:">
                     <report xmlns="DAV:">
