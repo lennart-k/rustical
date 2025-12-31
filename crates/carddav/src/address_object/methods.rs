@@ -82,7 +82,23 @@ pub async fn put_object<AS: AddressbookStore>(
     }
 
     let overwrite = if let Some(TypedHeader(if_none_match)) = if_none_match {
-        if_none_match == IfNoneMatch::any()
+        // TODO: Put into transaction?
+        let existing = match addr_store
+            .get_object(&principal, &addressbook_id, &object_id, false)
+            .await
+        {
+            Ok(existing) => Some(existing),
+            Err(rustical_store::Error::NotFound) => None,
+            Err(err) => Err(err)?,
+        };
+        existing.is_none_or(|existing| {
+            if_none_match.precondition_passes(
+                &existing
+                    .get_etag()
+                    .parse()
+                    .expect("We only generate valid ETags"),
+            )
+        })
     } else {
         true
     };
