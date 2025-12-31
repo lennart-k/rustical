@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use super::prop::{
     CalendarData, CalendarObjectProp, CalendarObjectPropName, CalendarObjectPropWrapper,
     CalendarObjectPropWrapperName,
@@ -20,8 +22,8 @@ pub struct CalendarObjectResource {
 }
 
 impl ResourceName for CalendarObjectResource {
-    fn get_name(&self) -> String {
-        format!("{}.ics", self.object.get_id())
+    fn get_name(&self) -> Cow<'_, str> {
+        Cow::from(format!("{}.ics", self.object.get_id()))
     }
 }
 

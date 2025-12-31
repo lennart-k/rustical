@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use crate::Error;
 use rustical_dav::extensions::CommonPropertiesExtension;
 use rustical_dav::privileges::UserPrivilegeSet;
@@ -21,8 +23,8 @@ pub struct PrincipalResource {
 }
 
 impl ResourceName for PrincipalResource {
-    fn get_name(&self) -> String {
-        self.principal.id.clone()
+    fn get_name(&self) -> Cow<'_, str> {
+        Cow::from(&self.principal.id)
     }
 }
 

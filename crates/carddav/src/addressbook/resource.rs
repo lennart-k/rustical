@@ -11,13 +11,14 @@ use rustical_dav::xml::{Resourcetype, ResourcetypeInner, SupportedReportSet};
 use rustical_dav_push::DavPushExtension;
 use rustical_store::Addressbook;
 use rustical_store::auth::Principal;
+use std::borrow::Cow;
 
 #[derive(Clone, Debug, From, Into)]
 pub struct AddressbookResource(pub(crate) Addressbook);
 
 impl ResourceName for AddressbookResource {
-    fn get_name(&self) -> String {
-        self.0.id.clone()
+    fn get_name(&self) -> Cow<'_, str> {
+        Cow::from(&self.0.id)
     }
 }
 

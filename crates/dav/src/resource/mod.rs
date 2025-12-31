@@ -11,6 +11,7 @@ pub use resource_service::ResourceService;
 use rustical_xml::{
     EnumVariants, NamespaceOwned, PropName, XmlDeserialize, XmlDocument, XmlSerialize,
 };
+use std::borrow::Cow;
 use std::str::FromStr;
 
 mod axum_methods;
@@ -30,7 +31,7 @@ pub trait ResourcePropName: FromStr {}
 impl<T: FromStr> ResourcePropName for T {}
 
 pub trait ResourceName {
-    fn get_name(&self) -> String;
+    fn get_name(&self) -> Cow<'_, str>;
 }
 
 pub trait Resource: Clone + Send + 'static {
