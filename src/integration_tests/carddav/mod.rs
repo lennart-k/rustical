@@ -7,6 +7,8 @@ use rstest::rstest;
 use rustical_store_sqlite::tests::{TestStoreContext, test_store_context};
 use tower::ServiceExt;
 
+mod addressbook;
+
 #[rstest]
 #[tokio::test]
 async fn test_carddav_root(
