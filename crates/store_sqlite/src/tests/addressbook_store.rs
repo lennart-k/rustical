@@ -1,17 +1,17 @@
 #[cfg(test)]
 mod tests {
-    use crate::{addressbook_store::SqliteAddressbookStore, tests::get_test_addressbook_store};
+    use crate::tests::{TestStoreContext, test_store_context};
     use rstest::rstest;
     use rustical_store::{Addressbook, AddressbookStore};
 
     #[rstest]
     #[tokio::test]
     async fn test_addressbook_store(
-        #[from(get_test_addressbook_store)]
+        #[from(test_store_context)]
         #[future]
-        addr_store: SqliteAddressbookStore,
+        context: TestStoreContext,
     ) {
-        let addr_store = addr_store.await;
+        let addr_store = context.await.addr_store;
 
         let cal = Addressbook {
             id: "addr".to_string(),

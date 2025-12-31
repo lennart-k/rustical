@@ -1,12 +1,12 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use rustical_ical::{CalendarObject, CalendarObjectType};
 use rustical_store::{Calendar, CalendarMetadata, CalendarStore};
-use rustical_store_sqlite::tests::get_test_calendar_store;
+use rustical_store_sqlite::tests::test_store_context;
 
 fn benchmark(c: &mut Criterion) {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     let cal_store = runtime.block_on(async {
-        let cal_store = get_test_calendar_store().await;
+        let cal_store = test_store_context().await.cal_store;
 
         cal_store
             .insert_calendar(Calendar {

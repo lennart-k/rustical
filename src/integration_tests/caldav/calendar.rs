@@ -5,7 +5,7 @@ use headers::{Authorization, HeaderMapExt};
 use http::{HeaderValue, StatusCode};
 use rstest::rstest;
 use rustical_store::{CalendarMetadata, CalendarStore};
-use rustical_store_sqlite::{calendar_store::SqliteCalendarStore, tests::get_test_calendar_store};
+use rustical_store_sqlite::tests::{TestStoreContext, test_store_context};
 use tower::ServiceExt;
 
 fn mkcalendar_template(
@@ -48,15 +48,13 @@ fn mkcalendar_template(
 #[rstest]
 #[tokio::test]
 async fn test_caldav_calendar(
-    #[from(get_app)]
+    #[from(test_store_context)]
     #[future]
-    app: axum::Router,
-    #[from(get_test_calendar_store)]
-    #[future]
-    cal_store: SqliteCalendarStore,
+    context: TestStoreContext,
 ) {
-    let app = app.await;
-    let cal_store = cal_store.await;
+    let context = context.await;
+    let app = get_app(context.clone());
+    let cal_store = context.cal_store;
 
     let mut calendar_meta = CalendarMetadata {
         displayname: Some("Calendar".to_string()),

@@ -5,32 +5,27 @@ use crate::{
 use rstest::rstest;
 use rustical_dav::resource::{Resource, ResourceService};
 use rustical_store::auth::{Principal, PrincipalType::Individual};
-use rustical_store_sqlite::{
-    SqliteStore,
-    calendar_store::SqliteCalendarStore,
-    principal_store::SqlitePrincipalStore,
-    tests::{get_test_calendar_store, get_test_principal_store, get_test_subscription_store},
-};
+use rustical_store_sqlite::tests::{TestStoreContext, test_store_context};
 use rustical_xml::XmlSerializeRoot;
 use std::sync::Arc;
 
 #[rstest]
 #[tokio::test]
 async fn test_principal_resource(
-    #[from(get_test_calendar_store)]
     #[future]
-    cal_store: SqliteCalendarStore,
-    #[from(get_test_principal_store)]
-    #[future]
-    auth_provider: SqlitePrincipalStore,
-    #[from(get_test_subscription_store)]
-    #[future]
-    sub_store: SqliteStore,
+    #[from(test_store_context)]
+    context: TestStoreContext,
 ) {
+    let TestStoreContext {
+        cal_store,
+        sub_store,
+        principal_store: auth_provider,
+        ..
+    } = context.await;
     let service = PrincipalResourceService {
-        cal_store: Arc::new(cal_store.await),
-        sub_store: Arc::new(sub_store.await),
-        auth_provider: Arc::new(auth_provider.await),
+        cal_store: Arc::new(cal_store),
+        sub_store: Arc::new(sub_store),
+        auth_provider: Arc::new(auth_provider),
         simplified_home_set: false,
     };
 

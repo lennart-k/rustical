@@ -87,7 +87,7 @@ impl From<CalendarRow> for Calendar {
     }
 }
 
-#[derive(Debug, Constructor)]
+#[derive(Debug, Clone, Constructor)]
 pub struct SqliteCalendarStore {
     db: SqlitePool,
     sender: Sender<CollectionOperation>,

@@ -4,6 +4,7 @@ use axum::extract::Request;
 use headers::{Authorization, HeaderMapExt};
 use http::{HeaderValue, StatusCode};
 use rstest::rstest;
+use rustical_store_sqlite::tests::{TestStoreContext, test_store_context};
 use tower::ServiceExt;
 
 mod calendar;
@@ -11,11 +12,11 @@ mod calendar;
 #[rstest]
 #[tokio::test]
 async fn test_caldav_root(
-    #[from(get_app)]
+    #[from(test_store_context)]
     #[future]
-    app: axum::Router,
+    context: TestStoreContext,
 ) {
-    let app = app.await;
+    let app = get_app(context.await);
 
     let request_template = || {
         Request::builder()
@@ -53,11 +54,11 @@ async fn test_caldav_root(
 #[rstest]
 #[tokio::test]
 async fn test_caldav_principal(
-    #[from(get_app)]
+    #[from(test_store_context)]
     #[future]
-    app: axum::Router,
+    context: TestStoreContext,
 ) {
-    let app = app.await;
+    let app = get_app(context.await);
 
     let request_template = || {
         Request::builder()

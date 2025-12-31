@@ -41,7 +41,7 @@ impl TryFrom<PrincipalRow> for Principal {
     }
 }
 
-#[derive(Debug, Constructor)]
+#[derive(Debug, Clone, Constructor)]
 pub struct SqlitePrincipalStore {
     db: SqlitePool,
 }

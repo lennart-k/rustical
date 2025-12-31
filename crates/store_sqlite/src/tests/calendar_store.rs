@@ -1,17 +1,19 @@
 #[cfg(test)]
 mod tests {
-    use crate::{calendar_store::SqliteCalendarStore, tests::get_test_calendar_store};
+    use crate::tests::{TestStoreContext, test_store_context};
     use rstest::rstest;
     use rustical_store::{Calendar, CalendarMetadata, CalendarStore};
 
     #[rstest]
     #[tokio::test]
     async fn test_calendar_store(
-        #[from(get_test_calendar_store)]
         #[future]
-        cal_store: SqliteCalendarStore,
+        #[from(test_store_context)]
+        context: TestStoreContext,
     ) {
-        let cal_store = cal_store.await;
+        let TestStoreContext { cal_store, .. } = context.await;
+
+        let cal_store = cal_store;
 
         let cal = Calendar {
             principal: "fake-user".to_string(),

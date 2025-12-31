@@ -4,16 +4,17 @@ use axum::extract::Request;
 use headers::{Authorization, HeaderMapExt};
 use http::StatusCode;
 use rstest::rstest;
+use rustical_store_sqlite::tests::{TestStoreContext, test_store_context};
 use tower::ServiceExt;
 
 #[rstest]
 #[tokio::test]
 async fn test_carddav_root(
-    #[from(get_app)]
+    #[from(test_store_context)]
     #[future]
-    app: axum::Router,
+    context: TestStoreContext,
 ) {
-    let app = app.await;
+    let app = get_app(context.await);
 
     let request_template = || {
         Request::builder()
