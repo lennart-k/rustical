@@ -1,3 +1,6 @@
+[![license](https://img.shields.io/github/license/lennart-k/rustical)](https://raw.githubusercontent.com/lennart-k/rustical/main/LICENSE)
+[![Coverage Status](https://coveralls.io/repos/github/lennart-k/rustical/badge.svg?branch=main)](https://coveralls.io/github/lennart-k/rustical?branch=main)
+
 # RustiCal
 
 a CalDAV/CardDAV server
