@@ -89,10 +89,19 @@ impl From<&CalendarObjectComponent> for CalendarObjectType {
 
 impl CalendarObjectComponent {
     fn from_events(mut events: Vec<EventObject>) -> Result<Self, Error> {
-        let main_event = events
+        // A calendar object does not necessarily have to contain a main VOBJECT
+        if events.is_empty() {
+            return Err(Error::MissingCalendar);
+        }
+        #[allow(clippy::option_if_let_else)]
+        let main_event = if let Some(main) = events
             .extract_if(.., |event| event.event.get_recurrence_id().is_none())
             .next()
-            .expect("there must be one main event");
+        {
+            main
+        } else {
+            events.remove(0)
+        };
         let overrides = events;
         for event in &overrides {
             if event.get_uid() != main_event.get_uid() {
@@ -109,10 +118,19 @@ impl CalendarObjectComponent {
         Ok(Self::Event(main_event, overrides))
     }
     fn from_todos(mut todos: Vec<IcalTodo>) -> Result<Self, Error> {
-        let main_todo = todos
+        // A calendar object does not necessarily have to contain a main VOBJECT
+        if todos.is_empty() {
+            return Err(Error::MissingCalendar);
+        }
+        #[allow(clippy::option_if_let_else)]
+        let main_todo = if let Some(main) = todos
             .extract_if(.., |todo| todo.get_recurrence_id().is_none())
             .next()
-            .expect("there must be one main event");
+        {
+            main
+        } else {
+            todos.remove(0)
+        };
         let overrides = todos;
         for todo in &overrides {
             if todo.get_uid() != main_todo.get_uid() {
@@ -129,10 +147,19 @@ impl CalendarObjectComponent {
         Ok(Self::Todo(main_todo, overrides))
     }
     fn from_journals(mut journals: Vec<IcalJournal>) -> Result<Self, Error> {
-        let main_journal = journals
+        // A calendar object does not necessarily have to contain a main VOBJECT
+        if journals.is_empty() {
+            return Err(Error::MissingCalendar);
+        }
+        #[allow(clippy::option_if_let_else)]
+        let main_journal = if let Some(main) = journals
             .extract_if(.., |journal| journal.get_recurrence_id().is_none())
             .next()
-            .expect("there must be one main event");
+        {
+            main
+        } else {
+            journals.remove(0)
+        };
         let overrides = journals;
         for journal in &overrides {
             if journal.get_uid() != main_journal.get_uid() {
