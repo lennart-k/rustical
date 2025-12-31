@@ -1,0 +1,28 @@
+---
+source: src/integration_tests/carddav/addressbook.rs
+expression: body
+---
+<?xml version="1.0" encoding="utf-8"?>
+<multistatus xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:PUSH="https://bitfire.at/webdav-push">
+    <response xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:PUSH="https://bitfire.at/webdav-push">
+        <href>/carddav/principal/user/contacts</href>
+        <propstat>
+            <prop>
+                <displayname xmlns="DAV:"/>
+                <addressbook-description xmlns="urn:ietf:params:xml:ns:carddav"/>
+                <addressbook-description/>
+            </prop>
+            <status>HTTP/1.1 200 OK</status>
+        </propstat>
+        <propstat>
+            <prop>
+            </prop>
+            <status>HTTP/1.1 404 Not Found</status>
+        </propstat>
+        <propstat>
+            <prop>
+            </prop>
+            <status>HTTP/1.1 409 Conflict</status>
+        </propstat>
+    </response>
+</multistatus>

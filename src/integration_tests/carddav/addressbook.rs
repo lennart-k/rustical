@@ -30,7 +30,7 @@ fn mkcol_template(displayname: &str, description: &str) -> String {
 
 #[rstest]
 #[tokio::test]
-async fn test_caldav_calendar(
+async fn test_carddav_addressbook(
     #[from(test_store_context)]
     #[future]
     context: TestStoreContext,
@@ -48,7 +48,7 @@ async fn test_caldav_calendar(
 
     let request_template = || {
         Request::builder()
-            .method("MKCALENDAR")
+            .method("MKCOL")
             .uri(&url)
             .body(Body::from(mkcol_template(
                 displayname.as_ref().unwrap(),
