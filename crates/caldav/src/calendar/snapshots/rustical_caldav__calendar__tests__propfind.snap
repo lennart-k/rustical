@@ -16,7 +16,7 @@ expression: output
             <supported-calendar-component-set xmlns="urn:ietf:params:xml:ns:caldav"/>
             <supported-calendar-data xmlns="urn:ietf:params:xml:ns:caldav"/>
             <supported-collation-set xmlns="urn:ietf:params:xml:ns:caldav"/>
-            <max-resource-size xmlns="DAV:"/>
+            <max-resource-size xmlns="urn:ietf:params:xml:ns:caldav"/>
             <supported-report-set xmlns="DAV:"/>
             <source xmlns="http://calendarserver.org/ns/"/>
             <min-date-time xmlns="urn:ietf:params:xml:ns:caldav"/>

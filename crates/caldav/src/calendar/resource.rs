@@ -42,7 +42,7 @@ pub enum CalendarProp {
     SupportedCalendarData(SupportedCalendarData),
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV", skip_deserializing)]
     SupportedCollationSet(SupportedCollationSet),
-    #[xml(ns = "rustical_dav::namespace::NS_DAV")]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     MaxResourceSize(i64),
     #[xml(skip_deserializing)]
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
