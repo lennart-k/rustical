@@ -67,7 +67,13 @@ impl PropFilterElement {
             return false;
         }
 
-        // TODO: param-filter
+        if !self
+            .param_filter
+            .iter()
+            .all(|param_filter| param_filter.match_property(property))
+        {
+            return false;
+        }
 
         true
     }

@@ -1,5 +1,6 @@
 use super::comp_filter::{CompFilterElement, CompFilterable};
 use crate::calendar_object::CalendarObjectPropWrapperName;
+use ical::property::Property;
 use rustical_dav::xml::{PropfindType, TextMatchElement};
 use rustical_ical::{CalendarObject, UtcDateTime};
 use rustical_store::calendar_store::CalendarQuery;
@@ -25,6 +26,23 @@ pub struct ParamFilterElement {
 
     #[xml(ty = "attr")]
     pub(crate) name: String,
+}
+
+impl ParamFilterElement {
+    #[must_use]
+    pub fn match_property(&self, prop: &Property) -> bool {
+        let Some(param) = prop.get_param(&self.name) else {
+            return self.is_not_defined.is_some();
+        };
+        if self.is_not_defined.is_some() {
+            return false;
+        }
+
+        let Some(text_match) = self.text_match.as_ref() else {
+            return true;
+        };
+        text_match.match_text(param)
+    }
 }
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]

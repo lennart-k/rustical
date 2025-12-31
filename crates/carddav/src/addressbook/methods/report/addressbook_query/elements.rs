@@ -30,6 +30,7 @@ pub struct ParamFilterElement {
 }
 
 impl ParamFilterElement {
+    #[must_use]
     pub fn match_property(&self, prop: &Property) -> bool {
         let Some(param) = prop.get_param(&self.name) else {
             return self.is_not_defined.is_some();
