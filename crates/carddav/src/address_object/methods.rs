@@ -7,6 +7,7 @@ use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Response};
 use axum_extra::TypedHeader;
 use axum_extra::headers::{ContentType, ETag, HeaderMapExt, IfNoneMatch};
+use http::HeaderValue;
 use http::Method;
 use http::{HeaderMap, StatusCode};
 use rustical_dav::privileges::UserPrivilege;
@@ -87,9 +88,15 @@ pub async fn put_object<AS: AddressbookStore>(
     };
 
     let object = AddressObject::from_vcf(object_id, body)?;
+    let etag = object.get_etag();
     addr_store
         .put_object(principal, addressbook_id, object, overwrite)
         .await?;
 
-    Ok(StatusCode::CREATED.into_response())
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        "ETag",
+        HeaderValue::from_str(&etag).expect("Contains no invalid characters"),
+    );
+    Ok((StatusCode::CREATED, headers).into_response())
 }

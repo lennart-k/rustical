@@ -52,11 +52,11 @@ pub async fn route_delete<R: ResourceService>(
         return Err(Error::Unauthorized.into());
     }
 
-    if let Some(if_match) = if_match {
-        if !resource.satisfies_if_match(&if_match) {
-            // Precondition failed
-            return Err(crate::Error::PreconditionFailed.into());
-        }
+    if let Some(if_match) = if_match
+        && !resource.satisfies_if_match(&if_match)
+    {
+        // Precondition failed
+        return Err(crate::Error::PreconditionFailed.into());
     }
     if let Some(if_none_match) = if_none_match
         && resource.satisfies_if_none_match(&if_none_match)

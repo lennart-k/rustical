@@ -6,7 +6,7 @@ use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Response};
 use axum_extra::TypedHeader;
 use headers::{ContentType, ETag, HeaderMapExt, IfNoneMatch};
-use http::{HeaderMap, Method, StatusCode};
+use http::{HeaderMap, HeaderValue, Method, StatusCode};
 use rustical_ical::CalendarObject;
 use rustical_store::CalendarStore;
 use rustical_store::auth::Principal;
@@ -82,9 +82,15 @@ pub async fn put_event<C: CalendarStore>(
         debug!("invalid calendar data:\n{body}");
         return Err(Error::PreconditionFailed(Precondition::ValidCalendarData));
     };
+    let etag = object.get_etag();
     cal_store
         .put_object(principal, calendar_id, object, overwrite)
         .await?;
 
-    Ok(StatusCode::CREATED.into_response())
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        "ETag",
+        HeaderValue::from_str(&etag).expect("Contains no invalid characters"),
+    );
+    Ok((StatusCode::CREATED, headers).into_response())
 }
