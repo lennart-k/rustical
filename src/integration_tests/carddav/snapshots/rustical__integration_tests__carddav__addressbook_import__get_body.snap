@@ -1,0 +1,13 @@
+---
+source: src/integration_tests/carddav/addressbook_import.rs
+expression: body
+---
+BEGIN:VCARD
+VERSION:4.0
+FN:Simon Perreault
+N:Perreault;Simon;;;ing. jr,M.Sc.
+BDAY:--0203
+GENDER:M
+EMAIL;TYPE=work:simon.perreault@viagenie.ca
+UID:42ed1bd7-8538-45fb-917d-872e2466a7ce
+END:VCARD

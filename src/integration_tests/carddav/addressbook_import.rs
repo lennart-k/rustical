@@ -7,23 +7,34 @@ use rstest::rstest;
 use rustical_store_sqlite::tests::{TestStoreContext, test_store_context};
 use tower::ServiceExt;
 
-mod addressbook;
-mod addressbook_import;
-
 #[rstest]
 #[tokio::test]
-async fn test_carddav_root(
+async fn test_import(
     #[from(test_store_context)]
     #[future]
     context: TestStoreContext,
 ) {
-    let app = get_app(context.await);
+    let context = context.await;
+    let app = get_app(context.clone());
+    let addr_store = context.addr_store;
+
+    let (principal, addr_id) = ("user", "contacts");
+    let url = format!("/carddav/principal/{principal}/{addr_id}");
 
     let request_template = || {
         Request::builder()
-            .method("PROPFIND")
-            .uri("/carddav")
-            .body(Body::empty())
+            .method("IMPORT")
+            .uri(&url)
+            .body(Body::from(
+                r"BEGIN:VCARD
+VERSION:4.0
+FN:Simon Perreault
+N:Perreault;Simon;;;ing. jr,M.Sc.
+BDAY:--0203
+GENDER:M
+EMAIL;TYPE=work:simon.perreault@viagenie.ca
+END:VCARD",
+            ))
             .unwrap()
     };
 
@@ -31,27 +42,27 @@ async fn test_carddav_root(
     let request = request_template();
     let response = app.clone().oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
-    let body = response.extract_string().await;
-    insta::assert_snapshot!(body);
-
-    // Try with wrong password
-    let mut request = request_template();
-    request
-        .headers_mut()
-        .typed_insert(Authorization::basic("user", "wrongpass"));
-    let response = app.clone().oneshot(request).await.unwrap();
-    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
-    let body = response.extract_string().await;
-    insta::assert_snapshot!(body);
 
     // Try with correct credentials
     let mut request = request_template();
     request
         .headers_mut()
         .typed_insert(Authorization::basic("user", "pass"));
-
-    let response = app.oneshot(request).await.unwrap();
-    assert_eq!(response.status(), StatusCode::MULTI_STATUS);
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
     let body = response.extract_string().await;
-    insta::assert_snapshot!(body);
+    insta::assert_snapshot!("import_body", body);
+
+    let mut request = Request::builder()
+        .method("GET")
+        .uri(&url)
+        .body(Body::empty())
+        .unwrap();
+    request
+        .headers_mut()
+        .typed_insert(Authorization::basic("user", "pass"));
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = response.extract_string().await;
+    insta::assert_snapshot!("get_body", body);
 }
