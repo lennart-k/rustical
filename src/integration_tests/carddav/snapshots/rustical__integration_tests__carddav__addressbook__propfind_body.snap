@@ -13,6 +13,11 @@ expression: body
                     <CARD:address-data-type content-type="text/vcard" version="3.0"/>
                     <CARD:address-data-type content-type="text/vcard" version="4.0"/>
                 </CARD:supported-address-data>
+                <CARD:supported-collation-set>
+                    <CARD:supported-collation>i;ascii-casemap</CARD:supported-collation>
+                    <CARD:supported-collation>i;unicode-casemap</CARD:supported-collation>
+                    <CARD:supported-collation>i;octet</CARD:supported-collation>
+                </CARD:supported-collation-set>
                 <supported-report-set>
                     <supported-report>
                         <report>
