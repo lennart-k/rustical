@@ -104,9 +104,7 @@ pub async fn route_post_oidc(
     TypedHeader(host): TypedHeader<Host>,
     Form(GetOidcForm { redirect_uri }): Form<GetOidcForm>,
 ) -> Result<Response, OidcError> {
-    dbg!(&host);
     let callback_uri = format!("https://{host}/frontend/login/oidc/callback");
-    dbg!(&callback_uri);
 
     let http_client = get_http_client();
     let oidc_client = get_oidc_client(

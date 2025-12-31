@@ -53,7 +53,6 @@ pub async fn route_delete<R: ResourceService>(
     }
 
     if let Some(if_match) = if_match {
-        dbg!(&if_match);
         if !resource.satisfies_if_match(&if_match) {
             // Precondition failed
             return Err(crate::Error::PreconditionFailed.into());
