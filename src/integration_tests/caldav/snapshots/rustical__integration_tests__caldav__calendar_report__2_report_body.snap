@@ -1,6 +1,5 @@
 ---
 source: src/integration_tests/caldav/calendar_report.rs
-assertion_line: 195
 expression: body
 ---
 <?xml version="1.0" encoding="utf-8"?>
