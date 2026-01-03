@@ -82,6 +82,11 @@ pub struct FilterElement {
 impl FilterElement {
     #[must_use]
     pub fn matches(&self, addr_object: &AddressObject) -> bool {
+        if self.prop_filter.is_empty() {
+            // Filter empty
+            return true;
+        }
+
         let Allof(allof) = self.test;
         let mut results = self
             .prop_filter

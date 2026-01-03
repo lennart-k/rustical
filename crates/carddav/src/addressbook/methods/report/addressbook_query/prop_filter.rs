@@ -32,6 +32,10 @@ pub struct PropFilterElement {
 impl PropFilterElement {
     #[must_use]
     pub fn match_property(&self, property: &Property) -> bool {
+        if self.param_filter.is_empty() && self.text_match.is_empty() {
+            // Filter empty
+            return true;
+        }
         let Allof(allof) = self.test;
         let text_matches = self
             .text_match
