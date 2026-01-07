@@ -126,16 +126,6 @@ impl CalendarObject {
         (&self.inner).into()
     }
 
-    pub fn get_first_occurence(&self) -> Option<CalDateTime> {
-        // TODO: Implement
-        None
-    }
-
-    pub fn get_last_occurence(&self) -> Option<CalDateTime> {
-        // TODO: Implement
-        None
-    }
-
     pub fn expand_recurrence(
         &self,
         start: Option<DateTime<Utc>>,
