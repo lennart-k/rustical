@@ -103,10 +103,10 @@ pub async fn put_object<AS: AddressbookStore>(
         true
     };
 
-    let object = AddressObject::from_vcf(object_id, body)?;
+    let object = AddressObject::from_vcf(body)?;
     let etag = object.get_etag();
     addr_store
-        .put_object(principal, addressbook_id, object, overwrite)
+        .put_object(&principal, &addressbook_id, &object_id, object, overwrite)
         .await?;
 
     let mut headers = HeaderMap::new();

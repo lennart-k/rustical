@@ -40,8 +40,9 @@ pub async fn route_import<AS: AddressbookStore, S: SubscriptionStore>(
             });
             card = card_mut.build(&HashMap::new()).unwrap();
         }
-
-        objects.push(card.try_into().unwrap());
+        // TODO: Make nicer
+        let uid = card.get_uid().unwrap();
+        objects.push((uid.to_owned(), card.into()));
     }
 
     if objects.is_empty() {

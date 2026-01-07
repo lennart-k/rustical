@@ -15,8 +15,8 @@ pub trait AddressbookStore: Send + Sync + 'static {
 
     async fn update_addressbook(
         &self,
-        principal: String,
-        id: String,
+        principal: &str,
+        id: &str,
         addressbook: Addressbook,
     ) -> Result<(), Error>;
     async fn insert_addressbook(&self, addressbook: Addressbook) -> Result<(), Error>;
@@ -33,7 +33,7 @@ pub trait AddressbookStore: Send + Sync + 'static {
         principal: &str,
         addressbook_id: &str,
         synctoken: i64,
-    ) -> Result<(Vec<AddressObject>, Vec<String>, i64), Error>;
+    ) -> Result<(Vec<(String, AddressObject)>, Vec<String>, i64), Error>;
 
     async fn addressbook_metadata(
         &self,
@@ -45,7 +45,7 @@ pub trait AddressbookStore: Send + Sync + 'static {
         &self,
         principal: &str,
         addressbook_id: &str,
-    ) -> Result<Vec<AddressObject>, Error>;
+    ) -> Result<Vec<(String, AddressObject)>, Error>;
     async fn get_object(
         &self,
         principal: &str,
@@ -55,8 +55,9 @@ pub trait AddressbookStore: Send + Sync + 'static {
     ) -> Result<AddressObject, Error>;
     async fn put_object(
         &self,
-        principal: String,
-        addressbook_id: String,
+        principal: &str,
+        addressbook_id: &str,
+        object_id: &str,
         object: AddressObject,
         overwrite: bool,
     ) -> Result<(), Error>;
@@ -77,7 +78,7 @@ pub trait AddressbookStore: Send + Sync + 'static {
     async fn import_addressbook(
         &self,
         addressbook: Addressbook,
-        objects: Vec<AddressObject>,
+        objects: Vec<(String, AddressObject)>,
         merge_existing: bool,
     ) -> Result<(), Error>;
 }

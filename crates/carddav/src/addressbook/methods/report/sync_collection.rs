@@ -32,11 +32,12 @@ pub async fn handle_sync_collection<AS: AddressbookStore>(
         .await?;
 
     let mut responses = Vec::new();
-    for object in new_objects {
-        let path = format!("{}/{}.vcf", path.trim_end_matches('/'), object.get_id());
+    for (object_id, object) in new_objects {
+        let path = format!("{}/{}.vcf", path.trim_end_matches('/'), object_id);
         responses.push(
             AddressObjectResource {
                 object,
+                object_id,
                 principal: principal.to_owned(),
             }
             .propfind(&path, &sync_collection.prop, None, puri, user)?,

@@ -78,7 +78,8 @@ impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
             .get_objects(principal, addressbook_id)
             .await?
             .into_iter()
-            .map(|object| AddressObjectResource {
+            .map(|(object_id, object)| AddressObjectResource {
+                object_id,
                 object,
                 principal: principal.to_owned(),
             })
@@ -91,7 +92,7 @@ impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
         file: Self::Resource,
     ) -> Result<(), Self::Error> {
         self.addr_store
-            .update_addressbook(principal.to_owned(), addressbook_id.to_owned(), file.into())
+            .update_addressbook(principal, addressbook_id, file.into())
             .await?;
         Ok(())
     }

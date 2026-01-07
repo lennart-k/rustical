@@ -8,7 +8,6 @@ use rustical_store::{
 };
 use sha2::{Digest, Sha256};
 use sqlx::{Executor, Sqlite};
-use std::collections::HashMap;
 use tracing::instrument;
 
 pub const BIRTHDAYS_PREFIX: &str = "_birthdays_";
@@ -330,13 +329,14 @@ impl CalendarStore for SqliteAddressbookStore {
             .ok_or(Error::NotFound)?;
         let (objects, deleted_objects, new_synctoken) =
             AddressbookStore::sync_changes(self, principal, cal_id, synctoken).await?;
-        let objects: Result<Vec<Option<CalendarObject>>, rustical_ical::Error> = objects
-            .iter()
-            .map(AddressObject::get_birthday_object)
-            .collect();
-        let objects = objects?.into_iter().flatten().collect();
-
-        Ok((objects, deleted_objects, new_synctoken))
+        todo!();
+        // let objects: Result<Vec<Option<CalendarObject>>, rustical_ical::Error> = objects
+        //     .iter()
+        //     .map(AddressObject::get_birthday_object)
+        //     .collect();
+        // let objects = objects?.into_iter().flatten().collect();
+        //
+        // Ok((objects, deleted_objects, new_synctoken))
     }
 
     #[instrument]
@@ -357,21 +357,22 @@ impl CalendarStore for SqliteAddressbookStore {
         principal: &str,
         cal_id: &str,
     ) -> Result<Vec<CalendarObject>, Error> {
-        let cal_id = cal_id
-            .strip_prefix(BIRTHDAYS_PREFIX)
-            .ok_or(Error::NotFound)?;
-        let objects: Result<Vec<HashMap<&'static str, CalendarObject>>, rustical_ical::Error> =
-            AddressbookStore::get_objects(self, principal, cal_id)
-                .await?
-                .iter()
-                .map(AddressObject::get_significant_dates)
-                .collect();
-        let objects = objects?
-            .into_iter()
-            .flat_map(HashMap::into_values)
-            .collect();
-
-        Ok(objects)
+        todo!()
+        // let cal_id = cal_id
+        //     .strip_prefix(BIRTHDAYS_PREFIX)
+        //     .ok_or(Error::NotFound)?;
+        // let objects: Result<Vec<HashMap<&'static str, CalendarObject>>, rustical_ical::Error> =
+        //     AddressbookStore::get_objects(self, principal, cal_id)
+        //         .await?
+        //         .iter()
+        //         .map(AddressObject::get_significant_dates)
+        //         .collect();
+        // let objects = objects?
+        //     .into_iter()
+        //     .flat_map(HashMap::into_values)
+        //     .collect();
+        //
+        // Ok(objects)
     }
 
     #[instrument]
