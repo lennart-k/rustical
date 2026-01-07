@@ -19,11 +19,11 @@ struct AddressObjectRow {
     vcf: String,
 }
 
-impl TryFrom<AddressObjectRow> for AddressObject {
+impl TryFrom<AddressObjectRow> for (String, AddressObject) {
     type Error = rustical_store::Error;
 
     fn try_from(value: AddressObjectRow) -> Result<Self, Self::Error> {
-        Ok(Self::from_vcf(value.id, value.vcf)?)
+        Ok((value.id, AddressObject::from_vcf(value.vcf)?))
     }
 }
 
@@ -290,7 +290,7 @@ impl SqliteAddressbookStore {
         principal: &str,
         addressbook_id: &str,
         synctoken: i64,
-    ) -> Result<(Vec<AddressObject>, Vec<String>, i64), rustical_store::Error> {
+    ) -> Result<(Vec<(String, AddressObject)>, Vec<String>, i64), rustical_store::Error> {
         struct Row {
             object_id: String,
             synctoken: i64,
@@ -318,7 +318,7 @@ impl SqliteAddressbookStore {
         for Row { object_id, .. } in changes {
             match Self::_get_object(&mut *conn, principal, addressbook_id, &object_id, false).await
             {
-                Ok(object) => objects.push(object),
+                Ok(object) => objects.push((object_id, object)),
                 Err(rustical_store::Error::NotFound) => deleted_objects.push(object_id),
                 Err(err) => return Err(err),
             }
@@ -353,7 +353,7 @@ impl SqliteAddressbookStore {
         executor: E,
         principal: &str,
         addressbook_id: &str,
-    ) -> Result<Vec<AddressObject>, rustical_store::Error> {
+    ) -> Result<Vec<(String, AddressObject)>, rustical_store::Error> {
         sqlx::query_as!(
             AddressObjectRow,
             "SELECT id, vcf FROM addressobjects WHERE principal = ? AND addressbook_id = ? AND deleted_at IS NULL",
@@ -374,7 +374,7 @@ impl SqliteAddressbookStore {
         object_id: &str,
         show_deleted: bool,
     ) -> Result<AddressObject, rustical_store::Error> {
-        sqlx::query_as!(
+        let (id, object) = sqlx::query_as!(
             AddressObjectRow,
             "SELECT id, vcf FROM addressobjects WHERE (principal, addressbook_id, id) = (?, ?, ?) AND ((deleted_at IS NULL) OR ?)",
             principal,
@@ -385,17 +385,20 @@ impl SqliteAddressbookStore {
         .fetch_one(executor)
         .await
         .map_err(crate::Error::from)?
-        .try_into()
+        .try_into()?;
+        assert_eq!(id, object_id);
+        Ok(object)
     }
 
     async fn _put_object<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         addressbook_id: &str,
+        object_id: &str,
         object: &AddressObject,
         overwrite: bool,
     ) -> Result<(), rustical_store::Error> {
-        let (object_id, vcf) = (object.get_id(), object.get_vcf());
+        let vcf = object.get_vcf();
 
         (if overwrite {
             sqlx::query!(
@@ -500,10 +503,12 @@ impl AddressbookStore for SqliteAddressbookStore {
     #[instrument]
     async fn update_addressbook(
         &self,
-        principal: String,
-        id: String,
+        principal: &str,
+        id: &str,
         addressbook: Addressbook,
     ) -> Result<(), rustical_store::Error> {
+        assert_eq!(principal, &addressbook.principal);
+        assert_eq!(id, &addressbook.id);
         Self::_update_addressbook(&self.db, &principal, &id, &addressbook).await
     }
 
@@ -569,7 +574,7 @@ impl AddressbookStore for SqliteAddressbookStore {
         principal: &str,
         addressbook_id: &str,
         synctoken: i64,
-    ) -> Result<(Vec<AddressObject>, Vec<String>, i64), rustical_store::Error> {
+    ) -> Result<(Vec<(String, AddressObject)>, Vec<String>, i64), rustical_store::Error> {
         Self::_sync_changes(&self.db, principal, addressbook_id, synctoken).await
     }
 
@@ -601,7 +606,7 @@ impl AddressbookStore for SqliteAddressbookStore {
         &self,
         principal: &str,
         addressbook_id: &str,
-    ) -> Result<Vec<AddressObject>, rustical_store::Error> {
+    ) -> Result<Vec<(String, AddressObject)>, rustical_store::Error> {
         Self::_get_objects(&self.db, principal, addressbook_id).await
     }
 
@@ -619,8 +624,9 @@ impl AddressbookStore for SqliteAddressbookStore {
     #[instrument]
     async fn put_object(
         &self,
-        principal: String,
-        addressbook_id: String,
+        principal: &str,
+        addressbook_id: &str,
+        object_id: &str,
         object: AddressObject,
         overwrite: bool,
     ) -> Result<(), rustical_store::Error> {
@@ -630,9 +636,15 @@ impl AddressbookStore for SqliteAddressbookStore {
             .await
             .map_err(crate::Error::from)?;
 
-        let object_id = object.get_id().to_owned();
-
-        Self::_put_object(&mut *tx, &principal, &addressbook_id, &object, overwrite).await?;
+        Self::_put_object(
+            &mut *tx,
+            principal,
+            addressbook_id,
+            object_id,
+            &object,
+            overwrite,
+        )
+        .await?;
 
         let sync_token = Self::log_object_operation(
             &mut tx,
@@ -648,7 +660,7 @@ impl AddressbookStore for SqliteAddressbookStore {
 
         self.send_push_notification(
             CollectionOperationInfo::Content { sync_token },
-            self.get_addressbook(&principal, &addressbook_id, false)
+            self.get_addressbook(principal, addressbook_id, false)
                 .await?
                 .push_topic,
         );
@@ -733,7 +745,7 @@ impl AddressbookStore for SqliteAddressbookStore {
     async fn import_addressbook(
         &self,
         addressbook: Addressbook,
-        objects: Vec<AddressObject>,
+        objects: Vec<(String, AddressObject)>,
         merge_existing: bool,
     ) -> Result<(), Error> {
         let mut tx = self
@@ -758,11 +770,12 @@ impl AddressbookStore for SqliteAddressbookStore {
         }
 
         let mut sync_token = None;
-        for object in objects {
+        for (object_id, object) in objects {
             Self::_put_object(
                 &mut *tx,
                 &addressbook.principal,
                 &addressbook.id,
+                &object_id,
                 &object,
                 false,
             )
@@ -773,7 +786,7 @@ impl AddressbookStore for SqliteAddressbookStore {
                     &mut tx,
                     &addressbook.principal,
                     &addressbook.id,
-                    object.get_id(),
+                    &object_id,
                     ChangeOperation::Add,
                 )
                 .await?,

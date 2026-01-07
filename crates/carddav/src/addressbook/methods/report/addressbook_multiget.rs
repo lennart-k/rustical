@@ -29,7 +29,7 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
     principal: &str,
     addressbook_id: &str,
     store: &AS,
-) -> Result<(Vec<AddressObject>, Vec<String>), Error> {
+) -> Result<(Vec<(String, AddressObject)>, Vec<String>), Error> {
     let mut result = vec![];
     let mut not_found = vec![];
 
@@ -43,7 +43,7 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
                     .get_object(principal, addressbook_id, object_id, false)
                     .await
                 {
-                    Ok(object) => result.push(object),
+                    Ok(object) => result.push((object_id.to_owned(), object)),
                     Err(rustical_store::Error::NotFound) => not_found.push(href.to_string()),
                     Err(err) => return Err(err.into()),
                 }
@@ -74,11 +74,12 @@ pub async fn handle_addressbook_multiget<AS: AddressbookStore>(
             .await?;
 
     let mut responses = Vec::new();
-    for object in objects {
-        let path = format!("{}/{}.vcf", path, object.get_id());
+    for (object_id, object) in objects {
+        let path = format!("{path}/{object_id}.vcf");
         responses.push(
             AddressObjectResource {
                 object,
+                object_id,
                 principal: principal.to_owned(),
             }
             .propfind(&path, prop, None, puri, user)?,
