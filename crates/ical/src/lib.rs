@@ -3,8 +3,8 @@
 mod timestamp;
 pub use timestamp::*;
 
-mod icalendar;
-pub use icalendar::*;
+mod calendar_object;
+pub use calendar_object::*;
 
 mod error;
 pub use error::Error;
