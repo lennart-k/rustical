@@ -1,4 +1,4 @@
-use std::io::BufReader;
+use std::{collections::HashMap, io::BufReader};
 
 use crate::Error;
 use crate::addressbook::AddressbookResourceService;
@@ -9,7 +9,7 @@ use axum::{
 use http::StatusCode;
 use ical::{
     parser::{Component, ComponentMut, vcard},
-    property::Property,
+    property::ContentLine,
 };
 use rustical_store::{Addressbook, AddressbookStore, SubscriptionStore, auth::Principal};
 use tracing::instrument;
@@ -33,12 +33,12 @@ pub async fn route_import<AS: AddressbookStore, S: SubscriptionStore>(
         let uid = card.get_uid();
         if uid.is_none() {
             let mut card_mut = card.mutable();
-            card_mut.set_property(Property {
+            card_mut.add_content_line(ContentLine {
                 name: "UID".to_owned(),
                 value: Some(uuid::Uuid::new_v4().to_string()),
-                params: vec![],
+                params: vec![].into(),
             });
-            card = card_mut.verify().unwrap();
+            card = card_mut.build(&HashMap::new()).unwrap();
         }
 
         objects.push(card.try_into().unwrap());

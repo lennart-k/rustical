@@ -1,18 +1,14 @@
-use super::EventObject;
-use crate::CalDateTime;
 use crate::Error;
 use chrono::DateTime;
 use chrono::Utc;
 use derive_more::Display;
-use ical::generator::{Emitter, IcalCalendar};
-use ical::parser::ical::component::IcalJournal;
-use ical::parser::ical::component::IcalTimeZone;
-use ical::parser::ical::component::IcalTodo;
-use ical::property::Property;
+use ical::component::CalendarInnerData;
+use ical::component::IcalCalendarObject;
+use ical::parser::ComponentParser;
+use ical::types::CalDateTime;
 use serde::Deserialize;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
-use std::{collections::HashMap, io::BufReader};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Display)]
 // specified in https://datatracker.ietf.org/doc/html/rfc5545#section-3.6
@@ -23,6 +19,16 @@ pub enum CalendarObjectType {
     Todo = 1,
     #[serde(rename = "VJOURNAL")]
     Journal = 2,
+}
+
+impl From<&IcalCalendarObject> for CalendarObjectType {
+    fn from(value: &IcalCalendarObject) -> Self {
+        match value.get_inner() {
+            CalendarInnerData::Event(_, _) => Self::Event,
+            CalendarInnerData::Todo(_, _) => Self::Todo,
+            CalendarInnerData::Journal(_, _) => Self::Journal,
+        }
+    }
 }
 
 impl CalendarObjectType {
@@ -58,240 +64,38 @@ impl rustical_xml::ValueDeserialize for CalendarObjectType {
 }
 
 #[derive(Debug, Clone)]
-pub enum CalendarObjectComponent {
-    Event(EventObject, Vec<EventObject>),
-    Todo(IcalTodo, Vec<IcalTodo>),
-    Journal(IcalJournal, Vec<IcalJournal>),
-}
-
-impl CalendarObjectComponent {
-    #[must_use]
-    pub fn get_uid(&self) -> &str {
-        match &self {
-            // We've made sure before that the first component exists and all components share the
-            // same UID
-            Self::Todo(todo, _) => todo.get_uid(),
-            Self::Event(event, _) => event.event.get_uid(),
-            Self::Journal(journal, _) => journal.get_uid(),
-        }
-    }
-}
-
-impl From<&CalendarObjectComponent> for CalendarObjectType {
-    fn from(value: &CalendarObjectComponent) -> Self {
-        match value {
-            CalendarObjectComponent::Event(..) => Self::Event,
-            CalendarObjectComponent::Todo(..) => Self::Todo,
-            CalendarObjectComponent::Journal(..) => Self::Journal,
-        }
-    }
-}
-
-impl CalendarObjectComponent {
-    fn from_events(mut events: Vec<EventObject>) -> Result<Self, Error> {
-        // A calendar object does not necessarily have to contain a main VOBJECT
-        if events.is_empty() {
-            return Err(Error::MissingCalendar);
-        }
-        #[allow(clippy::option_if_let_else)]
-        let main_event = if let Some(main) = events
-            .extract_if(.., |event| event.event.get_recurrence_id().is_none())
-            .next()
-        {
-            main
-        } else {
-            events.remove(0)
-        };
-        let overrides = events;
-        for event in &overrides {
-            if event.get_uid() != main_event.get_uid() {
-                return Err(Error::InvalidData(
-                    "Calendar object contains multiple UIDs".to_owned(),
-                ));
-            }
-            if event.event.get_recurrence_id().is_none() {
-                return Err(Error::InvalidData(
-                    "Calendar object can only contain one main component".to_owned(),
-                ));
-            }
-        }
-        Ok(Self::Event(main_event, overrides))
-    }
-    fn from_todos(mut todos: Vec<IcalTodo>) -> Result<Self, Error> {
-        // A calendar object does not necessarily have to contain a main VOBJECT
-        if todos.is_empty() {
-            return Err(Error::MissingCalendar);
-        }
-        #[allow(clippy::option_if_let_else)]
-        let main_todo = if let Some(main) = todos
-            .extract_if(.., |todo| todo.get_recurrence_id().is_none())
-            .next()
-        {
-            main
-        } else {
-            todos.remove(0)
-        };
-        let overrides = todos;
-        for todo in &overrides {
-            if todo.get_uid() != main_todo.get_uid() {
-                return Err(Error::InvalidData(
-                    "Calendar object contains multiple UIDs".to_owned(),
-                ));
-            }
-            if todo.get_recurrence_id().is_none() {
-                return Err(Error::InvalidData(
-                    "Calendar object can only contain one main component".to_owned(),
-                ));
-            }
-        }
-        Ok(Self::Todo(main_todo, overrides))
-    }
-    fn from_journals(mut journals: Vec<IcalJournal>) -> Result<Self, Error> {
-        // A calendar object does not necessarily have to contain a main VOBJECT
-        if journals.is_empty() {
-            return Err(Error::MissingCalendar);
-        }
-        #[allow(clippy::option_if_let_else)]
-        let main_journal = if let Some(main) = journals
-            .extract_if(.., |journal| journal.get_recurrence_id().is_none())
-            .next()
-        {
-            main
-        } else {
-            journals.remove(0)
-        };
-        let overrides = journals;
-        for journal in &overrides {
-            if journal.get_uid() != main_journal.get_uid() {
-                return Err(Error::InvalidData(
-                    "Calendar object contains multiple UIDs".to_owned(),
-                ));
-            }
-            if journal.get_recurrence_id().is_none() {
-                return Err(Error::InvalidData(
-                    "Calendar object can only contain one main component".to_owned(),
-                ));
-            }
-        }
-        Ok(Self::Journal(main_journal, overrides))
-    }
-
-    pub fn get_first_occurence(&self) -> Result<Option<CalDateTime>, Error> {
-        match &self {
-            Self::Event(main_event, overrides) => Ok(overrides
-                .iter()
-                .chain(std::iter::once(main_event))
-                .map(super::event::EventObject::get_dtstart)
-                .collect::<Result<Vec<_>, _>>()?
-                .into_iter()
-                .flatten()
-                .min()),
-            _ => Ok(None),
-        }
-    }
-
-    pub fn get_last_occurence(&self) -> Result<Option<CalDateTime>, Error> {
-        match &self {
-            Self::Event(main_event, overrides) => Ok(overrides
-                .iter()
-                .chain(std::iter::once(main_event))
-                .map(super::event::EventObject::get_last_occurence)
-                .collect::<Result<Vec<_>, _>>()?
-                .into_iter()
-                .flatten()
-                .max()),
-            _ => Ok(None),
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
 pub struct CalendarObject {
-    data: CalendarObjectComponent,
-    properties: Vec<Property>,
     id: String,
+    inner: IcalCalendarObject,
     ics: String,
-    vtimezones: HashMap<String, IcalTimeZone>,
 }
 
 impl CalendarObject {
     pub fn from_ics(ics: String, id: Option<String>) -> Result<Self, Error> {
-        let mut parser = ical::IcalParser::new(BufReader::new(ics.as_bytes()));
-        let cal = parser.next().ok_or(Error::MissingCalendar)??;
+        let mut parser: ComponentParser<_, IcalCalendarObject> =
+            ComponentParser::new(ics.as_bytes());
+        let inner = parser.next().ok_or(Error::MissingCalendar)??;
         if parser.next().is_some() {
             return Err(Error::InvalidData(
                 "multiple calendars, only one allowed".to_owned(),
             ));
         }
 
-        if u8::from(!cal.events.is_empty())
-            + u8::from(!cal.todos.is_empty())
-            + u8::from(!cal.journals.is_empty())
-            + u8::from(!cal.free_busys.is_empty())
-            != 1
-        {
-            // https://datatracker.ietf.org/doc/html/rfc4791#section-4.1
-            return Err(Error::InvalidData(
-                "iCalendar object must have exactly one component type".to_owned(),
-            ));
-        }
-
-        let timezones: HashMap<String, Option<chrono_tz::Tz>> = cal
-            .timezones
-            .clone()
-            .into_iter()
-            .map(|timezone| (timezone.get_tzid().to_owned(), (&timezone).try_into().ok()))
-            .collect();
-
-        let vtimezones = cal
-            .timezones
-            .clone()
-            .into_iter()
-            .map(|timezone| (timezone.get_tzid().to_owned(), timezone))
-            .collect();
-
-        let data = if !cal.events.is_empty() {
-            CalendarObjectComponent::from_events(
-                cal.events
-                    .into_iter()
-                    .map(|event| EventObject {
-                        event,
-                        timezones: timezones.clone(),
-                    })
-                    .collect(),
-            )?
-        } else if !cal.todos.is_empty() {
-            CalendarObjectComponent::from_todos(cal.todos)?
-        } else if !cal.journals.is_empty() {
-            CalendarObjectComponent::from_journals(cal.journals)?
-        } else {
-            return Err(Error::InvalidData(
-                "iCalendar component type not supported :(".to_owned(),
-            ));
-        };
-
         Ok(Self {
-            id: id.unwrap_or_else(|| data.get_uid().to_owned()),
-            data,
-            properties: cal.properties,
+            id: id.unwrap_or_else(|| inner.get_uid().to_owned()),
+            inner,
             ics,
-            vtimezones,
         })
     }
 
     #[must_use]
-    pub const fn get_vtimezones(&self) -> &HashMap<String, IcalTimeZone> {
-        &self.vtimezones
-    }
-
-    #[must_use]
-    pub const fn get_data(&self) -> &CalendarObjectComponent {
-        &self.data
+    pub const fn get_inner(&self) -> &IcalCalendarObject {
+        &self.inner
     }
 
     #[must_use]
     pub fn get_uid(&self) -> &str {
-        self.data.get_uid()
+        self.inner.get_uid()
     }
 
     #[must_use]
@@ -319,15 +123,17 @@ impl CalendarObject {
 
     #[must_use]
     pub fn get_object_type(&self) -> CalendarObjectType {
-        (&self.data).into()
+        (&self.inner).into()
     }
 
-    pub fn get_first_occurence(&self) -> Result<Option<CalDateTime>, Error> {
-        self.data.get_first_occurence()
+    pub fn get_first_occurence(&self) -> Option<CalDateTime> {
+        // TODO: Implement
+        None
     }
 
-    pub fn get_last_occurence(&self) -> Result<Option<CalDateTime>, Error> {
-        self.data.get_last_occurence()
+    pub fn get_last_occurence(&self) -> Option<CalDateTime> {
+        // TODO: Implement
+        None
     }
 
     pub fn expand_recurrence(
@@ -335,32 +141,7 @@ impl CalendarObject {
         start: Option<DateTime<Utc>>,
         end: Option<DateTime<Utc>>,
     ) -> Result<String, Error> {
-        // Only events can be expanded
-        match &self.data {
-            CalendarObjectComponent::Event(main_event, overrides) => {
-                let cal = IcalCalendar {
-                    properties: self.properties.clone(),
-                    events: main_event.expand_recurrence(start, end, overrides)?,
-                    ..Default::default()
-                };
-                Ok(cal.generate())
-            }
-            _ => Ok(self.get_ics().to_string()),
-        }
-    }
-
-    #[must_use]
-    pub fn get_property(&self, name: &str) -> Option<&Property> {
-        self.properties
-            .iter()
-            .find(|property| property.name == name)
-    }
-
-    #[must_use]
-    pub fn get_named_properties(&self, name: &str) -> Vec<&Property> {
-        self.properties
-            .iter()
-            .filter(|property| property.name == name)
-            .collect()
+        // Ok(self.inner.expand_recurrence(start, end)?)
+        todo!()
     }
 }
