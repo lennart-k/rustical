@@ -2,9 +2,7 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use derive_more::derive::Deref;
 use rustical_xml::{ValueDeserialize, ValueSerialize};
 
-const LOCAL_DATE_TIME: &str = "%Y%m%dT%H%M%S";
 const UTC_DATE_TIME: &str = "%Y%m%dT%H%M%SZ";
-pub const LOCAL_DATE: &str = "%Y%m%d";
 
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
 pub enum CalDateTimeError {

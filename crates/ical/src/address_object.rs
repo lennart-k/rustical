@@ -4,7 +4,6 @@ use ical::parser::{
     Component,
     vcard::{self, component::VcardContact},
 };
-use ical::types::CalDateTime;
 use sha2::{Digest, Sha256};
 use std::{collections::HashMap, io::BufReader};
 
@@ -60,20 +59,6 @@ impl AddressObject {
     #[must_use]
     pub fn get_vcf(&self) -> &str {
         &self.vcf
-    }
-
-    #[must_use]
-    pub fn get_anniversary(&self) -> Option<(CalDateTime, bool)> {
-        // let prop = self.vcard.get_property("ANNIVERSARY")?.value.as_deref()?;
-        // CalDateTime::parse_vcard(prop).ok()
-        todo!()
-    }
-
-    #[must_use]
-    pub fn get_birthday(&self) -> Option<(CalDateTime, bool)> {
-        todo!()
-        // let prop = self.vcard.get_property("BDAY")?.value.as_deref()?;
-        // CalDateTime::parse_vcard(prop).ok()
     }
 
     #[must_use]
