@@ -79,5 +79,5 @@ const FILTER_2: &str = r#"
 fn yeet(#[case] ics: &str, #[case] filter: &str, #[case] matches: bool) {
     let obj = CalendarObject::from_ics(ics.to_owned(), None).unwrap();
     let filter = FilterElement::parse_str(filter).unwrap();
-    assert_eq!(matches, filter.matches(&obj));
+    assert_eq!(matches, filter.matches(obj.get_inner()));
 }

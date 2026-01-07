@@ -1,6 +1,4 @@
 use crate::Error;
-use chrono::DateTime;
-use chrono::Utc;
 use derive_more::Display;
 use ical::component::CalendarInnerData;
 use ical::component::IcalCalendarObject;
@@ -116,21 +114,7 @@ impl CalendarObject {
     }
 
     #[must_use]
-    pub fn get_component_name(&self) -> &str {
-        self.get_object_type().as_str()
-    }
-
-    #[must_use]
     pub fn get_object_type(&self) -> CalendarObjectType {
         (&self.inner).into()
-    }
-
-    pub fn expand_recurrence(
-        &self,
-        start: Option<DateTime<Utc>>,
-        end: Option<DateTime<Utc>>,
-    ) -> Result<String, Error> {
-        // Ok(self.inner.expand_recurrence(start, end)?)
-        todo!()
     }
 }

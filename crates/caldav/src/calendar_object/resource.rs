@@ -54,10 +54,11 @@ impl Resource for CalendarObjectResource {
                     }
                     CalendarObjectPropName::CalendarData(CalendarData { expand, .. }) => {
                         CalendarObjectProp::CalendarData(if let Some(expand) = expand.as_ref() {
-                            self.object.expand_recurrence(
-                                Some(expand.start.to_utc()),
-                                Some(expand.end.to_utc()),
-                            )?
+                            todo!()
+                            // self.object.get_inner().expand_recurrence(
+                            //     Some(expand.start.to_utc()),
+                            //     Some(expand.end.to_utc()),
+                            // )
                         } else {
                             self.object.get_ics().to_owned()
                         })

@@ -139,7 +139,10 @@ END:VCALENDAR";
             prop_filter: vec![],
             comp_filter: vec![],
         };
-        assert!(!object.matches(&comp_filter), "filter: wants no VCALENDAR");
+        assert!(
+            !object.get_inner().matches(&comp_filter),
+            "filter: wants no VCALENDAR"
+        );
 
         let comp_filter = CompFilterElement {
             is_not_defined: None,
@@ -154,7 +157,10 @@ END:VCALENDAR";
                 comp_filter: vec![],
             }],
         };
-        assert!(!object.matches(&comp_filter), "filter matches VTODO");
+        assert!(
+            !object.get_inner().matches(&comp_filter),
+            "filter matches VTODO"
+        );
 
         let comp_filter = CompFilterElement {
             is_not_defined: None,
@@ -169,7 +175,10 @@ END:VCALENDAR";
                 comp_filter: vec![],
             }],
         };
-        assert!(object.matches(&comp_filter), "filter matches VEVENT");
+        assert!(
+            object.get_inner().matches(&comp_filter),
+            "filter matches VEVENT"
+        );
 
         let comp_filter = CompFilterElement {
             is_not_defined: None,
@@ -216,7 +225,7 @@ END:VCALENDAR";
             }],
         };
         assert!(
-            object.matches(&comp_filter),
+            object.get_inner().matches(&comp_filter),
             "Some prop filters on VCALENDAR and VEVENT"
         );
     }
@@ -245,7 +254,7 @@ END:VCALENDAR";
             }],
         };
         assert!(
-            object.matches(&comp_filter),
+            object.get_inner().matches(&comp_filter),
             "event should lie in time range"
         );
 
@@ -270,7 +279,7 @@ END:VCALENDAR";
             }],
         };
         assert!(
-            !object.matches(&comp_filter),
+            !object.get_inner().matches(&comp_filter),
             "event should not lie in time range"
         );
     }
@@ -304,7 +313,7 @@ END:VCALENDAR";
             }],
         };
         assert!(
-            object.matches(&comp_filter),
+            object.get_inner().matches(&comp_filter),
             "Timezone should be Europe/Berlin"
         );
     }
