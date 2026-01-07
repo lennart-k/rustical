@@ -1,5 +1,5 @@
 use super::{Allof, ParamFilterElement};
-use ical::{parser::Component, property::Property};
+use ical::{parser::Component, property::ContentLine};
 use rustical_dav::xml::TextMatchElement;
 use rustical_ical::AddressObject;
 use rustical_xml::XmlDeserialize;
@@ -31,7 +31,7 @@ pub struct PropFilterElement {
 
 impl PropFilterElement {
     #[must_use]
-    pub fn match_property(&self, property: &Property) -> bool {
+    pub fn match_property(&self, property: &ContentLine) -> bool {
         if self.param_filter.is_empty() && self.text_match.is_empty() {
             // Filter empty
             return true;
@@ -67,11 +67,11 @@ impl PropFilterElement {
 }
 
 pub trait PropFilterable {
-    fn get_named_properties(&self, name: &str) -> Vec<&Property>;
+    fn get_named_properties(&self, name: &str) -> Vec<&ContentLine>;
 }
 
 impl PropFilterable for AddressObject {
-    fn get_named_properties(&self, name: &str) -> Vec<&Property> {
+    fn get_named_properties(&self, name: &str) -> Vec<&ContentLine> {
         self.get_vcard().get_named_properties(name)
     }
 }

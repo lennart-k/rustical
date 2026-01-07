@@ -1,14 +1,7 @@
 use super::{ParamFilterElement, TimeRangeElement};
-use ical::{
-    generator::{IcalCalendar, IcalEvent},
-    parser::{
-        Component,
-        ical::component::{IcalJournal, IcalTimeZone, IcalTodo},
-    },
-    property::Property,
-};
+use ical::{parser::Component, property::ContentLine, types::CalDateTime};
 use rustical_dav::xml::TextMatchElement;
-use rustical_ical::{CalDateTime, CalendarObject, CalendarObjectComponent, UtcDateTime};
+use rustical_ical::UtcDateTime;
 use rustical_xml::XmlDeserialize;
 use std::collections::HashMap;
 
@@ -31,7 +24,7 @@ pub struct PropFilterElement {
 
 impl PropFilterElement {
     #[must_use]
-    pub fn match_property(&self, property: &Property) -> bool {
+    pub fn match_property(&self, property: &ContentLine) -> bool {
         if let Some(TimeRangeElement { start, end }) = &self.time_range {
             // TODO: Respect timezones
             let Ok(timestamp) = CalDateTime::parse_prop(property, &HashMap::default()) else {
@@ -68,7 +61,7 @@ impl PropFilterElement {
         true
     }
 
-    pub fn match_component(&self, comp: &impl PropFilterable) -> bool {
+    pub fn match_component(&self, comp: &impl Component) -> bool {
         let properties = comp.get_named_properties(&self.name);
         if self.is_not_defined.is_some() {
             return properties.is_empty();
@@ -77,55 +70,5 @@ impl PropFilterElement {
         // The filter matches when one property instance matches
         // Example where this matters: We have multiple attendees and want to match one
         properties.iter().any(|prop| self.match_property(prop))
-    }
-}
-
-pub trait PropFilterable {
-    fn get_named_properties(&self, name: &str) -> Vec<&Property>;
-}
-
-impl PropFilterable for CalendarObject {
-    fn get_named_properties(&self, name: &str) -> Vec<&Property> {
-        Self::get_named_properties(self, name)
-    }
-}
-
-impl PropFilterable for IcalEvent {
-    fn get_named_properties(&self, name: &str) -> Vec<&Property> {
-        Component::get_named_properties(self, name)
-    }
-}
-
-impl PropFilterable for IcalTodo {
-    fn get_named_properties(&self, name: &str) -> Vec<&Property> {
-        Component::get_named_properties(self, name)
-    }
-}
-
-impl PropFilterable for IcalJournal {
-    fn get_named_properties(&self, name: &str) -> Vec<&Property> {
-        Component::get_named_properties(self, name)
-    }
-}
-
-impl PropFilterable for IcalCalendar {
-    fn get_named_properties(&self, name: &str) -> Vec<&Property> {
-        Component::get_named_properties(self, name)
-    }
-}
-
-impl PropFilterable for IcalTimeZone {
-    fn get_named_properties(&self, name: &str) -> Vec<&Property> {
-        Component::get_named_properties(self, name)
-    }
-}
-
-impl PropFilterable for CalendarObjectComponent {
-    fn get_named_properties(&self, name: &str) -> Vec<&Property> {
-        match self {
-            Self::Event(event, _) => PropFilterable::get_named_properties(&event.event, name),
-            Self::Todo(todo, _) => PropFilterable::get_named_properties(todo, name),
-            Self::Journal(journal, _) => PropFilterable::get_named_properties(journal, name),
-        }
     }
 }

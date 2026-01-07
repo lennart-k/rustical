@@ -3,7 +3,8 @@ use crate::BEGIN_IMMEDIATE;
 use async_trait::async_trait;
 use chrono::TimeDelta;
 use derive_more::derive::Constructor;
-use rustical_ical::{CalDateTime, CalendarObject, CalendarObjectType};
+use ical::types::CalDateTime;
+use rustical_ical::{CalendarObject, CalendarObjectType};
 use rustical_store::calendar_store::CalendarQuery;
 use rustical_store::synctoken::format_synctoken;
 use rustical_store::{Calendar, CalendarMetadata, CalendarStore, CollectionMetadata, Error};
@@ -459,16 +460,12 @@ impl SqliteCalendarStore {
 
         let first_occurence = object
             .get_first_occurence()
-            .ok()
-            .flatten()
             .as_ref()
-            .map(CalDateTime::date);
+            .map(CalDateTime::date_floor);
         let last_occurence = object
             .get_last_occurence()
-            .ok()
-            .flatten()
             .as_ref()
-            .map(CalDateTime::date);
+            .map(CalDateTime::date_ceil);
         let etag = object.get_etag();
         let object_type = object.get_object_type() as u8;
 
