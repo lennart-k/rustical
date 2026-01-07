@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use super::prop::{
     CalendarData, CalendarObjectProp, CalendarObjectPropName, CalendarObjectPropWrapper,
     CalendarObjectPropWrapperName,
@@ -14,16 +12,18 @@ use rustical_dav::{
 };
 use rustical_ical::CalendarObject;
 use rustical_store::auth::Principal;
+use std::borrow::Cow;
 
 #[derive(Clone, From, Into)]
 pub struct CalendarObjectResource {
     pub object: CalendarObject,
+    pub object_id: String,
     pub principal: String,
 }
 
 impl ResourceName for CalendarObjectResource {
     fn get_name(&self) -> Cow<'_, str> {
-        Cow::from(format!("{}.ics", self.object.get_id()))
+        Cow::from(format!("{}.ics", self.object_id))
     }
 }
 

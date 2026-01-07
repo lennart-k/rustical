@@ -62,13 +62,12 @@ impl rustical_xml::ValueDeserialize for CalendarObjectType {
 
 #[derive(Debug, Clone)]
 pub struct CalendarObject {
-    id: String,
     inner: IcalCalendarObject,
     ics: String,
 }
 
 impl CalendarObject {
-    pub fn from_ics(ics: String, id: Option<String>) -> Result<Self, Error> {
+    pub fn from_ics(ics: String) -> Result<Self, Error> {
         let mut parser: ComponentParser<_, IcalCalendarObject> =
             ComponentParser::new(ics.as_bytes());
         let inner = parser.next().ok_or(Error::MissingCalendar)??;
@@ -78,11 +77,7 @@ impl CalendarObject {
             ));
         }
 
-        Ok(Self {
-            id: id.unwrap_or_else(|| inner.get_uid().to_owned()),
-            inner,
-            ics,
-        })
+        Ok(Self { inner, ics })
     }
 
     #[must_use]
@@ -93,11 +88,6 @@ impl CalendarObject {
     #[must_use]
     pub fn get_uid(&self) -> &str {
         self.inner.get_uid()
-    }
-
-    #[must_use]
-    pub fn get_id(&self) -> &str {
-        &self.id
     }
 
     #[must_use]

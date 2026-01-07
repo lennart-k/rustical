@@ -1,7 +1,7 @@
 use crate::addressbook_store::SqliteAddressbookStore;
 use async_trait::async_trait;
 use chrono::NaiveDateTime;
-use rustical_ical::{AddressObject, CalendarObject, CalendarObjectType};
+use rustical_ical::{CalendarObject, CalendarObjectType};
 use rustical_store::{
     Addressbook, AddressbookStore, Calendar, CalendarMetadata, CalendarStore, CollectionMetadata,
     Error, PrefixedCalendarStore,
@@ -268,10 +268,11 @@ impl CalendarStore for SqliteAddressbookStore {
     #[instrument]
     async fn update_calendar(
         &self,
-        principal: String,
-        id: String,
+        principal: &str,
+        id: &str,
         mut calendar: Calendar,
     ) -> Result<(), Error> {
+        assert_eq!(principal, calendar.principal);
         assert_eq!(id, calendar.id);
         calendar.id = calendar
             .id
@@ -323,7 +324,7 @@ impl CalendarStore for SqliteAddressbookStore {
         principal: &str,
         cal_id: &str,
         synctoken: i64,
-    ) -> Result<(Vec<CalendarObject>, Vec<String>, i64), Error> {
+    ) -> Result<(Vec<(String, CalendarObject)>, Vec<String>, i64), Error> {
         let cal_id = cal_id
             .strip_prefix(BIRTHDAYS_PREFIX)
             .ok_or(Error::NotFound)?;
@@ -356,7 +357,7 @@ impl CalendarStore for SqliteAddressbookStore {
         &self,
         principal: &str,
         cal_id: &str,
-    ) -> Result<Vec<CalendarObject>, Error> {
+    ) -> Result<Vec<(String, CalendarObject)>, Error> {
         todo!()
         // let cal_id = cal_id
         //     .strip_prefix(BIRTHDAYS_PREFIX)
@@ -397,9 +398,9 @@ impl CalendarStore for SqliteAddressbookStore {
     #[instrument]
     async fn put_objects(
         &self,
-        _principal: String,
-        _cal_id: String,
-        _objects: Vec<CalendarObject>,
+        _principal: &str,
+        _cal_id: &str,
+        _objects: Vec<(String, CalendarObject)>,
         _overwrite: bool,
     ) -> Result<(), Error> {
         Err(Error::ReadOnly)

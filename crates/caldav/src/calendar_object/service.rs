@@ -66,6 +66,7 @@ impl<C: CalendarStore> ResourceService for CalendarObjectResourceService<C> {
             .await?;
         Ok(CalendarObjectResource {
             object,
+            object_id: object_id.to_owned(),
             principal: principal.to_owned(),
         })
     }

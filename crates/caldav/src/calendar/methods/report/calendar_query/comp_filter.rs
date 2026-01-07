@@ -130,7 +130,7 @@ END:VCALENDAR";
 
     #[test]
     fn test_comp_filter_matching() {
-        let object = CalendarObject::from_ics(ICS.to_string(), None).unwrap();
+        let object = CalendarObject::from_ics(ICS.to_string()).unwrap();
 
         let comp_filter = CompFilterElement {
             is_not_defined: Some(()),
@@ -231,7 +231,7 @@ END:VCALENDAR";
     }
     #[test]
     fn test_comp_filter_time_range() {
-        let object = CalendarObject::from_ics(ICS.to_string(), None).unwrap();
+        let object = CalendarObject::from_ics(ICS.to_string()).unwrap();
 
         let comp_filter = CompFilterElement {
             is_not_defined: None,
@@ -286,7 +286,7 @@ END:VCALENDAR";
 
     #[test]
     fn test_match_timezone() {
-        let object = CalendarObject::from_ics(ICS.to_string(), None).unwrap();
+        let object = CalendarObject::from_ics(ICS.to_string()).unwrap();
 
         let comp_filter = CompFilterElement {
             is_not_defined: None,

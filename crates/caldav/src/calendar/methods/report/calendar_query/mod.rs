@@ -18,12 +18,12 @@ pub async fn get_objects_calendar_query<C: CalendarStore>(
     principal: &str,
     cal_id: &str,
     store: &C,
-) -> Result<Vec<CalendarObject>, Error> {
+) -> Result<Vec<(String, CalendarObject)>, Error> {
     let mut objects = store
         .calendar_query(principal, cal_id, cal_query.into())
         .await?;
     if let Some(filter) = &cal_query.filter {
-        objects.retain(|object| filter.matches(object.get_inner()));
+        objects.retain(|(_id, object)| filter.matches(object.get_inner()));
     }
     Ok(objects)
 }
