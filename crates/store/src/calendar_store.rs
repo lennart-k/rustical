@@ -22,8 +22,8 @@ pub trait CalendarStore: Send + Sync + 'static {
 
     async fn update_calendar(
         &self,
-        principal: String,
-        id: String,
+        principal: &str,
+        id: &str,
         calendar: Calendar,
     ) -> Result<(), Error>;
     async fn insert_calendar(&self, calendar: Calendar) -> Result<(), Error>;
@@ -46,7 +46,7 @@ pub trait CalendarStore: Send + Sync + 'static {
         principal: &str,
         cal_id: &str,
         synctoken: i64,
-    ) -> Result<(Vec<CalendarObject>, Vec<String>, i64), Error>;
+    ) -> Result<(Vec<(String, CalendarObject)>, Vec<String>, i64), Error>;
 
     /// Since the <calendar-query> rules are rather complex this function
     /// is only meant to do some prefiltering
@@ -55,7 +55,7 @@ pub trait CalendarStore: Send + Sync + 'static {
         principal: &str,
         cal_id: &str,
         _query: CalendarQuery,
-    ) -> Result<Vec<CalendarObject>, Error> {
+    ) -> Result<Vec<(String, CalendarObject)>, Error> {
         self.get_objects(principal, cal_id).await
     }
 
@@ -69,7 +69,7 @@ pub trait CalendarStore: Send + Sync + 'static {
         &self,
         principal: &str,
         cal_id: &str,
-    ) -> Result<Vec<CalendarObject>, Error>;
+    ) -> Result<Vec<(String, CalendarObject)>, Error>;
     async fn get_object(
         &self,
         principal: &str,
@@ -79,20 +79,26 @@ pub trait CalendarStore: Send + Sync + 'static {
     ) -> Result<CalendarObject, Error>;
     async fn put_objects(
         &self,
-        principal: String,
-        cal_id: String,
-        objects: Vec<CalendarObject>,
+        principal: &str,
+        cal_id: &str,
+        objects: Vec<(String, CalendarObject)>,
         overwrite: bool,
     ) -> Result<(), Error>;
     async fn put_object(
         &self,
-        principal: String,
-        cal_id: String,
+        principal: &str,
+        cal_id: &str,
+        object_id: &str,
         object: CalendarObject,
         overwrite: bool,
     ) -> Result<(), Error> {
-        self.put_objects(principal, cal_id, vec![object], overwrite)
-            .await
+        self.put_objects(
+            principal,
+            cal_id,
+            vec![(object_id.to_owned(), object)],
+            overwrite,
+        )
+        .await
     }
     async fn delete_object(
         &self,

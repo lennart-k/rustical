@@ -22,11 +22,11 @@ struct CalendarObjectRow {
     uid: String,
 }
 
-impl TryFrom<CalendarObjectRow> for CalendarObject {
+impl TryFrom<CalendarObjectRow> for (String, CalendarObject) {
     type Error = rustical_store::Error;
 
     fn try_from(value: CalendarObjectRow) -> Result<Self, Self::Error> {
-        let object = Self::from_ics(value.ics, Some(value.id))?;
+        let object = CalendarObject::from_ics(value.ics)?;
         if object.get_uid() != value.uid {
             return Err(rustical_store::Error::IcalError(
                 rustical_ical::Error::InvalidData(format!(
@@ -36,7 +36,7 @@ impl TryFrom<CalendarObjectRow> for CalendarObject {
                 )),
             ));
         }
-        Ok(object)
+        Ok((value.id, object))
     }
 }
 
@@ -358,8 +358,8 @@ impl SqliteCalendarStore {
 
     async fn _update_calendar<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
-        principal: String,
-        id: String,
+        principal: &str,
+        id: &str,
         calendar: Calendar,
     ) -> Result<(), Error> {
         let comp_event = calendar.components.contains(&CalendarObjectType::Event);
@@ -457,7 +457,7 @@ impl SqliteCalendarStore {
         executor: E,
         principal: &str,
         cal_id: &str,
-    ) -> Result<Vec<CalendarObject>, Error> {
+    ) -> Result<Vec<(String, CalendarObject)>, Error> {
         sqlx::query_as!(
             CalendarObjectRow,
             "SELECT id, uid, ics FROM calendarobjects WHERE principal = ? AND cal_id = ? AND deleted_at IS NULL",
@@ -476,7 +476,7 @@ impl SqliteCalendarStore {
         principal: &str,
         cal_id: &str,
         query: CalendarQuery,
-    ) -> Result<Vec<CalendarObject>, Error> {
+    ) -> Result<Vec<(String, CalendarObject)>, Error> {
         // We extend our query interval by one day in each direction since we really don't want to
         // miss any objects because of timezone differences
         // I've previously tried NaiveDate::MIN,MAX, but it seems like sqlite cannot handle these
@@ -512,7 +512,7 @@ impl SqliteCalendarStore {
         object_id: &str,
         show_deleted: bool,
     ) -> Result<CalendarObject, Error> {
-        sqlx::query_as!(
+        let (row_id, object) = sqlx::query_as!(
             CalendarObjectRow,
             "SELECT id, uid, ics FROM calendarobjects WHERE (principal, cal_id, id) = (?, ?, ?) AND ((deleted_at IS NULL) OR ?)",
             principal,
@@ -523,7 +523,9 @@ impl SqliteCalendarStore {
         .fetch_one(executor)
         .await
         .map_err(crate::Error::from)?
-        .try_into()
+        .try_into()?;
+        assert_eq!(object_id, row_id);
+        Ok(object)
     }
 
     #[instrument]
@@ -531,10 +533,11 @@ impl SqliteCalendarStore {
         executor: E,
         principal: &str,
         cal_id: &str,
+        object_id: &str,
         object: &CalendarObject,
         overwrite: bool,
     ) -> Result<(), Error> {
-        let (object_id, uid, ics) = (object.get_id(), object.get_uid(), object.get_ics());
+        let (uid, ics) = (object.get_uid(), object.get_ics());
 
         let first_occurence = object
             .get_inner()
@@ -640,7 +643,7 @@ impl SqliteCalendarStore {
         principal: &str,
         cal_id: &str,
         synctoken: i64,
-    ) -> Result<(Vec<CalendarObject>, Vec<String>, i64), Error> {
+    ) -> Result<(Vec<(String, CalendarObject)>, Vec<String>, i64), Error> {
         struct Row {
             object_id: String,
             synctoken: i64,
@@ -667,7 +670,7 @@ impl SqliteCalendarStore {
 
         for Row { object_id, .. } in changes {
             match Self::_get_object(&mut *conn, principal, cal_id, &object_id, false).await {
-                Ok(object) => objects.push(object),
+                Ok(object) => objects.push((object_id, object)),
                 Err(rustical_store::Error::NotFound) => deleted_objects.push(object_id),
                 Err(err) => return Err(err),
             }
@@ -707,8 +710,8 @@ impl CalendarStore for SqliteCalendarStore {
     #[instrument]
     async fn update_calendar(
         &self,
-        principal: String,
-        id: String,
+        principal: &str,
+        id: &str,
         calendar: Calendar,
     ) -> Result<(), Error> {
         Self::_update_calendar(&self.db, principal, id, calendar).await
@@ -776,14 +779,23 @@ impl CalendarStore for SqliteCalendarStore {
 
         let mut sync_token = None;
         for object in objects {
-            Self::_put_object(&mut *tx, &calendar.principal, &calendar.id, &object, false).await?;
+            let object_id = object.get_uid();
+            Self::_put_object(
+                &mut *tx,
+                &calendar.principal,
+                &calendar.id,
+                object_id,
+                &object,
+                false,
+            )
+            .await?;
 
             sync_token = Some(
                 Self::log_object_operation(
                     &mut tx,
                     &calendar.principal,
                     &calendar.id,
-                    object.get_id(),
+                    object_id,
                     ChangeOperation::Add,
                 )
                 .await?,
@@ -809,7 +821,7 @@ impl CalendarStore for SqliteCalendarStore {
         principal: &str,
         cal_id: &str,
         query: CalendarQuery,
-    ) -> Result<Vec<CalendarObject>, Error> {
+    ) -> Result<Vec<(String, CalendarObject)>, Error> {
         Self::_calendar_query(&self.db, principal, cal_id, query).await
     }
 
@@ -840,7 +852,7 @@ impl CalendarStore for SqliteCalendarStore {
         &self,
         principal: &str,
         cal_id: &str,
-    ) -> Result<Vec<CalendarObject>, Error> {
+    ) -> Result<Vec<(String, CalendarObject)>, Error> {
         Self::_get_objects(&self.db, principal, cal_id).await
     }
 
@@ -858,9 +870,9 @@ impl CalendarStore for SqliteCalendarStore {
     #[instrument]
     async fn put_objects(
         &self,
-        principal: String,
-        cal_id: String,
-        objects: Vec<CalendarObject>,
+        principal: &str,
+        cal_id: &str,
+        objects: Vec<(String, CalendarObject)>,
         overwrite: bool,
     ) -> Result<(), Error> {
         let mut tx = self
@@ -876,18 +888,21 @@ impl CalendarStore for SqliteCalendarStore {
         }
 
         let mut sync_token = None;
-        for object in objects {
+        for (object_id, object) in objects {
             sync_token = Some(
                 Self::log_object_operation(
                     &mut tx,
                     &principal,
                     &cal_id,
-                    object.get_id(),
+                    &object_id,
                     ChangeOperation::Add,
                 )
                 .await?,
             );
-            Self::_put_object(&mut *tx, &principal, &cal_id, &object, overwrite).await?;
+            Self::_put_object(
+                &mut *tx, &principal, &cal_id, &object_id, &object, overwrite,
+            )
+            .await?;
         }
 
         tx.commit().await.map_err(crate::Error::from)?;
@@ -965,7 +980,7 @@ impl CalendarStore for SqliteCalendarStore {
         principal: &str,
         cal_id: &str,
         synctoken: i64,
-    ) -> Result<(Vec<CalendarObject>, Vec<String>, i64), Error> {
+    ) -> Result<(Vec<(String, CalendarObject)>, Vec<String>, i64), Error> {
         Self::_sync_changes(&self.db, principal, cal_id, synctoken).await
     }
 
