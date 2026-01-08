@@ -2,6 +2,7 @@ use crate::Error;
 use derive_more::Display;
 use ical::component::CalendarInnerData;
 use ical::component::IcalCalendarObject;
+use ical::generator::Emitter;
 use ical::parser::ComponentParser;
 use serde::Deserialize;
 use serde::Serialize;
@@ -106,5 +107,14 @@ impl CalendarObject {
 impl From<CalendarObject> for IcalCalendarObject {
     fn from(value: CalendarObject) -> Self {
         value.inner
+    }
+}
+
+impl From<IcalCalendarObject> for CalendarObject {
+    fn from(value: IcalCalendarObject) -> Self {
+        Self {
+            ics: value.generate(),
+            inner: value,
+        }
     }
 }

@@ -5,13 +5,13 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use http::StatusCode;
-use ical::{generator::Emitter, parser::Component};
+use ical::parser::{Component, ComponentMut};
 use rustical_dav::header::Overwrite;
-use rustical_ical::{CalendarObject, CalendarObjectType};
+use rustical_ical::CalendarObjectType;
 use rustical_store::{
     Calendar, CalendarMetadata, CalendarStore, SubscriptionStore, auth::Principal,
 };
-use std::io::BufReader;
+use std::{collections::HashMap, io::BufReader};
 use tracing::instrument;
 
 #[instrument(skip(resource_service))]
@@ -26,18 +26,11 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
         return Err(Error::Unauthorized);
     }
 
-    let mut parser = ical::IcalParser::new(BufReader::new(body.as_bytes()));
+    let parser = ical::IcalParser::new(BufReader::new(body.as_bytes()));
     let mut cal = parser
-        .next()
-        .expect("input must contain calendar")
-        .unwrap()
+        .expect_one()
+        .map_err(rustical_ical::Error::ParserError)?
         .mutable();
-    if parser.next().is_some() {
-        return Err(rustical_ical::Error::InvalidData(
-            "multiple calendars, only one allowed".to_owned(),
-        )
-        .into());
-    }
 
     // Extract calendar metadata
     let displayname = cal
@@ -53,59 +46,58 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
         .get_property("X-WR-TIMEZONE")
         .and_then(|prop| prop.value.clone());
     // These properties should not appear in the expanded calendar objects
-    todo!();
-    // cal.remove_property("X-WR-CALNAME");
-    // cal.remove_property("X-WR-CALDESC");
-    // cal.remove_property("X-WR-TIMEZONE");
-    // let cal = cal.verify().unwrap();
-    // // Make sure timezone is valid
-    // if let Some(timezone_id) = timezone_id.as_ref() {
-    //     assert!(
-    //         vtimezones_rs::VTIMEZONES.contains_key(timezone_id),
-    //         "Invalid calendar timezone id"
-    //     );
-    // }
-    //
+    cal.remove_property("X-WR-CALNAME");
+    cal.remove_property("X-WR-CALDESC");
+    cal.remove_property("X-WR-CALCOLOR");
+    cal.remove_property("X-WR-TIMEZONE");
+    let cal = cal.build(&HashMap::new()).unwrap();
+
+    // Make sure timezone is valid
+    if let Some(timezone_id) = timezone_id.as_ref() {
+        assert!(
+            vtimezones_rs::VTIMEZONES.contains_key(timezone_id),
+            "Invalid calendar timezone id"
+        );
+    }
     // // Extract necessary component types
-    // let mut cal_components = vec![];
-    // if !cal.events.is_empty() {
-    //     cal_components.push(CalendarObjectType::Event);
-    // }
-    // if !cal.journals.is_empty() {
-    //     cal_components.push(CalendarObjectType::Journal);
-    // }
-    // if !cal.todos.is_empty() {
-    //     cal_components.push(CalendarObjectType::Todo);
-    // }
-    //
-    // let expanded_cals = cal.expand_calendar();
-    // // Janky way to convert between IcalCalendar and CalendarObject
-    // let objects = expanded_cals
-    //     .into_iter()
-    //     .map(|cal| cal.generate())
-    //     .map(|ics| CalendarObject::from_ics(ics, None))
-    //     .collect::<Result<Vec<_>, _>>()?;
-    // let new_cal = Calendar {
-    //     principal,
-    //     id: cal_id,
-    //     meta: CalendarMetadata {
-    //         displayname,
-    //         order: 0,
-    //         description,
-    //         color: None,
-    //     },
-    //     timezone_id,
-    //     deleted_at: None,
-    //     synctoken: 0,
-    //     subscription_url: None,
-    //     push_topic: uuid::Uuid::new_v4().to_string(),
-    //     components: cal_components,
-    // };
-    //
-    // let cal_store = resource_service.cal_store;
-    // cal_store
-    //     .import_calendar(new_cal, objects, overwrite)
-    //     .await?;
-    //
-    // Ok(StatusCode::OK.into_response())
+    let mut cal_components = vec![];
+    if !cal.events.is_empty() {
+        cal_components.push(CalendarObjectType::Event);
+    }
+    if !cal.journals.is_empty() {
+        cal_components.push(CalendarObjectType::Journal);
+    }
+    if !cal.todos.is_empty() {
+        cal_components.push(CalendarObjectType::Todo);
+    }
+
+    let objects = cal
+        .into_objects()
+        .map_err(rustical_ical::Error::ParserError)?
+        .into_iter()
+        .map(Into::into)
+        .collect();
+    let new_cal = Calendar {
+        principal,
+        id: cal_id,
+        meta: CalendarMetadata {
+            displayname,
+            order: 0,
+            description,
+            color,
+        },
+        timezone_id,
+        deleted_at: None,
+        synctoken: 0,
+        subscription_url: None,
+        push_topic: uuid::Uuid::new_v4().to_string(),
+        components: cal_components,
+    };
+
+    let cal_store = resource_service.cal_store;
+    cal_store
+        .import_calendar(new_cal, objects, overwrite)
+        .await?;
+
+    Ok(StatusCode::OK.into_response())
 }
