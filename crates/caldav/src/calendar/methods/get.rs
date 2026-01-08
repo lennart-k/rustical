@@ -69,7 +69,7 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
         });
     }
 
-    let export_calendar = IcalCalendar::from_objects(objects, props);
+    let export_calendar = IcalCalendar::from_objects("RustiCal Export".to_owned(), objects, props);
 
     let mut resp = Response::builder().status(StatusCode::OK);
     let hdrs = resp.headers_mut().unwrap();
