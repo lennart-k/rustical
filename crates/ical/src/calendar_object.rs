@@ -102,3 +102,9 @@ impl CalendarObject {
         (&self.inner).into()
     }
 }
+
+impl From<CalendarObject> for IcalCalendarObject {
+    fn from(value: CalendarObject) -> Self {
+        value.inner
+    }
+}

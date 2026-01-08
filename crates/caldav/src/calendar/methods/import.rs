@@ -46,6 +46,9 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
     let description = cal
         .get_property("X-WR-CALDESC")
         .and_then(|prop| prop.value.clone());
+    let color = cal
+        .get_property("X-WR-CALCOLOR")
+        .and_then(|prop| prop.value.clone());
     let timezone_id = cal
         .get_property("X-WR-TIMEZONE")
         .and_then(|prop| prop.value.clone());
