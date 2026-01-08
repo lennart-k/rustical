@@ -4,24 +4,6 @@ use rustical_xml::{ValueDeserialize, ValueSerialize};
 
 const UTC_DATE_TIME: &str = "%Y%m%dT%H%M%SZ";
 
-#[derive(Debug, thiserror::Error, PartialEq, Eq)]
-pub enum CalDateTimeError {
-    #[error(
-        "Timezone has X-LIC-LOCATION property to specify a timezone from the Olson database, however its value {0} is invalid"
-    )]
-    InvalidOlson(String),
-    #[error("TZID {0} does not refer to a valid timezone")]
-    InvalidTZID(String),
-    #[error("Timestamp doesn't exist because of gap in local time")]
-    LocalTimeGap,
-    #[error("Datetime string {0} has an invalid format")]
-    InvalidDatetimeFormat(String),
-    #[error("Could not parse datetime {0}")]
-    ParseError(String),
-    #[error("Duration string {0} has an invalid format")]
-    InvalidDurationFormat(String),
-}
-
 #[derive(Debug, Clone, Deref, PartialEq, Eq, Hash)]
 pub struct UtcDateTime(pub DateTime<Utc>);
 
