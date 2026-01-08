@@ -215,7 +215,7 @@ impl Resource for CalendarResource {
                                 )
                             })?;
 
-                        let timezone = calendar.vtimezones.first().ok_or_else(|| {
+                        let timezone = calendar.vtimezones.values().next().ok_or_else(|| {
                             rustical_dav::Error::BadRequest("No timezone data provided".to_owned())
                         })?;
                         let timezone: Option<chrono_tz::Tz> = timezone.into();
