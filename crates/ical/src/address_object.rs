@@ -1,9 +1,6 @@
 use crate::{CalendarObject, Error};
 use ical::generator::Emitter;
-use ical::parser::{
-    Component,
-    vcard::{self, component::VcardContact},
-};
+use ical::parser::vcard::{self, component::VcardContact};
 use sha2::{Digest, Sha256};
 use std::{collections::HashMap, io::BufReader};
 
@@ -22,13 +19,8 @@ impl From<VcardContact> for AddressObject {
 
 impl AddressObject {
     pub fn from_vcf(vcf: String) -> Result<Self, Error> {
-        let mut parser = vcard::VcardParser::new(BufReader::new(vcf.as_bytes()));
-        let vcard = parser.next().ok_or(Error::MissingContact)??;
-        if parser.next().is_some() {
-            return Err(Error::InvalidData(
-                "multiple vcards, only one allowed".to_owned(),
-            ));
-        }
+        let parser = vcard::VcardParser::new(BufReader::new(vcf.as_bytes()));
+        let vcard = parser.expect_one()?;
         Ok(Self { vcf, vcard })
     }
 
@@ -42,12 +34,6 @@ impl AddressObject {
     #[must_use]
     pub fn get_vcf(&self) -> &str {
         &self.vcf
-    }
-
-    #[must_use]
-    pub fn get_full_name(&self) -> Option<&str> {
-        let prop = self.vcard.get_property("FN")?;
-        prop.value.as_deref()
     }
 
     pub fn get_anniversary_object(&self) -> Result<Option<CalendarObject>, Error> {
