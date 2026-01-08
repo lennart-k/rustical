@@ -1,0 +1,14 @@
+---
+source: src/integration_tests/caldav/calendar.rs
+assertion_line: 145
+expression: body
+---
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:RustiCal Export
+CALSCALE:GREGORIAN
+X-WR-CALNAME:Calendar
+X-WR-CALDESC:Description
+X-WR-CALCOLOR:#00FF00
+X-WR-TIMEZONE:US/Eastern
+END:VCALENDAR

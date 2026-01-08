@@ -1,0 +1,36 @@
+---
+source: src/integration_tests/carddav/addressbook.rs
+assertion_line: 446
+expression: body
+---
+<?xml version="1.0" encoding="utf-8"?>
+<multistatus xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:PUSH="https://bitfire.at/webdav-push">
+    <response>
+        <href>/carddav/principal/user/contacts/newcard.vcf</href>
+        <propstat>
+            <prop>
+                <getetag>&quot;ea0bf4a2ce7ef84606a4cf9235776dbc11b3e7ce351ddf35f27cbc0088acca7e&quot;</getetag>
+                <CARD:address-data>BEGIN:VCARD
+VERSION:3.0
+FN:Cyrus Daboo
+N:Daboo;Cyrus
+ADR;TYPE=POSTAL:;2822 Email HQ;Suite 2821;RFCVille;PA;15213;USA
+EMAIL;TYPE=INTERNET,PREF:cyrus@example.com
+NICKNAME:me
+NOTE:Example VCard.
+ORG:Self Employed
+TEL;TYPE=WORK,VOICE:412 605 0499
+TEL;TYPE=FAX:412 605 0705
+URL:http://www.example.com
+UID:1234-5678-9000-1
+END:VCARD
+        </CARD:address-data>
+            </prop>
+            <status>HTTP/1.1 200 OK</status>
+        </propstat>
+    </response>
+    <response>
+        <href>/home/bernard/addressbook/vcf1.vcf</href>
+        <status>HTTP/1.1 404 Not Found</status>
+    </response>
+</multistatus>
