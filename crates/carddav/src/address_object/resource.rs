@@ -70,7 +70,8 @@ impl Resource for AddressObjectResource {
     }
 
     fn get_displayname(&self) -> Option<&str> {
-        self.object.get_full_name()
+        todo!()
+        // self.object.get_full_name()
     }
 
     fn get_owner(&self) -> Option<&str> {

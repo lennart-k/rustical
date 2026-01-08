@@ -68,14 +68,8 @@ pub struct CalendarObject {
 
 impl CalendarObject {
     pub fn from_ics(ics: String) -> Result<Self, Error> {
-        let mut parser: ComponentParser<_, IcalCalendarObject> =
-            ComponentParser::new(ics.as_bytes());
-        let inner = parser.next().ok_or(Error::MissingCalendar)??;
-        if parser.next().is_some() {
-            return Err(Error::InvalidData(
-                "multiple calendars, only one allowed".to_owned(),
-            ));
-        }
+        let parser: ComponentParser<_, IcalCalendarObject> = ComponentParser::new(ics.as_bytes());
+        let inner = parser.expect_one()?;
 
         Ok(Self { inner, ics })
     }
