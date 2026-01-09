@@ -1,7 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse};
 
-use crate::CalDateTimeError;
-
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
 pub enum Error {
     #[error("Invalid ics/vcf input: {0}")]
@@ -15,12 +13,6 @@ pub enum Error {
 
     #[error(transparent)]
     ParserError(#[from] ical::parser::ParserError),
-
-    #[error(transparent)]
-    CalDateTimeError(#[from] CalDateTimeError),
-
-    #[error(transparent)]
-    RRuleError(#[from] rrule::RRuleError),
 }
 
 impl Error {
@@ -30,7 +22,7 @@ impl Error {
             Self::InvalidData(_) | Self::MissingCalendar | Self::MissingContact => {
                 StatusCode::BAD_REQUEST
             }
-            _ => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::ParserError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }

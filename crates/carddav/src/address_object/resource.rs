@@ -21,11 +21,12 @@ use rustical_store::auth::Principal;
 pub struct AddressObjectResource {
     pub object: AddressObject,
     pub principal: String,
+    pub object_id: String,
 }
 
 impl ResourceName for AddressObjectResource {
     fn get_name(&self) -> Cow<'_, str> {
-        Cow::from(format!("{}.vcf", self.object.get_id()))
+        Cow::from(format!("{}.vcf", self.object_id))
     }
 }
 
@@ -69,7 +70,8 @@ impl Resource for AddressObjectResource {
     }
 
     fn get_displayname(&self) -> Option<&str> {
-        self.object.get_full_name()
+        todo!()
+        // self.object.get_full_name()
     }
 
     fn get_owner(&self) -> Option<&str> {

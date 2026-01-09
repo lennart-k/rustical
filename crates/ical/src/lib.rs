@@ -1,12 +1,10 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 #![allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]
 mod timestamp;
-mod timezone;
 pub use timestamp::*;
-pub use timezone::*;
 
-mod icalendar;
-pub use icalendar::*;
+mod calendar_object;
+pub use calendar_object::*;
 
 mod error;
 pub use error::Error;

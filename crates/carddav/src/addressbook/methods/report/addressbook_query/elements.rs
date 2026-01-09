@@ -3,7 +3,7 @@ use crate::{
     addressbook::methods::report::addressbook_query::PropFilterElement,
 };
 use derive_more::{From, Into};
-use ical::property::Property;
+use ical::property::ContentLine;
 use rustical_dav::xml::{PropfindType, TextMatchElement};
 use rustical_ical::{AddressObject, UtcDateTime};
 use rustical_xml::{ValueDeserialize, XmlDeserialize, XmlRootTag};
@@ -32,8 +32,8 @@ pub struct ParamFilterElement {
 
 impl ParamFilterElement {
     #[must_use]
-    pub fn match_property(&self, prop: &Property) -> bool {
-        let Some(param) = prop.get_param(&self.name) else {
+    pub fn match_property(&self, prop: &ContentLine) -> bool {
+        let Some(param) = prop.params.get_param(&self.name) else {
             return self.is_not_defined.is_some();
         };
         if self.is_not_defined.is_some() {

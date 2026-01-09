@@ -9,7 +9,6 @@ use http::{HeaderValue, Method, StatusCode, header};
 use percent_encoding::{CONTROLS, utf8_percent_encode};
 use rustical_dav::privileges::UserPrivilege;
 use rustical_dav::resource::Resource;
-use rustical_ical::AddressObject;
 use rustical_store::auth::Principal;
 use rustical_store::{AddressbookStore, SubscriptionStore};
 use std::str::FromStr;
@@ -40,7 +39,7 @@ pub async fn route_get<AS: AddressbookStore, S: SubscriptionStore>(
     let objects = addr_store.get_objects(&principal, &addressbook_id).await?;
     let vcf = objects
         .iter()
-        .map(AddressObject::get_vcf)
+        .map(|(_id, obj)| obj.get_vcf())
         .collect::<Vec<_>>()
         .join("\r\n");
 

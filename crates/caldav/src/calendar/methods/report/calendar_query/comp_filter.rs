@@ -1,9 +1,10 @@
 use crate::calendar::methods::report::calendar_query::{
-    TimeRangeElement,
-    prop_filter::{PropFilterElement, PropFilterable},
+    TimeRangeElement, prop_filter::PropFilterElement,
 };
-use ical::parser::ical::component::IcalTimeZone;
-use rustical_ical::{CalendarObject, CalendarObjectComponent, CalendarObjectType};
+use ical::{
+    component::IcalCalendarObject,
+    parser::{Component, ical::component::IcalTimeZone},
+};
 use rustical_xml::XmlDeserialize;
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq)]
@@ -24,9 +25,7 @@ pub struct CompFilterElement {
     pub(crate) name: String,
 }
 
-pub trait CompFilterable: PropFilterable + Sized {
-    fn get_comp_name(&self) -> &'static str;
-
+pub trait CompFilterable: Component + Sized {
     fn match_time_range(&self, time_range: &TimeRangeElement) -> bool;
 
     fn match_subcomponents(&self, comp_filter: &CompFilterElement) -> bool;
@@ -68,11 +67,7 @@ pub trait CompFilterable: PropFilterable + Sized {
     }
 }
 
-impl CompFilterable for CalendarObject {
-    fn get_comp_name(&self) -> &'static str {
-        "VCALENDAR"
-    }
-
+impl CompFilterable for IcalCalendarObject {
     fn match_time_range(&self, _time_range: &TimeRangeElement) -> bool {
         // VCALENDAR has no concept of time range
         false
@@ -83,7 +78,7 @@ impl CompFilterable for CalendarObject {
             .get_vtimezones()
             .values()
             .map(|tz| tz.matches(comp_filter))
-            .chain([self.get_data().matches(comp_filter)]);
+            .chain([self.matches(comp_filter)]);
 
         if comp_filter.is_not_defined.is_some() {
             matches.all(|x| x)
@@ -94,42 +89,11 @@ impl CompFilterable for CalendarObject {
 }
 
 impl CompFilterable for IcalTimeZone {
-    fn get_comp_name(&self) -> &'static str {
-        "VTIMEZONE"
-    }
-
     fn match_time_range(&self, _time_range: &TimeRangeElement) -> bool {
         false
     }
 
     fn match_subcomponents(&self, _comp_filter: &CompFilterElement) -> bool {
-        true
-    }
-}
-
-impl CompFilterable for CalendarObjectComponent {
-    fn get_comp_name(&self) -> &'static str {
-        CalendarObjectType::from(self).as_str()
-    }
-
-    fn match_time_range(&self, time_range: &TimeRangeElement) -> bool {
-        if let Some(start) = &time_range.start
-            && let Some(last_occurence) = self.get_last_occurence().unwrap_or(None)
-            && **start > last_occurence.utc()
-        {
-            return false;
-        }
-        if let Some(end) = &time_range.end
-            && let Some(first_occurence) = self.get_first_occurence().unwrap_or(None)
-            && **end < first_occurence.utc()
-        {
-            return false;
-        }
-        true
-    }
-
-    fn match_subcomponents(&self, _comp_filter: &CompFilterElement) -> bool {
-        // TODO: Properly check subcomponents
         true
     }
 }
@@ -166,7 +130,7 @@ END:VCALENDAR";
 
     #[test]
     fn test_comp_filter_matching() {
-        let object = CalendarObject::from_ics(ICS.to_string(), None).unwrap();
+        let object = CalendarObject::from_ics(ICS.to_string()).unwrap();
 
         let comp_filter = CompFilterElement {
             is_not_defined: Some(()),
@@ -175,7 +139,10 @@ END:VCALENDAR";
             prop_filter: vec![],
             comp_filter: vec![],
         };
-        assert!(!object.matches(&comp_filter), "filter: wants no VCALENDAR");
+        assert!(
+            !object.get_inner().matches(&comp_filter),
+            "filter: wants no VCALENDAR"
+        );
 
         let comp_filter = CompFilterElement {
             is_not_defined: None,
@@ -190,7 +157,10 @@ END:VCALENDAR";
                 comp_filter: vec![],
             }],
         };
-        assert!(!object.matches(&comp_filter), "filter matches VTODO");
+        assert!(
+            !object.get_inner().matches(&comp_filter),
+            "filter matches VTODO"
+        );
 
         let comp_filter = CompFilterElement {
             is_not_defined: None,
@@ -205,7 +175,10 @@ END:VCALENDAR";
                 comp_filter: vec![],
             }],
         };
-        assert!(object.matches(&comp_filter), "filter matches VEVENT");
+        assert!(
+            object.get_inner().matches(&comp_filter),
+            "filter matches VEVENT"
+        );
 
         let comp_filter = CompFilterElement {
             is_not_defined: None,
@@ -252,13 +225,13 @@ END:VCALENDAR";
             }],
         };
         assert!(
-            object.matches(&comp_filter),
+            object.get_inner().matches(&comp_filter),
             "Some prop filters on VCALENDAR and VEVENT"
         );
     }
     #[test]
     fn test_comp_filter_time_range() {
-        let object = CalendarObject::from_ics(ICS.to_string(), None).unwrap();
+        let object = CalendarObject::from_ics(ICS.to_string()).unwrap();
 
         let comp_filter = CompFilterElement {
             is_not_defined: None,
@@ -281,7 +254,7 @@ END:VCALENDAR";
             }],
         };
         assert!(
-            object.matches(&comp_filter),
+            object.get_inner().matches(&comp_filter),
             "event should lie in time range"
         );
 
@@ -306,14 +279,14 @@ END:VCALENDAR";
             }],
         };
         assert!(
-            !object.matches(&comp_filter),
+            !object.get_inner().matches(&comp_filter),
             "event should not lie in time range"
         );
     }
 
     #[test]
     fn test_match_timezone() {
-        let object = CalendarObject::from_ics(ICS.to_string(), None).unwrap();
+        let object = CalendarObject::from_ics(ICS.to_string()).unwrap();
 
         let comp_filter = CompFilterElement {
             is_not_defined: None,
@@ -340,7 +313,7 @@ END:VCALENDAR";
             }],
         };
         assert!(
-            object.matches(&comp_filter),
+            object.get_inner().matches(&comp_filter),
             "Timezone should be Europe/Berlin"
         );
     }

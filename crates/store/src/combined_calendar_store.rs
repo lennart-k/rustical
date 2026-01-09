@@ -1,5 +1,6 @@
-use crate::CalendarStore;
+use crate::{Calendar, CalendarStore, calendar_store::CalendarQuery};
 use async_trait::async_trait;
+use rustical_ical::CalendarObject;
 use std::{collections::HashMap, sync::Arc};
 
 pub trait PrefixedCalendarStore: CalendarStore {
@@ -51,11 +52,11 @@ impl CalendarStore for CombinedCalendarStore {
 
     async fn update_calendar(
         &self,
-        principal: String,
-        id: String,
-        calendar: crate::Calendar,
+        principal: &str,
+        id: &str,
+        calendar: Calendar,
     ) -> Result<(), crate::Error> {
-        self.store_for_id(&id)
+        self.store_for_id(id)
             .update_calendar(principal, id, calendar)
             .await
     }
@@ -88,7 +89,7 @@ impl CalendarStore for CombinedCalendarStore {
         principal: &str,
         cal_id: &str,
         synctoken: i64,
-    ) -> Result<(Vec<rustical_ical::CalendarObject>, Vec<String>, i64), crate::Error> {
+    ) -> Result<(Vec<(String, CalendarObject)>, Vec<String>, i64), crate::Error> {
         self.store_for_id(cal_id)
             .sync_changes(principal, cal_id, synctoken)
             .await
@@ -97,7 +98,7 @@ impl CalendarStore for CombinedCalendarStore {
     async fn import_calendar(
         &self,
         calendar: crate::Calendar,
-        objects: Vec<rustical_ical::CalendarObject>,
+        objects: Vec<CalendarObject>,
         merge_existing: bool,
     ) -> Result<(), crate::Error> {
         self.store_for_id(&calendar.id)
@@ -109,8 +110,8 @@ impl CalendarStore for CombinedCalendarStore {
         &self,
         principal: &str,
         cal_id: &str,
-        query: crate::calendar_store::CalendarQuery,
-    ) -> Result<Vec<rustical_ical::CalendarObject>, crate::Error> {
+        query: CalendarQuery,
+    ) -> Result<Vec<(String, CalendarObject)>, crate::Error> {
         self.store_for_id(cal_id)
             .calendar_query(principal, cal_id, query)
             .await
@@ -141,7 +142,7 @@ impl CalendarStore for CombinedCalendarStore {
         &self,
         principal: &str,
         cal_id: &str,
-    ) -> Result<Vec<rustical_ical::CalendarObject>, crate::Error> {
+    ) -> Result<Vec<(String, CalendarObject)>, crate::Error> {
         self.store_for_id(cal_id)
             .get_objects(principal, cal_id)
             .await
@@ -149,12 +150,12 @@ impl CalendarStore for CombinedCalendarStore {
 
     async fn put_objects(
         &self,
-        principal: String,
-        cal_id: String,
-        objects: Vec<rustical_ical::CalendarObject>,
+        principal: &str,
+        cal_id: &str,
+        objects: Vec<(String, CalendarObject)>,
         overwrite: bool,
     ) -> Result<(), crate::Error> {
-        self.store_for_id(&cal_id)
+        self.store_for_id(cal_id)
             .put_objects(principal, cal_id, objects, overwrite)
             .await
     }

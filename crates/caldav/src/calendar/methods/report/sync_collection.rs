@@ -32,11 +32,12 @@ pub async fn handle_sync_collection<C: CalendarStore>(
         .await?;
 
     let mut responses = Vec::new();
-    for object in new_objects {
-        let path = format!("{}/{}.ics", path, object.get_id());
+    for (object_id, object) in new_objects {
+        let path = format!("{}/{}.ics", path, &object_id);
         responses.push(
             CalendarObjectResource {
                 object,
+                object_id,
                 principal: principal.to_owned(),
             }
             .propfind(&path, &sync_collection.prop, None, puri, user)?,
