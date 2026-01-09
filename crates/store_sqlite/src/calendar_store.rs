@@ -545,13 +545,12 @@ impl SqliteCalendarStore {
             .get_first_occurence()
             .as_ref()
             .map(CalDateTime::date_floor);
-        let last_occurence: Option<chrono::NaiveDate> = todo!();
-        // let last_occurence = object
-        //     .get_inner()
-        //     .get_inner()
-        //     .get_last_occurence()
-        //     .as_ref()
-        //     .map(CalDateTime::date_ceil);
+        let last_occurence = object
+            .get_inner()
+            .get_inner()
+            .get_last_occurence()
+            .as_ref()
+            .map(CalDateTime::date_ceil);
         let etag = object.get_etag();
         let object_type = object.get_object_type() as u8;
 
