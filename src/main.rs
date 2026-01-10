@@ -25,7 +25,7 @@ use std::sync::Arc;
 use tokio::sync::mpsc::Receiver;
 use tower::Layer;
 use tower_http::normalize_path::NormalizePathLayer;
-use tracing::info;
+use tracing::{info, warn};
 
 mod app;
 mod commands;
@@ -33,6 +33,9 @@ mod config;
 #[cfg(test)]
 pub mod integration_tests;
 mod setup_tracing;
+
+mod migration_0_12;
+use migration_0_12::{validate_address_objects_0_12, validate_calendar_objects_0_12};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -114,6 +117,12 @@ async fn main() -> Result<()> {
 
             let (addr_store, cal_store, subscription_store, principal_store, update_recv) =
                 get_data_stores(!args.no_migrations, &config.data_store).await?;
+
+            warn!(
+                "Validating calendar data against the next-version ical parser.\nIn the next major release these will be rejected and cause errors.\nIf any errors occur, please open an issue so they can be fixed before the next major release."
+            );
+            validate_calendar_objects_0_12(principal_store.as_ref(), cal_store.as_ref()).await?;
+            validate_address_objects_0_12(principal_store.as_ref(), addr_store.as_ref()).await?;
 
             let mut tasks = vec![];
 

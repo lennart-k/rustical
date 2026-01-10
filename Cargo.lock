@@ -623,7 +623,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a6139a8597ed92cf816dfb33f5dd6cf0bb93a6adc938f11039f371bc5bcd26c3"
 dependencies = [
  "chrono",
- "phf",
+ "phf 0.12.1",
 ]
 
 [[package]]
@@ -1771,6 +1771,22 @@ dependencies = [
 [[package]]
 name = "ical"
 version = "0.11.0"
+source = "git+https://github.com/lennart-k/ical-rs?branch=dev#64c342e7258ba445dc91b47cd8e20e0ac8ffc417"
+dependencies = [
+ "chrono",
+ "chrono-tz",
+ "derive_more",
+ "itertools 0.14.0",
+ "lazy_static",
+ "phf 0.13.1",
+ "regex",
+ "rrule",
+ "thiserror 2.0.17",
+]
+
+[[package]]
+name = "ical"
+version = "0.11.0"
 source = "git+https://github.com/lennart-k/ical-rs#dcd3b106758a054f46a5172103abb17972ad032d"
 dependencies = [
  "chrono",
@@ -2593,7 +2609,18 @@ version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "913273894cec178f401a31ec4b656318d95473527be05c0752cc41cdc32be8b7"
 dependencies = [
- "phf_shared",
+ "phf_shared 0.12.1",
+]
+
+[[package]]
+name = "phf"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c1562dc717473dbaa4c1f85a36410e03c047b2e7df7f45ee938fbef64ae7fadf"
+dependencies = [
+ "phf_macros",
+ "phf_shared 0.13.1",
+ "serde",
 ]
 
 [[package]]
@@ -2602,8 +2629,8 @@ version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "efbdcb6f01d193b17f0b9c3360fa7e0e620991b193ff08702f78b3ce365d7e61"
 dependencies = [
- "phf_generator",
- "phf_shared",
+ "phf_generator 0.12.1",
+ "phf_shared 0.12.1",
 ]
 
 [[package]]
@@ -2613,7 +2640,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2cbb1126afed61dd6368748dae63b1ee7dc480191c6262a3b4ff1e29d86a6c5b"
 dependencies = [
  "fastrand",
- "phf_shared",
+ "phf_shared 0.12.1",
+]
+
+[[package]]
+name = "phf_generator"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "135ace3a761e564ec88c03a77317a7c6b80bb7f7135ef2544dbe054243b89737"
+dependencies = [
+ "fastrand",
+ "phf_shared 0.13.1",
+]
+
+[[package]]
+name = "phf_macros"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "812f032b54b1e759ccd5f8b6677695d5268c588701effba24601f6932f8269ef"
+dependencies = [
+ "phf_generator 0.13.1",
+ "phf_shared 0.13.1",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.112",
 ]
 
 [[package]]
@@ -2621,6 +2671,15 @@ name = "phf_shared"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06005508882fb681fd97892ecff4b7fd0fee13ef1aa569f8695dae7ab9099981"
+dependencies = [
+ "siphasher",
+]
+
+[[package]]
+name = "phf_shared"
+version = "0.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e57fef6bc5981e38c2ce2d63bfa546861309f875b8a75f092d1d54ae2d64f266"
 dependencies = [
  "siphasher",
 ]
@@ -3284,6 +3343,7 @@ dependencies = [
  "figment",
  "headers",
  "http",
+ "ical 0.11.0 (git+https://github.com/lennart-k/ical-rs?branch=dev)",
  "insta",
  "opentelemetry",
  "opentelemetry-otlp",
@@ -3331,7 +3391,7 @@ dependencies = [
  "futures-util",
  "headers",
  "http",
- "ical",
+ "ical 0.11.0 (git+https://github.com/lennart-k/ical-rs)",
  "insta",
  "percent-encoding",
  "quick-xml",
@@ -3370,7 +3430,7 @@ dependencies = [
  "derive_more",
  "futures-util",
  "http",
- "ical",
+ "ical 0.11.0 (git+https://github.com/lennart-k/ical-rs)",
  "insta",
  "percent-encoding",
  "quick-xml",
@@ -3403,7 +3463,7 @@ dependencies = [
  "futures-util",
  "headers",
  "http",
- "ical",
+ "ical 0.11.0 (git+https://github.com/lennart-k/ical-rs)",
  "itertools 0.14.0",
  "log",
  "matchit 0.9.1",
@@ -3487,7 +3547,7 @@ dependencies = [
  "chrono",
  "chrono-tz",
  "derive_more",
- "ical",
+ "ical 0.11.0 (git+https://github.com/lennart-k/ical-rs)",
  "regex",
  "rrule",
  "rstest",
@@ -3528,7 +3588,7 @@ dependencies = [
  "futures-core",
  "headers",
  "http",
- "ical",
+ "ical 0.11.0 (git+https://github.com/lennart-k/ical-rs)",
  "regex",
  "rrule",
  "rstest",
@@ -4910,7 +4970,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f6728de8767c8dea44f41b88115a205ed23adc3302e1b4342be59d922934dae5"
 dependencies = [
  "glob",
- "phf",
+ "phf 0.12.1",
  "phf_codegen",
 ]
 

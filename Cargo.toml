@@ -201,3 +201,7 @@ tower-http.workspace = true
 axum-extra.workspace = true
 headers.workspace = true
 http.workspace = true
+# TODO: Remove in next major release
+ical_dev = { package = "ical", git = "https://github.com/lennart-k/ical-rs", branch = "dev", features = [
+  "chrono-tz",
+] }
