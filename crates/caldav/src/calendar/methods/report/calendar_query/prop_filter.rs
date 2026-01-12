@@ -3,7 +3,6 @@ use ical::{parser::Component, property::ContentLine, types::CalDateTime};
 use rustical_dav::xml::TextMatchElement;
 use rustical_ical::UtcDateTime;
 use rustical_xml::XmlDeserialize;
-use std::collections::HashMap;
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
 #[allow(dead_code)]
@@ -27,7 +26,7 @@ impl PropFilterElement {
     pub fn match_property(&self, property: &ContentLine) -> bool {
         if let Some(TimeRangeElement { start, end }) = &self.time_range {
             // TODO: Respect timezones
-            let Ok(timestamp) = CalDateTime::parse_prop(property, &HashMap::default()) else {
+            let Ok(timestamp) = CalDateTime::parse_prop(property, None) else {
                 return false;
             };
             let timestamp = timestamp.utc();
@@ -62,13 +61,13 @@ impl PropFilterElement {
     }
 
     pub fn match_component(&self, comp: &impl Component) -> bool {
-        let properties = comp.get_named_properties(&self.name);
+        let mut properties = comp.get_named_properties(&self.name);
         if self.is_not_defined.is_some() {
-            return properties.is_empty();
+            return properties.next().is_none();
         }
 
         // The filter matches when one property instance matches
         // Example where this matters: We have multiple attendees and want to match one
-        properties.iter().any(|prop| self.match_property(prop))
+        properties.any(|prop| self.match_property(prop))
     }
 }

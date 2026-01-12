@@ -11,7 +11,7 @@ use rustical_ical::CalendarObjectType;
 use rustical_store::{
     Calendar, CalendarMetadata, CalendarStore, SubscriptionStore, auth::Principal,
 };
-use std::{collections::HashMap, io::BufReader};
+use std::io::BufReader;
 use tracing::instrument;
 
 #[instrument(skip(resource_service))]
@@ -50,7 +50,7 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
     cal.remove_property("X-WR-CALDESC");
     cal.remove_property("X-WR-CALCOLOR");
     cal.remove_property("X-WR-TIMEZONE");
-    let cal = cal.build(&HashMap::new()).unwrap();
+    let cal = cal.build(None).unwrap();
 
     // Make sure timezone is valid
     if let Some(timezone_id) = timezone_id.as_ref() {

@@ -1,5 +1,3 @@
-use std::{collections::HashMap, io::BufReader};
-
 use crate::Error;
 use crate::addressbook::AddressbookResourceService;
 use axum::{
@@ -12,6 +10,7 @@ use ical::{
     property::ContentLine,
 };
 use rustical_store::{Addressbook, AddressbookStore, SubscriptionStore, auth::Principal};
+use std::io::BufReader;
 use tracing::instrument;
 
 #[instrument(skip(resource_service))]
@@ -38,7 +37,7 @@ pub async fn route_import<AS: AddressbookStore, S: SubscriptionStore>(
                 value: Some(uuid::Uuid::new_v4().to_string()),
                 params: vec![].into(),
             });
-            card = card_mut.build(&HashMap::new()).unwrap();
+            card = card_mut.build(None).unwrap();
         }
         // TODO: Make nicer
         let uid = card.get_uid().unwrap();

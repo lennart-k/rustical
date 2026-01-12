@@ -56,22 +56,22 @@ impl PropFilterElement {
     }
 
     pub fn match_component(&self, comp: &impl PropFilterable) -> bool {
-        let properties = comp.get_named_properties(&self.name);
+        let mut properties = comp.get_named_properties(&self.name);
         if self.is_not_defined.is_some() {
-            return properties.is_empty();
+            return properties.next().is_none();
         }
 
         // The filter matches when one property instance matches
-        properties.iter().any(|prop| self.match_property(prop))
+        properties.any(|prop| self.match_property(prop))
     }
 }
 
 pub trait PropFilterable {
-    fn get_named_properties(&self, name: &str) -> Vec<&ContentLine>;
+    fn get_named_properties<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a ContentLine>;
 }
 
 impl PropFilterable for AddressObject {
-    fn get_named_properties(&self, name: &str) -> Vec<&ContentLine> {
+    fn get_named_properties<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a ContentLine> {
         self.get_vcard().get_named_properties(name)
     }
 }
