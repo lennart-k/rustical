@@ -202,7 +202,7 @@ impl Resource for CalendarResource {
                 CalendarProp::CalendarTimezone(timezone) => {
                     if let Some(tz) = timezone {
                         // TODO: Proper error (calendar-timezone precondition)
-                        let calendar = IcalParser::new(tz.as_bytes())
+                        let calendar = IcalParser::from_slice(tz.as_bytes())
                             .next()
                             .ok_or_else(|| {
                                 rustical_dav::Error::BadRequest(

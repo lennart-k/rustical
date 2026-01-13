@@ -11,7 +11,6 @@ use rustical_ical::CalendarObjectType;
 use rustical_store::{
     Calendar, CalendarMetadata, CalendarStore, SubscriptionStore, auth::Principal,
 };
-use std::io::BufReader;
 use tracing::instrument;
 
 #[instrument(skip(resource_service))]
@@ -26,7 +25,7 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
         return Err(Error::Unauthorized);
     }
 
-    let parser = ical::IcalParser::new(BufReader::new(body.as_bytes()));
+    let parser = ical::IcalParser::from_slice(body.as_bytes());
     let mut cal = parser
         .expect_one()
         .map_err(rustical_ical::Error::ParserError)?

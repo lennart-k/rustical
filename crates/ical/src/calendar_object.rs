@@ -1,9 +1,9 @@
 use crate::Error;
 use derive_more::Display;
+use ical::IcalObjectParser;
 use ical::component::CalendarInnerData;
 use ical::component::IcalCalendarObject;
 use ical::generator::Emitter;
-use ical::parser::ComponentParser;
 use serde::Deserialize;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
@@ -69,7 +69,7 @@ pub struct CalendarObject {
 
 impl CalendarObject {
     pub fn from_ics(ics: String) -> Result<Self, Error> {
-        let parser: ComponentParser<_, IcalCalendarObject> = ComponentParser::new(ics.as_bytes());
+        let parser = IcalObjectParser::from_slice(ics.as_bytes());
         let inner = parser.expect_one()?;
 
         Ok(Self { inner, ics })

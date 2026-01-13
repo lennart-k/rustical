@@ -87,7 +87,7 @@ pub async fn route_mkcalendar<C: CalendarStore, S: SubscriptionStore>(
         Some(tzid)
     } else if let Some(tz) = request.calendar_timezone {
         // TODO: Proper error (calendar-timezone precondition)
-        let calendar = IcalParser::new(tz.as_bytes())
+        let calendar = IcalParser::from_slice(tz.as_bytes())
             .next()
             .ok_or_else(|| rustical_dav::Error::BadRequest("No timezone data provided".to_owned()))?
             .map_err(|_| rustical_dav::Error::BadRequest("Error parsing timezone".to_owned()))?;

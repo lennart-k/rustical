@@ -14,8 +14,8 @@ use ical::parser::{
 use ical::property::ContentLine;
 use ical::types::{CalDate, PartialDate};
 use sha2::{Digest, Sha256};
+use std::collections::HashMap;
 use std::str::FromStr;
-use std::{collections::HashMap, io::BufReader};
 
 #[derive(Debug, Clone)]
 pub struct AddressObject {
@@ -32,7 +32,7 @@ impl From<VcardContact> for AddressObject {
 
 impl AddressObject {
     pub fn from_vcf(vcf: String) -> Result<Self, Error> {
-        let parser = vcard::VcardParser::new(BufReader::new(vcf.as_bytes()));
+        let parser = vcard::VcardParser::from_slice(vcf.as_bytes());
         let vcard = parser.expect_one()?;
         Ok(Self { vcf, vcard })
     }

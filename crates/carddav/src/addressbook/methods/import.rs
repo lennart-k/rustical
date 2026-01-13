@@ -10,7 +10,6 @@ use ical::{
     property::ContentLine,
 };
 use rustical_store::{Addressbook, AddressbookStore, SubscriptionStore, auth::Principal};
-use std::io::BufReader;
 use tracing::instrument;
 
 #[instrument(skip(resource_service))]
@@ -24,7 +23,7 @@ pub async fn route_import<AS: AddressbookStore, S: SubscriptionStore>(
         return Err(Error::Unauthorized);
     }
 
-    let parser = vcard::VcardParser::new(BufReader::new(body.as_bytes()));
+    let parser = vcard::VcardParser::from_slice(body.as_bytes());
 
     let mut objects = vec![];
     for res in parser {
