@@ -880,7 +880,7 @@ impl CalendarStore for SqliteCalendarStore {
             .await
             .map_err(crate::Error::from)?;
 
-        let calendar = Self::_get_calendar(&mut *tx, &principal, &cal_id, true).await?;
+        let calendar = Self::_get_calendar(&mut *tx, principal, cal_id, true).await?;
         if calendar.subscription_url.is_some() {
             // We cannot commit an object to a subscription calendar
             return Err(Error::ReadOnly);
@@ -891,17 +891,14 @@ impl CalendarStore for SqliteCalendarStore {
             sync_token = Some(
                 Self::log_object_operation(
                     &mut tx,
-                    &principal,
-                    &cal_id,
+                    principal,
+                    cal_id,
                     &object_id,
                     ChangeOperation::Add,
                 )
                 .await?,
             );
-            Self::_put_object(
-                &mut *tx, &principal, &cal_id, &object_id, &object, overwrite,
-            )
-            .await?;
+            Self::_put_object(&mut *tx, principal, cal_id, &object_id, &object, overwrite).await?;
         }
 
         tx.commit().await.map_err(crate::Error::from)?;
@@ -909,9 +906,7 @@ impl CalendarStore for SqliteCalendarStore {
         if let Some(sync_token) = sync_token {
             self.send_push_notification(
                 CollectionOperationInfo::Content { sync_token },
-                self.get_calendar(&principal, &cal_id, true)
-                    .await?
-                    .push_topic,
+                self.get_calendar(principal, cal_id, true).await?.push_topic,
             );
         }
         Ok(())

@@ -509,7 +509,7 @@ impl AddressbookStore for SqliteAddressbookStore {
     ) -> Result<(), rustical_store::Error> {
         assert_eq!(principal, &addressbook.principal);
         assert_eq!(id, &addressbook.id);
-        Self::_update_addressbook(&self.db, &principal, &id, &addressbook).await
+        Self::_update_addressbook(&self.db, principal, id, &addressbook).await
     }
 
     #[instrument]
@@ -648,9 +648,9 @@ impl AddressbookStore for SqliteAddressbookStore {
 
         let sync_token = Self::log_object_operation(
             &mut tx,
-            &principal,
-            &addressbook_id,
-            &object_id,
+            principal,
+            addressbook_id,
+            object_id,
             ChangeOperation::Add,
         )
         .await
