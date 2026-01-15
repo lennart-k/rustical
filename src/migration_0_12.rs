@@ -12,9 +12,10 @@ pub async fn validate_calendar_objects_0_12(
                 .get_objects(&calendar.principal, &calendar.id)
                 .await?
             {
-                if let Err(err) =
-                    ical_dev::parser::ical::IcalObjectParser::new(object.get_ics().as_bytes())
-                        .expect_one()
+                if let Err(err) = ical_dev::parser::ical::IcalObjectParser::from_slice(
+                    object.get_ics().as_bytes(),
+                )
+                .expect_one()
                 {
                     success = false;
                     error!(
@@ -52,7 +53,7 @@ pub async fn validate_address_objects_0_12(
                 .await?
             {
                 if let Err(err) =
-                    ical_dev::parser::vcard::VcardParser::new(object.get_vcf().as_bytes())
+                    ical_dev::parser::vcard::VcardParser::from_slice(object.get_vcf().as_bytes())
                         .expect_one()
                 {
                     success = false;

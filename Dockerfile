@@ -36,7 +36,7 @@ COPY --from=planner /rustical/recipe.json recipe.json
 RUN cargo chef cook --release --target "$(cat /tmp/rust_target)"
 
 COPY . .
-RUN cargo install --target "$(cat /tmp/rust_target)" --path .
+RUN cargo install --locked --target "$(cat /tmp/rust_target)" --path .
 
 FROM scratch
 COPY --from=builder /usr/local/cargo/bin/rustical /usr/local/bin/rustical
