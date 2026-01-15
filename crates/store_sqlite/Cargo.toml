@@ -36,3 +36,4 @@ pbkdf2.workspace = true
 rustical_ical.workspace = true
 rstest = { workspace = true, optional = true }
 sha2.workspace = true
+regex.workspace = true

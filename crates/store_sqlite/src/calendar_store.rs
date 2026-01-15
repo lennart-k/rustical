@@ -3,6 +3,7 @@ use crate::BEGIN_IMMEDIATE;
 use async_trait::async_trait;
 use chrono::TimeDelta;
 use derive_more::derive::Constructor;
+use regex::Regex;
 use rustical_ical::{CalDateTime, CalendarObject, CalendarObjectType};
 use rustical_store::calendar_store::CalendarQuery;
 use rustical_store::synctoken::format_synctoken;
@@ -143,6 +144,83 @@ impl SqliteCalendarStore {
                 err = format!("{err:?}"),
             );
         }
+    }
+
+    /// In the past exports generated objects with invalid VERSION:4.0
+    /// This repair sets them to VERSION:2.0
+    #[allow(clippy::missing_panics_doc)]
+    pub async fn repair_invalid_version_4_0(&self) -> Result<(), Error> {
+        struct Row {
+            principal: String,
+            cal_id: String,
+            id: String,
+            ics: String,
+        }
+
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
+
+        #[allow(clippy::missing_panics_doc)]
+        let version_pattern = Regex::new(r"(?mi)^VERSION:4.0").unwrap();
+
+        let repairs: Vec<Row> = sqlx::query_as!(
+            Row,
+            r#"SELECT principal, cal_id, id, ics FROM calendarobjects WHERE ics LIKE '%VERSION:4.0%';"#
+        )
+        .fetch_all(&mut *tx)
+        .await
+        .map_err(crate::Error::from)?
+            .into_iter()
+            .filter_map(|mut row| {
+                version_pattern.find(&row.ics)?;
+                let new_ics = version_pattern.replace(&row.ics, "VERSION:2.0");
+                // Safeguard that we really only changed the version
+                assert_eq!(row.ics.len(), new_ics.len());
+                row.ics = new_ics.to_string();
+                Some(row)
+            })
+            .collect();
+
+        if repairs.is_empty() {
+            return Ok(());
+        }
+        warn!(
+            "Found {} calendar objects with invalid VERSION:4.0. Repairing by setting to VERSION:2.0",
+            repairs.len()
+        );
+
+        for repair in &repairs {
+            // calendarobjectchangelog is used by sync-collection to fetch changes
+            // By deleting entries we will later regenerate new entries such that clients will notice
+            // the objects have changed
+            warn!(
+                "Repairing VERSION for {}/{}/{}.ics",
+                repair.principal, repair.cal_id, repair.id
+            );
+            sqlx::query!(
+                "DELETE FROM calendarobjectchangelog WHERE (principal, cal_id, object_id) = (?, ?, ?);",
+                repair.principal, repair.cal_id, repair.id
+            ).execute(&mut *tx).await
+            .map_err(crate::Error::from)?;
+
+            sqlx::query!(
+                "UPDATE calendarobjects SET ics = ? WHERE (principal, cal_id, id) = (?, ?, ?);",
+                repair.ics,
+                repair.principal,
+                repair.cal_id,
+                repair.id
+            )
+            .execute(&mut *tx)
+            .await
+            .map_err(crate::Error::from)?;
+        }
+
+        tx.commit().await.map_err(crate::Error::from)?;
+
+        Ok(())
     }
 
     // Commit "orphaned" objects to the changelog table

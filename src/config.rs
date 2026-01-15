@@ -26,6 +26,8 @@ impl Default for HttpConfig {
 #[serde(deny_unknown_fields)]
 pub struct SqliteDataStoreConfig {
     pub db_url: String,
+    #[serde(default = "default_true")]
+    pub run_repairs: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

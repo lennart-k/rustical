@@ -16,10 +16,6 @@ pub async fn validate_calendar_objects_0_12(
                     ical_dev::parser::ical::IcalObjectParser::new(object.get_ics().as_bytes())
                         .expect_one()
                 {
-                    if ical_dev::parser::ParserError::InvalidVersion == err {
-                        // This is a known issue that might cause a lot of spam in the logs
-                        continue;
-                    }
                     success = false;
                     error!(
                         "An error occured parsing a calendar object: principal={principal}, calendar={calendar}, object_id={object_id}: {err}",
