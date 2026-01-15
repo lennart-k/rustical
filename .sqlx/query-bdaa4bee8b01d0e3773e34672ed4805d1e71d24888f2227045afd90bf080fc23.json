@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT principal, cal_id, id, ics FROM calendarobjects WHERE ics LIKE '%VERSION:4.0%';",
+  "describe": {
+    "columns": [
+      {
+        "name": "principal",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "cal_id",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "id",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "ics",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "bdaa4bee8b01d0e3773e34672ed4805d1e71d24888f2227045afd90bf080fc23"
+}

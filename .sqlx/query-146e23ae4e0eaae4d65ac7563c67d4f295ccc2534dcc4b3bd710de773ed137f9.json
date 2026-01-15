@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM calendarobjectchangelog WHERE (principal, cal_id, object_id) = (?, ?, ?);",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "146e23ae4e0eaae4d65ac7563c67d4f295ccc2534dcc4b3bd710de773ed137f9"
+}

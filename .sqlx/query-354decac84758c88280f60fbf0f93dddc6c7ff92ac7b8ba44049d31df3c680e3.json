@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE calendarobjects SET ics = ? WHERE (principal, cal_id, id) = (?, ?, ?);",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "354decac84758c88280f60fbf0f93dddc6c7ff92ac7b8ba44049d31df3c680e3"
+}
