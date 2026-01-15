@@ -3332,7 +3332,7 @@ dependencies = [
 
 [[package]]
 name = "rustical"
-version = "0.11.11"
+version = "0.11.14"
 dependencies = [
  "anyhow",
  "argon2",
@@ -3378,7 +3378,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_caldav"
-version = "0.11.11"
+version = "0.11.14"
 dependencies = [
  "async-std",
  "async-trait",
@@ -3420,7 +3420,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_carddav"
-version = "0.11.11"
+version = "0.11.14"
 dependencies = [
  "async-trait",
  "axum",
@@ -3454,7 +3454,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_dav"
-version = "0.11.11"
+version = "0.11.14"
 dependencies = [
  "async-trait",
  "axum",
@@ -3480,7 +3480,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_dav_push"
-version = "0.11.11"
+version = "0.11.14"
 dependencies = [
  "async-trait",
  "axum",
@@ -3505,7 +3505,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_frontend"
-version = "0.11.11"
+version = "0.11.14"
 dependencies = [
  "askama",
  "askama_web",
@@ -3541,7 +3541,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_ical"
-version = "0.11.11"
+version = "0.11.14"
 dependencies = [
  "axum",
  "chrono",
@@ -3560,7 +3560,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_oidc"
-version = "0.11.11"
+version = "0.11.14"
 dependencies = [
  "async-trait",
  "axum",
@@ -3576,7 +3576,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_store"
-version = "0.11.11"
+version = "0.11.14"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3609,7 +3609,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_store_sqlite"
-version = "0.11.11"
+version = "0.11.14"
 dependencies = [
  "async-trait",
  "chrono",
@@ -3633,7 +3633,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_xml"
-version = "0.11.11"
+version = "0.11.14"
 dependencies = [
  "quick-xml",
  "thiserror 2.0.17",
@@ -5457,7 +5457,7 @@ checksum = "9edde0db4769d2dc68579893f2306b26c6ecfbe0ef499b013d731b7b9247e0b9"
 
 [[package]]
 name = "xml_derive"
-version = "0.11.11"
+version = "0.11.14"
 dependencies = [
  "darling 0.23.0",
  "heck",
