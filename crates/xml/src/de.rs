@@ -42,7 +42,7 @@ impl<T: XmlRootTag + XmlDeserialize> XmlDocument for T {
             match event {
                 Event::Decl(_) | Event::Comment(_) => { /*  ignore this */ }
                 Event::Start(start) | Event::Empty(start) => {
-                    let (ns, name) = reader.resolve_element(start.name());
+                    let (ns, name) = reader.resolver().resolve_element(start.name());
                     let matches = match (Self::root_ns(), &ns, name) {
                         // Wrong tag
                         (_, _, name) if name.as_ref() != Self::root_tag().as_bytes() => false,
