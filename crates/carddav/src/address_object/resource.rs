@@ -8,6 +8,7 @@ use crate::{
     },
 };
 use derive_more::derive::{From, Into};
+use ical::parser::VcardFNProperty;
 use rustical_dav::{
     extensions::CommonPropertiesExtension,
     privileges::UserPrivilegeSet,
@@ -70,8 +71,11 @@ impl Resource for AddressObjectResource {
     }
 
     fn get_displayname(&self) -> Option<&str> {
-        todo!()
-        // self.object.get_full_name()
+        self.object
+            .get_vcard()
+            .full_name
+            .first()
+            .map(|VcardFNProperty(name, _)| name.as_str())
     }
 
     fn get_owner(&self) -> Option<&str> {
