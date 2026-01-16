@@ -25,18 +25,17 @@ struct CalendarObjectRow {
 impl TryFrom<CalendarObjectRow> for (String, CalendarObject) {
     type Error = rustical_store::Error;
 
-    fn try_from(value: CalendarObjectRow) -> Result<Self, Self::Error> {
-        let object = CalendarObject::from_ics(value.ics)?;
-        if object.get_uid() != value.uid {
-            return Err(rustical_store::Error::IcalError(
-                rustical_ical::Error::InvalidData(format!(
-                    "uid={} and UID={} don't match",
-                    value.uid,
-                    object.get_uid()
-                )),
-            ));
+    fn try_from(row: CalendarObjectRow) -> Result<Self, Self::Error> {
+        let object = CalendarObject::from_ics(row.ics)?;
+        if object.get_uid() != row.uid {
+            warn!(
+                "Calendar object {}.ics: UID={} and row uid={} do not match",
+                row.id,
+                object.get_uid(),
+                row.uid
+            );
         }
-        Ok((value.id, object))
+        Ok((row.id, object))
     }
 }
 

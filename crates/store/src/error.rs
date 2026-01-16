@@ -26,7 +26,7 @@ pub enum Error {
     Other(#[from] anyhow::Error),
 
     #[error(transparent)]
-    IcalError(#[from] rustical_ical::Error),
+    IcalError(#[from] ical::parser::ParserError),
 }
 
 impl Error {
@@ -36,7 +36,8 @@ impl Error {
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::AlreadyExists => StatusCode::CONFLICT,
             Self::ReadOnly => StatusCode::FORBIDDEN,
-            Self::IcalError(err) => err.status_code(),
+            // TODO: Can also be Bad Request, depending on when this is raised
+            Self::IcalError(_err) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::InvalidPrincipalType(_) => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
