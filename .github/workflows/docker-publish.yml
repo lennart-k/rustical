@@ -2,7 +2,10 @@ name: Docker
 
 on:
   push:
-    branches: ["main", "dev"]
+    branches:
+      - main
+      - dev
+      - feat/*
   release:
     types: ["published"]
 
@@ -45,7 +48,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
+            ${{ github.ref_name == 'main' && 'type=ref,event=branch' || '' }}
+            type=ref,event=branch,prefix=br-
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
