@@ -16,3 +16,5 @@ site
 # Frontend
 **/node_modules
 **/.vite
+
+**/*.snap.new

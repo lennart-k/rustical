@@ -75,7 +75,8 @@ impl Error {
             Self::XmlDecodeError(_) => StatusCode::BAD_REQUEST,
             Self::ChronoParseError(_) | Self::NotImplemented => StatusCode::INTERNAL_SERVER_ERROR,
             Self::NotFound => StatusCode::NOT_FOUND,
-            Self::IcalError(err) => err.status_code(),
+            // TODO: Can also be Bad Request, if it's used input
+            Self::IcalError(_err) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::PreconditionFailed(_err) => StatusCode::PRECONDITION_FAILED,
         }
     }

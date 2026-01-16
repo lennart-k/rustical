@@ -78,8 +78,9 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
             .get_objects(principal, cal_id)
             .await?
             .into_iter()
-            .map(|object| CalendarObjectResource {
+            .map(|(object_id, object)| CalendarObjectResource {
                 object,
+                object_id,
                 principal: principal.to_owned(),
             })
             .collect())
@@ -91,7 +92,7 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
         file: Self::Resource,
     ) -> Result<(), Self::Error> {
         self.cal_store
-            .update_calendar(principal.to_owned(), cal_id.to_owned(), file.into())
+            .update_calendar(principal, cal_id, file.into())
             .await?;
         Ok(())
     }

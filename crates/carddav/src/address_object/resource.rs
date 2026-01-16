@@ -8,6 +8,7 @@ use crate::{
     },
 };
 use derive_more::derive::{From, Into};
+use ical::parser::VcardFNProperty;
 use rustical_dav::{
     extensions::CommonPropertiesExtension,
     privileges::UserPrivilegeSet,
@@ -21,11 +22,12 @@ use rustical_store::auth::Principal;
 pub struct AddressObjectResource {
     pub object: AddressObject,
     pub principal: String,
+    pub object_id: String,
 }
 
 impl ResourceName for AddressObjectResource {
     fn get_name(&self) -> Cow<'_, str> {
-        Cow::from(format!("{}.vcf", self.object.get_id()))
+        Cow::from(format!("{}.vcf", self.object_id))
     }
 }
 
@@ -69,7 +71,11 @@ impl Resource for AddressObjectResource {
     }
 
     fn get_displayname(&self) -> Option<&str> {
-        self.object.get_full_name()
+        self.object
+            .get_vcard()
+            .full_name
+            .first()
+            .map(|VcardFNProperty(name, _)| name.as_str())
     }
 
     fn get_owner(&self) -> Option<&str> {
