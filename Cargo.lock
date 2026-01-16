@@ -1771,22 +1771,6 @@ dependencies = [
 [[package]]
 name = "ical"
 version = "0.11.0"
-source = "git+https://github.com/lennart-k/ical-rs?branch=dev#ece5b95ddc20f89d14e162aba3a49038f9989701"
-dependencies = [
- "chrono",
- "chrono-tz",
- "derive_more",
- "itertools 0.14.0",
- "lazy_static",
- "phf 0.13.1",
- "regex",
- "rrule",
- "thiserror 2.0.17",
-]
-
-[[package]]
-name = "ical"
-version = "0.11.0"
 source = "git+https://github.com/lennart-k/ical-rs?rev=7c2ab1f3#7c2ab1f3abdca768f22d8a36627eebbdd7947e29"
 dependencies = [
  "chrono",
@@ -1794,6 +1778,22 @@ dependencies = [
  "derive_more",
  "itertools 0.14.0",
  "lazy_static",
+ "regex",
+ "rrule",
+ "thiserror 2.0.17",
+]
+
+[[package]]
+name = "ical"
+version = "0.12.0-dev"
+source = "git+https://github.com/lennart-k/ical-rs?branch=dev#d2226f6b92fa45dcc5a243adc57e6a07a67741a8"
+dependencies = [
+ "chrono",
+ "chrono-tz",
+ "derive_more",
+ "itertools 0.14.0",
+ "lazy_static",
+ "phf 0.13.1",
  "regex",
  "rrule",
  "thiserror 2.0.17",
@@ -3343,7 +3343,7 @@ dependencies = [
  "figment",
  "headers",
  "http",
- "ical 0.11.0 (git+https://github.com/lennart-k/ical-rs?branch=dev)",
+ "ical 0.12.0-dev",
  "insta",
  "opentelemetry",
  "opentelemetry-otlp",
@@ -3391,7 +3391,7 @@ dependencies = [
  "futures-util",
  "headers",
  "http",
- "ical 0.11.0 (git+https://github.com/lennart-k/ical-rs?rev=7c2ab1f3)",
+ "ical 0.11.0",
  "insta",
  "percent-encoding",
  "quick-xml",
@@ -3430,7 +3430,7 @@ dependencies = [
  "derive_more",
  "futures-util",
  "http",
- "ical 0.11.0 (git+https://github.com/lennart-k/ical-rs?rev=7c2ab1f3)",
+ "ical 0.11.0",
  "insta",
  "percent-encoding",
  "quick-xml",
@@ -3463,7 +3463,7 @@ dependencies = [
  "futures-util",
  "headers",
  "http",
- "ical 0.11.0 (git+https://github.com/lennart-k/ical-rs?rev=7c2ab1f3)",
+ "ical 0.11.0",
  "itertools 0.14.0",
  "log",
  "matchit 0.9.1",
@@ -3547,7 +3547,7 @@ dependencies = [
  "chrono",
  "chrono-tz",
  "derive_more",
- "ical 0.11.0 (git+https://github.com/lennart-k/ical-rs?rev=7c2ab1f3)",
+ "ical 0.11.0",
  "regex",
  "rrule",
  "rstest",
@@ -3588,7 +3588,7 @@ dependencies = [
  "futures-core",
  "headers",
  "http",
- "ical 0.11.0 (git+https://github.com/lennart-k/ical-rs?rev=7c2ab1f3)",
+ "ical 0.11.0",
  "regex",
  "rrule",
  "rstest",
@@ -3669,9 +3669,9 @@ dependencies = [
 
 [[package]]
 name = "rustls-pki-types"
-version = "1.13.2"
+version = "1.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "21e6f2ab2928ca4291b86736a8bd920a277a399bba1589409d72154ff87c1282"
+checksum = "4910321ebe4151be888e35fe062169554e74aad01beafed60410131420ceffbc"
 dependencies = [
  "web-time",
  "zeroize",
