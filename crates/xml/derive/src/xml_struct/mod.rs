@@ -136,7 +136,7 @@ impl NamedStruct {
                         #(#builder_field_inits),*
                     };
 
-                    let (ns, name) = reader.resolve_element(start.name());
+                    let (ns, name) = reader.resolver().resolve_element(start.name());
                     #(#tagname_field_branches);*
                     #(#namespace_field_branches);*
 
@@ -161,7 +161,7 @@ impl NamedStruct {
                                 // start of a child element
                                 Event::Start(start) | Event::Empty(start) => {
                                     let empty = matches!(event, Event::Empty(_));
-                                    let (ns, name) = reader.resolve_element(start.name());
+                                    let (ns, name) = reader.resolver().resolve_element(start.name());
                                     match (ns, name.as_ref()) {
                                         #(#named_field_branches),*
                                         #(#untagged_field_branches),*
