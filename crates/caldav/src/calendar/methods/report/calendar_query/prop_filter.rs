@@ -1,5 +1,5 @@
 use super::{ParamFilterElement, TimeRangeElement};
-use ical::{parser::Component, property::ContentLine, types::CalDateTime};
+use ical::{property::ContentLine, types::CalDateTime};
 use rustical_dav::xml::TextMatchElement;
 use rustical_ical::UtcDateTime;
 use rustical_xml::XmlDeserialize;
@@ -19,6 +19,10 @@ pub struct PropFilterElement {
 
     #[xml(ty = "attr")]
     pub(crate) name: String,
+}
+
+pub trait PropFilterable {
+    fn get_named_properties<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a ContentLine>;
 }
 
 impl PropFilterElement {
@@ -60,7 +64,7 @@ impl PropFilterElement {
         true
     }
 
-    pub fn match_component(&self, comp: &impl Component) -> bool {
+    pub fn match_component(&self, comp: &impl PropFilterable) -> bool {
         let mut properties = comp.get_named_properties(&self.name);
         if self.is_not_defined.is_some() {
             return properties.next().is_none();

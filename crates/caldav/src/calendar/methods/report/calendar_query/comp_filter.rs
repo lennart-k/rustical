@@ -1,8 +1,9 @@
 use crate::calendar::methods::report::calendar_query::{
-    TimeRangeElement, prop_filter::PropFilterElement,
+    TimeRangeElement,
+    prop_filter::{PropFilterElement, PropFilterable},
 };
 use ical::{
-    component::IcalCalendarObject,
+    component::{CalendarInnerData, IcalAlarm, IcalCalendarObject, IcalEvent, IcalTodo},
     parser::{Component, ical::component::IcalTimeZone},
 };
 use rustical_xml::XmlDeserialize;
@@ -25,7 +26,9 @@ pub struct CompFilterElement {
     pub(crate) name: String,
 }
 
-pub trait CompFilterable: Component + Sized {
+pub trait CompFilterable: PropFilterable + Sized {
+    fn get_comp_name(&self) -> &'static str;
+
     fn match_time_range(&self, time_range: &TimeRangeElement) -> bool;
 
     fn match_subcomponents(&self, comp_filter: &CompFilterElement) -> bool;
@@ -67,7 +70,100 @@ pub trait CompFilterable: Component + Sized {
     }
 }
 
+impl CompFilterable for CalendarInnerData {
+    fn get_comp_name(&self) -> &'static str {
+        match self {
+            Self::Event(main, _) => main.get_comp_name(),
+            Self::Journal(main, _) => main.get_comp_name(),
+            Self::Todo(main, _) => main.get_comp_name(),
+        }
+    }
+
+    fn match_time_range(&self, time_range: &TimeRangeElement) -> bool {
+        if let Some(start) = &time_range.start
+            && let Some(last_end) = self.get_last_occurence()
+            && start.to_utc() > last_end.utc()
+        {
+            return false;
+        }
+        if let Some(end) = &time_range.end
+            && let Some(first_start) = self.get_first_occurence()
+            && end.to_utc() < first_start.utc()
+        {
+            return false;
+        }
+        true
+    }
+
+    fn match_subcomponents(&self, comp_filter: &CompFilterElement) -> bool {
+        match self {
+            Self::Event(main, overrides) => std::iter::once(main)
+                .chain(overrides.iter())
+                .flat_map(IcalEvent::get_alarms)
+                .any(|alarm| alarm.matches(comp_filter)),
+            Self::Todo(main, overrides) => std::iter::once(main)
+                .chain(overrides.iter())
+                .flat_map(IcalTodo::get_alarms)
+                .any(|alarm| alarm.matches(comp_filter)),
+            // VJOURNAL has no subcomponents
+            Self::Journal(_, _) => comp_filter.is_not_defined.is_some(),
+        }
+    }
+}
+
+impl PropFilterable for IcalAlarm {
+    fn get_named_properties<'a>(
+        &'a self,
+        name: &'a str,
+    ) -> impl Iterator<Item = &'a ical::property::ContentLine> {
+        Component::get_named_properties(self, name)
+    }
+}
+
+impl CompFilterable for IcalAlarm {
+    fn get_comp_name(&self) -> &'static str {
+        Component::get_comp_name(self)
+    }
+
+    fn match_time_range(&self, _time_range: &TimeRangeElement) -> bool {
+        true
+    }
+
+    fn match_subcomponents(&self, comp_filter: &CompFilterElement) -> bool {
+        comp_filter.is_not_defined.is_some()
+    }
+}
+
+impl PropFilterable for CalendarInnerData {
+    #[allow(refining_impl_trait)]
+    fn get_named_properties<'a>(
+        &'a self,
+        name: &'a str,
+    ) -> Box<dyn Iterator<Item = &'a ical::property::ContentLine> + 'a> {
+        // TODO: If we were pedantic, we would have to do recurrence expansion first
+        // and take into account the overrides :(
+        match self {
+            Self::Event(main, _) => Box::new(main.get_named_properties(name)),
+            Self::Todo(main, _) => Box::new(main.get_named_properties(name)),
+            Self::Journal(main, _) => Box::new(main.get_named_properties(name)),
+        }
+    }
+}
+
+impl PropFilterable for IcalCalendarObject {
+    fn get_named_properties<'a>(
+        &'a self,
+        name: &'a str,
+    ) -> impl Iterator<Item = &'a ical::property::ContentLine> {
+        Component::get_named_properties(self, name)
+    }
+}
+
 impl CompFilterable for IcalCalendarObject {
+    fn get_comp_name(&self) -> &'static str {
+        Component::get_comp_name(self)
+    }
+
     fn match_time_range(&self, _time_range: &TimeRangeElement) -> bool {
         // VCALENDAR has no concept of time range
         false
@@ -78,23 +174,36 @@ impl CompFilterable for IcalCalendarObject {
             .get_vtimezones()
             .values()
             .map(|tz| tz.matches(comp_filter))
-            .chain([self.matches(comp_filter)]);
+            .chain([self.get_inner().matches(comp_filter)]);
 
         if comp_filter.is_not_defined.is_some() {
-            matches.all(|x| x)
+            matches.all(|x| !x)
         } else {
             matches.any(|x| x)
         }
     }
 }
 
+impl PropFilterable for IcalTimeZone {
+    fn get_named_properties<'a>(
+        &'a self,
+        name: &'a str,
+    ) -> impl Iterator<Item = &'a ical::property::ContentLine> {
+        Component::get_named_properties(self, name)
+    }
+}
+
 impl CompFilterable for IcalTimeZone {
+    fn get_comp_name(&self) -> &'static str {
+        Component::get_comp_name(self)
+    }
     fn match_time_range(&self, _time_range: &TimeRangeElement) -> bool {
         false
     }
 
-    fn match_subcomponents(&self, _comp_filter: &CompFilterElement) -> bool {
-        true
+    fn match_subcomponents(&self, comp_filter: &CompFilterElement) -> bool {
+        // VTIMEZONE has no subcomponents
+        comp_filter.is_not_defined.is_some()
     }
 }
 
@@ -111,6 +220,7 @@ mod tests {
     const ICS: &str = r"BEGIN:VCALENDAR
 CALSCALE:GREGORIAN
 VERSION:2.0
+PRODID:me
 BEGIN:VTIMEZONE
 TZID:Europe/Berlin
 X-LIC-LOCATION:Europe/Berlin
