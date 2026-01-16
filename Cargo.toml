@@ -160,6 +160,7 @@ rustical_store_sqlite.workspace = true
 rustical_caldav.workspace = true
 rustical_carddav.workspace = true
 rustical_frontend.workspace = true
+ical.workspace = true
 toml.workspace = true
 serde.workspace = true
 tokio.workspace = true

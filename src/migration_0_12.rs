@@ -1,3 +1,4 @@
+use ical::parser::{ical::IcalObjectParser, vcard::VcardParser};
 use rustical_store::{AddressbookStore, CalendarStore, auth::AuthenticationProvider};
 use tracing::{error, info};
 
@@ -8,21 +9,18 @@ pub async fn validate_calendar_objects_0_12(
     let mut success = true;
     for principal in principal_store.get_principals().await? {
         for calendar in cal_store.get_calendars(&principal.id).await? {
-            for object in cal_store
+            for (object_id, object) in cal_store
                 .get_objects(&calendar.principal, &calendar.id)
                 .await?
             {
-                if let Err(err) = ical_dev::parser::ical::IcalObjectParser::from_slice(
-                    object.get_ics().as_bytes(),
-                )
-                .expect_one()
+                if let Err(err) =
+                    IcalObjectParser::from_slice(object.get_ics().as_bytes()).expect_one()
                 {
                     success = false;
                     error!(
                         "An error occured parsing a calendar object: principal={principal}, calendar={calendar}, object_id={object_id}: {err}",
                         principal = principal.id,
                         calendar = calendar.id,
-                        object_id = object.get_id()
                     );
                     println!("{}", object.get_ics());
                 }
@@ -48,20 +46,17 @@ pub async fn validate_address_objects_0_12(
     let mut success = true;
     for principal in principal_store.get_principals().await? {
         for addressbook in addr_store.get_addressbooks(&principal.id).await? {
-            for object in addr_store
+            for (object_id, object) in addr_store
                 .get_objects(&addressbook.principal, &addressbook.id)
                 .await?
             {
-                if let Err(err) =
-                    ical_dev::parser::vcard::VcardParser::from_slice(object.get_vcf().as_bytes())
-                        .expect_one()
+                if let Err(err) = VcardParser::from_slice(object.get_vcf().as_bytes()).expect_one()
                 {
                     success = false;
                     error!(
                         "An error occured parsing an address object: principal={principal}, addressbook={addressbook}, object_id={object_id}: {err}",
                         principal = principal.id,
                         addressbook = addressbook.id,
-                        object_id = object.get_id()
                     );
                     println!("{}", object.get_vcf());
                 }
