@@ -11,7 +11,7 @@ use rustical_ical::CalendarObject;
 use rustical_store::CalendarStore;
 use rustical_store::auth::Principal;
 use std::str::FromStr;
-use tracing::{debug, instrument};
+use tracing::{instrument, warn};
 
 #[instrument(skip(cal_store))]
 pub async fn get_event<C: CalendarStore>(
@@ -94,9 +94,13 @@ pub async fn put_event<C: CalendarStore>(
         true
     };
 
-    let Ok(object) = CalendarObject::from_ics(body.clone()) else {
-        debug!("invalid calendar data:\n{body}");
-        return Err(Error::PreconditionFailed(Precondition::ValidCalendarData));
+    let object = match CalendarObject::from_ics(body.clone()) {
+        Ok(object) => object,
+        Err(err) => {
+            warn!("invalid calendar data:\n{body}");
+            warn!("{err:#?}");
+            return Err(Error::PreconditionFailed(Precondition::ValidCalendarData));
+        }
     };
     let etag = object.get_etag();
     cal_store

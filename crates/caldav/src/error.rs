@@ -79,6 +79,9 @@ impl Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
+        if let Self::PreconditionFailed(precondition) = self {
+            return precondition.into_response();
+        }
         if matches!(
             self.status_code(),
             StatusCode::INTERNAL_SERVER_ERROR | StatusCode::PRECONDITION_FAILED

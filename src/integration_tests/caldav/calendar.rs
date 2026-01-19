@@ -8,7 +8,7 @@ use rustical_store::{CalendarMetadata, CalendarStore};
 use rustical_store_sqlite::tests::{TestStoreContext, test_store_context};
 use tower::ServiceExt;
 
-fn mkcalendar_template(
+pub fn mkcalendar_template(
     CalendarMetadata {
         displayname,
         order: _order,
