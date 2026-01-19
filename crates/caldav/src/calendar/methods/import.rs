@@ -26,7 +26,10 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
     }
 
     let parser = ical::IcalParser::from_slice(body.as_bytes());
-    let mut cal = parser.expect_one()?.mutable();
+    let mut cal = match parser.expect_one() {
+        Ok(cal) => cal.mutable(),
+        Err(err) => return Ok((StatusCode::BAD_REQUEST, err.to_string()).into_response()),
+    };
 
     // Extract calendar metadata
     let displayname = cal
@@ -67,7 +70,10 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
         cal_components.push(CalendarObjectType::Todo);
     }
 
-    let objects = cal.into_objects()?.into_iter().map(Into::into).collect();
+    let objects = match cal.into_objects() {
+        Ok(objects) => objects.into_iter().map(Into::into).collect(),
+        Err(err) => return Ok((StatusCode::BAD_REQUEST, err.to_string()).into_response()),
+    };
     let new_cal = Calendar {
         principal,
         id: cal_id,

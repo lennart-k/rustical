@@ -103,7 +103,10 @@ pub async fn put_object<AS: AddressbookStore>(
         true
     };
 
-    let object = AddressObject::from_vcf(body)?;
+    let object = match AddressObject::from_vcf(body) {
+        Ok(object) => object,
+        Err(err) => return Ok((StatusCode::BAD_REQUEST, err.to_string()).into_response()),
+    };
     let etag = object.get_etag();
     addr_store
         .put_object(&principal, &addressbook_id, &object_id, object, overwrite)

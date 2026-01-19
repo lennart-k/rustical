@@ -53,9 +53,6 @@ pub enum Error {
     XmlDecodeError(#[from] rustical_xml::XmlError),
 
     #[error(transparent)]
-    IcalError(#[from] rustical_ical::Error),
-
-    #[error(transparent)]
     PreconditionFailed(Precondition),
 }
 
@@ -75,8 +72,6 @@ impl Error {
             Self::XmlDecodeError(_) => StatusCode::BAD_REQUEST,
             Self::ChronoParseError(_) | Self::NotImplemented => StatusCode::INTERNAL_SERVER_ERROR,
             Self::NotFound => StatusCode::NOT_FOUND,
-            // TODO: Can also be Bad Request, if it's used input
-            Self::IcalError(_err) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::PreconditionFailed(_err) => StatusCode::PRECONDITION_FAILED,
         }
     }
