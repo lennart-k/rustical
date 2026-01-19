@@ -71,6 +71,7 @@ pub async fn axum_route_proppatch<R: ResourceService>(
     route_proppatch(&path, uri.path(), &body, &principal, &resource_service).await
 }
 
+#[allow(clippy::too_many_lines)]
 pub async fn route_proppatch<R: ResourceService>(
     path_components: &R::PathComponents,
     path: &str,
@@ -116,12 +117,14 @@ pub async fn route_proppatch<R: ResourceService>(
                             }
                         }
                         SetPropertyPropWrapper::Invalid(invalid) => {
-                            let propname = invalid.tag_name();
+                            let Unparsed(propns, propname) = invalid;
 
                             if let Some(full_propname) = <R::Resource as Resource>::list_props()
                                 .into_iter()
                                 .find_map(|(ns, tag)| {
-                                    if tag == propname.as_str() {
+                                    if (ns, tag)
+                                        == (propns.as_ref().map(NamespaceOwned::as_ref), &propname)
+                                    {
                                         Some((ns.map(NamespaceOwned::from), tag.to_owned()))
                                     } else {
                                         None
@@ -133,7 +136,7 @@ pub async fn route_proppatch<R: ResourceService>(
                                 // - internal properties
                                 props_conflict.push(full_propname);
                             } else {
-                                props_not_found.push((None, propname));
+                                props_not_found.push((propns, propname));
                             }
                         }
                     }

@@ -36,7 +36,6 @@ impl Error {
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::AlreadyExists => StatusCode::CONFLICT,
             Self::ReadOnly => StatusCode::FORBIDDEN,
-            // TODO: Can also be Bad Request, depending on when this is raised
             Self::IcalError(_err) => StatusCode::INTERNAL_SERVER_ERROR,
             Self::InvalidPrincipalType(_) => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR,

@@ -1,6 +1,6 @@
 use quick_xml::name::Namespace;
 
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub struct NamespaceOwned(pub Vec<u8>);
 
 impl<'a> From<Namespace<'a>> for NamespaceOwned {
