@@ -8,7 +8,6 @@ use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Response};
 use http::{Method, StatusCode};
 use ical::IcalParser;
-use ical::types::get_proprietary_tzid;
 use rustical_dav::xml::HrefElement;
 use rustical_ical::CalendarObjectType;
 use rustical_store::auth::Principal;
