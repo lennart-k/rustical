@@ -6,12 +6,15 @@ use axum::{
     extract::{MatchedPath, Path, State},
     response::{IntoResponse, Response},
 };
+use axum_extra::TypedHeader;
+use headers::Host;
 use http::{HeaderMap, StatusCode, Uri};
 use matchit_serde::ParamsDeserializer;
 use serde::Deserialize;
 use tracing::instrument;
 
 #[instrument(skip(path, resource_service,))]
+#[allow(clippy::too_many_arguments)]
 pub async fn axum_route_copy<R: ResourceService>(
     Path(path): Path<R::PathComponents>,
     State(resource_service): State<R>,
@@ -20,6 +23,7 @@ pub async fn axum_route_copy<R: ResourceService>(
     Overwrite(overwrite): Overwrite,
     matched_path: MatchedPath,
     header_map: HeaderMap,
+    TypedHeader(host): TypedHeader<Host>,
 ) -> Result<Response, R::Error> {
     let destination = header_map
         .get("Destination")
@@ -27,7 +31,11 @@ pub async fn axum_route_copy<R: ResourceService>(
         .to_str()
         .map_err(|_| crate::Error::Forbidden)?;
     let destination_uri: Uri = destination.parse().map_err(|_| crate::Error::Forbidden)?;
-    // TODO: Check that host also matches
+    if let Some(authority) = destination_uri.authority()
+        && host != authority.clone().into()
+    {
+        return Err(crate::Error::Forbidden.into());
+    }
     let destination = destination_uri.path();
 
     let mut router = matchit::Router::new();
