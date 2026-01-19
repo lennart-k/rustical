@@ -107,7 +107,7 @@ strum = "0.27"
 strum_macros = "0.27"
 serde_json = { version = "1.0", features = ["raw_value"] }
 sqlx-sqlite = { version = "0.8", features = ["bundled"] }
-ical = { git = "https://github.com/lennart-k/ical-rs", branch = "dev", features = [
+ical = { git = "https://github.com/lennart-k/ical-rs", rev = "f1ad6456fd6cbd1e6da095297febddd2cfe61422", features = [
   "chrono-tz",
 ] }
 toml = "0.9"
