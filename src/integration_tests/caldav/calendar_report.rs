@@ -87,70 +87,79 @@ const REPORT_7_8_3: &str = r#"
    </C:calendar-query>
 "#;
 
-const OUTPUT_7_8_3: &str = r#"
-     <D:response>
-       <D:href>http://cal.example.com/bernard/work/abcd2.ics</D:href>
-       <D:propstat>
-         <D:prop>
-           <D:getetag>"fffff-abcd2"</D:getetag>
-           <C:calendar-data>BEGIN:VCALENDAR
-   VERSION:2.0
-   PRODID:-//Example Corp.//CalDAV Client//EN
-   BEGIN:VEVENT
-   DTSTAMP:20060206T001121Z
-   DTSTART:20060103T170000
-   DURATION:PT1H
-   RECURRENCE-ID:20060103T170000
-   SUMMARY:Event #2
-   UID:00959BC664CA650E933C892C@example.com
-   END:VEVENT
-   BEGIN:VEVENT
-   DTSTAMP:20060206T001121Z
-   DTSTART:20060104T190000
-   DURATION:PT1H
-   RECURRENCE-ID:20060104T170000
-   SUMMARY:Event #2 bis
-   UID:00959BC664CA650E933C892C@example.com
-   END:VEVENT
-   END:VCALENDAR
-   </C:calendar-data>
-         </D:prop>
-         <D:status>HTTP/1.1 200 OK</D:status>
-       </D:propstat>
-     </D:response>
-     <D:response>
-       <D:href>http://cal.example.com/bernard/work/abcd3.ics</D:href>
-       <D:propstat>
-         <D:prop>
-           <D:getetag>"fffff-abcd3"</D:getetag>
-           <C:calendar-data>BEGIN:VCALENDAR
-   VERSION:2.0
-   PRODID:-//Example Corp.//CalDAV Client//EN
-   BEGIN:VEVENT
-   ATTENDEE;PARTSTAT=ACCEPTED;ROLE=CHAIR:mailto:cyrus@example.com
-   ATTENDEE;PARTSTAT=NEEDS-ACTION:mailto:lisa@example.com
-   DTSTAMP:20060206T001220Z
-   DTSTART:20060104T150000
-   DURATION:PT1H
-   LAST-MODIFIED:20060206T001330Z
-   ORGANIZER:mailto:cyrus@example.com
-   SEQUENCE:1
-   STATUS:TENTATIVE
-   SUMMARY:Event #3
-   UID:DC6C50A017428C5216A2F1CD@example.com
-   X-ABC-GUID:E1CX5Dr-0007ym-Hz@example.com
-   END:VEVENT
-   END:VCALENDAR
-   </C:calendar-data>
-         </D:prop>
-         <D:status>HTTP/1.1 200 OK</D:status>
-       </D:propstat>
-"#;
+// Adapted from Example 7.8.3 of RFC 4791
+// In the RFC the output is wrong since it returns DTSTART in UTC as local time, e.g.
+// DTSTART:20060103T170000
+// instead of
+// DTSTART:20060103T170000Z
+// In https://datatracker.ietf.org/doc/html/rfc4791#section-9.6.5
+// it is clearly stated that times with timezone information MUST be returned in UTC.
+// Also, the RECURRENCE-ID needs to include the TIMEZONE, which is fixed here by converting it to
+// UTC
+const OUTPUT_7_8_3: &str = r#"<?xml version="1.0" encoding="utf-8"?>
+<multistatus xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:PUSH="https://bitfire.at/webdav-push">
+    <response>
+        <href>/caldav/principal/user/calendar/abcd2.ics</href>
+        <propstat>
+            <prop>
+                <CAL:calendar-data>BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Example Corp.//CalDAV Client//EN
+BEGIN:VEVENT
+DTSTAMP:20060206T001121Z
+DTSTART:20060103T170000Z
+DURATION:PT1H
+SUMMARY:Event #2
+UID:abcd2
+RECURRENCE-ID:20060103T170000Z
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:20060206T001121Z
+DTSTART:20060104T190000Z
+DURATION:PT1H
+RECURRENCE-ID:20060104T170000Z
+SUMMARY:Event #2 bis
+UID:abcd2
+END:VEVENT
+END:VCALENDAR
+</CAL:calendar-data>
+            </prop>
+            <status>HTTP/1.1 200 OK</status>
+        </propstat>
+    </response>
+    <response>
+        <href>/caldav/principal/user/calendar/abcd3.ics</href>
+        <propstat>
+            <prop>
+                <CAL:calendar-data>BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Example Corp.//CalDAV Client//EN
+BEGIN:VEVENT
+ATTENDEE;PARTSTAT=ACCEPTED;ROLE=CHAIR:mailto:cyrus@example.com
+ATTENDEE;PARTSTAT=NEEDS-ACTION:mailto:lisa@example.com
+DTSTAMP:20060206T001220Z
+DTSTART:20060104T150000Z
+DURATION:PT1H
+LAST-MODIFIED:20060206T001330Z
+ORGANIZER:mailto:cyrus@example.com
+SEQUENCE:1
+STATUS:TENTATIVE
+SUMMARY:Event #3
+UID:abcd3
+X-ABC-GUID:E1CX5Dr-0007ym-Hz@example.com
+END:VEVENT
+END:VCALENDAR
+</CAL:calendar-data>
+            </prop>
+            <status>HTTP/1.1 200 OK</status>
+        </propstat>
+    </response>
+</multistatus>"#;
 
 #[rstest]
-#[case(0, ICS_1, REPORT_7_8_1)]
-#[case(1, ICS_1, REPORT_7_8_2)]
-#[case(2, ICS_1, REPORT_7_8_3)]
+#[case(0, ICS_1, REPORT_7_8_1, None)]
+#[case(1, ICS_1, REPORT_7_8_2, None)]
+#[case(2, ICS_1, REPORT_7_8_3, Some(OUTPUT_7_8_3))]
 #[tokio::test]
 async fn test_report(
     #[from(test_store_context)]
@@ -159,6 +168,7 @@ async fn test_report(
     #[case] case: usize,
     #[case] ics: &'static str,
     #[case] report: &'static str,
+    #[case] output: Option<&'static str>,
 ) {
     let context = context.await;
     let app = get_app(context.clone());
@@ -193,4 +203,7 @@ async fn test_report(
     assert_eq!(response.status(), StatusCode::MULTI_STATUS);
     let body = response.extract_string().await;
     insta::assert_snapshot!(format!("{case}_report_body"), body);
+    if let Some(output) = output {
+        similar_asserts::assert_eq!(output, body.replace('\r', ""));
+    }
 }

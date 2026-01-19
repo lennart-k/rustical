@@ -1,8 +1,8 @@
 use super::comp_filter::{CompFilterElement, CompFilterable};
 use crate::calendar_object::CalendarObjectPropWrapperName;
-use ical::property::Property;
+use ical::{component::IcalCalendarObject, property::ContentLine};
 use rustical_dav::xml::{PropfindType, TextMatchElement};
-use rustical_ical::{CalendarObject, UtcDateTime};
+use rustical_ical::UtcDateTime;
 use rustical_store::calendar_store::CalendarQuery;
 use rustical_xml::{XmlDeserialize, XmlRootTag};
 
@@ -30,8 +30,8 @@ pub struct ParamFilterElement {
 
 impl ParamFilterElement {
     #[must_use]
-    pub fn match_property(&self, prop: &Property) -> bool {
-        let Some(param) = prop.get_param(&self.name) else {
+    pub fn match_property(&self, prop: &ContentLine) -> bool {
+        let Some(param) = prop.params.get_param(&self.name) else {
             return self.is_not_defined.is_some();
         };
         if self.is_not_defined.is_some() {
@@ -57,7 +57,7 @@ pub struct FilterElement {
 
 impl FilterElement {
     #[must_use]
-    pub fn matches(&self, cal_object: &CalendarObject) -> bool {
+    pub fn matches(&self, cal_object: &IcalCalendarObject) -> bool {
         cal_object.matches(&self.comp_filter)
     }
 }

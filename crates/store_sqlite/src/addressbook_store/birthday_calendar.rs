@@ -1,14 +1,13 @@
 use crate::addressbook_store::SqliteAddressbookStore;
 use async_trait::async_trait;
 use chrono::NaiveDateTime;
-use rustical_ical::{AddressObject, CalendarObject, CalendarObjectType};
+use rustical_ical::{CalendarObject, CalendarObjectType};
 use rustical_store::{
     Addressbook, AddressbookStore, Calendar, CalendarMetadata, CalendarStore, CollectionMetadata,
     Error, PrefixedCalendarStore,
 };
 use sha2::{Digest, Sha256};
 use sqlx::{Executor, Sqlite};
-use std::collections::HashMap;
 use tracing::instrument;
 
 pub const BIRTHDAYS_PREFIX: &str = "_birthdays_";
@@ -269,17 +268,18 @@ impl CalendarStore for SqliteAddressbookStore {
     #[instrument]
     async fn update_calendar(
         &self,
-        principal: String,
-        id: String,
+        principal: &str,
+        id: &str,
         mut calendar: Calendar,
     ) -> Result<(), Error> {
+        assert_eq!(principal, calendar.principal);
         assert_eq!(id, calendar.id);
         calendar.id = calendar
             .id
             .strip_prefix(BIRTHDAYS_PREFIX)
             .ok_or(Error::NotFound)?
             .to_string();
-        Self::_update_birthday_calendar(&self.db, &principal, &calendar).await
+        Self::_update_birthday_calendar(&self.db, principal, &calendar).await
     }
 
     #[instrument]
@@ -324,19 +324,35 @@ impl CalendarStore for SqliteAddressbookStore {
         principal: &str,
         cal_id: &str,
         synctoken: i64,
-    ) -> Result<(Vec<CalendarObject>, Vec<String>, i64), Error> {
+    ) -> Result<(Vec<(String, CalendarObject)>, Vec<String>, i64), Error> {
         let cal_id = cal_id
             .strip_prefix(BIRTHDAYS_PREFIX)
             .ok_or(Error::NotFound)?;
         let (objects, deleted_objects, new_synctoken) =
             AddressbookStore::sync_changes(self, principal, cal_id, synctoken).await?;
-        let objects: Result<Vec<Option<CalendarObject>>, rustical_ical::Error> = objects
-            .iter()
-            .map(AddressObject::get_birthday_object)
-            .collect();
-        let objects = objects?.into_iter().flatten().collect();
 
-        Ok((objects, deleted_objects, new_synctoken))
+        let mut out_objects = vec![];
+
+        for (object_id, object) in objects {
+            if let Some(birthday) = object.get_birthday_object()? {
+                out_objects.push((format!("{object_id}-birthday"), birthday));
+            }
+            if let Some(anniversary) = object.get_anniversary_object()? {
+                out_objects.push((format!("{object_id}-anniversayr"), anniversary));
+            }
+        }
+
+        let deleted_objects = deleted_objects
+            .into_iter()
+            .flat_map(|object_id| {
+                [
+                    format!("{object_id}-birthday"),
+                    format!("{object_id}-anniversary"),
+                ]
+            })
+            .collect();
+
+        Ok((out_objects, deleted_objects, new_synctoken))
     }
 
     #[instrument]
@@ -356,21 +372,19 @@ impl CalendarStore for SqliteAddressbookStore {
         &self,
         principal: &str,
         cal_id: &str,
-    ) -> Result<Vec<CalendarObject>, Error> {
+    ) -> Result<Vec<(String, CalendarObject)>, Error> {
+        let mut objects = vec![];
         let cal_id = cal_id
             .strip_prefix(BIRTHDAYS_PREFIX)
             .ok_or(Error::NotFound)?;
-        let objects: Result<Vec<HashMap<&'static str, CalendarObject>>, rustical_ical::Error> =
-            AddressbookStore::get_objects(self, principal, cal_id)
-                .await?
-                .iter()
-                .map(AddressObject::get_significant_dates)
-                .collect();
-        let objects = objects?
-            .into_iter()
-            .flat_map(HashMap::into_values)
-            .collect();
-
+        for (object_id, object) in AddressbookStore::get_objects(self, principal, cal_id).await? {
+            if let Some(birthday) = object.get_birthday_object()? {
+                objects.push((format!("{object_id}-birthday"), birthday));
+            }
+            if let Some(anniversary) = object.get_anniversary_object()? {
+                objects.push((format!("{object_id}-anniversayr"), anniversary));
+            }
+        }
         Ok(objects)
     }
 
@@ -386,19 +400,22 @@ impl CalendarStore for SqliteAddressbookStore {
             .strip_prefix(BIRTHDAYS_PREFIX)
             .ok_or(Error::NotFound)?;
         let (addressobject_id, date_type) = object_id.rsplit_once('-').ok_or(Error::NotFound)?;
-        AddressbookStore::get_object(self, principal, cal_id, addressobject_id, show_deleted)
-            .await?
-            .get_significant_dates()?
-            .remove(date_type)
-            .ok_or(Error::NotFound)
+        let obj =
+            AddressbookStore::get_object(self, principal, cal_id, addressobject_id, show_deleted)
+                .await?;
+        match date_type {
+            "birthday" => Ok(obj.get_birthday_object()?.ok_or(Error::NotFound)?),
+            "anniversary" => Ok(obj.get_anniversary_object()?.ok_or(Error::NotFound)?),
+            _ => Err(Error::NotFound),
+        }
     }
 
     #[instrument]
     async fn put_objects(
         &self,
-        _principal: String,
-        _cal_id: String,
-        _objects: Vec<CalendarObject>,
+        _principal: &str,
+        _cal_id: &str,
+        _objects: Vec<(String, CalendarObject)>,
         _overwrite: bool,
     ) -> Result<(), Error> {
         Err(Error::ReadOnly)

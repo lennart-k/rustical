@@ -15,8 +15,8 @@ pub async fn get_objects_addressbook_query<AS: AddressbookStore>(
     principal: &str,
     addressbook_id: &str,
     store: &AS,
-) -> Result<Vec<AddressObject>, Error> {
+) -> Result<Vec<(String, AddressObject)>, Error> {
     let mut objects = store.get_objects(principal, addressbook_id).await?;
-    objects.retain(|object| addr_query.filter.matches(object));
+    objects.retain(|(_id, object)| addr_query.filter.matches(object));
     Ok(objects)
 }

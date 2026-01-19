@@ -5,16 +5,12 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use http::StatusCode;
-use ical::{
-    generator::Emitter,
-    parser::{Component, ComponentMut},
-};
+use ical::parser::{Component, ComponentMut};
 use rustical_dav::header::Overwrite;
-use rustical_ical::{CalendarObject, CalendarObjectType};
+use rustical_ical::CalendarObjectType;
 use rustical_store::{
     Calendar, CalendarMetadata, CalendarStore, SubscriptionStore, auth::Principal,
 };
-use std::io::BufReader;
 use tracing::instrument;
 
 #[instrument(skip(resource_service))]
@@ -29,18 +25,11 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
         return Err(Error::Unauthorized);
     }
 
-    let mut parser = ical::IcalParser::new(BufReader::new(body.as_bytes()));
-    let mut cal = parser
-        .next()
-        .expect("input must contain calendar")
-        .unwrap()
-        .mutable();
-    if parser.next().is_some() {
-        return Err(rustical_ical::Error::InvalidData(
-            "multiple calendars, only one allowed".to_owned(),
-        )
-        .into());
-    }
+    let parser = ical::IcalParser::from_slice(body.as_bytes());
+    let mut cal = match parser.expect_one() {
+        Ok(cal) => cal.mutable(),
+        Err(err) => return Ok((StatusCode::BAD_REQUEST, err.to_string()).into_response()),
+    };
 
     // Extract calendar metadata
     let displayname = cal
@@ -49,14 +38,19 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
     let description = cal
         .get_property("X-WR-CALDESC")
         .and_then(|prop| prop.value.clone());
+    let color = cal
+        .get_property("X-WR-CALCOLOR")
+        .and_then(|prop| prop.value.clone());
     let timezone_id = cal
         .get_property("X-WR-TIMEZONE")
         .and_then(|prop| prop.value.clone());
     // These properties should not appear in the expanded calendar objects
     cal.remove_property("X-WR-CALNAME");
     cal.remove_property("X-WR-CALDESC");
+    cal.remove_property("X-WR-CALCOLOR");
     cal.remove_property("X-WR-TIMEZONE");
-    let cal = cal.verify().unwrap();
+    let cal = cal.build(None).unwrap();
+
     // Make sure timezone is valid
     if let Some(timezone_id) = timezone_id.as_ref() {
         assert!(
@@ -64,8 +58,7 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
             "Invalid calendar timezone id"
         );
     }
-
-    // Extract necessary component types
+    // // Extract necessary component types
     let mut cal_components = vec![];
     if !cal.events.is_empty() {
         cal_components.push(CalendarObjectType::Event);
@@ -77,13 +70,10 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
         cal_components.push(CalendarObjectType::Todo);
     }
 
-    let expanded_cals = cal.expand_calendar();
-    // Janky way to convert between IcalCalendar and CalendarObject
-    let objects = expanded_cals
-        .into_iter()
-        .map(|cal| cal.generate())
-        .map(|ics| CalendarObject::from_ics(ics, None))
-        .collect::<Result<Vec<_>, _>>()?;
+    let objects = match cal.into_objects() {
+        Ok(objects) => objects.into_iter().map(Into::into).collect(),
+        Err(err) => return Ok((StatusCode::BAD_REQUEST, err.to_string()).into_response()),
+    };
     let new_cal = Calendar {
         principal,
         id: cal_id,
@@ -91,7 +81,7 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
             displayname,
             order: 0,
             description,
-            color: None,
+            color,
         },
         timezone_id,
         deleted_at: None,

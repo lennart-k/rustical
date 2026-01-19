@@ -64,7 +64,7 @@ const FILTER_2: &str = r#"
 #[case(VCF_2, FILTER_2, true)]
 fn test_filter(#[case] vcf: &str, #[case] filter: &str, #[case] matches: bool) {
     dbg!(vcf);
-    let obj = AddressObject::from_vcf(String::new(), vcf.to_owned()).unwrap();
+    let obj = AddressObject::from_vcf(vcf.to_owned()).unwrap();
     let filter = FilterElement::parse_str(filter).unwrap();
     assert_eq!(matches, filter.matches(&obj));
 }

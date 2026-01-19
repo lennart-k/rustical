@@ -56,7 +56,7 @@ END:VCALENDAR
         <href>/caldav/principal/user/calendar/abcd3.ics</href>
         <propstat>
             <prop>
-                <getetag>&quot;c6a5b1cf6985805686df99e7f2e1cf286567dcb3383fc6fa1b12ce42d3fbc01c&quot;</getetag>
+                <getetag>&quot;a84fd022dfc742bf8f17ac04fca3aad687e9ae724180185e8e0df11e432dae30&quot;</getetag>
                 <CAL:calendar-data>BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Example Corp.//CalDAV Client//EN
@@ -90,6 +90,7 @@ SEQUENCE:1
 STATUS:TENTATIVE
 SUMMARY:Event #3
 UID:abcd3
+X-ABC-GUID:E1CX5Dr-0007ym-Hz@example.com
 END:VEVENT
 END:VCALENDAR
 </CAL:calendar-data>

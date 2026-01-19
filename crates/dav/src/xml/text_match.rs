@@ -1,4 +1,4 @@
-use ical::property::Property;
+use ical::property::ContentLine;
 use rustical_xml::{ValueDeserialize, XmlDeserialize};
 use std::borrow::Cow;
 
@@ -128,7 +128,7 @@ impl TextMatchElement {
         negate_condition.0 ^ matches
     }
     #[must_use]
-    pub fn match_property(&self, property: &Property) -> bool {
+    pub fn match_property(&self, property: &ContentLine) -> bool {
         let text = property.value.as_deref().unwrap_or("");
         self.match_text(text)
     }

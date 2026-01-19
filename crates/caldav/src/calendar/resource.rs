@@ -4,6 +4,7 @@ use crate::calendar::prop::{ReportMethod, SupportedCollationSet};
 use chrono::{DateTime, Utc};
 use derive_more::derive::{From, Into};
 use ical::IcalParser;
+use ical::types::CalDateTime;
 use rustical_dav::extensions::{
     CommonPropertiesExtension, CommonPropertiesProp, SyncTokenExtension, SyncTokenExtensionProp,
 };
@@ -11,7 +12,6 @@ use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner, SupportedReportSet};
 use rustical_dav_push::{DavPushExtension, DavPushExtensionProp};
-use rustical_ical::CalDateTime;
 use rustical_store::Calendar;
 use rustical_store::auth::Principal;
 use rustical_xml::{EnumVariants, PropName};
@@ -202,7 +202,7 @@ impl Resource for CalendarResource {
                 CalendarProp::CalendarTimezone(timezone) => {
                     if let Some(tz) = timezone {
                         // TODO: Proper error (calendar-timezone precondition)
-                        let calendar = IcalParser::new(tz.as_bytes())
+                        let calendar = IcalParser::from_slice(tz.as_bytes())
                             .next()
                             .ok_or_else(|| {
                                 rustical_dav::Error::BadRequest(
@@ -215,13 +215,13 @@ impl Resource for CalendarResource {
                                 )
                             })?;
 
-                        let timezone = calendar.timezones.first().ok_or_else(|| {
+                        let timezone = calendar.vtimezones.values().next().ok_or_else(|| {
                             rustical_dav::Error::BadRequest("No timezone data provided".to_owned())
                         })?;
-                        let timezone: chrono_tz::Tz = timezone.try_into().map_err(|_| {
+                        let timezone: Option<chrono_tz::Tz> = timezone.into();
+                        let timezone = timezone.ok_or_else(|| {
                             rustical_dav::Error::BadRequest("No timezone data provided".to_owned())
                         })?;
-
                         self.cal.timezone_id = Some(timezone.name().to_owned());
                     }
                     Ok(())

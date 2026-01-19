@@ -23,9 +23,6 @@ pub enum Error {
 
     #[error(transparent)]
     XmlDecodeError(#[from] rustical_xml::XmlError),
-
-    #[error(transparent)]
-    IcalError(#[from] rustical_ical::Error),
 }
 
 impl Error {
@@ -43,7 +40,6 @@ impl Error {
             Self::XmlDecodeError(_) => StatusCode::BAD_REQUEST,
             Self::ChronoParseError(_) | Self::NotImplemented => StatusCode::INTERNAL_SERVER_ERROR,
             Self::NotFound => StatusCode::NOT_FOUND,
-            Self::IcalError(err) => err.status_code(),
         }
     }
 }

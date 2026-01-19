@@ -34,16 +34,19 @@ fn benchmark(c: &mut Criterion) {
         cal_store
     });
 
-    let object = CalendarObject::from_ics(include_str!("ical_event.ics").to_owned(), None).unwrap();
+    let row = (
+        "asd".to_owned(),
+        CalendarObject::from_ics(include_str!("ical_event.ics").to_owned()).unwrap(),
+    );
 
     let batch_size = 1000;
-    let objects: Vec<_> = std::iter::repeat_n(object.clone(), batch_size).collect();
+    let objects: Vec<_> = std::iter::repeat_n(row.clone(), batch_size).collect();
 
     c.bench_function("put_batch", |b| {
         b.to_async(&runtime).iter(async || {
             // yeet
             cal_store
-                .put_objects("user".to_owned(), "okwow".to_owned(), objects.clone(), true)
+                .put_objects("user", "okwow", objects.clone(), true)
                 .await
                 .unwrap();
         });
@@ -54,7 +57,7 @@ fn benchmark(c: &mut Criterion) {
             // yeet
             for _ in 0..1000 {
                 cal_store
-                    .put_object("user".to_owned(), "okwow".to_owned(), object.clone(), true)
+                    .put_object("user", "okwow", &row.0, row.1.clone(), true)
                     .await
                     .unwrap();
             }

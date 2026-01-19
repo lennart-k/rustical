@@ -55,7 +55,7 @@ impl ReportRequest {
 }
 
 fn objects_response(
-    objects: Vec<AddressObject>,
+    objects: Vec<(String, AddressObject)>,
     not_found: Vec<String>,
     path: &str,
     principal: &str,
@@ -64,11 +64,12 @@ fn objects_response(
     prop: &PropfindType<AddressObjectPropWrapperName>,
 ) -> Result<MultistatusElement<AddressObjectPropWrapper, String>, Error> {
     let mut responses = Vec::new();
-    for object in objects {
-        let path = format!("{}/{}.vcf", path, object.get_id());
+    for (object_id, object) in objects {
+        let path = format!("{}/{}.vcf", path, &object_id);
         responses.push(
             AddressObjectResource {
                 object,
+                object_id,
                 principal: principal.to_owned(),
             }
             .propfind(&path, prop, None, puri, user)?,

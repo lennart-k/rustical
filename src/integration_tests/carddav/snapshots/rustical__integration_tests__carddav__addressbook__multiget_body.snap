@@ -8,7 +8,7 @@ expression: body
         <href>/carddav/principal/user/contacts/newcard.vcf</href>
         <propstat>
             <prop>
-                <getetag>&quot;24835b6c11816c864f9edadd4c7c296234c643892afcbbc5fbf5c9b7ac935cf8&quot;</getetag>
+                <getetag>&quot;ea0bf4a2ce7ef84606a4cf9235776dbc11b3e7ce351ddf35f27cbc0088acca7e&quot;</getetag>
                 <CARD:address-data>BEGIN:VCARD
 VERSION:3.0
 FN:Cyrus Daboo

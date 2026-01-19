@@ -107,7 +107,9 @@ strum = "0.27"
 strum_macros = "0.27"
 serde_json = { version = "1.0", features = ["raw_value"] }
 sqlx-sqlite = { version = "0.8", features = ["bundled"] }
-ical = { git = "https://github.com/lennart-k/ical-rs", rev = "7c2ab1f3" }
+ical = { git = "https://github.com/lennart-k/ical-rs", rev = "f1ad6456fd6cbd1e6da095297febddd2cfe61422", features = [
+  "chrono-tz",
+] }
 toml = "0.9"
 tower = "0.5"
 tower-http = { version = "0.6", features = [
@@ -151,6 +153,7 @@ criterion = { version = "0.8", features = ["async_tokio"] }
 rstest.workspace = true
 rustical_store_sqlite = { workspace = true, features = ["test"] }
 insta.workspace = true
+similar-asserts.workspace = true
 
 [dependencies]
 rustical_store.workspace = true
@@ -158,6 +161,7 @@ rustical_store_sqlite.workspace = true
 rustical_caldav.workspace = true
 rustical_carddav.workspace = true
 rustical_frontend.workspace = true
+ical.workspace = true
 toml.workspace = true
 serde.workspace = true
 tokio.workspace = true
@@ -199,7 +203,3 @@ tower-http.workspace = true
 axum-extra.workspace = true
 headers.workspace = true
 http.workspace = true
-# TODO: Remove in next major release
-ical_dev = { package = "ical", git = "https://github.com/lennart-k/ical-rs", branch = "dev", features = [
-  "chrono-tz",
-] }

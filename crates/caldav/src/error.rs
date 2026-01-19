@@ -53,9 +53,6 @@ pub enum Error {
     XmlDecodeError(#[from] rustical_xml::XmlError),
 
     #[error(transparent)]
-    IcalError(#[from] rustical_ical::Error),
-
-    #[error(transparent)]
     PreconditionFailed(Precondition),
 }
 
@@ -75,7 +72,6 @@ impl Error {
             Self::XmlDecodeError(_) => StatusCode::BAD_REQUEST,
             Self::ChronoParseError(_) | Self::NotImplemented => StatusCode::INTERNAL_SERVER_ERROR,
             Self::NotFound => StatusCode::NOT_FOUND,
-            Self::IcalError(err) => err.status_code(),
             Self::PreconditionFailed(_err) => StatusCode::PRECONDITION_FAILED,
         }
     }
@@ -83,6 +79,9 @@ impl Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
+        if let Self::PreconditionFailed(precondition) = self {
+            return precondition.into_response();
+        }
         if matches!(
             self.status_code(),
             StatusCode::INTERNAL_SERVER_ERROR | StatusCode::PRECONDITION_FAILED
