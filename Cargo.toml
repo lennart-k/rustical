@@ -153,6 +153,7 @@ criterion = { version = "0.8", features = ["async_tokio"] }
 rstest.workspace = true
 rustical_store_sqlite = { workspace = true, features = ["test"] }
 insta.workspace = true
+similar-asserts.workspace = true
 
 [dependencies]
 rustical_store.workspace = true
