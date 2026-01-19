@@ -18,7 +18,7 @@ impl From<sqlx::Error> for Error {
             sqlx::Error::RowNotFound => Self::StoreError(rustical_store::Error::NotFound),
             sqlx::Error::Database(err) => {
                 if err.is_unique_violation() {
-                    warn!("{err:?}");
+                    warn!("{err}");
                     Self::StoreError(rustical_store::Error::AlreadyExists)
                 } else {
                     Self::SqlxError(sqlx::Error::Database(err))

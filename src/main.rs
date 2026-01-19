@@ -34,9 +34,6 @@ mod config;
 pub mod integration_tests;
 mod setup_tracing;
 
-mod migration_0_12;
-use migration_0_12::{validate_address_objects_0_12, validate_calendar_objects_0_12};
-
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
@@ -73,13 +70,18 @@ async fn get_data_stores(
         DataStoreConfig::Sqlite(SqliteDataStoreConfig {
             db_url,
             run_repairs,
+            skip_broken,
         }) => {
             let db = create_db_pool(db_url, migrate).await?;
             // Channel to watch for changes (for DAV Push)
             let (send, recv) = tokio::sync::mpsc::channel(1000);
 
-            let addressbook_store = Arc::new(SqliteAddressbookStore::new(db.clone(), send.clone()));
-            let cal_store = Arc::new(SqliteCalendarStore::new(db.clone(), send));
+            let addressbook_store = Arc::new(SqliteAddressbookStore::new(
+                db.clone(),
+                send.clone(),
+                *skip_broken,
+            ));
+            let cal_store = Arc::new(SqliteCalendarStore::new(db.clone(), send, *skip_broken));
             if *run_repairs {
                 info!("Running repair tasks");
                 addressbook_store.repair_orphans().await?;
@@ -88,6 +90,13 @@ async fn get_data_stores(
             }
             let subscription_store = Arc::new(SqliteStore::new(db.clone()));
             let principal_store = Arc::new(SqlitePrincipalStore::new(db));
+
+            // Validate all calendar objects
+            for principal in principal_store.get_principals().await? {
+                cal_store.validate_objects(&principal.id).await?;
+                addressbook_store.validate_objects(&principal.id).await?;
+            }
+
             (
                 addressbook_store,
                 cal_store,
@@ -124,14 +133,6 @@ async fn main() -> Result<()> {
 
             let (addr_store, cal_store, subscription_store, principal_store, update_recv) =
                 get_data_stores(!args.no_migrations, &config.data_store).await?;
-
-            warn!(
-                "Validating calendar data against the next-version ical parser.
-In the next major release these will be rejected and cause errors.
-If any errors occur, please open an issue so they can be fixed before the next major release."
-            );
-            validate_calendar_objects_0_12(principal_store.as_ref(), cal_store.as_ref()).await?;
-            validate_address_objects_0_12(principal_store.as_ref(), addr_store.as_ref()).await?;
 
             let mut tasks = vec![];
 

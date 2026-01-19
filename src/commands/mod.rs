@@ -18,6 +18,7 @@ pub fn cmd_gen_config(_args: GenConfigArgs) -> anyhow::Result<()> {
         data_store: DataStoreConfig::Sqlite(SqliteDataStoreConfig {
             db_url: "/var/lib/rustical/db.sqlite3".to_owned(),
             run_repairs: true,
+            skip_broken: true,
         }),
         tracing: TracingConfig::default(),
         frontend: FrontendConfig {

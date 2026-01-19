@@ -2,6 +2,7 @@ use super::ChangeOperation;
 use crate::BEGIN_IMMEDIATE;
 use async_trait::async_trait;
 use derive_more::derive::Constructor;
+use ical::parser::ParserError;
 use rustical_ical::AddressObject;
 use rustical_store::{
     Addressbook, AddressbookStore, CollectionMetadata, CollectionOperation,
@@ -9,7 +10,7 @@ use rustical_store::{
 };
 use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};
 use tokio::sync::mpsc::Sender;
-use tracing::{error_span, instrument, warn};
+use tracing::{error, error_span, instrument, warn};
 
 pub mod birthday_calendar;
 
@@ -17,6 +18,12 @@ pub mod birthday_calendar;
 struct AddressObjectRow {
     id: String,
     vcf: String,
+}
+impl From<AddressObjectRow> for (String, Result<AddressObject, ParserError>) {
+    fn from(row: AddressObjectRow) -> Self {
+        let result = AddressObject::from_vcf(row.vcf);
+        (row.id, result)
+    }
 }
 
 impl TryFrom<AddressObjectRow> for (String, AddressObject) {
@@ -31,6 +38,7 @@ impl TryFrom<AddressObjectRow> for (String, AddressObject) {
 pub struct SqliteAddressbookStore {
     db: SqlitePool,
     sender: Sender<CollectionOperation>,
+    skip_broken: bool,
 }
 
 impl SqliteAddressbookStore {
@@ -88,6 +96,36 @@ impl SqliteAddressbookStore {
         Ok(())
     }
 
+    #[allow(clippy::missing_panics_doc)]
+    pub async fn validate_objects(&self, principal: &str) -> Result<(), Error> {
+        let mut success = true;
+        for addressbook in self.get_addressbooks(principal).await? {
+            for (object_id, res) in Self::_get_objects(&self.db, principal, &addressbook.id).await?
+            {
+                if let Err(err) = res {
+                    warn!(
+                        "Invalid address object found at {principal}/{addr_id}/{object_id}.vcf. Error: {err}",
+                        addr_id = addressbook.id
+                    );
+                    success = false;
+                }
+            }
+        }
+        if !success {
+            if self.skip_broken {
+                error!(
+                    "Not all address objects are valid. Since data_store.sqlite.skip_broken=true they will be hidden. You are still advised to manually remove or repair the object. If you need help feel free to open up an issue on GitHub."
+                );
+            } else {
+                error!(
+                    "Not all address objects are valid. Since data_store.sqlite.skip_broken=false this causes a panic. Remove or repair the broken objects manually or set data_store.sqlite.skip_broken=false as a temporary solution to ignore the error. If you need help feel free to open up an issue on GitHub."
+                );
+                panic!();
+            }
+        }
+        Ok(())
+    }
+
     // Logs an operation to an address object
     async fn log_object_operation(
         tx: &mut Transaction<'_, Sqlite>,
@@ -134,7 +172,7 @@ impl SqliteAddressbookStore {
         if let Err(err) = self.sender.try_send(CollectionOperation { topic, data }) {
             error_span!(
                 "Error trying to send addressbook update notification:",
-                err = format!("{err:?}"),
+                err = format!("{err}"),
             );
         }
     }
@@ -353,8 +391,8 @@ impl SqliteAddressbookStore {
         executor: E,
         principal: &str,
         addressbook_id: &str,
-    ) -> Result<Vec<(String, AddressObject)>, rustical_store::Error> {
-        sqlx::query_as!(
+    ) -> Result<impl Iterator<Item = (String, Result<AddressObject, ParserError>)>, Error> {
+        Ok(sqlx::query_as!(
             AddressObjectRow,
             "SELECT id, vcf FROM addressobjects WHERE principal = ? AND addressbook_id = ? AND deleted_at IS NULL",
             principal,
@@ -363,8 +401,8 @@ impl SqliteAddressbookStore {
         .fetch_all(executor)
         .await.map_err(crate::Error::from)?
         .into_iter()
-        .map(std::convert::TryInto::try_into)
-        .collect()
+        .map(Into::into)
+        )
     }
 
     async fn _get_object<'e, E: Executor<'e, Database = Sqlite>>(
@@ -607,7 +645,16 @@ impl AddressbookStore for SqliteAddressbookStore {
         principal: &str,
         addressbook_id: &str,
     ) -> Result<Vec<(String, AddressObject)>, rustical_store::Error> {
-        Self::_get_objects(&self.db, principal, addressbook_id).await
+        let objects = Self::_get_objects(&self.db, principal, addressbook_id).await?;
+        if self.skip_broken {
+            Ok(objects
+                .filter_map(|(id, res)| Some((id, res.ok()?)))
+                .collect())
+        } else {
+            Ok(objects
+                .map(|(id, res)| res.map(|obj| (id, obj)))
+                .collect::<Result<Vec<_>, _>>()?)
+        }
     }
 
     #[instrument]

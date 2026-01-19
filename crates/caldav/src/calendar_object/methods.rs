@@ -98,7 +98,7 @@ pub async fn put_event<C: CalendarStore>(
         Ok(object) => object,
         Err(err) => {
             warn!("invalid calendar data:\n{body}");
-            warn!("{err:#?}");
+            warn!("{err}");
             return Err(Error::PreconditionFailed(Precondition::ValidCalendarData));
         }
     };

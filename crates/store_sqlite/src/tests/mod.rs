@@ -52,8 +52,8 @@ pub async fn test_store_context() -> TestStoreContext {
     let db = get_test_db().await;
     TestStoreContext {
         db: db.clone(),
-        addr_store: SqliteAddressbookStore::new(db.clone(), send_addr),
-        cal_store: SqliteCalendarStore::new(db.clone(), send_cal),
+        addr_store: SqliteAddressbookStore::new(db.clone(), send_addr, false),
+        cal_store: SqliteCalendarStore::new(db.clone(), send_cal, false),
         principal_store: SqlitePrincipalStore::new(db.clone()),
         sub_store: SqliteStore::new(db),
     }

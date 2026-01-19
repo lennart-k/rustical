@@ -3,6 +3,7 @@ use crate::BEGIN_IMMEDIATE;
 use async_trait::async_trait;
 use chrono::TimeDelta;
 use derive_more::derive::Constructor;
+use ical::parser::ParserError;
 use ical::types::CalDateTime;
 use regex::Regex;
 use rustical_ical::{CalendarObject, CalendarObjectType};
@@ -13,13 +14,30 @@ use rustical_store::{CollectionOperation, CollectionOperationInfo};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};
 use tokio::sync::mpsc::Sender;
-use tracing::{error_span, instrument, warn};
+use tracing::{error, error_span, instrument, warn};
 
 #[derive(Debug, Clone)]
 struct CalendarObjectRow {
     id: String,
     ics: String,
     uid: String,
+}
+
+impl From<CalendarObjectRow> for (String, Result<CalendarObject, ParserError>) {
+    fn from(row: CalendarObjectRow) -> Self {
+        let result = CalendarObject::from_ics(row.ics).inspect(|object| {
+            if object.get_uid() != row.uid {
+                warn!(
+                    "Calendar object {}.ics: UID={} and row uid={} do not match",
+                    row.id,
+                    object.get_uid(),
+                    row.uid
+                );
+            }
+        });
+
+        (row.id, result)
+    }
 }
 
 impl TryFrom<CalendarObjectRow> for (String, CalendarObject) {
@@ -92,6 +110,7 @@ impl From<CalendarRow> for Calendar {
 pub struct SqliteCalendarStore {
     db: SqlitePool,
     sender: Sender<CollectionOperation>,
+    skip_broken: bool,
 }
 
 impl SqliteCalendarStore {
@@ -141,9 +160,38 @@ impl SqliteCalendarStore {
         if let Err(err) = self.sender.try_send(CollectionOperation { topic, data }) {
             error_span!(
                 "Error trying to send calendar update notification:",
-                err = format!("{err:?}"),
+                err = format!("{err}"),
             );
         }
+    }
+
+    #[allow(clippy::missing_panics_doc)]
+    pub async fn validate_objects(&self, principal: &str) -> Result<(), Error> {
+        let mut success = true;
+        for calendar in self.get_calendars(principal).await? {
+            for (object_id, res) in Self::_get_objects(&self.db, principal, &calendar.id).await? {
+                if let Err(err) = res {
+                    warn!(
+                        "Invalid calendar object found at {principal}/{cal_id}/{object_id}.ics. Error: {err}",
+                        cal_id = calendar.id
+                    );
+                    success = false;
+                }
+            }
+        }
+        if !success {
+            if self.skip_broken {
+                error!(
+                    "Not all calendar objects are valid. Since data_store.sqlite.skip_broken=true they will be hidden. You are still advised to manually remove or repair the object. If you need help feel free to open up an issue on GitHub."
+                );
+            } else {
+                error!(
+                    "Not all calendar objects are valid. Since data_store.sqlite.skip_broken=false this causes a panic. Remove or repair the broken objects manually or set data_store.sqlite.skip_broken=false as a temporary solution to ignore the error. If you need help feel free to open up an issue on GitHub."
+                );
+                panic!();
+            }
+        }
+        Ok(())
     }
 
     /// In the past exports generated objects with invalid VERSION:4.0
@@ -456,8 +504,8 @@ impl SqliteCalendarStore {
         executor: E,
         principal: &str,
         cal_id: &str,
-    ) -> Result<Vec<(String, CalendarObject)>, Error> {
-        sqlx::query_as!(
+    ) -> Result<impl Iterator<Item = (String, Result<CalendarObject, ParserError>)>, Error> {
+        Ok(sqlx::query_as!(
             CalendarObjectRow,
             "SELECT id, uid, ics FROM calendarobjects WHERE principal = ? AND cal_id = ? AND deleted_at IS NULL",
             principal,
@@ -466,8 +514,8 @@ impl SqliteCalendarStore {
         .fetch_all(executor)
         .await.map_err(crate::Error::from)?
         .into_iter()
-        .map(std::convert::TryInto::try_into)
-        .collect()
+        .map(Into::into)
+        )
     }
 
     async fn _calendar_query<'e, E: Executor<'e, Database = Sqlite>>(
@@ -475,14 +523,14 @@ impl SqliteCalendarStore {
         principal: &str,
         cal_id: &str,
         query: CalendarQuery,
-    ) -> Result<Vec<(String, CalendarObject)>, Error> {
+    ) -> Result<impl Iterator<Item = (String, Result<CalendarObject, ParserError>)>, Error> {
         // We extend our query interval by one day in each direction since we really don't want to
         // miss any objects because of timezone differences
         // I've previously tried NaiveDate::MIN,MAX, but it seems like sqlite cannot handle these
         let start = query.time_start.map(|start| start - TimeDelta::days(1));
         let end = query.time_end.map(|end| end + TimeDelta::days(1));
 
-        sqlx::query_as!(
+        Ok(sqlx::query_as!(
             CalendarObjectRow,
             r"SELECT id, uid, ics FROM calendarobjects
                 WHERE principal = ? AND cal_id = ? AND deleted_at IS NULL
@@ -500,8 +548,7 @@ impl SqliteCalendarStore {
         .await
         .map_err(crate::Error::from)?
         .into_iter()
-        .map(std::convert::TryInto::try_into)
-        .collect()
+        .map(Into::into))
     }
 
     async fn _get_object<'e, E: Executor<'e, Database = Sqlite>>(
@@ -641,6 +688,7 @@ impl SqliteCalendarStore {
         principal: &str,
         cal_id: &str,
         synctoken: i64,
+        skip_broken: bool,
     ) -> Result<(Vec<(String, CalendarObject)>, Vec<String>, i64), Error> {
         struct Row {
             object_id: String,
@@ -670,6 +718,8 @@ impl SqliteCalendarStore {
             match Self::_get_object(&mut *conn, principal, cal_id, &object_id, false).await {
                 Ok(object) => objects.push((object_id, object)),
                 Err(rustical_store::Error::NotFound) => deleted_objects.push(object_id),
+                // Skip broken object
+                Err(rustical_store::Error::IcalError(_)) if skip_broken => (),
                 Err(err) => return Err(err),
             }
         }
@@ -820,7 +870,16 @@ impl CalendarStore for SqliteCalendarStore {
         cal_id: &str,
         query: CalendarQuery,
     ) -> Result<Vec<(String, CalendarObject)>, Error> {
-        Self::_calendar_query(&self.db, principal, cal_id, query).await
+        let objects = Self::_calendar_query(&self.db, principal, cal_id, query).await?;
+        if self.skip_broken {
+            Ok(objects
+                .filter_map(|(id, res)| Some((id, res.ok()?)))
+                .collect())
+        } else {
+            Ok(objects
+                .map(|(id, res)| res.map(|obj| (id, obj)))
+                .collect::<Result<Vec<_>, _>>()?)
+        }
     }
 
     async fn calendar_metadata(
@@ -851,7 +910,16 @@ impl CalendarStore for SqliteCalendarStore {
         principal: &str,
         cal_id: &str,
     ) -> Result<Vec<(String, CalendarObject)>, Error> {
-        Self::_get_objects(&self.db, principal, cal_id).await
+        let objects = Self::_get_objects(&self.db, principal, cal_id).await?;
+        if self.skip_broken {
+            Ok(objects
+                .filter_map(|(id, res)| Some((id, res.ok()?)))
+                .collect())
+        } else {
+            Ok(objects
+                .map(|(id, res)| res.map(|obj| (id, obj)))
+                .collect::<Result<Vec<_>, _>>()?)
+        }
     }
 
     #[instrument]
@@ -974,7 +1042,7 @@ impl CalendarStore for SqliteCalendarStore {
         cal_id: &str,
         synctoken: i64,
     ) -> Result<(Vec<(String, CalendarObject)>, Vec<String>, i64), Error> {
-        Self::_sync_changes(&self.db, principal, cal_id, synctoken).await
+        Self::_sync_changes(&self.db, principal, cal_id, synctoken, self.skip_broken).await
     }
 
     fn is_read_only(&self, _cal_id: &str) -> bool {
