@@ -51,19 +51,18 @@ impl Error {
                 _ => StatusCode::BAD_REQUEST,
             },
             Self::PropReadOnly => StatusCode::CONFLICT,
-            Self::PreconditionFailed => StatusCode::PRECONDITION_FAILED,
             Self::InternalError | Self::IOError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::Forbidden => StatusCode::FORBIDDEN,
+            // The correct status code for a failed precondition is not PreconditionFailed but
+            // Forbidden (or Conflict):
+            // https://datatracker.ietf.org/doc/html/rfc4791#section-1.3
+            Self::PreconditionFailed | Self::Forbidden => StatusCode::FORBIDDEN,
         }
     }
 }
 
 impl axum::response::IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
-        if matches!(
-            self.status_code(),
-            StatusCode::INTERNAL_SERVER_ERROR | StatusCode::PRECONDITION_FAILED
-        ) {
+        if matches!(self.status_code(), StatusCode::INTERNAL_SERVER_ERROR) {
             error!("{self}");
         }
 

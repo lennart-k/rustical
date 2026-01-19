@@ -66,7 +66,7 @@ END:VCALENDAR";
         .typed_insert(Authorization::basic("user", "pass"));
 
     let response = app.clone().oneshot(request).await.unwrap();
-    assert_eq!(response.status(), StatusCode::PRECONDITION_FAILED);
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
     let body = response.extract_string().await;
     insta::assert_snapshot!(body, @r#"
     <?xml version="1.0" encoding="utf-8"?>

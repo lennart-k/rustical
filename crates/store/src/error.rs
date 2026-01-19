@@ -53,9 +53,7 @@ impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
         if matches!(
             self.status_code(),
-            StatusCode::INTERNAL_SERVER_ERROR
-                | StatusCode::PRECONDITION_FAILED
-                | StatusCode::CONFLICT
+            StatusCode::INTERNAL_SERVER_ERROR | StatusCode::CONFLICT
         ) {
             error!("{self}");
         }
