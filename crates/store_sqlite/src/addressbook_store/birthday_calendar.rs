@@ -338,7 +338,7 @@ impl CalendarStore for SqliteAddressbookStore {
                 out_objects.push((format!("{object_id}-birthday"), birthday));
             }
             if let Some(anniversary) = object.get_anniversary_object()? {
-                out_objects.push((format!("{object_id}-anniversayr"), anniversary));
+                out_objects.push((format!("{object_id}-anniversary"), anniversary));
             }
         }
 
@@ -382,7 +382,7 @@ impl CalendarStore for SqliteAddressbookStore {
                 objects.push((format!("{object_id}-birthday"), birthday));
             }
             if let Some(anniversary) = object.get_anniversary_object()? {
-                objects.push((format!("{object_id}-anniversayr"), anniversary));
+                objects.push((format!("{object_id}-anniversary"), anniversary));
             }
         }
         Ok(objects)
