@@ -7,8 +7,8 @@ use crate::{
         AddressObjectPropWrapperName,
     },
 };
+use caldata::property::VcardFNProperty;
 use derive_more::derive::{From, Into};
-use ical::parser::VcardFNProperty;
 use rustical_dav::{
     extensions::CommonPropertiesExtension,
     privileges::UserPrivilegeSet,

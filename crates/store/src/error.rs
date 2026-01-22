@@ -26,7 +26,7 @@ pub enum Error {
     Other(#[from] anyhow::Error),
 
     #[error(transparent)]
-    IcalError(#[from] ical::parser::ParserError),
+    IcalError(#[from] caldata::parser::ParserError),
 }
 
 impl Error {

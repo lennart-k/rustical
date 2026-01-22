@@ -1,10 +1,10 @@
 use super::ChangeOperation;
 use crate::BEGIN_IMMEDIATE;
 use async_trait::async_trait;
+use caldata::parser::ParserError;
+use caldata::types::CalDateTime;
 use chrono::TimeDelta;
 use derive_more::derive::Constructor;
-use ical::parser::ParserError;
-use ical::types::CalDateTime;
 use regex::Regex;
 use rustical_ical::{CalendarObject, CalendarObjectType};
 use rustical_store::calendar_store::CalendarQuery;

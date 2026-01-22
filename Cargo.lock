@@ -566,6 +566,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b35204fbdc0b3f4446b89fc1ac2cf84a8a68971995d0bf2e925ec7cd960f9cb3"
 
 [[package]]
+name = "caldata"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "55ae67018b0b95d01f20a5f6869810e83969baa94b2ff768de7f90a8a9e38efd"
+dependencies = [
+ "chrono",
+ "chrono-tz",
+ "derive_more",
+ "itertools 0.14.0",
+ "lazy_static",
+ "phf 0.13.1",
+ "regex",
+ "rrule",
+ "thiserror 2.0.18",
+]
+
+[[package]]
 name = "cast"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1766,22 +1783,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f31827a206f56af32e590ba56d5d2d085f558508192593743f16b2306495269f"
 dependencies = [
  "cc",
-]
-
-[[package]]
-name = "ical"
-version = "0.12.0-dev"
-source = "git+https://github.com/lennart-k/ical-rs?rev=f1ad6456fd6cbd1e6da095297febddd2cfe61422#f1ad6456fd6cbd1e6da095297febddd2cfe61422"
-dependencies = [
- "chrono",
- "chrono-tz",
- "derive_more",
- "itertools 0.14.0",
- "lazy_static",
- "phf 0.13.1",
- "regex",
- "rrule",
- "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -3324,11 +3325,11 @@ dependencies = [
  "async-trait",
  "axum",
  "axum-extra",
+ "caldata",
  "clap",
  "figment",
  "headers",
  "http",
- "ical",
  "insta",
  "opentelemetry",
  "opentelemetry-otlp",
@@ -3371,13 +3372,13 @@ dependencies = [
  "axum",
  "axum-extra",
  "base64 0.22.1",
+ "caldata",
  "chrono",
  "chrono-tz",
  "derive_more",
  "futures-util",
  "headers",
  "http",
- "ical",
  "insta",
  "percent-encoding",
  "quick-xml",
@@ -3412,11 +3413,11 @@ dependencies = [
  "axum",
  "axum-extra",
  "base64 0.22.1",
+ "caldata",
  "chrono",
  "derive_more",
  "futures-util",
  "http",
- "ical",
  "insta",
  "percent-encoding",
  "quick-xml",
@@ -3445,11 +3446,11 @@ dependencies = [
  "async-trait",
  "axum",
  "axum-extra",
+ "caldata",
  "derive_more",
  "futures-util",
  "headers",
  "http",
- "ical",
  "itertools 0.14.0",
  "log",
  "matchit 0.9.1",
@@ -3530,10 +3531,10 @@ name = "rustical_ical"
 version = "0.12.1"
 dependencies = [
  "axum",
+ "caldata",
  "chrono",
  "chrono-tz",
  "derive_more",
- "ical",
  "regex",
  "rrule",
  "rstest",
@@ -3567,6 +3568,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "axum",
+ "caldata",
  "chrono",
  "chrono-tz",
  "clap",
@@ -3574,7 +3576,6 @@ dependencies = [
  "futures-core",
  "headers",
  "http",
- "ical",
  "regex",
  "rrule",
  "rstest",
@@ -3598,10 +3599,10 @@ name = "rustical_store_sqlite"
 version = "0.12.1"
 dependencies = [
  "async-trait",
+ "caldata",
  "chrono",
  "criterion",
  "derive_more",
- "ical",
  "password-auth",
  "password-hash",
  "pbkdf2",

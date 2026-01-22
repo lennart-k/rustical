@@ -28,7 +28,7 @@ headers.workspace = true
 strum.workspace = true
 matchit.workspace = true
 matchit-serde.workspace = true
-ical = { workspace = true, optional = true }
+caldata = { workspace = true, optional = true }
 
 [features]
-ical = ["dep:ical"]
+ical = ["dep:caldata"]

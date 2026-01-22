@@ -3,8 +3,8 @@ use super::prop::{
     CalendarObjectPropWrapperName,
 };
 use crate::Error;
+use caldata::generator::Emitter;
 use derive_more::derive::{From, Into};
-use ical::generator::Emitter;
 use rustical_dav::{
     extensions::CommonPropertiesExtension,
     privileges::UserPrivilegeSet,

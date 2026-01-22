@@ -1,8 +1,8 @@
 use super::ChangeOperation;
 use crate::BEGIN_IMMEDIATE;
 use async_trait::async_trait;
+use caldata::parser::ParserError;
 use derive_more::derive::Constructor;
-use ical::parser::ParserError;
 use rustical_ical::AddressObject;
 use rustical_store::{
     Addressbook, AddressbookStore, CollectionMetadata, CollectionOperation,

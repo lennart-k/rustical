@@ -20,7 +20,7 @@ rstest.workspace = true
 criterion.workspace = true
 
 [dependencies]
-ical.workspace = true
+caldata.workspace = true
 tokio.workspace = true
 rustical_store.workspace = true
 async-trait.workspace = true

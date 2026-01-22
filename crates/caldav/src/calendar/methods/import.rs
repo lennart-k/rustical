@@ -4,8 +4,9 @@ use axum::{
     extract::{Path, State},
     response::{IntoResponse, Response},
 };
+use caldata::IcalParser;
+use caldata::component::{Component, ComponentMut};
 use http::StatusCode;
-use ical::parser::{Component, ComponentMut};
 use rustical_dav::header::Overwrite;
 use rustical_ical::CalendarObjectType;
 use rustical_store::{
@@ -25,7 +26,7 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
         return Err(Error::Unauthorized);
     }
 
-    let parser = ical::IcalParser::from_slice(body.as_bytes());
+    let parser = IcalParser::from_slice(body.as_bytes());
     let mut cal = match parser.expect_one() {
         Ok(cal) => cal.mutable(),
         Err(err) => return Ok((StatusCode::BAD_REQUEST, err.to_string()).into_response()),

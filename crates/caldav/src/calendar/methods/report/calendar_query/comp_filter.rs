@@ -2,9 +2,12 @@ use crate::calendar::methods::report::calendar_query::{
     TimeRangeElement,
     prop_filter::{PropFilterElement, PropFilterable},
 };
-use ical::{
-    component::{CalendarInnerData, IcalAlarm, IcalCalendarObject, IcalEvent, IcalTodo},
-    parser::{Component, ical::component::IcalTimeZone},
+use caldata::{
+    component::{
+        CalendarInnerData, Component, IcalAlarm, IcalCalendarObject, IcalEvent, IcalTimeZone,
+        IcalTodo,
+    },
+    parser::ContentLine,
 };
 use rustical_xml::XmlDeserialize;
 
@@ -112,10 +115,7 @@ impl CompFilterable for CalendarInnerData {
 }
 
 impl PropFilterable for IcalAlarm {
-    fn get_named_properties<'a>(
-        &'a self,
-        name: &'a str,
-    ) -> impl Iterator<Item = &'a ical::property::ContentLine> {
+    fn get_named_properties<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a ContentLine> {
         Component::get_named_properties(self, name)
     }
 }
@@ -139,7 +139,7 @@ impl PropFilterable for CalendarInnerData {
     fn get_named_properties<'a>(
         &'a self,
         name: &'a str,
-    ) -> Box<dyn Iterator<Item = &'a ical::property::ContentLine> + 'a> {
+    ) -> Box<dyn Iterator<Item = &'a ContentLine> + 'a> {
         // TODO: If we were pedantic, we would have to do recurrence expansion first
         // and take into account the overrides :(
         match self {
@@ -151,10 +151,7 @@ impl PropFilterable for CalendarInnerData {
 }
 
 impl PropFilterable for IcalCalendarObject {
-    fn get_named_properties<'a>(
-        &'a self,
-        name: &'a str,
-    ) -> impl Iterator<Item = &'a ical::property::ContentLine> {
+    fn get_named_properties<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a ContentLine> {
         Component::get_named_properties(self, name)
     }
 }
@@ -185,10 +182,7 @@ impl CompFilterable for IcalCalendarObject {
 }
 
 impl PropFilterable for IcalTimeZone {
-    fn get_named_properties<'a>(
-        &'a self,
-        name: &'a str,
-    ) -> impl Iterator<Item = &'a ical::property::ContentLine> {
+    fn get_named_properties<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a ContentLine> {
         Component::get_named_properties(self, name)
     }
 }

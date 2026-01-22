@@ -1,18 +1,21 @@
 use crate::{CalendarObject, Error};
+use caldata::{
+    VcardParser,
+    component::{
+        CalendarInnerDataBuilder, ComponentMut, IcalAlarmBuilder, IcalCalendarObjectBuilder,
+        IcalEventBuilder, VcardContact,
+    },
+    generator::Emitter,
+    parser::ContentLine,
+    property::{
+        Calscale, IcalCALSCALEProperty, IcalDTENDProperty, IcalDTSTAMPProperty,
+        IcalDTSTARTProperty, IcalPRODIDProperty, IcalRRULEProperty, IcalSUMMARYProperty,
+        IcalUIDProperty, IcalVERSIONProperty, IcalVersion, VcardANNIVERSARYProperty,
+        VcardBDAYProperty, VcardFNProperty,
+    },
+    types::{CalDate, PartialDate, Timezone},
+};
 use chrono::{NaiveDate, Utc};
-use ical::component::{
-    CalendarInnerDataBuilder, IcalAlarmBuilder, IcalCalendarObjectBuilder, IcalEventBuilder,
-};
-use ical::generator::Emitter;
-use ical::parser::vcard::{self, component::VcardContact};
-use ical::parser::{
-    Calscale, ComponentMut, IcalCALSCALEProperty, IcalDTENDProperty, IcalDTSTAMPProperty,
-    IcalDTSTARTProperty, IcalPRODIDProperty, IcalRRULEProperty, IcalSUMMARYProperty,
-    IcalUIDProperty, IcalVERSIONProperty, IcalVersion, VcardANNIVERSARYProperty, VcardBDAYProperty,
-    VcardFNProperty,
-};
-use ical::property::ContentLine;
-use ical::types::{CalDate, PartialDate};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -32,7 +35,7 @@ impl From<VcardContact> for AddressObject {
 
 impl AddressObject {
     pub fn from_vcf(vcf: String) -> Result<Self, Error> {
-        let parser = vcard::VcardParser::from_slice(vcf.as_bytes());
+        let parser = VcardParser::from_slice(vcf.as_bytes());
         let vcard = parser.expect_one()?;
         Ok(Self { vcf, vcard })
     }
@@ -70,7 +73,7 @@ impl AddressObject {
         let Some(dtstart) = NaiveDate::from_ymd_opt(year.unwrap_or(1900), month, day) else {
             return Ok(None);
         };
-        let start_date = CalDate(dtstart, ical::types::Timezone::Local);
+        let start_date = CalDate(dtstart, Timezone::Local);
         let Some(end_date) = start_date.succ_opt() else {
             // start_date is MAX_DATE, this should never happen but FAPP also not raise an error
             return Ok(None);

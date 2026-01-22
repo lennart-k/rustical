@@ -1,5 +1,5 @@
 use super::{Allof, ParamFilterElement};
-use ical::{parser::Component, property::ContentLine};
+use caldata::{component::Component, parser::ContentLine};
 use rustical_dav::xml::TextMatchElement;
 use rustical_ical::AddressObject;
 use rustical_xml::XmlDeserialize;

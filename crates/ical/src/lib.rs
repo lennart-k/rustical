@@ -1,7 +1,7 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 #![allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]
 mod timestamp;
-use ical::parser::ParserError;
+use caldata::parser::ParserError;
 pub use timestamp::*;
 
 mod calendar_object;

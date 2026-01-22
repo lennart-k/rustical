@@ -1,9 +1,10 @@
 use crate::Error;
+use caldata::{
+    IcalObjectParser,
+    component::{CalendarInnerData, IcalCalendarObject},
+    generator::Emitter,
+};
 use derive_more::Display;
-use ical::IcalObjectParser;
-use ical::component::CalendarInnerData;
-use ical::component::IcalCalendarObject;
-use ical::generator::Emitter;
 use serde::Deserialize;
 use serde::Serialize;
 use sha2::{Digest, Sha256};

@@ -1,4 +1,4 @@
-use ical::property::ContentLine;
+use caldata::parser::ContentLine;
 use rustical_xml::{ValueDeserialize, XmlDeserialize};
 use std::borrow::Cow;
 

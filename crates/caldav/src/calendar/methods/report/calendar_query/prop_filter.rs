@@ -1,5 +1,5 @@
 use super::{ParamFilterElement, TimeRangeElement};
-use ical::{property::ContentLine, types::CalDateTime};
+use caldata::{parser::ContentLine, types::CalDateTime};
 use rustical_dav::xml::TextMatchElement;
 use rustical_ical::UtcDateTime;
 use rustical_xml::XmlDeserialize;

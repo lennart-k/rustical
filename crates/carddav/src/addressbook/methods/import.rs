@@ -4,11 +4,12 @@ use axum::{
     extract::{Path, State},
     response::{IntoResponse, Response},
 };
-use http::StatusCode;
-use ical::{
-    parser::{Component, ComponentMut, vcard},
-    property::ContentLine,
+use caldata::{
+    VcardParser,
+    component::{Component, ComponentMut},
+    parser::ContentLine,
 };
+use http::StatusCode;
 use rustical_store::{Addressbook, AddressbookStore, SubscriptionStore, auth::Principal};
 use tracing::instrument;
 
@@ -23,7 +24,7 @@ pub async fn route_import<AS: AddressbookStore, S: SubscriptionStore>(
         return Err(Error::Unauthorized);
     }
 
-    let parser = vcard::VcardParser::from_slice(body.as_bytes());
+    let parser = VcardParser::from_slice(body.as_bytes());
 
     let mut objects = vec![];
     for res in parser {

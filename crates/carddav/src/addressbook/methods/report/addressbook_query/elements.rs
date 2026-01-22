@@ -2,8 +2,8 @@ use crate::{
     address_object::AddressObjectPropWrapperName,
     addressbook::methods::report::addressbook_query::PropFilterElement,
 };
+use caldata::parser::ContentLine;
 use derive_more::{From, Into};
-use ical::property::ContentLine;
 use rustical_dav::xml::{PropfindType, TextMatchElement};
 use rustical_ical::{AddressObject, UtcDateTime};
 use rustical_xml::{ValueDeserialize, XmlDeserialize, XmlRootTag};

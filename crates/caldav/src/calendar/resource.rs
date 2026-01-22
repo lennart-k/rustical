@@ -1,10 +1,10 @@
 use super::prop::{SupportedCalendarComponentSet, SupportedCalendarData};
 use crate::Error;
 use crate::calendar::prop::{ReportMethod, SupportedCollationSet};
+use caldata::IcalParser;
+use caldata::types::CalDateTime;
 use chrono::{DateTime, Utc};
 use derive_more::derive::{From, Into};
-use ical::IcalParser;
-use ical::types::CalDateTime;
 use rustical_dav::extensions::{
     CommonPropertiesExtension, CommonPropertiesProp, SyncTokenExtension, SyncTokenExtensionProp,
 };
