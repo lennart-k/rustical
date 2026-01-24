@@ -8,7 +8,7 @@ expression: body
         <href>/caldav/principal/user/calendar/qwue23489.ics</href>
         <propstat>
             <prop>
-                <getetag>&quot;aea50382a7775bb9742bfec277382e3a260b6066f503b5f5ae34548d7215ee46&quot;</getetag>
+                <getetag>&quot;f781224669f0db2674e9e45a9be2b01774c02136e3fb72792ef217bccf49fafa&quot;</getetag>
             </prop>
             <status>HTTP/1.1 200 OK</status>
         </propstat>
