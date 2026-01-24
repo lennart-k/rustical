@@ -107,7 +107,7 @@ strum = "0.27"
 strum_macros = "0.27"
 serde_json = { version = "1.0", features = ["raw_value"] }
 sqlx-sqlite = { version = "0.8", features = ["bundled"] }
-caldata = { version = "0.13.0", features = ["chrono-tz", "vtimezones-rs"] }
+caldata = { version = "0.14.0", features = ["chrono-tz", "vtimezones-rs"] }
 toml = "0.9"
 tower = "0.5"
 tower-http = { version = "0.6", features = [

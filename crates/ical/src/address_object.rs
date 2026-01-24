@@ -6,7 +6,7 @@ use caldata::{
         IcalEventBuilder, VcardContact,
     },
     generator::Emitter,
-    parser::ContentLine,
+    parser::{ContentLine, ParserOptions},
     property::{
         Calscale, IcalCALSCALEProperty, IcalDTENDProperty, IcalDTSTAMPProperty,
         IcalDTSTARTProperty, IcalPRODIDProperty, IcalRRULEProperty, IcalSUMMARYProperty,
@@ -136,7 +136,7 @@ impl AddressObject {
                 inner: Some(CalendarInnerDataBuilder::Event(vec![event])),
                 vtimezones: BTreeMap::default(),
             }
-            .build(None)?
+            .build(&ParserOptions::default(), None)?
             .into(),
         ))
     }

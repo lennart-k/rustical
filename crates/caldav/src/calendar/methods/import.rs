@@ -4,8 +4,8 @@ use axum::{
     extract::{Path, State},
     response::{IntoResponse, Response},
 };
-use caldata::IcalParser;
 use caldata::component::{Component, ComponentMut};
+use caldata::{IcalParser, parser::ParserOptions};
 use http::StatusCode;
 use rustical_dav::header::Overwrite;
 use rustical_ical::CalendarObjectType;
@@ -50,7 +50,7 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
     cal.remove_property("X-WR-CALDESC");
     cal.remove_property("X-WR-CALCOLOR");
     cal.remove_property("X-WR-TIMEZONE");
-    let cal = cal.build(None).unwrap();
+    let cal = cal.build(&ParserOptions::default(), None).unwrap();
 
     // Make sure timezone is valid
     if let Some(timezone_id) = timezone_id.as_ref() {

@@ -7,7 +7,7 @@ use axum::{
 use caldata::{
     VcardParser,
     component::{Component, ComponentMut},
-    parser::ContentLine,
+    parser::{ContentLine, ParserOptions},
 };
 use http::StatusCode;
 use rustical_store::{Addressbook, AddressbookStore, SubscriptionStore, auth::Principal};
@@ -37,7 +37,7 @@ pub async fn route_import<AS: AddressbookStore, S: SubscriptionStore>(
                 value: Some(uuid::Uuid::new_v4().to_string()),
                 params: vec![].into(),
             });
-            card = card_mut.build(None).unwrap();
+            card = card_mut.build(&ParserOptions::default(), None).unwrap();
         }
         // TODO: Make nicer
         let uid = card.get_uid().unwrap();
