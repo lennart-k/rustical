@@ -1,8 +1,11 @@
+use std::sync::OnceLock;
+
 use crate::Error;
 use caldata::{
     IcalObjectParser,
     component::{CalendarInnerData, IcalCalendarObject},
     generator::Emitter,
+    parser::ParserOptions,
 };
 use derive_more::Display;
 use serde::Deserialize;
@@ -65,15 +68,35 @@ impl rustical_xml::ValueDeserialize for CalendarObjectType {
 #[derive(Debug, Clone)]
 pub struct CalendarObject {
     inner: IcalCalendarObject,
-    ics: String,
+    ics: OnceLock<String>,
 }
 
 impl CalendarObject {
+    // This function parses iCalendar data but doesn't cache it
+    // This is meant for iCalendar data coming from outside that might need to be normalised.
+    // For example if timezones are omitted this can be fixed by this function.
+    pub fn import(ics: &str, options: Option<ParserOptions>) -> Result<Self, Error> {
+        let parser =
+            IcalObjectParser::from_slice(ics.as_bytes()).with_options(options.unwrap_or_default());
+        let inner = parser.expect_one()?;
+
+        Ok(Self {
+            inner,
+            ics: OnceLock::new(),
+        })
+    }
+
+    // This function parses iCalendar data and then caches the parsed iCalendar data.
+    // This function is only meant for loading data from a data store where we know the iCalendar
+    // is already in the desired form.
     pub fn from_ics(ics: String) -> Result<Self, Error> {
         let parser = IcalObjectParser::from_slice(ics.as_bytes());
         let inner = parser.expect_one()?;
 
-        Ok(Self { inner, ics })
+        Ok(Self {
+            inner,
+            ics: ics.into(),
+        })
     }
 
     #[must_use]
@@ -96,7 +119,7 @@ impl CalendarObject {
 
     #[must_use]
     pub fn get_ics(&self) -> &str {
-        &self.ics
+        self.ics.get_or_init(|| self.inner.generate())
     }
 
     #[must_use]
@@ -114,7 +137,7 @@ impl From<CalendarObject> for IcalCalendarObject {
 impl From<IcalCalendarObject> for CalendarObject {
     fn from(value: IcalCalendarObject) -> Self {
         Self {
-            ics: value.generate(),
+            ics: value.generate().into(),
             inner: value,
         }
     }

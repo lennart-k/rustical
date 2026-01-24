@@ -1,5 +1,5 @@
 use crate::{
-    CalDavPrincipalUri, Error,
+    CalDavConfig, CalDavPrincipalUri, Error,
     calendar_object::{
         methods::{get_event, put_event},
         resource::CalendarObjectResource,
@@ -24,19 +24,21 @@ pub struct CalendarObjectPathComponents {
 
 pub struct CalendarObjectResourceService<C: CalendarStore> {
     pub(crate) cal_store: Arc<C>,
+    pub(crate) config: Arc<CalDavConfig>,
 }
 
 impl<C: CalendarStore> Clone for CalendarObjectResourceService<C> {
     fn clone(&self) -> Self {
         Self {
             cal_store: self.cal_store.clone(),
+            config: self.config.clone(),
         }
     }
 }
 
 impl<C: CalendarStore> CalendarObjectResourceService<C> {
-    pub const fn new(cal_store: Arc<C>) -> Self {
-        Self { cal_store }
+    pub const fn new(cal_store: Arc<C>, config: Arc<CalDavConfig>) -> Self {
+        Self { cal_store, config }
     }
 }
 

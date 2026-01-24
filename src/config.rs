@@ -1,3 +1,4 @@
+use rustical_caldav::CalDavConfig;
 use rustical_frontend::FrontendConfig;
 use rustical_oidc::OidcConfig;
 use serde::{Deserialize, Serialize};
@@ -97,4 +98,6 @@ pub struct Config {
     pub dav_push: DavPushConfig,
     #[serde(default)]
     pub nextcloud_login: NextcloudLoginConfig,
+    #[serde(default)]
+    pub caldav: CalDavConfig,
 }

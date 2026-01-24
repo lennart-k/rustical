@@ -6,7 +6,7 @@ use crate::calendar::methods::report::route_report_calendar;
 use crate::calendar::resource::CalendarResource;
 use crate::calendar_object::CalendarObjectResourceService;
 use crate::calendar_object::resource::CalendarObjectResource;
-use crate::{CalDavPrincipalUri, Error};
+use crate::{CalDavConfig, CalDavPrincipalUri, Error};
 use async_trait::async_trait;
 use axum::Router;
 use axum::extract::Request;
@@ -23,6 +23,7 @@ use tower::Service;
 pub struct CalendarResourceService<C: CalendarStore, S: SubscriptionStore> {
     pub(crate) cal_store: Arc<C>,
     pub(crate) sub_store: Arc<S>,
+    pub(crate) config: Arc<CalDavConfig>,
 }
 
 impl<C: CalendarStore, S: SubscriptionStore> Clone for CalendarResourceService<C, S> {
@@ -30,15 +31,17 @@ impl<C: CalendarStore, S: SubscriptionStore> Clone for CalendarResourceService<C
         Self {
             cal_store: self.cal_store.clone(),
             sub_store: self.sub_store.clone(),
+            config: self.config.clone(),
         }
     }
 }
 
 impl<C: CalendarStore, S: SubscriptionStore> CalendarResourceService<C, S> {
-    pub const fn new(cal_store: Arc<C>, sub_store: Arc<S>) -> Self {
+    pub const fn new(cal_store: Arc<C>, sub_store: Arc<S>, config: Arc<CalDavConfig>) -> Self {
         Self {
             cal_store,
             sub_store,
+            config,
         }
     }
 }
@@ -112,7 +115,8 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
         Router::new()
             .nest(
                 "/{object_id}",
-                CalendarObjectResourceService::new(self.cal_store.clone()).axum_router(),
+                CalendarObjectResourceService::new(self.cal_store.clone(), self.config.clone())
+                    .axum_router(),
             )
             .route_service("/", self.axum_service())
     }

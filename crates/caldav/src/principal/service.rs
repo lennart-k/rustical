@@ -1,7 +1,7 @@
 use crate::calendar::CalendarResourceService;
 use crate::calendar::resource::CalendarResource;
 use crate::principal::PrincipalResource;
-use crate::{CalDavPrincipalUri, Error};
+use crate::{CalDavConfig, CalDavPrincipalUri, Error};
 use async_trait::async_trait;
 use axum::Router;
 use rustical_dav::resource::{AxumMethods, ResourceService};
@@ -20,6 +20,7 @@ pub struct PrincipalResourceService<
     pub(crate) cal_store: Arc<CS>,
     // If true only return the principal as the calendar home set, otherwise also groups
     pub(crate) simplified_home_set: bool,
+    pub(crate) config: Arc<CalDavConfig>,
 }
 
 impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Clone
@@ -31,6 +32,7 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Clone
             sub_store: self.sub_store.clone(),
             cal_store: self.cal_store.clone(),
             simplified_home_set: self.simplified_home_set,
+            config: self.config.clone(),
         }
     }
 }
@@ -84,8 +86,12 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Resour
         Router::new()
             .nest(
                 "/{calendar_id}",
-                CalendarResourceService::new(self.cal_store.clone(), self.sub_store.clone())
-                    .axum_router(),
+                CalendarResourceService::new(
+                    self.cal_store.clone(),
+                    self.sub_store.clone(),
+                    self.config.clone(),
+                )
+                .axum_router(),
             )
             .route_service("/", self.axum_service())
     }

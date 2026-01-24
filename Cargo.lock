@@ -567,9 +567,9 @@ checksum = "b35204fbdc0b3f4446b89fc1ac2cf84a8a68971995d0bf2e925ec7cd960f9cb3"
 
 [[package]]
 name = "caldata"
-version = "0.12.1"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55ae67018b0b95d01f20a5f6869810e83969baa94b2ff768de7f90a8a9e38efd"
+checksum = "b39dd55be55606179c8437278d2df04a0fcfdc2956edcc432b2d54413e3f1522"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -580,6 +580,7 @@ dependencies = [
  "regex",
  "rrule",
  "thiserror 2.0.18",
+ "vtimezones-rs",
 ]
 
 [[package]]
@@ -4952,9 +4953,9 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "vtimezones-rs"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f6728de8767c8dea44f41b88115a205ed23adc3302e1b4342be59d922934dae5"
+checksum = "cd57da82560fa7a80104c812a084968666133f57f386e4b0970932115dbf819a"
 dependencies = [
  "glob",
  "phf 0.12.1",

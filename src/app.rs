@@ -9,7 +9,7 @@ use axum_extra::TypedHeader;
 use headers::{HeaderMapExt, UserAgent};
 use http::header::CONNECTION;
 use http::{HeaderValue, StatusCode};
-use rustical_caldav::caldav_router;
+use rustical_caldav::{CalDavConfig, caldav_router};
 use rustical_carddav::carddav_router;
 use rustical_frontend::nextcloud_login::nextcloud_login_router;
 use rustical_frontend::{FrontendConfig, frontend_router};
@@ -45,6 +45,7 @@ pub fn make_app<
     auth_provider: Arc<impl AuthenticationProvider>,
     frontend_config: FrontendConfig,
     oidc_config: Option<OidcConfig>,
+    caldav_config: CalDavConfig,
     nextcloud_login_config: &NextcloudLoginConfig,
     dav_push_enabled: bool,
     session_cookie_samesite_strict: bool,
@@ -53,6 +54,8 @@ pub fn make_app<
     let birthday_store = addr_store.clone();
     let combined_cal_store =
         Arc::new(CombinedCalendarStore::new(cal_store).with_store(birthday_store));
+
+    let caldav_config = Arc::new(caldav_config);
 
     let mut router = Router::new()
         // endpoint to be used by healthcheck to see if rustical is online
@@ -63,6 +66,7 @@ pub fn make_app<
             combined_cal_store.clone(),
             subscription_store.clone(),
             false,
+            caldav_config.clone(),
         ))
         .merge(caldav_router(
             "/caldav-compat",
@@ -70,6 +74,7 @@ pub fn make_app<
             combined_cal_store.clone(),
             subscription_store.clone(),
             true,
+            caldav_config,
         ))
         .route(
             "/.well-known/caldav",

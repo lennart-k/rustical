@@ -5,6 +5,7 @@ use axum::body::Body;
 use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Response};
 use axum_extra::TypedHeader;
+use caldata::parser::ParserOptions;
 use headers::{ContentType, ETag, HeaderMapExt, IfNoneMatch};
 use http::{HeaderMap, HeaderValue, Method, StatusCode};
 use rustical_ical::CalendarObject;
@@ -20,7 +21,10 @@ pub async fn get_event<C: CalendarStore>(
         calendar_id,
         object_id,
     }): Path<CalendarObjectPathComponents>,
-    State(CalendarObjectResourceService { cal_store }): State<CalendarObjectResourceService<C>>,
+    State(CalendarObjectResourceService {
+        cal_store,
+        config: _,
+    }): State<CalendarObjectResourceService<C>>,
     user: Principal,
     method: Method,
 ) -> Result<Response, Error> {
@@ -57,7 +61,9 @@ pub async fn put_event<C: CalendarStore>(
         calendar_id,
         object_id,
     }): Path<CalendarObjectPathComponents>,
-    State(CalendarObjectResourceService { cal_store }): State<CalendarObjectResourceService<C>>,
+    State(CalendarObjectResourceService { cal_store, config }): State<
+        CalendarObjectResourceService<C>,
+    >,
     user: Principal,
     mut if_none_match: Option<TypedHeader<IfNoneMatch>>,
     header_map: HeaderMap,
@@ -94,7 +100,12 @@ pub async fn put_event<C: CalendarStore>(
         true
     };
 
-    let object = match CalendarObject::from_ics(body.clone()) {
+    let object = match CalendarObject::import(
+        &body,
+        Some(ParserOptions {
+            rfc7809: config.rfc7809,
+        }),
+    ) {
         Ok(object) => object,
         Err(err) => {
             warn!("invalid calendar data:\n{body}");

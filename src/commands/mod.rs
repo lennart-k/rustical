@@ -3,6 +3,7 @@ use crate::config::{
     SqliteDataStoreConfig, TracingConfig,
 };
 use clap::Parser;
+use rustical_caldav::CalDavConfig;
 use rustical_frontend::FrontendConfig;
 
 pub mod health;
@@ -15,6 +16,7 @@ pub struct GenConfigArgs {}
 pub fn cmd_gen_config(_args: GenConfigArgs) -> anyhow::Result<()> {
     let config = Config {
         http: HttpConfig::default(),
+        caldav: CalDavConfig::default(),
         data_store: DataStoreConfig::Sqlite(SqliteDataStoreConfig {
             db_url: "/var/lib/rustical/db.sqlite3".to_owned(),
             run_repairs: true,

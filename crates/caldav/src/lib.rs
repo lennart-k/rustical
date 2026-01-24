@@ -8,6 +8,7 @@ use rustical_dav::resources::RootResourceService;
 use rustical_store::auth::middleware::AuthenticationLayer;
 use rustical_store::auth::{AuthenticationProvider, Principal};
 use rustical_store::{CalendarStore, SubscriptionStore};
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 pub mod calendar;
@@ -34,6 +35,7 @@ pub fn caldav_router<AP: AuthenticationProvider, C: CalendarStore, S: Subscripti
     store: Arc<C>,
     subscription_store: Arc<S>,
     simplified_home_set: bool,
+    config: Arc<CalDavConfig>,
 ) -> Router {
     Router::new().nest(
         prefix,
@@ -42,9 +44,27 @@ pub fn caldav_router<AP: AuthenticationProvider, C: CalendarStore, S: Subscripti
             sub_store: subscription_store,
             cal_store: store,
             simplified_home_set,
+            config,
         })
         .axum_router()
         .layer(AuthenticationLayer::new(auth_provider))
         .layer(Extension(CalDavPrincipalUri(prefix))),
     )
+}
+
+const fn default_true() -> bool {
+    true
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, default)]
+pub struct CalDavConfig {
+    #[serde(default = "default_true")]
+    rfc7809: bool,
+}
+
+impl Default for CalDavConfig {
+    fn default() -> Self {
+        Self { rfc7809: true }
+    }
 }

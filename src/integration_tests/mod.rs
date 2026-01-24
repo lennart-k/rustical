@@ -2,6 +2,7 @@ use crate::{app::make_app, config::NextcloudLoginConfig};
 use axum::extract::Request;
 use axum::{body::Body, response::Response};
 use rstest::rstest;
+use rustical_caldav::CalDavConfig;
 use rustical_frontend::FrontendConfig;
 use rustical_store_sqlite::tests::{TestStoreContext, test_store_context};
 use std::sync::Arc;
@@ -26,6 +27,7 @@ pub fn get_app(context: TestStoreContext) -> axum::Router {
             allow_password_login: true,
         },
         None,
+        CalDavConfig::default(),
         &NextcloudLoginConfig { enabled: false },
         false,
         true,
