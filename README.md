@@ -24,6 +24,7 @@ a CalDAV/CardDAV server
 - Apple configuration profiles (skip copy-pasting passwords and instead generate the configuration in the frontend)
 - **OpenID Connect** support (with option to disable password login)
 - Group-based **sharing**
+- Partial [RFC 7809](https://datatracker.ietf.org/doc/html/rfc7809) support. RustiCal will accept timezones by reference and handle omitted timezones in objects.
 
 ## Getting Started
 
