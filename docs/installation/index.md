@@ -48,3 +48,26 @@ Since the app tokens are random they use the faster `pbkdf2` algorithm.
 ```sh
 cargo install --locked --git https://github.com/lennart-k/rustical
 ```
+
+## NixOS (community-maintained by [@PopeRigby](https://github.com/PopeRigby))
+
+!!! warning
+    The NixOS package is not maintained by myself but since I appreciate [@PopeRigby](https://github.com/PopeRigby)'s work on it I want to mention it.
+    Since rustical's development is still quite active I **strongly** recommend installing from the `nixpkgs-unstable` branch.
+
+In the `nixpkgs-unstable` you'll find a `rustical` package you can install.
+
+There's also a service that has not been merged yet. If you know how to add modules from PRs in Nix
+you can already install it <https://github.com/NixOS/nixpkgs/pull/424188>
+and then setup rustical as a service:
+
+```nix title="In your configuration.nix"
+services.rustical = {
+    enable = true;
+    package = inputs.rustical.legacyPackages.${pkgs.stdenv.hostPlatform.system}.rustical;
+    settings = {
+        # Settings the same as in config.toml but in Nix syntax
+        # http.port = 3002;
+    };
+};
+```
