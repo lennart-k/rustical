@@ -3,7 +3,7 @@ crates/*/target
 # For libraries ignore Cargo.lock
 crates/*/Cargo.lock
 
-db.sqlite3*
+**/*.sqlite3*
 config.toml
 principals.toml
 
