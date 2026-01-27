@@ -32,7 +32,8 @@ use tracing::field::display;
 #[allow(
     clippy::too_many_arguments,
     clippy::too_many_lines,
-    clippy::cognitive_complexity
+    clippy::cognitive_complexity,
+    clippy::missing_panics_doc
 )]
 pub fn make_app<
     AS: AddressbookStore + PrefixedCalendarStore,
@@ -109,9 +110,9 @@ pub fn make_app<
         options(async || {
             let mut resp = Response::builder().status(StatusCode::OK);
             resp.headers_mut()
-                .unwrap()
+                .expect("this always works")
                 .insert("DAV", HeaderValue::from_static("1"));
-            resp.body(Body::empty()).unwrap()
+            resp.body(Body::empty()).expect("empty body always works")
         }),
     );
 

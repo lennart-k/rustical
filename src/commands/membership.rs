@@ -33,7 +33,8 @@ pub struct MembershipArgs {
     command: MembershipCommand,
 }
 
-pub async fn handle_membership_command(
+#[allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]
+pub async fn cmd_membership(
     user_store: &impl AuthenticationProvider,
     MembershipArgs { command }: MembershipArgs,
 ) -> anyhow::Result<()> {

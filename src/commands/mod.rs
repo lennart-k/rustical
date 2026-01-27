@@ -6,13 +6,17 @@ use clap::Parser;
 use rustical_caldav::CalDavConfig;
 use rustical_frontend::FrontendConfig;
 
-pub mod health;
+mod health;
 pub mod membership;
-pub mod principals;
+mod principals;
+
+pub use health::{HealthArgs, cmd_health};
+pub use principals::{PrincipalsArgs, cmd_principals};
 
 #[derive(Debug, Parser)]
 pub struct GenConfigArgs {}
 
+#[allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]
 pub fn cmd_gen_config(_args: GenConfigArgs) -> anyhow::Result<()> {
     let config = Config {
         http: HttpConfig::default(),

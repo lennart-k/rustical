@@ -1,5 +1,5 @@
-use super::membership::{MembershipArgs, handle_membership_command};
-use crate::{config::Config, get_data_stores};
+use super::membership::MembershipArgs;
+use crate::{config::Config, get_data_stores, membership::cmd_membership};
 use clap::{Parser, Subcommand};
 use figment::{
     Figment,
@@ -58,6 +58,7 @@ enum Command {
     Membership(MembershipArgs),
 }
 
+#[allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]
 pub async fn cmd_principals(args: PrincipalsArgs) -> anyhow::Result<()> {
     let config: Config = Figment::new()
         .merge(Toml::file(&args.config_file))
@@ -152,7 +153,7 @@ pub async fn cmd_principals(args: PrincipalsArgs) -> anyhow::Result<()> {
             println!("Principal {id} updated");
         }
         Command::Membership(args) => {
-            handle_membership_command(principal_store.as_ref(), args).await?;
+            cmd_membership(principal_store.as_ref(), args).await?;
         }
     }
     Ok(())

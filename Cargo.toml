@@ -35,6 +35,12 @@ opentelemetry = [
 [profile.dev]
 debug = 0
 
+[lib]
+doc = true
+name = "rustical"
+path = "src/lib.rs"
+test = true
+
 [workspace.dependencies]
 rustical_dav = { path = "./crates/dav/", features = ["ical"] }
 rustical_dav_push = { path = "./crates/dav_push/" }
