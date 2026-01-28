@@ -3319,6 +3319,7 @@ dependencies = [
  "caldata",
  "clap",
  "figment",
+ "futures-util",
  "headers",
  "http",
  "insta",
@@ -3344,6 +3345,7 @@ dependencies = [
  "similar-asserts",
  "sqlx",
  "tokio",
+ "tokio-util",
  "toml 0.9.11+spec-1.1.0",
  "tower",
  "tower-http",
@@ -4471,6 +4473,7 @@ dependencies = [
  "bytes",
  "futures-core",
  "futures-sink",
+ "futures-util",
  "pin-project-lite",
  "tokio",
 ]

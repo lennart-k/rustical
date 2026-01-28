@@ -73,6 +73,7 @@ tokio = { version = "1.48", features = [
   "rt-multi-thread",
   "full",
 ] }
+tokio-util = { version = "0.7", features = ["rt"] }
 url = "2.5"
 base64 = "0.22"
 thiserror = "2.0"
@@ -166,6 +167,7 @@ caldata.workspace = true
 toml.workspace = true
 serde.workspace = true
 tokio.workspace = true
+tokio-util.workspace = true
 tracing.workspace = true
 anyhow.workspace = true
 clap.workspace = true
@@ -204,3 +206,4 @@ tower-http.workspace = true
 axum-extra.workspace = true
 headers.workspace = true
 http.workspace = true
+futures-util.workspace = true
