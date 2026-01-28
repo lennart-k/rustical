@@ -17,6 +17,7 @@ use rustical_store_sqlite::principal_store::SqlitePrincipalStore;
 use rustical_store_sqlite::{SqliteStore, create_db_pool};
 use setup_tracing::setup_tracing;
 use std::sync::Arc;
+use tokio::sync::Notify;
 use tokio::sync::mpsc::Receiver;
 use tower::Layer;
 use tower_http::normalize_path::NormalizePathLayer;
@@ -105,7 +106,11 @@ pub async fn get_data_stores(
 }
 
 #[allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]
-pub async fn cmd_default(args: Args, config: Config) -> Result<()> {
+pub async fn cmd_default(
+    args: Args,
+    config: Config,
+    start_notifier: Option<Arc<Notify>>,
+) -> Result<()> {
     setup_tracing(&config.tracing);
 
     let (addr_store, cal_store, subscription_store, principal_store, update_recv) =
@@ -144,6 +149,9 @@ pub async fn cmd_default(args: Args, config: Config) -> Result<()> {
     let listener = tokio::net::TcpListener::bind(&address).await?;
     tasks.push(tokio::spawn(async move {
         info!("RustiCal serving on http://{address}");
+        if let Some(start_notifier) = start_notifier {
+            start_notifier.notify_waiters();
+        }
         axum::serve(listener, app).await.unwrap();
     }));
 

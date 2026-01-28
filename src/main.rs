@@ -28,7 +28,7 @@ async fn main() -> Result<()> {
         }
         None => {
             let config: Config = parse_config()?;
-            cmd_default(args, config).await
+            cmd_default(args, config, None).await
         }
     }
 }
