@@ -1,0 +1,12 @@
+---
+source: tests/integration_tests/carddav/addressbook_import.rs
+expression: body
+---
+BEGIN:VCARD
+VERSION:4.0
+FN:John Doe
+N:Doe;John;;;,
+BDAY:--0203
+GENDER:M
+UID:[UID]
+END:VCARD
