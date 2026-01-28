@@ -26,8 +26,6 @@ pub mod app;
 mod commands;
 pub use commands::*;
 pub mod config;
-#[cfg(test)]
-pub mod integration_tests;
 mod setup_tracing;
 
 #[derive(Parser, Debug)]
@@ -70,6 +68,7 @@ pub async fn get_data_stores(
             skip_broken,
         }) => {
             let db = create_db_pool(db_url, migrate).await?;
+
             // Channel to watch for changes (for DAV Push)
             let (send, recv) = tokio::sync::mpsc::channel(1000);
 

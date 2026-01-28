@@ -1,5 +1,0 @@
----
-source: src/integration_tests/carddav/addressbook_import.rs
-expression: body
----
-

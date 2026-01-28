@@ -1,0 +1,28 @@
+---
+source: tests/integration_tests/caldav/calendar.rs
+expression: body
+---
+<?xml version="1.0" encoding="utf-8"?>
+<multistatus xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:PUSH="https://bitfire.at/webdav-push">
+    <response>
+        <href>/caldav/principal/user/calendar</href>
+        <propstat>
+            <prop>
+                <displayname xmlns="DAV:"/>
+                <calendar-description xmlns="urn:ietf:params:xml:ns:caldav"/>
+                <calendar-description/>
+            </prop>
+            <status>HTTP/1.1 200 OK</status>
+        </propstat>
+        <propstat>
+            <prop>
+            </prop>
+            <status>HTTP/1.1 404 Not Found</status>
+        </propstat>
+        <propstat>
+            <prop>
+            </prop>
+            <status>HTTP/1.1 409 Conflict</status>
+        </propstat>
+    </response>
+</multistatus>

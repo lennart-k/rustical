@@ -37,11 +37,11 @@ impl SqliteStore {
 }
 
 pub async fn create_db_pool(db_url: &str, migrate: bool) -> Result<Pool<Sqlite>, sqlx::Error> {
+    let options: SqliteConnectOptions = db_url.parse()?;
+
     let db = SqlitePool::connect_with(
-        SqliteConnectOptions::new()
+        options
             .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
-            .synchronous(sqlx::sqlite::SqliteSynchronous::Normal)
-            .filename(db_url)
             .create_if_missing(true),
     )
     .await?;

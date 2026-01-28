@@ -32,9 +32,6 @@ opentelemetry = [
   "dep:tracing-opentelemetry",
 ]
 
-[profile.dev]
-debug = 0
-
 [lib]
 doc = true
 name = "rustical"
