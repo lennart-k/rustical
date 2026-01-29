@@ -110,8 +110,11 @@ pub async fn cmd_default(
     args: Args,
     config: Config,
     start_notifier: Option<Arc<Notify>>,
+    tracing: bool,
 ) -> Result<()> {
-    setup_tracing(&config.tracing);
+    if tracing {
+        setup_tracing(&config.tracing);
+    }
 
     let (addr_store, cal_store, subscription_store, principal_store, update_recv) =
         get_data_stores(!args.no_migrations, &config.data_store).await?;

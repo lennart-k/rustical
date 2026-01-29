@@ -1,19 +1,26 @@
 // This integration test checks whether the HTTP server works by actually running rustical in a new
 // thread.
 use common::rustical_process;
-use http::StatusCode;
+use http::{Method, StatusCode};
+use rustical::{
+    PrincipalsArgs, cmd_principals,
+    config::{Config, DataStoreConfig, SqliteDataStoreConfig},
+    principals::{CreateArgs, PrincipalsCommand},
+};
+use rustical_store::auth::{AuthenticationProvider, PrincipalType};
+use rustical_store_sqlite::{create_db_pool, principal_store::SqlitePrincipalStore};
 use std::time::Duration;
 
 mod common;
 
-pub async fn test_runner<O, F>(inner: F)
+pub async fn test_runner<O, F>(db_path: Option<String>, inner: F)
 where
     O: IntoFuture<Output = ()>,
     // <O as IntoFuture>::IntoFuture: UnwindSafe,
     F: FnOnce(String) -> O,
 {
     // Start RustiCal process
-    let (token, port, main_process, start_notify) = rustical_process();
+    let (token, port, main_process, start_notify) = rustical_process(db_path);
     let origin = format!("http://localhost:{port}");
 
     // Wait for RustiCal server to listen
@@ -32,7 +39,7 @@ where
 
 #[tokio::test]
 async fn test_ping() {
-    test_runner(async |origin| {
+    test_runner(None, async |origin| {
         let resp = reqwest::get(origin.clone() + "/ping").await.unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
 
@@ -41,4 +48,78 @@ async fn test_ping() {
         assert_eq!(resp.status(), StatusCode::OK);
     })
     .await
+}
+
+// When setting a use password from the CLI we effectively have two processes accessing the same
+// database: The server and the CLI.
+// This test ensures that the server correctly picks up the changes made by the CLI.
+#[tokio::test]
+async fn test_initial_setup() {
+    let db_tempfile = tempfile::NamedTempFile::with_suffix(".rustical-test.sqlite3").unwrap();
+    let db_path = db_tempfile.path().to_string_lossy().into_owned();
+
+    test_runner(Some(db_path.clone()), async |origin| {
+        // Create principal
+        cmd_principals(
+            PrincipalsArgs {
+                command: PrincipalsCommand::Create(CreateArgs {
+                    id: "user".to_owned(),
+                    name: Some("Test User".to_owned()),
+                    password: false,
+                    principal_type: Some(PrincipalType::Individual),
+                }),
+            },
+            Config {
+                data_store: DataStoreConfig::Sqlite(SqliteDataStoreConfig {
+                    db_url: db_path.clone(),
+                    run_repairs: true,
+                    skip_broken: false,
+                }),
+                http: Default::default(),
+                frontend: Default::default(),
+                oidc: None,
+                tracing: Default::default(),
+                dav_push: Default::default(),
+                nextcloud_login: Default::default(),
+                caldav: Default::default(),
+            },
+        )
+        .await
+        .unwrap();
+
+        // Bodge to set password without using command (since that reads stdin)
+        let db = create_db_pool(&db_path, false).await.unwrap();
+        let principal_store = SqlitePrincipalStore::new(db);
+        let app_token = "token";
+        principal_store
+            .add_app_token("user", "Test Token".to_owned(), app_token.to_owned())
+            .await
+            .unwrap();
+
+        let url = origin.clone() + "/caldav/principal/user";
+        let resp = reqwest::Client::new()
+            .request(Method::from_bytes(b"PROPFIND").unwrap(), &url)
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+
+        let resp = reqwest::Client::new()
+            .request(Method::from_bytes(b"PROPFIND").unwrap(), &url)
+            .basic_auth("user", Some("token"))
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(resp.status(), StatusCode::MULTI_STATUS);
+
+        principal_store.remove_principal("user").await.unwrap();
+
+        let resp = reqwest::Client::new()
+            .request(Method::from_bytes(b"PROPFIND").unwrap(), &url)
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+    })
+    .await;
 }

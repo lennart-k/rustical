@@ -3344,6 +3344,7 @@ dependencies = [
  "serde",
  "similar-asserts",
  "sqlx",
+ "tempfile",
  "tokio",
  "tokio-util",
  "toml 0.9.11+spec-1.1.0",

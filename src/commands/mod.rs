@@ -8,7 +8,7 @@ use rustical_frontend::FrontendConfig;
 
 mod health;
 pub mod membership;
-mod principals;
+pub mod principals;
 
 pub use health::{HealthArgs, cmd_health};
 pub use principals::{PrincipalsArgs, cmd_principals};

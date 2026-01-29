@@ -21,14 +21,16 @@ async fn main() -> Result<()> {
 
     match args.command {
         Some(Command::GenConfig(gen_config_args)) => cmd_gen_config(gen_config_args),
-        Some(Command::Principals(principals_args)) => cmd_principals(principals_args).await,
+        Some(Command::Principals(principals_args)) => {
+            cmd_principals(principals_args, parse_config()?).await
+        }
         Some(Command::Health(health_args)) => {
             let config: Config = parse_config()?;
             cmd_health(config.http, health_args).await
         }
         None => {
             let config: Config = parse_config()?;
-            cmd_default(args, config, None).await
+            cmd_default(args, config, None, true).await
         }
     }
 }
