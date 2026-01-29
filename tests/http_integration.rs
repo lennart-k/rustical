@@ -3,8 +3,8 @@
 use common::rustical_process;
 use http::{Method, StatusCode};
 use rustical::{
-    PrincipalsArgs, cmd_principals,
-    config::{Config, DataStoreConfig, SqliteDataStoreConfig},
+    PrincipalsArgs, cmd_health, cmd_principals,
+    config::{Config, DataStoreConfig, HttpConfig, SqliteDataStoreConfig},
     principals::{CreateArgs, PrincipalsCommand},
 };
 use rustical_store::auth::{AuthenticationProvider, PrincipalType};
@@ -17,11 +17,10 @@ pub async fn test_runner<O, F>(db_path: Option<String>, inner: F)
 where
     O: IntoFuture<Output = ()>,
     // <O as IntoFuture>::IntoFuture: UnwindSafe,
-    F: FnOnce(String) -> O,
+    F: FnOnce(u16) -> O,
 {
     // Start RustiCal process
     let (token, port, main_process, start_notify) = rustical_process(db_path);
-    let origin = format!("http://localhost:{port}");
 
     // Wait for RustiCal server to listen
     tokio::time::timeout(Duration::new(2, 0), start_notify.notified())
@@ -30,7 +29,7 @@ where
 
     // We use catch_unwind to make sure we'll always correctly stop RustiCal
     // Otherwise, our process would just run indefinitely
-    inner(origin).into_future().await;
+    inner(port).into_future().await;
 
     // Signal RustiCal to stop
     token.cancel();
@@ -39,13 +38,25 @@ where
 
 #[tokio::test]
 async fn test_ping() {
-    test_runner(None, async |origin| {
+    test_runner(None, async |port| {
+        let origin = format!("http://localhost:{port}");
         let resp = reqwest::get(origin.clone() + "/ping").await.unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
 
         // Ensure that path normalisation works as intended
         let resp = reqwest::get(origin + "/ping/").await.unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
+
+        cmd_health(
+            HttpConfig {
+                host: "localhost".to_owned(),
+                port,
+                ..Default::default()
+            },
+            Default::default(),
+        )
+        .await
+        .unwrap();
     })
     .await
 }
@@ -58,7 +69,8 @@ async fn test_initial_setup() {
     let db_tempfile = tempfile::NamedTempFile::with_suffix(".rustical-test.sqlite3").unwrap();
     let db_path = db_tempfile.path().to_string_lossy().into_owned();
 
-    test_runner(Some(db_path.clone()), async |origin| {
+    test_runner(Some(db_path.clone()), async |port| {
+        let origin = format!("http://localhost:{port}");
         // Create principal
         cmd_principals(
             PrincipalsArgs {

@@ -2,7 +2,7 @@ use crate::config::HttpConfig;
 use clap::Parser;
 use http::Method;
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Default)]
 pub struct HealthArgs {}
 
 /// Healthcheck for running rustical instance
