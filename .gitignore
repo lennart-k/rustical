@@ -18,3 +18,5 @@ site
 **/.vite
 
 **/*.snap.new
+
+**/*.drawio
