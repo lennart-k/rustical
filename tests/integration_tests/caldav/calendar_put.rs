@@ -72,3 +72,53 @@ END:VCALENDAR";
     </error>
     "#);
 }
+
+/// Thunderbird creates VTIMEZONE objects with invalid RRULEs.
+/// While invalid, we still want to accept them since Thunderbird is quite commonly used.
+/// In the future, we might fix invalid timezones ourself.
+#[rstest]
+#[tokio::test]
+async fn test_put_thunderbird(
+    #[from(test_store_context)]
+    #[future]
+    context: TestStoreContext,
+) {
+    let context = context.await;
+    let app = get_app(context.clone());
+
+    let calendar_meta = CalendarMetadata {
+        displayname: Some("Calendar".to_string()),
+        description: Some("Description".to_string()),
+        color: Some("#00FF00".to_string()),
+        order: 0,
+    };
+    let (principal, cal_id) = ("user", "calendar");
+    let url = format!("/caldav/principal/{principal}/{cal_id}");
+
+    let mut request = Request::builder()
+        .method("MKCALENDAR")
+        .uri(&url)
+        .body(Body::from(mkcalendar_template(&calendar_meta)))
+        .unwrap();
+    request
+        .headers_mut()
+        .typed_insert(Authorization::basic("user", "pass"));
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::CREATED);
+
+    let ical = include_str!("resources/ical_thunderbird.ics");
+
+    let mut request = Request::builder()
+        .method("PUT")
+        .uri(format!("{url}/qwue23489.ics"))
+        .header("If-None-Match", "*")
+        .header("Content-Type", "text/calendar")
+        .body(Body::from(ical))
+        .unwrap();
+    request
+        .headers_mut()
+        .typed_insert(Authorization::basic("user", "pass"));
+
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::CREATED);
+}
