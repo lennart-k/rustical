@@ -13,7 +13,7 @@ use caldata::{
         IcalUIDProperty, IcalVERSIONProperty, IcalVersion, VcardANNIVERSARYProperty,
         VcardBDAYProperty, VcardFNProperty,
     },
-    types::{CalDate, PartialDate, Timezone},
+    types::{CalDate, PartialDate, Tz},
 };
 use chrono::{NaiveDate, Utc};
 use sha2::{Digest, Sha256};
@@ -73,7 +73,7 @@ impl AddressObject {
         let Some(dtstart) = NaiveDate::from_ymd_opt(year.unwrap_or(1900), month, day) else {
             return Ok(None);
         };
-        let start_date = CalDate(dtstart, Timezone::Local);
+        let start_date = CalDate(dtstart, Tz::Local);
         let Some(end_date) = start_date.succ_opt() else {
             // start_date is MAX_DATE, this should never happen but FAPP also not raise an error
             return Ok(None);
@@ -90,14 +90,14 @@ impl AddressObject {
                 IcalDTENDProperty(end_date.into(), vec![].into()).into(),
                 IcalUIDProperty(uid, vec![].into()).into(),
                 IcalRRULEProperty(
-                    rrule::RRule::from_str("FREQ=YEARLY").unwrap(),
+                    caldata::rrule::RRule::from_str("FREQ=YEARLY").unwrap(),
                     vec![].into(),
                 )
                 .into(),
                 IcalSUMMARYProperty(summary.clone(), vec![].into()).into(),
                 ContentLine {
                     name: "TRANSP".to_owned(),
-                    value: Some("TRANSPARENT".to_owned()),
+                    value: "TRANSPARENT".to_owned(),
                     ..Default::default()
                 },
             ],
@@ -105,17 +105,17 @@ impl AddressObject {
                 properties: vec![
                     ContentLine {
                         name: "TRIGGER".to_owned(),
-                        value: Some("-PT0M".to_owned()),
+                        value: "-PT0M".to_owned(),
                         params: vec![("VALUE".to_owned(), vec!["DURATION".to_owned()])].into(),
                     },
                     ContentLine {
                         name: "ACTION".to_owned(),
-                        value: Some("DISPLAY".to_owned()),
+                        value: "DISPLAY".to_owned(),
                         ..Default::default()
                     },
                     ContentLine {
                         name: "DESCRIPTION".to_owned(),
-                        value: Some(summary),
+                        value: summary,
                         ..Default::default()
                     },
                 ],

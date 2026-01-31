@@ -35,16 +35,16 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
     // Extract calendar metadata
     let displayname = cal
         .get_property("X-WR-CALNAME")
-        .and_then(|prop| prop.value.clone());
+        .map(|prop| prop.value.clone());
     let description = cal
         .get_property("X-WR-CALDESC")
-        .and_then(|prop| prop.value.clone());
+        .map(|prop| prop.value.clone());
     let color = cal
         .get_property("X-WR-CALCOLOR")
-        .and_then(|prop| prop.value.clone());
+        .map(|prop| prop.value.clone());
     let timezone_id = cal
         .get_property("X-WR-TIMEZONE")
-        .and_then(|prop| prop.value.clone());
+        .map(|prop| prop.value.clone());
     // These properties should not appear in the expanded calendar objects
     cal.remove_property("X-WR-CALNAME");
     cal.remove_property("X-WR-CALDESC");

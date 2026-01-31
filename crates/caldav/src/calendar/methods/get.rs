@@ -43,28 +43,28 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
     if let Some(displayname) = calendar.meta.displayname {
         props.push(ContentLine {
             name: "X-WR-CALNAME".to_owned(),
-            value: Some(displayname),
+            value: displayname,
             params: vec![].into(),
         });
     }
     if let Some(description) = calendar.meta.description {
         props.push(ContentLine {
             name: "X-WR-CALDESC".to_owned(),
-            value: Some(description),
+            value: description,
             params: vec![].into(),
         });
     }
     if let Some(color) = calendar.meta.color {
         props.push(ContentLine {
             name: "X-WR-CALCOLOR".to_owned(),
-            value: Some(color),
+            value: color,
             params: vec![].into(),
         });
     }
     if let Some(timezone_id) = calendar.timezone_id {
         props.push(ContentLine {
             name: "X-WR-TIMEZONE".to_owned(),
-            value: Some(timezone_id),
+            value: timezone_id,
             params: vec![].into(),
         });
     }

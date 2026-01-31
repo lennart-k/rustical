@@ -27,7 +27,6 @@ rustical_dav.workspace = true
 rustical_ical.workspace = true
 axum.workspace = true
 http.workspace = true
-rrule.workspace = true
 headers.workspace = true
 tower.workspace = true
 futures-core.workspace = true

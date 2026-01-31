@@ -111,7 +111,7 @@ strum = "0.27"
 strum_macros = "0.27"
 serde_json = { version = "1.0", features = ["raw_value"] }
 sqlx-sqlite = { version = "0.8", features = ["bundled"] }
-caldata = { version = "0.14.0", features = ["chrono-tz", "vtimezones-rs"] }
+caldata = { version = "0.15.0", features = ["chrono-tz", "vtimezones-rs"] }
 toml = "0.9"
 tower = "0.5"
 tower-http = { version = "0.6", features = [
@@ -124,7 +124,6 @@ chrono-tz = "0.10"
 chrono-humanize = "0.2"
 rand = "0.9"
 axum-extra = { version = "0.12", features = ["typed-header"] }
-rrule = "0.14"
 argon2 = "0.5"
 rpassword = "7.4"
 password-hash = { version = "0.5" }

@@ -17,7 +17,6 @@ derive_more.workspace = true
 rustical_xml.workspace = true
 caldata.workspace = true
 regex.workspace = true
-rrule.workspace = true
 serde.workspace = true
 sha2.workspace = true
 axum.workspace = true

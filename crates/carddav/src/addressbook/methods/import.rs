@@ -34,7 +34,7 @@ pub async fn route_import<AS: AddressbookStore, S: SubscriptionStore>(
             let mut card_mut = card.mutable();
             card_mut.add_content_line(ContentLine {
                 name: "UID".to_owned(),
-                value: Some(uuid::Uuid::new_v4().to_string()),
+                value: uuid::Uuid::new_v4().to_string(),
                 params: vec![].into(),
             });
             card = card_mut.build(&ParserOptions::default(), None).unwrap();

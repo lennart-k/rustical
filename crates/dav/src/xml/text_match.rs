@@ -129,8 +129,7 @@ impl TextMatchElement {
     }
     #[must_use]
     pub fn match_property(&self, property: &ContentLine) -> bool {
-        let text = property.value.as_deref().unwrap_or("");
-        self.match_text(text)
+        self.match_text(&property.value)
     }
 }
 

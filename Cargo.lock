@@ -567,18 +567,18 @@ checksum = "b35204fbdc0b3f4446b89fc1ac2cf84a8a68971995d0bf2e925ec7cd960f9cb3"
 
 [[package]]
 name = "caldata"
-version = "0.14.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f36de4a8034d98c95e7fe874b828272d823cfbd68e9571fe7bf6c419e852cbe2"
+checksum = "e18d0b0cbc271e44b6f0dc262c9469f10f10f8af3fa00c3ebcc10e49ac91d478"
 dependencies = [
  "chrono",
  "chrono-tz",
  "derive_more",
  "itertools 0.14.0",
  "lazy_static",
+ "log",
  "phf 0.13.1",
  "regex",
- "rrule",
  "thiserror 2.0.18",
  "vtimezones-rs",
 ]
@@ -3170,19 +3170,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rrule"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "720acfb4980b9d8a6a430f6d7a11933e701ebbeba5eee39cc9d8c5f932aaff74"
-dependencies = [
- "chrono",
- "chrono-tz",
- "log",
- "regex",
- "thiserror 2.0.18",
-]
-
-[[package]]
 name = "rsa"
 version = "0.9.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3530,7 +3517,6 @@ dependencies = [
  "chrono-tz",
  "derive_more",
  "regex",
- "rrule",
  "rstest",
  "rustical_xml",
  "serde",
@@ -3571,7 +3557,6 @@ dependencies = [
  "headers",
  "http",
  "regex",
- "rrule",
  "rstest",
  "rstest_reuse",
  "rustical_dav",
