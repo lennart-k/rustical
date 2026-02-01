@@ -110,7 +110,7 @@ async fn test_put_thunderbird(
 
     let mut request = Request::builder()
         .method("PUT")
-        .uri(format!("{url}/qwue23489.ics"))
+        .uri(format!("{url}/ical_thunderbird.ics"))
         .header("If-None-Match", "*")
         .header("Content-Type", "text/calendar")
         .body(Body::from(ical))
@@ -121,4 +121,33 @@ async fn test_put_thunderbird(
 
     let response = app.clone().oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::CREATED);
+
+    {
+        let mut request = Request::builder()
+            .method("GET")
+            .uri(format!("{url}/ical_thunderbird.ics"))
+            .body(Body::empty())
+            .unwrap();
+        request
+            .headers_mut()
+            .typed_insert(Authorization::basic("user", "pass"));
+        let response = app.clone().oneshot(request).await.unwrap();
+        let body = response.extract_string().await;
+        similar_asserts::assert_eq!(body.replace("\r", ""), ical);
+    }
+
+    {
+        let mut request = Request::builder()
+            .method("PROPFIND")
+            .uri(format!("{url}/ical_thunderbird.ics"))
+            .body(Body::empty())
+            .unwrap();
+        request
+            .headers_mut()
+            .typed_insert(Authorization::basic("user", "pass"));
+
+        let response = app.clone().oneshot(request).await.unwrap();
+        let body = response.extract_string().await;
+        insta::assert_snapshot!("propfind_response", body);
+    }
 }
