@@ -1,15 +1,21 @@
 // This integration test checks whether the HTTP server works by actually running rustical in a new
 // thread.
 use common::rustical_process;
+use headers::{HeaderMapExt, Location};
 use http::{Method, StatusCode};
+use reqwest::{
+    Url,
+    cookie::{CookieStore, Jar},
+    redirect::Policy,
+};
 use rustical::{
     PrincipalsArgs, cmd_health, cmd_principals,
     config::{Config, DataStoreConfig, HttpConfig, SqliteDataStoreConfig},
-    principals::{CreateArgs, PrincipalsCommand},
+    principals::{CreateArgs, EditArgs, PrincipalsCommand},
 };
 use rustical_store::auth::{AuthenticationProvider, PrincipalType};
 use rustical_store_sqlite::{create_db_pool, principal_store::SqlitePrincipalStore};
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
 mod common;
 
@@ -78,6 +84,36 @@ async fn test_initial_setup() {
                     id: "user".to_owned(),
                     name: Some("Test User".to_owned()),
                     password: false,
+                    for_testing_password_from_arg: None,
+                    principal_type: Some(PrincipalType::Individual),
+                }),
+            },
+            Config {
+                data_store: DataStoreConfig::Sqlite(SqliteDataStoreConfig {
+                    db_url: db_path.clone(),
+                    run_repairs: true,
+                    skip_broken: false,
+                }),
+                http: Default::default(),
+                frontend: Default::default(),
+                oidc: None,
+                tracing: Default::default(),
+                dav_push: Default::default(),
+                nextcloud_login: Default::default(),
+                caldav: Default::default(),
+            },
+        )
+        .await
+        .unwrap();
+        // Set principal password
+        cmd_principals(
+            PrincipalsArgs {
+                command: PrincipalsCommand::Edit(EditArgs {
+                    id: "user".to_owned(),
+                    name: None,
+                    password: false,
+                    remove_password: false,
+                    for_testing_password_from_arg: Some("pass".to_owned()),
                     principal_type: Some(PrincipalType::Individual),
                 }),
             },
@@ -99,14 +135,56 @@ async fn test_initial_setup() {
         .await
         .unwrap();
 
-        // Bodge to set password without using command (since that reads stdin)
-        let db = create_db_pool(&db_path, false).await.unwrap();
-        let principal_store = SqlitePrincipalStore::new(db);
-        let app_token = "token";
-        principal_store
-            .add_app_token("user", "Test Token".to_owned(), app_token.to_owned())
-            .await
+        let client = reqwest::Client::builder()
+            .redirect(Policy::none())
+            .cookie_store(true)
+            .build()
             .unwrap();
+        {
+            // Log in to the frontend
+            let url = origin.clone() + "/frontend/login";
+            let mut form = HashMap::new();
+            form.insert("username", "user");
+            form.insert("password", "pass");
+            let resp = client
+                .request(Method::POST, &url)
+                .form(&form)
+                .send()
+                .await
+                .unwrap();
+            assert_eq!(resp.status(), StatusCode::SEE_OTHER);
+            let location = resp.headers().get("Location").unwrap().to_str().unwrap();
+            assert_eq!(location, "/frontend/user");
+        }
+
+        {
+            let url = origin.clone() + "/frontend/user";
+            let resp = client.request(Method::GET, &url).send().await.unwrap();
+            assert_eq!(resp.status(), StatusCode::SEE_OTHER);
+            let location = resp.headers().get("Location").unwrap().to_str().unwrap();
+            assert_eq!(location, "/frontend/user/user");
+        }
+
+        {
+            let url = origin.clone() + "/frontend/user/user";
+            let resp = client.request(Method::GET, &url).send().await.unwrap();
+            assert_eq!(resp.status(), StatusCode::OK);
+        }
+
+        let app_token = {
+            let url = origin.clone() + "/frontend/user/user/app_token";
+            let mut form = HashMap::new();
+            form.insert("name", "Test Token");
+            let resp = client
+                .request(Method::POST, &url)
+                .form(&form)
+                .send()
+                .await
+                .unwrap();
+            assert_eq!(resp.status(), StatusCode::OK);
+
+            resp.text().await.unwrap()
+        };
 
         let url = origin.clone() + "/caldav/principal/user";
         let resp = reqwest::Client::new()
@@ -118,12 +196,14 @@ async fn test_initial_setup() {
 
         let resp = reqwest::Client::new()
             .request(Method::from_bytes(b"PROPFIND").unwrap(), &url)
-            .basic_auth("user", Some("token"))
+            .basic_auth("user", Some(&app_token))
             .send()
             .await
             .unwrap();
         assert_eq!(resp.status(), StatusCode::MULTI_STATUS);
 
+        let db = create_db_pool(&db_path, false).await.unwrap();
+        let principal_store = SqlitePrincipalStore::new(db);
         principal_store.remove_principal("user").await.unwrap();
 
         let resp = reqwest::Client::new()

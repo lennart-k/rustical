@@ -156,6 +156,7 @@ rustical_store_sqlite = { workspace = true, features = ["test"] }
 insta.workspace = true
 similar-asserts.workspace = true
 tempfile = "3.24"
+reqwest = { workspace = true, features = ["cookies"] }
 
 [dependencies]
 rustical_store.workspace = true
