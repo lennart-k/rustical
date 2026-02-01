@@ -62,7 +62,11 @@ pub enum PrincipalsCommand {
     Membership(MembershipArgs),
 }
 
-#[allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]
+#[allow(
+    clippy::missing_errors_doc,
+    clippy::missing_panics_doc,
+    clippy::too_many_lines
+)]
 pub async fn cmd_principals(args: PrincipalsArgs, config: Config) -> anyhow::Result<()> {
     let (_, _, _, principal_store, _) = get_data_stores(true, &config.data_store).await?;
 
