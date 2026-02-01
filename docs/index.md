@@ -4,8 +4,8 @@ a CalDAV/CardDAV server
 
 !!! warning
   RustiCal is under **active development**!
-  While I've been successfully using RustiCal productively for some months now and there seems to be a growing user base,
-  you'd still be one of the first testers so expect bugs and rough edges.
+  While I've been successfully using RustiCal productively for more than half a year now and there seems to be a growing user base,
+  you might still encounter bugs and rough edges.
   If you still want to use it in its current state, absolutely feel free to do so and to open up an issue if something is not working. :)
 
 [Installation](installation/index.md){ .md-button }
