@@ -2,7 +2,10 @@ use super::membership::MembershipArgs;
 use crate::{config::Config, get_data_stores, membership::cmd_membership};
 use clap::{Parser, Subcommand};
 use password_hash::{PasswordHasher, SaltString, rand_core::OsRng};
-use rustical_store::auth::{AuthenticationProvider, Principal, PrincipalType};
+use rustical_store::{
+    Secret,
+    auth::{AuthenticationProvider, Principal, PrincipalType},
+};
 
 #[derive(Parser, Debug)]
 pub struct PrincipalsArgs {
@@ -17,6 +20,10 @@ pub struct CreateArgs {
     pub principal_type: Option<PrincipalType>,
     #[arg(short, long)]
     pub name: Option<String>,
+    // This argument is just there so that we can create a user password in an integration test
+    // environment
+    #[arg(long, hide = true)]
+    pub for_testing_password_from_arg: Option<String>,
     #[arg(long, help = "Ask for password input")]
     pub password: bool,
 }
@@ -29,6 +36,10 @@ pub struct RemoveArgs {
 #[derive(Parser, Debug)]
 pub struct EditArgs {
     pub id: String,
+    // This argument is just there so that we can create a user password in an integration test
+    // environment
+    #[arg(long, hide = true)]
+    pub for_testing_password_from_arg: Option<String>,
     #[arg(long, help = "Ask for password input")]
     pub password: bool,
     #[arg(
@@ -71,21 +82,25 @@ pub async fn cmd_principals(args: PrincipalsArgs, config: Config) -> anyhow::Res
             principal_type,
             name,
             password,
+            for_testing_password_from_arg,
         }) => {
-            let salt = SaltString::generate(OsRng);
-            let password = if password {
-                println!("Enter your password:");
-                let password = rpassword::read_password()?;
-                Some(
-                    argon2::Argon2::default()
-                        .hash_password(password.as_bytes(), &salt)
-                        .unwrap()
-                        .to_string()
-                        .into(),
-                )
+            let password = if let Some(pass) = for_testing_password_from_arg {
+                Some(pass)
+            } else if password {
+                Some(rpassword::read_password()?)
             } else {
                 None
             };
+            let password = password.map(|password| {
+                let salt = SaltString::generate(OsRng);
+                Secret::from(
+                    argon2::Argon2::default()
+                        .hash_password(password.as_bytes(), &salt)
+                        .unwrap()
+                        .to_string(),
+                )
+            });
+
             principal_store
                 .insert_principal(
                     Principal {
@@ -110,6 +125,7 @@ pub async fn cmd_principals(args: PrincipalsArgs, config: Config) -> anyhow::Res
             password,
             name,
             principal_type,
+            for_testing_password_from_arg,
         }) => {
             let mut principal = principal_store
                 .get_principal(&id)
@@ -119,18 +135,27 @@ pub async fn cmd_principals(args: PrincipalsArgs, config: Config) -> anyhow::Res
             if remove_password {
                 principal.password = None;
             }
-            if password {
+
+            let password = if let Some(pass) = for_testing_password_from_arg {
+                Some(pass)
+            } else if password {
+                Some(rpassword::read_password()?)
+            } else {
+                None
+            };
+            let password = password.map(|password| {
                 let salt = SaltString::generate(OsRng);
-                println!("Enter your password:");
-                let password = rpassword::read_password()?;
-                principal.password = Some(
+                Secret::from(
                     argon2::Argon2::default()
                         .hash_password(password.as_bytes(), &salt)
                         .unwrap()
-                        .to_string()
-                        .into(),
-                );
+                        .to_string(),
+                )
+            });
+            if password.is_some() {
+                principal.password = password;
             }
+
             if name.is_some() {
                 principal.displayname = name;
             }
