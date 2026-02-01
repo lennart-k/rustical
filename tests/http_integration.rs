@@ -1,13 +1,8 @@
 // This integration test checks whether the HTTP server works by actually running rustical in a new
 // thread.
 use common::rustical_process;
-use headers::{HeaderMapExt, Location};
 use http::{Method, StatusCode};
-use reqwest::{
-    Url,
-    cookie::{CookieStore, Jar},
-    redirect::Policy,
-};
+use reqwest::redirect::Policy;
 use rustical::{
     PrincipalsArgs, cmd_health, cmd_principals,
     config::{Config, DataStoreConfig, HttpConfig, SqliteDataStoreConfig},
