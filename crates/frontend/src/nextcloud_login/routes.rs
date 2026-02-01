@@ -11,8 +11,8 @@ use axum::{
 };
 use axum_extra::TypedHeader;
 use chrono::{Duration, Utc};
-use headers::{Host, UserAgent};
-use http::StatusCode;
+use headers::{HeaderMapExt, Host, UserAgent};
+use http::{HeaderMap, StatusCode};
 use rustical_store::auth::{AuthenticationProvider, Principal};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -20,13 +20,16 @@ use tracing::instrument;
 
 pub async fn post_nextcloud_login(
     Extension(state): Extension<Arc<NextcloudFlows>>,
-    TypedHeader(user_agent): TypedHeader<UserAgent>,
     TypedHeader(host): TypedHeader<Host>,
+    headers: HeaderMap,
 ) -> Json<NextcloudLoginResponse> {
     let flow_id = uuid::Uuid::new_v4().to_string();
     let token = uuid::Uuid::new_v4().to_string();
 
-    let app_name = user_agent.to_string();
+    let app_name = headers
+        .typed_get::<UserAgent>()
+        .map_or_else(|| "Unnamed Client".to_owned(), |ua| ua.to_string());
+
     {
         let mut flows = state.flows.write().await;
         // Flows must not last longer than 10 minutes
