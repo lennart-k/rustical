@@ -7,6 +7,7 @@ VERSION:4.0
 FN:John Doe
 N:Doe;John;;;,
 BDAY:--0203
+ANNIVERSARY:--0303
 GENDER:M
-UID:[UID]
+UID:amazing-uid
 END:VCARD

@@ -1,0 +1,177 @@
+---
+source: tests/integration_tests/carddav/addressbook_import.rs
+expression: body
+---
+<?xml version="1.0" encoding="utf-8"?>
+<multistatus xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:PUSH="https://bitfire.at/webdav-push">
+    <response>
+        <href>/caldav/principal/user/_birthdays_contacts/</href>
+        <propstat>
+            <prop>
+                <calendar-color xmlns="http://apple.com/ns/ical/">#FFFF00</calendar-color>
+                <CAL:calendar-description>and anniversaries</CAL:calendar-description>
+                <CAL:timezone-service-set>
+                    <href>https://www.iana.org/time-zones</href>
+                </CAL:timezone-service-set>
+                <calendar-order xmlns="http://apple.com/ns/ical/">0</calendar-order>
+                <CAL:supported-calendar-component-set>
+                    <CAL:comp name="VEVENT"/>
+                </CAL:supported-calendar-component-set>
+                <CAL:supported-calendar-data>
+                    <CAL:calendar-data content-type="text/calendar" version="2.0"/>
+                </CAL:supported-calendar-data>
+                <CAL:supported-collation-set>
+                    <CAL:supported-collation>i;ascii-casemap</CAL:supported-collation>
+                    <CAL:supported-collation>i;unicode-casemap</CAL:supported-collation>
+                    <CAL:supported-collation>i;octet</CAL:supported-collation>
+                </CAL:supported-collation-set>
+                <CAL:max-resource-size>10000000</CAL:max-resource-size>
+                <supported-report-set>
+                    <supported-report>
+                        <report>
+                            <CAL:calendar-query/>
+                        </report>
+                    </supported-report>
+                    <supported-report>
+                        <report>
+                            <CAL:calendar-multiget/>
+                        </report>
+                    </supported-report>
+                    <supported-report>
+                        <report>
+                            <sync-collection/>
+                        </report>
+                    </supported-report>
+                </supported-report-set>
+                <CAL:min-date-time>-2621430101T000000Z</CAL:min-date-time>
+                <CAL:max-date-time>+2621421231T235959Z</CAL:max-date-time>
+                <sync-token>github.com/lennart-k/rustical/ns/1</sync-token>
+                <CS:getctag>github.com/lennart-k/rustical/ns/1</CS:getctag>
+                <PUSH:transports>
+                    <PUSH:web-push/>
+                </PUSH:transports>
+                <PUSH:topic>[PUSH_TOPIC]</PUSH:topic>
+                <PUSH:supported-triggers>
+                    <PUSH:content-update>
+                        <depth>1</depth>
+                    </PUSH:content-update>
+                    <PUSH:property-update>
+                        <depth>1</depth>
+                    </PUSH:property-update>
+                </PUSH:supported-triggers>
+                <resourcetype>
+                    <collection/>
+                    <CAL:calendar/>
+                </resourcetype>
+                <displayname>Test Birthdays</displayname>
+                <current-user-principal>
+                    <href>/caldav/principal/user/</href>
+                </current-user-principal>
+                <current-user-privilege-set>
+                    <privilege>
+                        <read/>
+                    </privilege>
+                    <privilege>
+                        <write-properties/>
+                    </privilege>
+                    <privilege>
+                        <read-acl/>
+                    </privilege>
+                    <privilege>
+                        <read-current-user-privilege-set/>
+                    </privilege>
+                </current-user-privilege-set>
+                <owner>
+                    <href>/caldav/principal/user/</href>
+                </owner>
+            </prop>
+            <status>HTTP/1.1 200 OK</status>
+        </propstat>
+    </response>
+    <response>
+        <href>/caldav/principal/user/_birthdays_contacts/amazing-uid-birthday.ics</href>
+        <propstat>
+            <prop>
+                <getetag>&quot;[GETETAG]&quot;</getetag>
+                <getcontenttype>text/calendar;charset=utf-8</getcontenttype>
+                <CAL:calendar-data>BEGIN:VCALENDAR
+VERSION:2.0
+CALSCALE:GREGORIAN
+PRODID:-//github.com/lennart-k/rustical birthday calendar//EN
+BEGIN:VEVENT
+DTSTAMP:[DTSTAMP]
+DTSTART;VALUE=DATE:19000203
+DTEND;VALUE=DATE:19000204
+UID:amazing-uid-birthday
+RRULE:FREQ=YEARLY
+SUMMARY:🎂 John Doe
+TRANSP:TRANSPARENT
+BEGIN:VALARM
+TRIGGER;VALUE=DURATION:-PT0M
+ACTION:DISPLAY
+DESCRIPTION:🎂 John Doe
+END:VALARM
+END:VEVENT
+END:VCALENDAR
+</CAL:calendar-data>
+                <resourcetype>
+                </resourcetype>
+                <current-user-principal>
+                    <href>/caldav/principal/user/</href>
+                </current-user-principal>
+                <current-user-privilege-set>
+                    <privilege>
+                        <all/>
+                    </privilege>
+                </current-user-privilege-set>
+                <owner>
+                    <href>/caldav/principal/user/</href>
+                </owner>
+            </prop>
+            <status>HTTP/1.1 200 OK</status>
+        </propstat>
+    </response>
+    <response>
+        <href>/caldav/principal/user/_birthdays_contacts/amazing-uid-anniversary.ics</href>
+        <propstat>
+            <prop>
+                <getetag>&quot;[GETETAG]&quot;</getetag>
+                <getcontenttype>text/calendar;charset=utf-8</getcontenttype>
+                <CAL:calendar-data>BEGIN:VCALENDAR
+VERSION:2.0
+CALSCALE:GREGORIAN
+PRODID:-//github.com/lennart-k/rustical birthday calendar//EN
+BEGIN:VEVENT
+DTSTAMP:[DTSTAMP]
+DTSTART;VALUE=DATE:19000303
+DTEND;VALUE=DATE:19000304
+UID:amazing-uid-anniversary
+RRULE:FREQ=YEARLY
+SUMMARY:💍 John Doe
+TRANSP:TRANSPARENT
+BEGIN:VALARM
+TRIGGER;VALUE=DURATION:-PT0M
+ACTION:DISPLAY
+DESCRIPTION:💍 John Doe
+END:VALARM
+END:VEVENT
+END:VCALENDAR
+</CAL:calendar-data>
+                <resourcetype>
+                </resourcetype>
+                <current-user-principal>
+                    <href>/caldav/principal/user/</href>
+                </current-user-principal>
+                <current-user-privilege-set>
+                    <privilege>
+                        <all/>
+                    </privilege>
+                </current-user-privilege-set>
+                <owner>
+                    <href>/caldav/principal/user/</href>
+                </owner>
+            </prop>
+            <status>HTTP/1.1 200 OK</status>
+        </propstat>
+    </response>
+</multistatus>
