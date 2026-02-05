@@ -80,14 +80,34 @@ where
             }
 
             if let Some(auth) = auth_header {
+                // This is a bodge to allow users to act on behalf of a principal they control.
+                // For example if alice is member of group.people she could authenticate as
+                // alice$group.people
+                // This is a workaround to support group calendars on Apple devices and will
+                // probably be removed once proper sharing is finally implemented.
                 let user_id = auth.username();
+                let (user_id, impersonating) = if let Some((a, b)) = user_id.split_once('$') {
+                    (a, Some(b))
+                } else {
+                    (user_id, None)
+                };
                 let password = auth.password();
+
                 if let Ok(Some(user)) = ap
                     .validate_app_token(user_id, password)
                     .instrument(info_span!("validate_user_token"))
                     .await
                 {
-                    request.extensions_mut().insert(user);
+                    // Make sure user is authorized to impersonate another principal
+                    if let Some(impersonating) = impersonating
+                        && user.memberships().contains(&impersonating)
+                    {
+                        if let Ok(Some(impersonating)) = ap.get_principal(impersonating).await {
+                            request.extensions_mut().insert(impersonating);
+                        }
+                    } else {
+                        request.extensions_mut().insert(user);
+                    }
                 }
             }
 
