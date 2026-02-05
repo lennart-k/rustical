@@ -14,7 +14,6 @@ use percent_encoding::{CONTROLS, utf8_percent_encode};
 use rand::{Rng, distr::Alphanumeric};
 use rustical_store::auth::{AuthenticationProvider, Principal};
 use serde::Deserialize;
-use uuid::Uuid;
 
 pub fn generate_app_token() -> String {
     rand::rng()
@@ -28,15 +27,10 @@ pub fn generate_app_token() -> String {
 #[template(path = "apple_configuration/template.xml")]
 pub struct AppleConfig {
     token_name: String,
-    account_description: String,
     hostname: String,
-    caldav_principal_url: String,
-    carddav_principal_url: String,
     user: String,
+    memberships: Vec<String>,
     token: String,
-    caldav_profile_uuid: Uuid,
-    carddav_profile_uuid: Uuid,
-    plist_uuid: Uuid,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -66,15 +60,14 @@ pub async fn route_post_app_token<AP: AuthenticationProvider>(
     if apple {
         let profile = AppleConfig {
             token_name: name,
-            account_description: format!("{}@{}", &user.id, &host),
             hostname: host.to_string(),
-            caldav_principal_url: format!("https://{host}/caldav-compat/principal/{user_id}"),
-            carddav_principal_url: format!("https://{host}/carddav/principal/{user_id}"),
             user: user.id.clone(),
+            memberships: user
+                .memberships_without_self()
+                .into_iter()
+                .map(String::from)
+                .collect(),
             token,
-            caldav_profile_uuid: Uuid::new_v4(),
-            carddav_profile_uuid: Uuid::new_v4(),
-            plist_uuid: Uuid::new_v4(),
         }
         .render()
         .unwrap();

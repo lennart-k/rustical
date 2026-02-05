@@ -6,13 +6,13 @@
   <array>
     <dict>
       <key>CalDAVAccountDescription</key>
-      <string>{{ account_description }}</string>
+      <string>{{ user }}@{{ hostname }}</string>
 
       <key>CalDAVHostName</key>
       <string>{{ hostname }}</string>
 
       <key>CalDAVPrincipalURL</key>
-      <string>{{ caldav_principal_url }}</string>
+      <string>https://{{ hostname }}/caldav-compat/principal/{{ user }}</string>
 
       <key>CalDAVUseSSL</key>
       <true/>
@@ -39,21 +39,64 @@
       <string>com.apple.caldav.account</string>
 
       <key>PayloadUUID</key>
-      <string>{{ caldav_profile_uuid }}</string>
+      <string>{{ uuid::Uuid::new_v4() }}</string>
 
       <key>PayloadVersion</key>
       <integer>1</integer>
     </dict>
 
+    {% for membership in memberships %}
+    <dict>
+      <key>CalDAVAccountDescription</key>
+      <string>{{ membership }}@{{ hostname }}</string>
+
+      <key>CalDAVHostName</key>
+      <string>{{ hostname }}</string>
+
+      <key>CalDAVPrincipalURL</key>
+      <string>https://{{ hostname }}/caldav-compat/principal/{{ membership }}</string>
+
+      <key>CalDAVUseSSL</key>
+      <true/>
+
+      <key>CalDAVUsername</key>
+      <string>{{ user }}${{ membership }}</string>
+
+      <key>CalDAVPassword</key>
+      <string>{{ token }}</string>
+
+      <key>PayloadDescription</key>
+      <string>{{ user }} (as {{ membership }}) RustiCal CalDAV profile</string>
+
+      <key>PayloadDisplayName</key>
+      <string>{{ user }} (as {{ membership }}) RustiCal CalDAV profile</string>
+
+      <key>PayloadIdentifier</key>
+      <string>{{ hostname }}.cal.{{ user }}.{{ membership }}</string>
+
+      <key>PayloadOrganization</key>
+      <string>RustiCal</string>
+
+      <key>PayloadType</key>
+      <string>com.apple.caldav.account</string>
+
+      <key>PayloadUUID</key>
+      <string>{{ uuid::Uuid::new_v4() }}</string>
+
+      <key>PayloadVersion</key>
+      <integer>1</integer>
+    </dict>
+    {% endfor %}
+
     <dict>
       <key>CardDAVAccountDescription</key>
-      <string>{{ account_description }}</string>
+      <string>{{ user }}@{{ hostname }}</string>
 
       <key>CardDAVHostName</key>
       <string>{{ hostname }}</string>
 
       <key>CardDAVPrincipalURL</key>
-      <string>{{ carddav_principal_url }}</string>
+      <string>https://{{ hostname }}/carddav/principal/{{ user }}</string>
 
       <key>CardDAVUseSSL</key>
       <true/>
@@ -80,7 +123,7 @@
       <string>com.apple.carddav.account</string>
 
       <key>PayloadUUID</key>
-      <string>{{ carddav_profile_uuid }}</string>
+      <string>{{ uuid::Uuid::new_v4() }}</string>
 
       <key>PayloadVersion</key>
       <integer>1</integer>
@@ -107,7 +150,7 @@
   <string>Configuration</string>
 
   <key>PayloadUUID</key>
-  <string>{{ plist_uuid }}</string>
+  <string>{{ uuid::Uuid::new_v4() }}</string>
 
   <key>PayloadVersion</key>
   <integer>1</integer>
