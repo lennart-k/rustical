@@ -47,9 +47,9 @@ impl Principal {
 
     /// Returns all principals the user implements
     pub fn memberships(&self) -> Vec<&str> {
-        let mut memberships: Vec<_> = self.memberships.iter().map(String::as_ref).collect();
-        memberships.push(self.id.as_str());
-        memberships
+        std::iter::once(self.id.as_str())
+            .chain(self.memberships.iter().map(String::as_ref))
+            .collect()
     }
 
     pub fn memberships_without_self(&self) -> Vec<&str> {
