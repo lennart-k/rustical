@@ -3,7 +3,7 @@ use rustical_frontend::FrontendConfig;
 use rustical_oidc::OidcConfig;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields, default)]
 pub struct HttpConfig {
     pub host: String,
@@ -23,7 +23,7 @@ impl Default for HttpConfig {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct SqliteDataStoreConfig {
     pub db_url: String,
@@ -33,14 +33,14 @@ pub struct SqliteDataStoreConfig {
     pub skip_broken: bool,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "snake_case")]
 #[serde(deny_unknown_fields)]
 pub enum DataStoreConfig {
     Sqlite(SqliteDataStoreConfig),
 }
 
-#[derive(Debug, Deserialize, Serialize, Default)]
+#[derive(Debug, Deserialize, Serialize, Default, Clone)]
 #[serde(deny_unknown_fields, default)]
 pub struct TracingConfig {
     pub opentelemetry: bool,
@@ -50,7 +50,7 @@ const fn default_true() -> bool {
     true
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields, default)]
 pub struct DavPushConfig {
     #[serde(default = "default_true")]
@@ -82,7 +82,7 @@ impl Default for NextcloudLoginConfig {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
     pub data_store: DataStoreConfig,

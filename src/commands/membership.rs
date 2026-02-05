@@ -3,9 +3,9 @@ use rustical_store::auth::AuthenticationProvider;
 
 #[derive(Debug, Parser)]
 pub struct AssignArgs {
-    id: String,
+    pub id: String,
     #[arg(long, help = "The principal to assign a membership to (e.g. a group)")]
-    to: String,
+    pub to: String,
 }
 
 #[derive(Debug, Parser)]
@@ -30,7 +30,7 @@ pub enum MembershipCommand {
 #[derive(Parser, Debug)]
 pub struct MembershipArgs {
     #[command(subcommand)]
-    command: MembershipCommand,
+    pub command: MembershipCommand,
 }
 
 #[allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]

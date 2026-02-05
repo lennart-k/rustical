@@ -99,10 +99,10 @@ where
                     .await
                 {
                     // Make sure user is authorized to impersonate another principal
-                    if let Some(impersonating) = impersonating
-                        && user.memberships().contains(&impersonating)
-                    {
-                        if let Ok(Some(impersonating)) = ap.get_principal(impersonating).await {
+                    if let Some(impersonating) = impersonating {
+                        if user.memberships().contains(&impersonating)
+                            && let Ok(Some(impersonating)) = ap.get_principal(impersonating).await
+                        {
                             request.extensions_mut().insert(impersonating);
                         }
                     } else {
