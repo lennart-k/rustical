@@ -33,6 +33,15 @@ Following resources are available.
 
 Authenticate with HTTP Basic authentication using your user id and a generated app token.
 
+Note that the user id is not allowed to contain a colon (`:`) character.
+Furthermore, the dollar (`$`) character is also forbidden.
+
+#### Principal impersonation
+
+If a user (e.g. alice) is member of a group (i.e. group.amazing) a client can authenticate as the group by specifying the username
+`alice$group.amazing`.
+This only applies for the caldav/carddav endpoints and is an unfortunate workaround since Apple does not properly adhere to their own spec and ignores its own configuration options. :(
+
 ## `/caldav` vs `/caldav-compat` (relevant for group sharing)
 
 To discover shared calendars the `calendar-home-set` property is used to list all principals the user has access to.
@@ -47,7 +56,11 @@ You can set up DAVx5 through the Nextcloud login flow. Collections including gro
 
 ## Apple Calendar
 
-You can download a configuration profile from the frontend in the app token section.
+You can download a configuration profile from the frontend in the app token section. This will include CalDAV profiles for all groups the user is a member of.
+
+When the memberships of a user change the user is required to download a new configuration profile from the frontend.
+
+This is because Apple does not properly adhere to the CalDAV specification (which they authored).
 
 **Note**: Since Apple Calendar does not properly support the `calendar-home-set` property the `/caldav-compat` endpoints should be used.
 That also means that Apple Calendar is not able to automatically discover group collections so in that case you'll have to manually add all principals with `/caldav-compat/principal/<principal_id>`.
