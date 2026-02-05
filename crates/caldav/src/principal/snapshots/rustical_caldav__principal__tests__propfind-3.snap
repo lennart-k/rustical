@@ -28,8 +28,8 @@ expression: response.serialize_to_string().unwrap()
                 </supported-report>
             </supported-report-set>
             <calendar-home-set xmlns="urn:ietf:params:xml:ns:caldav">
-                <href xmlns="DAV:">/caldav/principal/group/</href>
                 <href xmlns="DAV:">/caldav/principal/user/</href>
+                <href xmlns="DAV:">/caldav/principal/group/</href>
             </calendar-home-set>
             <resourcetype xmlns="DAV:">
                 <collection xmlns="DAV:"/>

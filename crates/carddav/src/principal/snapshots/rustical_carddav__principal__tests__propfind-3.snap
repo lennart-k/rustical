@@ -20,8 +20,8 @@ expression: response.serialize_to_string().unwrap()
                 <href xmlns="DAV:">/carddav/principal/</href>
             </principal-collection-set>
             <addressbook-home-set xmlns="urn:ietf:params:xml:ns:carddav">
-                <href xmlns="DAV:">/carddav/principal/group/</href>
                 <href xmlns="DAV:">/carddav/principal/user/</href>
+                <href xmlns="DAV:">/carddav/principal/group/</href>
             </addressbook-home-set>
             <resourcetype xmlns="DAV:">
                 <collection xmlns="DAV:"/>

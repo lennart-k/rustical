@@ -50,10 +50,10 @@ ResponseElement {
                                 AddressbookHomeSet(
                                     [
                                         HrefElement {
-                                            href: "/carddav/principal/group/",
+                                            href: "/carddav/principal/user/",
                                         },
                                         HrefElement {
-                                            href: "/carddav/principal/user/",
+                                            href: "/carddav/principal/group/",
                                         },
                                     ],
                                 ),

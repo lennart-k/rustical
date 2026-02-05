@@ -66,10 +66,10 @@ ResponseElement {
                                 CalendarHomeSet(
                                     [
                                         HrefElement {
-                                            href: "/caldav/principal/group/",
+                                            href: "/caldav/principal/user/",
                                         },
                                         HrefElement {
-                                            href: "/caldav/principal/user/",
+                                            href: "/caldav/principal/group/",
                                         },
                                     ],
                                 ),
