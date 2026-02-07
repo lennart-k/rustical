@@ -80,7 +80,12 @@ pub fn make_app<
         .route(
             "/.well-known/caldav",
             any(async |TypedHeader(ua): TypedHeader<UserAgent>| {
-                if ua.as_str().contains("remindd") || ua.as_str().contains("dataaccessd") {
+                // This would be a use case for Aho Corasick :)
+                // For user agents see https://github.com/lennart-k/rustical/issues/180
+                if ua.as_str().contains("accountsd")
+                    || ua.as_str().contains("remindd")
+                    || ua.as_str().contains("dataaccessd")
+                {
                     // remindd is an Apple Calendar User Agent
                     // Even when explicitly configuring a principal URL in Apple Calendar Apple
                     // will not respect that configuration but call /.well-known/caldav,
