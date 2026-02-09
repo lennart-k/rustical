@@ -219,6 +219,10 @@ pub async fn route_get_oidc_callback<US: UserStore + Clone>(
             .preferred_username()
             .ok_or(OidcError::Other("Missing preferred_username claim"))?
             .to_string(),
+        UserIdClaim::Email => user_info_claims
+            .email()
+            .ok_or(OidcError::Other("Missing email claim"))?
+            .to_string(),
     };
 
     match user_store.user_exists(&user_id).await {

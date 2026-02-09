@@ -19,7 +19,7 @@ allow_sign_up = true
 allow_password_login = false  # optional
 ```
 
-1. Can be either `preferred_username` or `sub`
+1. Can be `preferred_username`, `email` or `sub`
 2. Optional: You can require a user to be in a certain group to use RustiCal
 
 ```yaml title="Authelia configuration"
