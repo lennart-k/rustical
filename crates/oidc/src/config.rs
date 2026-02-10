@@ -9,6 +9,8 @@ pub enum UserIdClaim {
     // The more ergonomic option if you know what you're doing
     #[default]
     PreferredUsername,
+    // The hopefully unique option
+    Email,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
