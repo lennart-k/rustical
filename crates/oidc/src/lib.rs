@@ -198,13 +198,14 @@ pub async fn route_get_oidc_callback<US: UserStore + Clone>(
         .await
         .map_err(|e| OidcError::UserInfo(e.to_string()))?;
 
+    let groups = user_info_claims
+        .additional_claims()
+        .groups
+        .as_deref()
+        .unwrap_or_default();
+
     if let Some(require_group) = &oidc_config.require_group
-        && !user_info_claims
-            .additional_claims()
-            .groups
-            .clone()
-            .unwrap_or_default()
-            .contains(require_group)
+        && !groups.contains(require_group)
     {
         return Ok((
             StatusCode::UNAUTHORIZED,
