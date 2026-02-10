@@ -13,6 +13,9 @@ pub enum Error {
     #[error("Invalid principal type: {0}")]
     InvalidPrincipalType(String),
 
+    #[error("Invalid principal id: Id cannot contain ':' or '$'.")]
+    InvalidPrincipalId,
+
     #[error("Read-only")]
     ReadOnly,
 

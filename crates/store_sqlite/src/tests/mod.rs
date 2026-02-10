@@ -2,7 +2,7 @@ use crate::{
     SqliteStore, addressbook_store::SqliteAddressbookStore, calendar_store::SqliteCalendarStore,
     create_db_pool, principal_store::SqlitePrincipalStore,
 };
-use rstest::fixture;
+use rstest::{fixture, rstest};
 use rustical_store::auth::{AuthenticationProvider, Principal, PrincipalType};
 use sqlx::SqlitePool;
 
@@ -51,4 +51,52 @@ pub async fn test_store_context() -> TestStoreContext {
         principal_store,
         sub_store: SqliteStore::new(db),
     }
+}
+
+#[rstest]
+#[tokio::test]
+async fn test_invalid_principal_id(
+    #[from(test_store_context)]
+    #[future]
+    context: TestStoreContext,
+) {
+    let principal_store = context.await.principal_store;
+
+    assert!(
+        matches!(
+            principal_store
+                .insert_principal(
+                    Principal {
+                        id: "group:nicegroup".to_owned(),
+                        displayname: None,
+                        principal_type: PrincipalType::Individual,
+                        password: None,
+                        memberships: vec![],
+                    },
+                    false,
+                )
+                .await,
+            Err(rustical_store::Error::InvalidPrincipalId)
+        ),
+        ": not allowed since it breaks basic auth"
+    );
+
+    assert!(
+        matches!(
+            principal_store
+                .insert_principal(
+                    Principal {
+                        id: "nice$user".to_owned(),
+                        displayname: None,
+                        principal_type: PrincipalType::Individual,
+                        password: None,
+                        memberships: vec![],
+                    },
+                    false,
+                )
+                .await,
+            Err(rustical_store::Error::InvalidPrincipalId)
+        ),
+        ": not allowed since '$' symbol is reserved for principal impersonation"
+    );
 }

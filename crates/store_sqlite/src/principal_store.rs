@@ -106,6 +106,10 @@ impl AuthenticationProvider for SqlitePrincipalStore {
         user: Principal,
         overwrite: bool,
     ) -> Result<(), rustical_store::Error> {
+        if user.id.contains(':') || user.id.contains('$') {
+            return Err(rustical_store::Error::InvalidPrincipalId);
+        }
+
         // Would be cleaner to put this into a transaction but for now it will be fine
         if !overwrite && self.get_principal(&user.id).await?.is_some() {
             return Err(Error::AlreadyExists);
