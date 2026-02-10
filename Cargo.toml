@@ -60,7 +60,6 @@ serde = { version = "1.0", features = ["serde_derive", "derive", "rc"] }
 futures-util = "0.3"
 password-auth = { version = "1.0", features = ["argon2", "pbkdf2"] }
 pbkdf2 = { version = "0.12", features = ["simple"] }
-rand_core = { version = "0.10", features = ["std"] }
 chrono = { version = "0.4", features = ["serde"] }
 regex = "1.12"
 rstest = "0.26"
@@ -122,7 +121,7 @@ tower-http = { version = "0.6", features = [
 percent-encoding = "2.3"
 chrono-tz = "0.10"
 chrono-humanize = "0.2"
-rand = "0.9"
+rand = "0.10"
 axum-extra = { version = "0.12", features = ["typed-header"] }
 argon2 = "0.5"
 rpassword = "7.4"
@@ -132,8 +131,7 @@ quote = "1.0"
 proc-macro2 = "1.0"
 heck = "0.5"
 darling = "0.23"
-reqwest = { version = "0.12", features = [
-  "rustls-tls",
+reqwest = { version = "0.13", features = [
   "charset",
   "http2",
 ], default-features = false }
@@ -156,7 +154,7 @@ rustical_store_sqlite = { workspace = true, features = ["test"] }
 insta.workspace = true
 similar-asserts.workspace = true
 tempfile = "3.24"
-reqwest = { workspace = true, features = ["cookies"] }
+reqwest = { workspace = true, features = ["cookies", "form"] }
 
 [dependencies]
 rustical_store.workspace = true

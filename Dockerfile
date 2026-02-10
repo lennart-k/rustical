@@ -1,11 +1,11 @@
-FROM --platform=$BUILDPLATFORM rust:1.92-alpine AS chef
+FROM --platform=$BUILDPLATFORM rust:1.93-alpine AS chef
 
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 
 # the compiler will otherwise ask for aarch64-linux-musl-gcc
 ENV CC_aarch64_unknown_linux_musl="clang"
-ENV AR_aarch64_unknown_linux_musl="llvm20-ar"
+ENV AR_aarch64_unknown_linux_musl="llvm21-ar"
 ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld"
 
 # Stupid workaound with tempfiles since environment variables
@@ -16,7 +16,7 @@ RUN case $TARGETPLATFORM in \
   *) echo "Unsupported platform ${TARGETPLATFORM}"; exit 1;;  \
   esac
 
-RUN apk add --no-cache musl-dev llvm20 clang perl pkgconf make \
+RUN apk add --no-cache musl-dev llvm21 clang perl pkgconf make \
   && rustup target add "$(cat /tmp/rust_target)" \
   && cargo install cargo-chef --locked \
   && rm -rf "$CARGO_HOME/registry"
@@ -44,7 +44,7 @@ CMD ["/usr/local/bin/rustical"]
 
 ENV RUSTICAL_DATA_STORE__SQLITE__DB_URL=/var/lib/rustical/db.sqlite3
 
-LABEL org.opencontainers.image.authors="Lennart K github.com/lennart-k"
+LABEL org.opencontainers.image.authors="Lennart Kämmle github.com/lennart-k"
 LABEL org.opencontainers.image.licenses="AGPL-3.0-or-later"
 EXPOSE 4000
 

@@ -11,7 +11,7 @@ publish = false
 [dependencies]
 openidconnect.workspace = true
 serde.workspace = true
-reqwest.workspace = true
+reqwest = { version = "0.12", features = ["rustls-tls"] }
 thiserror.workspace = true
 async-trait.workspace = true
 axum.workspace = true

@@ -11,7 +11,7 @@ use axum_extra::TypedHeader;
 use headers::{ContentType, HeaderMapExt, Host};
 use http::{HeaderValue, StatusCode, header};
 use percent_encoding::{CONTROLS, utf8_percent_encode};
-use rand::{Rng, distr::Alphanumeric};
+use rand::{RngExt, distr::Alphanumeric};
 use rustical_store::auth::{AuthenticationProvider, Principal};
 use serde::Deserialize;
 
