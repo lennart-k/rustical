@@ -184,10 +184,13 @@ pub async fn route_get_oidc_callback<US: UserStore + Clone>(
         .request_async(&http_client)
         .await
         .map_err(|_| OidcError::Other("Error requesting token"))?;
+    let id_token_verifier = &oidc_client
+        .id_token_verifier()
+        .set_other_audience_verifier_fn(|aud| oidc_config.additional_audiences.contains(aud));
     let id_claims = token_response
         .id_token()
         .ok_or(OidcError::Other("OIDC provider did not return an ID token"))?
-        .claims(&oidc_client.id_token_verifier(), &oidc_state.nonce)?;
+        .claims(id_token_verifier, &oidc_state.nonce)?;
 
     let user_info_claims: UserInfoClaims<GroupAdditionalClaims, CoreGenderClaim> = oidc_client
         .user_info(

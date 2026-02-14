@@ -1,4 +1,4 @@
-use openidconnect::{ClientId, ClientSecret, IssuerUrl, Scope};
+use openidconnect::{Audience, ClientId, ClientSecret, IssuerUrl, Scope};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Clone, Default)]
@@ -26,4 +26,6 @@ pub struct OidcConfig {
     pub require_group: Option<String>,
     #[serde(default)]
     pub claim_userid: UserIdClaim,
+    #[serde(default)]
+    pub additional_audiences: Vec<Audience>,
 }
