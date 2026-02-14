@@ -27,5 +27,5 @@ pub struct OidcConfig {
     #[serde(default)]
     pub claim_userid: UserIdClaim,
     #[serde(default)]
-    pub additional_audience: Vec<Audience>,
+    pub additional_audiences: Vec<Audience>,
 }
