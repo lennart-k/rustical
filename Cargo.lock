@@ -3727,6 +3727,7 @@ dependencies = [
  "tower",
  "tower-sessions",
  "tracing",
+ "uuid",
  "vtimezones-rs",
 ]
 
@@ -5060,6 +5061,7 @@ dependencies = [
  "getrandom 0.3.4",
  "js-sys",
  "rand 0.9.2",
+ "serde_core",
  "wasm-bindgen",
 ]
 
