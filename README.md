@@ -38,3 +38,11 @@ a CalDAV/CardDAV server
 - Apple Calendar
 - Home Assistant integration
 - Thunderbird
+
+## Contributing
+
+If you want to contribute bug fixes, tests, or smaller features for your use case, feel free to create a PR. :)
+
+Larger contributions are also welcome, but please open up an issue first to discuss it.
+I'll feel extremely bad for rejecting the PR you put a lot of work into,
+but I also need to make sure that it's compatible with the plans I have for this project. :)
