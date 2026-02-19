@@ -3649,6 +3649,7 @@ dependencies = [
  "futures-core",
  "headers",
  "http",
+ "password-auth",
  "regex",
  "rstest",
  "rstest_reuse",
