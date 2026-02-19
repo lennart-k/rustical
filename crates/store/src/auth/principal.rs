@@ -1,12 +1,9 @@
-use crate::{Secret, auth::PrincipalType};
-use axum::{
-    body::Body,
-    extract::{FromRequestParts, OptionalFromRequestParts},
-    response::{IntoResponse, Response},
+use crate::{
+    Secret,
+    auth::{PrincipalType, UnauthorizedError},
 };
+use axum::extract::{FromRequestParts, OptionalFromRequestParts};
 use chrono::{DateTime, Utc};
-use derive_more::Display;
-use http::{HeaderValue, StatusCode, header};
 use serde::{Deserialize, Serialize};
 use std::convert::Infallible;
 
@@ -60,20 +57,6 @@ impl Principal {
 impl rustical_dav::Principal for Principal {
     fn get_id(&self) -> &str {
         &self.id
-    }
-}
-
-#[derive(Clone, Debug, Display)]
-pub struct UnauthorizedError;
-
-impl IntoResponse for UnauthorizedError {
-    fn into_response(self) -> axum::response::Response {
-        let mut resp = Response::builder().status(StatusCode::UNAUTHORIZED);
-        resp.headers_mut().unwrap().insert(
-            header::WWW_AUTHENTICATE,
-            HeaderValue::from_static(r#"Basic realm="RustiCal", charset="UTF-8""#),
-        );
-        resp.body(Body::empty()).unwrap()
     }
 }
 
