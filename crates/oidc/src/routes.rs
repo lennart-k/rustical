@@ -16,7 +16,7 @@ use openidconnect::{
     TokenResponse, UserInfoClaims,
     core::{CoreClient, CoreGenderClaim, CoreProviderMetadata, CoreResponseType},
 };
-use reqwest::{StatusCode, Url};
+use reqwest::Url;
 use serde::Deserialize;
 use std::collections::HashSet;
 use tower_sessions::Session;
@@ -79,10 +79,9 @@ pub async fn route_post_oidc(
 ) -> Result<Response, OidcError> {
     let callback_uri = format!("https://{host}{path}", path = service_config.callback_path);
 
-    let http_client = get_http_client();
     let oidc_client = get_oidc_client(
         oidc_config.clone(),
-        &http_client,
+        &get_http_client(),
         RedirectUrl::new(callback_uri)?,
     )
     .await?;
@@ -143,10 +142,9 @@ pub async fn route_get_oidc_callback<US: UserStore>(
 
     assert_eq!(oidc_state.state.secret(), &state);
 
-    let http_client = get_http_client();
     let oidc_client = get_oidc_client(
         oidc_config.clone(),
-        &http_client,
+        &get_http_client(),
         RedirectUrl::new(callback_uri)?,
     )
     .await?;
@@ -154,7 +152,7 @@ pub async fn route_get_oidc_callback<US: UserStore>(
     let token_response = oidc_client
         .exchange_code(code)?
         .set_pkce_verifier(oidc_state.pkce_verifier)
-        .request_async(&http_client)
+        .request_async(&get_http_client())
         .await
         .map_err(|_| OidcError::Other("Error requesting token"))?;
     let id_token_verifier = &oidc_client
@@ -170,7 +168,7 @@ pub async fn route_get_oidc_callback<US: UserStore>(
             token_response.access_token().clone(),
             Some(id_claims.subject().clone()),
         )?
-        .request_async(&http_client)
+        .request_async(&get_http_client())
         .await
         .map_err(|e| OidcError::UserInfo(e.to_string()))?;
 
@@ -187,11 +185,7 @@ pub async fn route_get_oidc_callback<US: UserStore>(
     if let Some(require_group) = &oidc_config.require_group
         && !groups.contains(require_group)
     {
-        return Ok((
-            StatusCode::UNAUTHORIZED,
-            "User is not in the authorized group to use RustiCal",
-        )
-            .into_response());
+        return Err(OidcError::NotInAuthorisedGroup);
     }
 
     // Assign membership based on the OIDC group.
@@ -208,11 +202,9 @@ pub async fn route_get_oidc_callback<US: UserStore>(
         Ok(exists) => exists,
         Err(err) => return Ok(err.into_response()),
     };
-    if !user_exists {
-        // User does not exist
-        if !oidc_config.allow_sign_up {
-            return Ok((StatusCode::UNAUTHORIZED, "User signup is disabled").into_response());
-        }
+    // User does not exist
+    if !user_exists && !oidc_config.allow_sign_up {
+        return Err(OidcError::SignupDisabled);
     }
     // Create new user. This is also executed when the user already exists
     // since it also ensures the correct group memberships
@@ -222,16 +214,11 @@ pub async fn route_get_oidc_callback<US: UserStore>(
 
     let default_redirect = service_config.default_redirect_path.to_owned();
     let base_url: Url = format!("https://{host}").parse().unwrap();
-    let redirect_uri = if let Some(redirect_uri) = oidc_state.redirect_uri {
-        if let Ok(redirect_url) = base_url.join(&redirect_uri) {
-            if redirect_url.origin() == base_url.origin() {
-                redirect_url.path().to_owned()
-            } else {
-                default_redirect
-            }
-        } else {
-            default_redirect
-        }
+    let redirect_uri = if let Some(redirect_uri) = oidc_state.redirect_uri
+        && let Ok(redirect_url) = base_url.join(&redirect_uri)
+        && redirect_url.origin() == base_url.origin()
+    {
+        redirect_url.path().to_owned()
     } else {
         default_redirect
     };
