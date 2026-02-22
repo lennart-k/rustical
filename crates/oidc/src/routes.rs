@@ -1,9 +1,7 @@
-use std::collections::HashSet;
-
+use crate::OidcState;
 pub use crate::config::OidcConfig;
 pub use crate::user_store::UserStore;
 use crate::{GroupAdditionalClaims, OidcServiceConfig};
-use crate::{OidcState, config::UserIdClaim};
 use crate::{SESSION_KEY_OIDC_STATE, error::OidcError};
 use axum::{
     Extension, Form,
@@ -20,6 +18,7 @@ use openidconnect::{
 };
 use reqwest::{StatusCode, Url};
 use serde::Deserialize;
+use std::collections::HashSet;
 use tower_sessions::Session;
 
 fn get_http_client() -> reqwest::Client {
@@ -175,6 +174,10 @@ pub async fn route_get_oidc_callback<US: UserStore>(
         .await
         .map_err(|e| OidcError::UserInfo(e.to_string()))?;
 
+    let user_id = oidc_config
+        .claim_userid
+        .extract_user_id(&user_info_claims)?;
+
     let groups = user_info_claims
         .additional_claims()
         .groups
@@ -200,18 +203,6 @@ pub async fn route_get_oidc_callback<US: UserStore>(
         .collect::<HashSet<_>>()
         .into_iter()
         .collect();
-
-    let user_id = match oidc_config.claim_userid {
-        UserIdClaim::Sub => user_info_claims.subject().to_string(),
-        UserIdClaim::PreferredUsername => user_info_claims
-            .preferred_username()
-            .ok_or(OidcError::Other("Missing preferred_username claim"))?
-            .to_string(),
-        UserIdClaim::Email => user_info_claims
-            .email()
-            .ok_or(OidcError::Other("Missing email claim"))?
-            .to_string(),
-    };
 
     let user_exists = match user_store.user_exists(&user_id).await {
         Ok(exists) => exists,
