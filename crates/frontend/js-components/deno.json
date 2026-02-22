@@ -3,16 +3,9 @@
     "dev": "deno run -A --node-modules-dir npm:vite build --emptyOutDir --watch",
     "build": "deno run -A --node-modules-dir npm:vite build --emptyOutDir"
   },
-  "compilerOptions": {
-    "lib": [
-      "ES2024",
-      "DOM",
-      "DOM.Iterable"
-    ]
-  },
   "imports": {
     "@deno/vite-plugin": "npm:@deno/vite-plugin@^1.0.6",
-    "lit": "npm:lit@^3.3.1",
-    "vite": "npm:vite@^7.3.0"
+    "lit": "npm:lit@^3.3.2",
+    "vite": "npm:vite@^7.3.1"
   }
 }

@@ -1,12 +1,15 @@
 {
   "compilerOptions": {
+    "strict": true,
+    "module": "esnext",
     "target": "es2024",
     "moduleResolution": "bundler",
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
     "lib": [
-      "dom",
-      "es2024"
+      "DOM",
+      "DOM.Iterable",
+      "ES2024"
     ]
   },
   "include": [
