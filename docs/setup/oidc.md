@@ -49,3 +49,25 @@ RUSTICAL_OIDC__REQUIRE_GROUP: "app:rustical"
 RUSTICAL_OIDC__ALLOW_SIGN_UP: "true"
 RUSTICAL_FRONTEND__ALLOW_PASSWORD_LOGIN: "false"
 ```
+
+## Assigning memberships based on group claims
+
+You can also assign principal memberships based on the group claim.
+
+This example will add a user to `group.mygroup` if it is in the IdP's `mygroup` group:
+
+```toml title="RustiCal configuration"
+[oidc.assign_memberships]
+mygroup = ["group.mygroup"]
+```
+
+```sh
+RUSTICAL_OIDC__ASSIGN_GROUPS__mygroup: '["group.mygroup"]'
+```
+
+Note that:
+
+- The group will not be automatically created, you have to do that manually through the CLI
+- If adding a membership fails (e.g. because the principal is missing), the error will only be logged and the user can still log in
+- Assigning memberships only happens when the user logs in to the frontend using OIDC.
+- Assigning memberships ONLY ADDS memberships. You have to revoke them manually.
