@@ -10,6 +10,12 @@ pub enum OidcError {
     #[error("Error fetching user info: {0}")]
     UserInfo(String),
 
+    #[error("User signup is disabled")]
+    SignupDisabled,
+
+    #[error("User is not in authorised group for OIDC login")]
+    NotInAuthorisedGroup,
+
     #[error(transparent)]
     OidcConfigurationError(#[from] ConfigurationError),
 
@@ -25,6 +31,10 @@ pub enum OidcError {
 
 impl IntoResponse for OidcError {
     fn into_response(self) -> axum::response::Response {
-        (StatusCode::INTERNAL_SERVER_ERROR, self.to_string()).into_response()
+        let status_code = match self {
+            Self::SignupDisabled | Self::NotInAuthorisedGroup => StatusCode::UNAUTHORIZED,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
+        };
+        (status_code, self.to_string()).into_response()
     }
 }

@@ -10,7 +10,7 @@ use axum::{
 use headers::{ContentType, HeaderMapExt};
 use http::{Method, StatusCode};
 use routes::{addressbooks::route_addressbooks, calendars::route_calendars};
-use rustical_oidc::{OidcConfig, OidcServiceConfig, route_get_oidc_callback, route_post_oidc};
+use rustical_oidc::{OidcConfig, OidcServiceConfig, oidc_router};
 use rustical_store::{
     AddressbookStore, CalendarStore, PrefixedCalendarStore,
     auth::{AuthenticationProvider, middleware::AuthenticationLayer},
@@ -99,18 +99,18 @@ pub fn frontend_router<
     );
 
     if let Some(oidc_config) = oidc_config.clone() {
-        router = router
-            .route("/login/oidc", post(route_post_oidc))
-            .route(
-                "/login/oidc/callback",
-                get(route_get_oidc_callback::<OidcUserStore<AP>>),
-            )
-            .layer(Extension(OidcUserStore(auth_provider.clone())))
-            .layer(Extension(OidcServiceConfig {
-                default_redirect_path: "/frontend/user",
-                session_key_user_id: "user",
-            }))
-            .layer(Extension(oidc_config));
+        router = router.nest(
+            "/login/oidc",
+            oidc_router(
+                oidc_config,
+                OidcServiceConfig {
+                    default_redirect_path: "/frontend/user",
+                    session_key_user_id: "user",
+                    callback_path: "/frontend/login/oidc/callback",
+                },
+                OidcUserStore(auth_provider.clone()),
+            ),
+        );
     }
 
     router = router

@@ -1,5 +1,10 @@
-use openidconnect::{Audience, ClientId, ClientSecret, IssuerUrl, Scope};
+use crate::error::OidcError;
+use openidconnect::{
+    AdditionalClaims, Audience, ClientId, ClientSecret, GenderClaim, IssuerUrl, Scope,
+    UserInfoClaims,
+};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Deserialize, Serialize, Clone, Default)]
 #[serde(rename_all = "snake_case")]
@@ -11,6 +16,25 @@ pub enum UserIdClaim {
     PreferredUsername,
     // The hopefully unique option
     Email,
+}
+
+impl UserIdClaim {
+    pub fn extract_user_id<AC: AdditionalClaims, GC: GenderClaim>(
+        &self,
+        claims: &UserInfoClaims<AC, GC>,
+    ) -> Result<String, OidcError> {
+        Ok(match self {
+            Self::Sub => claims.subject().to_string(),
+            Self::PreferredUsername => claims
+                .preferred_username()
+                .ok_or(OidcError::Other("Missing preferred_username claim"))?
+                .to_string(),
+            Self::Email => claims
+                .email()
+                .ok_or(OidcError::Other("Missing email claim"))?
+                .to_string(),
+        })
+    }
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -28,4 +52,6 @@ pub struct OidcConfig {
     pub claim_userid: UserIdClaim,
     #[serde(default)]
     pub additional_audiences: Vec<Audience>,
+    #[serde(default)]
+    pub assign_memberships: HashMap<String, Vec<String>>,
 }
