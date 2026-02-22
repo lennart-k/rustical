@@ -1,5 +1,6 @@
 use openidconnect::{Audience, ClientId, ClientSecret, IssuerUrl, Scope};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Deserialize, Serialize, Clone, Default)]
 #[serde(rename_all = "snake_case")]
@@ -28,4 +29,6 @@ pub struct OidcConfig {
     pub claim_userid: UserIdClaim,
     #[serde(default)]
     pub additional_audiences: Vec<Audience>,
+    #[serde(default)]
+    pub assign_memberships: HashMap<String, Vec<String>>,
 }
