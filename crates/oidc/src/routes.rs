@@ -10,6 +10,7 @@ use axum::{
 };
 use axum_extra::TypedHeader;
 use headers::Host;
+use openidconnect::PkceCodeVerifier;
 use openidconnect::{
     AuthenticationFlow, AuthorizationCode, CsrfToken, EndpointMaybeSet, EndpointNotSet,
     EndpointSet, IssuerUrl, Nonce, OAuth2TokenResponse, PkceCodeChallenge, RedirectUrl,
@@ -121,29 +122,19 @@ pub struct AuthCallbackQuery {
     state: String,
 }
 
-// Handle callback from IdP page
-pub async fn route_get_oidc_callback<US: UserStore>(
-    Extension(oidc_config): Extension<OidcConfig>,
-    Extension(user_store): Extension<US>,
-    Extension(service_config): Extension<OidcServiceConfig>,
-    session: Session,
-    Query(AuthCallbackQuery { code, iss, state }): Query<AuthCallbackQuery>,
-    TypedHeader(host): TypedHeader<Host>,
-) -> Result<Response, OidcError> {
-    let callback_uri = format!("https://{host}{path}", path = service_config.callback_path);
-
-    if let Some(iss) = iss {
-        assert_eq!(iss, oidc_config.issuer);
-    }
-    let oidc_state = session
-        .remove::<OidcState>(SESSION_KEY_OIDC_STATE)
-        .await?
-        .ok_or(OidcError::Other("No local OIDC state"))?;
-
-    assert_eq!(oidc_state.state.secret(), &state);
+/// Resolves the OIDC callback data to get the user id an the groups claim
+async fn resolve_oidc_callback(
+    config: &OidcConfig,
+    host: &Host,
+    callback_path: &str,
+    code: AuthorizationCode,
+    pkce_verifier: PkceCodeVerifier,
+    nonce: &Nonce,
+) -> Result<(String, Vec<String>), OidcError> {
+    let callback_uri = format!("https://{host}{callback_path}");
 
     let oidc_client = get_oidc_client(
-        oidc_config.clone(),
+        config.clone(),
         &get_http_client(),
         RedirectUrl::new(callback_uri)?,
     )
@@ -151,17 +142,17 @@ pub async fn route_get_oidc_callback<US: UserStore>(
 
     let token_response = oidc_client
         .exchange_code(code)?
-        .set_pkce_verifier(oidc_state.pkce_verifier)
+        .set_pkce_verifier(pkce_verifier)
         .request_async(&get_http_client())
         .await
         .map_err(|_| OidcError::Other("Error requesting token"))?;
     let id_token_verifier = &oidc_client
         .id_token_verifier()
-        .set_other_audience_verifier_fn(|aud| oidc_config.additional_audiences.contains(aud));
+        .set_other_audience_verifier_fn(|aud| config.additional_audiences.contains(aud));
     let id_claims = token_response
         .id_token()
         .ok_or(OidcError::Other("OIDC provider did not return an ID token"))?
-        .claims(id_token_verifier, &oidc_state.nonce)?;
+        .claims(id_token_verifier, nonce)?;
 
     let user_info_claims: UserInfoClaims<GroupAdditionalClaims, CoreGenderClaim> = oidc_client
         .user_info(
@@ -172,15 +163,46 @@ pub async fn route_get_oidc_callback<US: UserStore>(
         .await
         .map_err(|e| OidcError::UserInfo(e.to_string()))?;
 
-    let user_id = oidc_config
-        .claim_userid
-        .extract_user_id(&user_info_claims)?;
+    let user_id = config.claim_userid.extract_user_id(&user_info_claims)?;
 
     let groups = user_info_claims
         .additional_claims()
         .groups
-        .as_deref()
+        // .as_deref()
+        .clone()
         .unwrap_or_default();
+
+    Ok((user_id, groups))
+}
+
+// Handle callback from IdP page
+pub async fn route_get_oidc_callback<US: UserStore>(
+    Extension(oidc_config): Extension<OidcConfig>,
+    Extension(user_store): Extension<US>,
+    Extension(service_config): Extension<OidcServiceConfig>,
+    session: Session,
+    Query(AuthCallbackQuery { code, iss, state }): Query<AuthCallbackQuery>,
+    TypedHeader(host): TypedHeader<Host>,
+) -> Result<Response, OidcError> {
+    if let Some(iss) = iss {
+        assert_eq!(iss, oidc_config.issuer);
+    }
+
+    let oidc_state = session
+        .remove::<OidcState>(SESSION_KEY_OIDC_STATE)
+        .await?
+        .ok_or(OidcError::Other("No local OIDC state"))?;
+    assert_eq!(oidc_state.state.secret(), &state);
+
+    let (user_id, groups) = resolve_oidc_callback(
+        &oidc_config,
+        &host,
+        service_config.callback_path,
+        code,
+        oidc_state.pkce_verifier,
+        &oidc_state.nonce,
+    )
+    .await?;
 
     if let Some(require_group) = &oidc_config.require_group
         && !groups.contains(require_group)
