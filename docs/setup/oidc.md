@@ -62,7 +62,7 @@ mygroup = ["group.mygroup"]
 ```
 
 ```sh
-RUSTICAL_OIDC__ASSIGN_GROUPS__mygroup: '["group.mygroup"]'
+RUSTICAL_OIDC__ASSIGN_MEMBERSHIPS__mygroup: '["group.mygroup"]'
 ```
 
 Note that:
