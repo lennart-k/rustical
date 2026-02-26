@@ -29,7 +29,7 @@ jobs:
           restore-keys: |
             mkdocs-material-
       - run: pip install mkdocs-material
-      - run: mkdocs build --clean
+      - run: mkdocs build --clean --strict
 
       - name: Save build cache
         uses: actions/cache/save@v4
