@@ -21,7 +21,7 @@ docker run \
 
 ## User management
 
-In case you already have an OIDC server set up, see [here](setup/oidc.md) how to set up OIDC login and maybe skip this section.
+In case you already have an OIDC server set up, see [here](../setup/oidc.md) how to set up OIDC login and maybe skip this section.
 Otherwise you will have to use the `rustical principals` command.
 In Docker you can run this with
 
