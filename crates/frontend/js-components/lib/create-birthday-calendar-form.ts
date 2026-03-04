@@ -64,6 +64,11 @@ export class CreateBirthdayCalendarForm extends LitElement {
       alert("Empty displayname")
       return
     }
+    
+    // Short-term fix to ensure that calendars have a well-defined order
+    // See https://github.com/lennart-k/rustical/issues/189
+    // Would probably be nice in the future to have some drag-and-drop functionality for ordering or at least some fields
+    const order = Math.floor(Math.random() * 5000)
 
     let response = await fetch(`/caldav/principal/${this.principal}/_birthdays_${this.addr_id}`, {
       method: 'MKCOL',
@@ -77,6 +82,7 @@ export class CreateBirthdayCalendarForm extends LitElement {
             <displayname>${escapeXml(this.displayname)}</displayname>
             ${this.description ? `<CAL:calendar-description>${escapeXml(this.description)}</CAL:calendar-description>` : ''}
             ${this.color ? `<ICAL:calendar-color>${escapeXml(this.color)}</ICAL:calendar-color>` : ''}
+            <ICAL:calendar-order>${order}</ICAL:calendar-order>
             <CAL:supported-calendar-component-set>
               <CAL:comp name="VEVENT" />
             </CAL:supported-calendar-component-set>

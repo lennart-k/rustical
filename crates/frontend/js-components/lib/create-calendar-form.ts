@@ -166,6 +166,11 @@ export class CreateCalendarForm extends LitElement {
       return
     }
 
+    // Short-term fix to ensure that calendars have a well-defined order
+    // See https://github.com/lennart-k/rustical/issues/189
+    // Would probably be nice in the future to have some drag-and-drop functionality for ordering or at least some fields
+    const order = Math.floor(Math.random() * 5000)
+
     let response = await fetch(`/caldav/principal/${this.principal || this.user}/${this.cal_id}`, {
       method: 'MKCOL',
       headers: {
@@ -179,6 +184,7 @@ export class CreateCalendarForm extends LitElement {
             ${this.timezone_id ? `<CAL:calendar-timezone-id>${escapeXml(this.timezone_id)}</CAL:calendar-timezone-id>` : ''}
             ${this.description ? `<CAL:calendar-description>${escapeXml(this.description)}</CAL:calendar-description>` : ''}
             ${this.color ? `<ICAL:calendar-color>${escapeXml(this.color)}</ICAL:calendar-color>` : ''}
+            <ICAL:calendar-order>${order}</ICAL:calendar-order>
             ${(this.isSubscription && this.subscriptionUrl) ? `<CS:source><href>${escapeXml(this.subscriptionUrl)}</href></CS:source>` : ''}
             <CAL:supported-calendar-component-set>
               ${Array.from(this.components.keys()).map(comp => `<CAL:comp name="${escapeXml(comp)}" />`).join('\n')}

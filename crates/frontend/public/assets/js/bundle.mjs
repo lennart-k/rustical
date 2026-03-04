@@ -827,6 +827,7 @@ let CreateBirthdayCalendarForm = class extends i$1 {
       alert("Empty displayname");
       return;
     }
+    const order = Math.floor(Math.random() * 5e3);
     let response = await fetch(`/caldav/principal/${this.principal}/_birthdays_${this.addr_id}`, {
       method: "MKCOL",
       headers: {
@@ -839,6 +840,7 @@ let CreateBirthdayCalendarForm = class extends i$1 {
             <displayname>${escapeXml(this.displayname)}</displayname>
             ${this.description ? `<CAL:calendar-description>${escapeXml(this.description)}</CAL:calendar-description>` : ""}
             ${this.color ? `<ICAL:calendar-color>${escapeXml(this.color)}</ICAL:calendar-color>` : ""}
+            <ICAL:calendar-order>${order}</ICAL:calendar-order>
             <CAL:supported-calendar-component-set>
               <CAL:comp name="VEVENT" />
             </CAL:supported-calendar-component-set>
@@ -1034,6 +1036,7 @@ let CreateCalendarForm = class extends i$1 {
       alert("Invalid subscription url");
       return;
     }
+    const order = Math.floor(Math.random() * 5e3);
     let response = await fetch(`/caldav/principal/${this.principal || this.user}/${this.cal_id}`, {
       method: "MKCOL",
       headers: {
@@ -1047,6 +1050,7 @@ let CreateCalendarForm = class extends i$1 {
             ${this.timezone_id ? `<CAL:calendar-timezone-id>${escapeXml(this.timezone_id)}</CAL:calendar-timezone-id>` : ""}
             ${this.description ? `<CAL:calendar-description>${escapeXml(this.description)}</CAL:calendar-description>` : ""}
             ${this.color ? `<ICAL:calendar-color>${escapeXml(this.color)}</ICAL:calendar-color>` : ""}
+            <ICAL:calendar-order>${order}</ICAL:calendar-order>
             ${this.isSubscription && this.subscriptionUrl ? `<CS:source><href>${escapeXml(this.subscriptionUrl)}</href></CS:source>` : ""}
             <CAL:supported-calendar-component-set>
               ${Array.from(this.components.keys()).map((comp) => `<CAL:comp name="${escapeXml(comp)}" />`).join("\n")}
