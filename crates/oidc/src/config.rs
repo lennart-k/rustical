@@ -3,7 +3,8 @@ use openidconnect::{
     AdditionalClaims, Audience, ClientId, ClientSecret, GenderClaim, IssuerUrl, Scope,
     UserInfoClaims,
 };
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
+use serde_aux::field_attributes::deserialize_string_from_number;
 use std::collections::HashMap;
 
 #[derive(Deserialize, Serialize, Clone, Default)]
@@ -37,11 +38,20 @@ impl UserIdClaim {
     }
 }
 
+fn deserialize_client_id<'de, D>(deserializer: D) -> Result<ClientId, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let string_val = deserialize_string_from_number(deserializer)?;
+    Ok(ClientId::new(string_val))
+}
+
 #[derive(Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct OidcConfig {
     pub name: String,
     pub issuer: IssuerUrl,
+    #[serde(deserialize_with = "deserialize_client_id")]
     pub client_id: ClientId,
     pub client_secret: Option<ClientSecret>,
     pub scopes: Vec<Scope>,
