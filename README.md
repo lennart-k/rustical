@@ -32,7 +32,8 @@ a CalDAV/CardDAV server
 
 ## Tested Clients
 
-- [DAVx5](https://www.davx5.com/) (Android)
+- [DAVx5](https://www.davx5.com) (Android)
+- [Tasks.org](https://tasks.org) (Android)
 - GNOME Accounts, [GNOME Calendar](https://apps.gnome.org/Calendar/), [GNOME Contacts](https://apps.gnome.org/Contacts/) (Linux)
 - [Evolution](https://flathub.org/en/apps/org.gnome.Evolution) (Linux)
 - Apple Calendar (iOS, macOS)
