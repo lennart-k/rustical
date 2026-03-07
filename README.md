@@ -38,6 +38,7 @@ a CalDAV/CardDAV server
 - Apple Calendar
 - Home Assistant integration
 - Thunderbird
+- caldav-tasks
 
 ## Contributing
 
