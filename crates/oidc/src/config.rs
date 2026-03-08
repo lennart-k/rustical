@@ -37,6 +37,8 @@ impl UserIdClaim {
     }
 }
 
+/// Deserialize a `ClientId` from either string or integer input.
+/// Identity providers like Zitadel generate numeric client ids which would otherwise need to be quoted as `RUSTICAL_OIDC__CLIENT_ID="\"123\""` which may be counterintuitive
 fn deserialize_client_id<'de, D>(deserializer: D) -> Result<ClientId, D::Error>
 where
     D: Deserializer<'de>,
