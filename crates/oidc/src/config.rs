@@ -3,7 +3,7 @@ use openidconnect::{
     AdditionalClaims, Audience, ClientId, ClientSecret, GenderClaim, IssuerUrl, Scope,
     UserInfoClaims,
 };
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
 
 #[derive(Deserialize, Serialize, Clone, Default)]
@@ -37,11 +37,33 @@ impl UserIdClaim {
     }
 }
 
+/// Deserialize a `ClientId` from either string or integer input.
+/// Identity providers like Zitadel generate numeric client ids which would otherwise need to be quoted as `RUSTICAL_OIDC__CLIENT_ID="\"123\""` which may be counterintuitive
+fn deserialize_client_id<'de, D>(deserializer: D) -> Result<ClientId, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum StringOrInt {
+        String(String),
+        Integer(i64),
+    }
+
+    let string_val = match StringOrInt::deserialize(deserializer)? {
+        StringOrInt::String(s) => s,
+        StringOrInt::Integer(i) => i.to_string(),
+    };
+
+    Ok(ClientId::new(string_val))
+}
+
 #[derive(Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct OidcConfig {
     pub name: String,
     pub issuer: IssuerUrl,
+    #[serde(deserialize_with = "deserialize_client_id")]
     pub client_id: ClientId,
     pub client_secret: Option<ClientSecret>,
     pub scopes: Vec<Scope>,
