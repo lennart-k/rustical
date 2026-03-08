@@ -23,4 +23,3 @@ tower-sessions.workspace = true
 axum-extra.workspace = true
 headers.workspace = true
 tracing.workspace = true
-serde-aux = "4.7.0"

@@ -4,7 +4,6 @@ use openidconnect::{
     UserInfoClaims,
 };
 use serde::{Deserialize, Deserializer, Serialize};
-use serde_aux::field_attributes::deserialize_string_from_number;
 use std::collections::HashMap;
 
 #[derive(Deserialize, Serialize, Clone, Default)]
@@ -42,7 +41,18 @@ fn deserialize_client_id<'de, D>(deserializer: D) -> Result<ClientId, D::Error>
 where
     D: Deserializer<'de>,
 {
-    let string_val = deserialize_string_from_number(deserializer)?;
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum StringOrInt {
+        String(String),
+        Integer(i64),
+    }
+
+    let string_val = match StringOrInt::deserialize(deserializer)? {
+        StringOrInt::String(s) => s,
+        StringOrInt::Integer(i) => i.to_string(),
+    };
+
     Ok(ClientId::new(string_val))
 }
 
