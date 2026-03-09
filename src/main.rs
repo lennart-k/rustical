@@ -17,6 +17,8 @@ async fn main() -> Result<()> {
             .merge(Toml::file(&args.config_file))
             .merge(Env::prefixed("RUSTICAL_").split("__"))
             .extract()
+            // Clippy appeasement clippy::result_large_err
+            .map_err(anyhow::Error::from)
     };
 
     match args.command {
