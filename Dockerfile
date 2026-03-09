@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM rust:1.93-alpine AS chef
+FROM --platform=$BUILDPLATFORM rust:1.94-alpine AS chef
 
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
