@@ -3402,7 +3402,7 @@ dependencies = [
 
 [[package]]
 name = "rustical"
-version = "0.12.9"
+version = "0.12.10"
 dependencies = [
  "anyhow",
  "argon2",
@@ -3452,7 +3452,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_caldav"
-version = "0.12.9"
+version = "0.12.10"
 dependencies = [
  "async-std",
  "async-trait",
@@ -3494,7 +3494,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_carddav"
-version = "0.12.9"
+version = "0.12.10"
 dependencies = [
  "async-trait",
  "axum",
@@ -3528,7 +3528,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_dav"
-version = "0.12.9"
+version = "0.12.10"
 dependencies = [
  "async-trait",
  "axum",
@@ -3554,7 +3554,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_dav_push"
-version = "0.12.9"
+version = "0.12.10"
 dependencies = [
  "async-trait",
  "axum",
@@ -3579,7 +3579,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_frontend"
-version = "0.12.9"
+version = "0.12.10"
 dependencies = [
  "askama",
  "askama_web",
@@ -3615,7 +3615,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_ical"
-version = "0.12.9"
+version = "0.12.10"
 dependencies = [
  "axum",
  "caldata",
@@ -3633,7 +3633,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_oidc"
-version = "0.12.9"
+version = "0.12.10"
 dependencies = [
  "async-trait",
  "axum",
@@ -3649,7 +3649,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_store"
-version = "0.12.9"
+version = "0.12.10"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3682,7 +3682,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_store_sqlite"
-version = "0.12.9"
+version = "0.12.10"
 dependencies = [
  "async-trait",
  "caldata",
@@ -3707,7 +3707,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_xml"
-version = "0.12.9"
+version = "0.12.10"
 dependencies = [
  "quick-xml",
  "thiserror 2.0.18",
@@ -5655,7 +5655,7 @@ checksum = "9edde0db4769d2dc68579893f2306b26c6ecfbe0ef499b013d731b7b9247e0b9"
 
 [[package]]
 name = "xml_derive"
-version = "0.12.9"
+version = "0.12.10"
 dependencies = [
  "darling 0.23.0",
  "heck",
