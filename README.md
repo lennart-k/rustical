@@ -32,12 +32,14 @@ a CalDAV/CardDAV server
 
 ## Tested Clients
 
-- DAVx5,
-- GNOME Accounts, GNOME Calendar, GNOME Contacts
-- Evolution
-- Apple Calendar
-- Home Assistant integration
-- Thunderbird
+- [DAVx5](https://www.davx5.com) (Android)
+- [Tasks.org](https://tasks.org) (Android)
+- GNOME Accounts, [GNOME Calendar](https://apps.gnome.org/Calendar/), [GNOME Contacts](https://apps.gnome.org/Contacts/) (Linux)
+- [Evolution](https://flathub.org/en/apps/org.gnome.Evolution) (Linux)
+- Apple Calendar (iOS, macOS)
+- [Home Assistant integration](https://www.home-assistant.io/integrations/caldav/)
+- [Thunderbird](https://www.thunderbird.net) (macOS, Linux, Windows)
+- [caldav-tasks](https://github.com/SapphoSys/caldav-tasks) (macOS, Linux, Windows)
 
 ## Contributing
 
