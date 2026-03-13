@@ -86,16 +86,11 @@ pub async fn route_post_login<AP: AuthenticationProvider>(
     let default_redirect = "/frontend/user".to_string();
     // Ensure that redirect_uri never goes cross-origin
     let base_url: Url = format!("https://{host}").parse().unwrap();
-    let redirect_uri = if let Some(redirect_uri) = redirect_uri {
-        if let Ok(redirect_url) = base_url.join(&redirect_uri) {
-            if redirect_url.origin() == base_url.origin() {
-                redirect_url.path().to_owned()
-            } else {
-                default_redirect
-            }
-        } else {
-            default_redirect
-        }
+    let redirect_uri = if let Some(redirect_uri) = redirect_uri
+        && let Ok(redirect_url) = base_url.join(&redirect_uri)
+        && redirect_url.origin() == base_url.origin()
+    {
+        redirect_url.path().to_owned()
     } else {
         default_redirect
     };
