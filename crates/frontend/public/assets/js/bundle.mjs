@@ -1,631 +1,760 @@
-const t$3 = globalThis, e$4 = t$3.ShadowRoot && (void 0 === t$3.ShadyCSS || t$3.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, s$3 = /* @__PURE__ */ Symbol(), o$6 = /* @__PURE__ */ new WeakMap();
-let n$5 = class n {
-  constructor(t2, e2, o2) {
-    if (this._$cssResult$ = true, o2 !== s$3) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
-    this.cssText = t2, this.t = e2;
-  }
-  get styleSheet() {
-    let t2 = this.o;
-    const s2 = this.t;
-    if (e$4 && void 0 === t2) {
-      const e2 = void 0 !== s2 && 1 === s2.length;
-      e2 && (t2 = o$6.get(s2)), void 0 === t2 && ((this.o = t2 = new CSSStyleSheet()).replaceSync(this.cssText), e2 && o$6.set(s2, t2));
-    }
-    return t2;
-  }
-  toString() {
-    return this.cssText;
-  }
+//#region node_modules/.deno/@lit+reactive-element@2.1.2/node_modules/@lit/reactive-element/css-tag.js
+/**
+* @license
+* Copyright 2019 Google LLC
+* SPDX-License-Identifier: BSD-3-Clause
+*/
+var t$4 = globalThis, e$5 = t$4.ShadowRoot && (void 0 === t$4.ShadyCSS || t$4.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, s$4 = Symbol(), o$6 = /* @__PURE__ */ new WeakMap();
+var n$6 = class {
+	constructor(t, e, o) {
+		if (this._$cssResult$ = !0, o !== s$4) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
+		this.cssText = t, this.t = e;
+	}
+	get styleSheet() {
+		let t = this.o;
+		const s = this.t;
+		if (e$5 && void 0 === t) {
+			const e = void 0 !== s && 1 === s.length;
+			e && (t = o$6.get(s)), void 0 === t && ((this.o = t = new CSSStyleSheet()).replaceSync(this.cssText), e && o$6.set(s, t));
+		}
+		return t;
+	}
+	toString() {
+		return this.cssText;
+	}
+}, r$5 = (t) => new n$6("string" == typeof t ? t : t + "", void 0, s$4), S$1 = (s, o) => {
+	if (e$5) s.adoptedStyleSheets = o.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
+	else for (const e of o) {
+		const o = document.createElement("style"), n = t$4.litNonce;
+		void 0 !== n && o.setAttribute("nonce", n), o.textContent = e.cssText, s.appendChild(o);
+	}
+}, c$4 = e$5 ? (t) => t : (t) => t instanceof CSSStyleSheet ? ((t) => {
+	let e = "";
+	for (const s of t.cssRules) e += s.cssText;
+	return r$5(e);
+})(t) : t;
+//#endregion
+//#region node_modules/.deno/@lit+reactive-element@2.1.2/node_modules/@lit/reactive-element/reactive-element.js
+/**
+* @license
+* Copyright 2017 Google LLC
+* SPDX-License-Identifier: BSD-3-Clause
+*/ var { is: i$4, defineProperty: e$4, getOwnPropertyDescriptor: h$4, getOwnPropertyNames: r$4, getOwnPropertySymbols: o$5, getPrototypeOf: n$5 } = Object, a$1 = globalThis, c$3 = a$1.trustedTypes, l$2 = c$3 ? c$3.emptyScript : "", p$2 = a$1.reactiveElementPolyfillSupport, d$2 = (t, s) => t, u$2 = {
+	toAttribute(t, s) {
+		switch (s) {
+			case Boolean:
+				t = t ? l$2 : null;
+				break;
+			case Object:
+			case Array: t = null == t ? t : JSON.stringify(t);
+		}
+		return t;
+	},
+	fromAttribute(t, s) {
+		let i = t;
+		switch (s) {
+			case Boolean:
+				i = null !== t;
+				break;
+			case Number:
+				i = null === t ? null : Number(t);
+				break;
+			case Object:
+			case Array: try {
+				i = JSON.parse(t);
+			} catch (t) {
+				i = null;
+			}
+		}
+		return i;
+	}
+}, f$3 = (t, s) => !i$4(t, s), b$1 = {
+	attribute: !0,
+	type: String,
+	converter: u$2,
+	reflect: !1,
+	useDefault: !1,
+	hasChanged: f$3
 };
-const r$5 = (t2) => new n$5("string" == typeof t2 ? t2 : t2 + "", void 0, s$3), S$1 = (s2, o2) => {
-  if (e$4) s2.adoptedStyleSheets = o2.map((t2) => t2 instanceof CSSStyleSheet ? t2 : t2.styleSheet);
-  else for (const e2 of o2) {
-    const o3 = document.createElement("style"), n3 = t$3.litNonce;
-    void 0 !== n3 && o3.setAttribute("nonce", n3), o3.textContent = e2.cssText, s2.appendChild(o3);
-  }
-}, c$3 = e$4 ? (t2) => t2 : (t2) => t2 instanceof CSSStyleSheet ? ((t3) => {
-  let e2 = "";
-  for (const s2 of t3.cssRules) e2 += s2.cssText;
-  return r$5(e2);
-})(t2) : t2;
-const { is: i$3, defineProperty: e$3, getOwnPropertyDescriptor: h$3, getOwnPropertyNames: r$4, getOwnPropertySymbols: o$5, getPrototypeOf: n$4 } = Object, a$1 = globalThis, c$2 = a$1.trustedTypes, l$1 = c$2 ? c$2.emptyScript : "", p$1 = a$1.reactiveElementPolyfillSupport, d$1 = (t2, s2) => t2, u$1 = { toAttribute(t2, s2) {
-  switch (s2) {
-    case Boolean:
-      t2 = t2 ? l$1 : null;
-      break;
-    case Object:
-    case Array:
-      t2 = null == t2 ? t2 : JSON.stringify(t2);
-  }
-  return t2;
-}, fromAttribute(t2, s2) {
-  let i3 = t2;
-  switch (s2) {
-    case Boolean:
-      i3 = null !== t2;
-      break;
-    case Number:
-      i3 = null === t2 ? null : Number(t2);
-      break;
-    case Object:
-    case Array:
-      try {
-        i3 = JSON.parse(t2);
-      } catch (t3) {
-        i3 = null;
-      }
-  }
-  return i3;
-} }, f$2 = (t2, s2) => !i$3(t2, s2), b$1 = { attribute: true, type: String, converter: u$1, reflect: false, useDefault: false, hasChanged: f$2 };
-Symbol.metadata ??= /* @__PURE__ */ Symbol("metadata"), a$1.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
-let y$1 = class y extends HTMLElement {
-  static addInitializer(t2) {
-    this._$Ei(), (this.l ??= []).push(t2);
-  }
-  static get observedAttributes() {
-    return this.finalize(), this._$Eh && [...this._$Eh.keys()];
-  }
-  static createProperty(t2, s2 = b$1) {
-    if (s2.state && (s2.attribute = false), this._$Ei(), this.prototype.hasOwnProperty(t2) && ((s2 = Object.create(s2)).wrapped = true), this.elementProperties.set(t2, s2), !s2.noAccessor) {
-      const i3 = /* @__PURE__ */ Symbol(), h2 = this.getPropertyDescriptor(t2, i3, s2);
-      void 0 !== h2 && e$3(this.prototype, t2, h2);
-    }
-  }
-  static getPropertyDescriptor(t2, s2, i3) {
-    const { get: e2, set: r2 } = h$3(this.prototype, t2) ?? { get() {
-      return this[s2];
-    }, set(t3) {
-      this[s2] = t3;
-    } };
-    return { get: e2, set(s3) {
-      const h2 = e2?.call(this);
-      r2?.call(this, s3), this.requestUpdate(t2, h2, i3);
-    }, configurable: true, enumerable: true };
-  }
-  static getPropertyOptions(t2) {
-    return this.elementProperties.get(t2) ?? b$1;
-  }
-  static _$Ei() {
-    if (this.hasOwnProperty(d$1("elementProperties"))) return;
-    const t2 = n$4(this);
-    t2.finalize(), void 0 !== t2.l && (this.l = [...t2.l]), this.elementProperties = new Map(t2.elementProperties);
-  }
-  static finalize() {
-    if (this.hasOwnProperty(d$1("finalized"))) return;
-    if (this.finalized = true, this._$Ei(), this.hasOwnProperty(d$1("properties"))) {
-      const t3 = this.properties, s2 = [...r$4(t3), ...o$5(t3)];
-      for (const i3 of s2) this.createProperty(i3, t3[i3]);
-    }
-    const t2 = this[Symbol.metadata];
-    if (null !== t2) {
-      const s2 = litPropertyMetadata.get(t2);
-      if (void 0 !== s2) for (const [t3, i3] of s2) this.elementProperties.set(t3, i3);
-    }
-    this._$Eh = /* @__PURE__ */ new Map();
-    for (const [t3, s2] of this.elementProperties) {
-      const i3 = this._$Eu(t3, s2);
-      void 0 !== i3 && this._$Eh.set(i3, t3);
-    }
-    this.elementStyles = this.finalizeStyles(this.styles);
-  }
-  static finalizeStyles(s2) {
-    const i3 = [];
-    if (Array.isArray(s2)) {
-      const e2 = new Set(s2.flat(1 / 0).reverse());
-      for (const s3 of e2) i3.unshift(c$3(s3));
-    } else void 0 !== s2 && i3.push(c$3(s2));
-    return i3;
-  }
-  static _$Eu(t2, s2) {
-    const i3 = s2.attribute;
-    return false === i3 ? void 0 : "string" == typeof i3 ? i3 : "string" == typeof t2 ? t2.toLowerCase() : void 0;
-  }
-  constructor() {
-    super(), this._$Ep = void 0, this.isUpdatePending = false, this.hasUpdated = false, this._$Em = null, this._$Ev();
-  }
-  _$Ev() {
-    this._$ES = new Promise((t2) => this.enableUpdating = t2), this._$AL = /* @__PURE__ */ new Map(), this._$E_(), this.requestUpdate(), this.constructor.l?.forEach((t2) => t2(this));
-  }
-  addController(t2) {
-    (this._$EO ??= /* @__PURE__ */ new Set()).add(t2), void 0 !== this.renderRoot && this.isConnected && t2.hostConnected?.();
-  }
-  removeController(t2) {
-    this._$EO?.delete(t2);
-  }
-  _$E_() {
-    const t2 = /* @__PURE__ */ new Map(), s2 = this.constructor.elementProperties;
-    for (const i3 of s2.keys()) this.hasOwnProperty(i3) && (t2.set(i3, this[i3]), delete this[i3]);
-    t2.size > 0 && (this._$Ep = t2);
-  }
-  createRenderRoot() {
-    const t2 = this.shadowRoot ?? this.attachShadow(this.constructor.shadowRootOptions);
-    return S$1(t2, this.constructor.elementStyles), t2;
-  }
-  connectedCallback() {
-    this.renderRoot ??= this.createRenderRoot(), this.enableUpdating(true), this._$EO?.forEach((t2) => t2.hostConnected?.());
-  }
-  enableUpdating(t2) {
-  }
-  disconnectedCallback() {
-    this._$EO?.forEach((t2) => t2.hostDisconnected?.());
-  }
-  attributeChangedCallback(t2, s2, i3) {
-    this._$AK(t2, i3);
-  }
-  _$ET(t2, s2) {
-    const i3 = this.constructor.elementProperties.get(t2), e2 = this.constructor._$Eu(t2, i3);
-    if (void 0 !== e2 && true === i3.reflect) {
-      const h2 = (void 0 !== i3.converter?.toAttribute ? i3.converter : u$1).toAttribute(s2, i3.type);
-      this._$Em = t2, null == h2 ? this.removeAttribute(e2) : this.setAttribute(e2, h2), this._$Em = null;
-    }
-  }
-  _$AK(t2, s2) {
-    const i3 = this.constructor, e2 = i3._$Eh.get(t2);
-    if (void 0 !== e2 && this._$Em !== e2) {
-      const t3 = i3.getPropertyOptions(e2), h2 = "function" == typeof t3.converter ? { fromAttribute: t3.converter } : void 0 !== t3.converter?.fromAttribute ? t3.converter : u$1;
-      this._$Em = e2;
-      const r2 = h2.fromAttribute(s2, t3.type);
-      this[e2] = r2 ?? this._$Ej?.get(e2) ?? r2, this._$Em = null;
-    }
-  }
-  requestUpdate(t2, s2, i3, e2 = false, h2) {
-    if (void 0 !== t2) {
-      const r2 = this.constructor;
-      if (false === e2 && (h2 = this[t2]), i3 ??= r2.getPropertyOptions(t2), !((i3.hasChanged ?? f$2)(h2, s2) || i3.useDefault && i3.reflect && h2 === this._$Ej?.get(t2) && !this.hasAttribute(r2._$Eu(t2, i3)))) return;
-      this.C(t2, s2, i3);
-    }
-    false === this.isUpdatePending && (this._$ES = this._$EP());
-  }
-  C(t2, s2, { useDefault: i3, reflect: e2, wrapped: h2 }, r2) {
-    i3 && !(this._$Ej ??= /* @__PURE__ */ new Map()).has(t2) && (this._$Ej.set(t2, r2 ?? s2 ?? this[t2]), true !== h2 || void 0 !== r2) || (this._$AL.has(t2) || (this.hasUpdated || i3 || (s2 = void 0), this._$AL.set(t2, s2)), true === e2 && this._$Em !== t2 && (this._$Eq ??= /* @__PURE__ */ new Set()).add(t2));
-  }
-  async _$EP() {
-    this.isUpdatePending = true;
-    try {
-      await this._$ES;
-    } catch (t3) {
-      Promise.reject(t3);
-    }
-    const t2 = this.scheduleUpdate();
-    return null != t2 && await t2, !this.isUpdatePending;
-  }
-  scheduleUpdate() {
-    return this.performUpdate();
-  }
-  performUpdate() {
-    if (!this.isUpdatePending) return;
-    if (!this.hasUpdated) {
-      if (this.renderRoot ??= this.createRenderRoot(), this._$Ep) {
-        for (const [t4, s3] of this._$Ep) this[t4] = s3;
-        this._$Ep = void 0;
-      }
-      const t3 = this.constructor.elementProperties;
-      if (t3.size > 0) for (const [s3, i3] of t3) {
-        const { wrapped: t4 } = i3, e2 = this[s3];
-        true !== t4 || this._$AL.has(s3) || void 0 === e2 || this.C(s3, void 0, i3, e2);
-      }
-    }
-    let t2 = false;
-    const s2 = this._$AL;
-    try {
-      t2 = this.shouldUpdate(s2), t2 ? (this.willUpdate(s2), this._$EO?.forEach((t3) => t3.hostUpdate?.()), this.update(s2)) : this._$EM();
-    } catch (s3) {
-      throw t2 = false, this._$EM(), s3;
-    }
-    t2 && this._$AE(s2);
-  }
-  willUpdate(t2) {
-  }
-  _$AE(t2) {
-    this._$EO?.forEach((t3) => t3.hostUpdated?.()), this.hasUpdated || (this.hasUpdated = true, this.firstUpdated(t2)), this.updated(t2);
-  }
-  _$EM() {
-    this._$AL = /* @__PURE__ */ new Map(), this.isUpdatePending = false;
-  }
-  get updateComplete() {
-    return this.getUpdateComplete();
-  }
-  getUpdateComplete() {
-    return this._$ES;
-  }
-  shouldUpdate(t2) {
-    return true;
-  }
-  update(t2) {
-    this._$Eq &&= this._$Eq.forEach((t3) => this._$ET(t3, this[t3])), this._$EM();
-  }
-  updated(t2) {
-  }
-  firstUpdated(t2) {
-  }
+Symbol.metadata ??= Symbol("metadata"), a$1.litPropertyMetadata ??= /* @__PURE__ */ new WeakMap();
+var y$1 = class extends HTMLElement {
+	static addInitializer(t) {
+		this._$Ei(), (this.l ??= []).push(t);
+	}
+	static get observedAttributes() {
+		return this.finalize(), this._$Eh && [...this._$Eh.keys()];
+	}
+	static createProperty(t, s = b$1) {
+		if (s.state && (s.attribute = !1), this._$Ei(), this.prototype.hasOwnProperty(t) && ((s = Object.create(s)).wrapped = !0), this.elementProperties.set(t, s), !s.noAccessor) {
+			const i = Symbol(), h = this.getPropertyDescriptor(t, i, s);
+			void 0 !== h && e$4(this.prototype, t, h);
+		}
+	}
+	static getPropertyDescriptor(t, s, i) {
+		const { get: e, set: r } = h$4(this.prototype, t) ?? {
+			get() {
+				return this[s];
+			},
+			set(t) {
+				this[s] = t;
+			}
+		};
+		return {
+			get: e,
+			set(s) {
+				const h = e?.call(this);
+				r?.call(this, s), this.requestUpdate(t, h, i);
+			},
+			configurable: !0,
+			enumerable: !0
+		};
+	}
+	static getPropertyOptions(t) {
+		return this.elementProperties.get(t) ?? b$1;
+	}
+	static _$Ei() {
+		if (this.hasOwnProperty(d$2("elementProperties"))) return;
+		const t = n$5(this);
+		t.finalize(), void 0 !== t.l && (this.l = [...t.l]), this.elementProperties = new Map(t.elementProperties);
+	}
+	static finalize() {
+		if (this.hasOwnProperty(d$2("finalized"))) return;
+		if (this.finalized = !0, this._$Ei(), this.hasOwnProperty(d$2("properties"))) {
+			const t = this.properties, s = [...r$4(t), ...o$5(t)];
+			for (const i of s) this.createProperty(i, t[i]);
+		}
+		const t = this[Symbol.metadata];
+		if (null !== t) {
+			const s = litPropertyMetadata.get(t);
+			if (void 0 !== s) for (const [t, i] of s) this.elementProperties.set(t, i);
+		}
+		this._$Eh = /* @__PURE__ */ new Map();
+		for (const [t, s] of this.elementProperties) {
+			const i = this._$Eu(t, s);
+			void 0 !== i && this._$Eh.set(i, t);
+		}
+		this.elementStyles = this.finalizeStyles(this.styles);
+	}
+	static finalizeStyles(s) {
+		const i = [];
+		if (Array.isArray(s)) {
+			const e = new Set(s.flat(Infinity).reverse());
+			for (const s of e) i.unshift(c$4(s));
+		} else void 0 !== s && i.push(c$4(s));
+		return i;
+	}
+	static _$Eu(t, s) {
+		const i = s.attribute;
+		return !1 === i ? void 0 : "string" == typeof i ? i : "string" == typeof t ? t.toLowerCase() : void 0;
+	}
+	constructor() {
+		super(), this._$Ep = void 0, this.isUpdatePending = !1, this.hasUpdated = !1, this._$Em = null, this._$Ev();
+	}
+	_$Ev() {
+		this._$ES = new Promise((t) => this.enableUpdating = t), this._$AL = /* @__PURE__ */ new Map(), this._$E_(), this.requestUpdate(), this.constructor.l?.forEach((t) => t(this));
+	}
+	addController(t) {
+		(this._$EO ??= /* @__PURE__ */ new Set()).add(t), void 0 !== this.renderRoot && this.isConnected && t.hostConnected?.();
+	}
+	removeController(t) {
+		this._$EO?.delete(t);
+	}
+	_$E_() {
+		const t = /* @__PURE__ */ new Map(), s = this.constructor.elementProperties;
+		for (const i of s.keys()) this.hasOwnProperty(i) && (t.set(i, this[i]), delete this[i]);
+		t.size > 0 && (this._$Ep = t);
+	}
+	createRenderRoot() {
+		const t = this.shadowRoot ?? this.attachShadow(this.constructor.shadowRootOptions);
+		return S$1(t, this.constructor.elementStyles), t;
+	}
+	connectedCallback() {
+		this.renderRoot ??= this.createRenderRoot(), this.enableUpdating(!0), this._$EO?.forEach((t) => t.hostConnected?.());
+	}
+	enableUpdating(t) {}
+	disconnectedCallback() {
+		this._$EO?.forEach((t) => t.hostDisconnected?.());
+	}
+	attributeChangedCallback(t, s, i) {
+		this._$AK(t, i);
+	}
+	_$ET(t, s) {
+		const i = this.constructor.elementProperties.get(t), e = this.constructor._$Eu(t, i);
+		if (void 0 !== e && !0 === i.reflect) {
+			const h = (void 0 !== i.converter?.toAttribute ? i.converter : u$2).toAttribute(s, i.type);
+			this._$Em = t, null == h ? this.removeAttribute(e) : this.setAttribute(e, h), this._$Em = null;
+		}
+	}
+	_$AK(t, s) {
+		const i = this.constructor, e = i._$Eh.get(t);
+		if (void 0 !== e && this._$Em !== e) {
+			const t = i.getPropertyOptions(e), h = "function" == typeof t.converter ? { fromAttribute: t.converter } : void 0 !== t.converter?.fromAttribute ? t.converter : u$2;
+			this._$Em = e;
+			const r = h.fromAttribute(s, t.type);
+			this[e] = r ?? this._$Ej?.get(e) ?? r, this._$Em = null;
+		}
+	}
+	requestUpdate(t, s, i, e = !1, h) {
+		if (void 0 !== t) {
+			const r = this.constructor;
+			if (!1 === e && (h = this[t]), i ??= r.getPropertyOptions(t), !((i.hasChanged ?? f$3)(h, s) || i.useDefault && i.reflect && h === this._$Ej?.get(t) && !this.hasAttribute(r._$Eu(t, i)))) return;
+			this.C(t, s, i);
+		}
+		!1 === this.isUpdatePending && (this._$ES = this._$EP());
+	}
+	C(t, s, { useDefault: i, reflect: e, wrapped: h }, r) {
+		i && !(this._$Ej ??= /* @__PURE__ */ new Map()).has(t) && (this._$Ej.set(t, r ?? s ?? this[t]), !0 !== h || void 0 !== r) || (this._$AL.has(t) || (this.hasUpdated || i || (s = void 0), this._$AL.set(t, s)), !0 === e && this._$Em !== t && (this._$Eq ??= /* @__PURE__ */ new Set()).add(t));
+	}
+	async _$EP() {
+		this.isUpdatePending = !0;
+		try {
+			await this._$ES;
+		} catch (t) {
+			Promise.reject(t);
+		}
+		const t = this.scheduleUpdate();
+		return null != t && await t, !this.isUpdatePending;
+	}
+	scheduleUpdate() {
+		return this.performUpdate();
+	}
+	performUpdate() {
+		if (!this.isUpdatePending) return;
+		if (!this.hasUpdated) {
+			if (this.renderRoot ??= this.createRenderRoot(), this._$Ep) {
+				for (const [t, s] of this._$Ep) this[t] = s;
+				this._$Ep = void 0;
+			}
+			const t = this.constructor.elementProperties;
+			if (t.size > 0) for (const [s, i] of t) {
+				const { wrapped: t } = i, e = this[s];
+				!0 !== t || this._$AL.has(s) || void 0 === e || this.C(s, void 0, i, e);
+			}
+		}
+		let t = !1;
+		const s = this._$AL;
+		try {
+			t = this.shouldUpdate(s), t ? (this.willUpdate(s), this._$EO?.forEach((t) => t.hostUpdate?.()), this.update(s)) : this._$EM();
+		} catch (s) {
+			throw t = !1, this._$EM(), s;
+		}
+		t && this._$AE(s);
+	}
+	willUpdate(t) {}
+	_$AE(t) {
+		this._$EO?.forEach((t) => t.hostUpdated?.()), this.hasUpdated || (this.hasUpdated = !0, this.firstUpdated(t)), this.updated(t);
+	}
+	_$EM() {
+		this._$AL = /* @__PURE__ */ new Map(), this.isUpdatePending = !1;
+	}
+	get updateComplete() {
+		return this.getUpdateComplete();
+	}
+	getUpdateComplete() {
+		return this._$ES;
+	}
+	shouldUpdate(t) {
+		return !0;
+	}
+	update(t) {
+		this._$Eq &&= this._$Eq.forEach((t) => this._$ET(t, this[t])), this._$EM();
+	}
+	updated(t) {}
+	firstUpdated(t) {}
 };
-y$1.elementStyles = [], y$1.shadowRootOptions = { mode: "open" }, y$1[d$1("elementProperties")] = /* @__PURE__ */ new Map(), y$1[d$1("finalized")] = /* @__PURE__ */ new Map(), p$1?.({ ReactiveElement: y$1 }), (a$1.reactiveElementVersions ??= []).push("2.1.2");
-const t$2 = globalThis, i$2 = (t2) => t2, s$2 = t$2.trustedTypes, e$2 = s$2 ? s$2.createPolicy("lit-html", { createHTML: (t2) => t2 }) : void 0, h$2 = "$lit$", o$4 = `lit$${Math.random().toFixed(9).slice(2)}$`, n$3 = "?" + o$4, r$3 = `<${n$3}>`, l = document, c$1 = () => l.createComment(""), a = (t2) => null === t2 || "object" != typeof t2 && "function" != typeof t2, u = Array.isArray, d = (t2) => u(t2) || "function" == typeof t2?.[Symbol.iterator], f$1 = "[ 	\n\f\r]", v = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, _ = /-->/g, m = />/g, p = RegExp(`>|${f$1}(?:([^\\s"'>=/]+)(${f$1}*=${f$1}*(?:[^ 	
-\f\r"'\`<>=]|("|')|))|$)`, "g"), g = /'/g, $ = /"/g, y2 = /^(?:script|style|textarea|title)$/i, x = (t2) => (i3, ...s2) => ({ _$litType$: t2, strings: i3, values: s2 }), b = x(1), w = x(2), E = /* @__PURE__ */ Symbol.for("lit-noChange"), A = /* @__PURE__ */ Symbol.for("lit-nothing"), C = /* @__PURE__ */ new WeakMap(), P = l.createTreeWalker(l, 129);
-function V(t2, i3) {
-  if (!u(t2) || !t2.hasOwnProperty("raw")) throw Error("invalid template strings array");
-  return void 0 !== e$2 ? e$2.createHTML(i3) : i3;
+y$1.elementStyles = [], y$1.shadowRootOptions = { mode: "open" }, y$1[d$2("elementProperties")] = /* @__PURE__ */ new Map(), y$1[d$2("finalized")] = /* @__PURE__ */ new Map(), p$2?.({ ReactiveElement: y$1 }), (a$1.reactiveElementVersions ??= []).push("2.1.2");
+//#endregion
+//#region node_modules/.deno/lit-html@3.3.2/node_modules/lit-html/lit-html.js
+/**
+* @license
+* Copyright 2017 Google LLC
+* SPDX-License-Identifier: BSD-3-Clause
+*/
+var t$3 = globalThis, i$3 = (t) => t, s$3 = t$3.trustedTypes, e$3 = s$3 ? s$3.createPolicy("lit-html", { createHTML: (t) => t }) : void 0, h$3 = "$lit$", o$4 = `lit$${Math.random().toFixed(9).slice(2)}$`, n$4 = "?" + o$4, r$3 = `<${n$4}>`, l$1 = document, c$2 = () => l$1.createComment(""), a = (t) => null === t || "object" != typeof t && "function" != typeof t, u$1 = Array.isArray, d$1 = (t) => u$1(t) || "function" == typeof t?.[Symbol.iterator], f$2 = "[ 	\n\f\r]", v$1 = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, _ = /-->/g, m$1 = />/g, p$1 = RegExp(`>|${f$2}(?:([^\\s"'>=/]+)(${f$2}*=${f$2}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`, "g"), g = /'/g, $ = /"/g, y = /^(?:script|style|textarea|title)$/i, x = (t) => (i, ...s) => ({
+	_$litType$: t,
+	strings: i,
+	values: s
+}), b = x(1), w = x(2);
+x(3);
+var E = Symbol.for("lit-noChange"), A = Symbol.for("lit-nothing"), C = /* @__PURE__ */ new WeakMap(), P = l$1.createTreeWalker(l$1, 129);
+function V(t, i) {
+	if (!u$1(t) || !t.hasOwnProperty("raw")) throw Error("invalid template strings array");
+	return void 0 !== e$3 ? e$3.createHTML(i) : i;
 }
-const N = (t2, i3) => {
-  const s2 = t2.length - 1, e2 = [];
-  let n3, l2 = 2 === i3 ? "<svg>" : 3 === i3 ? "<math>" : "", c2 = v;
-  for (let i4 = 0; i4 < s2; i4++) {
-    const s3 = t2[i4];
-    let a2, u2, d2 = -1, f2 = 0;
-    for (; f2 < s3.length && (c2.lastIndex = f2, u2 = c2.exec(s3), null !== u2); ) f2 = c2.lastIndex, c2 === v ? "!--" === u2[1] ? c2 = _ : void 0 !== u2[1] ? c2 = m : void 0 !== u2[2] ? (y2.test(u2[2]) && (n3 = RegExp("</" + u2[2], "g")), c2 = p) : void 0 !== u2[3] && (c2 = p) : c2 === p ? ">" === u2[0] ? (c2 = n3 ?? v, d2 = -1) : void 0 === u2[1] ? d2 = -2 : (d2 = c2.lastIndex - u2[2].length, a2 = u2[1], c2 = void 0 === u2[3] ? p : '"' === u2[3] ? $ : g) : c2 === $ || c2 === g ? c2 = p : c2 === _ || c2 === m ? c2 = v : (c2 = p, n3 = void 0);
-    const x2 = c2 === p && t2[i4 + 1].startsWith("/>") ? " " : "";
-    l2 += c2 === v ? s3 + r$3 : d2 >= 0 ? (e2.push(a2), s3.slice(0, d2) + h$2 + s3.slice(d2) + o$4 + x2) : s3 + o$4 + (-2 === d2 ? i4 : x2);
-  }
-  return [V(t2, l2 + (t2[s2] || "<?>") + (2 === i3 ? "</svg>" : 3 === i3 ? "</math>" : "")), e2];
+var N = (t, i) => {
+	const s = t.length - 1, e = [];
+	let n, l = 2 === i ? "<svg>" : 3 === i ? "<math>" : "", c = v$1;
+	for (let i = 0; i < s; i++) {
+		const s = t[i];
+		let a, u, d = -1, f = 0;
+		for (; f < s.length && (c.lastIndex = f, u = c.exec(s), null !== u);) f = c.lastIndex, c === v$1 ? "!--" === u[1] ? c = _ : void 0 !== u[1] ? c = m$1 : void 0 !== u[2] ? (y.test(u[2]) && (n = RegExp("</" + u[2], "g")), c = p$1) : void 0 !== u[3] && (c = p$1) : c === p$1 ? ">" === u[0] ? (c = n ?? v$1, d = -1) : void 0 === u[1] ? d = -2 : (d = c.lastIndex - u[2].length, a = u[1], c = void 0 === u[3] ? p$1 : "\"" === u[3] ? $ : g) : c === $ || c === g ? c = p$1 : c === _ || c === m$1 ? c = v$1 : (c = p$1, n = void 0);
+		const x = c === p$1 && t[i + 1].startsWith("/>") ? " " : "";
+		l += c === v$1 ? s + r$3 : d >= 0 ? (e.push(a), s.slice(0, d) + h$3 + s.slice(d) + o$4 + x) : s + o$4 + (-2 === d ? i : x);
+	}
+	return [V(t, l + (t[s] || "<?>") + (2 === i ? "</svg>" : 3 === i ? "</math>" : "")), e];
 };
-class S {
-  constructor({ strings: t2, _$litType$: i3 }, e2) {
-    let r2;
-    this.parts = [];
-    let l2 = 0, a2 = 0;
-    const u2 = t2.length - 1, d2 = this.parts, [f2, v2] = N(t2, i3);
-    if (this.el = S.createElement(f2, e2), P.currentNode = this.el.content, 2 === i3 || 3 === i3) {
-      const t3 = this.el.content.firstChild;
-      t3.replaceWith(...t3.childNodes);
-    }
-    for (; null !== (r2 = P.nextNode()) && d2.length < u2; ) {
-      if (1 === r2.nodeType) {
-        if (r2.hasAttributes()) for (const t3 of r2.getAttributeNames()) if (t3.endsWith(h$2)) {
-          const i4 = v2[a2++], s2 = r2.getAttribute(t3).split(o$4), e3 = /([.?@])?(.*)/.exec(i4);
-          d2.push({ type: 1, index: l2, name: e3[2], strings: s2, ctor: "." === e3[1] ? I : "?" === e3[1] ? L : "@" === e3[1] ? z : H }), r2.removeAttribute(t3);
-        } else t3.startsWith(o$4) && (d2.push({ type: 6, index: l2 }), r2.removeAttribute(t3));
-        if (y2.test(r2.tagName)) {
-          const t3 = r2.textContent.split(o$4), i4 = t3.length - 1;
-          if (i4 > 0) {
-            r2.textContent = s$2 ? s$2.emptyScript : "";
-            for (let s2 = 0; s2 < i4; s2++) r2.append(t3[s2], c$1()), P.nextNode(), d2.push({ type: 2, index: ++l2 });
-            r2.append(t3[i4], c$1());
-          }
-        }
-      } else if (8 === r2.nodeType) if (r2.data === n$3) d2.push({ type: 2, index: l2 });
-      else {
-        let t3 = -1;
-        for (; -1 !== (t3 = r2.data.indexOf(o$4, t3 + 1)); ) d2.push({ type: 7, index: l2 }), t3 += o$4.length - 1;
-      }
-      l2++;
-    }
-  }
-  static createElement(t2, i3) {
-    const s2 = l.createElement("template");
-    return s2.innerHTML = t2, s2;
-  }
-}
-function M(t2, i3, s2 = t2, e2) {
-  if (i3 === E) return i3;
-  let h2 = void 0 !== e2 ? s2._$Co?.[e2] : s2._$Cl;
-  const o2 = a(i3) ? void 0 : i3._$litDirective$;
-  return h2?.constructor !== o2 && (h2?._$AO?.(false), void 0 === o2 ? h2 = void 0 : (h2 = new o2(t2), h2._$AT(t2, s2, e2)), void 0 !== e2 ? (s2._$Co ??= [])[e2] = h2 : s2._$Cl = h2), void 0 !== h2 && (i3 = M(t2, h2._$AS(t2, i3.values), h2, e2)), i3;
-}
-class R {
-  constructor(t2, i3) {
-    this._$AV = [], this._$AN = void 0, this._$AD = t2, this._$AM = i3;
-  }
-  get parentNode() {
-    return this._$AM.parentNode;
-  }
-  get _$AU() {
-    return this._$AM._$AU;
-  }
-  u(t2) {
-    const { el: { content: i3 }, parts: s2 } = this._$AD, e2 = (t2?.creationScope ?? l).importNode(i3, true);
-    P.currentNode = e2;
-    let h2 = P.nextNode(), o2 = 0, n3 = 0, r2 = s2[0];
-    for (; void 0 !== r2; ) {
-      if (o2 === r2.index) {
-        let i4;
-        2 === r2.type ? i4 = new k(h2, h2.nextSibling, this, t2) : 1 === r2.type ? i4 = new r2.ctor(h2, r2.name, r2.strings, this, t2) : 6 === r2.type && (i4 = new Z(h2, this, t2)), this._$AV.push(i4), r2 = s2[++n3];
-      }
-      o2 !== r2?.index && (h2 = P.nextNode(), o2++);
-    }
-    return P.currentNode = l, e2;
-  }
-  p(t2) {
-    let i3 = 0;
-    for (const s2 of this._$AV) void 0 !== s2 && (void 0 !== s2.strings ? (s2._$AI(t2, s2, i3), i3 += s2.strings.length - 2) : s2._$AI(t2[i3])), i3++;
-  }
-}
-class k {
-  get _$AU() {
-    return this._$AM?._$AU ?? this._$Cv;
-  }
-  constructor(t2, i3, s2, e2) {
-    this.type = 2, this._$AH = A, this._$AN = void 0, this._$AA = t2, this._$AB = i3, this._$AM = s2, this.options = e2, this._$Cv = e2?.isConnected ?? true;
-  }
-  get parentNode() {
-    let t2 = this._$AA.parentNode;
-    const i3 = this._$AM;
-    return void 0 !== i3 && 11 === t2?.nodeType && (t2 = i3.parentNode), t2;
-  }
-  get startNode() {
-    return this._$AA;
-  }
-  get endNode() {
-    return this._$AB;
-  }
-  _$AI(t2, i3 = this) {
-    t2 = M(this, t2, i3), a(t2) ? t2 === A || null == t2 || "" === t2 ? (this._$AH !== A && this._$AR(), this._$AH = A) : t2 !== this._$AH && t2 !== E && this._(t2) : void 0 !== t2._$litType$ ? this.$(t2) : void 0 !== t2.nodeType ? this.T(t2) : d(t2) ? this.k(t2) : this._(t2);
-  }
-  O(t2) {
-    return this._$AA.parentNode.insertBefore(t2, this._$AB);
-  }
-  T(t2) {
-    this._$AH !== t2 && (this._$AR(), this._$AH = this.O(t2));
-  }
-  _(t2) {
-    this._$AH !== A && a(this._$AH) ? this._$AA.nextSibling.data = t2 : this.T(l.createTextNode(t2)), this._$AH = t2;
-  }
-  $(t2) {
-    const { values: i3, _$litType$: s2 } = t2, e2 = "number" == typeof s2 ? this._$AC(t2) : (void 0 === s2.el && (s2.el = S.createElement(V(s2.h, s2.h[0]), this.options)), s2);
-    if (this._$AH?._$AD === e2) this._$AH.p(i3);
-    else {
-      const t3 = new R(e2, this), s3 = t3.u(this.options);
-      t3.p(i3), this.T(s3), this._$AH = t3;
-    }
-  }
-  _$AC(t2) {
-    let i3 = C.get(t2.strings);
-    return void 0 === i3 && C.set(t2.strings, i3 = new S(t2)), i3;
-  }
-  k(t2) {
-    u(this._$AH) || (this._$AH = [], this._$AR());
-    const i3 = this._$AH;
-    let s2, e2 = 0;
-    for (const h2 of t2) e2 === i3.length ? i3.push(s2 = new k(this.O(c$1()), this.O(c$1()), this, this.options)) : s2 = i3[e2], s2._$AI(h2), e2++;
-    e2 < i3.length && (this._$AR(s2 && s2._$AB.nextSibling, e2), i3.length = e2);
-  }
-  _$AR(t2 = this._$AA.nextSibling, s2) {
-    for (this._$AP?.(false, true, s2); t2 !== this._$AB; ) {
-      const s3 = i$2(t2).nextSibling;
-      i$2(t2).remove(), t2 = s3;
-    }
-  }
-  setConnected(t2) {
-    void 0 === this._$AM && (this._$Cv = t2, this._$AP?.(t2));
-  }
-}
-class H {
-  get tagName() {
-    return this.element.tagName;
-  }
-  get _$AU() {
-    return this._$AM._$AU;
-  }
-  constructor(t2, i3, s2, e2, h2) {
-    this.type = 1, this._$AH = A, this._$AN = void 0, this.element = t2, this.name = i3, this._$AM = e2, this.options = h2, s2.length > 2 || "" !== s2[0] || "" !== s2[1] ? (this._$AH = Array(s2.length - 1).fill(new String()), this.strings = s2) : this._$AH = A;
-  }
-  _$AI(t2, i3 = this, s2, e2) {
-    const h2 = this.strings;
-    let o2 = false;
-    if (void 0 === h2) t2 = M(this, t2, i3, 0), o2 = !a(t2) || t2 !== this._$AH && t2 !== E, o2 && (this._$AH = t2);
-    else {
-      const e3 = t2;
-      let n3, r2;
-      for (t2 = h2[0], n3 = 0; n3 < h2.length - 1; n3++) r2 = M(this, e3[s2 + n3], i3, n3), r2 === E && (r2 = this._$AH[n3]), o2 ||= !a(r2) || r2 !== this._$AH[n3], r2 === A ? t2 = A : t2 !== A && (t2 += (r2 ?? "") + h2[n3 + 1]), this._$AH[n3] = r2;
-    }
-    o2 && !e2 && this.j(t2);
-  }
-  j(t2) {
-    t2 === A ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, t2 ?? "");
-  }
-}
-class I extends H {
-  constructor() {
-    super(...arguments), this.type = 3;
-  }
-  j(t2) {
-    this.element[this.name] = t2 === A ? void 0 : t2;
-  }
-}
-class L extends H {
-  constructor() {
-    super(...arguments), this.type = 4;
-  }
-  j(t2) {
-    this.element.toggleAttribute(this.name, !!t2 && t2 !== A);
-  }
-}
-class z extends H {
-  constructor(t2, i3, s2, e2, h2) {
-    super(t2, i3, s2, e2, h2), this.type = 5;
-  }
-  _$AI(t2, i3 = this) {
-    if ((t2 = M(this, t2, i3, 0) ?? A) === E) return;
-    const s2 = this._$AH, e2 = t2 === A && s2 !== A || t2.capture !== s2.capture || t2.once !== s2.once || t2.passive !== s2.passive, h2 = t2 !== A && (s2 === A || e2);
-    e2 && this.element.removeEventListener(this.name, this, s2), h2 && this.element.addEventListener(this.name, this, t2), this._$AH = t2;
-  }
-  handleEvent(t2) {
-    "function" == typeof this._$AH ? this._$AH.call(this.options?.host ?? this.element, t2) : this._$AH.handleEvent(t2);
-  }
-}
-class Z {
-  constructor(t2, i3, s2) {
-    this.element = t2, this.type = 6, this._$AN = void 0, this._$AM = i3, this.options = s2;
-  }
-  get _$AU() {
-    return this._$AM._$AU;
-  }
-  _$AI(t2) {
-    M(this, t2);
-  }
-}
-const B = t$2.litHtmlPolyfillSupport;
-B?.(S, k), (t$2.litHtmlVersions ??= []).push("3.3.2");
-const D = (t2, i3, s2) => {
-  const e2 = s2?.renderBefore ?? i3;
-  let h2 = e2._$litPart$;
-  if (void 0 === h2) {
-    const t3 = s2?.renderBefore ?? null;
-    e2._$litPart$ = h2 = new k(i3.insertBefore(c$1(), t3), t3, void 0, s2 ?? {});
-  }
-  return h2._$AI(t2), h2;
+var S = class S {
+	constructor({ strings: t, _$litType$: i }, e) {
+		let r;
+		this.parts = [];
+		let l = 0, a = 0;
+		const u = t.length - 1, d = this.parts, [f, v] = N(t, i);
+		if (this.el = S.createElement(f, e), P.currentNode = this.el.content, 2 === i || 3 === i) {
+			const t = this.el.content.firstChild;
+			t.replaceWith(...t.childNodes);
+		}
+		for (; null !== (r = P.nextNode()) && d.length < u;) {
+			if (1 === r.nodeType) {
+				if (r.hasAttributes()) for (const t of r.getAttributeNames()) if (t.endsWith(h$3)) {
+					const i = v[a++], s = r.getAttribute(t).split(o$4), e = /([.?@])?(.*)/.exec(i);
+					d.push({
+						type: 1,
+						index: l,
+						name: e[2],
+						strings: s,
+						ctor: "." === e[1] ? I : "?" === e[1] ? L : "@" === e[1] ? z : H
+					}), r.removeAttribute(t);
+				} else t.startsWith(o$4) && (d.push({
+					type: 6,
+					index: l
+				}), r.removeAttribute(t));
+				if (y.test(r.tagName)) {
+					const t = r.textContent.split(o$4), i = t.length - 1;
+					if (i > 0) {
+						r.textContent = s$3 ? s$3.emptyScript : "";
+						for (let s = 0; s < i; s++) r.append(t[s], c$2()), P.nextNode(), d.push({
+							type: 2,
+							index: ++l
+						});
+						r.append(t[i], c$2());
+					}
+				}
+			} else if (8 === r.nodeType) if (r.data === n$4) d.push({
+				type: 2,
+				index: l
+			});
+			else {
+				let t = -1;
+				for (; -1 !== (t = r.data.indexOf(o$4, t + 1));) d.push({
+					type: 7,
+					index: l
+				}), t += o$4.length - 1;
+			}
+			l++;
+		}
+	}
+	static createElement(t, i) {
+		const s = l$1.createElement("template");
+		return s.innerHTML = t, s;
+	}
 };
-const s$1 = globalThis;
-let i$1 = class i extends y$1 {
-  constructor() {
-    super(...arguments), this.renderOptions = { host: this }, this._$Do = void 0;
-  }
-  createRenderRoot() {
-    const t2 = super.createRenderRoot();
-    return this.renderOptions.renderBefore ??= t2.firstChild, t2;
-  }
-  update(t2) {
-    const r2 = this.render();
-    this.hasUpdated || (this.renderOptions.isConnected = this.isConnected), super.update(t2), this._$Do = D(r2, this.renderRoot, this.renderOptions);
-  }
-  connectedCallback() {
-    super.connectedCallback(), this._$Do?.setConnected(true);
-  }
-  disconnectedCallback() {
-    super.disconnectedCallback(), this._$Do?.setConnected(false);
-  }
-  render() {
-    return E;
-  }
+function M$1(t, i, s = t, e) {
+	if (i === E) return i;
+	let h = void 0 !== e ? s._$Co?.[e] : s._$Cl;
+	const o = a(i) ? void 0 : i._$litDirective$;
+	return h?.constructor !== o && (h?._$AO?.(!1), void 0 === o ? h = void 0 : (h = new o(t), h._$AT(t, s, e)), void 0 !== e ? (s._$Co ??= [])[e] = h : s._$Cl = h), void 0 !== h && (i = M$1(t, h._$AS(t, i.values), h, e)), i;
+}
+var R = class {
+	constructor(t, i) {
+		this._$AV = [], this._$AN = void 0, this._$AD = t, this._$AM = i;
+	}
+	get parentNode() {
+		return this._$AM.parentNode;
+	}
+	get _$AU() {
+		return this._$AM._$AU;
+	}
+	u(t) {
+		const { el: { content: i }, parts: s } = this._$AD, e = (t?.creationScope ?? l$1).importNode(i, !0);
+		P.currentNode = e;
+		let h = P.nextNode(), o = 0, n = 0, r = s[0];
+		for (; void 0 !== r;) {
+			if (o === r.index) {
+				let i;
+				2 === r.type ? i = new k(h, h.nextSibling, this, t) : 1 === r.type ? i = new r.ctor(h, r.name, r.strings, this, t) : 6 === r.type && (i = new Z(h, this, t)), this._$AV.push(i), r = s[++n];
+			}
+			o !== r?.index && (h = P.nextNode(), o++);
+		}
+		return P.currentNode = l$1, e;
+	}
+	p(t) {
+		let i = 0;
+		for (const s of this._$AV) void 0 !== s && (void 0 !== s.strings ? (s._$AI(t, s, i), i += s.strings.length - 2) : s._$AI(t[i])), i++;
+	}
 };
-i$1._$litElement$ = true, i$1["finalized"] = true, s$1.litElementHydrateSupport?.({ LitElement: i$1 });
-const o$3 = s$1.litElementPolyfillSupport;
-o$3?.({ LitElement: i$1 });
-(s$1.litElementVersions ??= []).push("4.2.2");
-const t$1 = (t2) => (e2, o2) => {
-  void 0 !== o2 ? o2.addInitializer(() => {
-    customElements.define(t2, e2);
-  }) : customElements.define(t2, e2);
+var k = class k {
+	get _$AU() {
+		return this._$AM?._$AU ?? this._$Cv;
+	}
+	constructor(t, i, s, e) {
+		this.type = 2, this._$AH = A, this._$AN = void 0, this._$AA = t, this._$AB = i, this._$AM = s, this.options = e, this._$Cv = e?.isConnected ?? !0;
+	}
+	get parentNode() {
+		let t = this._$AA.parentNode;
+		const i = this._$AM;
+		return void 0 !== i && 11 === t?.nodeType && (t = i.parentNode), t;
+	}
+	get startNode() {
+		return this._$AA;
+	}
+	get endNode() {
+		return this._$AB;
+	}
+	_$AI(t, i = this) {
+		t = M$1(this, t, i), a(t) ? t === A || null == t || "" === t ? (this._$AH !== A && this._$AR(), this._$AH = A) : t !== this._$AH && t !== E && this._(t) : void 0 !== t._$litType$ ? this.$(t) : void 0 !== t.nodeType ? this.T(t) : d$1(t) ? this.k(t) : this._(t);
+	}
+	O(t) {
+		return this._$AA.parentNode.insertBefore(t, this._$AB);
+	}
+	T(t) {
+		this._$AH !== t && (this._$AR(), this._$AH = this.O(t));
+	}
+	_(t) {
+		this._$AH !== A && a(this._$AH) ? this._$AA.nextSibling.data = t : this.T(l$1.createTextNode(t)), this._$AH = t;
+	}
+	$(t) {
+		const { values: i, _$litType$: s } = t, e = "number" == typeof s ? this._$AC(t) : (void 0 === s.el && (s.el = S.createElement(V(s.h, s.h[0]), this.options)), s);
+		if (this._$AH?._$AD === e) this._$AH.p(i);
+		else {
+			const t = new R(e, this), s = t.u(this.options);
+			t.p(i), this.T(s), this._$AH = t;
+		}
+	}
+	_$AC(t) {
+		let i = C.get(t.strings);
+		return void 0 === i && C.set(t.strings, i = new S(t)), i;
+	}
+	k(t) {
+		u$1(this._$AH) || (this._$AH = [], this._$AR());
+		const i = this._$AH;
+		let s, e = 0;
+		for (const h of t) e === i.length ? i.push(s = new k(this.O(c$2()), this.O(c$2()), this, this.options)) : s = i[e], s._$AI(h), e++;
+		e < i.length && (this._$AR(s && s._$AB.nextSibling, e), i.length = e);
+	}
+	_$AR(t = this._$AA.nextSibling, s) {
+		for (this._$AP?.(!1, !0, s); t !== this._$AB;) {
+			const s = i$3(t).nextSibling;
+			i$3(t).remove(), t = s;
+		}
+	}
+	setConnected(t) {
+		void 0 === this._$AM && (this._$Cv = t, this._$AP?.(t));
+	}
 };
-const o$2 = { attribute: true, type: String, converter: u$1, reflect: false, hasChanged: f$2 }, r$2 = (t2 = o$2, e2, r2) => {
-  const { kind: n3, metadata: i3 } = r2;
-  let s2 = globalThis.litPropertyMetadata.get(i3);
-  if (void 0 === s2 && globalThis.litPropertyMetadata.set(i3, s2 = /* @__PURE__ */ new Map()), "setter" === n3 && ((t2 = Object.create(t2)).wrapped = true), s2.set(r2.name, t2), "accessor" === n3) {
-    const { name: o2 } = r2;
-    return { set(r3) {
-      const n4 = e2.get.call(this);
-      e2.set.call(this, r3), this.requestUpdate(o2, n4, t2, true, r3);
-    }, init(e3) {
-      return void 0 !== e3 && this.C(o2, void 0, t2, e3), e3;
-    } };
-  }
-  if ("setter" === n3) {
-    const { name: o2 } = r2;
-    return function(r3) {
-      const n4 = this[o2];
-      e2.call(this, r3), this.requestUpdate(o2, n4, t2, true, r3);
-    };
-  }
-  throw Error("Unsupported decorator location: " + n3);
+var H = class {
+	get tagName() {
+		return this.element.tagName;
+	}
+	get _$AU() {
+		return this._$AM._$AU;
+	}
+	constructor(t, i, s, e, h) {
+		this.type = 1, this._$AH = A, this._$AN = void 0, this.element = t, this.name = i, this._$AM = e, this.options = h, s.length > 2 || "" !== s[0] || "" !== s[1] ? (this._$AH = Array(s.length - 1).fill(/* @__PURE__ */ new String()), this.strings = s) : this._$AH = A;
+	}
+	_$AI(t, i = this, s, e) {
+		const h = this.strings;
+		let o = !1;
+		if (void 0 === h) t = M$1(this, t, i, 0), o = !a(t) || t !== this._$AH && t !== E, o && (this._$AH = t);
+		else {
+			const e = t;
+			let n, r;
+			for (t = h[0], n = 0; n < h.length - 1; n++) r = M$1(this, e[s + n], i, n), r === E && (r = this._$AH[n]), o ||= !a(r) || r !== this._$AH[n], r === A ? t = A : t !== A && (t += (r ?? "") + h[n + 1]), this._$AH[n] = r;
+		}
+		o && !e && this.j(t);
+	}
+	j(t) {
+		t === A ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, t ?? "");
+	}
 };
-function n$2(t2) {
-  return (e2, o2) => "object" == typeof o2 ? r$2(t2, e2, o2) : ((t3, e3, o3) => {
-    const r2 = e3.hasOwnProperty(o3);
-    return e3.constructor.createProperty(o3, t3), r2 ? Object.getOwnPropertyDescriptor(e3, o3) : void 0;
-  })(t2, e2, o2);
-}
-const r$1 = (o2) => void 0 === o2.strings;
-const t = { CHILD: 2 }, e$1 = (t2) => (...e2) => ({ _$litDirective$: t2, values: e2 });
-class i2 {
-  constructor(t2) {
-  }
-  get _$AU() {
-    return this._$AM._$AU;
-  }
-  _$AT(t2, e2, i3) {
-    this._$Ct = t2, this._$AM = e2, this._$Ci = i3;
-  }
-  _$AS(t2, e2) {
-    return this.update(t2, e2);
-  }
-  update(t2, e2) {
-    return this.render(...e2);
-  }
-}
-const s = (i3, t2) => {
-  const e2 = i3._$AN;
-  if (void 0 === e2) return false;
-  for (const i4 of e2) i4._$AO?.(t2, false), s(i4, t2);
-  return true;
-}, o$1 = (i3) => {
-  let t2, e2;
-  do {
-    if (void 0 === (t2 = i3._$AM)) break;
-    e2 = t2._$AN, e2.delete(i3), i3 = t2;
-  } while (0 === e2?.size);
-}, r = (i3) => {
-  for (let t2; t2 = i3._$AM; i3 = t2) {
-    let e2 = t2._$AN;
-    if (void 0 === e2) t2._$AN = e2 = /* @__PURE__ */ new Set();
-    else if (e2.has(i3)) break;
-    e2.add(i3), c(t2);
-  }
+var I = class extends H {
+	constructor() {
+		super(...arguments), this.type = 3;
+	}
+	j(t) {
+		this.element[this.name] = t === A ? void 0 : t;
+	}
 };
-function h$1(i3) {
-  void 0 !== this._$AN ? (o$1(this), this._$AM = i3, r(this)) : this._$AM = i3;
-}
-function n$1(i3, t2 = false, e2 = 0) {
-  const r2 = this._$AH, h2 = this._$AN;
-  if (void 0 !== h2 && 0 !== h2.size) if (t2) if (Array.isArray(r2)) for (let i4 = e2; i4 < r2.length; i4++) s(r2[i4], false), o$1(r2[i4]);
-  else null != r2 && (s(r2, false), o$1(r2));
-  else s(this, i3);
-}
-const c = (i3) => {
-  i3.type == t.CHILD && (i3._$AP ??= n$1, i3._$AQ ??= h$1);
+var L = class extends H {
+	constructor() {
+		super(...arguments), this.type = 4;
+	}
+	j(t) {
+		this.element.toggleAttribute(this.name, !!t && t !== A);
+	}
 };
-class f extends i2 {
-  constructor() {
-    super(...arguments), this._$AN = void 0;
-  }
-  _$AT(i3, t2, e2) {
-    super._$AT(i3, t2, e2), r(this), this.isConnected = i3._$AU;
-  }
-  _$AO(i3, t2 = true) {
-    i3 !== this.isConnected && (this.isConnected = i3, i3 ? this.reconnected?.() : this.disconnected?.()), t2 && (s(this, i3), o$1(this));
-  }
-  setValue(t2) {
-    if (r$1(this._$Ct)) this._$Ct._$AI(t2, this);
-    else {
-      const i3 = [...this._$Ct._$AH];
-      i3[this._$Ci] = t2, this._$Ct._$AI(i3, this, 0);
-    }
-  }
-  disconnected() {
-  }
-  reconnected() {
-  }
+var z = class extends H {
+	constructor(t, i, s, e, h) {
+		super(t, i, s, e, h), this.type = 5;
+	}
+	_$AI(t, i = this) {
+		if ((t = M$1(this, t, i, 0) ?? A) === E) return;
+		const s = this._$AH, e = t === A && s !== A || t.capture !== s.capture || t.once !== s.once || t.passive !== s.passive, h = t !== A && (s === A || e);
+		e && this.element.removeEventListener(this.name, this, s), h && this.element.addEventListener(this.name, this, t), this._$AH = t;
+	}
+	handleEvent(t) {
+		"function" == typeof this._$AH ? this._$AH.call(this.options?.host ?? this.element, t) : this._$AH.handleEvent(t);
+	}
+};
+var Z = class {
+	constructor(t, i, s) {
+		this.element = t, this.type = 6, this._$AN = void 0, this._$AM = i, this.options = s;
+	}
+	get _$AU() {
+		return this._$AM._$AU;
+	}
+	_$AI(t) {
+		M$1(this, t);
+	}
+};
+var j$1 = {
+	M: h$3,
+	P: o$4,
+	A: n$4,
+	C: 1,
+	L: N,
+	R,
+	D: d$1,
+	V: M$1,
+	I: k,
+	H,
+	N: L,
+	U: z,
+	B: I,
+	F: Z
+}, B = t$3.litHtmlPolyfillSupport;
+B?.(S, k), (t$3.litHtmlVersions ??= []).push("3.3.2");
+var D = (t, i, s) => {
+	const e = s?.renderBefore ?? i;
+	let h = e._$litPart$;
+	if (void 0 === h) {
+		const t = s?.renderBefore ?? null;
+		e._$litPart$ = h = new k(i.insertBefore(c$2(), t), t, void 0, s ?? {});
+	}
+	return h._$AI(t), h;
+};
+//#endregion
+//#region node_modules/.deno/lit-element@4.2.2/node_modules/lit-element/lit-element.js
+/**
+* @license
+* Copyright 2017 Google LLC
+* SPDX-License-Identifier: BSD-3-Clause
+*/ var s$2 = globalThis;
+var i$2 = class extends y$1 {
+	constructor() {
+		super(...arguments), this.renderOptions = { host: this }, this._$Do = void 0;
+	}
+	createRenderRoot() {
+		const t = super.createRenderRoot();
+		return this.renderOptions.renderBefore ??= t.firstChild, t;
+	}
+	update(t) {
+		const r = this.render();
+		this.hasUpdated || (this.renderOptions.isConnected = this.isConnected), super.update(t), this._$Do = D(r, this.renderRoot, this.renderOptions);
+	}
+	connectedCallback() {
+		super.connectedCallback(), this._$Do?.setConnected(!0);
+	}
+	disconnectedCallback() {
+		super.disconnectedCallback(), this._$Do?.setConnected(!1);
+	}
+	render() {
+		return E;
+	}
+};
+i$2._$litElement$ = !0, i$2["finalized"] = !0, s$2.litElementHydrateSupport?.({ LitElement: i$2 });
+var o$3 = s$2.litElementPolyfillSupport;
+o$3?.({ LitElement: i$2 });
+(s$2.litElementVersions ??= []).push("4.2.2");
+//#endregion
+//#region node_modules/.deno/@lit+reactive-element@2.1.2/node_modules/@lit/reactive-element/decorators/custom-element.js
+/**
+* @license
+* Copyright 2017 Google LLC
+* SPDX-License-Identifier: BSD-3-Clause
+*/
+var t$2 = (t) => (e, o) => {
+	void 0 !== o ? o.addInitializer(() => {
+		customElements.define(t, e);
+	}) : customElements.define(t, e);
+};
+//#endregion
+//#region node_modules/.deno/@lit+reactive-element@2.1.2/node_modules/@lit/reactive-element/decorators/property.js
+/**
+* @license
+* Copyright 2017 Google LLC
+* SPDX-License-Identifier: BSD-3-Clause
+*/ var o$2 = {
+	attribute: !0,
+	type: String,
+	converter: u$2,
+	reflect: !1,
+	hasChanged: f$3
+}, r$2 = (t = o$2, e, r) => {
+	const { kind: n, metadata: i } = r;
+	let s = globalThis.litPropertyMetadata.get(i);
+	if (void 0 === s && globalThis.litPropertyMetadata.set(i, s = /* @__PURE__ */ new Map()), "setter" === n && ((t = Object.create(t)).wrapped = !0), s.set(r.name, t), "accessor" === n) {
+		const { name: o } = r;
+		return {
+			set(r) {
+				const n = e.get.call(this);
+				e.set.call(this, r), this.requestUpdate(o, n, t, !0, r);
+			},
+			init(e) {
+				return void 0 !== e && this.C(o, void 0, t, e), e;
+			}
+		};
+	}
+	if ("setter" === n) {
+		const { name: o } = r;
+		return function(r) {
+			const n = this[o];
+			e.call(this, r), this.requestUpdate(o, n, t, !0, r);
+		};
+	}
+	throw Error("Unsupported decorator location: " + n);
+};
+function n$3(t) {
+	return (e, o) => "object" == typeof o ? r$2(t, e, o) : ((t, e, o) => {
+		const r = e.hasOwnProperty(o);
+		return e.constructor.createProperty(o, t), r ? Object.getOwnPropertyDescriptor(e, o) : void 0;
+	})(t, e, o);
 }
-const e = () => new h();
-class h {
-}
-const o = /* @__PURE__ */ new WeakMap(), n2 = e$1(class extends f {
-  render(i3) {
-    return A;
-  }
-  update(i3, [s2]) {
-    const e2 = s2 !== this.G;
-    return e2 && void 0 !== this.G && this.rt(void 0), (e2 || this.lt !== this.ct) && (this.G = s2, this.ht = i3.options?.host, this.rt(this.ct = i3.element)), A;
-  }
-  rt(t2) {
-    if (this.isConnected || (t2 = void 0), "function" == typeof this.G) {
-      const i3 = this.ht ?? globalThis;
-      let s2 = o.get(i3);
-      void 0 === s2 && (s2 = /* @__PURE__ */ new WeakMap(), o.set(i3, s2)), void 0 !== s2.get(this.G) && this.G.call(this.ht, void 0), s2.set(this.G, t2), void 0 !== t2 && this.G.call(this.ht, t2);
-    } else this.G.value = t2;
-  }
-  get lt() {
-    return "function" == typeof this.G ? o.get(this.ht ?? globalThis)?.get(this.G) : this.G?.value;
-  }
-  disconnected() {
-    this.lt === this.ct && this.rt(void 0);
-  }
-  reconnected() {
-    this.rt(this.ct);
-  }
+//#endregion
+//#region node_modules/.deno/lit-html@3.3.2/node_modules/lit-html/directive-helpers.js
+/**
+* @license
+* Copyright 2020 Google LLC
+* SPDX-License-Identifier: BSD-3-Clause
+*/ var { I: t$1 } = j$1, r$1 = (o) => void 0 === o.strings;
+//#endregion
+//#region node_modules/.deno/lit-html@3.3.2/node_modules/lit-html/directive.js
+/**
+* @license
+* Copyright 2017 Google LLC
+* SPDX-License-Identifier: BSD-3-Clause
+*/
+var t = {
+	ATTRIBUTE: 1,
+	CHILD: 2,
+	PROPERTY: 3,
+	BOOLEAN_ATTRIBUTE: 4,
+	EVENT: 5,
+	ELEMENT: 6
+}, e$1 = (t) => (...e) => ({
+	_$litDirective$: t,
+	values: e
 });
-function escapeXml(unsafe) {
-  return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+var i = class {
+	constructor(t) {}
+	get _$AU() {
+		return this._$AM._$AU;
+	}
+	_$AT(t, e, i) {
+		this._$Ct = t, this._$AM = e, this._$Ci = i;
+	}
+	_$AS(t, e) {
+		return this.update(t, e);
+	}
+	update(t, e) {
+		return this.render(...e);
+	}
+};
+//#endregion
+//#region node_modules/.deno/lit-html@3.3.2/node_modules/lit-html/async-directive.js
+/**
+* @license
+* Copyright 2017 Google LLC
+* SPDX-License-Identifier: BSD-3-Clause
+*/ var s = (i, t) => {
+	const e = i._$AN;
+	if (void 0 === e) return !1;
+	for (const i of e) i._$AO?.(t, !1), s(i, t);
+	return !0;
+}, o$1 = (i) => {
+	let t, e;
+	do {
+		if (void 0 === (t = i._$AM)) break;
+		e = t._$AN, e.delete(i), i = t;
+	} while (0 === e?.size);
+}, r = (i) => {
+	for (let t; t = i._$AM; i = t) {
+		let e = t._$AN;
+		if (void 0 === e) t._$AN = e = /* @__PURE__ */ new Set();
+		else if (e.has(i)) break;
+		e.add(i), c(t);
+	}
+};
+function h$1(i) {
+	void 0 !== this._$AN ? (o$1(this), this._$AM = i, r(this)) : this._$AM = i;
 }
-const SVG_ICON_CALENDAR = w`<!-- Adapted from https://iconoir.com/ -->
+function n$1(i, t = !1, e = 0) {
+	const r = this._$AH, h = this._$AN;
+	if (void 0 !== h && 0 !== h.size) if (t) if (Array.isArray(r)) for (let i = e; i < r.length; i++) s(r[i], !1), o$1(r[i]);
+	else null != r && (s(r, !1), o$1(r));
+	else s(this, i);
+}
+var c = (i) => {
+	i.type == t.CHILD && (i._$AP ??= n$1, i._$AQ ??= h$1);
+};
+var f = class extends i {
+	constructor() {
+		super(...arguments), this._$AN = void 0;
+	}
+	_$AT(i, t, e) {
+		super._$AT(i, t, e), r(this), this.isConnected = i._$AU;
+	}
+	_$AO(i, t = !0) {
+		i !== this.isConnected && (this.isConnected = i, i ? this.reconnected?.() : this.disconnected?.()), t && (s(this, i), o$1(this));
+	}
+	setValue(t) {
+		if (r$1(this._$Ct)) this._$Ct._$AI(t, this);
+		else {
+			const i = [...this._$Ct._$AH];
+			i[this._$Ci] = t, this._$Ct._$AI(i, this, 0);
+		}
+	}
+	disconnected() {}
+	reconnected() {}
+};
+//#endregion
+//#region node_modules/.deno/lit-html@3.3.2/node_modules/lit-html/directives/ref.js
+/**
+* @license
+* Copyright 2020 Google LLC
+* SPDX-License-Identifier: BSD-3-Clause
+*/ var e = () => new h();
+var h = class {};
+var o = /* @__PURE__ */ new WeakMap(), n = e$1(class extends f {
+	render(i) {
+		return A;
+	}
+	update(i, [s]) {
+		const e = s !== this.G;
+		return e && void 0 !== this.G && this.rt(void 0), (e || this.lt !== this.ct) && (this.G = s, this.ht = i.options?.host, this.rt(this.ct = i.element)), A;
+	}
+	rt(t) {
+		if (this.isConnected || (t = void 0), "function" == typeof this.G) {
+			const i = this.ht ?? globalThis;
+			let s = o.get(i);
+			void 0 === s && (s = /* @__PURE__ */ new WeakMap(), o.set(i, s)), void 0 !== s.get(this.G) && this.G.call(this.ht, void 0), s.set(this.G, t), void 0 !== t && this.G.call(this.ht, t);
+		} else this.G.value = t;
+	}
+	get lt() {
+		return "function" == typeof this.G ? o.get(this.ht ?? globalThis)?.get(this.G) : this.G?.value;
+	}
+	disconnected() {
+		this.lt === this.ct && this.rt(void 0);
+	}
+	reconnected() {
+		this.rt(this.ct);
+	}
+});
+//#endregion
+//#region lib/index.ts
+function escapeXml(unsafe) {
+	return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+}
+var SVG_ICON_CALENDAR = w`<!-- Adapted from https://iconoir.com/ -->
 <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon">
   <path d="M15 4V2M15 4V6M15 4H10.5M3 10V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V10H3Z" stroke-linecap="round" stroke-linejoin="round"></path>
   <path d="M3 10V6C3 4.89543 3.89543 4 5 4H7" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -633,7 +762,7 @@ const SVG_ICON_CALENDAR = w`<!-- Adapted from https://iconoir.com/ -->
   <path d="M21 10V6C21 4.89543 20.1046 4 19 4H18.5" stroke-linecap="round" stroke-linejoin="round"></path>
 </svg>
 `;
-const SVG_ICON_INTERNET = w`<!-- Adapted from https://iconoir.com/ -->
+var SVG_ICON_INTERNET = w`<!-- Adapted from https://iconoir.com/ -->
 <svg class="icon" width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
   <path d="M22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22" stroke-linecap="round" stroke-linejoin="round"></path>
   <path d="M13 2.04932C13 2.04932 16 5.99994 16 11.9999" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -643,39 +772,39 @@ const SVG_ICON_INTERNET = w`<!-- Adapted from https://iconoir.com/ -->
   <path fill-rule="evenodd" clip-rule="evenodd" d="M21.8789 17.9174C22.3727 18.2211 22.3423 18.9604 21.8337 19.0181L19.2671 19.309L18.1159 21.6213C17.8878 22.0795 17.1827 21.8552 17.0661 21.2873L15.8108 15.1713C15.7123 14.6913 16.1437 14.3892 16.561 14.646L21.8789 17.9174Z"></path>
 </svg>
 `;
-var __defProp$7 = Object.defineProperty;
-var __getOwnPropDesc$7 = Object.getOwnPropertyDescriptor;
-var __decorateClass$7 = (decorators, target, key, kind) => {
-  var result = kind > 1 ? void 0 : kind ? __getOwnPropDesc$7(target, key) : target;
-  for (var i3 = decorators.length - 1, decorator; i3 >= 0; i3--)
-    if (decorator = decorators[i3])
-      result = (kind ? decorator(target, key, result) : decorator(result)) || result;
-  if (kind && result) __defProp$7(target, key, result);
-  return result;
-};
-let CreateAddressbookForm = class extends i$1 {
-  constructor() {
-    super();
-    this.user = "";
-    this.principal = "";
-    this.addr_id = self.crypto.randomUUID();
-    this.displayname = "";
-    this.description = "";
-    this.dialog = e();
-    this.form = e();
-  }
-  createRenderRoot() {
-    return this;
-  }
-  render() {
-    return b`
+//#endregion
+//#region \0@oxc-project+runtime@0.115.0/helpers/decorate.js
+function __decorate(decorators, target, key, desc) {
+	var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+	if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+	else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+	return c > 3 && r && Object.defineProperty(target, key, r), r;
+}
+//#endregion
+//#region lib/create-addressbook-form.ts
+var CreateAddressbookForm = class CreateAddressbookForm extends i$2 {
+	constructor() {
+		super();
+		this.user = "";
+		this.principal = "";
+		this.addr_id = self.crypto.randomUUID();
+		this.displayname = "";
+		this.description = "";
+		this.dialog = e();
+		this.form = e();
+	}
+	createRenderRoot() {
+		return this;
+	}
+	render() {
+		return b`
       <button @click=${() => this.dialog.value.showModal()}>Create addressbook</button>
-      <dialog ${n2(this.dialog)}>
+      <dialog ${n(this.dialog)}>
         <h3>Create addressbook</h3>
-        <form @submit=${this.submit} ${n2(this.form)}>
+        <form @submit=${this.submit} ${n(this.form)}>
           <label>
             principal (for group addressbooks)
-            <select .value=${this.user} @change=${(e2) => this.principal = e2.target.value}>
+            <select .value=${this.user} @change=${(e) => this.principal = e.target.value}>
               <option .value=${this.user}>${this.user}</option>
               ${window.rusticalUser.memberships.map((membership) => b`
                 <option .value=${membership}>${membership}</option>
@@ -685,46 +814,44 @@ let CreateAddressbookForm = class extends i$1 {
           <br>
           <label>
             id
-            <input type="text" .value=${this.addr_id} @change=${(e2) => this.addr_id = e2.target.value} />
+            <input type="text" .value=${this.addr_id} @change=${(e) => this.addr_id = e.target.value} />
           </label>
           <br>
           <label>
             Displayname
-            <input type="text" .value=${this.displayname} @change=${(e2) => this.displayname = e2.target.value} />
+            <input type="text" .value=${this.displayname} @change=${(e) => this.displayname = e.target.value} />
           </label>
           <br>
           <label>
             Description
-            <input type="text" .value=${this.description} @change=${(e2) => this.description = e2.target.value} />
+            <input type="text" .value=${this.description} @change=${(e) => this.description = e.target.value} />
           </label>
           <br>
           <button type="submit">Create</button>
           <button type="submit" @click=${(event) => {
-      event.preventDefault();
-      this.dialog.value.close();
-      this.form.value.reset();
-    }} class="cancel">Cancel</button>
+			event.preventDefault();
+			this.dialog.value.close();
+			this.form.value.reset();
+		}} class="cancel">Cancel</button>
         </form>
       </dialog>
     `;
-  }
-  async submit(e2) {
-    console.log(this.displayname);
-    e2.preventDefault();
-    if (!this.addr_id) {
-      alert("Empty id");
-      return;
-    }
-    if (!this.displayname) {
-      alert("Empty displayname");
-      return;
-    }
-    let response = await fetch(`/carddav/principal/${this.principal || this.user}/${this.addr_id}`, {
-      method: "MKCOL",
-      headers: {
-        "Content-Type": "application/xml"
-      },
-      body: `
+	}
+	async submit(e) {
+		console.log(this.displayname);
+		e.preventDefault();
+		if (!this.addr_id) {
+			alert("Empty id");
+			return;
+		}
+		if (!this.displayname) {
+			alert("Empty displayname");
+			return;
+		}
+		let response = await fetch(`/carddav/principal/${this.principal || this.user}/${this.addr_id}`, {
+			method: "MKCOL",
+			headers: { "Content-Type": "application/xml" },
+			body: `
       <mkcol xmlns="DAV:" xmlns:CARD="urn:ietf:params:xml:ns:carddav">
         <set>
           <prop>
@@ -734,106 +861,84 @@ let CreateAddressbookForm = class extends i$1 {
         </set>
       </mkcol>
       `
-    });
-    if (response.status >= 400) {
-      alert(`Error ${response.status}: ${await response.text()}`);
-      return null;
-    }
-    window.location.reload();
-    return null;
-  }
+		});
+		if (response.status >= 400) {
+			alert(`Error ${response.status}: ${await response.text()}`);
+			return null;
+		}
+		window.location.reload();
+		return null;
+	}
 };
-__decorateClass$7([
-  n$2()
-], CreateAddressbookForm.prototype, "user", 2);
-__decorateClass$7([
-  n$2()
-], CreateAddressbookForm.prototype, "principal", 2);
-__decorateClass$7([
-  n$2()
-], CreateAddressbookForm.prototype, "addr_id", 2);
-__decorateClass$7([
-  n$2()
-], CreateAddressbookForm.prototype, "displayname", 2);
-__decorateClass$7([
-  n$2()
-], CreateAddressbookForm.prototype, "description", 2);
-CreateAddressbookForm = __decorateClass$7([
-  t$1("create-addressbook-form")
-], CreateAddressbookForm);
-var __defProp$6 = Object.defineProperty;
-var __getOwnPropDesc$6 = Object.getOwnPropertyDescriptor;
-var __decorateClass$6 = (decorators, target, key, kind) => {
-  var result = kind > 1 ? void 0 : kind ? __getOwnPropDesc$6(target, key) : target;
-  for (var i3 = decorators.length - 1, decorator; i3 >= 0; i3--)
-    if (decorator = decorators[i3])
-      result = (kind ? decorator(target, key, result) : decorator(result)) || result;
-  if (kind && result) __defProp$6(target, key, result);
-  return result;
-};
-let CreateBirthdayCalendarForm = class extends i$1 {
-  constructor() {
-    super(...arguments);
-    this.principal = "";
-    this.addr_id = "";
-    this.displayname = "";
-    this.description = "";
-    this.color = "";
-    this.dialog = e();
-    this.form = e();
-    this.timezones = [];
-  }
-  createRenderRoot() {
-    return this;
-  }
-  render() {
-    return b`
+__decorate([n$3()], CreateAddressbookForm.prototype, "user", void 0);
+__decorate([n$3()], CreateAddressbookForm.prototype, "principal", void 0);
+__decorate([n$3()], CreateAddressbookForm.prototype, "addr_id", void 0);
+__decorate([n$3()], CreateAddressbookForm.prototype, "displayname", void 0);
+__decorate([n$3()], CreateAddressbookForm.prototype, "description", void 0);
+CreateAddressbookForm = __decorate([t$2("create-addressbook-form")], CreateAddressbookForm);
+//#endregion
+//#region lib/create-birthday-calendar-form.ts
+var CreateBirthdayCalendarForm = class CreateBirthdayCalendarForm extends i$2 {
+	constructor(..._args) {
+		super(..._args);
+		this.principal = "";
+		this.addr_id = "";
+		this.displayname = "";
+		this.description = "";
+		this.color = "";
+		this.dialog = e();
+		this.form = e();
+		this.timezones = [];
+	}
+	createRenderRoot() {
+		return this;
+	}
+	render() {
+		return b`
       <button @click=${() => this.dialog.value.showModal()}>Create birthday calendar</button>
-      <dialog ${n2(this.dialog)}>
+      <dialog ${n(this.dialog)}>
         <h3>Create calendar</h3>
-        <form @submit=${this.submit} ${n2(this.form)}>
+        <form @submit=${this.submit} ${n(this.form)}>
           <label>
             Displayname
-            <input type="text" .value=${this.displayname} required @change=${(e2) => this.displayname = e2.target.value} />
+            <input type="text" .value=${this.displayname} required @change=${(e) => this.displayname = e.target.value} />
           </label>
           <br>
           <label>
             Description
-            <input type="text" .value=${this.description} @change=${(e2) => this.description = e2.target.value} />
+            <input type="text" .value=${this.description} @change=${(e) => this.description = e.target.value} />
           </label>
           <br>
           <label>
             Color
-            <input type="color" .value=${this.color} @change=${(e2) => this.color = e2.target.value} />
+            <input type="color" .value=${this.color} @change=${(e) => this.color = e.target.value} />
           </label>
           <br>
           <button type="submit">Create</button>
           <button type="submit" @click=${(event) => {
-      event.preventDefault();
-      this.dialog.value.close();
-      this.form.value.reset();
-    }} class="cancel">Cancel</button>
+			event.preventDefault();
+			this.dialog.value.close();
+			this.form.value.reset();
+		}} class="cancel">Cancel</button>
       </form>
       </dialog>
         `;
-  }
-  async submit(e2) {
-    e2.preventDefault();
-    if (!this.addr_id) {
-      alert("Empty id");
-      return;
-    }
-    if (!this.displayname) {
-      alert("Empty displayname");
-      return;
-    }
-    const order = Math.floor(Math.random() * 5e3);
-    let response = await fetch(`/caldav/principal/${this.principal}/_birthdays_${this.addr_id}`, {
-      method: "MKCOL",
-      headers: {
-        "Content-Type": "application/xml"
-      },
-      body: `
+	}
+	async submit(e) {
+		e.preventDefault();
+		if (!this.addr_id) {
+			alert("Empty id");
+			return;
+		}
+		if (!this.displayname) {
+			alert("Empty displayname");
+			return;
+		}
+		const order = Math.floor(Math.random() * 5e3);
+		let response = await fetch(`/caldav/principal/${this.principal}/_birthdays_${this.addr_id}`, {
+			method: "MKCOL",
+			headers: { "Content-Type": "application/xml" },
+			body: `
       <mkcol xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CS="http://calendarserver.org/ns/" xmlns:ICAL="http://apple.com/ns/ical/">
         <set>
           <prop>
@@ -848,95 +953,74 @@ let CreateBirthdayCalendarForm = class extends i$1 {
         </set>
       </mkcol>
       `
-    });
-    if (response.status >= 400) {
-      alert(`Error ${response.status}: ${await response.text()}`);
-      return null;
-    }
-    window.location.reload();
-    return null;
-  }
+		});
+		if (response.status >= 400) {
+			alert(`Error ${response.status}: ${await response.text()}`);
+			return null;
+		}
+		window.location.reload();
+		return null;
+	}
 };
-__decorateClass$6([
-  n$2()
-], CreateBirthdayCalendarForm.prototype, "principal", 2);
-__decorateClass$6([
-  n$2()
-], CreateBirthdayCalendarForm.prototype, "addr_id", 2);
-__decorateClass$6([
-  n$2()
-], CreateBirthdayCalendarForm.prototype, "displayname", 2);
-__decorateClass$6([
-  n$2()
-], CreateBirthdayCalendarForm.prototype, "description", 2);
-__decorateClass$6([
-  n$2()
-], CreateBirthdayCalendarForm.prototype, "color", 2);
-__decorateClass$6([
-  n$2()
-], CreateBirthdayCalendarForm.prototype, "timezones", 2);
-CreateBirthdayCalendarForm = __decorateClass$6([
-  t$1("create-birthday-calendar-form")
-], CreateBirthdayCalendarForm);
-let timezonesPromise = null;
+__decorate([n$3()], CreateBirthdayCalendarForm.prototype, "principal", void 0);
+__decorate([n$3()], CreateBirthdayCalendarForm.prototype, "addr_id", void 0);
+__decorate([n$3()], CreateBirthdayCalendarForm.prototype, "displayname", void 0);
+__decorate([n$3()], CreateBirthdayCalendarForm.prototype, "description", void 0);
+__decorate([n$3()], CreateBirthdayCalendarForm.prototype, "color", void 0);
+__decorate([n$3()], CreateBirthdayCalendarForm.prototype, "timezones", void 0);
+CreateBirthdayCalendarForm = __decorate([t$2("create-birthday-calendar-form")], CreateBirthdayCalendarForm);
+//#endregion
+//#region lib/timezones.ts
+var timezonesPromise = null;
 async function getTimezones() {
-  timezonesPromise ||= new Promise(async (resolve, reject) => {
-    try {
-      let response = await fetch("/frontend/_timezones.json");
-      resolve(await response.json());
-    } catch (e2) {
-      reject(e2);
-    }
-  });
-  return await timezonesPromise;
+	timezonesPromise ||= new Promise(async (resolve, reject) => {
+		try {
+			resolve(await (await fetch("/frontend/_timezones.json")).json());
+		} catch (e) {
+			reject(e);
+		}
+	});
+	return await timezonesPromise;
 }
-var __defProp$5 = Object.defineProperty;
-var __getOwnPropDesc$5 = Object.getOwnPropertyDescriptor;
-var __decorateClass$5 = (decorators, target, key, kind) => {
-  var result = kind > 1 ? void 0 : kind ? __getOwnPropDesc$5(target, key) : target;
-  for (var i3 = decorators.length - 1, decorator; i3 >= 0; i3--)
-    if (decorator = decorators[i3])
-      result = (kind ? decorator(target, key, result) : decorator(result)) || result;
-  if (kind && result) __defProp$5(target, key, result);
-  return result;
-};
-let CreateCalendarForm = class extends i$1 {
-  constructor() {
-    super();
-    this.user = "";
-    this.dialog = e();
-    this.form = e();
-    this.timezones = [];
-    this.resetForm();
-    this.fetchTimezones();
-  }
-  resetForm() {
-    this.form.value?.reset();
-    this.principal = this.user;
-    this.cal_id = self.crypto.randomUUID();
-    this.displayname = "";
-    this.description = "";
-    this.timezone_id = "";
-    this.color = "";
-    this.isSubscription = false;
-    this.subscriptionUrl = null;
-    this.components = /* @__PURE__ */ new Set(["VEVENT", "VTODO"]);
-  }
-  async fetchTimezones() {
-    this.timezones = await getTimezones();
-  }
-  createRenderRoot() {
-    return this;
-  }
-  render() {
-    return b`
-      <button @click=${(e2) => this.dialog.value.showModal()}>Create calendar</button>
-      <dialog ${n2(this.dialog)} @close=${(e2) => this.resetForm()}>
+//#endregion
+//#region lib/create-calendar-form.ts
+var CreateCalendarForm = class CreateCalendarForm extends i$2 {
+	constructor() {
+		super();
+		this.user = "";
+		this.dialog = e();
+		this.form = e();
+		this.timezones = [];
+		this.resetForm();
+		this.fetchTimezones();
+	}
+	resetForm() {
+		this.form.value?.reset();
+		this.principal = this.user;
+		this.cal_id = self.crypto.randomUUID();
+		this.displayname = "";
+		this.description = "";
+		this.timezone_id = "";
+		this.color = "";
+		this.isSubscription = false;
+		this.subscriptionUrl = null;
+		this.components = new Set(["VEVENT", "VTODO"]);
+	}
+	async fetchTimezones() {
+		this.timezones = await getTimezones();
+	}
+	createRenderRoot() {
+		return this;
+	}
+	render() {
+		return b`
+      <button @click=${(e) => this.dialog.value.showModal()}>Create calendar</button>
+      <dialog ${n(this.dialog)} @close=${(e) => this.resetForm()}>
         <h3>Create calendar</h3>
-        <form @submit=${this.submit} ${n2(this.form)}>
+        <form @submit=${this.submit} ${n(this.form)}>
           <label>
             principal (for group calendars)
-            <select required value=${this.user} @change=${(e2) => this.principal = e2.target.value}>
+            <select required value=${this.user} @change=${(e) => this.principal = e.target.value}>
               <option value=${this.user}>${this.user}</option>
               ${window.rusticalUser.memberships.map((membership) => b`
                 <option value=${membership}>${membership}</option>
@@ -946,17 +1030,17 @@ let CreateCalendarForm = class extends i$1 {
           <br>
           <label>
             id
-            <input type="text" required .value=${this.cal_id} @change=${(e2) => this.cal_id = e2.target.value} />
+            <input type="text" required .value=${this.cal_id} @change=${(e) => this.cal_id = e.target.value} />
           </label>
           <br>
           <label>
             Displayname
-            <input type="text" required .value=${this.displayname} @change=${(e2) => this.displayname = e2.target.value} />
+            <input type="text" required .value=${this.displayname} @change=${(e) => this.displayname = e.target.value} />
           </label>
           <br>
           <label>
             Timezone (optional)
-            <select .value=${this.timezone_id} @change=${(e2) => this.timezone_id = e2.target.value}>
+            <select .value=${this.timezone_id} @change=${(e) => this.timezone_id = e.target.value}>
               <option value="">No timezone</option>
               ${this.timezones.map((timezone) => b`
                 <option value=${timezone} ?selected=${timezone === this.timezone_id}>${timezone}</option>
@@ -966,24 +1050,24 @@ let CreateCalendarForm = class extends i$1 {
           <br>
           <label>
             Description
-            <input type="text" .value=${this.description} @change=${(e2) => this.description = e2.target.value} />
+            <input type="text" .value=${this.description} @change=${(e) => this.description = e.target.value} />
           </label>
           <br>
           <label>
             Color
-            <input type="color" .value=${this.color} @change=${(e2) => this.color = e2.target.value} />
+            <input type="color" .value=${this.color} @change=${(e) => this.color = e.target.value} />
           </label>
           <br>
           <br>
           <label>Type</label>
           <div class="tab-radio">
             <label>
-              <input type="radio" name="type" .checked=${!this.isSubscription} @change=${(e2) => this.isSubscription = false}></input>
+              <input type="radio" name="type" .checked=${!this.isSubscription} @change=${(e) => this.isSubscription = false}></input>
               ${SVG_ICON_CALENDAR}
               Calendar
             </label>
             <label>
-              <input type="radio" name="type" .checked=${this.isSubscription} @change=${(e2) => this.isSubscription = true}></input>
+              <input type="radio" name="type" .checked=${this.isSubscription} @change=${(e) => this.isSubscription = true}></input>
               ${SVG_ICON_INTERNET}
               webCal Subscription
             </label>
@@ -992,7 +1076,7 @@ let CreateCalendarForm = class extends i$1 {
           ${this.isSubscription ? b`
             <label>
               Subscription URL
-              <input type="text" pattern="https://.*" .required=${this.isSubscription} .value=${this.subscriptionUrl} @change=${(e2) => this.subscriptionUrl = e2.target.value}  />
+              <input type="text" pattern="https://.*" .required=${this.isSubscription} .value=${this.subscriptionUrl} @change=${(e) => this.subscriptionUrl = e.target.value}  />
             </label>
             <br>
             <br>
@@ -1000,10 +1084,14 @@ let CreateCalendarForm = class extends i$1 {
 
           <label>Components</label>
           <div>
-            ${["VEVENT", "VTODO", "VJOURNAL"].map((comp) => b`
+            ${[
+			"VEVENT",
+			"VTODO",
+			"VJOURNAL"
+		].map((comp) => b`
               <label>
                 Support ${comp}
-                <input type="checkbox" .value=${comp} @change=${(e2) => e2.target.checked ? this.components.add(e2.target.value) : this.components.delete(e2.target.value)} .checked=${this.components.has(comp)} />
+                <input type="checkbox" .value=${comp} @change=${(e) => e.target.checked ? this.components.add(e.target.value) : this.components.delete(e.target.value)} .checked=${this.components.has(comp)} />
               </label>
               <br>
             `)}
@@ -1011,38 +1099,36 @@ let CreateCalendarForm = class extends i$1 {
           <br>
           <button type="submit">Create</button>
           <button type="submit" @click=${(event) => {
-      event.preventDefault();
-      this.dialog.value.close();
-    }} class="cancel">Cancel</button>
+			event.preventDefault();
+			this.dialog.value.close();
+		}} class="cancel">Cancel</button>
       </form>
       </dialog>
         `;
-  }
-  async submit(e2) {
-    e2.preventDefault();
-    if (!this.cal_id) {
-      alert("Empty id");
-      return;
-    }
-    if (!this.displayname) {
-      alert("Empty displayname");
-      return;
-    }
-    if (!this.components.size) {
-      alert("No calendar components selected");
-      return;
-    }
-    if (this.isSubscription && !this.subscriptionUrl) {
-      alert("Invalid subscription url");
-      return;
-    }
-    const order = Math.floor(Math.random() * 5e3);
-    let response = await fetch(`/caldav/principal/${this.principal || this.user}/${this.cal_id}`, {
-      method: "MKCOL",
-      headers: {
-        "Content-Type": "application/xml"
-      },
-      body: `
+	}
+	async submit(e) {
+		e.preventDefault();
+		if (!this.cal_id) {
+			alert("Empty id");
+			return;
+		}
+		if (!this.displayname) {
+			alert("Empty displayname");
+			return;
+		}
+		if (!this.components.size) {
+			alert("No calendar components selected");
+			return;
+		}
+		if (this.isSubscription && !this.subscriptionUrl) {
+			alert("Invalid subscription url");
+			return;
+		}
+		const order = Math.floor(Math.random() * 5e3);
+		let response = await fetch(`/caldav/principal/${this.principal || this.user}/${this.cal_id}`, {
+			method: "MKCOL",
+			headers: { "Content-Type": "application/xml" },
+			body: `
       <mkcol xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CS="http://calendarserver.org/ns/" xmlns:ICAL="http://apple.com/ns/ical/">
         <set>
           <prop>
@@ -1059,170 +1145,117 @@ let CreateCalendarForm = class extends i$1 {
         </set>
       </mkcol>
       `
-    });
-    if (response.status >= 400) {
-      alert(`Error ${response.status}: ${await response.text()}`);
-      return null;
-    }
-    window.location.reload();
-    return null;
-  }
+		});
+		if (response.status >= 400) {
+			alert(`Error ${response.status}: ${await response.text()}`);
+			return null;
+		}
+		window.location.reload();
+		return null;
+	}
 };
-__decorateClass$5([
-  n$2()
-], CreateCalendarForm.prototype, "user", 2);
-__decorateClass$5([
-  n$2()
-], CreateCalendarForm.prototype, "principal", 2);
-__decorateClass$5([
-  n$2()
-], CreateCalendarForm.prototype, "cal_id", 2);
-__decorateClass$5([
-  n$2()
-], CreateCalendarForm.prototype, "displayname", 2);
-__decorateClass$5([
-  n$2()
-], CreateCalendarForm.prototype, "description", 2);
-__decorateClass$5([
-  n$2()
-], CreateCalendarForm.prototype, "timezone_id", 2);
-__decorateClass$5([
-  n$2()
-], CreateCalendarForm.prototype, "color", 2);
-__decorateClass$5([
-  n$2()
-], CreateCalendarForm.prototype, "isSubscription", 2);
-__decorateClass$5([
-  n$2()
-], CreateCalendarForm.prototype, "subscriptionUrl", 2);
-__decorateClass$5([
-  n$2()
-], CreateCalendarForm.prototype, "components", 2);
-__decorateClass$5([
-  n$2()
-], CreateCalendarForm.prototype, "timezones", 2);
-CreateCalendarForm = __decorateClass$5([
-  t$1("create-calendar-form")
-], CreateCalendarForm);
-var __defProp$4 = Object.defineProperty;
-var __getOwnPropDesc$4 = Object.getOwnPropertyDescriptor;
-var __decorateClass$4 = (decorators, target, key, kind) => {
-  var result = kind > 1 ? void 0 : kind ? __getOwnPropDesc$4(target, key) : target;
-  for (var i3 = decorators.length - 1, decorator; i3 >= 0; i3--)
-    if (decorator = decorators[i3])
-      result = (kind ? decorator(target, key, result) : decorator(result)) || result;
-  if (kind && result) __defProp$4(target, key, result);
-  return result;
+__decorate([n$3()], CreateCalendarForm.prototype, "user", void 0);
+__decorate([n$3()], CreateCalendarForm.prototype, "principal", void 0);
+__decorate([n$3()], CreateCalendarForm.prototype, "cal_id", void 0);
+__decorate([n$3()], CreateCalendarForm.prototype, "displayname", void 0);
+__decorate([n$3()], CreateCalendarForm.prototype, "description", void 0);
+__decorate([n$3()], CreateCalendarForm.prototype, "timezone_id", void 0);
+__decorate([n$3()], CreateCalendarForm.prototype, "color", void 0);
+__decorate([n$3()], CreateCalendarForm.prototype, "isSubscription", void 0);
+__decorate([n$3()], CreateCalendarForm.prototype, "subscriptionUrl", void 0);
+__decorate([n$3()], CreateCalendarForm.prototype, "components", void 0);
+__decorate([n$3()], CreateCalendarForm.prototype, "timezones", void 0);
+CreateCalendarForm = __decorate([t$2("create-calendar-form")], CreateCalendarForm);
+//#endregion
+//#region lib/delete-button.ts
+var DeleteButton = class DeleteButton extends i$2 {
+	constructor() {
+		super();
+		this.trash = false;
+	}
+	createRenderRoot() {
+		return this;
+	}
+	render() {
+		return b`<button class="delete" @click=${(e) => this._onClick(e)}>${this.trash ? "Trash" : "Delete"}</button>`;
+	}
+	async _onClick(event) {
+		event.preventDefault();
+		if (!this.trash && !confirm("Do you want to delete this collection permanently?")) return;
+		let response = await fetch(this.href, {
+			method: "DELETE",
+			headers: { "X-No-Trashbin": this.trash ? "0" : "1" }
+		});
+		if (response.status < 200 || response.status >= 300) {
+			alert("An error occured, look into the console");
+			console.error(response);
+			return;
+		}
+		window.location.reload();
+	}
 };
-let DeleteButton = class extends i$1 {
-  constructor() {
-    super();
-    this.trash = false;
-  }
-  createRenderRoot() {
-    return this;
-  }
-  render() {
-    let text = this.trash ? "Trash" : "Delete";
-    return b`<button class="delete" @click=${(e2) => this._onClick(e2)}>${text}</button>`;
-  }
-  async _onClick(event) {
-    event.preventDefault();
-    if (!this.trash && !confirm("Do you want to delete this collection permanently?")) {
-      return;
-    }
-    let response = await fetch(this.href, {
-      method: "DELETE",
-      headers: {
-        "X-No-Trashbin": this.trash ? "0" : "1"
-      }
-    });
-    if (response.status < 200 || response.status >= 300) {
-      alert("An error occured, look into the console");
-      console.error(response);
-      return;
-    }
-    window.location.reload();
-  }
-};
-__decorateClass$4([
-  n$2({ type: Boolean })
-], DeleteButton.prototype, "trash", 2);
-__decorateClass$4([
-  n$2()
-], DeleteButton.prototype, "href", 2);
-DeleteButton = __decorateClass$4([
-  t$1("delete-button")
-], DeleteButton);
-var __defProp$3 = Object.defineProperty;
-var __getOwnPropDesc$3 = Object.getOwnPropertyDescriptor;
-var __decorateClass$3 = (decorators, target, key, kind) => {
-  var result = kind > 1 ? void 0 : kind ? __getOwnPropDesc$3(target, key) : target;
-  for (var i3 = decorators.length - 1, decorator; i3 >= 0; i3--)
-    if (decorator = decorators[i3])
-      result = (kind ? decorator(target, key, result) : decorator(result)) || result;
-  if (kind && result) __defProp$3(target, key, result);
-  return result;
-};
-let EditAddressbookForm = class extends i$1 {
-  constructor() {
-    super();
-    this.principal = "";
-    this.addr_id = "";
-    this.displayname = "";
-    this.description = "";
-    this.dialog = e();
-    this.form = e();
-  }
-  createRenderRoot() {
-    return this;
-  }
-  render() {
-    return b`
+__decorate([n$3({ type: Boolean })], DeleteButton.prototype, "trash", void 0);
+__decorate([n$3()], DeleteButton.prototype, "href", void 0);
+DeleteButton = __decorate([t$2("delete-button")], DeleteButton);
+//#endregion
+//#region lib/edit-addressbook-form.ts
+var EditAddressbookForm = class EditAddressbookForm extends i$2 {
+	constructor() {
+		super();
+		this.principal = "";
+		this.addr_id = "";
+		this.displayname = "";
+		this.description = "";
+		this.dialog = e();
+		this.form = e();
+	}
+	createRenderRoot() {
+		return this;
+	}
+	render() {
+		return b`
       <button @click=${() => this.dialog.value.showModal()}>Edit</button>
-      <dialog ${n2(this.dialog)}>
+      <dialog ${n(this.dialog)}>
         <h3>Edit addressbook</h3>
-        <form @submit=${this.submit} ${n2(this.form)}>
+        <form @submit=${this.submit} ${n(this.form)}>
           <label>
             Displayname
-            <input type="text" .value=${this.displayname} @change=${(e2) => this.displayname = e2.target.value} />
+            <input type="text" .value=${this.displayname} @change=${(e) => this.displayname = e.target.value} />
           </label>
           <br>
           <label>
             Description
-            <input type="text" .value=${this.description} @change=${(e2) => this.description = e2.target.value} />
+            <input type="text" .value=${this.description} @change=${(e) => this.description = e.target.value} />
           </label>
           <br>
           <button type="submit">Submit</button>
           <button type="submit" @click=${(event) => {
-      event.preventDefault();
-      this.dialog.value.close();
-      this.form.value.reset();
-    }} class="cancel">Cancel</button>
+			event.preventDefault();
+			this.dialog.value.close();
+			this.form.value.reset();
+		}} class="cancel">Cancel</button>
         </form>
       </dialog>
     `;
-  }
-  async submit(e2) {
-    e2.preventDefault();
-    if (!this.principal) {
-      alert("Empty principal");
-      return;
-    }
-    if (!this.addr_id) {
-      alert("Empty id");
-      return;
-    }
-    if (!this.displayname) {
-      alert("Empty displayname");
-      return;
-    }
-    let response = await fetch(`/carddav/principal/${this.principal}/${this.addr_id}`, {
-      method: "PROPPATCH",
-      headers: {
-        "Content-Type": "application/xml"
-      },
-      body: `
+	}
+	async submit(e) {
+		e.preventDefault();
+		if (!this.principal) {
+			alert("Empty principal");
+			return;
+		}
+		if (!this.addr_id) {
+			alert("Empty id");
+			return;
+		}
+		if (!this.displayname) {
+			alert("Empty displayname");
+			return;
+		}
+		let response = await fetch(`/carddav/principal/${this.principal}/${this.addr_id}`, {
+			method: "PROPPATCH",
+			headers: { "Content-Type": "application/xml" },
+			body: `
       <propertyupdate xmlns="DAV:" xmlns:CARD="urn:ietf:params:xml:ns:carddav">
         <set>
           <prop>
@@ -1237,73 +1270,55 @@ let EditAddressbookForm = class extends i$1 {
         </remove>
       </propertyupdate>
       `
-    });
-    if (response.status >= 400) {
-      alert(`Error ${response.status}: ${await response.text()}`);
-      return null;
-    }
-    window.location.reload();
-    return null;
-  }
+		});
+		if (response.status >= 400) {
+			alert(`Error ${response.status}: ${await response.text()}`);
+			return null;
+		}
+		window.location.reload();
+		return null;
+	}
 };
-__decorateClass$3([
-  n$2()
-], EditAddressbookForm.prototype, "principal", 2);
-__decorateClass$3([
-  n$2()
-], EditAddressbookForm.prototype, "addr_id", 2);
-__decorateClass$3([
-  n$2()
-], EditAddressbookForm.prototype, "displayname", 2);
-__decorateClass$3([
-  n$2()
-], EditAddressbookForm.prototype, "description", 2);
-EditAddressbookForm = __decorateClass$3([
-  t$1("edit-addressbook-form")
-], EditAddressbookForm);
-var __defProp$2 = Object.defineProperty;
-var __getOwnPropDesc$2 = Object.getOwnPropertyDescriptor;
-var __decorateClass$2 = (decorators, target, key, kind) => {
-  var result = kind > 1 ? void 0 : kind ? __getOwnPropDesc$2(target, key) : target;
-  for (var i3 = decorators.length - 1, decorator; i3 >= 0; i3--)
-    if (decorator = decorators[i3])
-      result = (kind ? decorator(target, key, result) : decorator(result)) || result;
-  if (kind && result) __defProp$2(target, key, result);
-  return result;
-};
-let EditCalendarForm = class extends i$1 {
-  constructor() {
-    super();
-    this.displayname = "";
-    this.description = "";
-    this.timezone_id = "";
-    this.color = "";
-    this.components = /* @__PURE__ */ new Set();
-    this.dialog = e();
-    this.form = e();
-    this.timezones = [];
-    this.fetchTimezones();
-  }
-  async fetchTimezones() {
-    this.timezones = await getTimezones();
-  }
-  createRenderRoot() {
-    return this;
-  }
-  render() {
-    return b`
+__decorate([n$3()], EditAddressbookForm.prototype, "principal", void 0);
+__decorate([n$3()], EditAddressbookForm.prototype, "addr_id", void 0);
+__decorate([n$3()], EditAddressbookForm.prototype, "displayname", void 0);
+__decorate([n$3()], EditAddressbookForm.prototype, "description", void 0);
+EditAddressbookForm = __decorate([t$2("edit-addressbook-form")], EditAddressbookForm);
+//#endregion
+//#region lib/edit-calendar-form.ts
+var EditCalendarForm = class EditCalendarForm extends i$2 {
+	constructor() {
+		super();
+		this.displayname = "";
+		this.description = "";
+		this.timezone_id = "";
+		this.color = "";
+		this.components = /* @__PURE__ */ new Set();
+		this.dialog = e();
+		this.form = e();
+		this.timezones = [];
+		this.fetchTimezones();
+	}
+	async fetchTimezones() {
+		this.timezones = await getTimezones();
+	}
+	createRenderRoot() {
+		return this;
+	}
+	render() {
+		return b`
       <button @click=${() => this.dialog.value.showModal()}>Edit</button>
-      <dialog ${n2(this.dialog)}>
+      <dialog ${n(this.dialog)}>
         <h3>Edit calendar</h3>
-        <form @submit=${this.submit} ${n2(this.form)}>
+        <form @submit=${this.submit} ${n(this.form)}>
           <label>
             Displayname
-            <input type="text" required .value=${this.displayname} @change=${(e2) => this.displayname = e2.target.value} />
+            <input type="text" required .value=${this.displayname} @change=${(e) => this.displayname = e.target.value} />
           </label>
           <br>
           <label>
             Timezone (optional)
-            <select .value=${this.timezone_id} @change=${(e2) => this.timezone_id = e2.target.value}>
+            <select .value=${this.timezone_id} @change=${(e) => this.timezone_id = e.target.value}>
               <option value="">No timezone</option>
               ${this.timezones.map((timezone) => b`
                 <option value=${timezone} ?selected=${timezone === this.timezone_id}>${timezone}</option>
@@ -1313,56 +1328,58 @@ let EditCalendarForm = class extends i$1 {
           <br>
           <label>
             Description
-            <input type="text" .value=${this.description} @change=${(e2) => this.description = e2.target.value} />
+            <input type="text" .value=${this.description} @change=${(e) => this.description = e.target.value} />
           </label>
           <br>
           <label>
             Color
-            <input type="color" .value=${this.color} @change=${(e2) => this.color = e2.target.value} />
+            <input type="color" .value=${this.color} @change=${(e) => this.color = e.target.value} />
           </label>
           <br>
-          ${["VEVENT", "VTODO", "VJOURNAL"].map((comp) => b`
+          ${[
+			"VEVENT",
+			"VTODO",
+			"VJOURNAL"
+		].map((comp) => b`
             <label>
               Support ${comp}
-              <input type="checkbox" .value=${comp} ?checked=${this.components.has(comp)} @change=${(e2) => e2.target.checked ? this.components.add(e2.target.value) : this.components.delete(e2.target.value)} />
+              <input type="checkbox" .value=${comp} ?checked=${this.components.has(comp)} @change=${(e) => e.target.checked ? this.components.add(e.target.value) : this.components.delete(e.target.value)} />
             </label>
             <br>
           `)}
           <br>
           <button type="submit">Submit</button>
           <button type="submit" @click=${(event) => {
-      event.preventDefault();
-      this.dialog.value.close();
-      this.form.value.reset();
-    }} class="cancel">Cancel</button>
+			event.preventDefault();
+			this.dialog.value.close();
+			this.form.value.reset();
+		}} class="cancel">Cancel</button>
       </form>
       </dialog>
         `;
-  }
-  async submit(e2) {
-    e2.preventDefault();
-    if (!this.principal) {
-      alert("Empty principal");
-      return;
-    }
-    if (!this.cal_id) {
-      alert("Empty id");
-      return;
-    }
-    if (!this.displayname) {
-      alert("Empty displayname");
-      return;
-    }
-    if (!this.components.size) {
-      alert("No calendar components selected");
-      return;
-    }
-    let response = await fetch(`/caldav/principal/${this.principal}/${this.cal_id}`, {
-      method: "PROPPATCH",
-      headers: {
-        "Content-Type": "application/xml"
-      },
-      body: `
+	}
+	async submit(e) {
+		e.preventDefault();
+		if (!this.principal) {
+			alert("Empty principal");
+			return;
+		}
+		if (!this.cal_id) {
+			alert("Empty id");
+			return;
+		}
+		if (!this.displayname) {
+			alert("Empty displayname");
+			return;
+		}
+		if (!this.components.size) {
+			alert("No calendar components selected");
+			return;
+		}
+		let response = await fetch(`/caldav/principal/${this.principal}/${this.cal_id}`, {
+			method: "PROPPATCH",
+			headers: { "Content-Type": "application/xml" },
+			body: `
       <propertyupdate xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CS="http://calendarserver.org/ns/" xmlns:ICAL="http://apple.com/ns/ical/">
         <set>
           <prop>
@@ -1384,77 +1401,49 @@ let EditCalendarForm = class extends i$1 {
         </remove>
       </propertyupdate>
       `
-    });
-    if (response.status >= 400) {
-      alert(`Error ${response.status}: ${await response.text()}`);
-      return null;
-    }
-    window.location.reload();
-    return null;
-  }
+		});
+		if (response.status >= 400) {
+			alert(`Error ${response.status}: ${await response.text()}`);
+			return null;
+		}
+		window.location.reload();
+		return null;
+	}
 };
-__decorateClass$2([
-  n$2()
-], EditCalendarForm.prototype, "principal", 2);
-__decorateClass$2([
-  n$2()
-], EditCalendarForm.prototype, "cal_id", 2);
-__decorateClass$2([
-  n$2()
-], EditCalendarForm.prototype, "displayname", 2);
-__decorateClass$2([
-  n$2()
-], EditCalendarForm.prototype, "description", 2);
-__decorateClass$2([
-  n$2()
-], EditCalendarForm.prototype, "timezone_id", 2);
-__decorateClass$2([
-  n$2()
-], EditCalendarForm.prototype, "color", 2);
-__decorateClass$2([
-  n$2({
-    converter: {
-      fromAttribute: (value, _type) => new Set(value ? JSON.parse(value) : []),
-      toAttribute: (value, _type) => JSON.stringify(value)
-    }
-  })
-], EditCalendarForm.prototype, "components", 2);
-__decorateClass$2([
-  n$2()
-], EditCalendarForm.prototype, "timezones", 2);
-EditCalendarForm = __decorateClass$2([
-  t$1("edit-calendar-form")
-], EditCalendarForm);
-var __defProp$1 = Object.defineProperty;
-var __getOwnPropDesc$1 = Object.getOwnPropertyDescriptor;
-var __decorateClass$1 = (decorators, target, key, kind) => {
-  var result = kind > 1 ? void 0 : kind ? __getOwnPropDesc$1(target, key) : target;
-  for (var i3 = decorators.length - 1, decorator; i3 >= 0; i3--)
-    if (decorator = decorators[i3])
-      result = (kind ? decorator(target, key, result) : decorator(result)) || result;
-  if (kind && result) __defProp$1(target, key, result);
-  return result;
-};
-let ImportAddressbookForm = class extends i$1 {
-  constructor() {
-    super();
-    this.user = "";
-    this.addressbook_id = self.crypto.randomUUID();
-    this.dialog = e();
-    this.form = e();
-  }
-  createRenderRoot() {
-    return this;
-  }
-  render() {
-    return b`
+__decorate([n$3()], EditCalendarForm.prototype, "principal", void 0);
+__decorate([n$3()], EditCalendarForm.prototype, "cal_id", void 0);
+__decorate([n$3()], EditCalendarForm.prototype, "displayname", void 0);
+__decorate([n$3()], EditCalendarForm.prototype, "description", void 0);
+__decorate([n$3()], EditCalendarForm.prototype, "timezone_id", void 0);
+__decorate([n$3()], EditCalendarForm.prototype, "color", void 0);
+__decorate([n$3({ converter: {
+	fromAttribute: (value, _type) => new Set(value ? JSON.parse(value) : []),
+	toAttribute: (value, _type) => JSON.stringify(value)
+} })], EditCalendarForm.prototype, "components", void 0);
+__decorate([n$3()], EditCalendarForm.prototype, "timezones", void 0);
+EditCalendarForm = __decorate([t$2("edit-calendar-form")], EditCalendarForm);
+//#endregion
+//#region lib/import-addressbook-form.ts
+var ImportAddressbookForm = class ImportAddressbookForm extends i$2 {
+	constructor() {
+		super();
+		this.user = "";
+		this.addressbook_id = self.crypto.randomUUID();
+		this.dialog = e();
+		this.form = e();
+	}
+	createRenderRoot() {
+		return this;
+	}
+	render() {
+		return b`
       <button @click=${() => this.dialog.value.showModal()}>Import addressbook</button>
-      <dialog ${n2(this.dialog)}>
+      <dialog ${n(this.dialog)}>
         <h3>Import addressbook</h3>
-        <form @submit=${this.submit} ${n2(this.form)}>
+        <form @submit=${this.submit} ${n(this.form)}>
           <label>
             principal (for group addressbook)
-            <select name="principal" required .value=${this.user} @change=${(e2) => this.principal = e2.target.value}>
+            <select name="principal" required .value=${this.user} @change=${(e) => this.principal = e.target.value}>
               <option .value=${this.user}>${this.user}</option>
               ${window.rusticalUser.memberships.map((membership) => b`
                 <option .value=${membership}>${membership}</option>
@@ -1464,93 +1453,75 @@ let ImportAddressbookForm = class extends i$1 {
           <br>
           <label>
             id
-            <input type="text" required .value=${this.addressbook_id} @change=${(e2) => this.addressbook_id = e2.target.value} />
+            <input type="text" required .value=${this.addressbook_id} @change=${(e) => this.addressbook_id = e.target.value} />
           </label>
           <br>
           <label>
             file
-            <input type="file" accept="text/vcard" required @change=${(e2) => this.file = e2.target.files[0]} />
+            <input type="file" accept="text/vcard" required @change=${(e) => this.file = e.target.files[0]} />
           </label>
           <br>
           <br>
           <button type="submit">Import</button>
           <button type="submit" @click=${(event) => {
-      event.preventDefault();
-      this.dialog.value.close();
-      this.form.value.reset();
-    }} class="cancel">Cancel</button>
+			event.preventDefault();
+			this.dialog.value.close();
+			this.form.value.reset();
+		}} class="cancel">Cancel</button>
       </form>
       </dialog>
         `;
-  }
-  async submit(e2) {
-    e2.preventDefault();
-    this.principal ||= this.user;
-    if (!this.principal) {
-      alert("Empty principal");
-      return;
-    }
-    if (!this.addressbook_id) {
-      alert("Empty id");
-      return;
-    }
-    let response = await fetch(`/carddav/principal/${this.principal}/${this.addressbook_id}`, {
-      method: "IMPORT",
-      headers: {
-        "Content-Type": "text/vcard"
-      },
-      body: this.file
-    });
-    if (response.status >= 400) {
-      alert(`Error ${response.status}: ${await response.text()}`);
-      return null;
-    }
-    window.location.reload();
-    return null;
-  }
+	}
+	async submit(e) {
+		e.preventDefault();
+		this.principal ||= this.user;
+		if (!this.principal) {
+			alert("Empty principal");
+			return;
+		}
+		if (!this.addressbook_id) {
+			alert("Empty id");
+			return;
+		}
+		let response = await fetch(`/carddav/principal/${this.principal}/${this.addressbook_id}`, {
+			method: "IMPORT",
+			headers: { "Content-Type": "text/vcard" },
+			body: this.file
+		});
+		if (response.status >= 400) {
+			alert(`Error ${response.status}: ${await response.text()}`);
+			return null;
+		}
+		window.location.reload();
+		return null;
+	}
 };
-__decorateClass$1([
-  n$2()
-], ImportAddressbookForm.prototype, "user", 2);
-__decorateClass$1([
-  n$2()
-], ImportAddressbookForm.prototype, "principal", 2);
-__decorateClass$1([
-  n$2()
-], ImportAddressbookForm.prototype, "addressbook_id", 2);
-ImportAddressbookForm = __decorateClass$1([
-  t$1("import-addressbook-form")
-], ImportAddressbookForm);
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __decorateClass = (decorators, target, key, kind) => {
-  var result = kind > 1 ? void 0 : kind ? __getOwnPropDesc(target, key) : target;
-  for (var i3 = decorators.length - 1, decorator; i3 >= 0; i3--)
-    if (decorator = decorators[i3])
-      result = (kind ? decorator(target, key, result) : decorator(result)) || result;
-  if (kind && result) __defProp(target, key, result);
-  return result;
-};
-let ImportCalendarForm = class extends i$1 {
-  constructor() {
-    super();
-    this.user = "";
-    this.cal_id = self.crypto.randomUUID();
-    this.dialog = e();
-    this.form = e();
-  }
-  createRenderRoot() {
-    return this;
-  }
-  render() {
-    return b`
+__decorate([n$3()], ImportAddressbookForm.prototype, "user", void 0);
+__decorate([n$3()], ImportAddressbookForm.prototype, "principal", void 0);
+__decorate([n$3()], ImportAddressbookForm.prototype, "addressbook_id", void 0);
+ImportAddressbookForm = __decorate([t$2("import-addressbook-form")], ImportAddressbookForm);
+//#endregion
+//#region lib/import-calendar-form.ts
+var ImportCalendarForm = class ImportCalendarForm extends i$2 {
+	constructor() {
+		super();
+		this.user = "";
+		this.cal_id = self.crypto.randomUUID();
+		this.dialog = e();
+		this.form = e();
+	}
+	createRenderRoot() {
+		return this;
+	}
+	render() {
+		return b`
       <button @click=${() => this.dialog.value.showModal()}>Import calendar</button>
-      <dialog ${n2(this.dialog)}>
+      <dialog ${n(this.dialog)}>
         <h3>Import calendar</h3>
-        <form @submit=${this.submit} ${n2(this.form)}>
+        <form @submit=${this.submit} ${n(this.form)}>
           <label>
             principal (for group calendars)
-            <select name="principal" required .value=${this.user} @change=${(e2) => this.principal = e2.target.value}>
+            <select name="principal" required .value=${this.user} @change=${(e) => this.principal = e.target.value}>
               <option .value=${this.user}>${this.user}</option>
               ${window.rusticalUser.memberships.map((membership) => b`
                 <option .value=${membership}>${membership}</option>
@@ -1560,70 +1531,52 @@ let ImportCalendarForm = class extends i$1 {
           <br>
           <label>
             id
-            <input type="text" required .value=${this.cal_id} @change=${(e2) => this.cal_id = e2.target.value} />
+            <input type="text" required .value=${this.cal_id} @change=${(e) => this.cal_id = e.target.value} />
           </label>
           <br>
           <label>
             file
-            <input type="file" required accept="text/calendar" @change=${(e2) => this.file = e2.target.files[0]} />
+            <input type="file" required accept="text/calendar" @change=${(e) => this.file = e.target.files[0]} />
           </label>
           <br>
           <br>
           <button type="submit">Import</button>
           <button type="submit" @click=${(event) => {
-      event.preventDefault();
-      this.dialog.value.close();
-      this.form.value.reset();
-    }} class="cancel">Cancel</button>
+			event.preventDefault();
+			this.dialog.value.close();
+			this.form.value.reset();
+		}} class="cancel">Cancel</button>
       </form>
       </dialog>
         `;
-  }
-  async submit(e2) {
-    e2.preventDefault();
-    this.principal ||= this.user;
-    if (!this.principal) {
-      alert("Empty principal");
-      return;
-    }
-    if (!this.cal_id) {
-      alert("Empty id");
-      return;
-    }
-    let response = await fetch(`/caldav/principal/${this.principal}/${this.cal_id}`, {
-      method: "IMPORT",
-      headers: {
-        "Content-Type": "text/calendar"
-      },
-      body: this.file
-    });
-    if (response.status >= 400) {
-      alert(`Error ${response.status}: ${await response.text()}`);
-      return null;
-    }
-    window.location.reload();
-    return null;
-  }
+	}
+	async submit(e) {
+		e.preventDefault();
+		this.principal ||= this.user;
+		if (!this.principal) {
+			alert("Empty principal");
+			return;
+		}
+		if (!this.cal_id) {
+			alert("Empty id");
+			return;
+		}
+		let response = await fetch(`/caldav/principal/${this.principal}/${this.cal_id}`, {
+			method: "IMPORT",
+			headers: { "Content-Type": "text/calendar" },
+			body: this.file
+		});
+		if (response.status >= 400) {
+			alert(`Error ${response.status}: ${await response.text()}`);
+			return null;
+		}
+		window.location.reload();
+		return null;
+	}
 };
-__decorateClass([
-  n$2()
-], ImportCalendarForm.prototype, "user", 2);
-__decorateClass([
-  n$2()
-], ImportCalendarForm.prototype, "principal", 2);
-__decorateClass([
-  n$2()
-], ImportCalendarForm.prototype, "cal_id", 2);
-ImportCalendarForm = __decorateClass([
-  t$1("import-calendar-form")
-], ImportCalendarForm);
-export {
-  CreateAddressbookForm,
-  CreateBirthdayCalendarForm,
-  CreateCalendarForm,
-  DeleteButton,
-  EditAddressbookForm,
-  EditCalendarForm,
-  ImportAddressbookForm,
-  ImportCalendarForm
-};
+__decorate([n$3()], ImportCalendarForm.prototype, "user", void 0);
+__decorate([n$3()], ImportCalendarForm.prototype, "principal", void 0);
+__decorate([n$3()], ImportCalendarForm.prototype, "cal_id", void 0);
+ImportCalendarForm = __decorate([t$2("import-calendar-form")], ImportCalendarForm);
+//#endregion
+export { CreateAddressbookForm, CreateBirthdayCalendarForm, CreateCalendarForm, DeleteButton, EditAddressbookForm, EditCalendarForm, ImportAddressbookForm, ImportCalendarForm };
