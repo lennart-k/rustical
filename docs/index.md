@@ -33,4 +33,4 @@ a CalDAV/CardDAV server
 - Apple Calendar (iOS, macOS)
 - [Home Assistant integration](https://www.home-assistant.io/integrations/caldav/)
 - [Thunderbird](https://www.thunderbird.net) (macOS, Linux, Windows)
-- [caldav-tasks](https://github.com/SapphoSys/caldav-tasks) (macOS, Linux, Windows)
+- [Chiri](https://github.com/SapphoSys/chiri) (macOS, Linux, Windows)
