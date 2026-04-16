@@ -47,7 +47,9 @@ pub async fn route_post_app_token<AP: AuthenticationProvider>(
     TypedHeader(host): TypedHeader<Host>,
     Form(PostAppTokenForm { apple, name }): Form<PostAppTokenForm>,
 ) -> Result<Response, rustical_store::Error> {
-    assert!(!name.is_empty());
+    if name.is_empty() {
+        return Ok((StatusCode::BAD_REQUEST, "empty app name").into_response());
+    }
     assert_eq!(user_id, user.id);
     let token = generate_app_token();
     let mut token_id = auth_provider
