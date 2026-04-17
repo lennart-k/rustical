@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT DISTINCT object_id, max(0, synctoken) as \"synctoken!: i64\" from addressobjectchangelog\n                WHERE (principal, addressbook_id) = (?, ?)\n                AND synctoken > ?\n                ORDER BY synctoken ASC\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "object_id",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "synctoken!: i64",
+        "ordinal": 1,
+        "type_info": "Null"
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false,
+      null
+    ]
+  },
+  "hash": "bfac1f2192654e2b67bae0545e2c5e988fff419ced18725327b96b64ffc60037"
+}

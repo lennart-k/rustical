@@ -701,9 +701,12 @@ impl SqliteCalendarStore {
             Row,
             r#"
                 SELECT DISTINCT object_id, max(0, synctoken) as "synctoken!: i64" from calendarobjectchangelog
-                WHERE synctoken > ?
+                WHERE (principal, cal_id) = (?, ?)
+                AND synctoken > ?
                 ORDER BY synctoken ASC
             "#,
+            principal,
+            cal_id,
             synctoken
         )
         .fetch_all(&mut *conn)
