@@ -39,6 +39,11 @@ COPY . .
 RUN cargo install --locked --target "$(cat /tmp/rust_target)" --path .
 
 FROM scratch
+
+ARG UID=65534
+ARG GID=65534
+USER $UID:$GID
+
 COPY --from=builder /usr/local/cargo/bin/rustical /usr/local/bin/rustical
 CMD ["/usr/local/bin/rustical"]
 
