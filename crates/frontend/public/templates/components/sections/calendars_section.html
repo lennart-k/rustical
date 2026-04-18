@@ -46,7 +46,7 @@
   {% endfor %}
 </ul>
 {%if !deleted_calendars.is_empty() %}
-<h3>Deleted Calendars</h3>
+<h3>Deleted calendars</h3>
 <ul class="collection-list">
   {% for (meta, calendar) in deleted_calendars %}
   {% let color = calendar.meta.color.to_owned().unwrap_or("transparent".to_owned()) %}

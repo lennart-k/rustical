@@ -306,8 +306,6 @@ table {
   th {
     font-size: 0.8rem;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
     color: var(--text-muted);
     background: var(--surface-alt);
   }
@@ -462,7 +460,7 @@ ul.collection-list {
 
   label {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
     justify-content: center;
     gap: 6px;
@@ -515,6 +513,9 @@ dialog {
   color: var(--text);
   max-width: 480px;
   width: 100%;
+  margin: auto;
+  max-height: 100dvh;
+  overflow-y: auto;
 
   h3 {
     margin-bottom: 20px;
@@ -524,6 +525,23 @@ dialog {
 dialog::backdrop {
   background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(2px);
+}
+
+@media (max-width: 560px) {
+  dialog {
+    max-width: 100vw;
+    width: 100vw;
+    min-height: 100dvh;
+    margin: 0;
+    border-radius: 0;
+    border: none;
+    padding: 24px 20px;
+    box-shadow: none;
+  }
+
+  dialog::backdrop {
+    display: none;
+  }
 }
 
 dialog form {
@@ -578,6 +596,19 @@ dialog form {
     color: var(--text);
     font-size: 0.9rem;
     font-weight: 400;
+  }
+
+  label:not(:has(input, select, textarea)) {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    margin-top: 6px;
+  }
+
+  .tab-radio,
+  > div {
+    margin-bottom: 14px;
   }
 
   > button {
@@ -636,6 +667,23 @@ dialog form {
     color: var(--text-muted);
     margin-bottom: 2px;
     display: block;
+  }
+}
+
+/* ── Primary button contexts ───────────────── */
+
+dialog form button[type="submit"]:not(.cancel),
+tr.generate button[type="submit"]:first-of-type,
+create-calendar-form > button,
+create-addressbook-form > button {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-text);
+  font-weight: 600;
+
+  &:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
   }
 }
 
@@ -718,11 +766,6 @@ footer {
     display: block;
     overflow-x: auto;
     white-space: nowrap;
-  }
-
-  dialog {
-    padding: 20px;
-    margin: 12px;
   }
 
   .login_window {
