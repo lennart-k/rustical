@@ -32,24 +32,18 @@
     </td>
   </tr>
   {% endfor %}
-  <tr class="generate">
-    <td>
-      <form action="/frontend/user/{{ user.id }}/app_token" method="POST" id="form_generate_app_token">
-        <input type="text" name="name" id="generate_app_token_name" placeholder="App name" required />
-      </form>
-    </td>
-    <td></td>
-    <td>
-      <button type="submit" form="form_generate_app_token">Generate</button>
-      {% if is_apple %}
-      <button type="submit" form="form_generate_app_token" name="apple" value="true">Apple Configuration Profile
-        (contains token)</button>
-      {% endif %}
-    </td>
-  </tr>
 </table>
+
+<form action="/frontend/user/{{ user.id }}/app_token" method="POST" id="form_generate_app_token" class="generate-form">
+  <input type="text" name="name" id="generate_app_token_name" placeholder="App name" required />
+  <div class="generate-actions">
+    <button type="submit">Generate</button>
+    {% if is_apple %}
+    <button type="submit" name="apple" value="true">Apple Configuration Profile (contains token)</button>
+    {% endif %}
+  </div>
+</form>
+
 {% if let Some(hostname) = davx5_hostname %}
-<a
-  href="intent://{{ hostname | urlencode }}#Intent;action=android.intent.action.VIEW;component=at.bitfire.davdroid.ui.setup.LoginActivity;scheme=davx5;package=at.bitfire.davdroid;S.loginFlow=1;end">Configure
-  in DAVx5</a>
+<a href="intent://{{ hostname | urlencode }}#Intent;action=android.intent.action.VIEW;component=at.bitfire.davdroid.ui.setup.LoginActivity;scheme=davx5;package=at.bitfire.davdroid;S.loginFlow=1;end">Configure in DAVx5</a>
 {% endif %}
