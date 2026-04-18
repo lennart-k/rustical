@@ -9,6 +9,7 @@ license.workspace = true
 publish = false
 
 [dependencies]
+chrono.workspace = true
 rustical_xml.workspace = true
 async-trait.workspace = true
 futures-util.workspace = true
