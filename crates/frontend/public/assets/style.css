@@ -673,7 +673,7 @@ dialog form {
 /* ── Primary button contexts ───────────────── */
 
 dialog form button[type="submit"]:not(.cancel),
-tr.generate button[type="submit"]:first-of-type,
+.generate-form button[type="submit"]:first-of-type,
 create-calendar-form > button,
 create-addressbook-form > button {
   background: var(--primary);
@@ -685,6 +685,36 @@ create-addressbook-form > button {
     background: var(--primary-hover);
     border-color: var(--primary-hover);
   }
+}
+
+/* ── Generate form (app tokens) ────────────── */
+
+.generate-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+
+  input[type="text"] {
+    flex: 1;
+    min-width: 160px;
+  }
+
+  .generate-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+}
+
+/* ── Section action rows ────────────────────── */
+
+.section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
 }
 
 /* ── Pre / Code ────────────────────────────── */

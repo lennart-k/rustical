@@ -1,4 +1,4 @@
-<h2>{{user.id }}'s Addressbooks</h2>
+<h2>{{user.id }}'s addressbooks</h2>
 <ul class="collection-list">
   {% for (meta, birthday_cal, addressbook) in addressbooks %}
   <li class="collection-list-item">
@@ -71,6 +71,8 @@
 </ul>
 {% endif %}
 
-<create-addressbook-form user="{{ user.id }}"></create-addressbook-form>
-<import-addressbook-form user="{{ user.id }}"></import-addressbook-form>
+<div class="section-actions">
+  <create-addressbook-form user="{{ user.id }}"></create-addressbook-form>
+  <import-addressbook-form user="{{ user.id }}"></import-addressbook-form>
+</div>
 
