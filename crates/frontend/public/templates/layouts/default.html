@@ -29,5 +29,10 @@
       <a href="{{ env!("CARGO_PKG_REPOSITORY") }}" target="_blank">RustiCal {{ env!("CARGO_PKG_VERSION") }}</a>
       <a href="/frontend/assets/licenses.html" target="_blank">Open Source Licenses</a>
   </footer>
+  <script>
+    document.addEventListener('click', (e) => {
+      if (e.target.tagName === 'DIALOG') e.target.close();
+    });
+  </script>
 </body>
 </html>
