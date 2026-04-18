@@ -44,6 +44,47 @@
   </div>
 </form>
 
+<div id="token-result" class="token-result" hidden>
+  <p class="token-result-warning">This token will only be shown once. Copy it now and keep it secret.</p>
+  <div class="token-result-row">
+    <code id="token-value" class="token-value"></code>
+    <button type="button" id="token-copy-btn">Copy</button>
+  </div>
+  <button type="button" id="token-done-btn">Done</button>
+</div>
+
+<script>
+  document.getElementById('form_generate_app_token').addEventListener('submit', async function(e) {
+    if (e.submitter && e.submitter.name === 'apple') return;
+    e.preventDefault();
+    const data = new URLSearchParams(new FormData(this));
+    const res = await fetch(this.action, {
+      method: 'POST',
+      body: data,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
+    if (!res.ok) {
+      alert('Error: ' + await res.text());
+      return;
+    }
+    const token = await res.text();
+    document.getElementById('token-value').textContent = token;
+    const result = document.getElementById('token-result');
+    result.hidden = false;
+    result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    this.reset();
+  });
+
+  document.getElementById('token-copy-btn').addEventListener('click', function() {
+    navigator.clipboard.writeText(document.getElementById('token-value').textContent).then(() => {
+      this.textContent = 'Copied!';
+      setTimeout(() => this.textContent = 'Copy', 2000);
+    });
+  });
+
+  document.getElementById('token-done-btn').addEventListener('click', () => window.location.reload());
+</script>
+
 {% if let Some(hostname) = davx5_hostname %}
 <a href="intent://{{ hostname | urlencode }}#Intent;action=android.intent.action.VIEW;component=at.bitfire.davdroid.ui.setup.LoginActivity;scheme=davx5;package=at.bitfire.davdroid;S.loginFlow=1;end">Configure in DAVx5</a>
 {% endif %}
