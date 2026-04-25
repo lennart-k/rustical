@@ -38,14 +38,20 @@ RUN cargo chef cook --release --target "$(cat /tmp/rust_target)"
 COPY . .
 RUN cargo install --locked --target "$(cat /tmp/rust_target)" --path .
 
-FROM scratch
+FROM alpine
+
+RUN apk add --no-cache su-exec
+
 COPY --from=builder /usr/local/cargo/bin/rustical /usr/local/bin/rustical
-CMD ["/usr/local/bin/rustical"]
+COPY --chmod=755 entrypoint.sh /entrypoint.sh
 
 ENV RUSTICAL_DATA_STORE__SQLITE__DB_URL=/var/lib/rustical/db.sqlite3
 
 LABEL org.opencontainers.image.authors="Lennart Kämmle github.com/lennart-k"
 LABEL org.opencontainers.image.licenses="AGPL-3.0-or-later"
 EXPOSE 4000
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/usr/local/bin/rustical"]
 
 HEALTHCHECK --interval=30s --timeout=30s --start-period=3s --retries=3 CMD ["/usr/local/bin/rustical", "health"]
