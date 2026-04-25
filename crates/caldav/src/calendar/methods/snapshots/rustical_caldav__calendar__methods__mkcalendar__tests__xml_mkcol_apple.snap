@@ -1,0 +1,75 @@
+---
+source: crates/caldav/src/calendar/methods/mkcalendar.rs
+expression: mkcol
+---
+MkcalendarRequest {
+    set: PropElement {
+        prop: MkcolCalendarProp {
+            displayname: Some(
+                "rdgrdgre",
+            ),
+            calendar_description: None,
+            calendar_color: Some(
+                "#0088FF",
+            ),
+            calendar_order: Some(
+                5116,
+            ),
+            calendar_timezone: Some(
+                "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nCALSCALE:GREGORIAN\r\nBEGIN:VTIMEZONE\r\nTZID:Europe/Berlin\r\nBEGIN:DAYLIGHT\r\nTZOFFSETFROM:+0100\r\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU\r\nDTSTART:19810329T020000\r\nTZNAME:CEST\r\nTZOFFSETTO:+0200\r\nEND:DAYLIGHT\r\nBEGIN:STANDARD\r\nTZOFFSETFROM:+0200\r\nRRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU\r\nDTSTART:19961027T030000\r\nTZNAME:CET\r\nTZOFFSETTO:+0100\r\nEND:STANDARD\r\nEND:VTIMEZONE\r\nEND:VCALENDAR\r\n",
+            ),
+            calendar_timezone_id: None,
+            resourcetype: None,
+            supported_calendar_component_set: Some(
+                SupportedCalendarComponentSet {
+                    comp: [
+                        SupportedCalendarComponent {
+                            name: Event,
+                        },
+                    ],
+                },
+            ),
+            source: None,
+            calendar_free_busy_set: Some(
+                Unparsed(
+                    Some(
+                        NamespaceOwned(
+                            [
+                                117,
+                                114,
+                                110,
+                                58,
+                                105,
+                                101,
+                                116,
+                                102,
+                                58,
+                                112,
+                                97,
+                                114,
+                                97,
+                                109,
+                                115,
+                                58,
+                                120,
+                                109,
+                                108,
+                                58,
+                                110,
+                                115,
+                                58,
+                                99,
+                                97,
+                                108,
+                                100,
+                                97,
+                                118,
+                            ],
+                        ),
+                    ),
+                    "calendar-free-busy-set",
+                ),
+            ),
+        },
+    },
+}

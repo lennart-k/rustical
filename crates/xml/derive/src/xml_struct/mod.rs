@@ -170,7 +170,10 @@ impl NamedStruct {
                                 }
                                 Event::Text(bytes_text) => {
                                     let text = bytes_text.decode()?;
-                                    string.push_str(&text);
+                                    // Ignore text events that only consist of whitespace
+                                    if !text.chars().all(|char| char.is_whitespace()) {
+                                        string.push_str(&text);
+                                    }
                                 }
                                 Event::CData(cdata) => {
                                     let text = String::from_utf8(cdata.to_vec())?;

@@ -60,8 +60,10 @@ impl Enum {
                                 return <Self as ::rustical_xml::XmlDeserialize>::deserialize(&mut reader, &start, empty);
                             }
                             Event::Eof => return Err(::rustical_xml::XmlError::Eof),
-                            Event::Text(bytes_text) => {
-                                return Err(::rustical_xml::XmlError::UnsupportedEvent("Text"));
+                            Event::Text(text) => {
+                                if text.xml_content()?.chars().any(|chr| !chr.is_whitespace()) {
+                                    return Err(::rustical_xml::XmlError::UnsupportedEvent("unexpected text"));
+                                }
                             }
                             Event::CData(cdata) => {
                                 return Err(::rustical_xml::XmlError::UnsupportedEvent("CDATA"));

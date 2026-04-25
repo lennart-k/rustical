@@ -63,7 +63,14 @@ impl<PN: XmlDeserialize> XmlDeserialize for PropElement<PN> {
                         Err(err) => return Err(err),
                     }
                 }
-                Event::Text(_) | Event::CData(_) => {
+                Event::Text(text) => {
+                    if text.xml_content()?.chars().any(|chr| !chr.is_whitespace()) {
+                        return Err(::rustical_xml::XmlError::UnsupportedEvent(
+                            "unexpected text",
+                        ));
+                    }
+                }
+                Event::CData(_) => {
                     return Err(XmlError::UnsupportedEvent("Not expecting text here"));
                 }
                 Event::GeneralRef(_) => {

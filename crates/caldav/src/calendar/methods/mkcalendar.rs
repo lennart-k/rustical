@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use crate::Error;
 use crate::calendar::CalendarResourceService;
 use crate::calendar::prop::SupportedCalendarComponentSet;
@@ -13,6 +11,7 @@ use rustical_ical::CalendarObjectType;
 use rustical_store::auth::Principal;
 use rustical_store::{Calendar, CalendarMetadata, CalendarStore, SubscriptionStore};
 use rustical_xml::{Unparsed, XmlDeserialize, XmlDocument, XmlRootTag};
+use std::str::FromStr;
 use tracing::instrument;
 
 #[derive(XmlDeserialize, Clone, Debug)]
@@ -99,9 +98,11 @@ pub async fn route_mkcalendar<C: CalendarStore, S: SubscriptionStore>(
             .ok_or(Error::PreconditionFailed(Precondition::CalendarTimezone(
                 "No timezone data provided",
             )))?
-            .map_err(|_| {
+            .map_err(|err| {
+                tracing::error!(%err);
                 Error::PreconditionFailed(Precondition::CalendarTimezone("Error parsing timezone"))
-            })?;
+            })
+            .inspect_err(|e| tracing::error!(%e))?;
 
         let timezone = calendar
             .vtimezones
@@ -207,5 +208,54 @@ mod tests {
                 </set>
             </mkcol>
     "#).unwrap();
+    }
+
+    #[test]
+    fn test_xml_mkcol_apple() {
+        let mkcol = MkcalendarRequest::parse_str(
+            r#"
+<?xml version="1.0" encoding="UTF-8"?>
+<B:mkcalendar xmlns:B="urn:ietf:params:xml:ns:caldav">
+  <A:set xmlns:A="DAV:">
+    <A:prop>
+      <B:calendar-free-busy-set>
+        <NO/>
+      </B:calendar-free-busy-set>
+      <G:calendar-color xmlns:G="http://apple.com/ns/ical/" symbolic-color="custom">#0088FF</G:calendar-color>
+      <A:displayname>rdgrdgre</A:displayname>
+      <B:supported-calendar-component-set>
+        <B:comp name="VEVENT"/>
+      </B:supported-calendar-component-set>
+      <B:calendar-timezone>BEGIN:VCALENDAR&#13;
+VERSION:2.0&#13;
+CALSCALE:GREGORIAN&#13;
+BEGIN:VTIMEZONE&#13;
+TZID:Europe/Berlin&#13;
+BEGIN:DAYLIGHT&#13;
+TZOFFSETFROM:+0100&#13;
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU&#13;
+DTSTART:19810329T020000&#13;
+TZNAME:CEST&#13;
+TZOFFSETTO:+0200&#13;
+END:DAYLIGHT&#13;
+BEGIN:STANDARD&#13;
+TZOFFSETFROM:+0200&#13;
+RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU&#13;
+DTSTART:19961027T030000&#13;
+TZNAME:CET&#13;
+TZOFFSETTO:+0100&#13;
+END:STANDARD&#13;
+END:VTIMEZONE&#13;
+END:VCALENDAR&#13;
+</B:calendar-timezone>
+      <G:calendar-order xmlns:G="http://apple.com/ns/ical/">5116</G:calendar-order>
+    </A:prop>
+  </A:set>
+</B:mkcalendar>
+    "#,
+        )
+        .unwrap();
+
+        insta::assert_debug_snapshot!(mkcol);
     }
 }

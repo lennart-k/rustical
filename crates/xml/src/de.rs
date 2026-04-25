@@ -19,8 +19,7 @@ pub trait XmlDocument: XmlDeserialize {
 
     #[inline]
     fn parse_reader<R: BufRead>(input: R) -> Result<Self, XmlError> {
-        let mut reader = quick_xml::NsReader::from_reader(input);
-        reader.config_mut().trim_text(true);
+        let reader = quick_xml::NsReader::from_reader(input);
         Self::parse(reader)
     }
 
@@ -63,6 +62,11 @@ impl<T: XmlRootTag + XmlDeserialize> XmlDocument for T {
                     return Self::deserialize(&mut reader, &start, empty);
                 }
                 Event::Eof => return Err(XmlError::Eof),
+                Event::Text(text) => {
+                    if text.xml_content()?.chars().any(|chr| !chr.is_whitespace()) {
+                        return Err(XmlError::UnsupportedEvent("unexpected text"));
+                    }
+                }
                 _ => return Err(XmlError::UnsupportedEvent("unknown, todo")),
             }
         }
