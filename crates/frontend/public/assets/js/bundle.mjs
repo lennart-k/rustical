@@ -773,7 +773,7 @@ var SVG_ICON_INTERNET = w`<!-- Adapted from https://iconoir.com/ -->
 </svg>
 `;
 //#endregion
-//#region \0@oxc-project+runtime@0.115.0/helpers/decorate.js
+//#region \0@oxc-project+runtime@0.127.0/helpers/decorate.js
 function __decorate(decorators, target, key, desc) {
 	var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
 	if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
