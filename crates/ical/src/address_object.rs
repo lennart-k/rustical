@@ -16,6 +16,7 @@ use caldata::{
     types::{CalDate, PartialDate, Tz},
 };
 use chrono::{NaiveDate, Utc};
+use hex::ToHex;
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 use std::str::FromStr;
@@ -44,7 +45,10 @@ impl AddressObject {
     pub fn get_etag(&self) -> String {
         let mut hasher = Sha256::new();
         hasher.update(self.get_vcf());
-        format!("\"{:x}\"", hasher.finalize())
+        format!(
+            "\"{}\"",
+            hasher.finalize().as_slice().encode_hex::<String>()
+        )
     }
 
     #[must_use]

@@ -1,10 +1,8 @@
 use async_trait::async_trait;
 use derive_more::Constructor;
-use password_hash::PasswordHasher;
-use pbkdf2::{
-    Params,
-    password_hash::{SaltString, rand_core::OsRng},
-};
+use password_hash::{CustomizedPasswordHasher, phc::Salt};
+use pbkdf2::Params;
+use rand::rngs::SysRng;
 use rustical_store::{
     Error, Secret,
     auth::{AppToken, AuthenticationProvider, Principal},
@@ -168,20 +166,15 @@ impl AuthenticationProvider for SqlitePrincipalStore {
         token: String,
     ) -> Result<String, Error> {
         let id = uuid::Uuid::new_v4().to_string();
-        let salt = SaltString::generate(OsRng);
-        let token_hash = pbkdf2::Pbkdf2
-            .hash_password_customized(
+        let salt = Salt::try_from_rng(&mut SysRng).map_err(|err| Error::Other(err.into()))?;
+        let token_hash = pbkdf2::Pbkdf2::SHA512
+            .hash_password_with_params(
                 token.as_bytes(),
-                None,
-                None,
-                Params {
-                    // The app token has a high entropy so we are quite safe from quessing attacks
-                    // Also if an attacker got access to the hashes they'd have already gotten
-                    // access to the whole database.
-                    rounds: 2,
-                    ..Default::default()
-                },
                 &salt,
+                // The app token has a high entropy so we are quite safe from quessing attacks
+                // Also if an attacker got access to the hashes they'd have already gotten
+                // access to the whole database.
+                Params::new(1000).expect("1000 rounds are valid"),
             )
             .map_err(|_| Error::PasswordHash)?
             .to_string();

@@ -8,6 +8,7 @@ use caldata::{
     parser::ParserOptions,
 };
 use derive_more::Display;
+use hex::ToHex;
 use serde::Deserialize;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
@@ -114,7 +115,10 @@ impl CalendarObject {
         let mut hasher = Sha256::new();
         hasher.update(self.get_uid());
         hasher.update(self.get_ics());
-        format!("\"{:x}\"", hasher.finalize())
+        format!(
+            "\"{}\"",
+            hasher.finalize().as_slice().encode_hex::<String>()
+        )
     }
 
     #[must_use]

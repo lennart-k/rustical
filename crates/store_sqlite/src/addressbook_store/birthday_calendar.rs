@@ -1,6 +1,7 @@
 use crate::addressbook_store::SqliteAddressbookStore;
 use async_trait::async_trait;
 use chrono::NaiveDateTime;
+use hex::ToHex;
 use rustical_ical::{CalendarObject, CalendarObjectType};
 use rustical_store::{
     Addressbook, AddressbookStore, Calendar, CalendarMetadata, CalendarStore, CollectionMetadata,
@@ -124,7 +125,10 @@ impl SqliteAddressbookStore {
             let mut hasher = Sha256::new();
             hasher.update("birthdays");
             hasher.update(&addressbook.push_topic);
-            format!("{:x}", hasher.finalize())
+            format!(
+                "\"{}\"",
+                hasher.finalize().as_slice().encode_hex::<String>()
+            )
         };
         Calendar {
             principal: addressbook.principal,
