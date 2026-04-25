@@ -3,7 +3,7 @@ members = ["crates/*"]
 
 [workspace.package]
 version = "0.12.11"
-rust-version = "1.92"
+rust-version = "1.95"
 edition = "2024"
 description = "A CalDAV server"
 documentation = "https://lennart-k.github.io/rustical/"
