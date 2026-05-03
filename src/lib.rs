@@ -1,5 +1,5 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery)]
-use crate::config::Config;
+use crate::config::{Config, HttpBind};
 use anyhow::Result;
 use app::make_app;
 use axum::ServiceExt;
@@ -16,6 +16,8 @@ use rustical_store_sqlite::calendar_store::SqliteCalendarStore;
 use rustical_store_sqlite::principal_store::SqlitePrincipalStore;
 use rustical_store_sqlite::{SqliteStore, create_db_pool};
 use setup_tracing::setup_tracing;
+use std::fs::{self, Permissions};
+use std::os::unix::fs::PermissionsExt;
 use std::sync::Arc;
 use tokio::sync::Notify;
 use tokio::sync::mpsc::Receiver;
@@ -148,15 +150,37 @@ pub async fn cmd_default(
         NormalizePathLayer::trim_trailing_slash().layer(app),
     );
 
-    let address = format!("{}:{}", config.http.host, config.http.port);
-    let listener = tokio::net::TcpListener::bind(&address).await?;
-    tasks.push(tokio::spawn(async move {
-        info!("RustiCal serving on http://{address}");
-        if let Some(start_notifier) = start_notifier {
-            start_notifier.notify_waiters();
+    tasks.push(match config.http.bind {
+        HttpBind::Tcp(tcp) => {
+            let address = format!("{}:{}", tcp.host, tcp.port);
+            let listener = tokio::net::TcpListener::bind(&address).await?;
+
+            tokio::spawn(async move {
+                info!("RustiCal serving on http://{address}");
+                if let Some(start_notifier) = start_notifier {
+                    start_notifier.notify_waiters();
+                }
+                axum::serve(listener, app).await.unwrap();
+            })
         }
-        axum::serve(listener, app).await.unwrap();
-    }));
+        HttpBind::Unix { path } => {
+            if path.exists() {
+                fs::remove_file(&path)?;
+            }
+
+            let listener = tokio::net::UnixListener::bind(&path)?;
+
+            fs::set_permissions(&path, Permissions::from_mode(0o220))?;
+
+            tokio::spawn(async move {
+                info!("RustiCal serving on http+unix://{}", path.to_string_lossy());
+                if let Some(start_notifier) = start_notifier {
+                    start_notifier.notify_waiters();
+                }
+                axum::serve(listener, app).await.unwrap();
+            })
+        }
+    });
 
     for task in tasks {
         task.await?;
