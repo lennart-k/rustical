@@ -6,6 +6,7 @@ use axum::ServiceExt;
 use axum::extract::Request;
 use clap::{Parser, Subcommand};
 use config::{DataStoreConfig, SqliteDataStoreConfig};
+use provided_listeners::ProvidedListeners;
 use rustical_dav_push::DavPushController;
 use rustical_store::auth::AuthenticationProvider;
 use rustical_store::{
@@ -150,10 +151,14 @@ pub async fn cmd_default(
         NormalizePathLayer::trim_trailing_slash().layer(app),
     );
 
+    let mut provided_listeners = ProvidedListeners::from_env()?;
+
     tasks.push(match config.http.bind {
         HttpBind::Tcp(tcp) => {
             let address = format!("{}:{}", tcp.host, tcp.port);
-            let listener = tokio::net::TcpListener::bind(&address).await?;
+            let listener = provided_listeners
+                .tcp_tokio_resolved_or_bind(&address)
+                .await?;
 
             tokio::spawn(async move {
                 info!("RustiCal serving on http://{address}");
@@ -164,13 +169,18 @@ pub async fn cmd_default(
             })
         }
         HttpBind::Unix { path } => {
-            if path.exists() {
-                fs::remove_file(&path)?;
-            }
+            let listener = if let Some(listener) = provided_listeners.unix_tokio(&path) {
+                listener?
+            } else {
+                if path.exists() {
+                    fs::remove_file(&path)?;
+                }
 
-            let listener = tokio::net::UnixListener::bind(&path)?;
+                let listener = tokio::net::UnixListener::bind(&path)?;
+                fs::set_permissions(&path, Permissions::from_mode(0o220))?;
 
-            fs::set_permissions(&path, Permissions::from_mode(0o220))?;
+                listener
+            };
 
             tokio::spawn(async move {
                 info!("RustiCal serving on http+unix://{}", path.to_string_lossy());
