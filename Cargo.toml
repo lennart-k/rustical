@@ -206,3 +206,4 @@ axum-extra.workspace = true
 headers.workspace = true
 http.workspace = true
 futures-util.workspace = true
+provided-listeners = { version = "0.3.1", features = ["tokio"] }

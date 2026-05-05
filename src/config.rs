@@ -1,13 +1,40 @@
+use std::path::PathBuf;
+
 use rustical_caldav::CalDavConfig;
 use rustical_frontend::FrontendConfig;
 use rustical_oidc::OidcConfig;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "snake_case")]
+#[serde(deny_unknown_fields)]
+pub enum HttpBind {
+    Tcp(HttpBindTcp),
+    Unix { path: PathBuf },
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "snake_case")]
 #[serde(deny_unknown_fields, default)]
-pub struct HttpConfig {
+pub struct HttpBindTcp {
     pub host: String,
     pub port: u16,
+}
+
+impl Default for HttpBindTcp {
+    fn default() -> Self {
+        Self {
+            host: "[::]".to_owned(),
+            port: 4000,
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(deny_unknown_fields, default)]
+pub struct HttpConfig {
+    #[serde(flatten)]
+    pub bind: HttpBind,
     pub session_cookie_samesite_strict: bool,
     pub payload_limit_mb: usize,
 }
@@ -15,8 +42,7 @@ pub struct HttpConfig {
 impl Default for HttpConfig {
     fn default() -> Self {
         Self {
-            host: "[::]".to_owned(),
-            port: 4000,
+            bind: HttpBind::Tcp(HttpBindTcp::default()),
             session_cookie_samesite_strict: false,
             payload_limit_mb: 4,
         }
