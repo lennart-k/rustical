@@ -21,7 +21,7 @@ pub use secret::Secret;
 pub use subscription_store::*;
 
 pub use addressbook::Addressbook;
-pub use calendar::{Calendar, CalendarMetadata};
+pub use calendar::{BaseCalendar, CalendarView, FullCalendarView};
 
 #[derive(Debug, Clone)]
 pub enum CollectionOperationInfo {

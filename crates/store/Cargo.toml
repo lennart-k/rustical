@@ -33,6 +33,7 @@ futures-core.workspace = true
 tower-sessions.workspace = true
 vtimezones-rs.workspace = true
 password-auth.workspace = true
+uuid = { workspace = true, features = ["serde"] }
 
 [dev-dependencies]
 rstest.workspace = true
