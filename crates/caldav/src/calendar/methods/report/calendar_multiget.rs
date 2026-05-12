@@ -26,8 +26,8 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore>(
     let mut not_found = vec![];
 
     for href in &cal_query.href {
-        if let Ok(href) = percent_encoding::percent_decode_str(href).decode_utf8()
-            && let Some(filename) = href.strip_prefix(path)
+        if let Some(stripped) = href.strip_prefix(path)
+            && let Ok(filename) = percent_encoding::percent_decode_str(stripped).decode_utf8()
         {
             let filename = filename.trim_start_matches('/');
             if let Some(object_id) = filename.strip_suffix(".ics") {
