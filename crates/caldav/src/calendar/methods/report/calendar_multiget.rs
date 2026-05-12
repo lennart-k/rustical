@@ -26,18 +26,18 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore>(
     let mut not_found = vec![];
 
     for href in &cal_query.href {
-        if let Ok(href) = percent_encoding::percent_decode_str(href).decode_utf8()
-            && let Some(filename) = href.strip_prefix(path)
+        if let Some(stripped) = href.strip_prefix(path)
+            && let Ok(filename) = percent_encoding::percent_decode_str(stripped).decode_utf8()
         {
             let filename = filename.trim_start_matches('/');
             if let Some(object_id) = filename.strip_suffix(".ics") {
                 match store.get_object(principal, cal_id, object_id, false).await {
                     Ok(object) => result.push((object_id.to_owned(), object)),
-                    Err(rustical_store::Error::NotFound) => not_found.push(href.to_string()),
+                    Err(rustical_store::Error::NotFound) => not_found.push(href.clone()),
                     Err(err) => return Err(err.into()),
                 }
             } else {
-                not_found.push(href.to_string());
+                not_found.push(href.clone());
             }
         } else {
             not_found.push(href.to_owned());
