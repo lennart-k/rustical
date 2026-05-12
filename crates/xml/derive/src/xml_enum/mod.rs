@@ -61,7 +61,7 @@ impl Enum {
                             }
                             Event::Eof => return Err(::rustical_xml::XmlError::Eof),
                             Event::Text(text) => {
-                                if text.xml_content()?.chars().any(|chr| !chr.is_whitespace()) {
+                                if text.xml11_content()?.chars().any(|chr| !chr.is_whitespace()) {
                                     return Err(::rustical_xml::XmlError::UnsupportedEvent("unexpected text"));
                                 }
                             }

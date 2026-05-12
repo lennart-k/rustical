@@ -41,7 +41,7 @@ impl Enum {
                     start: &::quick_xml::events::BytesStart,
                     empty: bool
                 ) -> Result<Self, rustical_xml::XmlError> {
-                    let (_ns, name) = reader.resolve_element(start.name());
+                    let (_ns, name) = reader.resolver().resolve_element(start.name());
 
                     match name.as_ref() {
                         #(#variant_branches),*

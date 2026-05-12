@@ -63,7 +63,11 @@ impl<T: XmlRootTag + XmlDeserialize> XmlDocument for T {
                 }
                 Event::Eof => return Err(XmlError::Eof),
                 Event::Text(text) => {
-                    if text.xml_content()?.chars().any(|chr| !chr.is_whitespace()) {
+                    if text
+                        .xml11_content()?
+                        .chars()
+                        .any(|chr| !chr.is_whitespace())
+                    {
                         return Err(XmlError::UnsupportedEvent("unexpected text"));
                     }
                 }

@@ -295,11 +295,11 @@ fn test_quickxml_bytesref() {
     let gt = quick_xml::events::BytesRef::new("gt");
     assert!(!gt.is_char_ref());
     let result = if !gt.is_char_ref() {
-        quick_xml::escape::resolve_xml_entity(&gt.xml_content().unwrap())
+        quick_xml::escape::resolve_xml_entity(&gt.xml11_content().unwrap())
             .unwrap()
             .to_string()
     } else {
-        gt.xml_content().unwrap().to_string()
+        gt.xml11_content().unwrap().to_string()
     };
     assert_eq!(result, ">");
 }

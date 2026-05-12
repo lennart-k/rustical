@@ -64,7 +64,11 @@ impl<PN: XmlDeserialize> XmlDeserialize for PropElement<PN> {
                     }
                 }
                 Event::Text(text) => {
-                    if text.xml_content()?.chars().any(|chr| !chr.is_whitespace()) {
+                    if text
+                        .xml11_content()?
+                        .chars()
+                        .any(|chr| !chr.is_whitespace())
+                    {
                         return Err(::rustical_xml::XmlError::UnsupportedEvent(
                             "unexpected text",
                         ));
