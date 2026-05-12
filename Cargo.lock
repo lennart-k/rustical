@@ -3470,7 +3470,7 @@ dependencies = [
 
 [[package]]
 name = "rustical"
-version = "0.12.12"
+version = "0.12.13"
 dependencies = [
  "anyhow",
  "argon2",
@@ -3520,7 +3520,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_caldav"
-version = "0.12.12"
+version = "0.12.13"
 dependencies = [
  "async-std",
  "async-trait",
@@ -3562,7 +3562,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_carddav"
-version = "0.12.12"
+version = "0.12.13"
 dependencies = [
  "async-trait",
  "axum",
@@ -3596,7 +3596,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_dav"
-version = "0.12.12"
+version = "0.12.13"
 dependencies = [
  "async-trait",
  "axum",
@@ -3622,7 +3622,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_dav_push"
-version = "0.12.12"
+version = "0.12.13"
 dependencies = [
  "async-trait",
  "axum",
@@ -3648,7 +3648,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_frontend"
-version = "0.12.12"
+version = "0.12.13"
 dependencies = [
  "askama",
  "askama_web",
@@ -3684,7 +3684,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_ical"
-version = "0.12.12"
+version = "0.12.13"
 dependencies = [
  "axum",
  "caldata",
@@ -3703,7 +3703,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_oidc"
-version = "0.12.12"
+version = "0.12.13"
 dependencies = [
  "async-trait",
  "axum",
@@ -3719,7 +3719,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_store"
-version = "0.12.12"
+version = "0.12.13"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3752,7 +3752,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_store_sqlite"
-version = "0.12.12"
+version = "0.12.13"
 dependencies = [
  "async-trait",
  "caldata",
@@ -3779,7 +3779,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_xml"
-version = "0.12.12"
+version = "0.12.13"
 dependencies = [
  "quick-xml",
  "thiserror 2.0.18",
@@ -5755,7 +5755,7 @@ checksum = "1ffae5123b2d3fc086436f8834ae3ab053a283cfac8fe0a0b8eaae044768a4c4"
 
 [[package]]
 name = "xml_derive"
-version = "0.12.12"
+version = "0.12.13"
 dependencies = [
  "darling",
  "heck",
