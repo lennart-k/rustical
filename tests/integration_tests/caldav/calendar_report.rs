@@ -4,8 +4,8 @@ use axum::extract::Request;
 use headers::{Authorization, HeaderMapExt};
 use http::StatusCode;
 use rstest::rstest;
-use rustical_store_sqlite::tests::{TestStoreContext, test_store_context};
 use rustical_store::auth::{AuthenticationProvider, Principal, PrincipalType};
+use rustical_store_sqlite::tests::{TestStoreContext, test_store_context};
 use tower::ServiceExt;
 
 const ICS_1: &str = include_str!("resources/rfc4791_appb.ics");
