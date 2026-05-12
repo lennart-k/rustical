@@ -5,6 +5,7 @@ use headers::{Authorization, HeaderMapExt};
 use http::StatusCode;
 use rstest::rstest;
 use rustical_store_sqlite::tests::{TestStoreContext, test_store_context};
+use rustical_store::auth::{AuthenticationProvider, Principal, PrincipalType};
 use tower::ServiceExt;
 
 const ICS_1: &str = include_str!("resources/rfc4791_appb.ics");
@@ -206,4 +207,80 @@ async fn test_report(
     if let Some(output) = output {
         similar_asserts::assert_eq!(output, body.replace('\r', ""));
     }
+}
+
+const REPORT_EMAIL_PRINCIPAL: &str = r#"
+ <?xml version="1.0" encoding="utf-8" ?>
+   <C:calendar-multiget xmlns:D="DAV:"
+                        xmlns:C="urn:ietf:params:xml:ns:caldav">
+     <D:prop>
+       <C:calendar-data/>
+     </D:prop>
+     <D:href>/caldav/principal/cyrus%40example.com/calendar/abcd3.ics</D:href>
+   </C:calendar-multiget>
+"#;
+#[rstest]
+#[case(0, ICS_1, REPORT_EMAIL_PRINCIPAL)]
+#[tokio::test]
+async fn test_report_email_principal(
+    #[from(test_store_context)]
+    #[future]
+    context: TestStoreContext,
+    #[case] case: usize,
+    #[case] ics: &'static str,
+    #[case] report: &'static str,
+) {
+    let mut context = context.await;
+    let (principal, addr_id) = ("cyrus@example.com", "calendar");
+
+    let principal_store = context.principal_store;
+    principal_store
+        .insert_principal(
+            Principal {
+                id: principal.to_owned(),
+                displayname: None,
+                memberships: vec![],
+                password: None,
+                principal_type: PrincipalType::Individual,
+            },
+            false,
+        )
+        .await
+        .unwrap();
+    principal_store
+        .add_app_token(principal, "test".to_string(), "pass".to_string())
+        .await
+        .unwrap();
+    context.principal_store = principal_store;
+    let app = get_app(context.clone());
+
+    let url = format!("/caldav/principal/cyrus%40example.com/{addr_id}");
+
+    let request_template = || {
+        Request::builder()
+            .method("IMPORT")
+            .uri(&url)
+            .body(Body::from(ics))
+            .unwrap()
+    };
+    // Try with correct credentials
+    let mut request = request_template();
+    request
+        .headers_mut()
+        .typed_insert(Authorization::basic(principal, "pass"));
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let mut request = Request::builder()
+        .method("REPORT")
+        .uri(&url)
+        .body(Body::from(report))
+        .unwrap();
+    request
+        .headers_mut()
+        .typed_insert(Authorization::basic(principal, "pass"));
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::MULTI_STATUS);
+    let body = response.extract_string().await;
+    insta::assert_snapshot!(format!("{case}_report_body_email_principal"), body);
 }
