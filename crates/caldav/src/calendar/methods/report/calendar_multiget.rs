@@ -33,11 +33,11 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore>(
             if let Some(object_id) = filename.strip_suffix(".ics") {
                 match store.get_object(principal, cal_id, object_id, false).await {
                     Ok(object) => result.push((object_id.to_owned(), object)),
-                    Err(rustical_store::Error::NotFound) => not_found.push(href.to_string()),
+                    Err(rustical_store::Error::NotFound) => not_found.push(href.clone()),
                     Err(err) => return Err(err.into()),
                 }
             } else {
-                not_found.push(href.to_string());
+                not_found.push(href.clone());
             }
         } else {
             not_found.push(href.to_owned());
