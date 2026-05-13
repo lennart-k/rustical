@@ -2,6 +2,10 @@ use caldata::parser::ContentLine;
 use rustical_xml::{ValueDeserialize, XmlDeserialize};
 use std::borrow::Cow;
 
+const COLLATION_ASCII_CASEMAP: &str = "i;ascii-casemap";
+const COLLATION_UNICODE_CASEMAP: &str = "i;unicode-casemap";
+const COLLATION_OCTET: &str = "i;octet";
+
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub enum TextCollation {
     #[default]
@@ -25,9 +29,9 @@ impl TextCollation {
 impl AsRef<str> for TextCollation {
     fn as_ref(&self) -> &str {
         match self {
-            Self::AsciiCasemap => "i;ascii-casemap",
-            Self::UnicodeCasemap => "i;unicode-casemap",
-            Self::Octet => "i;octet",
+            Self::AsciiCasemap => COLLATION_ASCII_CASEMAP,
+            Self::UnicodeCasemap => COLLATION_UNICODE_CASEMAP,
+            Self::Octet => COLLATION_OCTET,
         }
     }
 }
@@ -35,9 +39,9 @@ impl AsRef<str> for TextCollation {
 impl ValueDeserialize for TextCollation {
     fn deserialize(val: &str) -> Result<Self, rustical_xml::XmlError> {
         match val {
-            "i;ascii-casemap" => Ok(Self::AsciiCasemap),
-            "i;unicode-casemap" => Ok(Self::UnicodeCasemap),
-            "i;octet" => Ok(Self::Octet),
+            COLLATION_ASCII_CASEMAP => Ok(Self::AsciiCasemap),
+            COLLATION_UNICODE_CASEMAP => Ok(Self::UnicodeCasemap),
+            COLLATION_OCTET => Ok(Self::Octet),
             _ => Err(rustical_xml::XmlError::InvalidVariant(format!(
                 "Invalid collation: {val}"
             ))),
