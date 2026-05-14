@@ -1,5 +1,11 @@
-use axum::{body::Body, extract::FromRequestParts, response::IntoResponse};
+use axum::{body::Body, response::IntoResponse};
+use derive_more::{From, Into};
+use headers::Header;
+use http::{HeaderName, HeaderValue};
+use std::str::FromStr;
 use thiserror::Error;
+
+static OVERWRITE: HeaderName = HeaderName::from_static("overwrite");
 
 #[derive(Error, Debug)]
 #[error("Invalid Overwrite header")]
@@ -14,7 +20,7 @@ impl IntoResponse for InvalidOverwriteHeader {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, From, Into)]
 pub struct Overwrite(pub bool);
 
 impl Default for Overwrite {
@@ -23,67 +29,83 @@ impl Default for Overwrite {
     }
 }
 
-impl<S: Send + Sync> FromRequestParts<S> for Overwrite {
-    type Rejection = InvalidOverwriteHeader;
-
-    async fn from_request_parts(
-        parts: &mut axum::http::request::Parts,
-        _state: &S,
-    ) -> Result<Self, Self::Rejection> {
-        parts.headers.get("Overwrite").map_or_else(
-            || Ok(Self::default()),
-            |overwrite_header| overwrite_header.as_bytes().try_into(),
-        )
+impl From<&Overwrite> for &'static str {
+    fn from(value: &Overwrite) -> Self {
+        if value.0 { "T" } else { "F" }
     }
 }
 
-impl TryFrom<&[u8]> for Overwrite {
-    type Error = InvalidOverwriteHeader;
+impl FromStr for Overwrite {
+    type Err = InvalidOverwriteHeader;
 
-    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        match value {
-            b"T" => Ok(Self(true)),
-            b"F" => Ok(Self(false)),
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "T" => Ok(Self(true)),
+            "F" => Ok(Self(false)),
             _ => Err(InvalidOverwriteHeader),
         }
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use axum::{extract::FromRequestParts, response::IntoResponse};
-    use http::Request;
-
-    use crate::header::Overwrite;
-
-    #[tokio::test]
-    async fn test_overwrite_default() {
-        let request = Request::put("asd").body(()).unwrap();
-        let (mut parts, ()) = request.into_parts();
-        let overwrite = Overwrite::from_request_parts(&mut parts, &())
-            .await
-            .unwrap();
-        assert_eq!(
-            Overwrite(true),
-            overwrite,
-            "By default we want to overwrite!"
-        );
+impl Header for Overwrite {
+    fn name() -> &'static HeaderName {
+        &OVERWRITE
     }
 
-    #[test]
-    fn test_overwrite() {
-        assert_eq!(
-            Overwrite(true),
-            Overwrite::try_from(b"T".as_slice()).unwrap()
-        );
-        assert_eq!(
-            Overwrite(false),
-            Overwrite::try_from(b"F".as_slice()).unwrap()
-        );
-        if let Err(err) = Overwrite::try_from(b"aslkdjlad".as_slice()) {
-            let _ = err.into_response();
-        } else {
-            unreachable!("should return error")
+    fn encode<E: Extend<HeaderValue>>(&self, values: &mut E) {
+        values.extend(std::iter::once(HeaderValue::from_static(self.into())));
+    }
+
+    fn decode<'i, I>(values: &mut I) -> Result<Self, headers::Error>
+    where
+        Self: Sized,
+        I: Iterator<Item = &'i HeaderValue>,
+    {
+        let Some(val) = values.next() else {
+            return Err(headers::Error::invalid());
+        };
+        if values.next().is_some() {
+            return Err(headers::Error::invalid());
         }
+        let val = val.to_str().map_err(|_| headers::Error::invalid())?;
+        Self::from_str(val).map_err(|_| headers::Error::invalid())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Overwrite;
+    use axum::{body::Body, extract::FromRequest};
+    use axum_extra::TypedHeader;
+    use http::Request;
+
+    #[tokio::test]
+    #[rstest::rstest]
+    #[case("T", Overwrite(true))]
+    #[case("F", Overwrite(false))]
+    async fn test_overwrite_header(#[case] input: &str, #[case] header: Overwrite) {
+        let request = Request::builder()
+            .method("GET")
+            .header("Overwrite", input)
+            .body(Body::empty())
+            .unwrap();
+        let TypedHeader(depth) = TypedHeader::<Overwrite>::from_request(request, &())
+            .await
+            .unwrap();
+        assert_eq!(depth, header);
+    }
+
+    #[tokio::test]
+    async fn test_invalid_overwrite_header() {
+        let request = Request::builder()
+            .method("GET")
+            .header("Overwrite", "asldkj")
+            .body(Body::empty())
+            .unwrap();
+        assert!(
+            TypedHeader::<Overwrite>::from_request(request, &())
+                .await
+                .is_err()
+        );
     }
 }

@@ -1,7 +1,4 @@
-use crate::{
-    header::{Depth, Overwrite},
-    resource::ResourceService,
-};
+use crate::{header::Overwrite, resource::ResourceService};
 use axum::{
     extract::{MatchedPath, Path, State},
     response::{IntoResponse, Response},
@@ -18,13 +15,16 @@ use tracing::instrument;
 pub async fn axum_route_copy<R: ResourceService>(
     Path(path): Path<R::PathComponents>,
     State(resource_service): State<R>,
-    depth: Option<Depth>,
     principal: R::Principal,
-    Overwrite(overwrite): Overwrite,
+    overwrite: Option<TypedHeader<Overwrite>>,
     matched_path: MatchedPath,
     header_map: HeaderMap,
     TypedHeader(host): TypedHeader<Host>,
 ) -> Result<Response, R::Error> {
+    let overwrite = overwrite
+        .map(|TypedHeader(overwrite)| overwrite)
+        .unwrap_or_default()
+        .into();
     let destination = header_map
         .get("Destination")
         .ok_or(crate::Error::Forbidden)?

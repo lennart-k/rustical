@@ -4,6 +4,7 @@ use axum::{
     extract::{Path, State},
     response::{IntoResponse, Response},
 };
+use axum_extra::TypedHeader;
 use caldata::component::{Component, ComponentMut};
 use caldata::{IcalParser, parser::ParserOptions};
 use http::StatusCode;
@@ -19,12 +20,17 @@ pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
     Path((principal, cal_id)): Path<(String, String)>,
     user: Principal,
     State(resource_service): State<CalendarResourceService<C, S>>,
-    Overwrite(overwrite): Overwrite,
+    overwrite: Option<TypedHeader<Overwrite>>,
     body: String,
 ) -> Result<Response, Error> {
     if !user.is_principal(&principal) {
         return Err(Error::Unauthorized);
     }
+
+    let overwrite = overwrite
+        .map(|TypedHeader(overwrite)| overwrite)
+        .unwrap_or_default()
+        .into();
 
     let parser = IcalParser::from_slice(body.as_bytes());
     let mut cal = match parser.expect_one() {
