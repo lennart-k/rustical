@@ -114,7 +114,7 @@ pub async fn route_report_addressbook<AS: AddressbookStore, S: SubscriptionStore
             handle_addressbook_multiget(
                 addr_multiget,
                 request.props(),
-                uri.path(),
+                &uri,
                 &puri,
                 &user,
                 &principal,

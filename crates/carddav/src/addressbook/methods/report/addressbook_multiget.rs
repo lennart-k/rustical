@@ -8,6 +8,7 @@ use crate::{
 };
 use http::{StatusCode, Uri};
 use rustical_dav::{
+    resolve_child_uri,
     resource::{PrincipalUri, Resource},
     xml::{MultistatusElement, PropfindType, multistatus::ResponseElement},
 };
@@ -26,8 +27,8 @@ pub struct AddressbookMultigetRequest {
 }
 
 pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
-    addressbook_multiget: &AddressbookMultigetRequest,
-    path: &str,
+    request: &AddressbookMultigetRequest,
+    collection_uri: &Uri,
     principal: &str,
     addressbook_id: &str,
     store: &AS,
@@ -35,25 +36,30 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
     let mut result = vec![];
     let mut not_found = vec![];
 
-    for href in &addressbook_multiget.href {
-        if let Some(filename) = href.strip_prefix(path)
-            && let Ok(href) = percent_encoding::percent_decode_str(href).decode_utf8()
+    for href in &request.href {
+        let Ok(child_uri) = Uri::from_str(href) else {
+            not_found.push(href.clone());
+            continue;
+        };
+        let Some(subpath) = resolve_child_uri(collection_uri, &child_uri) else {
+            not_found.push(href.clone());
+            continue;
+        };
+        let [filename] = subpath.as_slice() else {
+            not_found.push(href.clone());
+            continue;
+        };
+        let Some(object_id) = filename.strip_suffix(".vcf") else {
+            not_found.push(href.clone());
+            continue;
+        };
+        match store
+            .get_object(principal, addressbook_id, object_id, false)
+            .await
         {
-            let filename = filename.trim_start_matches('/');
-            if let Some(object_id) = filename.strip_suffix(".vcf") {
-                match store
-                    .get_object(principal, addressbook_id, object_id, false)
-                    .await
-                {
-                    Ok(object) => result.push((object_id.to_owned(), object)),
-                    Err(rustical_store::Error::NotFound) => not_found.push(href.to_string()),
-                    Err(err) => return Err(err.into()),
-                }
-            } else {
-                not_found.push(href.to_string());
-            }
-        } else {
-            not_found.push(href.to_owned());
+            Ok(object) => result.push((object_id.to_owned(), object)),
+            Err(rustical_store::Error::NotFound) => not_found.push(href.clone()),
+            Err(err) => return Err(err.into()),
         }
     }
 
@@ -64,20 +70,28 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
 pub async fn handle_addressbook_multiget<AS: AddressbookStore>(
     addr_multiget: &AddressbookMultigetRequest,
     prop: &PropfindType<AddressObjectPropWrapperName>,
-    path: &str,
+    collection_uri: &Uri,
     puri: &impl PrincipalUri,
     user: &Principal,
     principal: &str,
     cal_id: &str,
     addr_store: &AS,
 ) -> Result<MultistatusElement<AddressObjectPropWrapper, String>, Error> {
-    let (objects, not_found) =
-        get_objects_addressbook_multiget(addr_multiget, path, principal, cal_id, addr_store)
-            .await?;
+    let (objects, not_found) = get_objects_addressbook_multiget(
+        addr_multiget,
+        collection_uri,
+        principal,
+        cal_id,
+        addr_store,
+    )
+    .await?;
 
     let mut responses = Vec::new();
     for (object_id, object) in objects {
-        let path = format!("{path}/{object_id}.vcf");
+        let path = format!(
+            "{path}/{object_id}.vcf",
+            path = collection_uri.path().trim_end_matches('/')
+        );
         responses.push(
             AddressObjectResource {
                 object,

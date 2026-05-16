@@ -62,7 +62,7 @@ fn objects_response(
 ) -> Result<MultistatusElement<CalendarObjectPropWrapper, String>, Error> {
     let mut responses = Vec::new();
     for (object_id, object) in objects {
-        let path = format!("{path}/{object_id}.ics");
+        let path = format!("{path}/{object_id}.ics", path = path.trim_end_matches('/'));
         responses.push(
             CalendarObjectResource {
                 object,
@@ -116,7 +116,7 @@ pub async fn route_report_calendar<C: CalendarStore, S: SubscriptionStore>(
         ReportRequest::CalendarMultiget(cal_multiget) => {
             let (objects, not_found) = get_objects_calendar_multiget(
                 cal_multiget,
-                uri.path(),
+                &uri,
                 &principal,
                 &cal_id,
                 cal_store.as_ref(),

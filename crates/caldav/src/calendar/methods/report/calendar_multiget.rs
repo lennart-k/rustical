@@ -1,5 +1,8 @@
+use std::str::FromStr;
+
 use crate::{Error, calendar_object::CalendarObjectPropWrapperName};
-use rustical_dav::xml::PropfindType;
+use http::Uri;
+use rustical_dav::{resolve_child_uri, xml::PropfindType};
 use rustical_ical::CalendarObject;
 use rustical_store::CalendarStore;
 use rustical_xml::XmlDeserialize;
@@ -17,7 +20,7 @@ pub struct CalendarMultigetRequest {
 
 pub async fn get_objects_calendar_multiget<C: CalendarStore>(
     request: &CalendarMultigetRequest,
-    path: &str,
+    collection_uri: &Uri,
     principal: &str,
     cal_id: &str,
     store: &C,
@@ -26,21 +29,26 @@ pub async fn get_objects_calendar_multiget<C: CalendarStore>(
     let mut not_found = vec![];
 
     for href in &request.href {
-        if let Some(stripped) = href.strip_prefix(path)
-            && let Ok(filename) = percent_encoding::percent_decode_str(stripped).decode_utf8()
-        {
-            let filename = filename.trim_start_matches('/');
-            if let Some(object_id) = filename.strip_suffix(".ics") {
-                match store.get_object(principal, cal_id, object_id, false).await {
-                    Ok(object) => result.push((object_id.to_owned(), object)),
-                    Err(rustical_store::Error::NotFound) => not_found.push(href.clone()),
-                    Err(err) => return Err(err.into()),
-                }
-            } else {
-                not_found.push(href.clone());
-            }
-        } else {
-            not_found.push(href.to_owned());
+        let Ok(child_uri) = Uri::from_str(href) else {
+            not_found.push(href.clone());
+            continue;
+        };
+        let Some(subpath) = resolve_child_uri(collection_uri, &child_uri) else {
+            not_found.push(href.clone());
+            continue;
+        };
+        let [filename] = subpath.as_slice() else {
+            not_found.push(href.clone());
+            continue;
+        };
+        let Some(object_id) = filename.strip_suffix(".ics") else {
+            not_found.push(href.clone());
+            continue;
+        };
+        match store.get_object(principal, cal_id, object_id, false).await {
+            Ok(object) => result.push((object_id.to_owned(), object)),
+            Err(rustical_store::Error::NotFound) => not_found.push(href.clone()),
+            Err(err) => return Err(err.into()),
         }
     }
 
@@ -52,6 +60,7 @@ mod tests {
     use crate::calendar::methods::report::calendar_multiget::{
         CalendarMultigetRequest, get_objects_calendar_multiget,
     };
+    use http::Uri;
     use rustical_ical::CalendarObject;
     use rustical_store::CalendarStore;
     use std::panic;
@@ -245,7 +254,7 @@ END:VCALENDAR"
     #[rstest::rstest]
     #[case("/caldav/principal/user%40example%2Ecom/cal/")]
     #[case("/caldav/principal/user%40example.com/cal/")]
-    async fn test_multiget_url_escaping(#[case] request_path: &str) {
+    async fn test_multiget_url_escaping(#[case] request_path: &'static str) {
         let req = CalendarMultigetRequest {
             prop: rustical_dav::xml::PropfindType::Propname,
             href: vec![
@@ -258,7 +267,7 @@ END:VCALENDAR"
 
         let (result, not_found) = get_objects_calendar_multiget(
             &req,
-            request_path,
+            &Uri::from_static(request_path),
             "user@example.com",
             "cal",
             &MockCalStore {
