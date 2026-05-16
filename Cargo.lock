@@ -3535,6 +3535,8 @@ dependencies = [
  "headers",
  "http",
  "insta",
+ "matchit 0.9.2",
+ "matchit-serde",
  "percent-encoding",
  "quick-xml",
  "rstest",
@@ -3610,6 +3612,7 @@ dependencies = [
  "log",
  "matchit 0.9.2",
  "matchit-serde",
+ "percent-encoding",
  "quick-xml",
  "rstest",
  "rustical_xml",
@@ -3619,6 +3622,7 @@ dependencies = [
  "tokio",
  "tower",
  "tracing",
+ "url",
 ]
 
 [[package]]
@@ -3667,6 +3671,7 @@ dependencies = [
  "percent-encoding",
  "rand 0.10.1",
  "rust-embed",
+ "rustical_dav",
  "rustical_ical",
  "rustical_oidc",
  "rustical_store",
@@ -3782,6 +3787,7 @@ dependencies = [
 name = "rustical_xml"
 version = "0.12.13"
 dependencies = [
+ "http",
  "quick-xml",
  "thiserror 2.0.18",
  "xml_derive",
