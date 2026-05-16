@@ -91,3 +91,14 @@ https://<your-host>/caldav-compat/principal/<principal>
 - Go to `New Account -> Calendar -> On The Network`
 - Specify the root path of RustiCal
 - Thunderbird will properly discover group calendars
+
+## KDE Kontact / Merkuro
+
+- Open Kontakt and go to `Settings -> Configure Kontact... -> Calendar -> General -> Calendars -> Add...`
+- Add a `DAV groupware resource` and insert your user id and a generated app token
+- Select `Configure the resource manually` and click `Finish`
+- Insert a display name and click `Add` next to the server configuration
+- For calendar: select CalDAV, insert `https://<hour-host>/caldav` into the `remote URL` field, click `Fetch` and `OK`
+- For contacts: click `Add` again, select CardDAV, insert `https://<hour-host>/carddav` into the `remote URL` field, click `Fetch` and `OK`
+- Click OK
+- The calendars and contact should sync now. Make sure to enable them in the Kontact Calender view for them to show up (in Kontact itself and also necessary for Merkuro)

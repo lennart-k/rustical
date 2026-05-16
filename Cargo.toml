@@ -2,8 +2,8 @@
 members = ["crates/*"]
 
 [workspace.package]
-version = "0.12.9"
-rust-version = "1.92"
+version = "0.12.13"
+rust-version = "1.95"
 edition = "2024"
 description = "A CalDAV server"
 documentation = "https://lennart-k.github.io/rustical/"
@@ -50,6 +50,7 @@ rustical_xml = { path = "./crates/xml/" }
 rustical_oidc = { path = "./crates/oidc/" }
 rustical_ical = { path = "./crates/ical/" }
 
+pbkdf2 = { version = "0.13", features = ["phc"] }
 matchit = "0.9"
 uuid = { version = "1.19", features = ["v4", "fast-rng"] }
 async-trait = "0.1"
@@ -59,12 +60,11 @@ anyhow = { version = "1.0", features = ["backtrace"] }
 serde = { version = "1.0", features = ["serde_derive", "derive", "rc"] }
 futures-util = "0.3"
 password-auth = { version = "1.0", features = ["argon2", "pbkdf2"] }
-pbkdf2 = { version = "0.12", features = ["simple"] }
 chrono = { version = "0.4", features = ["serde"] }
 regex = "1.12"
 rstest = "0.26"
 rstest_reuse = "0.7"
-sha2 = "0.10"
+sha2 = "0.11"
 tokio = { version = "1.48", features = [
   "net",
   "tracing",
@@ -76,7 +76,7 @@ tokio-util = { version = "0.7", features = ["rt"] }
 url = "2.5"
 base64 = "0.22"
 thiserror = "2.0"
-quick-xml = { version = "0.39" }
+quick-xml = { version = "0.40" }
 rust-embed = "8.9"
 tower-sessions = "0.15"
 futures-core = "0.3"
@@ -92,8 +92,8 @@ derive_more = { version = "2.1", features = [
   "constructor",
   "display",
 ] }
-askama = { version = "0.15", features = ["serde_json"] }
-askama_web = { version = "0.15", features = ["axum-0.8"] }
+askama = { version = "0.16", features = ["serde_json"] }
+askama_web = { version = "0.16", features = ["axum-0.8"] }
 sqlx = { version = "0.8", default-features = false, features = [
   "sqlx-sqlite",
   "uuid",
@@ -110,7 +110,7 @@ strum = "0.28"
 strum_macros = "0.28"
 serde_json = { version = "1.0", features = ["raw_value"] }
 sqlx-sqlite = { version = "0.8", features = ["bundled"] }
-caldata = { version = "0.15.0", features = ["chrono-tz", "vtimezones-rs"] }
+caldata = { version = "0.16", features = ["chrono-tz", "vtimezones-rs"] }
 toml = "1.0"
 tower = "0.5"
 tower-http = { version = "0.6", features = [
@@ -125,7 +125,7 @@ rand = "0.10"
 axum-extra = { version = "0.12", features = ["typed-header"] }
 argon2 = "0.5"
 rpassword = "7.4"
-password-hash = { version = "0.5" }
+password-hash = { version = "0.6", features = ["phc", "rand_core"] }
 syn = { version = "2.0", features = ["full"] }
 quote = "1.0"
 proc-macro2 = "1.0"
@@ -144,7 +144,7 @@ ece = { version = "2.3", default-features = false, features = [
 ] }
 openssl = { version = "0.10", features = ["vendored"] }
 async-std = { version = "1.13", features = ["attributes"] }
-similar-asserts = "1.7"
+similar-asserts = "2.0"
 insta = { version = "1.44", features = ["filters"] }
 criterion = { version = "0.8", features = ["async_tokio"] }
 

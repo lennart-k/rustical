@@ -53,3 +53,38 @@ impl XmlSerialize for TagList {
         None
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::TagList;
+    use crate::namespace::NS_DAV;
+    use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
+
+    #[derive(XmlSerialize, XmlRootTag)]
+    #[xml(root = "document")]
+    struct Document {
+        taglist: TagList,
+    }
+
+    #[test]
+    fn test_serialize_taglist() {
+        let out = Document {
+            taglist: TagList(vec![
+                (Some(NS_DAV.into()), "resourcetype".to_owned()),
+                (None, "hello".to_owned()),
+            ]),
+        }
+        .serialize_to_string()
+        .unwrap();
+        assert_eq!(
+            out,
+            r#"<?xml version="1.0" encoding="utf-8"?>
+<document>
+    <taglist>
+        <resourcetype xmlns="DAV:"/>
+        <hello/>
+    </taglist>
+</document>"#
+        );
+    }
+}

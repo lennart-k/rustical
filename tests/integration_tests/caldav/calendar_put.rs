@@ -67,8 +67,8 @@ END:VCALENDAR";
     let body = response.extract_string().await;
     insta::assert_snapshot!(body, @r#"
     <?xml version="1.0" encoding="utf-8"?>
-    <error xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:PUSH="https://bitfire.at/webdav-push">
-        <CAL:valid-calendar-data/>
+    <error xmlns="DAV:">
+        <valid-calendar-data xmlns="urn:ietf:params:xml:ns:caldav"/>
     </error>
     "#);
 }

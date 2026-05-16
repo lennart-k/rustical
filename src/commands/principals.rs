@@ -1,7 +1,7 @@
 use super::membership::MembershipArgs;
 use crate::{config::Config, get_data_stores, membership::cmd_membership};
+use argon2::password_hash::{PasswordHasher, SaltString, rand_core::OsRng};
 use clap::{Parser, Subcommand};
-use password_hash::{PasswordHasher, SaltString, rand_core::OsRng};
 use rustical_store::{
     Secret,
     auth::{AuthenticationProvider, Principal, PrincipalType},

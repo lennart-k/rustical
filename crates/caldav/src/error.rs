@@ -12,7 +12,7 @@ pub enum Precondition {
     #[error("valid-calendar-data")]
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     ValidCalendarData,
-    #[error("calendar-timezone")]
+    #[error("calendar-timezone error: {0}")]
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     CalendarTimezone(&'static str),
 }

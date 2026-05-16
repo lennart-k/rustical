@@ -7,17 +7,23 @@ use axum::extract::FromRequestParts;
 use axum::response::IntoResponse;
 use serde::Deserialize;
 
+/// A `ResourceService` is responsible for handling operations on the resource at an endpoint
 #[async_trait]
 pub trait ResourceService: Clone + Sized + Send + Sync + AxumMethods + 'static {
+    /// defines how the resource URI maps to parameters, i.e. /{principal}/{calendar} -> (String, String)
     type PathComponents: std::fmt::Debug
         + for<'de> Deserialize<'de>
         + Sized
         + Send
         + Sync
         + Clone
-        + 'static; // defines how the resource URI maps to parameters, i.e. /{principal}/{calendar} -> (String, String)
+        + 'static;
+
+    /// Type of a potential child resource
     type MemberType: Resource<Error = Self::Error, Principal = Self::Principal>
         + super::ResourceName;
+
+    /// The resource type served by this service
     type Resource: Resource<Error = Self::Error, Principal = Self::Principal>;
     type Error: From<crate::Error> + Send + Sync + IntoResponse + 'static;
     type Principal: Principal + FromRequestParts<Self>;

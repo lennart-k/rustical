@@ -30,5 +30,8 @@ matchit.workspace = true
 matchit-serde.workspace = true
 caldata = { workspace = true, optional = true }
 
+[dev-dependencies]
+rstest.workspace = true
+
 [features]
 ical = ["dep:caldata"]

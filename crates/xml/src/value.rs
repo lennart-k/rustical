@@ -88,7 +88,7 @@ impl<T: ValueDeserialize> XmlDeserialize for T {
                         if let Some(char) = gref.resolve_char_ref()? {
                             string.push(char);
                         } else if let Some(text) =
-                            quick_xml::escape::resolve_xml_entity(&gref.xml_content()?)
+                            quick_xml::escape::resolve_xml_entity(&gref.xml11_content()?)
                         {
                             string.push_str(text);
                         } else {

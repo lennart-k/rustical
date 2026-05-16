@@ -4,6 +4,7 @@ mod extension;
 mod prop;
 pub mod register;
 use base64::Engine;
+use chrono::Utc;
 use derive_more::Constructor;
 pub use extension::*;
 use http::{HeaderValue, Method, header};
@@ -15,7 +16,7 @@ use rustical_store::{
 use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::mpsc::Receiver;
-use tracing::{error, warn};
+use tracing::{error, info, warn};
 
 mod endpoints;
 pub use endpoints::subscription_service;
@@ -111,6 +112,15 @@ impl<S: SubscriptionStore> DavPushController<S> {
         };
 
         for subsciption in subscriptions {
+            if subsciption.is_expired(&Utc::now()) {
+                info!(
+                    "Deleting subscription {} on topic {} because it is expired",
+                    subsciption.id, subsciption.topic
+                );
+                self.try_delete_subscription(&subsciption.id).await;
+                continue;
+            }
+
             if let Some(allowed_push_servers) = &self.allowed_push_servers {
                 if let Ok(url) = Url::parse(&subsciption.push_resource) {
                     let origin = url.origin().unicode_serialization();
@@ -120,6 +130,7 @@ impl<S: SubscriptionStore> DavPushController<S> {
                             subsciption.id, subsciption.topic
                         );
                         self.try_delete_subscription(&subsciption.id).await;
+                        continue;
                     }
                 } else {
                     warn!(
@@ -127,6 +138,7 @@ impl<S: SubscriptionStore> DavPushController<S> {
                         subsciption.id, subsciption.topic
                     );
                     self.try_delete_subscription(&subsciption.id).await;
+                    continue;
                 }
             }
 

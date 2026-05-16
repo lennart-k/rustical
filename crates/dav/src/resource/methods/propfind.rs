@@ -7,6 +7,7 @@ use crate::resource::ResourceName;
 use crate::resource::ResourceService;
 use crate::xml::MultistatusElement;
 use axum::extract::{Extension, OriginalUri, Path, State};
+use axum_extra::TypedHeader;
 use tracing::instrument;
 
 type RSMultistatus<R> = MultistatusElement<
@@ -18,12 +19,13 @@ type RSMultistatus<R> = MultistatusElement<
 pub async fn axum_route_propfind<R: ResourceService>(
     Path(path): Path<R::PathComponents>,
     State(resource_service): State<R>,
-    depth: Depth,
+    depth: Option<TypedHeader<Depth>>,
     principal: R::Principal,
     uri: OriginalUri,
     Extension(puri): Extension<R::PrincipalUri>,
     body: String,
 ) -> Result<RSMultistatus<R>, R::Error> {
+    let depth = depth.map(|TypedHeader(depth)| depth).unwrap_or_default();
     route_propfind::<R>(
         &path,
         uri.path(),

@@ -13,3 +13,33 @@ impl HrefElement {
         Self { href }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::HrefElement;
+    use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
+
+    #[derive(XmlSerialize, XmlRootTag)]
+    #[xml(root = "document")]
+    struct Document {
+        hello: HrefElement,
+    }
+
+    #[test]
+    fn test_serialize_resourcetype() {
+        let out = Document {
+            hello: HrefElement::new("/okaywow".to_owned()),
+        }
+        .serialize_to_string()
+        .unwrap();
+        assert_eq!(
+            out,
+            r#"<?xml version="1.0" encoding="utf-8"?>
+<document>
+    <hello>
+        <href xmlns="DAV:">/okaywow</href>
+    </hello>
+</document>"#
+        );
+    }
+}
