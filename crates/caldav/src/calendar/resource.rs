@@ -5,6 +5,7 @@ use caldata::IcalParser;
 use caldata::types::CalDateTime;
 use chrono::{DateTime, Utc};
 use derive_more::derive::{From, Into};
+use http::Uri;
 use rustical_dav::extensions::{
     CommonPropertiesExtension, CommonPropertiesProp, SyncTokenExtension, SyncTokenExtensionProp,
 };
@@ -18,6 +19,7 @@ use rustical_xml::{EnumVariants, PropName};
 use rustical_xml::{XmlDeserialize, XmlSerialize};
 use serde::Deserialize;
 use std::borrow::Cow;
+use std::str::FromStr;
 
 #[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "CalendarPropName")]
@@ -145,7 +147,7 @@ impl Resource for CalendarResource {
                 }
                 // chrono_tz uses the IANA database
                 CalendarPropName::TimezoneServiceSet => CalendarProp::TimezoneServiceSet(
-                    "https://www.iana.org/time-zones".to_owned().into(),
+                    Uri::from_static("https://www.iana.org/time-zones").into(),
                 ),
                 CalendarPropName::CalendarTimezoneId => {
                     CalendarProp::CalendarTimezoneId(self.cal.timezone_id.clone())
@@ -167,7 +169,15 @@ impl Resource for CalendarResource {
                     CalendarProp::SupportedReportSet(SupportedReportSet::all())
                 }
                 CalendarPropName::Source => {
-                    CalendarProp::Source(self.cal.subscription_url.clone().map(HrefElement::from))
+                    // TODO: Validate that source is valid
+                    CalendarProp::Source(
+                        self.cal
+                            .subscription_url
+                            .as_deref()
+                            .map(Uri::from_str)
+                            .and_then(Result::ok)
+                            .map(HrefElement::from),
+                    )
                 }
                 CalendarPropName::MinDateTime => {
                     CalendarProp::MinDateTime(CalDateTime::from(DateTime::<Utc>::MIN_UTC).format())

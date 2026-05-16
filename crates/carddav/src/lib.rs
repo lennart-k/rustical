@@ -5,6 +5,7 @@ use axum::routing::any;
 use axum::{Extension, Router};
 use derive_more::Constructor;
 pub use error::Error;
+use http::Uri;
 use principal::PrincipalResourceService;
 use rustical_dav::resource::{PrincipalUri, ResourceService};
 use rustical_dav::resources::RootResourceService;
@@ -24,11 +25,17 @@ pub mod principal;
 pub struct CardDavPrincipalUri(&'static str);
 
 impl PrincipalUri for CardDavPrincipalUri {
-    fn principal_collection(&self) -> String {
-        format!("{}/principal/", self.0)
+    fn principal_collection(&self) -> Uri {
+        Uri::builder()
+            .path_and_query(format!("{}/principal/", self.0))
+            .build()
+            .unwrap()
     }
-    fn principal_uri(&self, principal: &str) -> String {
-        format!("{}{}/", self.principal_collection(), principal)
+    fn principal_uri(&self, principal: &str) -> Uri {
+        Uri::builder()
+            .path_and_query(format!("{}{}/", self.principal_collection(), principal))
+            .build()
+            .unwrap()
     }
 }
 

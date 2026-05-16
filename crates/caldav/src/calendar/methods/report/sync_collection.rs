@@ -1,10 +1,12 @@
+use std::str::FromStr;
+
 use crate::{
     Error,
     calendar_object::{
         CalendarObjectPropWrapper, CalendarObjectPropWrapperName, resource::CalendarObjectResource,
     },
 };
-use http::StatusCode;
+use http::{StatusCode, Uri};
 use rustical_dav::{
     resource::{PrincipalUri, Resource},
     xml::{
@@ -47,9 +49,9 @@ pub async fn handle_sync_collection<C: CalendarStore>(
     for object_id in deleted_objects {
         let path = format!("{path}/{object_id}.ics");
         responses.push(ResponseElement {
-            href: path,
+            href: Uri::from_str(&path).unwrap(),
             status: Some(StatusCode::NOT_FOUND),
-            ..Default::default()
+            propstat: vec![],
         });
     }
 

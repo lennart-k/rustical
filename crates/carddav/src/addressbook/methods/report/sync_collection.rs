@@ -1,10 +1,12 @@
+use std::str::FromStr;
+
 use crate::{
     Error,
     address_object::{
         AddressObjectPropWrapper, AddressObjectPropWrapperName, resource::AddressObjectResource,
     },
 };
-use http::StatusCode;
+use http::{StatusCode, Uri};
 use rustical_dav::{
     resource::{PrincipalUri, Resource},
     xml::{
@@ -47,9 +49,9 @@ pub async fn handle_sync_collection<AS: AddressbookStore>(
     for object_id in deleted_objects {
         let path = format!("{}/{}.vcf", path.trim_end_matches('/'), object_id);
         responses.push(ResponseElement {
-            href: path,
+            href: Uri::from_str(&path).unwrap(),
             status: Some(StatusCode::NOT_FOUND),
-            ..Default::default()
+            propstat: vec![],
         });
     }
 

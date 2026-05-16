@@ -27,7 +27,7 @@ async fn test_principal_resource(
         sub_store: Arc::new(sub_store),
         auth_provider: Arc::new(auth_provider),
         simplified_home_set: false,
-        config: Default::default(),
+        config: Arc::default(),
     };
 
     // We don't have any calendars here

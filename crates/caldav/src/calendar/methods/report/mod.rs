@@ -7,12 +7,12 @@ use crate::{
 };
 use axum::{
     Extension,
-    extract::{OriginalUri, Path, State},
+    extract::{MatchedPath, OriginalUri, Path, State},
     response::IntoResponse,
 };
 use calendar_multiget::{CalendarMultigetRequest, get_objects_calendar_multiget};
 use calendar_query::{CalendarQueryRequest, get_objects_calendar_query};
-use http::StatusCode;
+use http::{StatusCode, Uri};
 use rustical_dav::{
     resource::{PrincipalUri, Resource},
     xml::{
@@ -23,6 +23,7 @@ use rustical_dav::{
 use rustical_ical::CalendarObject;
 use rustical_store::{CalendarStore, SubscriptionStore, auth::Principal};
 use rustical_xml::{XmlDeserialize, XmlDocument};
+use std::str::FromStr;
 use sync_collection::handle_sync_collection;
 use tracing::instrument;
 
@@ -75,9 +76,9 @@ fn objects_response(
     let not_found_responses = not_found
         .into_iter()
         .map(|path| ResponseElement {
-            href: path,
+            href: Uri::from_str(&path).unwrap(),
             status: Some(StatusCode::NOT_FOUND),
-            ..Default::default()
+            propstat: vec![],
         })
         .collect();
 
@@ -95,6 +96,7 @@ pub async fn route_report_calendar<C: CalendarStore, S: SubscriptionStore>(
     Extension(puri): Extension<CalDavPrincipalUri>,
     State(CalendarResourceService { cal_store, .. }): State<CalendarResourceService<C, S>>,
     OriginalUri(uri): OriginalUri,
+    matched_path: MatchedPath,
     body: String,
 ) -> Result<impl IntoResponse, Error> {
     if !user.is_principal(&principal) {
@@ -149,10 +151,14 @@ pub async fn route_report_calendar<C: CalendarStore, S: SubscriptionStore>(
 mod tests {
     use super::*;
     use crate::calendar_object::{CalendarData, CalendarObjectPropName, ExpandElement};
+    use axum::{Router, body::Body};
     use calendar_query::{CompFilterElement, FilterElement, TimeRangeElement};
+    use http::Request;
+    use rstest::rstest;
     use rustical_dav::{extensions::CommonPropertiesPropName, xml::PropElement};
     use rustical_ical::UtcDateTime;
     use rustical_xml::{NamespaceOwned, ValueDeserialize};
+    use tower::ServiceExt;
 
     #[test]
     fn test_xml_calendar_data() {
@@ -271,5 +277,30 @@ mod tests {
                 ]
             })
         );
+    }
+
+    /// Ensure that the path extractor urldecodes all paths
+    #[tokio::test]
+    #[rstest]
+    #[case("user", "user")]
+    #[case("user%20with%20space", "user with space")]
+    #[case("asd%40asd%2Ede", "asd@asd.de")]
+    #[case("slash%2Fslash", "slash/slash")]
+    async fn test_path_extractor_urlencoding(#[case] input: &str, #[case] expected: &'static str) {
+        let app = Router::new().route(
+            "/{yeet}",
+            axum::routing::get(async |Path(path): Path<String>| path),
+        );
+        let req = Request::builder()
+            .uri(format!("/{input}"))
+            .body(Body::empty())
+            .unwrap();
+        let resp = app.oneshot(req).await.unwrap();
+
+        let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX)
+            .await
+            .unwrap();
+        let body = String::from_utf8(bytes.to_vec()).unwrap();
+        assert_eq!(body, expected);
     }
 }

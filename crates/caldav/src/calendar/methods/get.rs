@@ -8,7 +8,7 @@ use caldata::generator::Emitter;
 use caldata::parser::ContentLine;
 use headers::{ContentType, HeaderMapExt};
 use http::{HeaderValue, Method, StatusCode, header};
-use percent_encoding::{CONTROLS, utf8_percent_encode};
+use rustical_dav::rfc_3986_percent_encode;
 use rustical_store::{CalendarStore, SubscriptionStore, auth::Principal};
 use std::str::FromStr;
 use tracing::instrument;
@@ -76,7 +76,7 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
     hdrs.typed_insert(ContentType::from_str("text/calendar; charset=utf-8").unwrap());
 
     let filename = format!("{}_{}.ics", calendar.principal, calendar.id);
-    let filename = utf8_percent_encode(&filename, CONTROLS);
+    let filename = rfc_3986_percent_encode(&filename);
     hdrs.insert(
         header::CONTENT_DISPOSITION,
         HeaderValue::from_str(&format!(

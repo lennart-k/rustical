@@ -3,7 +3,7 @@ source: crates/caldav/src/principal/tests.rs
 expression: response
 ---
 ResponseElement {
-    href: "/caldav/principal/user/",
+    href: /caldav/principal/user/,
     status: None,
     propstat: [
         Normal(
@@ -18,14 +18,14 @@ ResponseElement {
                         Principal(
                             CalendarUserAddressSet(
                                 HrefElement {
-                                    href: "/caldav/principal/user/",
+                                    href: /caldav/principal/user/,
                                 },
                             ),
                         ),
                         Principal(
                             PrincipalUrl(
                                 HrefElement {
-                                    href: "/caldav/principal/user/",
+                                    href: /caldav/principal/user/,
                                 },
                             ),
                         ),
@@ -34,7 +34,7 @@ ResponseElement {
                                 GroupMembership(
                                     [
                                         HrefElement {
-                                            href: "/caldav/principal/group/",
+                                            href: /caldav/principal/group/,
                                         },
                                     ],
                                 ),
@@ -66,10 +66,10 @@ ResponseElement {
                                 CalendarHomeSet(
                                     [
                                         HrefElement {
-                                            href: "/caldav/principal/user/",
+                                            href: /caldav/principal/user/,
                                         },
                                         HrefElement {
-                                            href: "/caldav/principal/group/",
+                                            href: /caldav/principal/group/,
                                         },
                                     ],
                                 ),
@@ -105,7 +105,7 @@ ResponseElement {
                         Common(
                             CurrentUserPrincipal(
                                 HrefElement {
-                                    href: "/caldav/principal/user/",
+                                    href: /caldav/principal/user/,
                                 },
                             ),
                         ),
@@ -122,7 +122,7 @@ ResponseElement {
                             Owner(
                                 Some(
                                     HrefElement {
-                                        href: "/caldav/principal/user/",
+                                        href: /caldav/principal/user/,
                                     },
                                 ),
                             ),

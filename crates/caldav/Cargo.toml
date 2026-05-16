@@ -47,3 +47,5 @@ strum.workspace = true
 strum_macros.workspace = true
 vtimezones-rs.workspace = true
 similar-asserts.workspace = true
+matchit.workspace = true
+matchit-serde.workspace = true

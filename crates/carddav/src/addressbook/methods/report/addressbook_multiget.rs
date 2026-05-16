@@ -1,10 +1,12 @@
+use std::str::FromStr;
+
 use crate::{
     Error,
     address_object::{
         AddressObjectPropWrapper, AddressObjectPropWrapperName, resource::AddressObjectResource,
     },
 };
-use http::StatusCode;
+use http::{StatusCode, Uri};
 use rustical_dav::{
     resource::{PrincipalUri, Resource},
     xml::{MultistatusElement, PropfindType, multistatus::ResponseElement},
@@ -89,9 +91,9 @@ pub async fn handle_addressbook_multiget<AS: AddressbookStore>(
     let not_found_responses = not_found
         .into_iter()
         .map(|path| ResponseElement {
-            href: path,
+            href: Uri::from_str(&path).unwrap(),
             status: Some(StatusCode::NOT_FOUND),
-            ..Default::default()
+            propstat: vec![],
         })
         .collect();
 

@@ -4,7 +4,7 @@ use crate::xml::multistatus::{PropTagWrapper, PropstatElement, PropstatWrapper};
 use crate::xml::{PropElement, PropfindElement, PropfindType, Resourcetype};
 use crate::xml::{TagList, multistatus::ResponseElement};
 use headers::{ETag, IfMatch, IfNoneMatch};
-use http::StatusCode;
+use http::{StatusCode, Uri};
 use itertools::Itertools;
 use quick_xml::name::Namespace;
 pub use resource_service::ResourceService;
@@ -31,6 +31,8 @@ pub trait ResourcePropName: FromStr {}
 impl<T: FromStr> ResourcePropName for T {}
 
 pub trait ResourceName {
+    /// Return the file name of a resource
+    /// It is NOT percent-encoded yet
     fn get_name(&self) -> Cow<'_, str>;
 }
 
@@ -141,12 +143,12 @@ pub trait Resource: Clone + Send + 'static {
                         .collect_vec();
 
                     return Ok(ResponseElement {
-                        href: path.clone(),
+                        href: Uri::from_str(&path).unwrap(),
                         propstat: vec![PropstatWrapper::TagList(PropstatElement {
                             prop: TagList::from(props),
                             status: StatusCode::OK,
                         })],
-                        ..Default::default()
+                        status: None,
                     });
                 }
                 PropfindType::Allprop => (
@@ -183,9 +185,9 @@ pub trait Resource: Clone + Send + 'static {
             }));
         }
         Ok(ResponseElement {
-            href: path.clone(),
+            href: Uri::from_str(&path).unwrap(),
             propstat: propstats,
-            ..Default::default()
+            status: None,
         })
     }
 }

@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::{
     CardDavPrincipalUri, Error,
     address_object::{
@@ -16,7 +18,7 @@ use axum::{
     extract::{OriginalUri, Path, State},
     response::IntoResponse,
 };
-use http::StatusCode;
+use http::{StatusCode, Uri};
 use rustical_dav::{
     resource::{PrincipalUri, Resource},
     xml::{
@@ -79,9 +81,9 @@ fn objects_response(
     let not_found_responses = not_found
         .into_iter()
         .map(|path| ResponseElement {
-            href: path,
+            href: Uri::from_str(&path).unwrap(),
             status: Some(StatusCode::NOT_FOUND),
-            ..Default::default()
+            propstat: vec![],
         })
         .collect();
 
