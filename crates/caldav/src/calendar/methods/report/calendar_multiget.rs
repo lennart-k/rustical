@@ -249,7 +249,6 @@ END:VCALENDAR"
         }
     }
 
-    /// We need to make sure that
     #[tokio::test]
     #[rstest::rstest]
     #[case("/caldav/principal/user%40example%2Ecom/cal/")]

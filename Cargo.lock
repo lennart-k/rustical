@@ -3585,6 +3585,7 @@ dependencies = [
  "rustical_store",
  "rustical_xml",
  "serde",
+ "similar-asserts",
  "strum",
  "strum_macros",
  "thiserror 2.0.18",

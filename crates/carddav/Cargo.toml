@@ -39,3 +39,4 @@ rstest.workspace = true
 
 [dev-dependencies]
 insta.workspace = true
+similar-asserts.workspace = true
