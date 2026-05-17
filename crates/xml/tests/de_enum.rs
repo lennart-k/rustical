@@ -149,7 +149,7 @@ fn test_untagged_enum() {
         nice: Option<()>,
     }
 
-    let doc = Document::parse_str(
+    Document::parse_str(
         r#"<document>
         <prop>
             <displayname>Hello</displayname>
@@ -159,5 +159,4 @@ fn test_untagged_enum() {
     </document>"#,
     )
     .unwrap();
-    dbg!(doc);
 }

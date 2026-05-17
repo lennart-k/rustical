@@ -31,7 +31,6 @@ impl PrincipalUri for CalDavPrincipalUri {
     }
     fn principal_uri(&self, principal: &str) -> Uri {
         let principal = rfc_3986_percent_encode(principal);
-        dbg!(principal.to_string());
         Uri::builder()
             .path_and_query(format!("{}{}/", self.principal_collection(), principal))
             .build()

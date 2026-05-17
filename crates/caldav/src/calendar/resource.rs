@@ -168,17 +168,26 @@ impl Resource for CalendarResource {
                 CalendarPropName::SupportedReportSet => {
                     CalendarProp::SupportedReportSet(SupportedReportSet::all())
                 }
-                CalendarPropName::Source => {
-                    // TODO: Validate that source is valid
-                    CalendarProp::Source(
-                        self.cal
-                            .subscription_url
-                            .as_deref()
-                            .map(Uri::from_str)
-                            .and_then(Result::ok)
-                            .map(HrefElement::from),
-                    )
-                }
+                CalendarPropName::Source => CalendarProp::Source(
+                    self.cal
+                        .subscription_url
+                        .as_deref()
+                        .map(Uri::from_str)
+                        .and_then(|res| {
+                            res.map_or_else(
+                                |_| {
+                                    tracing::error!(
+                                        "Invalid source url for calendar {}/{}",
+                                        self.cal.principal,
+                                        self.cal.id
+                                    );
+                                    None
+                                },
+                                Some,
+                            )
+                        })
+                        .map(HrefElement::from),
+                ),
                 CalendarPropName::MinDateTime => {
                     CalendarProp::MinDateTime(CalDateTime::from(DateTime::<Utc>::MIN_UTC).format())
                 }

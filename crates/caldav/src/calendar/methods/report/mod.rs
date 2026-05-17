@@ -15,6 +15,7 @@ use calendar_query::{CalendarQueryRequest, get_objects_calendar_query};
 use http::{StatusCode, Uri};
 use rustical_dav::{
     resource::{PrincipalUri, Resource},
+    rfc_3986_percent_encode,
     xml::{
         MultistatusElement, PropfindType, multistatus::ResponseElement,
         sync_collection::SyncCollectionRequest,
@@ -62,7 +63,11 @@ fn objects_response(
 ) -> Result<MultistatusElement<CalendarObjectPropWrapper, String>, Error> {
     let mut responses = Vec::new();
     for (object_id, object) in objects {
-        let path = format!("{path}/{object_id}.ics", path = path.trim_end_matches('/'));
+        let path = format!(
+            "{path}/{object_id}.ics",
+            path = path.trim_end_matches('/'),
+            object_id = rfc_3986_percent_encode(&object_id)
+        );
         responses.push(
             CalendarObjectResource {
                 object,

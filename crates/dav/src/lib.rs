@@ -101,7 +101,6 @@ pub fn resolve_child_uri<'a>(
     let mut child_path_segments = child_uri.path().split('/').filter(|seg| !seg.is_empty());
 
     for collection_segment in collection_path_segments {
-        dbg!(collection_segment);
         let Some(child_segment) = child_path_segments.next() else {
             // child_uri is not child of collection_uri
             return None;
