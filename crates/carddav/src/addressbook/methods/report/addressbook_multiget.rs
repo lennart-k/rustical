@@ -295,7 +295,10 @@ END:VCARD"
                 "/carddav/principal/user%40example%2Ecom/contacts/hello.vcf".to_string(),
                 "/carddav/principal/user@example.com/contacts/unescaped.vcf".to_string(),
                 "/carddav/principal/user%40example.com/contacts/shouldwork.vcf".to_string(),
+                "/carddav/principal/user%40example.com/contacts/notfound".to_string(),
                 "/carddav/principal/user%40example%2Ecom/wrongcontacts/hello.vcf".to_string(),
+                "asd asd".to_string(),
+                "/carddav/principal/user%40example.com/contacts".to_string(),
             ],
         };
 
@@ -324,7 +327,12 @@ END:VCARD"
 
         similar_asserts::assert_eq!(
             not_found,
-            vec!["/carddav/principal/user%40example%2Ecom/wrongcontacts/hello.vcf".to_string()]
+            vec![
+                "/carddav/principal/user%40example.com/contacts/notfound".to_string(),
+                "/carddav/principal/user%40example%2Ecom/wrongcontacts/hello.vcf".to_string(),
+                "asd asd".to_string(),
+                "/carddav/principal/user%40example.com/contacts".to_string(),
+            ]
         );
     }
 }

@@ -260,7 +260,10 @@ END:VCALENDAR"
                 "/caldav/principal/user%40example%2Ecom/cal/hello.ics".to_string(),
                 "/caldav/principal/user@example.com/cal/unescaped.ics".to_string(),
                 "/caldav/principal/user%40example.com/cal/shouldwork.ics".to_string(),
+                "/caldav/principal/user%40example.com/cal/notfound".to_string(),
                 "/caldav/principal/user%40example%2Ecom/nocal/hello.ics".to_string(),
+                "asd asd".to_string(),
+                "/caldav/principal/user%40example.com/cal".to_string(),
             ],
         };
 
@@ -289,7 +292,12 @@ END:VCALENDAR"
 
         similar_asserts::assert_eq!(
             not_found,
-            vec!["/caldav/principal/user%40example%2Ecom/nocal/hello.ics".to_string()]
+            vec![
+                "/caldav/principal/user%40example.com/cal/notfound".to_string(),
+                "/caldav/principal/user%40example%2Ecom/nocal/hello.ics".to_string(),
+                "asd asd".to_string(),
+                "/caldav/principal/user%40example.com/cal".to_string(),
+            ]
         );
     }
 }
