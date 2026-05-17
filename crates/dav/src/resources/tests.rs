@@ -5,8 +5,10 @@ use crate::{
     privileges::UserPrivilegeSet,
     resource::{PrincipalUri, Resource},
     resources::RootResource,
+    rfc_3986_percent_encode,
     xml::{Resourcetype, ResourcetypeInner},
 };
+use http::Uri;
 
 #[test]
 fn test_root_resource() {
@@ -76,10 +78,14 @@ impl Resource for TestPrincipal {
 pub struct TestPrincipalUri;
 
 impl PrincipalUri for TestPrincipalUri {
-    fn principal_collection(&self) -> String {
-        "/".to_owned()
+    fn principal_collection(&self) -> Uri {
+        Uri::from_static("/")
     }
-    fn principal_uri(&self, principal: &str) -> String {
-        format!("/{principal}/")
+    fn principal_uri(&self, principal: &str) -> Uri {
+        let principal = rfc_3986_percent_encode(principal);
+        Uri::builder()
+            .path_and_query(format!("/{principal}/"))
+            .build()
+            .unwrap()
     }
 }

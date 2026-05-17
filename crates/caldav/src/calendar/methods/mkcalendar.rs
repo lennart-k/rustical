@@ -133,7 +133,7 @@ pub async fn route_mkcalendar<C: CalendarStore, S: SubscriptionStore>(
         timezone_id,
         deleted_at: None,
         synctoken: 0,
-        subscription_url: request.source.map(|href| href.href),
+        subscription_url: request.source.map(|href| href.href.to_string()),
         push_topic: uuid::Uuid::new_v4().to_string(),
         components: request.supported_calendar_component_set.map_or_else(
             || {

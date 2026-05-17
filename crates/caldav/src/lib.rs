@@ -2,9 +2,11 @@
 #![allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]
 use axum::{Extension, Router};
 use derive_more::Constructor;
+use http::Uri;
 use principal::PrincipalResourceService;
 use rustical_dav::resource::{PrincipalUri, ResourceService};
 use rustical_dav::resources::RootResourceService;
+use rustical_dav::rfc_3986_percent_encode;
 use rustical_store::auth::middleware::AuthenticationLayer;
 use rustical_store::auth::{AuthenticationProvider, Principal};
 use rustical_store::{CalendarStore, SubscriptionStore};
@@ -21,11 +23,18 @@ pub use error::Error;
 pub struct CalDavPrincipalUri(&'static str);
 
 impl PrincipalUri for CalDavPrincipalUri {
-    fn principal_collection(&self) -> String {
-        format!("{}/principal/", self.0)
+    fn principal_collection(&self) -> Uri {
+        Uri::builder()
+            .path_and_query(format!("{}/principal/", self.0))
+            .build()
+            .unwrap()
     }
-    fn principal_uri(&self, principal: &str) -> String {
-        format!("{}{}/", self.principal_collection(), principal)
+    fn principal_uri(&self, principal: &str) -> Uri {
+        let principal = rfc_3986_percent_encode(principal);
+        Uri::builder()
+            .path_and_query(format!("{}{}/", self.principal_collection(), principal))
+            .build()
+            .unwrap()
     }
 }
 
@@ -66,5 +75,22 @@ pub struct CalDavConfig {
 impl Default for CalDavConfig {
     fn default() -> Self {
         Self { rfc7809: true }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::CalDavPrincipalUri;
+    use rustical_dav::resource::PrincipalUri;
+
+    #[rstest::rstest]
+    #[case("user", "/caldav/principal/user/")]
+    #[case("user with space", "/caldav/principal/user%20with%20space/")]
+    #[case("asd@asd.de", "/caldav/principal/asd%40asd.de/")]
+    fn test_principal_uri_encoding(#[case] principal: &str, #[case] output: &str) {
+        assert_eq!(
+            CalDavPrincipalUri("/caldav").principal_uri(principal),
+            output
+        );
     }
 }

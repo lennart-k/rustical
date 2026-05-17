@@ -7,14 +7,15 @@ use crate::{
 };
 use axum::{
     Extension,
-    extract::{OriginalUri, Path, State},
+    extract::{MatchedPath, OriginalUri, Path, State},
     response::IntoResponse,
 };
 use calendar_multiget::{CalendarMultigetRequest, get_objects_calendar_multiget};
 use calendar_query::{CalendarQueryRequest, get_objects_calendar_query};
-use http::StatusCode;
+use http::{StatusCode, Uri};
 use rustical_dav::{
     resource::{PrincipalUri, Resource},
+    rfc_3986_percent_encode,
     xml::{
         MultistatusElement, PropfindType, multistatus::ResponseElement,
         sync_collection::SyncCollectionRequest,
@@ -23,6 +24,7 @@ use rustical_dav::{
 use rustical_ical::CalendarObject;
 use rustical_store::{CalendarStore, SubscriptionStore, auth::Principal};
 use rustical_xml::{XmlDeserialize, XmlDocument};
+use std::str::FromStr;
 use sync_collection::handle_sync_collection;
 use tracing::instrument;
 
@@ -61,7 +63,11 @@ fn objects_response(
 ) -> Result<MultistatusElement<CalendarObjectPropWrapper, String>, Error> {
     let mut responses = Vec::new();
     for (object_id, object) in objects {
-        let path = format!("{path}/{object_id}.ics");
+        let path = format!(
+            "{path}/{object_id}.ics",
+            path = path.trim_end_matches('/'),
+            object_id = rfc_3986_percent_encode(&object_id)
+        );
         responses.push(
             CalendarObjectResource {
                 object,
@@ -75,9 +81,9 @@ fn objects_response(
     let not_found_responses = not_found
         .into_iter()
         .map(|path| ResponseElement {
-            href: path,
+            href: Uri::from_str(&path).unwrap(),
             status: Some(StatusCode::NOT_FOUND),
-            ..Default::default()
+            propstat: vec![],
         })
         .collect();
 
@@ -95,6 +101,7 @@ pub async fn route_report_calendar<C: CalendarStore, S: SubscriptionStore>(
     Extension(puri): Extension<CalDavPrincipalUri>,
     State(CalendarResourceService { cal_store, .. }): State<CalendarResourceService<C, S>>,
     OriginalUri(uri): OriginalUri,
+    matched_path: MatchedPath,
     body: String,
 ) -> Result<impl IntoResponse, Error> {
     if !user.is_principal(&principal) {
@@ -114,7 +121,7 @@ pub async fn route_report_calendar<C: CalendarStore, S: SubscriptionStore>(
         ReportRequest::CalendarMultiget(cal_multiget) => {
             let (objects, not_found) = get_objects_calendar_multiget(
                 cal_multiget,
-                uri.path(),
+                &uri,
                 &principal,
                 &cal_id,
                 cal_store.as_ref(),
@@ -149,10 +156,14 @@ pub async fn route_report_calendar<C: CalendarStore, S: SubscriptionStore>(
 mod tests {
     use super::*;
     use crate::calendar_object::{CalendarData, CalendarObjectPropName, ExpandElement};
+    use axum::{Router, body::Body};
     use calendar_query::{CompFilterElement, FilterElement, TimeRangeElement};
+    use http::Request;
+    use rstest::rstest;
     use rustical_dav::{extensions::CommonPropertiesPropName, xml::PropElement};
     use rustical_ical::UtcDateTime;
     use rustical_xml::{NamespaceOwned, ValueDeserialize};
+    use tower::ServiceExt;
 
     #[test]
     fn test_xml_calendar_data() {
@@ -271,5 +282,83 @@ mod tests {
                 ]
             })
         );
+    }
+
+    /// Ensure that the path extractor urldecodes all paths
+    #[tokio::test]
+    #[rstest]
+    #[case("user", "user")]
+    #[case("user%20with%20space", "user with space")]
+    #[case("asd%40asd%2Ede", "asd@asd.de")]
+    #[case("slash%2Fslash", "slash/slash")]
+    async fn test_path_extractor_urlencoding(#[case] input: &str, #[case] expected: &'static str) {
+        let app = Router::new().route(
+            "/{yeet}",
+            axum::routing::get(async |Path(path): Path<String>| path),
+        );
+        let req = Request::builder()
+            .uri(format!("/{input}"))
+            .body(Body::empty())
+            .unwrap();
+        let resp = app.oneshot(req).await.unwrap();
+
+        let bytes = axum::body::to_bytes(resp.into_body(), usize::MAX)
+            .await
+            .unwrap();
+        let body = String::from_utf8(bytes.to_vec()).unwrap();
+        assert_eq!(body, expected);
+    }
+
+    #[rstest]
+    fn test_objects_response() {
+        let response = objects_response(
+            vec![(
+                "found with space".to_string(),
+                CalendarObject::from_ics(
+                    r"BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Example Corp.//CalDAV Client//EN
+BEGIN:VEVENT
+UID:20010712T182145Z-123401@example.com
+DTSTAMP:20060712T182145Z
+DTSTART:20060714T170000Z
+DTEND:20060715T040000Z
+SUMMARY:Bastille Day Party
+END:VEVENT
+END:VCALENDAR"
+                        .to_string(),
+                )
+                .unwrap(),
+            )],
+            vec!["/caldav/principal/user/not%20found.ics".to_string()],
+            "/caldav/principal/user%40rustical.dev/cal",
+            "user@rustical.dev",
+            &CalDavPrincipalUri::new("/caldav"),
+            &Principal {
+                id: "user@rustical.dev".to_string(),
+                displayname: None,
+                principal_type: rustical_store::auth::PrincipalType::Individual,
+                password: None,
+                memberships: vec![],
+            },
+            &PropfindType::Propname,
+        )
+        .unwrap();
+
+        // Make sure we get responses for both
+        assert_eq!(response.responses.len(), 1);
+        for resp in response.responses {
+            // Make sure spaces are escaped
+            assert!(resp.href.path().contains("%20"));
+            // Make sure periods are not escaped
+            assert!(resp.href.path().contains('.'));
+        }
+        assert_eq!(response.member_responses.len(), 1);
+        for resp in response.member_responses {
+            // Make sure spaces are escaped
+            assert!(resp.href.path().contains("%20"));
+            // Make sure periods are not escaped
+            assert!(resp.href.path().contains('.'));
+        }
     }
 }

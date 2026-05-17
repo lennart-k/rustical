@@ -12,3 +12,4 @@ publish = false
 quick-xml.workspace = true
 thiserror.workspace = true
 xml_derive = { path = "./derive" }
+http.workspace = true

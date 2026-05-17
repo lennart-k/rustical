@@ -1,8 +1,10 @@
 use crate::{XmlDeserialize, XmlError, XmlSerialize};
+use http::uri::InvalidUri;
 use quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
 use quick_xml::name::Namespace;
 use std::collections::HashMap;
 use std::num::{ParseFloatError, ParseIntError};
+use std::str::FromStr;
 use std::{convert::Infallible, io::BufRead};
 use thiserror::Error;
 
@@ -22,6 +24,8 @@ pub enum ParseValueError {
     ParseIntError(#[from] ParseIntError),
     #[error(transparent)]
     ParseFloatError(#[from] ParseFloatError),
+    #[error(transparent)]
+    InvalidUri(#[from] InvalidUri),
     #[error("{0}")]
     Other(String),
 }
@@ -61,6 +65,18 @@ impl_value_parse!(usize);
 impl ValueSerialize for &str {
     fn serialize(&self) -> String {
         (*self).to_string()
+    }
+}
+
+impl ValueDeserialize for http::Uri {
+    fn deserialize(val: &str) -> Result<Self, XmlError> {
+        Self::from_str(val).map_err(|err| XmlError::InvalidValue(ParseValueError::InvalidUri(err)))
+    }
+}
+
+impl ValueSerialize for http::Uri {
+    fn serialize(&self) -> String {
+        self.to_string()
     }
 }
 

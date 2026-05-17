@@ -1,6 +1,6 @@
 use crate::xml::TagList;
 use headers::{CacheControl, ContentType, HeaderMapExt};
-use http::StatusCode;
+use http::{StatusCode, Uri};
 use quick_xml::name::Namespace;
 use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
 use std::{collections::HashMap, fmt::Debug};
@@ -43,7 +43,7 @@ pub enum PropstatWrapper<T: XmlSerialize> {
 #[derive(XmlSerialize, XmlRootTag, Debug)]
 #[xml(ns = "crate::namespace::NS_DAV", root = "response")]
 pub struct ResponseElement<PropstatType: XmlSerialize> {
-    pub href: String,
+    pub href: Uri,
     #[xml(serialize_with = "xml_serialize_optional_status")]
     pub status: Option<StatusCode>,
     #[xml(flatten)]
@@ -65,16 +65,6 @@ fn xml_serialize_optional_status(
         namespaces,
         writer,
     )
-}
-
-impl<PT: XmlSerialize> Default for ResponseElement<PT> {
-    fn default() -> Self {
-        Self {
-            href: String::new(),
-            status: None,
-            propstat: vec![],
-        }
-    }
 }
 
 // RFC 2518

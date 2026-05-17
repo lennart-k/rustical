@@ -1,12 +1,15 @@
+use std::str::FromStr;
+
 use crate::{
     Error,
     calendar_object::{
         CalendarObjectPropWrapper, CalendarObjectPropWrapperName, resource::CalendarObjectResource,
     },
 };
-use http::StatusCode;
+use http::{StatusCode, Uri};
 use rustical_dav::{
     resource::{PrincipalUri, Resource},
+    rfc_3986_percent_encode,
     xml::{
         MultistatusElement, multistatus::ResponseElement, sync_collection::SyncCollectionRequest,
     },
@@ -33,7 +36,7 @@ pub async fn handle_sync_collection<C: CalendarStore>(
 
     let mut responses = Vec::new();
     for (object_id, object) in new_objects {
-        let path = format!("{}/{}.ics", path, &object_id);
+        let path = format!("{path}/{}.ics", rfc_3986_percent_encode(&object_id));
         responses.push(
             CalendarObjectResource {
                 object,
@@ -45,11 +48,11 @@ pub async fn handle_sync_collection<C: CalendarStore>(
     }
 
     for object_id in deleted_objects {
-        let path = format!("{path}/{object_id}.ics");
+        let path = format!("{path}/{}.ics", rfc_3986_percent_encode(&object_id));
         responses.push(ResponseElement {
-            href: path,
+            href: Uri::from_str(&path).unwrap(),
             status: Some(StatusCode::NOT_FOUND),
-            ..Default::default()
+            propstat: vec![],
         });
     }
 

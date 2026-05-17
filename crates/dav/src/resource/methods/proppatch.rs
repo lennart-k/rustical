@@ -7,6 +7,7 @@ use crate::xml::TagList;
 use crate::xml::multistatus::{PropstatElement, PropstatWrapper, ResponseElement};
 use axum::extract::{OriginalUri, Path, State};
 use http::StatusCode;
+use http::Uri;
 use quick_xml::name::Namespace;
 use rustical_xml::NamespaceOwned;
 use rustical_xml::PropName;
@@ -79,8 +80,6 @@ pub async fn route_proppatch<R: ResourceService>(
     principal: &R::Principal,
     resource_service: &R,
 ) -> Result<MultistatusElement<String, String>, R::Error> {
-    let href = path.to_owned();
-
     // Extract operations
     let PropertyupdateElement::<<R::Resource as Resource>::Prop>(operations) =
         XmlDocument::parse_str(body).map_err(Error::XmlError)?;
@@ -172,7 +171,7 @@ pub async fn route_proppatch<R: ResourceService>(
 
     Ok(MultistatusElement {
         responses: vec![ResponseElement {
-            href,
+            href: Uri::from_str(path).unwrap(),
             propstat: vec![
                 PropstatWrapper::TagList(PropstatElement {
                     prop: TagList::from(props_ok),
@@ -187,7 +186,7 @@ pub async fn route_proppatch<R: ResourceService>(
                     status: StatusCode::CONFLICT,
                 }),
             ],
-            ..Default::default()
+            status: None,
         }],
         ..Default::default()
     })

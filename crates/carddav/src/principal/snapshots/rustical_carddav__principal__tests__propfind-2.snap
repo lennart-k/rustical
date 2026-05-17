@@ -3,7 +3,7 @@ source: crates/carddav/src/principal/tests.rs
 expression: response
 ---
 ResponseElement {
-    href: "/carddav/principal/user/",
+    href: /carddav/principal/user/,
     status: None,
     propstat: [
         Normal(
@@ -13,7 +13,7 @@ ResponseElement {
                         Principal(
                             PrincipalUrl(
                                 HrefElement {
-                                    href: "/carddav/principal/user/",
+                                    href: /carddav/principal/user/,
                                 },
                             ),
                         ),
@@ -22,7 +22,7 @@ ResponseElement {
                                 GroupMembership(
                                     [
                                         HrefElement {
-                                            href: "/carddav/principal/group/",
+                                            href: /carddav/principal/group/,
                                         },
                                     ],
                                 ),
@@ -41,7 +41,7 @@ ResponseElement {
                         Principal(
                             PrincipalCollectionSet(
                                 HrefElement {
-                                    href: "/carddav/principal/",
+                                    href: /carddav/principal/,
                                 },
                             ),
                         ),
@@ -50,10 +50,10 @@ ResponseElement {
                                 AddressbookHomeSet(
                                     [
                                         HrefElement {
-                                            href: "/carddav/principal/user/",
+                                            href: /carddav/principal/user/,
                                         },
                                         HrefElement {
-                                            href: "/carddav/principal/group/",
+                                            href: /carddav/principal/group/,
                                         },
                                     ],
                                 ),
@@ -94,7 +94,7 @@ ResponseElement {
                         Common(
                             CurrentUserPrincipal(
                                 HrefElement {
-                                    href: "/carddav/principal/user/",
+                                    href: /carddav/principal/user/,
                                 },
                             ),
                         ),
@@ -111,7 +111,7 @@ ResponseElement {
                             Owner(
                                 Some(
                                     HrefElement {
-                                        href: "/carddav/principal/user/",
+                                        href: /carddav/principal/user/,
                                     },
                                 ),
                             ),

@@ -1,15 +1,16 @@
 use derive_more::From;
+use http::Uri;
 use rustical_xml::{XmlDeserialize, XmlSerialize};
 
 #[derive(XmlDeserialize, XmlSerialize, Debug, Clone, From, PartialEq, Eq)]
 pub struct HrefElement {
     #[xml(ns = "crate::namespace::NS_DAV")]
-    pub href: String,
+    pub href: Uri,
 }
 
 impl HrefElement {
     #[must_use]
-    pub const fn new(href: String) -> Self {
+    pub const fn new(href: Uri) -> Self {
         Self { href }
     }
 }
@@ -17,6 +18,7 @@ impl HrefElement {
 #[cfg(test)]
 mod tests {
     use super::HrefElement;
+    use http::Uri;
     use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
 
     #[derive(XmlSerialize, XmlRootTag)]
@@ -28,7 +30,7 @@ mod tests {
     #[test]
     fn test_serialize_resourcetype() {
         let out = Document {
-            hello: HrefElement::new("/okaywow".to_owned()),
+            hello: HrefElement::new(Uri::from_static("/okaywow")),
         }
         .serialize_to_string()
         .unwrap();

@@ -6,9 +6,9 @@ use axum::extract::{Path, State};
 use axum::response::Response;
 use axum_extra::headers::{ContentType, HeaderMapExt};
 use http::{HeaderValue, Method, StatusCode, header};
-use percent_encoding::{CONTROLS, utf8_percent_encode};
 use rustical_dav::privileges::UserPrivilege;
 use rustical_dav::resource::Resource;
+use rustical_dav::rfc_3986_percent_encode;
 use rustical_store::auth::Principal;
 use rustical_store::{AddressbookStore, SubscriptionStore};
 use std::str::FromStr;
@@ -47,7 +47,7 @@ pub async fn route_get<AS: AddressbookStore, S: SubscriptionStore>(
     let hdrs = resp.headers_mut().unwrap();
     hdrs.typed_insert(ContentType::from_str("text/vcard; charset=utf-8").unwrap());
     let filename = format!("{principal}_{addressbook_id}.vcf");
-    let filename = utf8_percent_encode(&filename, CONTROLS);
+    let filename = rfc_3986_percent_encode(&filename);
     hdrs.insert(
         header::CONTENT_DISPOSITION,
         HeaderValue::from_str(&format!(

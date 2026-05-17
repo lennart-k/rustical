@@ -3,7 +3,7 @@ source: crates/carddav/src/addressbook/tests.rs
 expression: response
 ---
 ResponseElement {
-    href: "/carddav/principal/user/yeet/",
+    href: /carddav/principal/user/yeet/,
     status: None,
     propstat: [
         Normal(
@@ -137,7 +137,7 @@ ResponseElement {
                         Common(
                             CurrentUserPrincipal(
                                 HrefElement {
-                                    href: "/carddav/principal/user/",
+                                    href: /carddav/principal/user/,
                                 },
                             ),
                         ),
@@ -154,7 +154,7 @@ ResponseElement {
                             Owner(
                                 Some(
                                     HrefElement {
-                                        href: "/carddav/principal/user/",
+                                        href: /carddav/principal/user/,
                                     },
                                 ),
                             ),

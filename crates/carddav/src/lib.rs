@@ -5,9 +5,11 @@ use axum::routing::any;
 use axum::{Extension, Router};
 use derive_more::Constructor;
 pub use error::Error;
+use http::Uri;
 use principal::PrincipalResourceService;
 use rustical_dav::resource::{PrincipalUri, ResourceService};
 use rustical_dav::resources::RootResourceService;
+use rustical_dav::rfc_3986_percent_encode;
 use rustical_store::auth::middleware::AuthenticationLayer;
 use rustical_store::{
     AddressbookStore, SubscriptionStore,
@@ -24,11 +26,18 @@ pub mod principal;
 pub struct CardDavPrincipalUri(&'static str);
 
 impl PrincipalUri for CardDavPrincipalUri {
-    fn principal_collection(&self) -> String {
-        format!("{}/principal/", self.0)
+    fn principal_collection(&self) -> Uri {
+        Uri::builder()
+            .path_and_query(format!("{}/principal/", self.0))
+            .build()
+            .unwrap()
     }
-    fn principal_uri(&self, principal: &str) -> String {
-        format!("{}{}/", self.principal_collection(), principal)
+    fn principal_uri(&self, principal: &str) -> Uri {
+        let principal = rfc_3986_percent_encode(principal);
+        Uri::builder()
+            .path_and_query(format!("{}{}/", self.principal_collection(), principal))
+            .build()
+            .unwrap()
     }
 }
 
@@ -52,4 +61,21 @@ pub fn carddav_router<AP: AuthenticationProvider, A: AddressbookStore, S: Subscr
             "/.well-known/carddav",
             any(async || Redirect::permanent(prefix)),
         )
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::CardDavPrincipalUri;
+    use rustical_dav::resource::PrincipalUri;
+
+    #[rstest::rstest]
+    #[case("user", "/carddav/principal/user/")]
+    #[case("user with space", "/carddav/principal/user%20with%20space/")]
+    #[case("asd@asd.de", "/carddav/principal/asd%40asd.de/")]
+    fn test_principal_uri_encoding(#[case] principal: &str, #[case] output: &str) {
+        assert_eq!(
+            CardDavPrincipalUri("/carddav").principal_uri(principal),
+            output
+        );
+    }
 }

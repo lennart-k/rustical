@@ -43,3 +43,4 @@ tower-http = { workspace = true, optional = true }
 vtimezones-rs.workspace = true
 serde_json.workspace = true
 itertools.workspace = true
+rustical_dav.workspace = true

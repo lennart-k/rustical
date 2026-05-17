@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::{
     CardDavPrincipalUri, Error,
     address_object::{
@@ -16,9 +18,10 @@ use axum::{
     extract::{OriginalUri, Path, State},
     response::IntoResponse,
 };
-use http::StatusCode;
+use http::{StatusCode, Uri};
 use rustical_dav::{
     resource::{PrincipalUri, Resource},
+    rfc_3986_percent_encode,
     xml::{
         MultistatusElement, PropfindType, multistatus::ResponseElement,
         sync_collection::SyncCollectionRequest,
@@ -65,7 +68,11 @@ fn objects_response(
 ) -> Result<MultistatusElement<AddressObjectPropWrapper, String>, Error> {
     let mut responses = Vec::new();
     for (object_id, object) in objects {
-        let path = format!("{}/{}.vcf", path, &object_id);
+        let path = format!(
+            "{}/{object_id}.vcf",
+            path,
+            object_id = rfc_3986_percent_encode(&object_id)
+        );
         responses.push(
             AddressObjectResource {
                 object,
@@ -79,9 +86,9 @@ fn objects_response(
     let not_found_responses = not_found
         .into_iter()
         .map(|path| ResponseElement {
-            href: path,
+            href: Uri::from_str(&path).unwrap(),
             status: Some(StatusCode::NOT_FOUND),
-            ..Default::default()
+            propstat: vec![],
         })
         .collect();
 
@@ -112,7 +119,7 @@ pub async fn route_report_addressbook<AS: AddressbookStore, S: SubscriptionStore
             handle_addressbook_multiget(
                 addr_multiget,
                 request.props(),
-                uri.path(),
+                &uri,
                 &puri,
                 &user,
                 &principal,

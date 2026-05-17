@@ -29,6 +29,8 @@ strum.workspace = true
 matchit.workspace = true
 matchit-serde.workspace = true
 caldata = { workspace = true, optional = true }
+url.workspace = true
+percent-encoding.workspace = true
 
 [dev-dependencies]
 rstest.workspace = true
