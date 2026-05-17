@@ -142,7 +142,7 @@ impl<S: SubscriptionStore> DavPushController<S> {
                 }
             }
 
-            if let Err(err) = self.send_payload(&payload, &subsciption).await {
+            if let Err(err) = send_payload(&payload, &subsciption).await {
                 error!("An error occured sending out a push notification: {err}");
                 if err.is_permament_error() {
                     warn!(
@@ -160,50 +160,46 @@ impl<S: SubscriptionStore> DavPushController<S> {
             error!("Error deleting subsciption: {err}");
         }
     }
+}
 
-    async fn send_payload(
-        &self,
-        payload: &str,
-        subsciption: &Subscription,
-    ) -> Result<(), NotifierError> {
-        if subsciption.public_key_type != "p256dh" {
-            return Err(NotifierError::InvalidPublicKeyType(
-                subsciption.public_key_type.clone(),
-            ));
-        }
-        let endpoint = subsciption
-            .push_resource
-            .parse()
-            .map_err(|_| NotifierError::InvalidEndpointUrl(subsciption.push_resource.clone()))?;
-        let ua_public = base64::engine::general_purpose::URL_SAFE_NO_PAD
-            .decode(&subsciption.public_key)
-            .map_err(|_| NotifierError::InvalidKeyEncoding)?;
-        let auth_secret = base64::engine::general_purpose::URL_SAFE_NO_PAD
-            .decode(&subsciption.auth_secret)
-            .map_err(|_| NotifierError::InvalidKeyEncoding)?;
-
-        let client = reqwest::ClientBuilder::new()
-            .build()
-            .map_err(NotifierError::from)?;
-
-        let payload = ece::encrypt(&ua_public, &auth_secret, payload.as_bytes())?;
-
-        let mut request = reqwest::Request::new(Method::POST, endpoint);
-        *request.body_mut() = Some(Body::from(payload));
-        let hdrs = request.headers_mut();
-        hdrs.insert(
-            header::CONTENT_ENCODING,
-            HeaderValue::from_static("aes128gcm"),
-        );
-        hdrs.insert(
-            header::CONTENT_TYPE,
-            HeaderValue::from_static("application/octet-stream"),
-        );
-        hdrs.insert("TTL", HeaderValue::from(60));
-        client.execute(request).await?;
-
-        Ok(())
+async fn send_payload(payload: &str, subsciption: &Subscription) -> Result<(), NotifierError> {
+    if subsciption.public_key_type != "p256dh" {
+        return Err(NotifierError::InvalidPublicKeyType(
+            subsciption.public_key_type.clone(),
+        ));
     }
+    let endpoint = subsciption
+        .push_resource
+        .parse()
+        .map_err(|_| NotifierError::InvalidEndpointUrl(subsciption.push_resource.clone()))?;
+    let ua_public = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(&subsciption.public_key)
+        .map_err(|_| NotifierError::InvalidKeyEncoding)?;
+    let auth_secret = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(&subsciption.auth_secret)
+        .map_err(|_| NotifierError::InvalidKeyEncoding)?;
+
+    let client = reqwest::ClientBuilder::new()
+        .build()
+        .map_err(NotifierError::from)?;
+
+    let payload = ece::encrypt(&ua_public, &auth_secret, payload.as_bytes())?;
+
+    let mut request = reqwest::Request::new(Method::POST, endpoint);
+    *request.body_mut() = Some(Body::from(payload));
+    let hdrs = request.headers_mut();
+    hdrs.insert(
+        header::CONTENT_ENCODING,
+        HeaderValue::from_static("aes128gcm"),
+    );
+    hdrs.insert(
+        header::CONTENT_TYPE,
+        HeaderValue::from_static("application/octet-stream"),
+    );
+    hdrs.insert("TTL", HeaderValue::from(60));
+    client.execute(request).await?;
+
+    Ok(())
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -233,5 +229,37 @@ impl NotifierError {
             ),
             Self::ReqwestError(_) => false,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::send_payload;
+    use base64::Engine;
+    use chrono::NaiveDateTime;
+    use ece::generate_keypair_and_auth_secret;
+    use rustical_store::Subscription;
+
+    #[tokio::test]
+    async fn test_ntfy_request() {
+        let (keypair, auth_secret) = generate_keypair_and_auth_secret().unwrap();
+        let auth_secret = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(auth_secret);
+        let public_key =
+            base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(keypair.pub_as_raw().unwrap());
+
+        send_payload(
+            "hello",
+            &Subscription {
+                id: "asd".to_string(),
+                topic: "asd".to_string(),
+                expiration: NaiveDateTime::MAX,
+                push_resource: "https://ntfy.sh/upL00-v4L3SGM2".to_string(),
+                public_key,
+                public_key_type: "p256dh".to_string(),
+                auth_secret,
+            },
+        )
+        .await
+        .unwrap();
     }
 }
