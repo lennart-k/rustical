@@ -308,4 +308,57 @@ mod tests {
         let body = String::from_utf8(bytes.to_vec()).unwrap();
         assert_eq!(body, expected);
     }
+
+    #[rstest]
+    fn test_objects_response() {
+        let response = objects_response(
+            vec![(
+                "found with space".to_string(),
+                CalendarObject::from_ics(
+                    r"BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Example Corp.//CalDAV Client//EN
+BEGIN:VEVENT
+UID:20010712T182145Z-123401@example.com
+DTSTAMP:20060712T182145Z
+DTSTART:20060714T170000Z
+DTEND:20060715T040000Z
+SUMMARY:Bastille Day Party
+END:VEVENT
+END:VCALENDAR"
+                        .to_string(),
+                )
+                .unwrap(),
+            )],
+            vec!["/caldav/principal/user/not%20found.ics".to_string()],
+            "/caldav/principal/user%40rustical.dev/cal",
+            "user@rustical.dev",
+            &CalDavPrincipalUri::new("/caldav"),
+            &Principal {
+                id: "user@rustical.dev".to_string(),
+                displayname: None,
+                principal_type: rustical_store::auth::PrincipalType::Individual,
+                password: None,
+                memberships: vec![],
+            },
+            &PropfindType::Propname,
+        )
+        .unwrap();
+
+        // Make sure we get responses for both
+        assert_eq!(response.responses.len(), 1);
+        for resp in response.responses {
+            // Make sure spaces are escaped
+            assert!(resp.href.path().contains("%20"));
+            // Make sure periods are not escaped
+            assert!(resp.href.path().contains('.'));
+        }
+        assert_eq!(response.member_responses.len(), 1);
+        for resp in response.member_responses {
+            // Make sure spaces are escaped
+            assert!(resp.href.path().contains("%20"));
+            // Make sure periods are not escaped
+            assert!(resp.href.path().contains('.'));
+        }
+    }
 }
