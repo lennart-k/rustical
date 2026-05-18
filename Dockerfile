@@ -42,6 +42,9 @@ FROM scratch
 COPY --from=builder /usr/local/cargo/bin/rustical /usr/local/bin/rustical
 CMD ["/usr/local/bin/rustical"]
 
+# Copy CA certificates from alpine Linux
+COPY --from=builder /etc/ssl/certs /etc/ssl/certs
+
 ENV RUSTICAL_DATA_STORE__SQLITE__DB_URL=/var/lib/rustical/db.sqlite3
 
 LABEL org.opencontainers.image.authors="Lennart Kämmle github.com/lennart-k"
