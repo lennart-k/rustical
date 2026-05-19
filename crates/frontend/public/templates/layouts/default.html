@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
   <title>{% block title %}RustiCal{% endblock %}</title>
   <link rel="stylesheet" href="/frontend/assets/style.css" />
   {% block imports %}{% endblock %}
@@ -28,5 +29,10 @@
       <a href="{{ env!("CARGO_PKG_REPOSITORY") }}" target="_blank">RustiCal {{ env!("CARGO_PKG_VERSION") }}</a>
       <a href="/frontend/assets/licenses.html" target="_blank">Open Source Licenses</a>
   </footer>
+  <script>
+    document.addEventListener('click', (e) => {
+      if (e.target.tagName === 'DIALOG') e.target.close();
+    });
+  </script>
 </body>
 </html>

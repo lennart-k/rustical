@@ -1,4 +1,4 @@
-<h2>{{ user.id }}'s Calendars</h2>
+<h2>{{ user.id }}'s calendars</h2>
 <ul class="collection-list">
   {% for (meta, calendar) in calendars %}
   {% let color = calendar.meta.color.to_owned().unwrap_or("transparent".to_owned()) %}
@@ -46,7 +46,7 @@
   {% endfor %}
 </ul>
 {%if !deleted_calendars.is_empty() %}
-<h3>Deleted Calendars</h3>
+<h3>Deleted calendars</h3>
 <ul class="collection-list">
   {% for (meta, calendar) in deleted_calendars %}
   {% let color = calendar.meta.color.to_owned().unwrap_or("transparent".to_owned()) %}
@@ -81,5 +81,7 @@
   {% endfor %}
 </ul>
 {% endif %}
-<create-calendar-form user="{{ user.id }}"></create-calendar-form>
-<import-calendar-form user="{{ user.id }}"></import-calendar-form>
+<div class="section-actions">
+  <create-calendar-form user="{{ user.id }}"></create-calendar-form>
+  <import-calendar-form user="{{ user.id }}"></import-calendar-form>
+</div>
