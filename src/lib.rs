@@ -119,16 +119,15 @@ pub async fn cmd_default(
     let (addr_store, cal_store, subscription_store, principal_store, update_recv) =
         get_data_stores(!args.no_migrations, &config.data_store).await?;
 
-    let mut tasks = vec![];
-
     if config.dav_push.enabled {
         let dav_push_controller = DavPushController::new(
             config.dav_push.allowed_push_servers,
             subscription_store.clone(),
         );
-        tasks.push(tokio::spawn(async move {
+        // Atm we never join this task
+        tokio::spawn(async move {
             dav_push_controller.notifier(update_recv).await;
-        }));
+        });
     }
 
     let app = make_app(
@@ -150,16 +149,43 @@ pub async fn cmd_default(
 
     let address = format!("{}:{}", config.http.host, config.http.port);
     let listener = tokio::net::TcpListener::bind(&address).await?;
-    tasks.push(tokio::spawn(async move {
+
+    let serve_task = tokio::spawn(async move {
         info!("RustiCal serving on http://{address}");
         if let Some(start_notifier) = start_notifier {
             start_notifier.notify_waiters();
         }
-        axum::serve(listener, app).await.unwrap();
-    }));
+        axum::serve(listener, app)
+            .with_graceful_shutdown(shutdown_signal())
+            .await
+            .unwrap();
+    });
 
-    for task in tasks {
-        task.await?;
-    }
+    serve_task.await?;
+
     Ok(())
+}
+
+async fn shutdown_signal() -> () {
+    let ctrl_c = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        () = ctrl_c => tracing::debug!("Received SIGINT signal"),
+        () = terminate => tracing::debug!("Received SIGTERM signal"),
+    }
 }
