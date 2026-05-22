@@ -28,7 +28,7 @@ pub async fn route_get<AS: AddressbookStore, S: SubscriptionStore>(
     let addressbook = addr_store
         .get_addressbook(&principal, &addressbook_id, false)
         .await?;
-    let addressbook_resource = AddressbookResource(addressbook);
+    let addressbook_resource = AddressbookResource(addressbook.clone());
     if !addressbook_resource
         .get_user_privileges(&user)?
         .has(&UserPrivilege::Read)
@@ -46,7 +46,14 @@ pub async fn route_get<AS: AddressbookStore, S: SubscriptionStore>(
     let mut resp = Response::builder().status(StatusCode::OK);
     let hdrs = resp.headers_mut().unwrap();
     hdrs.typed_insert(ContentType::from_str("text/vcard; charset=utf-8").unwrap());
-    let filename = format!("{principal}_{addressbook_id}.vcf");
+    let filename = format!(
+        "{principal}_{addressbook_id}{}.vcf",
+        addressbook
+            .displayname
+            .as_deref()
+            .map(|name| format!("_{name}"))
+            .unwrap_or_default()
+    );
     let filename = rfc_3986_percent_encode(&filename);
     hdrs.insert(
         header::CONTENT_DISPOSITION,

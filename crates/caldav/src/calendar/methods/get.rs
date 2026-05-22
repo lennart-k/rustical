@@ -40,10 +40,10 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
 
     let mut props = vec![];
 
-    if let Some(displayname) = calendar.meta.displayname {
+    if let Some(ref displayname) = calendar.meta.displayname {
         props.push(ContentLine {
             name: "X-WR-CALNAME".to_owned(),
-            value: displayname,
+            value: displayname.clone(),
             params: vec![].into(),
         });
     }
@@ -75,7 +75,17 @@ pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
     let hdrs = resp.headers_mut().unwrap();
     hdrs.typed_insert(ContentType::from_str("text/calendar; charset=utf-8").unwrap());
 
-    let filename = format!("{}_{}.ics", calendar.principal, calendar.id);
+    let filename = format!(
+        "{}_{}{}.ics",
+        calendar.principal,
+        calendar.id,
+        calendar
+            .meta
+            .displayname
+            .as_deref()
+            .map(|name| format!("_{name}"))
+            .unwrap_or_default()
+    );
     let filename = rfc_3986_percent_encode(&filename);
     hdrs.insert(
         header::CONTENT_DISPOSITION,
