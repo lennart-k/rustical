@@ -71,3 +71,8 @@ Note that:
 - If adding a membership fails (e.g. because the principal is missing), the error will only be logged and the user can still log in
 - Assigning memberships only happens when the user logs in to the frontend using OIDC.
 - Assigning memberships ONLY ADDS memberships. You have to revoke them manually.
+
+## Allowing self-signed certificates
+
+RustiCal reads the CA certificates from `/etc/ssl/certs`.
+If you have a custom certificate bundle on your OS you can simply mount it there.
