@@ -38,12 +38,18 @@ RUN cargo chef cook --release --target "$(cat /tmp/rust_target)"
 COPY . .
 RUN cargo install --locked --target "$(cat /tmp/rust_target)" --path .
 
+# In scratch we cannot use mkdir but we want to create a tmpdir with 777 permissions for sqlite to work
+RUN mkdir -m 777 /buildertmpdir
+
 FROM scratch
 COPY --from=builder /usr/local/cargo/bin/rustical /usr/local/bin/rustical
 CMD ["/usr/local/bin/rustical"]
 
 # Copy CA certificates from alpine Linux
 COPY --from=builder /etc/ssl/certs /etc/ssl/certs
+
+# Install /tmp dir for sqlite to work
+COPY --from=builder /buildertmpdir /tmp
 
 ENV RUSTICAL_DATA_STORE__SQLITE__DB_URL=/var/lib/rustical/db.sqlite3
 
