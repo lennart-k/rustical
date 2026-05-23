@@ -26,9 +26,11 @@ a CalDAV/CardDAV server
 
 ## Tested Clients
 
-- DAVx5,
-- GNOME Accounts, GNOME Calendar, GNOME Contacts
-- Evolution
+- [DAVx5](https://www.davx5.com)
+- [Tasks.org](https://tasks.org)
+- GNOME Accounts, [GNOME Calendar](https://apps.gnome.org/Calendar/), [GNOME Contacts](https://apps.gnome.org/Contacts/)
+- [Evolution](https://flathub.org/en/apps/org.gnome.Evolution)
 - Apple Calendar
-- Home Assistant integration
-- Thunderbird
+- [Home Assistant integration](https://www.home-assistant.io/integrations/caldav/)
+- [Thunderbird](https://www.thunderbird.net)
+- [Chiri](https://github.com/SapphoSys/chiri) (tested by @SapphoSys)
