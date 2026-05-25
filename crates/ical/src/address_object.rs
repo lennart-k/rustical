@@ -15,7 +15,7 @@ use caldata::{
     },
     types::{CalDate, PartialDate, Tz},
 };
-use chrono::{NaiveDate, Utc};
+use chrono::{Datelike, NaiveDate, Utc};
 use hex::ToHex;
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
@@ -127,109 +127,25 @@ impl AddressObject {
             }],
         };
 
-        let Some(dt_this_year) = NaiveDate::from_ymd_opt(this_year, month, day) else {
-            return Ok(None);
-        };
-        let this_year_start_date = CalDate(dt_this_year, Tz::Local);
-        let Some(this_year_end_date) = this_year_start_date.succ_opt() else {
-            // this_year_start_date is MAX_DATE, this should never happen but FAPP also not raise an error
-            return Ok(None);
-        };
-        let age_suffix = dt_this_year
-            .years_since(dtstart)
-            .map(|age| format!(" {age}"))
-            .unwrap_or_default();
-        let this_year_summary = format!("{summary_prefix} {fullname}{age_suffix}");
-        let this_year_event = IcalEventBuilder {
-            properties: vec![
-                IcalDTSTAMPProperty(Utc::now().into(), vec![].into()).into(),
-                IcalDTSTARTProperty(this_year_start_date.clone().into(), vec![].into()).into(),
-                IcalDTENDProperty(this_year_end_date.clone().into(), vec![].into()).into(),
-                IcalUIDProperty(uid.clone(), vec![].into()).into(),
-                IcalRECURIDProperty(
-                    this_year_start_date.into(),
-                    vec![].into(),
-                    RecurIdRange::This,
-                )
-                .into(),
-                IcalSUMMARYProperty(this_year_summary.clone(), vec![].into()).into(),
-                ContentLine {
-                    name: "TRANSP".to_owned(),
-                    value: "TRANSPARENT".to_owned(),
-                    ..Default::default()
-                },
-            ],
-            alarms: vec![IcalAlarmBuilder {
-                properties: vec![
-                    ContentLine {
-                        name: "TRIGGER".to_owned(),
-                        value: "-PT0M".to_owned(),
-                        params: vec![("VALUE".to_owned(), vec!["DURATION".to_owned()])].into(),
-                    },
-                    ContentLine {
-                        name: "ACTION".to_owned(),
-                        value: "DISPLAY".to_owned(),
-                        ..Default::default()
-                    },
-                    ContentLine {
-                        name: "DESCRIPTION".to_owned(),
-                        value: this_year_summary,
-                        ..Default::default()
-                    },
-                ],
-            }],
-        };
-
-        let dt_next_year = dt_this_year + chrono::Months::new(12);
-        let next_year_start_date = CalDate(dt_next_year, Tz::Local);
-        let Some(next_year_end_date) = next_year_start_date.succ_opt() else {
-            // next_year_start_date is MAX_DATE, this should never happen but FAPP also not raise an error
-            return Ok(None);
-        };
-        let age_suffix = dt_next_year
-            .years_since(dtstart)
-            .map(|age| format!(" {age}"))
-            .unwrap_or_default();
-        let next_year_summary = format!("{summary_prefix} {fullname}{age_suffix}");
-        let next_year_event = IcalEventBuilder {
-            properties: vec![
-                IcalDTSTAMPProperty(Utc::now().into(), vec![].into()).into(),
-                IcalDTSTARTProperty(next_year_start_date.clone().into(), vec![].into()).into(),
-                IcalDTENDProperty(next_year_end_date.clone().into(), vec![].into()).into(),
-                IcalUIDProperty(uid.clone(), vec![].into()).into(),
-                IcalRECURIDProperty(
-                    next_year_start_date.into(),
-                    vec![].into(),
-                    RecurIdRange::This,
-                )
-                .into(),
-                IcalSUMMARYProperty(next_year_summary.clone(), vec![].into()).into(),
-                ContentLine {
-                    name: "TRANSP".to_owned(),
-                    value: "TRANSPARENT".to_owned(),
-                    ..Default::default()
-                },
-            ],
-            alarms: vec![IcalAlarmBuilder {
-                properties: vec![
-                    ContentLine {
-                        name: "TRIGGER".to_owned(),
-                        value: "-PT0M".to_owned(),
-                        params: vec![("VALUE".to_owned(), vec!["DURATION".to_owned()])].into(),
-                    },
-                    ContentLine {
-                        name: "ACTION".to_owned(),
-                        value: "DISPLAY".to_owned(),
-                        ..Default::default()
-                    },
-                    ContentLine {
-                        name: "DESCRIPTION".to_owned(),
-                        value: next_year_summary,
-                        ..Default::default()
-                    },
-                ],
-            }],
-        };
+        let mut events = vec![event];
+        if let Some(y) = year {
+            if let Some(dtstart) = NaiveDate::from_ymd_opt(y, month, day) {
+                if let Some(this_year_instance) = create_recurring_instance(
+                    uid.clone(),
+                    summary_prefix,
+                    fullname,
+                    dtstart,
+                    this_year,
+                ) {
+                    events.push(this_year_instance);
+                }
+                if let Some(next_year_instance) =
+                    create_recurring_instance(uid, summary_prefix, fullname, dtstart, this_year + 1)
+                {
+                    events.push(next_year_instance);
+                }
+            }
+        }
 
         Ok(Some(
             IcalCalendarObjectBuilder {
@@ -242,18 +158,13 @@ impl AddressObject {
                     )
                     .into(),
                 ],
-                inner: Some(CalendarInnerDataBuilder::Event(vec![
-                    event,
-                    this_year_event,
-                    next_year_event,
-                ])),
+                inner: Some(CalendarInnerDataBuilder::Event(events)),
                 vtimezones: BTreeMap::default(),
             }
             .build(&ParserOptions::default(), None)?
             .into(),
         ))
     }
-
     pub fn get_anniversary_object(&self, year: i32) -> Result<Option<CalendarObject>, Error> {
         let Some(VcardANNIVERSARYProperty(anniversary, _)) = &self.vcard.anniversary else {
             return Ok(None);
@@ -280,4 +191,65 @@ impl AddressObject {
     pub const fn get_vcard(&self) -> &VcardContact {
         &self.vcard
     }
+}
+
+fn create_recurring_instance(
+    uid: String,
+    summary_prefix: &str,
+    fullname: &str,
+    dtstart: NaiveDate,
+    year: i32,
+) -> Option<IcalEventBuilder> {
+    let Some(dt_this_year) = NaiveDate::from_ymd_opt(year, dtstart.month(), dtstart.day()) else {
+        return None;
+    };
+    let this_year_start_date = CalDate(dt_this_year, Tz::Local);
+    let Some(this_year_end_date) = this_year_start_date.succ_opt() else {
+        // this_year_start_date is MAX_DATE, this should never happen but FAPP also not raise an error
+        return None;
+    };
+    let age_suffix = dt_this_year
+        .years_since(dtstart)
+        .map(|age| format!(" {age}"))
+        .unwrap_or_default();
+    let this_year_summary = format!("{summary_prefix} {fullname}{age_suffix}");
+    return Some(IcalEventBuilder {
+        properties: vec![
+            IcalDTSTAMPProperty(Utc::now().into(), vec![].into()).into(),
+            IcalDTSTARTProperty(this_year_start_date.clone().into(), vec![].into()).into(),
+            IcalDTENDProperty(this_year_end_date.clone().into(), vec![].into()).into(),
+            IcalUIDProperty(uid, vec![].into()).into(),
+            IcalRECURIDProperty(
+                this_year_start_date.into(),
+                vec![].into(),
+                RecurIdRange::This,
+            )
+            .into(),
+            IcalSUMMARYProperty(this_year_summary.clone(), vec![].into()).into(),
+            ContentLine {
+                name: "TRANSP".to_owned(),
+                value: "TRANSPARENT".to_owned(),
+                ..Default::default()
+            },
+        ],
+        alarms: vec![IcalAlarmBuilder {
+            properties: vec![
+                ContentLine {
+                    name: "TRIGGER".to_owned(),
+                    value: "-PT0M".to_owned(),
+                    params: vec![("VALUE".to_owned(), vec!["DURATION".to_owned()])].into(),
+                },
+                ContentLine {
+                    name: "ACTION".to_owned(),
+                    value: "DISPLAY".to_owned(),
+                    ..Default::default()
+                },
+                ContentLine {
+                    name: "DESCRIPTION".to_owned(),
+                    value: this_year_summary,
+                    ..Default::default()
+                },
+            ],
+        }],
+    });
 }

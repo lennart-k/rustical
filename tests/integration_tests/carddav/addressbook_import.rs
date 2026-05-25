@@ -34,6 +34,14 @@ BDAY:--0203
 ANNIVERSARY:--0303
 GENDER:M
 UID:amazing-uid
+END:VCARD
+BEGIN:VCARD
+VERSION:4.0
+FN:Doe Johnson
+N:Johnson;Doe;;;,
+BDAY:19900525
+GENDER:W
+UID:okey-uid
 END:VCARD",
             ))
             .unwrap()
