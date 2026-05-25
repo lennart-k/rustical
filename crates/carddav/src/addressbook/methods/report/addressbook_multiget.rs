@@ -148,6 +148,7 @@ mod tests {
             _principal: &str,
             _addressbook_id: &str,
             _synctoken: i64,
+            _current_year: i32,
         ) -> Result<
             (
                 Vec<(String, rustical_ical::AddressObject)>,

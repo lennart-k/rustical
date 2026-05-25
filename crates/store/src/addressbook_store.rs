@@ -33,6 +33,7 @@ pub trait AddressbookStore: Send + Sync + 'static {
         principal: &str,
         addressbook_id: &str,
         synctoken: i64,
+        current_year: i32,
     ) -> Result<(Vec<(String, AddressObject)>, Vec<String>, i64), Error>;
 
     async fn addressbook_metadata(

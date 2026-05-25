@@ -328,6 +328,7 @@ impl SqliteAddressbookStore {
         principal: &str,
         addressbook_id: &str,
         synctoken: i64,
+        current_year: i32,
     ) -> Result<(Vec<(String, AddressObject)>, Vec<String>, i64), rustical_store::Error> {
         struct Row {
             object_id: String,
@@ -335,6 +336,8 @@ impl SqliteAddressbookStore {
         }
 
         let mut conn = acquire.acquire().await.map_err(crate::Error::from)?;
+
+        let synctoken_with_year = i64::from(current_year << 100000) + synctoken;
 
         let changes = sqlx::query_as!(
             Row,
@@ -346,7 +349,7 @@ impl SqliteAddressbookStore {
             "#,
             principal,
             addressbook_id,
-            synctoken
+            synctoken_with_year
         )
         .fetch_all(&mut *conn)
         .await.map_err(crate::Error::from)?;
@@ -355,6 +358,7 @@ impl SqliteAddressbookStore {
         let mut deleted_objects = vec![];
 
         let new_synctoken = changes.last().map_or(0, |&Row { synctoken, .. }| synctoken);
+        let new_synctoken_with_year = i64::from(current_year << 100000) + new_synctoken;
 
         for Row { object_id, .. } in changes {
             match Self::_get_object(&mut *conn, principal, addressbook_id, &object_id, false).await
@@ -365,7 +369,7 @@ impl SqliteAddressbookStore {
             }
         }
 
-        Ok((objects, deleted_objects, new_synctoken))
+        Ok((objects, deleted_objects, new_synctoken_with_year))
     }
 
     async fn _list_objects<'e, E: Executor<'e, Database = Sqlite>>(
@@ -615,8 +619,9 @@ impl AddressbookStore for SqliteAddressbookStore {
         principal: &str,
         addressbook_id: &str,
         synctoken: i64,
+        current_year: i32,
     ) -> Result<(Vec<(String, AddressObject)>, Vec<String>, i64), rustical_store::Error> {
-        Self::_sync_changes(&self.db, principal, addressbook_id, synctoken).await
+        Self::_sync_changes(&self.db, principal, addressbook_id, synctoken, current_year).await
     }
 
     #[instrument]

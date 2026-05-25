@@ -332,11 +332,12 @@ impl CalendarStore for SqliteAddressbookStore {
         let cal_id = cal_id
             .strip_prefix(BIRTHDAYS_PREFIX)
             .ok_or(Error::NotFound)?;
+        let year = chrono::Utc::now().year();
+
         let (objects, deleted_objects, new_synctoken) =
-            AddressbookStore::sync_changes(self, principal, cal_id, synctoken).await?;
+            AddressbookStore::sync_changes(self, principal, cal_id, synctoken, year).await?;
 
         let mut out_objects = vec![];
-        let year = chrono::Utc::now().year();
 
         for (object_id, object) in objects {
             if let Some(birthday) = object.get_birthday_object(year)? {
