@@ -9,13 +9,13 @@ use caldata::{
     parser::{ContentLine, ParserOptions},
     property::{
         Calscale, IcalCALSCALEProperty, IcalDTENDProperty, IcalDTSTAMPProperty,
-        IcalDTSTARTProperty, IcalPRODIDProperty, IcalRRULEProperty, IcalSUMMARYProperty,
-        IcalUIDProperty, IcalVERSIONProperty, IcalVersion, VcardANNIVERSARYProperty,
-        VcardBDAYProperty, VcardFNProperty, IcalRECURIDProperty, RecurIdRange
+        IcalDTSTARTProperty, IcalPRODIDProperty, IcalRECURIDProperty, IcalRRULEProperty,
+        IcalSUMMARYProperty, IcalUIDProperty, IcalVERSIONProperty, IcalVersion, RecurIdRange,
+        VcardANNIVERSARYProperty, VcardBDAYProperty, VcardFNProperty,
     },
     types::{CalDate, PartialDate, Tz},
 };
-use chrono::{NaiveDate, Utc, Datelike};
+use chrono::{NaiveDate, Utc};
 use hex::ToHex;
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
@@ -59,6 +59,7 @@ impl AddressObject {
     fn get_significant_date_object(
         &self,
         date: &PartialDate,
+        this_year: i32,
         summary_prefix: &str,
         suffix: &str,
     ) -> Result<Option<CalendarObject>, Error> {
@@ -126,7 +127,7 @@ impl AddressObject {
             }],
         };
 
-        let Some(dt_this_year) = NaiveDate::from_ymd_opt(chrono::Utc::now().year(), month, day) else {
+        let Some(dt_this_year) = NaiveDate::from_ymd_opt(this_year, month, day) else {
             return Ok(None);
         };
         let this_year_start_date = CalDate(dt_this_year, Tz::Local);
@@ -134,7 +135,10 @@ impl AddressObject {
             // this_year_start_date is MAX_DATE, this should never happen but FAPP also not raise an error
             return Ok(None);
         };
-        let age_suffix = dt_this_year.years_since(dtstart).map(|age| format!(" {age}")).unwrap_or_default();
+        let age_suffix = dt_this_year
+            .years_since(dtstart)
+            .map(|age| format!(" {age}"))
+            .unwrap_or_default();
         let this_year_summary = format!("{summary_prefix} {fullname}{age_suffix}");
         let this_year_event = IcalEventBuilder {
             properties: vec![
@@ -142,7 +146,12 @@ impl AddressObject {
                 IcalDTSTARTProperty(this_year_start_date.clone().into(), vec![].into()).into(),
                 IcalDTENDProperty(this_year_end_date.clone().into(), vec![].into()).into(),
                 IcalUIDProperty(uid.clone(), vec![].into()).into(),
-                IcalRECURIDProperty(this_year_start_date.into(), vec![].into(), RecurIdRange::This).into(),
+                IcalRECURIDProperty(
+                    this_year_start_date.into(),
+                    vec![].into(),
+                    RecurIdRange::This,
+                )
+                .into(),
                 IcalSUMMARYProperty(this_year_summary.clone(), vec![].into()).into(),
                 ContentLine {
                     name: "TRANSP".to_owned(),
@@ -177,7 +186,10 @@ impl AddressObject {
             // next_year_start_date is MAX_DATE, this should never happen but FAPP also not raise an error
             return Ok(None);
         };
-        let age_suffix = dt_next_year.years_since(dtstart).map(|age| format!(" {age}")).unwrap_or_default();
+        let age_suffix = dt_next_year
+            .years_since(dtstart)
+            .map(|age| format!(" {age}"))
+            .unwrap_or_default();
         let next_year_summary = format!("{summary_prefix} {fullname}{age_suffix}");
         let next_year_event = IcalEventBuilder {
             properties: vec![
@@ -185,7 +197,12 @@ impl AddressObject {
                 IcalDTSTARTProperty(next_year_start_date.clone().into(), vec![].into()).into(),
                 IcalDTENDProperty(next_year_end_date.clone().into(), vec![].into()).into(),
                 IcalUIDProperty(uid.clone(), vec![].into()).into(),
-                IcalRECURIDProperty(next_year_start_date.into(), vec![].into(), RecurIdRange::This).into(),
+                IcalRECURIDProperty(
+                    next_year_start_date.into(),
+                    vec![].into(),
+                    RecurIdRange::This,
+                )
+                .into(),
                 IcalSUMMARYProperty(next_year_summary.clone(), vec![].into()).into(),
                 ContentLine {
                     name: "TRANSP".to_owned(),
@@ -225,7 +242,11 @@ impl AddressObject {
                     )
                     .into(),
                 ],
-                inner: Some(CalendarInnerDataBuilder::Event(vec![event, this_year_event, next_year_event])),
+                inner: Some(CalendarInnerDataBuilder::Event(vec![
+                    event,
+                    this_year_event,
+                    next_year_event,
+                ])),
                 vtimezones: BTreeMap::default(),
             }
             .build(&ParserOptions::default(), None)?
@@ -233,7 +254,7 @@ impl AddressObject {
         ))
     }
 
-    pub fn get_anniversary_object(&self) -> Result<Option<CalendarObject>, Error> {
+    pub fn get_anniversary_object(&self, year: i32) -> Result<Option<CalendarObject>, Error> {
         let Some(VcardANNIVERSARYProperty(anniversary, _)) = &self.vcard.anniversary else {
             return Ok(None);
         };
@@ -241,10 +262,10 @@ impl AddressObject {
             return Ok(None);
         };
 
-        self.get_significant_date_object(date, "💍", "-anniversary")
+        self.get_significant_date_object(date, year, "💍", "-anniversary")
     }
 
-    pub fn get_birthday_object(&self) -> Result<Option<CalendarObject>, Error> {
+    pub fn get_birthday_object(&self, year: i32) -> Result<Option<CalendarObject>, Error> {
         let Some(VcardBDAYProperty(bday, _)) = &self.vcard.birthday else {
             return Ok(None);
         };
@@ -252,7 +273,7 @@ impl AddressObject {
             return Ok(None);
         };
 
-        self.get_significant_date_object(date, "🎂", "-birthday")
+        self.get_significant_date_object(date, year, "🎂", "-birthday")
     }
 
     #[must_use]
