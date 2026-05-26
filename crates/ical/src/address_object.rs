@@ -59,7 +59,7 @@ impl AddressObject {
     fn get_significant_date_object(
         &self,
         date: &PartialDate,
-        this_year: i32,
+        current_year: i32,
         summary_prefix: &str,
         suffix: &str,
     ) -> Result<Option<CalendarObject>, Error> {
@@ -130,18 +130,22 @@ impl AddressObject {
         let mut events = vec![event];
         if let Some(y) = year {
             if let Some(dtstart) = NaiveDate::from_ymd_opt(y, month, day) {
-                if let Some(this_year_instance) = create_recurring_instance(
+                if let Some(current_year_instance) = create_recurring_instance(
                     uid.clone(),
                     summary_prefix,
                     fullname,
                     dtstart,
-                    this_year,
+                    current_year,
                 ) {
-                    events.push(this_year_instance);
+                    events.push(current_year_instance);
                 }
-                if let Some(next_year_instance) =
-                    create_recurring_instance(uid, summary_prefix, fullname, dtstart, this_year + 1)
-                {
+                if let Some(next_year_instance) = create_recurring_instance(
+                    uid,
+                    summary_prefix,
+                    fullname,
+                    dtstart,
+                    current_year + 1,
+                ) {
                     events.push(next_year_instance);
                 }
             }
@@ -200,32 +204,32 @@ fn create_recurring_instance(
     dtstart: NaiveDate,
     year: i32,
 ) -> Option<IcalEventBuilder> {
-    let Some(dt_this_year) = NaiveDate::from_ymd_opt(year, dtstart.month(), dtstart.day()) else {
+    let Some(dt_instance) = NaiveDate::from_ymd_opt(year, dtstart.month(), dtstart.day()) else {
         return None;
     };
-    let this_year_start_date = CalDate(dt_this_year, Tz::Local);
-    let Some(this_year_end_date) = this_year_start_date.succ_opt() else {
-        // this_year_start_date is MAX_DATE, this should never happen but FAPP also not raise an error
+    let instance_start_date = CalDate(dt_instance, Tz::Local);
+    let Some(instance_end_date) = instance_start_date.succ_opt() else {
+        // instance_start_date is MAX_DATE, this should never happen but FAPP also not raise an error
         return None;
     };
-    let age_suffix = dt_this_year
+    let age_suffix = dt_instance
         .years_since(dtstart)
         .map(|age| format!(" {age}"))
         .unwrap_or_default();
-    let this_year_summary = format!("{summary_prefix} {fullname}{age_suffix}");
+    let instance_summary = format!("{summary_prefix} {fullname}{age_suffix}");
     return Some(IcalEventBuilder {
         properties: vec![
             IcalDTSTAMPProperty(Utc::now().into(), vec![].into()).into(),
-            IcalDTSTARTProperty(this_year_start_date.clone().into(), vec![].into()).into(),
-            IcalDTENDProperty(this_year_end_date.clone().into(), vec![].into()).into(),
+            IcalDTSTARTProperty(instance_start_date.clone().into(), vec![].into()).into(),
+            IcalDTENDProperty(instance_end_date.clone().into(), vec![].into()).into(),
             IcalUIDProperty(uid, vec![].into()).into(),
             IcalRECURIDProperty(
-                this_year_start_date.into(),
+                instance_start_date.into(),
                 vec![].into(),
                 RecurIdRange::This,
             )
             .into(),
-            IcalSUMMARYProperty(this_year_summary.clone(), vec![].into()).into(),
+            IcalSUMMARYProperty(instance_summary.clone(), vec![].into()).into(),
             ContentLine {
                 name: "TRANSP".to_owned(),
                 value: "TRANSPARENT".to_owned(),
@@ -246,7 +250,7 @@ fn create_recurring_instance(
                 },
                 ContentLine {
                     name: "DESCRIPTION".to_owned(),
-                    value: this_year_summary,
+                    value: instance_summary,
                     ..Default::default()
                 },
             ],
