@@ -161,7 +161,7 @@ END:VCARD",
         .headers_mut()
         .typed_insert(Authorization::basic("user", "pass"));
     let response = app.clone().oneshot(request).await.unwrap();
-    // assert_eq!(response.status(), StatusCode::MULTI_STATUS);
+    assert_eq!(response.status(), StatusCode::MULTI_STATUS);
     let body = response.extract_string().await;
     insta::assert_snapshot!("birthdays_sync_collection_body", body);
 }
