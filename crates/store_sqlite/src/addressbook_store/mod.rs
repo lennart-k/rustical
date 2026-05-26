@@ -337,7 +337,7 @@ impl SqliteAddressbookStore {
 
         let mut conn = acquire.acquire().await.map_err(crate::Error::from)?;
 
-        let synctoken_with_year = i64::from(current_year << 100000) + synctoken;
+        let synctoken_with_year = i64::from(current_year) << 32 + synctoken;
 
         let changes = sqlx::query_as!(
             Row,
@@ -358,7 +358,7 @@ impl SqliteAddressbookStore {
         let mut deleted_objects = vec![];
 
         let new_synctoken = changes.last().map_or(0, |&Row { synctoken, .. }| synctoken);
-        let new_synctoken_with_year = i64::from(current_year << 100000) + new_synctoken;
+        let new_synctoken_with_year = i64::from(current_year) << 32 + new_synctoken;
 
         for Row { object_id, .. } in changes {
             match Self::_get_object(&mut *conn, principal, addressbook_id, &object_id, false).await
