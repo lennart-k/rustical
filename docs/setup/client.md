@@ -80,11 +80,7 @@ As URL specify
 https://<your-host>/caldav-compat
 ```
 
-For group collections explicitly specify
-
-```
-https://<your-host>/caldav-compat/principal/<principal>
-```
+For group collections set the user to `<user>$<group>` as described in the `Principal impersonation` section.
 
 ## Thunderbird
 
