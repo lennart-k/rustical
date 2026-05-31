@@ -36,3 +36,60 @@ async fn main() -> Result<()> {
         }
     }
 }
+
+#[cfg(test)]
+mod test_config {
+    use figment::{
+        Figment, Jail,
+        providers::{Env, Format, Toml},
+    };
+    use rustical::config::Config;
+
+    #[test]
+    fn test_config_toml() {
+        let config = r#"
+[data_store.sqlite]
+db_url = "/var/lib/rustical/db.sqlite3"
+
+[http]
+host = "0.0.0.0"
+port = 4000
+
+[oidc]
+name = "Authelia"
+issuer = "https://auth.rustical.dev"
+client_id = "rustical"
+client_secret = "secret"
+claim_userid = "email"
+scopes = ["openid", "email", "profile", "groups"]
+require_group = "app:rustical"
+allow_sign_up = true
+"#;
+
+        let config: Config = Figment::new()
+            .merge(Toml::string(config))
+            .extract()
+            .unwrap();
+        assert_eq!(config.http.port, 4000);
+    }
+
+    #[test]
+    fn test_config_env() {
+        Jail::expect_with(|jail| {
+            jail.set_env(
+                "RUSTICAL_DATA_STORE__SQLITE__DB_URL",
+                "/var/lib/rustical/db.sqlite3",
+            );
+            jail.set_env("RUSTICAL_HTTP__HOST", "localhost");
+            jail.set_env("RUSTICAL_HTTP__PORT", "4000");
+
+            let config: Config = Figment::new()
+                .merge(Env::prefixed("RUSTICAL_").split("__"))
+                .extract()
+                .unwrap();
+            assert_eq!(config.http.host, "localhost");
+            assert_eq!(config.http.port, 4000);
+            Ok(())
+        });
+    }
+}

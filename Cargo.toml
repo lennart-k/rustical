@@ -152,6 +152,7 @@ insta.workspace = true
 similar-asserts.workspace = true
 tempfile = "3.24"
 reqwest = { workspace = true, features = ["cookies", "form"] }
+figment = { version = "0.10", features = ["env", "toml", "test"] }
 
 [dependencies]
 rustical_store.workspace = true
