@@ -265,17 +265,6 @@ h3 { font-size: 1rem; }
 
 .font_bold { font-weight: 600; }
 
-/* ── Cards / Sections ──────────────────────── */
-
-section {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 20px 24px;
-  margin: 20px 0;
-  box-shadow: 0 1px 3px var(--shadow);
-}
-
 /* ── Tables ────────────────────────────────── */
 
 table {
@@ -809,10 +798,6 @@ footer {
 
   #app {
     padding: 20px 14px 32px;
-  }
-
-  section {
-    padding: 16px;
   }
 
   ul.collection-list li.collection-list-item .inner {
