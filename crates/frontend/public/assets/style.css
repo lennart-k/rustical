@@ -405,14 +405,10 @@ ul.collection-list {
 
       .color-chip {
         position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        right: 16px;
+        right: 0;
         width: 22px;
-        height: 22px;
-        border-radius: 5px;
+        height: 100%;
         background: var(--color, transparent);
-        border: 1px solid color-mix(in srgb, var(--border), var(--color, transparent) 30%);
       }
     }
   }
@@ -825,10 +821,6 @@ footer {
 
   ul.collection-list li.collection-list-item .inner {
     padding-right: 16px;
-
-    .color-chip {
-      display: none;
-    }
   }
 
   table {
