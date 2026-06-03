@@ -61,7 +61,7 @@ export class CreateCalendarForm extends LitElement {
 
   override render() {
     return html`
-      <button @click=${e => this.dialog.value.showModal()}>Create calendar</button>
+      <button class="primary" @click=${e => this.dialog.value.showModal()}>Create calendar</button>
       <dialog ${ref(this.dialog)} @close=${e => this.resetForm()}>
         <h3>Create calendar</h3>
         <form @submit=${this.submit} ${ref(this.form)}>
@@ -140,7 +140,7 @@ export class CreateCalendarForm extends LitElement {
             `)}
           </div>
           <br>
-          <button type="submit">Create</button>
+          <button type="submit" class="primary">Create</button>
           <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close();}} class="cancel">Cancel</button>
       </form>
       </dialog>

@@ -773,7 +773,7 @@ var SVG_ICON_INTERNET = w`<!-- Adapted from https://iconoir.com/ -->
 </svg>
 `;
 //#endregion
-//#region \0@oxc-project+runtime@0.127.0/helpers/decorate.js
+//#region \0@oxc-project+runtime@0.121.0/helpers/decorate.js
 function __decorate(decorators, target, key, desc) {
 	var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
 	if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -798,12 +798,12 @@ var CreateAddressbookForm = class CreateAddressbookForm extends i$2 {
 	}
 	render() {
 		return b`
-      <button @click=${() => this.dialog.value.showModal()}>Create addressbook</button>
+      <button class="primary" @click=${() => this.dialog.value.showModal()}>Create addressbook</button>
       <dialog ${n(this.dialog)}>
         <h3>Create addressbook</h3>
         <form @submit=${this.submit} ${n(this.form)}>
           <label>
-            Principal (for group addressbooks)
+            principal (for group addressbooks)
             <select .value=${this.user} @change=${(e) => this.principal = e.target.value}>
               <option .value=${this.user}>${this.user}</option>
               ${window.rusticalUser.memberships.map((membership) => b`
@@ -813,12 +813,12 @@ var CreateAddressbookForm = class CreateAddressbookForm extends i$2 {
           </label>
           <br>
           <label>
-            ID
+            id
             <input type="text" .value=${this.addr_id} @change=${(e) => this.addr_id = e.target.value} />
           </label>
           <br>
           <label>
-            Display name
+            Displayname
             <input type="text" .value=${this.displayname} @change=${(e) => this.displayname = e.target.value} />
           </label>
           <br>
@@ -827,7 +827,7 @@ var CreateAddressbookForm = class CreateAddressbookForm extends i$2 {
             <input type="text" .value=${this.description} @change=${(e) => this.description = e.target.value} />
           </label>
           <br>
-          <button type="submit">Create</button>
+          <button type="submit" class="primary">Create</button>
           <button type="submit" @click=${(event) => {
 			event.preventDefault();
 			this.dialog.value.close();
@@ -900,7 +900,7 @@ var CreateBirthdayCalendarForm = class CreateBirthdayCalendarForm extends i$2 {
         <h3>Create calendar</h3>
         <form @submit=${this.submit} ${n(this.form)}>
           <label>
-            Display name
+            Displayname
             <input type="text" .value=${this.displayname} required @change=${(e) => this.displayname = e.target.value} />
           </label>
           <br>
@@ -914,7 +914,7 @@ var CreateBirthdayCalendarForm = class CreateBirthdayCalendarForm extends i$2 {
             <input type="color" .value=${this.color} @change=${(e) => this.color = e.target.value} />
           </label>
           <br>
-          <button type="submit">Create</button>
+          <button type="submit" class="primary">Create</button>
           <button type="submit" @click=${(event) => {
 			event.preventDefault();
 			this.dialog.value.close();
@@ -1014,12 +1014,12 @@ var CreateCalendarForm = class CreateCalendarForm extends i$2 {
 	}
 	render() {
 		return b`
-      <button @click=${(e) => this.dialog.value.showModal()}>Create calendar</button>
+      <button class="primary" @click=${(e) => this.dialog.value.showModal()}>Create calendar</button>
       <dialog ${n(this.dialog)} @close=${(e) => this.resetForm()}>
         <h3>Create calendar</h3>
         <form @submit=${this.submit} ${n(this.form)}>
           <label>
-            Principal (for group calendars)
+            principal (for group calendars)
             <select required value=${this.user} @change=${(e) => this.principal = e.target.value}>
               <option value=${this.user}>${this.user}</option>
               ${window.rusticalUser.memberships.map((membership) => b`
@@ -1029,12 +1029,12 @@ var CreateCalendarForm = class CreateCalendarForm extends i$2 {
           </label>
           <br>
           <label>
-            ID
+            id
             <input type="text" required .value=${this.cal_id} @change=${(e) => this.cal_id = e.target.value} />
           </label>
           <br>
           <label>
-            Display name
+            Displayname
             <input type="text" required .value=${this.displayname} @change=${(e) => this.displayname = e.target.value} />
           </label>
           <br>
@@ -1097,7 +1097,7 @@ var CreateCalendarForm = class CreateCalendarForm extends i$2 {
             `)}
           </div>
           <br>
-          <button type="submit">Create</button>
+          <button type="submit" class="primary">Create</button>
           <button type="submit" @click=${(event) => {
 			event.preventDefault();
 			this.dialog.value.close();
@@ -1219,7 +1219,7 @@ var EditAddressbookForm = class EditAddressbookForm extends i$2 {
         <h3>Edit addressbook</h3>
         <form @submit=${this.submit} ${n(this.form)}>
           <label>
-            Display name
+            Displayname
             <input type="text" .value=${this.displayname} @change=${(e) => this.displayname = e.target.value} />
           </label>
           <br>
@@ -1228,7 +1228,7 @@ var EditAddressbookForm = class EditAddressbookForm extends i$2 {
             <input type="text" .value=${this.description} @change=${(e) => this.description = e.target.value} />
           </label>
           <br>
-          <button type="submit">Submit</button>
+          <button type="submit" class="primary">Submit</button>
           <button type="submit" @click=${(event) => {
 			event.preventDefault();
 			this.dialog.value.close();
@@ -1312,7 +1312,7 @@ var EditCalendarForm = class EditCalendarForm extends i$2 {
         <h3>Edit calendar</h3>
         <form @submit=${this.submit} ${n(this.form)}>
           <label>
-            Display name
+            Displayname
             <input type="text" required .value=${this.displayname} @change=${(e) => this.displayname = e.target.value} />
           </label>
           <br>
@@ -1348,7 +1348,7 @@ var EditCalendarForm = class EditCalendarForm extends i$2 {
             <br>
           `)}
           <br>
-          <button type="submit">Submit</button>
+          <button type="submit" class="primary">Submit</button>
           <button type="submit" @click=${(event) => {
 			event.preventDefault();
 			this.dialog.value.close();
@@ -1442,7 +1442,7 @@ var ImportAddressbookForm = class ImportAddressbookForm extends i$2 {
         <h3>Import addressbook</h3>
         <form @submit=${this.submit} ${n(this.form)}>
           <label>
-            Principal (for group addressbook)
+            principal (for group addressbook)
             <select name="principal" required .value=${this.user} @change=${(e) => this.principal = e.target.value}>
               <option .value=${this.user}>${this.user}</option>
               ${window.rusticalUser.memberships.map((membership) => b`
@@ -1452,17 +1452,17 @@ var ImportAddressbookForm = class ImportAddressbookForm extends i$2 {
           </label>
           <br>
           <label>
-            ID
+            id
             <input type="text" required .value=${this.addressbook_id} @change=${(e) => this.addressbook_id = e.target.value} />
           </label>
           <br>
           <label>
-            File
+            file
             <input type="file" accept="text/vcard" required @change=${(e) => this.file = e.target.files[0]} />
           </label>
           <br>
           <br>
-          <button type="submit">Import</button>
+          <button type="submit" class="primary">Import</button>
           <button type="submit" @click=${(event) => {
 			event.preventDefault();
 			this.dialog.value.close();
@@ -1520,7 +1520,7 @@ var ImportCalendarForm = class ImportCalendarForm extends i$2 {
         <h3>Import calendar</h3>
         <form @submit=${this.submit} ${n(this.form)}>
           <label>
-            Principal (for group calendars)
+            principal (for group calendars)
             <select name="principal" required .value=${this.user} @change=${(e) => this.principal = e.target.value}>
               <option .value=${this.user}>${this.user}</option>
               ${window.rusticalUser.memberships.map((membership) => b`
@@ -1530,17 +1530,17 @@ var ImportCalendarForm = class ImportCalendarForm extends i$2 {
           </label>
           <br>
           <label>
-            ID
+            id
             <input type="text" required .value=${this.cal_id} @change=${(e) => this.cal_id = e.target.value} />
           </label>
           <br>
           <label>
-            File
+            file
             <input type="file" required accept="text/calendar" @change=${(e) => this.file = e.target.files[0]} />
           </label>
           <br>
           <br>
-          <button type="submit">Import</button>
+          <button type="submit" class="primary">Import</button>
           <button type="submit" @click=${(event) => {
 			event.preventDefault();
 			this.dialog.value.close();

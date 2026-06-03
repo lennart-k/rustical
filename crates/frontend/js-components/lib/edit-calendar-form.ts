@@ -84,7 +84,7 @@ export class EditCalendarForm extends LitElement {
             <br>
           `)}
           <br>
-          <button type="submit">Submit</button>
+          <button type="submit" class="primary">Submit</button>
           <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close(); this.form.value.reset() }} class="cancel">Cancel</button>
       </form>
       </dialog>

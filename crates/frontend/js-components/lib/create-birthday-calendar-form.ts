@@ -47,7 +47,7 @@ export class CreateBirthdayCalendarForm extends LitElement {
             <input type="color" .value=${this.color} @change=${e => this.color = e.target.value} />
           </label>
           <br>
-          <button type="submit">Create</button>
+          <button type="submit" class="primary">Create</button>
           <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close(); this.form.value.reset() }} class="cancel">Cancel</button>
       </form>
       </dialog>

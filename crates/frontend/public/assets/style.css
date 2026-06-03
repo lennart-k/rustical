@@ -655,12 +655,9 @@ dialog form {
   }
 }
 
-/* ── Primary button contexts ───────────────── */
+/* ── Primary button ---------───────────────── */
 
-dialog form button[type="submit"]:not(.cancel),
-.generate-form button[type="submit"]:first-of-type,
-create-calendar-form > button,
-create-addressbook-form > button {
+button.primary {
   background: var(--primary);
   border-color: var(--primary);
   color: var(--primary-text);

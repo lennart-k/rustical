@@ -51,7 +51,7 @@ export class ImportAddressbookForm extends LitElement {
           </label>
           <br>
           <br>
-          <button type="submit">Import</button>
+          <button type="submit" class="primary">Import</button>
           <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close(); this.form.value.reset() }} class="cancel">Cancel</button>
       </form>
       </dialog>
