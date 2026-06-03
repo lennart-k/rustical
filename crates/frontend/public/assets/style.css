@@ -742,6 +742,18 @@ create-addressbook-form > button {
 }
 
 @media (prefers-color-scheme: dark) {
+  .tab-radio {
+    background: var(--bg);
+
+    label:has(input:checked) {
+      background: var(--surface-alt);
+      border: 1px solid color-mix(in srgb, var(--border), white 12%);
+      box-shadow: 0 1px 4px var(--shadow-md);
+    }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
   .token-result {
     background: color-mix(in srgb, #F59E0B, transparent 92%);
     border-color: color-mix(in srgb, #F59E0B, transparent 65%);
