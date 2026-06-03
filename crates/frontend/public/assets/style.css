@@ -109,7 +109,6 @@ header {
       font-size: 0.9rem;
       font-weight: 500;
       color: var(--text-muted);
-      transition: background 0.15s, color 0.15s;
 
       &:hover {
         background: var(--bg-alt);
@@ -157,17 +156,11 @@ button, .button {
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.25;
-  transition: background 0.15s, border-color 0.15s, transform 0.1s;
   white-space: nowrap;
 
   &:hover {
     background: var(--bg-alt);
     border-color: color-mix(in srgb, var(--border), var(--text) 15%);
-    transform: translateY(-1px);
-  }
-
-  &:active {
-    transform: translateY(0);
   }
 
   &.delete, &.cancel {
@@ -200,7 +193,6 @@ textarea {
   font-family: inherit;
   font-size: 0.9rem;
   line-height: 1.4;
-  transition: border-color 0.15s, box-shadow 0.15s;
   outline: none;
 
   &:focus {
@@ -220,7 +212,6 @@ input[type="color"] {
   height: 38px;
   cursor: pointer;
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
 
   &::-webkit-color-swatch-wrapper {
     padding: 0;
@@ -336,7 +327,6 @@ ul.collection-list {
     border-radius: var(--radius-lg);
     box-shadow: 0 1px 3px var(--shadow);
     overflow: hidden;
-    transition: box-shadow 0.15s, border-color 0.15s;
 
     &:hover {
       box-shadow: 0 4px 12px var(--shadow-md);
@@ -471,7 +461,6 @@ ul.collection-list {
     font-weight: 500;
     color: var(--text-muted);
     position: relative;
-    transition: background 0.12s, color 0.12s;
     margin-bottom: 0;
 
     input {
