@@ -78,8 +78,8 @@ header {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 10px;
-  padding: 0 24px;
-  height: 58px;
+  padding: 10px 24px;
+  min-height: 58px;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -807,20 +807,7 @@ footer {
 
 @media (max-width: 680px) {
   header {
-    padding: 0 16px;
-    height: auto;
-    min-height: 52px;
-    padding-top: 8px;
-    padding-bottom: 8px;
-
-    a.logo {
-      font-size: 1.1rem;
-    }
-
-    nav a {
-      padding: 6px 10px;
-      font-size: 0.82rem;
-    }
+    padding: 10px 16px;
   }
 
   #app {
