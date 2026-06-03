@@ -835,6 +835,12 @@ footer {
     display: block;
     overflow-x: auto;
     white-space: nowrap;
+
+    > thead, > tbody {
+      display: table;
+      width: 100%;
+      border-collapse: collapse;
+    }
   }
 
   .login_window {
