@@ -40,8 +40,10 @@ export class EditAddressbookForm extends LitElement {
             Description
             <input type="text" .value=${this.description} @change=${e => this.description = e.target.value} />
           </label>
-          <button type="submit" class="primary">Submit</button>
-          <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close(); this.form.value.reset() }} class="cancel">Cancel</button>
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Submit</button>
+            <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close(); this.form.value.reset() }} class="cancel">Cancel</button>
+          </div>
         </form>
       </dialog>
     `

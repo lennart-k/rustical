@@ -47,8 +47,10 @@ export class ImportAddressbookForm extends LitElement {
             file
             <input type="file" accept="text/vcard" required @change=${e => this.file = e.target.files[0]} />
           </label>
-          <button type="submit" class="primary">Import</button>
-          <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close(); this.form.value.reset() }} class="cancel">Cancel</button>
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Import</button>
+            <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close(); this.form.value.reset() }} class="cancel">Cancel</button>
+          </div>
       </form>
       </dialog>
         `

@@ -15,7 +15,7 @@
   --shadow-md: rgba(0, 0, 0, 0.10);
   --radius-sm: 6px;
   --radius: 10px;
-  --radius-lg: 14px;
+  --radius-lg: 1em;
   --orange: #F59E0B;
   --background-color-warning-card: color-mix(in srgb, var(--orange), transparent 90%);
   --border-color-warning-card: color-mix(in srgb, var(--orange), transparent 65%);
@@ -43,16 +43,8 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  .tab-radio {
-    background: var(--background-color-01);
-
-    label:has(input:checked) {
-      background: var(--background-color-04);
-      border: 1px solid color-mix(in srgb, var(--border), white 12%);
-      box-shadow: 0 1px 4px var(--shadow-md);
-    }
-  }
+.margin-top-m {
+  margin-top: 2em;
 }
 
 * {
@@ -107,7 +99,7 @@ header {
       align-items: center;
       gap: 6px;
       text-decoration: none;
-      padding: 7px 14px;
+      padding: .5em 1em;
       border-radius: var(--radius-sm);
       font-size: 0.9rem;
       font-weight: 500;
@@ -157,18 +149,14 @@ a {
 }
 
 button, .button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
   cursor: pointer;
   border: 1px solid var(--border);
   background: var(--background-color-03);
-  padding: 8px 1em;
+  padding: .5em 1em;
   border-radius: var(--radius-sm);
   color: var(--text);
-  font-size: 0.875rem;
+  font-size: .9em;
   font-weight: 500;
-  line-height: 1.25;
   white-space: nowrap;
 
   &:hover {
@@ -218,7 +206,6 @@ input[type="color"] {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 0;
-  width: 4em;
   height: 2.5em;
   cursor: pointer;
   outline: none;
@@ -236,26 +223,12 @@ textarea {
   resize: vertical;
 }
 
-form input[type="text"],
-form input[type="url"],
-form input[type="password"],
-form input[type="file"],
-form select,
-form textarea {
-  width: 100%;
-}
-
 h1, h2, h3 {
-  letter-spacing: -0.025em;
   font-weight: 700;
   line-height: 1.25;
   margin: 0 0 16px;
   color: var(--text);
 }
-
-h1 { font-size: 1.6rem; }
-h2 { font-size: 1.2rem; }
-h3 { font-size: 1rem; }
 
 table {
   width: 100%;
@@ -300,7 +273,7 @@ ul.collection-list {
   margin: 0 0 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: .8em;
 
   li.collection-list-item {
     position: relative;
@@ -335,9 +308,10 @@ ul.collection-list {
         "metadata    color-chip"
         "actions     color-chip"
         ".           color-chip";
-      row-gap: 3px;
-      grid-template-rows: 12px auto auto auto auto auto 12px;
-      padding-left: 12px;
+      row-gap: .1em;
+      column-gap: 1em;
+      grid-template-rows: 1em auto auto auto auto auto 1em;
+      padding-left: 1em;
 
       button, a {
         pointer-events: all;
@@ -347,29 +321,25 @@ ul.collection-list {
       .title {
         grid-area: title;
         font-weight: 600;
-        font-size: 0.975rem;
       }
 
       .description {
         grid-area: description;
         color: var(--text-muted);
-        font-size: 0.875rem;
-        margin-right: 12px;
+        font-size: .9em;
       }
 
       .subscription-url {
         grid-area: sub-url;
-        font-size: 0.8rem;
+        font-size: .9em;
         color: var(--text-muted);
         word-break: break-all;
-        margin-right: 12px;
       }
 
       .metadata {
         grid-area: metadata;
-        font-size: 0.8rem;
+        font-size: .8em;
         color: var(--text-muted);
-        margin-right: 12px;
       }
 
       .actions {
@@ -378,9 +348,8 @@ ul.collection-list {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 6px;
-        margin-top: 10px;
-        margin-right: 12px;
+        gap: .5em;
+        margin-top: .3em;
       }
 
       .color-chip {
@@ -411,6 +380,7 @@ span.chip {
   border-radius: var(--radius-sm);
   padding: 3px;
   gap: 2px;
+  margin-bottom: 1em;
 
   label {
     display: flex;
@@ -425,7 +395,7 @@ span.chip {
     font-weight: 500;
     color: var(--text-muted);
     position: relative;
-    margin-bottom: 0;
+    margin-top: 0;
 
     input {
       appearance: none;
@@ -434,7 +404,7 @@ span.chip {
       pointer-events: none;
     }
 
-    svg { width: 18px; height: 18px; }
+    svg { width: 1.2em; height: 1.2em; }
   }
 
   label:hover {
@@ -445,10 +415,10 @@ span.chip {
   label:has(input:focus-visible) {
     outline: 2px solid var(--primary);
     outline-offset: 1px;
-    input { outline: none; }
   }
 
   label:has(input:checked) {
+    border: 1px solid var(--border);
     background: var(--background-color-03);
     color: var(--text);
     box-shadow: 0 1px 3px var(--shadow);
@@ -474,17 +444,15 @@ dialog::backdrop {
   backdrop-filter: blur(2px);
 }
 
-dialog form {
-  display: block;
-
+form {
   label {
     display: flex;
     flex-direction: column;
     gap: 5px;
-    margin-bottom: 14px;
     font-size: 0.85rem;
     font-weight: 500;
     color: var(--text-muted);
+    margin-top: 1em;
 
     input[type="text"],
     input[type="url"],
@@ -495,15 +463,23 @@ dialog form {
     }
   }
 
+  input[type="text"],
+  input[type="url"],
+  input[type="password"],
+  input[type="file"],
+  input[type="color"],
+  select,
+  textarea {
+    display: block;
+    width: 100%;
+  }
+
   label:has(input[type="checkbox"]) {
     flex-direction: row;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
     color: var(--text);
-    font-size: 0.9rem;
     font-weight: 400;
-    cursor: pointer;
+    margin-top: .1em;
 
     input[type="checkbox"] {
       width: 16px;
@@ -513,38 +489,6 @@ dialog form {
       accent-color: var(--primary);
       cursor: pointer;
     }
-  }
-
-  label:has(input[type="color"]) {
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-    color: var(--text);
-    font-size: 0.9rem;
-    font-weight: 400;
-  }
-
-  label:not(:has(input, select, textarea)) {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-    margin-top: 6px;
-  }
-
-  .tab-radio,
-  > div {
-    margin-bottom: 14px;
-  }
-
-  > button {
-    margin-top: 20px;
-    margin-right: 8px;
-    margin-bottom: 0;
-  }
-
-  > button ~ button {
-    margin-top: 20px;
   }
 }
 
@@ -557,19 +501,10 @@ dialog form {
   padding: 36px 32px;
   box-shadow: 0 4px 24px var(--shadow);
 
-  form {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 4px;
-  }
-
   button[type="submit"] {
     width: 100%;
-    justify-content: center;
-    margin-top: 4px;
-    padding: 10px 16px;
+    text-align: center;
+    margin-top: .5em;
     background: var(--primary);
     border-color: var(--primary);
     color: var(--primary-text);
@@ -579,14 +514,6 @@ dialog form {
       background: var(--primary-hover);
       border-color: var(--primary-hover);
     }
-  }
-
-  label {
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--text-muted);
-    margin-bottom: 2px;
-    display: block;
   }
 }
 
@@ -607,7 +534,7 @@ generate-app-token-form {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-top: 14px;
+    margin-top: 1em;
     flex-wrap: wrap;
 
     input[type="text"] {
@@ -617,15 +544,15 @@ generate-app-token-form {
   }
 
   .token-result {
-    margin-top: 14px;
-    padding: 16px 18px;
+    margin-top: 1em;
+    padding: 1em;
     background: var(--background-color-warning-card);
     border: 1px solid var(--border-color-warning-card);
     border-radius: var(--radius);
 
     .token-result-warning {
       margin: 0 0 12px;
-      font-size: 0.875rem;
+      font-size: 0.9em;
       font-weight: 600;
       color: var(--text-color-warning)
     }
@@ -633,21 +560,21 @@ generate-app-token-form {
     .token-result-row {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: .8em;
       flex-wrap: wrap;
-      margin-bottom: 12px;
+      margin-bottom: 1em;
     }
 
     .token-value {
       flex: 1;
       min-width: 0;
       font-family: ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
-      font-size: 0.825rem;
+      font-size: 0.9em;
       word-break: break-all;
       background: var(--background-color-03);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
-      padding: 9px 12px;
+      padding: .7em 1em;
       display: block;
       line-height: 1.5;
     }
@@ -659,9 +586,7 @@ pre {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: auto;
-  padding: 14px 16px;
-  font-size: 0.83rem;
-  line-height: 1.55;
+  padding: 1em;
 }
 
 svg.icon {
@@ -674,12 +599,12 @@ footer {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 20px;
-  padding: 0 20px 32px;
+  gap: 2em;
+  padding: 0 2em 2em;
   max-width: 1000px;
-  margin: 8px auto 0;
+  margin: 1em auto 0;
   color: var(--text-muted);
-  font-size: 0.82rem;
+  font-size: 0.9em;
 
   a {
     color: var(--text-muted);

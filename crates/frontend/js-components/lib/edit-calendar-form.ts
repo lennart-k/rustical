@@ -72,14 +72,17 @@ export class EditCalendarForm extends LitElement {
             Color
             <input type="color" .value=${this.color} @change=${e => this.color = e.target.value} />
           </label>
+          <label>Components</label>
           ${["VEVENT", "VTODO", "VJOURNAL"].map(comp => html`
             <label>
               Support ${comp}
               <input type="checkbox" .value=${comp} ?checked=${this.components.has(comp)} @change=${e => e.target.checked ? this.components.add(e.target.value) : this.components.delete(e.target.value)} />
             </label>
           `)}
-          <button type="submit" class="primary">Submit</button>
-          <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close(); this.form.value.reset() }} class="cancel">Cancel</button>
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Submit</button>
+            <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close(); this.form.value.reset() }} class="cancel">Cancel</button>
+          </div>
       </form>
       </dialog>
         `

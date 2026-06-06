@@ -823,12 +823,14 @@ var CreateAddressbookForm = class CreateAddressbookForm extends i$2 {
             Description
             <input type="text" .value=${this.description} @change=${(e) => this.description = e.target.value} />
           </label>
-          <button type="submit" class="primary">Create</button>
-          <button type="submit" @click=${(event) => {
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Create</button>
+            <button type="submit" @click=${(event) => {
 			event.preventDefault();
 			this.dialog.value.close();
 			this.form.value.reset();
 		}} class="cancel">Cancel</button>
+          </div>
         </form>
       </dialog>
     `;
@@ -907,12 +909,14 @@ var CreateBirthdayCalendarForm = class CreateBirthdayCalendarForm extends i$2 {
             Color
             <input type="color" .value=${this.color} @change=${(e) => this.color = e.target.value} />
           </label>
-          <button type="submit" class="primary">Create</button>
-          <button type="submit" @click=${(event) => {
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Create</button>
+            <button type="submit" @click=${(event) => {
 			event.preventDefault();
 			this.dialog.value.close();
 			this.form.value.reset();
 		}} class="cancel">Cancel</button>
+          </div>
       </form>
       </dialog>
         `;
@@ -1077,12 +1081,14 @@ var CreateCalendarForm = class CreateCalendarForm extends i$2 {
                 <input type="checkbox" .value=${comp} @change=${(e) => e.target.checked ? this.components.add(e.target.value) : this.components.delete(e.target.value)} .checked=${this.components.has(comp)} />
               </label>
             `)}
-          </div>
-          <button type="submit" class="primary">Create</button>
-          <button type="submit" @click=${(event) => {
+          </div> 
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Create</button>
+            <button type="submit" @click=${(event) => {
 			event.preventDefault();
 			this.dialog.value.close();
 		}} class="cancel">Cancel</button>
+          </div>
       </form>
       </dialog>
         `;
@@ -1207,12 +1213,14 @@ var EditAddressbookForm = class EditAddressbookForm extends i$2 {
             Description
             <input type="text" .value=${this.description} @change=${(e) => this.description = e.target.value} />
           </label>
-          <button type="submit" class="primary">Submit</button>
-          <button type="submit" @click=${(event) => {
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Submit</button>
+            <button type="submit" @click=${(event) => {
 			event.preventDefault();
 			this.dialog.value.close();
 			this.form.value.reset();
 		}} class="cancel">Cancel</button>
+          </div>
         </form>
       </dialog>
     `;
@@ -1311,6 +1319,7 @@ var EditCalendarForm = class EditCalendarForm extends i$2 {
             Color
             <input type="color" .value=${this.color} @change=${(e) => this.color = e.target.value} />
           </label>
+          <label>Components</label>
           ${[
 			"VEVENT",
 			"VTODO",
@@ -1321,12 +1330,14 @@ var EditCalendarForm = class EditCalendarForm extends i$2 {
               <input type="checkbox" .value=${comp} ?checked=${this.components.has(comp)} @change=${(e) => e.target.checked ? this.components.add(e.target.value) : this.components.delete(e.target.value)} />
             </label>
           `)}
-          <button type="submit" class="primary">Submit</button>
-          <button type="submit" @click=${(event) => {
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Submit</button>
+            <button type="submit" @click=${(event) => {
 			event.preventDefault();
 			this.dialog.value.close();
 			this.form.value.reset();
 		}} class="cancel">Cancel</button>
+          </div>
       </form>
       </dialog>
         `;
@@ -1431,12 +1442,14 @@ var ImportAddressbookForm = class ImportAddressbookForm extends i$2 {
             file
             <input type="file" accept="text/vcard" required @change=${(e) => this.file = e.target.files[0]} />
           </label>
-          <button type="submit" class="primary">Import</button>
-          <button type="submit" @click=${(event) => {
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Import</button>
+            <button type="submit" @click=${(event) => {
 			event.preventDefault();
 			this.dialog.value.close();
 			this.form.value.reset();
 		}} class="cancel">Cancel</button>
+          </div>
       </form>
       </dialog>
         `;
@@ -1505,12 +1518,14 @@ var ImportCalendarForm = class ImportCalendarForm extends i$2 {
             file
             <input type="file" required accept="text/calendar" @change=${(e) => this.file = e.target.files[0]} />
           </label>
-          <button type="submit" class="primary">Import</button>
-          <button type="submit" @click=${(event) => {
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Import</button>
+            <button type="submit" @click=${(event) => {
 			event.preventDefault();
 			this.dialog.value.close();
 			this.form.value.reset();
 		}} class="cancel">Cancel</button>
+          </div>
       </form>
       </dialog>
         `;

@@ -127,9 +127,11 @@ export class CreateCalendarForm extends LitElement {
                 <input type="checkbox" .value=${comp} @change=${e => e.target.checked ? this.components.add(e.target.value) : this.components.delete(e.target.value)} .checked=${this.components.has(comp)} />
               </label>
             `)}
+          </div> 
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Create</button>
+            <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close();}} class="cancel">Cancel</button>
           </div>
-          <button type="submit" class="primary">Create</button>
-          <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close();}} class="cancel">Cancel</button>
       </form>
       </dialog>
         `
