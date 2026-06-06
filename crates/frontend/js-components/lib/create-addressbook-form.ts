@@ -30,7 +30,7 @@ export class CreateAddressbookForm extends LitElement {
 
   override render() {
     return html`
-      <button @click=${() => this.dialog.value.showModal()}>Create addressbook</button>
+      <button class="primary" @click=${() => this.dialog.value.showModal()}>Create addressbook</button>
       <dialog ${ref(this.dialog)}>
         <h3>Create addressbook</h3>
         <form @submit=${this.submit} ${ref(this.form)}>
@@ -43,24 +43,22 @@ export class CreateAddressbookForm extends LitElement {
               `)}
             </select>
           </label>
-          <br>
           <label>
             id
             <input type="text" .value=${this.addr_id} @change=${e => this.addr_id = e.target.value} />
           </label>
-          <br>
           <label>
             Displayname
             <input type="text" .value=${this.displayname} @change=${e => this.displayname = e.target.value} />
           </label>
-          <br>
           <label>
             Description
             <input type="text" .value=${this.description} @change=${e => this.description = e.target.value} />
           </label>
-          <br>
-          <button type="submit">Create</button>
-          <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close(); this.form.value.reset() }} class="cancel">Cancel</button>
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Create</button>
+            <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close(); this.form.value.reset() }} class="cancel">Cancel</button>
+          </div>
         </form>
       </dialog>
     `

@@ -39,20 +39,18 @@ export class ImportCalendarForm extends LitElement {
               `)}
             </select>
           </label>
-          <br>
           <label>
             id
             <input type="text" required .value=${this.cal_id} @change=${e => this.cal_id = e.target.value} />
           </label>
-          <br>
           <label>
             file
             <input type="file" required accept="text/calendar" @change=${e => this.file = e.target.files[0]} />
           </label>
-          <br>
-          <br>
-          <button type="submit">Import</button>
-          <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close(); this.form.value.reset() }} class="cancel">Cancel</button>
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Import</button>
+            <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close(); this.form.value.reset() }} class="cancel">Cancel</button>
+          </div>
       </form>
       </dialog>
         `

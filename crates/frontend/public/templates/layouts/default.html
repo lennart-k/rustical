@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
   <title>{% block title %}RustiCal{% endblock %}</title>
   <link rel="stylesheet" href="/frontend/assets/style.css" />
   {% block imports %}{% endblock %}
@@ -21,12 +22,14 @@
       {% endif %}
   </header>
   {% endblock %}
-  <div id="app">
-    {% block content %}<p>Placeholder</p>{% endblock %}
+  <div class="content-pane">
+    <main>
+      {% block content %}<p>Placeholder</p>{% endblock %}
+    </main>
+    <footer>
+        <a href="{{ env!("CARGO_PKG_REPOSITORY") }}" target="_blank">RustiCal {{ env!("CARGO_PKG_VERSION") }}</a>
+        <a href="/frontend/assets/licenses.html" target="_blank">Open Source Licenses</a>
+    </footer>
   </div>
-  <footer>
-      <a href="{{ env!("CARGO_PKG_REPOSITORY") }}" target="_blank">RustiCal {{ env!("CARGO_PKG_VERSION") }}</a>
-      <a href="/frontend/assets/licenses.html" target="_blank">Open Source Licenses</a>
-  </footer>
 </body>
 </html>

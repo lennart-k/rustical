@@ -773,7 +773,7 @@ var SVG_ICON_INTERNET = w`<!-- Adapted from https://iconoir.com/ -->
 </svg>
 `;
 //#endregion
-//#region \0@oxc-project+runtime@0.127.0/helpers/decorate.js
+//#region \0@oxc-project+runtime@0.121.0/helpers/decorate.js
 function __decorate(decorators, target, key, desc) {
 	var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
 	if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -798,7 +798,7 @@ var CreateAddressbookForm = class CreateAddressbookForm extends i$2 {
 	}
 	render() {
 		return b`
-      <button @click=${() => this.dialog.value.showModal()}>Create addressbook</button>
+      <button class="primary" @click=${() => this.dialog.value.showModal()}>Create addressbook</button>
       <dialog ${n(this.dialog)}>
         <h3>Create addressbook</h3>
         <form @submit=${this.submit} ${n(this.form)}>
@@ -811,28 +811,26 @@ var CreateAddressbookForm = class CreateAddressbookForm extends i$2 {
               `)}
             </select>
           </label>
-          <br>
           <label>
             id
             <input type="text" .value=${this.addr_id} @change=${(e) => this.addr_id = e.target.value} />
           </label>
-          <br>
           <label>
             Displayname
             <input type="text" .value=${this.displayname} @change=${(e) => this.displayname = e.target.value} />
           </label>
-          <br>
           <label>
             Description
             <input type="text" .value=${this.description} @change=${(e) => this.description = e.target.value} />
           </label>
-          <br>
-          <button type="submit">Create</button>
-          <button type="submit" @click=${(event) => {
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Create</button>
+            <button type="submit" @click=${(event) => {
 			event.preventDefault();
 			this.dialog.value.close();
 			this.form.value.reset();
 		}} class="cancel">Cancel</button>
+          </div>
         </form>
       </dialog>
     `;
@@ -903,23 +901,22 @@ var CreateBirthdayCalendarForm = class CreateBirthdayCalendarForm extends i$2 {
             Displayname
             <input type="text" .value=${this.displayname} required @change=${(e) => this.displayname = e.target.value} />
           </label>
-          <br>
           <label>
             Description
             <input type="text" .value=${this.description} @change=${(e) => this.description = e.target.value} />
           </label>
-          <br>
           <label>
             Color
             <input type="color" .value=${this.color} @change=${(e) => this.color = e.target.value} />
           </label>
-          <br>
-          <button type="submit">Create</button>
-          <button type="submit" @click=${(event) => {
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Create</button>
+            <button type="submit" @click=${(event) => {
 			event.preventDefault();
 			this.dialog.value.close();
 			this.form.value.reset();
 		}} class="cancel">Cancel</button>
+          </div>
       </form>
       </dialog>
         `;
@@ -1014,7 +1011,7 @@ var CreateCalendarForm = class CreateCalendarForm extends i$2 {
 	}
 	render() {
 		return b`
-      <button @click=${(e) => this.dialog.value.showModal()}>Create calendar</button>
+      <button class="primary" @click=${(e) => this.dialog.value.showModal()}>Create calendar</button>
       <dialog ${n(this.dialog)} @close=${(e) => this.resetForm()}>
         <h3>Create calendar</h3>
         <form @submit=${this.submit} ${n(this.form)}>
@@ -1027,17 +1024,14 @@ var CreateCalendarForm = class CreateCalendarForm extends i$2 {
               `)}
             </select>
           </label>
-          <br>
           <label>
             id
             <input type="text" required .value=${this.cal_id} @change=${(e) => this.cal_id = e.target.value} />
           </label>
-          <br>
           <label>
             Displayname
             <input type="text" required .value=${this.displayname} @change=${(e) => this.displayname = e.target.value} />
           </label>
-          <br>
           <label>
             Timezone (optional)
             <select .value=${this.timezone_id} @change=${(e) => this.timezone_id = e.target.value}>
@@ -1047,18 +1041,14 @@ var CreateCalendarForm = class CreateCalendarForm extends i$2 {
               `)}
             </select>
           </label>
-          <br>
           <label>
             Description
             <input type="text" .value=${this.description} @change=${(e) => this.description = e.target.value} />
           </label>
-          <br>
           <label>
             Color
             <input type="color" .value=${this.color} @change=${(e) => this.color = e.target.value} />
           </label>
-          <br>
-          <br>
           <label>Type</label>
           <div class="tab-radio">
             <label>
@@ -1072,14 +1062,11 @@ var CreateCalendarForm = class CreateCalendarForm extends i$2 {
               webCal Subscription
             </label>
           </div>
-          <br>
           ${this.isSubscription ? b`
             <label>
               Subscription URL
               <input type="text" pattern="https://.*" .required=${this.isSubscription} .value=${this.subscriptionUrl} @change=${(e) => this.subscriptionUrl = e.target.value}  />
             </label>
-            <br>
-            <br>
           ` : b``}
 
           <label>Components</label>
@@ -1093,15 +1080,15 @@ var CreateCalendarForm = class CreateCalendarForm extends i$2 {
                 Support ${comp}
                 <input type="checkbox" .value=${comp} @change=${(e) => e.target.checked ? this.components.add(e.target.value) : this.components.delete(e.target.value)} .checked=${this.components.has(comp)} />
               </label>
-              <br>
             `)}
-          </div>
-          <br>
-          <button type="submit">Create</button>
-          <button type="submit" @click=${(event) => {
+          </div> 
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Create</button>
+            <button type="submit" @click=${(event) => {
 			event.preventDefault();
 			this.dialog.value.close();
 		}} class="cancel">Cancel</button>
+          </div>
       </form>
       </dialog>
         `;
@@ -1222,18 +1209,18 @@ var EditAddressbookForm = class EditAddressbookForm extends i$2 {
             Displayname
             <input type="text" .value=${this.displayname} @change=${(e) => this.displayname = e.target.value} />
           </label>
-          <br>
           <label>
             Description
             <input type="text" .value=${this.description} @change=${(e) => this.description = e.target.value} />
           </label>
-          <br>
-          <button type="submit">Submit</button>
-          <button type="submit" @click=${(event) => {
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Submit</button>
+            <button type="submit" @click=${(event) => {
 			event.preventDefault();
 			this.dialog.value.close();
 			this.form.value.reset();
 		}} class="cancel">Cancel</button>
+          </div>
         </form>
       </dialog>
     `;
@@ -1315,7 +1302,6 @@ var EditCalendarForm = class EditCalendarForm extends i$2 {
             Displayname
             <input type="text" required .value=${this.displayname} @change=${(e) => this.displayname = e.target.value} />
           </label>
-          <br>
           <label>
             Timezone (optional)
             <select .value=${this.timezone_id} @change=${(e) => this.timezone_id = e.target.value}>
@@ -1325,17 +1311,15 @@ var EditCalendarForm = class EditCalendarForm extends i$2 {
               `)}
             </select>
           </label>
-          <br>
           <label>
             Description
             <input type="text" .value=${this.description} @change=${(e) => this.description = e.target.value} />
           </label>
-          <br>
           <label>
             Color
             <input type="color" .value=${this.color} @change=${(e) => this.color = e.target.value} />
           </label>
-          <br>
+          <label>Components</label>
           ${[
 			"VEVENT",
 			"VTODO",
@@ -1345,15 +1329,15 @@ var EditCalendarForm = class EditCalendarForm extends i$2 {
               Support ${comp}
               <input type="checkbox" .value=${comp} ?checked=${this.components.has(comp)} @change=${(e) => e.target.checked ? this.components.add(e.target.value) : this.components.delete(e.target.value)} />
             </label>
-            <br>
           `)}
-          <br>
-          <button type="submit">Submit</button>
-          <button type="submit" @click=${(event) => {
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Submit</button>
+            <button type="submit" @click=${(event) => {
 			event.preventDefault();
 			this.dialog.value.close();
 			this.form.value.reset();
 		}} class="cancel">Cancel</button>
+          </div>
       </form>
       </dialog>
         `;
@@ -1450,24 +1434,22 @@ var ImportAddressbookForm = class ImportAddressbookForm extends i$2 {
               `)}
             </select>
           </label>
-          <br>
           <label>
             id
             <input type="text" required .value=${this.addressbook_id} @change=${(e) => this.addressbook_id = e.target.value} />
           </label>
-          <br>
           <label>
             file
             <input type="file" accept="text/vcard" required @change=${(e) => this.file = e.target.files[0]} />
           </label>
-          <br>
-          <br>
-          <button type="submit">Import</button>
-          <button type="submit" @click=${(event) => {
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Import</button>
+            <button type="submit" @click=${(event) => {
 			event.preventDefault();
 			this.dialog.value.close();
 			this.form.value.reset();
 		}} class="cancel">Cancel</button>
+          </div>
       </form>
       </dialog>
         `;
@@ -1528,24 +1510,22 @@ var ImportCalendarForm = class ImportCalendarForm extends i$2 {
               `)}
             </select>
           </label>
-          <br>
           <label>
             id
             <input type="text" required .value=${this.cal_id} @change=${(e) => this.cal_id = e.target.value} />
           </label>
-          <br>
           <label>
             file
             <input type="file" required accept="text/calendar" @change=${(e) => this.file = e.target.files[0]} />
           </label>
-          <br>
-          <br>
-          <button type="submit">Import</button>
-          <button type="submit" @click=${(event) => {
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Import</button>
+            <button type="submit" @click=${(event) => {
 			event.preventDefault();
 			this.dialog.value.close();
 			this.form.value.reset();
 		}} class="cancel">Cancel</button>
+          </div>
       </form>
       </dialog>
         `;
@@ -1579,4 +1559,64 @@ __decorate([n$3()], ImportCalendarForm.prototype, "principal", void 0);
 __decorate([n$3()], ImportCalendarForm.prototype, "cal_id", void 0);
 ImportCalendarForm = __decorate([t$2("import-calendar-form")], ImportCalendarForm);
 //#endregion
-export { CreateAddressbookForm, CreateBirthdayCalendarForm, CreateCalendarForm, DeleteButton, EditAddressbookForm, EditCalendarForm, ImportAddressbookForm, ImportCalendarForm };
+//#region lib/generate-app-token-form.ts
+var GenerateAppTokenForm = class GenerateAppTokenForm extends i$2 {
+	constructor(..._args) {
+		super(..._args);
+		this.user = "";
+		this.uaApple = navigator.userAgent.includes("Apple") || navigator.userAgent.includes("macOS") || true;
+		this.form = e();
+	}
+	createRenderRoot() {
+		return this;
+	}
+	async onSubmit(e) {
+		if (e.submitter?.name === "apple") return;
+		e.preventDefault();
+		const form = this.form.value;
+		const data = new URLSearchParams(new FormData(form));
+		const res = await fetch(form.action, {
+			method: form.method,
+			body: data,
+			headers: { "Content-Type": "application/x-www-form-urlencoded" }
+		});
+		if (!res.ok) {
+			alert("Error: " + await res.text());
+			return;
+		}
+		this.token = await res.text();
+		form.reset();
+	}
+	async copyToken(e) {
+		await navigator.clipboard.writeText(this.token);
+		e.target.textContent = "Copied!";
+	}
+	render() {
+		return b`
+      <form method="POST" action=${`/frontend/user/${this.user}/app_token`} @submit=${this.onSubmit} ${n(this.form)}>
+        <input type="text" name="name" placeholder="App name" required />
+        <div class="generate-actions">
+          <button type="submit" class="primary">Generate</button>
+          ${this.uaApple ? b`
+            <button type="submit" name="apple" value="true">Apple Configuration Profile (contains token)</button>
+          ` : null}
+        </div>
+      </form>
+
+      <div class="token-result" ?hidden="${!this.token}">
+        <p class="token-result-warning">This token will only be shown once. Copy it now and keep it secret.</p>
+        <div class="token-result-row">
+          <code class="token-value">${this.token}</code>
+          <button type="button" @click=${this.copyToken}>Copy</button>
+        </div>
+        <button @click=${() => location.reload()}>Done</button>
+      </div>
+    `;
+	}
+};
+__decorate([n$3()], GenerateAppTokenForm.prototype, "user", void 0);
+__decorate([n$3()], GenerateAppTokenForm.prototype, "token", void 0);
+__decorate([n$3()], GenerateAppTokenForm.prototype, "uaApple", void 0);
+GenerateAppTokenForm = __decorate([t$2("generate-app-token-form")], GenerateAppTokenForm);
+//#endregion
+export { CreateAddressbookForm, CreateBirthdayCalendarForm, CreateCalendarForm, DeleteButton, EditAddressbookForm, EditCalendarForm, GenerateAppTokenForm, ImportAddressbookForm, ImportCalendarForm };
