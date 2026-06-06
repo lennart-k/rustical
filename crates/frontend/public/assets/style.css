@@ -68,6 +68,11 @@ body {
   grid-template-rows: auto 1fr;
 }
 
+a {
+  color: var(--text);
+  text-decoration: none;
+}
+
 header {
   background: var(--background-color-03);
   border-bottom: 1px solid var(--border);
@@ -75,8 +80,8 @@ header {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 10px;
-  padding: 10px 24px;
+  gap: 1em;
+  padding: .8em 2em;
   min-height: 60px;
 
   a.logo {
@@ -91,17 +96,16 @@ header {
   nav {
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: .5em;
     flex-wrap: wrap;
 
     a {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: .4em;
       text-decoration: none;
       padding: .5em 1em;
       border-radius: var(--radius-sm);
-      font-size: 0.9rem;
       font-weight: 500;
       color: var(--text-muted);
 
@@ -117,15 +121,11 @@ header {
       }
 
       svg.icon {
-        width: 16px;
-        height: 16px;
+        width: 1em;
+        height: 1em;
         flex-shrink: 0;
       }
     }
-  }
-
-  .logout_form {
-    display: contents;
   }
 }
 
@@ -141,11 +141,6 @@ header {
   > * {
     grid-column: 2;
   }
-}
-
-a {
-  color: var(--text);
-  text-decoration: none;
 }
 
 button, .button {
@@ -181,8 +176,7 @@ input[type="text"],
 input[type="url"],
 input[type="password"],
 input[type="file"],
-select,
-textarea {
+select {
   background: var(--background-color-04);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -216,13 +210,6 @@ input[type="color"] {
   }
 }
 
-textarea {
-  width: 100%;
-  height: auto;
-  min-height: 100px;
-  resize: vertical;
-}
-
 h1, h2, h3 {
   font-weight: 700;
   line-height: 1.25;
@@ -242,7 +229,7 @@ table {
   white-space: nowrap;
 
   th, td {
-    padding: 11px 16px;
+    padding: .8em 1em;
     text-align: left;
     border-bottom: 1px solid var(--border);
   }
@@ -270,7 +257,6 @@ table {
 ul.collection-list {
   list-style: none;
   padding: 0;
-  margin: 0 0 16px;
   display: flex;
   flex-direction: column;
   gap: .8em;
@@ -377,9 +363,9 @@ span.chip {
   grid-auto-columns: 1fr;
   background: var(--background-color-02);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 3px;
-  gap: 2px;
+  border-radius: .5em;
+  padding: .1em;
+  gap: .2em;
   margin-bottom: 1em;
 
   label {
@@ -388,10 +374,10 @@ span.chip {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    padding: 8px 12px;
-    border-radius: 4px;
+    padding: .5em .7em;
+    border-radius: .5em;
     cursor: pointer;
-    font-size: 0.875rem;
+    font-size: 0.9em;
     font-weight: 500;
     color: var(--text-muted);
     position: relative;
@@ -446,18 +432,15 @@ dialog::backdrop {
 
 form {
   label {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    font-size: 0.85rem;
+    display: block;
+    font-size: 0.9em;
     font-weight: 500;
     color: var(--text-muted);
     margin-top: 1em;
 
     input[type="text"],
     input[type="url"],
-    select,
-    textarea {
+    select {
       color: var(--text);
       font-size: 0.9rem;
     }
@@ -468,8 +451,7 @@ form {
   input[type="password"],
   input[type="file"],
   input[type="color"],
-  select,
-  textarea {
+  select {
     display: block;
     width: 100%;
   }
@@ -487,18 +469,17 @@ form {
       flex-shrink: 0;
       order: -1;
       accent-color: var(--primary);
-      cursor: pointer;
     }
   }
 }
 
 .login_window {
   max-width: 380px;
-  margin: 60px auto 40px;
+  margin: 5em auto 3em;
   background: var(--background-color-03);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 36px 32px;
+  padding: 2em;
   box-shadow: 0 4px 24px var(--shadow);
 
   button[type="submit"] {
@@ -533,7 +514,7 @@ generate-app-token-form {
   form {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 1em;
     margin-top: 1em;
     flex-wrap: wrap;
 
@@ -551,7 +532,7 @@ generate-app-token-form {
     border-radius: var(--radius);
 
     .token-result-warning {
-      margin: 0 0 12px;
+      margin: 0 0 1em;
       font-size: 0.9em;
       font-weight: 600;
       color: var(--text-color-warning)
