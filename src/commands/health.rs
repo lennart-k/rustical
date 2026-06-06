@@ -1,4 +1,4 @@
-use crate::config::HttpConfig;
+use crate::config::{HttpBindConfig, HttpConfig};
 use clap::Parser;
 use http::Method;
 
@@ -11,13 +11,10 @@ pub struct HealthArgs {}
 pub async fn cmd_health(http_config: HttpConfig, _health_args: HealthArgs) -> anyhow::Result<()> {
     let client = reqwest::ClientBuilder::new().build().unwrap();
 
-    let endpoint = format!(
-        "http://{host}:{port}/ping",
-        host = http_config.host,
-        port = http_config.port
-    )
-    .parse()
-    .unwrap();
+    let HttpBindConfig::Tcp(address) = http_config.bind_config()? else {
+        todo!("Listening on UNIX sockets not implemented yet");
+    };
+    let endpoint = format!("http://{address}/ping").parse().unwrap();
     let request = reqwest::Request::new(Method::GET, endpoint);
 
     assert!(client.execute(request).await.unwrap().status().is_success());

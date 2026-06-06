@@ -57,8 +57,7 @@ pub fn rustical_process(
                         skip_broken: false,
                     }),
                     http: HttpConfig {
-                        host: "127.0.0.1".to_owned(),
-                        port,
+                        bind: Some(format!("127.0.0.1:{port}")),
                         ..Default::default()
                     },
                     frontend: Default::default(),

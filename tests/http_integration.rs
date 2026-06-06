@@ -51,8 +51,7 @@ async fn test_ping() {
 
         cmd_health(
             HttpConfig {
-                host: "localhost".to_owned(),
-                port,
+                bind: Some(format!("127.0.0.1:{port}")),
                 ..Default::default()
             },
             Default::default(),

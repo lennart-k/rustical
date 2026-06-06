@@ -1,5 +1,5 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery)]
-use crate::config::Config;
+use crate::config::{Config, HttpBindConfig};
 use anyhow::Result;
 use app::make_app;
 use axum::ServiceExt;
@@ -147,7 +147,10 @@ pub async fn cmd_default(
         NormalizePathLayer::trim_trailing_slash().layer(app),
     );
 
-    let address = format!("{}:{}", config.http.host, config.http.port);
+    let bind_config = config.http.bind_config()?;
+    let HttpBindConfig::Tcp(address) = bind_config else {
+        todo!("Listening on UNIX sockets not implemented yet");
+    };
     let listener = tokio::net::TcpListener::bind(&address).await?;
 
     let serve_task = tokio::spawn(async move {
