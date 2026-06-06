@@ -162,6 +162,7 @@ impl HttpConfig {
         ))
     }
 
+    #[allow(clippy::missing_errors_doc)]
     pub fn bind_config(&self) -> anyhow::Result<HttpBindConfig> {
         HttpBindConfig::from_str(&self.address()?)
     }
