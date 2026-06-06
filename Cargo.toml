@@ -94,7 +94,7 @@ derive_more = { version = "2.1", features = [
 ] }
 askama = { version = "0.16", features = ["serde_json"] }
 askama_web = { version = "0.16", features = ["axum-0.8"] }
-sqlx = { version = "0.8", default-features = false, features = [
+sqlx = { version = "0.9", default-features = false, features = [
   "sqlx-sqlite",
   "uuid",
   "chrono",
@@ -109,7 +109,7 @@ headers = "0.4"
 strum = "0.28"
 strum_macros = "0.28"
 serde_json = { version = "1.0", features = ["raw_value"] }
-sqlx-sqlite = { version = "0.8", features = ["bundled"] }
+sqlx-sqlite = { version = "0.9", features = ["bundled"] }
 caldata = { version = "0.16", features = ["chrono-tz", "vtimezones-rs"] }
 toml = "1.0"
 tower = "0.5"
@@ -173,15 +173,15 @@ async-trait.workspace = true
 uuid.workspace = true
 axum.workspace = true
 
-opentelemetry = { version = "0.31", optional = true }
-opentelemetry-otlp = { version = "0.31", optional = true, features = [
+opentelemetry = { version = "0.32", optional = true }
+opentelemetry-otlp = { version = "0.32", optional = true, features = [
   "grpc-tonic",
 ] }
-opentelemetry_sdk = { version = "0.31", features = [
+opentelemetry_sdk = { version = "0.32", features = [
   "rt-tokio",
 ], optional = true }
-opentelemetry-semantic-conventions = { version = "0.31", optional = true }
-tracing-opentelemetry = { version = "0.32", optional = true }
+opentelemetry-semantic-conventions = { version = "0.32", optional = true }
+tracing-opentelemetry = { version = "0.33", optional = true }
 tracing-subscriber = { version = "0.3", features = [
   "env-filter",
   "fmt",
