@@ -24,7 +24,6 @@ impl Section for ProfileSection {
 pub struct ProfileSection {
     pub user: Principal,
     pub app_tokens: Vec<AppToken>,
-    pub is_apple: bool,
     pub davx5_hostname: Option<String>,
 }
 
@@ -40,9 +39,6 @@ pub async fn route_user_named<AP: AuthenticationProvider>(
     }
 
     let ua = headers.typed_get::<UserAgent>();
-    let is_apple = ua
-        .as_ref()
-        .is_some_and(|ua| ua.as_str().contains("Apple") || ua.as_str().contains("Mac OS"));
     let davx5_hostname =
         ua.and_then(|ua| ua.as_str().contains("Android").then_some(host.to_string()));
 
@@ -50,7 +46,6 @@ pub async fn route_user_named<AP: AuthenticationProvider>(
         section: ProfileSection {
             user: user.clone(),
             app_tokens: auth_provider.get_app_tokens(&user.id).await.unwrap(),
-            is_apple,
             davx5_hostname,
         },
         user,

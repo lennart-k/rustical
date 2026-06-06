@@ -8,11 +8,9 @@
       <span class="title">
         {%- if calendar.principal != user.id -%}{{ calendar.principal }}/{%- endif -%}
         {{ calendar.meta.displayname.to_owned().unwrap_or(calendar.id.to_owned()) }}
-        <div class="component-chips">
-          {% for comp in calendar.components %}
+        {% for comp in calendar.components %}
           <span class="chip">{{ comp }}</span>
-          {% endfor %}
-        </div>
+        {% endfor %}
       </span>
       <span class="description">
         {% if let Some(description) = calendar.meta.description %}{{ description }}{% endif %}
@@ -56,11 +54,9 @@
       <span class="title">
         {%- if calendar.principal != user.id -%}{{ calendar.principal }}/{%- endif -%}
         {{ calendar.meta.displayname.to_owned().unwrap_or(calendar.id.to_owned()) }}
-        <div class="component-chips">
-          {% for comp in calendar.components %}
+        {% for comp in calendar.components %}
           <span class="chip">{{ comp }}</span>
-          {% endfor %}
-        </div>
+        {% endfor %}
       </span>
       <span class="description">
         {% if let Some(description) = calendar.meta.description %}{{ description }}{% endif %}

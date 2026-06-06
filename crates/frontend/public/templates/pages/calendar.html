@@ -7,11 +7,9 @@
 {% let name = calendar.meta.displayname.to_owned().unwrap_or(calendar.id.to_owned()) %}
 <h1>
   {{ calendar.principal }}/{{ name }}
-  <div class="component-chips">
-    {% for comp in calendar.components %}
+  {% for comp in calendar.components %}
     <span class="chip">{{ comp }}</span>
-    {% endfor %}
-  </div>
+  {% endfor %}
 
 </h1>
 {% if let Some(description) = calendar.meta.description %}<p>{{ description }}</p>{% endif%}

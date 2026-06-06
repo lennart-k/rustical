@@ -43,22 +43,18 @@ export class CreateAddressbookForm extends LitElement {
               `)}
             </select>
           </label>
-          <br>
           <label>
             id
             <input type="text" .value=${this.addr_id} @change=${e => this.addr_id = e.target.value} />
           </label>
-          <br>
           <label>
             Displayname
             <input type="text" .value=${this.displayname} @change=${e => this.displayname = e.target.value} />
           </label>
-          <br>
           <label>
             Description
             <input type="text" .value=${this.description} @change=${e => this.description = e.target.value} />
           </label>
-          <br>
           <button type="submit" class="primary">Create</button>
           <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close(); this.form.value.reset() }} class="cancel">Cancel</button>
         </form>

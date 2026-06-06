@@ -74,17 +74,14 @@ export class CreateCalendarForm extends LitElement {
               `)}
             </select>
           </label>
-          <br>
           <label>
             id
             <input type="text" required .value=${this.cal_id} @change=${e => this.cal_id = e.target.value} />
           </label>
-          <br>
           <label>
             Displayname
             <input type="text" required .value=${this.displayname} @change=${e => this.displayname = e.target.value} />
           </label>
-          <br>
           <label>
             Timezone (optional)
             <select .value=${this.timezone_id} @change=${e => this.timezone_id = e.target.value}>
@@ -94,18 +91,14 @@ export class CreateCalendarForm extends LitElement {
               `)}
             </select>
           </label>
-          <br>
           <label>
             Description
             <input type="text" .value=${this.description} @change=${e => this.description = e.target.value} />
           </label>
-          <br>
           <label>
             Color
             <input type="color" .value=${this.color} @change=${e => this.color = e.target.value} />
           </label>
-          <br>
-          <br>
           <label>Type</label>
           <div class="tab-radio">
             <label>
@@ -119,14 +112,11 @@ export class CreateCalendarForm extends LitElement {
               webCal Subscription
             </label>
           </div>
-          <br>
           ${this.isSubscription ? html`
             <label>
               Subscription URL
               <input type="text" pattern="https://.*" .required=${this.isSubscription} .value=${this.subscriptionUrl} @change=${e => this.subscriptionUrl = e.target.value}  />
             </label>
-            <br>
-            <br>
           `: html``}
 
           <label>Components</label>
@@ -136,10 +126,8 @@ export class CreateCalendarForm extends LitElement {
                 Support ${comp}
                 <input type="checkbox" .value=${comp} @change=${e => e.target.checked ? this.components.add(e.target.value) : this.components.delete(e.target.value)} .checked=${this.components.has(comp)} />
               </label>
-              <br>
             `)}
           </div>
-          <br>
           <button type="submit" class="primary">Create</button>
           <button type="submit" @click=${event => { event.preventDefault(); this.dialog.value.close();}} class="cancel">Cancel</button>
       </form>
