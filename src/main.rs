@@ -164,7 +164,7 @@ allow_sign_up = true
                 .unwrap();
             assert_eq!(
                 config.http.bind_config().unwrap(),
-                HttpBindConfig::Unix("/run/rustical/socket".to_string())
+                HttpBindConfig::Unix("/run/rustical/socket".parse().unwrap())
             );
             Ok(())
         });

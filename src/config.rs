@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{path::PathBuf, str::FromStr};
 
 use anyhow::anyhow;
 use reqwest::Url;
@@ -21,7 +21,7 @@ pub struct HttpConfig {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum HttpBindConfig {
     Tcp(String),
-    Unix(String),
+    Unix(PathBuf),
 }
 
 impl FromStr for HttpBindConfig {
@@ -40,7 +40,7 @@ impl FromStr for HttpBindConfig {
                         "Invalid URL in http.bind config: unix: url cannot contain a host. You probably used double slashes, use unix:///absolute/path or unix:/absolute/path"
                     ));
                 }
-                Self::Unix(url.path().to_string())
+                Self::Unix(url.path().parse()?)
             }
             "http" => {
                 if url.path() != "/" {
@@ -81,7 +81,7 @@ mod bind_config {
     use std::str::FromStr;
 
     #[rstest]
-    #[case("unix:///run/rustical/socket", HttpBindConfig::Unix("/run/rustical/socket".to_string()))]
+    #[case("unix:///run/rustical/socket", HttpBindConfig::Unix("/run/rustical/socket".parse().unwrap()))]
     #[case("http://[::]:4000", HttpBindConfig::Tcp("[::]:4000".to_string()))]
     #[case("[::]:4000", HttpBindConfig::Tcp("[::]:4000".to_string()))]
     #[case("example.com:4000", HttpBindConfig::Tcp("example.com:4000".to_string()))]
@@ -91,20 +91,20 @@ mod bind_config {
     // Unix relative paths
     #[case(
         "unix:asd/asd",
-        HttpBindConfig::Unix("asd/asd".to_string())
+        HttpBindConfig::Unix("asd/asd".parse().unwrap())
     )]
     #[case(
         "unix:asd",
-        HttpBindConfig::Unix("asd".to_string())
+        HttpBindConfig::Unix("asd".parse().unwrap())
     )]
     // Unix absolute path
     #[case(
         "unix:/asd",
-        HttpBindConfig::Unix("/asd".to_string())
+        HttpBindConfig::Unix("/asd".parse().unwrap())
     )]
     #[case(
         "unix:/asd/asd",
-        HttpBindConfig::Unix("/asd/asd".to_string())
+        HttpBindConfig::Unix("/asd/asd".parse().unwrap())
     )]
     fn test_parse_http_bind_valid(#[case] address: &str, #[case] out: HttpBindConfig) {
         assert_eq!(HttpBindConfig::from_str(address).unwrap(), out);
