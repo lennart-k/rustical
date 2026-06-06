@@ -144,6 +144,7 @@ async-std = { version = "1.13", features = ["attributes"] }
 similar-asserts = "2.0"
 insta = { version = "1.44", features = ["filters"] }
 criterion = { version = "0.8", features = ["async_tokio"] }
+schemars = { version = "1.2" }
 
 [dev-dependencies]
 rstest.workspace = true
@@ -188,6 +189,8 @@ tracing-subscriber = { version = "0.3", features = [
   "registry",
 ] }
 figment = { version = "0.10", features = ["env", "toml"] }
+schemars.workspace = true
+serde_json = "1.0"
 tower-sessions.workspace = true
 rpassword.workspace = true
 tower.workspace = true

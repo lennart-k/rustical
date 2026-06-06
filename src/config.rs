@@ -1,9 +1,10 @@
 use rustical_caldav::CalDavConfig;
 use rustical_frontend::FrontendConfig;
 use rustical_oidc::OidcConfig;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, JsonSchema)]
 #[serde(deny_unknown_fields, default)]
 pub struct HttpConfig {
     pub host: String,
@@ -23,7 +24,7 @@ impl Default for HttpConfig {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct SqliteDataStoreConfig {
     pub db_url: String,
@@ -33,14 +34,14 @@ pub struct SqliteDataStoreConfig {
     pub skip_broken: bool,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 #[serde(deny_unknown_fields)]
 pub enum DataStoreConfig {
     Sqlite(SqliteDataStoreConfig),
 }
 
-#[derive(Debug, Deserialize, Serialize, Default, Clone)]
+#[derive(Debug, Deserialize, Serialize, Default, Clone, JsonSchema)]
 #[serde(deny_unknown_fields, default)]
 pub struct TracingConfig {
     pub opentelemetry: bool,
@@ -50,7 +51,7 @@ const fn default_true() -> bool {
     true
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, JsonSchema)]
 #[serde(deny_unknown_fields, default)]
 pub struct DavPushConfig {
     #[serde(default = "default_true")]
@@ -70,7 +71,7 @@ impl Default for DavPushConfig {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(deny_unknown_fields, default)]
 pub struct NextcloudLoginConfig {
     pub enabled: bool,
@@ -82,7 +83,7 @@ impl Default for NextcloudLoginConfig {
     }
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
     pub data_store: DataStoreConfig,

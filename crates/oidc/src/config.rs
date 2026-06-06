@@ -3,6 +3,7 @@ use openidconnect::{
     AdditionalClaims, Audience, ClientId, ClientSecret, GenderClaim, IssuerUrl, Scope,
     UserInfoClaims,
 };
+use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
 
@@ -58,21 +59,27 @@ where
     Ok(ClientId::new(string_val))
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct OidcConfig {
     pub name: String,
+    #[schemars(with = "String")]
     pub issuer: IssuerUrl,
     #[serde(deserialize_with = "deserialize_client_id")]
+    #[schemars(with = "String")]
     pub client_id: ClientId,
+    #[schemars(with = "Option<String>")]
     pub client_secret: Option<ClientSecret>,
+    #[schemars(with = "Vec<String>")]
     pub scopes: Vec<Scope>,
     #[serde(default)]
     pub allow_sign_up: bool,
     pub require_group: Option<String>,
     #[serde(default)]
+    #[schemars(with = "String")]
     pub claim_userid: UserIdClaim,
     #[serde(default)]
+    #[schemars(with = "Vec<String>")]
     pub additional_audiences: Vec<Audience>,
     #[serde(default)]
     pub assign_memberships: HashMap<String, Vec<String>>,

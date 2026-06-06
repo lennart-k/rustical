@@ -10,6 +10,7 @@ use rustical_dav::rfc_3986_percent_encode;
 use rustical_store::auth::middleware::AuthenticationLayer;
 use rustical_store::auth::{AuthenticationProvider, Principal};
 use rustical_store::{CalendarStore, SubscriptionStore};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -65,7 +66,7 @@ const fn default_true() -> bool {
     true
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(deny_unknown_fields, default)]
 pub struct CalDavConfig {
     #[serde(default = "default_true")]
