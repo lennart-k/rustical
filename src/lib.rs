@@ -1,6 +1,6 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 use crate::config::{Config, HttpBindConfig};
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use app::make_app;
 use axum::ServiceExt;
 use axum::extract::Request;
@@ -16,6 +16,8 @@ use rustical_store_sqlite::calendar_store::SqliteCalendarStore;
 use rustical_store_sqlite::principal_store::SqlitePrincipalStore;
 use rustical_store_sqlite::{SqliteStore, create_db_pool};
 use setup_tracing::setup_tracing;
+use std::fs;
+use std::os::unix::fs::FileTypeExt;
 use std::sync::Arc;
 use tokio::sync::Notify;
 use tokio::sync::mpsc::Receiver;
@@ -148,21 +150,47 @@ pub async fn cmd_default(
     );
 
     let bind_config = config.http.bind_config()?;
-    let HttpBindConfig::Tcp(address) = bind_config else {
-        todo!("Listening on UNIX sockets not implemented yet");
-    };
-    let listener = tokio::net::TcpListener::bind(&address).await?;
-
-    let serve_task = tokio::spawn(async move {
-        info!("RustiCal serving on http://{address}");
-        if let Some(start_notifier) = start_notifier {
-            start_notifier.notify_waiters();
+    let serve_task = match bind_config {
+        HttpBindConfig::Tcp(address) => {
+            let listener = tokio::net::TcpListener::bind(&address).await?;
+            tokio::spawn(async move {
+                info!("RustiCal serving on http://{address}");
+                if let Some(start_notifier) = start_notifier {
+                    start_notifier.notify_waiters();
+                }
+                axum::serve(listener, app)
+                    .with_graceful_shutdown(shutdown_signal())
+                    .await
+                    .unwrap();
+            })
         }
-        axum::serve(listener, app)
-            .with_graceful_shutdown(shutdown_signal())
-            .await
-            .unwrap();
-    });
+
+        HttpBindConfig::Unix(path) => {
+            if path.exists() {
+                let metadata = fs::metadata(&path)?;
+                if metadata.file_type().is_socket() {
+                    // Only remove existing file if it's a socket
+                    fs::remove_file(&path)?;
+                } else {
+                    return Err(anyhow!(
+                        "Path {path} exists and is not a socket",
+                        path = path.display()
+                    ));
+                }
+            }
+            let listener = tokio::net::UnixListener::bind(&path)?;
+            tokio::spawn(async move {
+                info!("RustiCal serving on unix://{path}", path = path.display());
+                if let Some(start_notifier) = start_notifier {
+                    start_notifier.notify_waiters();
+                }
+                axum::serve(listener, app)
+                    .with_graceful_shutdown(shutdown_signal())
+                    .await
+                    .unwrap();
+            })
+        }
+    };
 
     serve_task.await?;
 
