@@ -1564,7 +1564,7 @@ var GenerateAppTokenForm = class GenerateAppTokenForm extends i$2 {
 	constructor(..._args) {
 		super(..._args);
 		this.user = "";
-		this.uaApple = navigator.userAgent.includes("Apple") || navigator.userAgent.includes("macOS") || true;
+		this.uaApple = navigator.userAgent.includes("Apple") || navigator.userAgent.includes("macOS");
 		this.form = e();
 	}
 	createRenderRoot() {

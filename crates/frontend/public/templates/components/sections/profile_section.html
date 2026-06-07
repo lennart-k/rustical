@@ -22,7 +22,7 @@
   <tbody>
     {% for app_token in app_tokens %}
     <tr>
-      <td>{{ app_token.name }}</td>
+      <td><div class="shrink-cell">{{ app_token.name }}</div></td>
       <td>
         {% if let Some(created_at) = app_token.created_at %}
         {{ chrono_humanize::HumanTime::from(created_at.to_owned()) }}

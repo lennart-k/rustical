@@ -217,21 +217,46 @@ h1, h2, h3 {
   color: var(--text);
 }
 
+.shrink-cell {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+table#app-tokens {
+  td {
+    width: min-content;
+  }
+  td:first-child {
+    width: 100%;
+    max-width: 0;
+    text-overflow: ellipsis;
+  }
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
   background: var(--background-color-03);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  overflow-x: auto;
-  box-shadow: 0 1px 3px var(--shadow);
   font-size: 0.9rem;
   white-space: nowrap;
+
+  tr:has(td) {
+    background: var(--background-color-03);
+  }
+
+  tr:hover:has(td) {
+    background: var(--background-color-02);
+  }
 
   th, td {
     padding: .8em 1em;
     text-align: left;
     border-bottom: 1px solid var(--border);
+    overflow-x: auto;
   }
 
   th {
@@ -247,10 +272,6 @@ table {
 
   tr:last-child td {
     border-bottom: none;
-  }
-
-  tr:hover td {
-    background: var(--background-color-02);
   }
 }
 

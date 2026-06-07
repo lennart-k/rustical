@@ -12,7 +12,7 @@ export class GenerateAppTokenForm extends LitElement {
   token: string
 
   @property()
-  uaApple: boolean = navigator.userAgent.includes('Apple') || navigator.userAgent.includes('macOS') || true
+  uaApple: boolean = navigator.userAgent.includes('Apple') || navigator.userAgent.includes('macOS')
 
   form: Ref<HTMLFormElement> = createRef()
 
