@@ -32,7 +32,7 @@ pub trait DavPushExtension {
     ) -> Result<DavPushExtensionProp, rustical_dav::Error> {
         Ok(match &prop {
             DavPushExtensionPropName::Transports => {
-                DavPushExtensionProp::Transports(Transports::default())
+                DavPushExtensionProp::Transports(Transports::new(crate::vapid::vapid_public_key()))
             }
             DavPushExtensionPropName::Topic => DavPushExtensionProp::Topic(self.get_topic()),
             DavPushExtensionPropName::SupportedTriggers => {

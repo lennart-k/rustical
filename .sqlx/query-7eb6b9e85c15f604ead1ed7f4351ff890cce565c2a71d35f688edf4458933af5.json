@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE server_settings SET vapid_key = ? WHERE id = 1 AND vapid_key IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "7eb6b9e85c15f604ead1ed7f4351ff890cce565c2a71d35f688edf4458933af5"
+}
