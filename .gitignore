@@ -20,3 +20,5 @@ site
 **/*.snap.new
 
 **/*.drawio
+
+.direnv
