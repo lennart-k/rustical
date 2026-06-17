@@ -1,6 +1,6 @@
 use crate::addressbook_store::SqliteAddressbookStore;
 use async_trait::async_trait;
-use chrono::NaiveDateTime;
+use chrono::{Datelike, NaiveDateTime};
 use hex::ToHex;
 use rustical_ical::{CalendarObject, CalendarObjectType};
 use rustical_store::{
@@ -332,16 +332,19 @@ impl CalendarStore for SqliteAddressbookStore {
         let cal_id = cal_id
             .strip_prefix(BIRTHDAYS_PREFIX)
             .ok_or(Error::NotFound)?;
+        let current_year = chrono::Utc::now().year();
+
         let (objects, deleted_objects, new_synctoken) =
-            AddressbookStore::sync_changes(self, principal, cal_id, synctoken).await?;
+            AddressbookStore::sync_changes(self, principal, cal_id, synctoken, current_year)
+                .await?;
 
         let mut out_objects = vec![];
 
         for (object_id, object) in objects {
-            if let Some(birthday) = object.get_birthday_object()? {
+            if let Some(birthday) = object.get_birthday_object(current_year)? {
                 out_objects.push((format!("{object_id}-birthday"), birthday));
             }
-            if let Some(anniversary) = object.get_anniversary_object()? {
+            if let Some(anniversary) = object.get_anniversary_object(current_year)? {
                 out_objects.push((format!("{object_id}-anniversary"), anniversary));
             }
         }
@@ -381,11 +384,14 @@ impl CalendarStore for SqliteAddressbookStore {
         let cal_id = cal_id
             .strip_prefix(BIRTHDAYS_PREFIX)
             .ok_or(Error::NotFound)?;
+
+        let current_year = chrono::Utc::now().year();
+
         for (object_id, object) in AddressbookStore::get_objects(self, principal, cal_id).await? {
-            if let Some(birthday) = object.get_birthday_object()? {
+            if let Some(birthday) = object.get_birthday_object(current_year)? {
                 objects.push((format!("{object_id}-birthday"), birthday));
             }
-            if let Some(anniversary) = object.get_anniversary_object()? {
+            if let Some(anniversary) = object.get_anniversary_object(current_year)? {
                 objects.push((format!("{object_id}-anniversary"), anniversary));
             }
         }
@@ -407,9 +413,16 @@ impl CalendarStore for SqliteAddressbookStore {
         let obj =
             AddressbookStore::get_object(self, principal, cal_id, addressobject_id, show_deleted)
                 .await?;
+
+        let current_year = chrono::Utc::now().year();
+
         match date_type {
-            "birthday" => Ok(obj.get_birthday_object()?.ok_or(Error::NotFound)?),
-            "anniversary" => Ok(obj.get_anniversary_object()?.ok_or(Error::NotFound)?),
+            "birthday" => Ok(obj
+                .get_birthday_object(current_year)?
+                .ok_or(Error::NotFound)?),
+            "anniversary" => Ok(obj
+                .get_anniversary_object(current_year)?
+                .ok_or(Error::NotFound)?),
             _ => Err(Error::NotFound),
         }
     }

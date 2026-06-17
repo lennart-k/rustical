@@ -6,6 +6,7 @@ use crate::{
         AddressObjectPropWrapper, AddressObjectPropWrapperName, resource::AddressObjectResource,
     },
 };
+use chrono::Datelike;
 use http::{StatusCode, Uri};
 use rustical_dav::{
     resource::{PrincipalUri, Resource},
@@ -30,8 +31,9 @@ pub async fn handle_sync_collection<AS: AddressbookStore>(
     addr_store: &AS,
 ) -> Result<MultistatusElement<AddressObjectPropWrapper, String>, Error> {
     let old_synctoken = parse_synctoken(&sync_collection.sync_token).unwrap_or(0);
+    let year = chrono::Utc::now().year();
     let (new_objects, deleted_objects, new_synctoken) = addr_store
-        .sync_changes(principal, addressbook_id, old_synctoken)
+        .sync_changes(principal, addressbook_id, old_synctoken, year)
         .await?;
 
     let mut responses = Vec::new();

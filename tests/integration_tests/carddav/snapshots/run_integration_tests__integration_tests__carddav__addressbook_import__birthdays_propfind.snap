@@ -45,8 +45,8 @@ expression: body
                 </supported-report-set>
                 <CAL:min-date-time>-2621430101T000000Z</CAL:min-date-time>
                 <CAL:max-date-time>+2621421231T235959Z</CAL:max-date-time>
-                <sync-token>github.com/lennart-k/rustical/ns/1</sync-token>
-                <CS:getctag>github.com/lennart-k/rustical/ns/1</CS:getctag>
+                <sync-token>github.com/lennart-k/rustical/ns/2</sync-token>
+                <CS:getctag>github.com/lennart-k/rustical/ns/2</CS:getctag>
                 <PUSH:transports>
                     <PUSH:web-push/>
                 </PUSH:transports>
@@ -153,6 +153,77 @@ BEGIN:VALARM
 TRIGGER;VALUE=DURATION:-PT0M
 ACTION:DISPLAY
 DESCRIPTION:💍 John Doe
+END:VALARM
+END:VEVENT
+END:VCALENDAR
+</CAL:calendar-data>
+                <resourcetype>
+                </resourcetype>
+                <current-user-principal>
+                    <href>/caldav/principal/user/</href>
+                </current-user-principal>
+                <current-user-privilege-set>
+                    <privilege>
+                        <all/>
+                    </privilege>
+                </current-user-privilege-set>
+                <owner>
+                    <href>/caldav/principal/user/</href>
+                </owner>
+            </prop>
+            <status>HTTP/1.1 200 OK</status>
+        </propstat>
+    </response>
+    <response>
+        <href>/caldav/principal/user/_birthdays_contacts/okey-uid-birthday.ics</href>
+        <propstat>
+            <prop>
+                <getetag>&quot;[GETETAG]&quot;</getetag>
+                <getcontenttype>text/calendar;charset=utf-8</getcontenttype>
+                <CAL:calendar-data>BEGIN:VCALENDAR
+VERSION:2.0
+CALSCALE:GREGORIAN
+PRODID:-//github.com/lennart-k/rustical birthday calendar//EN
+BEGIN:VEVENT
+DTSTAMP:[DTSTAMP]
+DTSTART;VALUE=DATE:19900525
+DTEND;VALUE=DATE:19900526
+UID:okey-uid-birthday
+RRULE:FREQ=YEARLY
+SUMMARY:🎂 Doe Johnson 1990
+TRANSP:TRANSPARENT
+BEGIN:VALARM
+TRIGGER;VALUE=DURATION:-PT0M
+ACTION:DISPLAY
+DESCRIPTION:🎂 Doe Johnson 1990
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:[DTSTAMP]
+DTSTART;VALUE=DATE:20260525
+DTEND;VALUE=DATE:20260526
+UID:okey-uid-birthday
+RECURRENCE-ID;VALUE=DATE:20260525
+SUMMARY:🎂 Doe Johnson 36
+TRANSP:TRANSPARENT
+BEGIN:VALARM
+TRIGGER;VALUE=DURATION:-PT0M
+ACTION:DISPLAY
+DESCRIPTION:🎂 Doe Johnson 36
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+DTSTAMP:[DTSTAMP]
+DTSTART;VALUE=DATE:20270525
+DTEND;VALUE=DATE:20270526
+UID:okey-uid-birthday
+RECURRENCE-ID;VALUE=DATE:20270525
+SUMMARY:🎂 Doe Johnson 37
+TRANSP:TRANSPARENT
+BEGIN:VALARM
+TRIGGER;VALUE=DURATION:-PT0M
+ACTION:DISPLAY
+DESCRIPTION:🎂 Doe Johnson 37
 END:VALARM
 END:VEVENT
 END:VCALENDAR

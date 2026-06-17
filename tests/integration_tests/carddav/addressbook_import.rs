@@ -7,6 +7,16 @@ use rstest::rstest;
 use rustical_store_sqlite::tests::{TestStoreContext, test_store_context};
 use tower::ServiceExt;
 
+const REPORT_SYNC_COLLECTION: &str = r#"
+<?xml version="1.0" encoding="utf-8" ?>
+<sync-collection xmlns="DAV:">
+    <sync-token />
+    <sync-level>1</sync-level>
+    <prop>
+        <getetag />
+    </prop>
+</sync-collection>
+"#;
 #[rstest]
 #[tokio::test]
 async fn test_import(
@@ -34,6 +44,14 @@ BDAY:--0203
 ANNIVERSARY:--0303
 GENDER:M
 UID:amazing-uid
+END:VCARD
+BEGIN:VCARD
+VERSION:4.0
+FN:Doe Johnson
+N:Johnson;Doe;;;,
+BDAY:19900525
+GENDER:W
+UID:okey-uid
 END:VCARD",
             ))
             .unwrap()
@@ -133,4 +151,17 @@ END:VCARD",
     }, {
         insta::assert_snapshot!("birthdays_propfind", body);
     });
+
+    let mut request = Request::builder()
+        .method("REPORT")
+        .uri(&bday_url)
+        .body(Body::from(REPORT_SYNC_COLLECTION))
+        .unwrap();
+    request
+        .headers_mut()
+        .typed_insert(Authorization::basic("user", "pass"));
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::MULTI_STATUS);
+    let body = response.extract_string().await;
+    insta::assert_snapshot!("birthdays_sync_collection_body", body);
 }

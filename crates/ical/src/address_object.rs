@@ -9,13 +9,13 @@ use caldata::{
     parser::{ContentLine, ParserOptions},
     property::{
         Calscale, IcalCALSCALEProperty, IcalDTENDProperty, IcalDTSTAMPProperty,
-        IcalDTSTARTProperty, IcalPRODIDProperty, IcalRRULEProperty, IcalSUMMARYProperty,
-        IcalUIDProperty, IcalVERSIONProperty, IcalVersion, VcardANNIVERSARYProperty,
-        VcardBDAYProperty, VcardFNProperty,
+        IcalDTSTARTProperty, IcalPRODIDProperty, IcalRECURIDProperty, IcalRRULEProperty,
+        IcalSUMMARYProperty, IcalUIDProperty, IcalVERSIONProperty, IcalVersion, RecurIdRange,
+        VcardANNIVERSARYProperty, VcardBDAYProperty, VcardFNProperty,
     },
     types::{CalDate, PartialDate, Tz},
 };
-use chrono::{NaiveDate, Utc};
+use chrono::{Datelike, NaiveDate, Utc};
 use hex::ToHex;
 use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
@@ -59,6 +59,7 @@ impl AddressObject {
     fn get_significant_date_object(
         &self,
         date: &PartialDate,
+        current_year: i32,
         summary_prefix: &str,
         suffix: &str,
     ) -> Result<Option<CalendarObject>, Error> {
@@ -90,9 +91,9 @@ impl AddressObject {
         let event = IcalEventBuilder {
             properties: vec![
                 IcalDTSTAMPProperty(Utc::now().into(), vec![].into()).into(),
-                IcalDTSTARTProperty(start_date.into(), vec![].into()).into(),
-                IcalDTENDProperty(end_date.into(), vec![].into()).into(),
-                IcalUIDProperty(uid, vec![].into()).into(),
+                IcalDTSTARTProperty(start_date.clone().into(), vec![].into()).into(),
+                IcalDTENDProperty(end_date.clone().into(), vec![].into()).into(),
+                IcalUIDProperty(uid.clone(), vec![].into()).into(),
                 IcalRRULEProperty(
                     caldata::rrule::RRule::from_str("FREQ=YEARLY").unwrap(),
                     vec![].into(),
@@ -126,6 +127,30 @@ impl AddressObject {
             }],
         };
 
+        let mut events = vec![event];
+        if let Some(y) = year {
+            if let Some(dtstart) = NaiveDate::from_ymd_opt(y, month, day) {
+                if let Some(current_year_instance) = create_recurring_instance(
+                    uid.clone(),
+                    summary_prefix,
+                    fullname,
+                    dtstart,
+                    current_year,
+                ) {
+                    events.push(current_year_instance);
+                }
+                if let Some(next_year_instance) = create_recurring_instance(
+                    uid,
+                    summary_prefix,
+                    fullname,
+                    dtstart,
+                    current_year + 1,
+                ) {
+                    events.push(next_year_instance);
+                }
+            }
+        }
+
         Ok(Some(
             IcalCalendarObjectBuilder {
                 properties: vec![
@@ -137,15 +162,14 @@ impl AddressObject {
                     )
                     .into(),
                 ],
-                inner: Some(CalendarInnerDataBuilder::Event(vec![event])),
+                inner: Some(CalendarInnerDataBuilder::Event(events)),
                 vtimezones: BTreeMap::default(),
             }
             .build(&ParserOptions::default(), None)?
             .into(),
         ))
     }
-
-    pub fn get_anniversary_object(&self) -> Result<Option<CalendarObject>, Error> {
+    pub fn get_anniversary_object(&self, year: i32) -> Result<Option<CalendarObject>, Error> {
         let Some(VcardANNIVERSARYProperty(anniversary, _)) = &self.vcard.anniversary else {
             return Ok(None);
         };
@@ -153,10 +177,10 @@ impl AddressObject {
             return Ok(None);
         };
 
-        self.get_significant_date_object(date, "💍", "-anniversary")
+        self.get_significant_date_object(date, year, "💍", "-anniversary")
     }
 
-    pub fn get_birthday_object(&self) -> Result<Option<CalendarObject>, Error> {
+    pub fn get_birthday_object(&self, year: i32) -> Result<Option<CalendarObject>, Error> {
         let Some(VcardBDAYProperty(bday, _)) = &self.vcard.birthday else {
             return Ok(None);
         };
@@ -164,11 +188,72 @@ impl AddressObject {
             return Ok(None);
         };
 
-        self.get_significant_date_object(date, "🎂", "-birthday")
+        self.get_significant_date_object(date, year, "🎂", "-birthday")
     }
 
     #[must_use]
     pub const fn get_vcard(&self) -> &VcardContact {
         &self.vcard
     }
+}
+
+fn create_recurring_instance(
+    uid: String,
+    summary_prefix: &str,
+    fullname: &str,
+    dtstart: NaiveDate,
+    year: i32,
+) -> Option<IcalEventBuilder> {
+    let Some(dt_instance) = NaiveDate::from_ymd_opt(year, dtstart.month(), dtstart.day()) else {
+        return None;
+    };
+    let instance_start_date = CalDate(dt_instance, Tz::Local);
+    let Some(instance_end_date) = instance_start_date.succ_opt() else {
+        // instance_start_date is MAX_DATE, this should never happen but FAPP also not raise an error
+        return None;
+    };
+    let age_suffix = dt_instance
+        .years_since(dtstart)
+        .map(|age| format!(" {age}"))
+        .unwrap_or_default();
+    let instance_summary = format!("{summary_prefix} {fullname}{age_suffix}");
+    return Some(IcalEventBuilder {
+        properties: vec![
+            IcalDTSTAMPProperty(Utc::now().into(), vec![].into()).into(),
+            IcalDTSTARTProperty(instance_start_date.clone().into(), vec![].into()).into(),
+            IcalDTENDProperty(instance_end_date.clone().into(), vec![].into()).into(),
+            IcalUIDProperty(uid, vec![].into()).into(),
+            IcalRECURIDProperty(
+                instance_start_date.into(),
+                vec![].into(),
+                RecurIdRange::This,
+            )
+            .into(),
+            IcalSUMMARYProperty(instance_summary.clone(), vec![].into()).into(),
+            ContentLine {
+                name: "TRANSP".to_owned(),
+                value: "TRANSPARENT".to_owned(),
+                ..Default::default()
+            },
+        ],
+        alarms: vec![IcalAlarmBuilder {
+            properties: vec![
+                ContentLine {
+                    name: "TRIGGER".to_owned(),
+                    value: "-PT0M".to_owned(),
+                    params: vec![("VALUE".to_owned(), vec!["DURATION".to_owned()])].into(),
+                },
+                ContentLine {
+                    name: "ACTION".to_owned(),
+                    value: "DISPLAY".to_owned(),
+                    ..Default::default()
+                },
+                ContentLine {
+                    name: "DESCRIPTION".to_owned(),
+                    value: instance_summary,
+                    ..Default::default()
+                },
+            ],
+        }],
+    });
 }
