@@ -21,6 +21,7 @@ pub struct PrincipalResourceService<
     // If true only return the principal as the calendar home set, otherwise also groups
     pub(crate) simplified_home_set: bool,
     pub(crate) config: Arc<CalDavConfig>,
+    pub(crate) vapid_public_key: Option<&'static str>,
 }
 
 impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Clone
@@ -33,6 +34,7 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Clone
             cal_store: self.cal_store.clone(),
             simplified_home_set: self.simplified_home_set,
             config: self.config.clone(),
+            vapid_public_key: self.vapid_public_key,
         }
     }
 }
@@ -78,6 +80,7 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Resour
             .map(|cal| CalendarResource {
                 read_only: self.cal_store.is_read_only(&cal.id),
                 cal,
+                vapid_public_key: self.vapid_public_key,
             })
             .collect())
     }
@@ -90,6 +93,7 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Resour
                     self.cal_store.clone(),
                     self.sub_store.clone(),
                     self.config.clone(),
+                    self.vapid_public_key,
                 )
                 .axum_router(),
             )

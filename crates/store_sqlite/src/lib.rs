@@ -47,18 +47,12 @@ impl SqliteStore {
         )
     }
 
-    /// Persist the DAV Push VAPID keypair PEM, but only if one isn't already set.
-    /// The key is generate-once and never rotated here, so a conditional update
-    /// makes first-run creation race-safe (a concurrent process can't clobber a
-    /// key that's already in use).
-    pub async fn set_vapid_key_if_unset(&self, pem: &str) -> Result<(), rustical_store::Error> {
-        sqlx::query!(
-            "UPDATE server_settings SET vapid_key = ? WHERE id = 1 AND vapid_key IS NULL",
-            pem
-        )
-        .execute(&self.db)
-        .await
-        .map_err(crate::Error::from)?;
+    /// Persist the DAV Push VAPID keypair PEM into the single settings row.
+    pub async fn set_vapid_key(&self, pem: &str) -> Result<(), rustical_store::Error> {
+        sqlx::query!("UPDATE server_settings SET vapid_key = ? WHERE id = 1", pem)
+            .execute(&self.db)
+            .await
+            .map_err(crate::Error::from)?;
         Ok(())
     }
 }

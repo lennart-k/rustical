@@ -48,7 +48,8 @@ expression: body
                 <sync-token>github.com/lennart-k/rustical/ns/1</sync-token>
                 <CS:getctag>github.com/lennart-k/rustical/ns/1</CS:getctag>
                 <PUSH:transports>
-                    <PUSH:web-push/>
+                    <PUSH:web-push>
+                    </PUSH:web-push>
                 </PUSH:transports>
                 <PUSH:topic>[PUSH_TOPIC]</PUSH:topic>
                 <PUSH:supported-triggers>

@@ -30,6 +30,7 @@ pub async fn route_post<C: CalendarStore, S: SubscriptionStore>(
     let calendar_resource = CalendarResource {
         cal: calendar,
         read_only: true,
+        vapid_public_key: None,
     };
 
     if !calendar_resource

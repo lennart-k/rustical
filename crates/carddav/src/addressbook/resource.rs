@@ -4,7 +4,6 @@ use crate::addressbook::prop::{
     AddressbookProp, AddressbookPropName, AddressbookPropWrapper, AddressbookPropWrapperName,
     SupportedCollationSet,
 };
-use derive_more::derive::{From, Into};
 use rustical_dav::extensions::{CommonPropertiesExtension, SyncTokenExtension};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
@@ -14,8 +13,14 @@ use rustical_store::Addressbook;
 use rustical_store::auth::Principal;
 use std::borrow::Cow;
 
-#[derive(Clone, Debug, From, Into)]
-pub struct AddressbookResource(pub(crate) Addressbook);
+#[derive(Clone, Debug)]
+pub struct AddressbookResource(pub(crate) Addressbook, pub(crate) Option<&'static str>);
+
+impl From<AddressbookResource> for Addressbook {
+    fn from(value: AddressbookResource) -> Self {
+        value.0
+    }
+}
 
 impl ResourceName for AddressbookResource {
     fn get_name(&self) -> Cow<'_, str> {
@@ -32,6 +37,9 @@ impl SyncTokenExtension for AddressbookResource {
 impl DavPushExtension for AddressbookResource {
     fn get_topic(&self) -> String {
         self.0.push_topic.clone()
+    }
+    fn vapid_public_key(&self) -> Option<&str> {
+        self.1
     }
 }
 

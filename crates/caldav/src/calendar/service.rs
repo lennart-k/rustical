@@ -24,6 +24,7 @@ pub struct CalendarResourceService<C: CalendarStore, S: SubscriptionStore> {
     pub(crate) cal_store: Arc<C>,
     pub(crate) sub_store: Arc<S>,
     pub(crate) config: Arc<CalDavConfig>,
+    pub(crate) vapid_public_key: Option<&'static str>,
 }
 
 impl<C: CalendarStore, S: SubscriptionStore> Clone for CalendarResourceService<C, S> {
@@ -32,16 +33,23 @@ impl<C: CalendarStore, S: SubscriptionStore> Clone for CalendarResourceService<C
             cal_store: self.cal_store.clone(),
             sub_store: self.sub_store.clone(),
             config: self.config.clone(),
+            vapid_public_key: self.vapid_public_key,
         }
     }
 }
 
 impl<C: CalendarStore, S: SubscriptionStore> CalendarResourceService<C, S> {
-    pub const fn new(cal_store: Arc<C>, sub_store: Arc<S>, config: Arc<CalDavConfig>) -> Self {
+    pub const fn new(
+        cal_store: Arc<C>,
+        sub_store: Arc<S>,
+        config: Arc<CalDavConfig>,
+        vapid_public_key: Option<&'static str>,
+    ) -> Self {
         Self {
             cal_store,
             sub_store,
             config,
+            vapid_public_key,
         }
     }
 }
@@ -69,6 +77,7 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
         Ok(CalendarResource {
             cal: calendar,
             read_only: self.cal_store.is_read_only(cal_id),
+            vapid_public_key: self.vapid_public_key,
         })
     }
 

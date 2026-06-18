@@ -45,6 +45,7 @@ pub fn caldav_router<AP: AuthenticationProvider, C: CalendarStore, S: Subscripti
     subscription_store: Arc<S>,
     simplified_home_set: bool,
     config: Arc<CalDavConfig>,
+    vapid_public_key: Option<&'static str>,
 ) -> Router {
     Router::new().nest(
         prefix,
@@ -54,6 +55,7 @@ pub fn caldav_router<AP: AuthenticationProvider, C: CalendarStore, S: Subscripti
             cal_store: store,
             simplified_home_set,
             config,
+            vapid_public_key,
         })
         .axum_router()
         .layer(AuthenticationLayer::new(auth_provider))

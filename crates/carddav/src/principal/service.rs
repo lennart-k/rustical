@@ -17,6 +17,7 @@ pub struct PrincipalResourceService<
     addr_store: Arc<A>,
     auth_provider: Arc<AP>,
     sub_store: Arc<S>,
+    vapid_public_key: Option<&'static str>,
 }
 
 impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> Clone
@@ -27,6 +28,7 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> Clon
             addr_store: self.addr_store.clone(),
             auth_provider: self.auth_provider.clone(),
             sub_store: self.sub_store.clone(),
+            vapid_public_key: self.vapid_public_key,
         }
     }
 }
@@ -34,11 +36,17 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> Clon
 impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore>
     PrincipalResourceService<A, AP, S>
 {
-    pub const fn new(addr_store: Arc<A>, auth_provider: Arc<AP>, sub_store: Arc<S>) -> Self {
+    pub const fn new(
+        addr_store: Arc<A>,
+        auth_provider: Arc<AP>,
+        sub_store: Arc<S>,
+        vapid_public_key: Option<&'static str>,
+    ) -> Self {
         Self {
             addr_store,
             auth_provider,
             sub_store,
+            vapid_public_key,
         }
     }
 }
@@ -79,7 +87,7 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> Reso
         let addressbooks = self.addr_store.get_addressbooks(principal).await?;
         Ok(addressbooks
             .into_iter()
-            .map(AddressbookResource::from)
+            .map(|addressbook| AddressbookResource(addressbook, self.vapid_public_key))
             .collect())
     }
 
@@ -87,8 +95,12 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> Reso
         Router::new()
             .nest(
                 "/{addressbook_id}",
-                AddressbookResourceService::new(self.addr_store.clone(), self.sub_store.clone())
-                    .axum_router(),
+                AddressbookResourceService::new(
+                    self.addr_store.clone(),
+                    self.sub_store.clone(),
+                    self.vapid_public_key,
+                )
+                .axum_router(),
             )
             .route_service("/", self.axum_service())
     }

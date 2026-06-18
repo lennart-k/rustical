@@ -23,13 +23,19 @@ use tower::Service;
 pub struct AddressbookResourceService<AS: AddressbookStore, S: SubscriptionStore> {
     pub(crate) addr_store: Arc<AS>,
     pub(crate) sub_store: Arc<S>,
+    pub(crate) vapid_public_key: Option<&'static str>,
 }
 
 impl<A: AddressbookStore, S: SubscriptionStore> AddressbookResourceService<A, S> {
-    pub const fn new(addr_store: Arc<A>, sub_store: Arc<S>) -> Self {
+    pub const fn new(
+        addr_store: Arc<A>,
+        sub_store: Arc<S>,
+        vapid_public_key: Option<&'static str>,
+    ) -> Self {
         Self {
             addr_store,
             sub_store,
+            vapid_public_key,
         }
     }
 }
@@ -39,6 +45,7 @@ impl<A: AddressbookStore, S: SubscriptionStore> Clone for AddressbookResourceSer
         Self {
             addr_store: self.addr_store.clone(),
             sub_store: self.sub_store.clone(),
+            vapid_public_key: self.vapid_public_key,
         }
     }
 }
@@ -66,7 +73,7 @@ impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
             .get_addressbook(principal, addressbook_id, show_deleted)
             .await
             .map_err(|_e| Error::NotFound)?;
-        Ok(addressbook.into())
+        Ok(AddressbookResource(addressbook, self.vapid_public_key))
     }
 
     async fn get_members(

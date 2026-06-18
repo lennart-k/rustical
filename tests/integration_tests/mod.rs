@@ -30,6 +30,7 @@ pub fn get_app(context: TestStoreContext) -> axum::Router {
         CalDavConfig::default(),
         &NextcloudLoginConfig { enabled: false },
         false,
+        None,
         true,
         20,
     )

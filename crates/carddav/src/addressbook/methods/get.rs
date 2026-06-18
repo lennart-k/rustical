@@ -28,7 +28,7 @@ pub async fn route_get<AS: AddressbookStore, S: SubscriptionStore>(
     let addressbook = addr_store
         .get_addressbook(&principal, &addressbook_id, false)
         .await?;
-    let addressbook_resource = AddressbookResource(addressbook.clone());
+    let addressbook_resource = AddressbookResource(addressbook.clone(), None);
     if !addressbook_resource
         .get_user_privileges(&user)?
         .has(&UserPrivilege::Read)

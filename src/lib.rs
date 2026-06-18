@@ -6,7 +6,6 @@ use axum::ServiceExt;
 use axum::extract::Request;
 use clap::{Parser, Subcommand};
 use config::{DataStoreConfig, SqliteDataStoreConfig};
-use rustical_dav_push::vapid::set_vapid_public_key;
 use rustical_dav_push::{DavPushController, VapidKeypair};
 use rustical_store::auth::AuthenticationProvider;
 use rustical_store::{
@@ -128,18 +127,13 @@ async fn load_or_create_vapid_key(store: &SqliteStore) -> Result<VapidKeypair> {
     if let Some(pem) = store.get_vapid_key().await? {
         return Ok(VapidKeypair::from_pem(pem.as_bytes())?);
     }
-    // First run: generate a candidate, persist it only if the key is still unset
-    // (so a concurrent process can't clobber one that's already in use), then read
-    // back whichever key won the race and use that.
-    let candidate = VapidKeypair::generate()?;
+    // First run: generate and persist a keypair so the advertised public key
+    // stays stable across restarts.
+    let keypair = VapidKeypair::generate()?;
     store
-        .set_vapid_key_if_unset(&String::from_utf8(candidate.to_pem()?)?)
+        .set_vapid_key(&String::from_utf8(keypair.to_pem()?)?)
         .await?;
-    let pem = store
-        .get_vapid_key()
-        .await?
-        .ok_or_else(|| anyhow!("VAPID key missing immediately after persisting"))?;
-    Ok(VapidKeypair::from_pem(pem.as_bytes())?)
+    Ok(keypair)
 }
 
 #[allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]
@@ -156,15 +150,17 @@ pub async fn cmd_default(
     let (addr_store, cal_store, subscription_store, principal_store, update_recv, vapid) =
         get_data_stores(!args.no_migrations, config.dav_push.enabled, &config.data_store).await?;
 
+    // The advertised VAPID public key, leaked to `'static` once at startup: it's a
+    // single value that lives for the whole process, so the resource services can
+    // carry a zero-cost `Copy` of it and stamp it onto the resources they build.
+    let vapid_public_key: Option<&'static str> = match &vapid {
+        Some(vapid) => Some(Box::leak(vapid.public_key_b64url()?.into_boxed_str())),
+        None => None,
+    };
+
     if config.dav_push.enabled {
-        // Advertise our VAPID public key so clients can pin their subscription.
         let vapid = vapid.expect("VAPID key is loaded when dav_push is enabled");
-        set_vapid_public_key(vapid.public_key_b64url()?);
-        let vapid_sub = config
-            .dav_push
-            .vapid_sub
-            .clone()
-            .unwrap_or_else(|| "mailto:admin@localhost".to_owned());
+        let vapid_sub = config.dav_push.vapid_sub.clone();
         let dav_push_controller = DavPushController::new(
             config.dav_push.allowed_push_servers,
             subscription_store.clone(),
@@ -187,6 +183,7 @@ pub async fn cmd_default(
         config.caldav,
         &config.nextcloud_login,
         config.dav_push.enabled,
+        vapid_public_key,
         config.http.session_cookie_samesite_strict,
         config.http.payload_limit_mb,
     );

@@ -81,7 +81,11 @@ ResponseElement {
                             Transports(
                                 Transports {
                                     transports: [
-                                        WebPush,
+                                        WebPush(
+                                            WebPushTransport {
+                                                vapid_public_key: None,
+                                            },
+                                        ),
                                     ],
                                 },
                             ),

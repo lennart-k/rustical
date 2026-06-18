@@ -5,48 +5,37 @@
 //! persistent NIST P-256 keypair whose public key is advertised to clients (so
 //! they can restrict their push subscription to this server via
 //! `applicationServerKey`) and whose private key signs every push request with a
-//! `vapid` `Authorization` JWT (ES256). Implemented with `openssl` (already a
-//! dependency) — `EcdsaSig` yields the raw `r‖s` the JWS signature needs.
+//! `vapid` `Authorization` JWT (ES256). The JWT is produced with `jsonwebtoken`;
+//! `openssl` (already a dependency) handles keypair generation, PEM persistence,
+//! and exporting the raw public-key point clients use as `applicationServerKey`.
 
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD as B64;
 use chrono::{Duration, Utc};
+use jsonwebtoken::{Algorithm, EncodingKey, Header, encode};
 use openssl::{
     bn::BigNumContext,
     ec::{EcGroup, EcKey, PointConversionForm},
-    ecdsa::EcdsaSig,
-    hash::MessageDigest,
     nid::Nid,
     pkey::{PKey, Private},
-    sign::Signer,
 };
+use serde::Serialize;
 
 #[derive(Debug, thiserror::Error)]
 pub enum VapidError {
     #[error(transparent)]
     OpenSsl(#[from] openssl::error::ErrorStack),
     #[error(transparent)]
-    Json(#[from] serde_json::Error),
+    Jwt(#[from] jsonwebtoken::errors::Error),
 }
 
-/// The server's VAPID public key (base64url), set once at startup. The key is a
-/// single process-wide value, so this avoids threading it through every DAV
-/// resource just to advertise it in `propfind` responses.
-static VAPID_PUBLIC_KEY: std::sync::OnceLock<String> = std::sync::OnceLock::new();
-
-/// Record the server's VAPID public key for advertisement. First value wins.
-pub fn set_vapid_public_key(key: String) {
-    let _ = VAPID_PUBLIC_KEY.set(key);
-}
-
-/// The server's VAPID public key (base64url), if one has been set.
-#[must_use]
-pub fn vapid_public_key() -> Option<String> {
-    VAPID_PUBLIC_KEY.get().cloned()
-}
-
-fn p256_group() -> Result<EcGroup, openssl::error::ErrorStack> {
-    EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)
+/// VAPID JWT claims (RFC 8292 §2): audience, expiry, and an optional contact.
+#[derive(Serialize)]
+struct VapidClaims<'a> {
+    aud: &'a str,
+    exp: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    sub: Option<&'a str>,
 }
 
 /// A persistent VAPID (RFC 8292) application-server keypair (NIST P-256 / ES256).
@@ -63,22 +52,19 @@ impl std::fmt::Debug for VapidKeypair {
 }
 
 impl VapidKeypair {
-    /// Generate a fresh keypair.
     pub fn generate() -> Result<Self, VapidError> {
-        let group = p256_group()?;
+        let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?;
         Ok(Self {
             key: EcKey::generate(&group)?,
         })
     }
 
-    /// Restore from the PEM produced by [`Self::to_pem`].
     pub fn from_pem(pem: &[u8]) -> Result<Self, VapidError> {
         Ok(Self {
             key: EcKey::private_key_from_pem(pem)?,
         })
     }
 
-    /// Serialize the private key as PEM (for persistence).
     pub fn to_pem(&self) -> Result<Vec<u8>, VapidError> {
         Ok(self.key.private_key_to_pem()?)
     }
@@ -86,46 +72,38 @@ impl VapidKeypair {
     /// Public key as `base64url(raw uncompressed point)` — the value clients use
     /// as `applicationServerKey` and the `k` parameter of the auth header.
     pub fn public_key_b64url(&self) -> Result<String, VapidError> {
-        let group = p256_group()?;
+        let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?;
         let mut ctx = BigNumContext::new()?;
-        let bytes = self.key.public_key().to_bytes(
-            &group,
-            PointConversionForm::UNCOMPRESSED,
-            &mut ctx,
-        )?;
+        let bytes =
+            self.key
+                .public_key()
+                .to_bytes(&group, PointConversionForm::UNCOMPRESSED, &mut ctx)?;
         Ok(B64.encode(bytes))
+    }
+
+    /// The private key as PKCS#8 PEM, the form `jsonwebtoken`'s `EncodingKey`
+    /// expects (persistence uses SEC1 via [`Self::to_pem`]).
+    fn signing_key_pem(&self) -> Result<Vec<u8>, VapidError> {
+        Ok(PKey::from_ec_key(self.key.clone())?.private_key_to_pem_pkcs8()?)
     }
 
     /// Build the `vapid t=<jwt>, k=<pubkey>` `Authorization` header value for a
     /// push to `aud` (the push endpoint's origin, e.g. `https://ntfy.example`).
-    /// `sub` is the VAPID contact (a `mailto:` or `https:` URL); `ttl` bounds the
-    /// JWT `exp` (RFC 8292 requires ≤ 24h).
-    pub fn auth_header(&self, aud: &str, sub: &str, ttl: Duration) -> Result<String, VapidError> {
-        let header = B64.encode(br#"{"typ":"JWT","alg":"ES256"}"#);
-        let exp = (Utc::now() + ttl).timestamp();
-        let claims = B64.encode(serde_json::to_vec(&serde_json::json!({
-            "aud": aud,
-            "exp": exp,
-            "sub": sub,
-        }))?);
-        let signing_input = format!("{header}.{claims}");
-
-        let pkey = PKey::from_ec_key(self.key.clone())?;
-        let mut signer = Signer::new(MessageDigest::sha256(), &pkey)?;
-        signer.update(signing_input.as_bytes())?;
-        let der = signer.sign_to_vec()?;
-
-        // JWS/ES256 wants the fixed-size raw signature `r‖s` (32 bytes each,
-        // left-padded), not openssl's variable-length DER encoding.
-        let ecdsa = EcdsaSig::from_der(&der)?;
-        let r = ecdsa.r().to_vec();
-        let s = ecdsa.s().to_vec();
-        let mut raw = [0u8; 64];
-        raw[32 - r.len()..32].copy_from_slice(&r);
-        raw[64 - s.len()..64].copy_from_slice(&s);
-        let signature = B64.encode(raw);
-
-        let jwt = format!("{signing_input}.{signature}");
+    /// `sub` is the optional VAPID contact; `ttl` bounds the `exp`
+    /// (RFC 8292 requires <= 24h).
+    pub fn auth_header(
+        &self,
+        aud: &str,
+        sub: Option<&str>,
+        ttl: Duration,
+    ) -> Result<String, VapidError> {
+        let claims = VapidClaims {
+            aud,
+            exp: (Utc::now() + ttl).timestamp(),
+            sub,
+        };
+        let key = EncodingKey::from_ec_pem(&self.signing_key_pem()?)?;
+        let jwt = encode(&Header::new(Algorithm::ES256), &claims, &key)?;
         Ok(format!("vapid t={jwt}, k={}", self.public_key_b64url()?))
     }
 }
@@ -133,50 +111,62 @@ impl VapidKeypair {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use openssl::{bn::BigNum, sign::Verifier};
+    use jsonwebtoken::{DecodingKey, Validation, decode};
 
     #[test]
     fn auth_header_is_a_valid_es256_jwt() {
         let kp = VapidKeypair::generate().unwrap();
         let header = kp
-            .auth_header("https://push.example", "mailto:admin@example.com", Duration::hours(12))
+            .auth_header(
+                "https://push.example",
+                Some("mailto:admin@example.com"),
+                Duration::hours(12),
+            )
             .unwrap();
 
-        // Shape: `vapid t=<h>.<c>.<s>, k=<pub>`.
+        // Shape: `vapid t=<jwt>, k=<pub>`.
         let rest = header.strip_prefix("vapid t=").unwrap();
         let (jwt, k) = rest.split_once(", k=").unwrap();
         assert_eq!(k, kp.public_key_b64url().unwrap());
 
-        let parts: Vec<&str> = jwt.split('.').collect();
-        assert_eq!(parts.len(), 3);
-
-        // Header: ES256.
-        let hdr = B64.decode(parts[0]).unwrap();
-        assert!(std::str::from_utf8(&hdr).unwrap().contains("ES256"));
-
-        // Claims: aud/sub/exp, with exp in the future and within 24h.
-        let claims: serde_json::Value =
-            serde_json::from_slice(&B64.decode(parts[1]).unwrap()).unwrap();
-        assert_eq!(claims["aud"], "https://push.example");
-        assert_eq!(claims["sub"], "mailto:admin@example.com");
-        let exp = claims["exp"].as_i64().unwrap();
-        let now = Utc::now().timestamp();
-        assert!(exp > now && exp <= now + 24 * 3600);
-
-        // Signature: 64-byte raw r‖s that verifies against the public key.
-        let sig_raw = B64.decode(parts[2]).unwrap();
-        assert_eq!(sig_raw.len(), 64);
-        let ecdsa = EcdsaSig::from_private_components(
-            BigNum::from_slice(&sig_raw[..32]).unwrap(),
-            BigNum::from_slice(&sig_raw[32..]).unwrap(),
+        // The JWT verifies against the keypair's public key (ES256), and the
+        // standard claims are present and within RFC 8292's 24h bound.
+        let pub_pem = PKey::from_ec_key(kp.key.clone())
+            .unwrap()
+            .public_key_to_pem()
+            .unwrap();
+        let mut validation = Validation::new(Algorithm::ES256);
+        validation.set_audience(&["https://push.example"]);
+        validation.set_required_spec_claims(&["exp", "aud"]);
+        let data = decode::<serde_json::Value>(
+            jwt,
+            &DecodingKey::from_ec_pem(&pub_pem).unwrap(),
+            &validation,
         )
         .unwrap();
-        let pkey = PKey::from_ec_key(kp.key.clone()).unwrap();
-        let mut verifier = Verifier::new(MessageDigest::sha256(), &pkey).unwrap();
-        verifier
-            .update(format!("{}.{}", parts[0], parts[1]).as_bytes())
+        assert_eq!(data.header.alg, Algorithm::ES256);
+        assert_eq!(data.claims["sub"], "mailto:admin@example.com");
+        let exp = data.claims["exp"].as_i64().unwrap();
+        let now = Utc::now().timestamp();
+        assert!(exp > now && exp <= now + 24 * 3600);
+    }
+
+    #[test]
+    fn omits_sub_claim_when_none() {
+        let kp = VapidKeypair::generate().unwrap();
+        let header = kp
+            .auth_header("https://push.example", None, Duration::hours(12))
             .unwrap();
-        assert!(verifier.verify(&ecdsa.to_der().unwrap()).unwrap());
+        let jwt = header
+            .strip_prefix("vapid t=")
+            .unwrap()
+            .split_once(", k=")
+            .unwrap()
+            .0;
+        let claims: serde_json::Value =
+            serde_json::from_slice(&B64.decode(jwt.split('.').nth(1).unwrap()).unwrap()).unwrap();
+        assert_eq!(claims["aud"], "https://push.example");
+        assert!(claims.get("sub").is_none());
     }
 
     #[test]

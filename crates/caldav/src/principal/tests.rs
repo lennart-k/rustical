@@ -28,6 +28,7 @@ async fn test_principal_resource(
         auth_provider: Arc::new(auth_provider),
         simplified_home_set: false,
         config: Arc::default(),
+        vapid_public_key: None,
     };
 
     // We don't have any calendars here

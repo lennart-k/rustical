@@ -30,7 +30,7 @@ fn test_propfind() {
         push_topic: "asdasd".to_string(),
     };
 
-    let resource = AddressbookResource(addressbook.clone());
+    let resource = AddressbookResource(addressbook.clone(), None);
     let response = resource
         .propfind(
             &format!(

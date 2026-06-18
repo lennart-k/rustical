@@ -109,6 +109,7 @@ headers = "0.4"
 strum = "0.28"
 strum_macros = "0.28"
 serde_json = { version = "1.0", features = ["raw_value"] }
+jsonwebtoken = "9"
 sqlx-sqlite = { version = "0.9", features = ["bundled"] }
 caldata = { version = "0.16", features = ["chrono-tz", "vtimezones-rs"] }
 toml = "1.0"

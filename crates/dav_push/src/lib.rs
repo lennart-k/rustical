@@ -47,7 +47,7 @@ pub struct DavPushController<S: SubscriptionStore> {
     allowed_push_servers: Option<Vec<String>>,
     sub_store: Arc<S>,
     vapid: Arc<VapidKeypair>,
-    vapid_sub: String,
+    vapid_sub: Option<String>,
 }
 
 impl<S: SubscriptionStore> DavPushController<S> {
@@ -147,7 +147,7 @@ impl<S: SubscriptionStore> DavPushController<S> {
             }
 
             if let Err(err) =
-                send_payload(&payload, &subsciption, &self.vapid, &self.vapid_sub).await
+                send_payload(&payload, &subsciption, &self.vapid, self.vapid_sub.as_deref()).await
             {
                 error!("An error occured sending out a push notification: {err}");
                 if err.is_permament_error() {
@@ -172,7 +172,7 @@ async fn send_payload(
     payload: &str,
     subsciption: &Subscription,
     vapid: &VapidKeypair,
-    vapid_sub: &str,
+    vapid_sub: Option<&str>,
 ) -> Result<(), NotifierError> {
     if subsciption.public_key_type != "p256dh" {
         return Err(NotifierError::InvalidPublicKeyType(
@@ -183,8 +183,9 @@ async fn send_payload(
         .push_resource
         .parse()
         .map_err(|_| NotifierError::InvalidEndpointUrl(subsciption.push_resource.clone()))?;
-    // VAPID `aud` is the origin of the push endpoint (RFC 8292 §2).
-    let audience = endpoint.origin().ascii_serialization();
+    // VAPID `aud` is the origin of the push endpoint (RFC 8292 §2, serialized
+    // per RFC 6454 §6.2).
+    let audience = endpoint.origin().unicode_serialization();
     let ua_public = base64::engine::general_purpose::URL_SAFE_NO_PAD
         .decode(&subsciption.public_key)
         .map_err(|_| NotifierError::InvalidKeyEncoding)?;
@@ -275,6 +276,8 @@ mod tests {
     use rustical_store::Subscription;
 
     #[tokio::test]
+    #[ignore = "live integration test: POSTs to the public ntfy.sh and now asserts a 2xx \
+                (send_payload checks the response status); run explicitly with `--ignored`"]
     async fn test_ntfy_request() {
         let (keypair, auth_secret) = generate_keypair_and_auth_secret().unwrap();
         let auth_secret = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(auth_secret);
@@ -293,7 +296,7 @@ mod tests {
                 auth_secret,
             },
             &VapidKeypair::generate().unwrap(),
-            "mailto:test@example.com",
+            Some("mailto:test@example.com"),
         )
         .await
         .unwrap();

@@ -72,6 +72,8 @@ pub enum CalendarPropWrapper {
 pub struct CalendarResource {
     pub cal: Calendar,
     pub read_only: bool,
+    #[serde(skip)]
+    pub vapid_public_key: Option<&'static str>,
 }
 
 impl ResourceName for CalendarResource {
@@ -95,6 +97,9 @@ impl SyncTokenExtension for CalendarResource {
 impl DavPushExtension for CalendarResource {
     fn get_topic(&self) -> String {
         self.cal.push_topic.clone()
+    }
+    fn vapid_public_key(&self) -> Option<&str> {
+        self.vapid_public_key
     }
 }
 

@@ -46,9 +46,14 @@ pub fn carddav_router<AP: AuthenticationProvider, A: AddressbookStore, S: Subscr
     auth_provider: Arc<AP>,
     store: Arc<A>,
     subscription_store: Arc<S>,
+    vapid_public_key: Option<&'static str>,
 ) -> Router {
-    let principal_service =
-        PrincipalResourceService::new(store, auth_provider.clone(), subscription_store);
+    let principal_service = PrincipalResourceService::new(
+        store,
+        auth_provider.clone(),
+        subscription_store,
+        vapid_public_key,
+    );
     Router::new()
         .nest(
             prefix,

@@ -49,6 +49,7 @@ pub fn make_app<
     caldav_config: CalDavConfig,
     nextcloud_login_config: &NextcloudLoginConfig,
     dav_push_enabled: bool,
+    vapid_public_key: Option<&'static str>,
     session_cookie_samesite_strict: bool,
     payload_limit_mb: usize,
 ) -> Router<()> {
@@ -68,6 +69,7 @@ pub fn make_app<
             subscription_store.clone(),
             false,
             caldav_config.clone(),
+            vapid_public_key,
         ))
         .merge(caldav_router(
             "/caldav-compat",
@@ -76,6 +78,7 @@ pub fn make_app<
             subscription_store.clone(),
             true,
             caldav_config,
+            vapid_public_key,
         ))
         .route(
             "/.well-known/caldav",
@@ -101,6 +104,7 @@ pub fn make_app<
             auth_provider.clone(),
             addr_store.clone(),
             subscription_store.clone(),
+            vapid_public_key,
         ));
 
     // GNOME Accounts needs to discover a WebDAV Files endpoint to complete the setup
