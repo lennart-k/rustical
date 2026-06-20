@@ -5,8 +5,9 @@ use crate::{CalDavConfig, CalDavPrincipalUri, Error};
 use async_trait::async_trait;
 use axum::Router;
 use rustical_dav::resource::{AxumMethods, ResourceService};
+use rustical_dav_push::SubscriptionStore;
+use rustical_store::CalendarStore;
 use rustical_store::auth::{AuthenticationProvider, Principal};
-use rustical_store::{CalendarStore, SubscriptionStore};
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -40,6 +41,8 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Clone
 #[async_trait]
 impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> ResourceService
     for PrincipalResourceService<AP, S, CS>
+where
+    Error: From<S::Error>,
 {
     type PathComponents = (String,);
     type MemberType = CalendarResource;
@@ -71,6 +74,12 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Resour
         &self,
         (principal,): &Self::PathComponents,
     ) -> Result<Vec<Self::MemberType>, Self::Error> {
+        let vapid_public_key = self
+            .sub_store
+            .get_vapid_public_key()
+            .await?
+            .encode()
+            .map_err(rustical_dav_push::Error::from)?;
         let calendars = self.cal_store.get_calendars(principal).await?;
 
         Ok(calendars
@@ -78,6 +87,7 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Resour
             .map(|cal| CalendarResource {
                 read_only: self.cal_store.is_read_only(&cal.id),
                 cal,
+                vapid_public_key: Some(vapid_public_key.clone()),
             })
             .collect())
     }

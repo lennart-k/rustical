@@ -10,7 +10,8 @@ use caldata::{
     parser::{ContentLine, ParserOptions},
 };
 use http::StatusCode;
-use rustical_store::{Addressbook, AddressbookStore, SubscriptionStore, auth::Principal};
+use rustical_dav_push::SubscriptionStore;
+use rustical_store::{Addressbook, AddressbookStore, auth::Principal};
 use tracing::instrument;
 
 #[instrument(skip(resource_service))]

@@ -14,8 +14,9 @@ use axum::handler::Handler;
 use axum::response::Response;
 use futures_util::future::BoxFuture;
 use rustical_dav::resource::{AxumMethods, ResourceService};
+use rustical_dav_push::SubscriptionStore;
+use rustical_store::CalendarStore;
 use rustical_store::auth::Principal;
-use rustical_store::{CalendarStore, SubscriptionStore};
 use std::convert::Infallible;
 use std::sync::Arc;
 use tower::Service;
@@ -47,7 +48,10 @@ impl<C: CalendarStore, S: SubscriptionStore> CalendarResourceService<C, S> {
 }
 
 #[async_trait]
-impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourceService<C, S> {
+impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourceService<C, S>
+where
+    Error: From<S::Error>,
+{
     type MemberType = CalendarObjectResource;
     type PathComponents = (String, String); // principal, calendar_id
     type Resource = CalendarResource;
@@ -62,6 +66,12 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
         (principal, cal_id): &Self::PathComponents,
         show_deleted: bool,
     ) -> Result<Self::Resource, Error> {
+        let vapid_public_key = self
+            .sub_store
+            .get_vapid_public_key()
+            .await?
+            .encode()
+            .map_err(rustical_dav_push::Error::from)?;
         let calendar = self
             .cal_store
             .get_calendar(principal, cal_id, show_deleted)
@@ -69,6 +79,7 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
         Ok(CalendarResource {
             cal: calendar,
             read_only: self.cal_store.is_read_only(cal_id),
+            vapid_public_key: Some(vapid_public_key),
         })
     }
 
@@ -122,7 +133,10 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
     }
 }
 
-impl<C: CalendarStore, S: SubscriptionStore> AxumMethods for CalendarResourceService<C, S> {
+impl<C: CalendarStore, S: SubscriptionStore> AxumMethods for CalendarResourceService<C, S>
+where
+    Error: From<S::Error>,
+{
     fn report() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
         Some(|state, req| {
             let mut service = Handler::with_state(route_report_calendar::<C, S>, state);

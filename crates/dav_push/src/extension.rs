@@ -1,4 +1,7 @@
-use crate::{ContentUpdate, PropertyUpdate, SupportedTriggers, Transports, Trigger};
+use crate::{
+    ContentUpdate, PropertyUpdate, SupportedTriggers, Transports, Trigger, VapidPublicKey,
+    VapidPublicKeyB64,
+};
 use rustical_dav::header::Depth;
 use rustical_xml::{EnumVariants, PropName, XmlDeserialize, XmlSerialize};
 
@@ -18,6 +21,7 @@ pub enum DavPushExtensionProp {
 
 pub trait DavPushExtension {
     fn get_topic(&self) -> String;
+    fn get_vapid_public_key(&self) -> Option<&VapidPublicKeyB64>;
 
     fn supported_triggers(&self) -> SupportedTriggers {
         SupportedTriggers(vec![
@@ -32,7 +36,9 @@ pub trait DavPushExtension {
     ) -> Result<DavPushExtensionProp, rustical_dav::Error> {
         Ok(match &prop {
             DavPushExtensionPropName::Transports => {
-                DavPushExtensionProp::Transports(Transports::default())
+                DavPushExtensionProp::Transports(Transports::from_p256ecdsa_key(
+                    self.get_vapid_public_key().map(|key| key.0.clone()),
+                ))
             }
             DavPushExtensionPropName::Topic => DavPushExtensionProp::Topic(self.get_topic()),
             DavPushExtensionPropName::SupportedTriggers => {

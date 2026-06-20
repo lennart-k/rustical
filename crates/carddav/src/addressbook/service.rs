@@ -14,8 +14,9 @@ use axum::handler::Handler;
 use axum::response::Response;
 use futures_util::future::BoxFuture;
 use rustical_dav::resource::{AxumMethods, ResourceService};
+use rustical_dav_push::SubscriptionStore;
+use rustical_store::AddressbookStore;
 use rustical_store::auth::Principal;
-use rustical_store::{AddressbookStore, SubscriptionStore};
 use std::convert::Infallible;
 use std::sync::Arc;
 use tower::Service;
@@ -46,6 +47,8 @@ impl<A: AddressbookStore, S: SubscriptionStore> Clone for AddressbookResourceSer
 #[async_trait]
 impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
     for AddressbookResourceService<AS, S>
+where
+    Error: From<S::Error>,
 {
     type MemberType = AddressObjectResource;
     type PathComponents = (String, String); // principal, addressbook_id
@@ -61,12 +64,18 @@ impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
         (principal, addressbook_id): &Self::PathComponents,
         show_deleted: bool,
     ) -> Result<Self::Resource, Error> {
+        let vapid_public_key = self
+            .sub_store
+            .get_vapid_public_key()
+            .await?
+            .encode()
+            .map_err(rustical_dav_push::Error::from)?;
         let addressbook = self
             .addr_store
             .get_addressbook(principal, addressbook_id, show_deleted)
             .await
             .map_err(|_e| Error::NotFound)?;
-        Ok(addressbook.into())
+        Ok(AddressbookResource(addressbook, Some(vapid_public_key)))
     }
 
     async fn get_members(
@@ -92,7 +101,7 @@ impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
         file: Self::Resource,
     ) -> Result<(), Self::Error> {
         self.addr_store
-            .update_addressbook(principal, addressbook_id, file.into())
+            .update_addressbook(principal, addressbook_id, file.0)
             .await?;
         Ok(())
     }
@@ -118,7 +127,10 @@ impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
     }
 }
 
-impl<AS: AddressbookStore, S: SubscriptionStore> AxumMethods for AddressbookResourceService<AS, S> {
+impl<AS: AddressbookStore, S: SubscriptionStore> AxumMethods for AddressbookResourceService<AS, S>
+where
+    Error: From<S::Error>,
+{
     fn report() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
         Some(|state, req| {
             let mut service = Handler::with_state(route_report_addressbook::<AS, S>, state);

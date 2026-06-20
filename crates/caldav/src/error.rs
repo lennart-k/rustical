@@ -50,6 +50,9 @@ pub enum Error {
     ChronoParseError(#[from] chrono::ParseError),
 
     #[error(transparent)]
+    DavPushError(#[from] rustical_dav_push::Error),
+
+    #[error(transparent)]
     DavError(#[from] rustical_dav::Error),
 
     #[error(transparent)]
@@ -73,7 +76,9 @@ impl Error {
                 .expect("Just converting between versions"),
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
             Self::XmlDecodeError(_) => StatusCode::BAD_REQUEST,
-            Self::ChronoParseError(_) | Self::NotImplemented => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::ChronoParseError(_) | Self::DavPushError(_) | Self::NotImplemented => {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
             Self::NotFound => StatusCode::NOT_FOUND,
             // The correct status code for a failed precondition is not PreconditionFailed but
             // Forbidden (or Conflict):

@@ -7,8 +7,9 @@ use http::{HeaderMap, HeaderValue, StatusCode, header};
 use rustical_dav::privileges::UserPrivilege;
 use rustical_dav::resource::Resource;
 use rustical_dav_push::register::PushRegister;
+use rustical_dav_push::{Subscription, SubscriptionStore};
+use rustical_store::AddressbookStore;
 use rustical_store::auth::Principal;
-use rustical_store::{AddressbookStore, Subscription, SubscriptionStore};
 use rustical_xml::XmlDocument;
 use tracing::instrument;
 
@@ -18,7 +19,10 @@ pub async fn route_post<AS: AddressbookStore, S: SubscriptionStore>(
     user: Principal,
     State(resource_service): State<AddressbookResourceService<AS, S>>,
     body: String,
-) -> Result<Response, Error> {
+) -> Result<Response, Error>
+where
+    Error: From<S::Error>,
+{
     if !user.is_principal(&principal) {
         return Err(Error::Unauthorized);
     }
@@ -27,7 +31,7 @@ pub async fn route_post<AS: AddressbookStore, S: SubscriptionStore>(
         .addr_store
         .get_addressbook(&principal, &addr_id, false)
         .await?;
-    let addressbook_resource = AddressbookResource(addressbook);
+    let addressbook_resource = AddressbookResource(addressbook, None);
     if !addressbook_resource
         .get_user_privileges(&user)?
         .has(&UserPrivilege::Read)
@@ -39,7 +43,7 @@ pub async fn route_post<AS: AddressbookStore, S: SubscriptionStore>(
     let sub_id = uuid::Uuid::new_v4().to_string();
 
     let expires = if let Some(expires) = request.expires {
-        chrono::DateTime::parse_from_rfc2822(&expires).map_err(Error::from)?
+        chrono::DateTime::parse_from_rfc2822(&expires).map_err(Error::ChronoParseError)?
     } else {
         chrono::Utc::now().fixed_offset() + chrono::Duration::weeks(1)
     };

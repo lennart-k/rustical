@@ -4,7 +4,8 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use http::StatusCode;
-use rustical_store::{Addressbook, AddressbookStore, SubscriptionStore, auth::Principal};
+use rustical_dav_push::SubscriptionStore;
+use rustical_store::{Addressbook, AddressbookStore, auth::Principal};
 use rustical_xml::{XmlDeserialize, XmlDocument, XmlRootTag};
 use tracing::instrument;
 

@@ -35,8 +35,10 @@ password-hash.workspace = true
 uuid.workspace = true
 pbkdf2.workspace = true
 rustical_ical.workspace = true
+rustical_dav_push.workspace = true
 rstest = { workspace = true, optional = true }
 sha2.workspace = true
 regex.workspace = true
 rand.workspace = true
 hex.workspace = true
+axum.workspace = true

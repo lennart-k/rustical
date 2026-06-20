@@ -7,8 +7,9 @@ use http::{HeaderMap, HeaderValue, StatusCode, header};
 use rustical_dav::privileges::UserPrivilege;
 use rustical_dav::resource::Resource;
 use rustical_dav_push::register::PushRegister;
+use rustical_dav_push::{Subscription, SubscriptionStore};
+use rustical_store::CalendarStore;
 use rustical_store::auth::Principal;
-use rustical_store::{CalendarStore, Subscription, SubscriptionStore};
 use rustical_xml::XmlDocument;
 use tracing::instrument;
 
@@ -18,7 +19,10 @@ pub async fn route_post<C: CalendarStore, S: SubscriptionStore>(
     user: Principal,
     State(resource_service): State<CalendarResourceService<C, S>>,
     body: String,
-) -> Result<Response, Error> {
+) -> Result<Response, Error>
+where
+    Error: From<S::Error>,
+{
     if !user.is_principal(&principal) {
         return Err(Error::Unauthorized);
     }
@@ -30,6 +34,7 @@ pub async fn route_post<C: CalendarStore, S: SubscriptionStore>(
     let calendar_resource = CalendarResource {
         cal: calendar,
         read_only: true,
+        vapid_public_key: None,
     };
 
     if !calendar_resource
@@ -43,7 +48,7 @@ pub async fn route_post<C: CalendarStore, S: SubscriptionStore>(
     let sub_id = uuid::Uuid::new_v4().to_string();
 
     let expires = if let Some(expires) = request.expires {
-        chrono::DateTime::parse_from_rfc2822(&expires).map_err(Error::from)?
+        chrono::DateTime::parse_from_rfc2822(&expires).map_err(Error::ChronoParseError)?
     } else {
         chrono::Utc::now().fixed_offset() + chrono::Duration::weeks(1)
     };

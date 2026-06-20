@@ -9,10 +9,9 @@ use caldata::component::{Component, ComponentMut};
 use caldata::{IcalParser, parser::ParserOptions};
 use http::StatusCode;
 use rustical_dav::header::Overwrite;
+use rustical_dav_push::SubscriptionStore;
 use rustical_ical::CalendarObjectType;
-use rustical_store::{
-    Calendar, CalendarMetadata, CalendarStore, SubscriptionStore, auth::Principal,
-};
+use rustical_store::{Calendar, CalendarMetadata, CalendarStore, auth::Principal};
 use tracing::instrument;
 
 #[instrument(skip(resource_service))]

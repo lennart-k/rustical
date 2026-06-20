@@ -27,8 +27,9 @@ use rustical_dav::{
         sync_collection::SyncCollectionRequest,
     },
 };
+use rustical_dav_push::SubscriptionStore;
 use rustical_ical::AddressObject;
-use rustical_store::{AddressbookStore, SubscriptionStore, auth::Principal};
+use rustical_store::{AddressbookStore, auth::Principal};
 use rustical_xml::{XmlDeserialize, XmlDocument};
 use sync_collection::handle_sync_collection;
 use tracing::instrument;

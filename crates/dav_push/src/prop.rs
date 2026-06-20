@@ -1,24 +1,42 @@
 use rustical_dav::header::Depth;
 use rustical_xml::{Unparsed, XmlDeserialize, XmlSerialize};
 
+// #[derive(Debug, Clone, XmlSerialize, PartialEq, Eq)]
+// pub struct VapidPublicKey {
+//     #[xml(ty = "attr", rename = "type")]
+//     pub ty: &'static str,
+//     #[xml(ty = "text")]
+//     pub key: String,
+// }
+
+#[derive(Debug, Clone, XmlSerialize, PartialEq, Eq)]
+pub struct WebPushTransport {
+    // #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
+    // pub vapid_public_key: Option<VapidPublicKey>,
+}
+
 #[derive(Debug, Clone, XmlSerialize, PartialEq, Eq)]
 pub enum Transport {
     #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
-    WebPush,
+    WebPush(WebPushTransport),
 }
 
 #[derive(Debug, Clone, XmlSerialize, PartialEq, Eq)]
-pub struct Transports {
+pub struct Transports(
     #[xml(flatten, ty = "untagged")]
-    #[xml(ns = "crate::namespace::NS_DAVPUSH")]
-    transports: Vec<Transport>,
-}
+    #[xml(ns = "crate::namespace::NS_DAVPUSH", rename = "transports")]
+    pub Vec<Transport>,
+);
 
-impl Default for Transports {
-    fn default() -> Self {
-        Self {
-            transports: vec![Transport::WebPush],
-        }
+impl Transports {
+    #[must_use]
+    pub fn from_p256ecdsa_key(public_key: Option<String>) -> Self {
+        Self(vec![Transport::WebPush(WebPushTransport {
+            // vapid_public_key: public_key.map(|key| VapidPublicKey {
+            //     ty: "p256ecdsa",
+            //     key,
+            // }),
+        })])
     }
 }
 

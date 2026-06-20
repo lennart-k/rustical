@@ -21,8 +21,9 @@ use rustical_dav::{
         sync_collection::SyncCollectionRequest,
     },
 };
+use rustical_dav_push::SubscriptionStore;
 use rustical_ical::CalendarObject;
-use rustical_store::{CalendarStore, SubscriptionStore, auth::Principal};
+use rustical_store::{CalendarStore, auth::Principal};
 use rustical_xml::{XmlDeserialize, XmlDocument};
 use std::str::FromStr;
 use sync_collection::handle_sync_collection;

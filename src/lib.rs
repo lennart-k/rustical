@@ -6,11 +6,9 @@ use axum::ServiceExt;
 use axum::extract::Request;
 use clap::{Parser, Subcommand};
 use config::{DataStoreConfig, SqliteDataStoreConfig};
-use rustical_dav_push::DavPushController;
+use rustical_dav_push::{DavPushController, SubscriptionStore};
 use rustical_store::auth::AuthenticationProvider;
-use rustical_store::{
-    AddressbookStore, CalendarStore, CollectionOperation, PrefixedCalendarStore, SubscriptionStore,
-};
+use rustical_store::{AddressbookStore, CalendarStore, CollectionOperation, PrefixedCalendarStore};
 use rustical_store_sqlite::addressbook_store::SqliteAddressbookStore;
 use rustical_store_sqlite::calendar_store::SqliteCalendarStore;
 use rustical_store_sqlite::principal_store::SqlitePrincipalStore;

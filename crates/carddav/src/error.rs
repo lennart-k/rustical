@@ -19,6 +19,9 @@ pub enum Error {
     ChronoParseError(#[from] chrono::ParseError),
 
     #[error(transparent)]
+    DavPushError(#[from] rustical_dav_push::Error),
+
+    #[error(transparent)]
     DavError(#[from] rustical_dav::Error),
 
     #[error(transparent)]
@@ -38,7 +41,9 @@ impl Error {
             Self::DavError(err) => err.status_code(),
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
             Self::XmlDecodeError(_) => StatusCode::BAD_REQUEST,
-            Self::ChronoParseError(_) | Self::NotImplemented => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::ChronoParseError(_) | Self::DavPushError(_) | Self::NotImplemented => {
+                StatusCode::INTERNAL_SERVER_ERROR
+            }
             Self::NotFound => StatusCode::NOT_FOUND,
         }
     }

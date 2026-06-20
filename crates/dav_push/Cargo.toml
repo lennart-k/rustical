@@ -29,3 +29,5 @@ base64.workspace = true
 ece.workspace = true
 axum.workspace = true
 openssl.workspace = true
+ct-codecs.workspace = true
+jsonwebtoken.workspace = true

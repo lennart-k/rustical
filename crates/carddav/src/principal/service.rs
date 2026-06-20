@@ -5,8 +5,9 @@ use crate::{CardDavPrincipalUri, Error};
 use async_trait::async_trait;
 use axum::Router;
 use rustical_dav::resource::{AxumMethods, ResourceService};
+use rustical_dav_push::SubscriptionStore;
+use rustical_store::AddressbookStore;
 use rustical_store::auth::{AuthenticationProvider, Principal};
-use rustical_store::{AddressbookStore, SubscriptionStore};
 use std::sync::Arc;
 
 pub struct PrincipalResourceService<
@@ -46,6 +47,8 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore>
 #[async_trait]
 impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> ResourceService
     for PrincipalResourceService<A, AP, S>
+where
+    Error: From<S::Error>,
 {
     type PathComponents = (String,);
     type MemberType = AddressbookResource;
@@ -76,10 +79,16 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> Reso
         &self,
         (principal,): &Self::PathComponents,
     ) -> Result<Vec<Self::MemberType>, Self::Error> {
+        let vapid_public_key = self
+            .sub_store
+            .get_vapid_public_key()
+            .await?
+            .encode()
+            .map_err(rustical_dav_push::Error::from)?;
         let addressbooks = self.addr_store.get_addressbooks(principal).await?;
         Ok(addressbooks
             .into_iter()
-            .map(AddressbookResource::from)
+            .map(|addressbook| AddressbookResource(addressbook, Some(vapid_public_key.clone())))
             .collect())
     }
 

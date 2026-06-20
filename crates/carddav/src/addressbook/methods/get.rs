@@ -9,8 +9,9 @@ use http::{HeaderValue, Method, StatusCode, header};
 use rustical_dav::privileges::UserPrivilege;
 use rustical_dav::resource::Resource;
 use rustical_dav::rfc_3986_percent_encode;
+use rustical_dav_push::SubscriptionStore;
+use rustical_store::AddressbookStore;
 use rustical_store::auth::Principal;
-use rustical_store::{AddressbookStore, SubscriptionStore};
 use std::str::FromStr;
 use tracing::instrument;
 
@@ -28,7 +29,7 @@ pub async fn route_get<AS: AddressbookStore, S: SubscriptionStore>(
     let addressbook = addr_store
         .get_addressbook(&principal, &addressbook_id, false)
         .await?;
-    let addressbook_resource = AddressbookResource(addressbook.clone());
+    let addressbook_resource = AddressbookResource(addressbook.clone(), None);
     if !addressbook_resource
         .get_user_privileges(&user)?
         .has(&UserPrivilege::Read)

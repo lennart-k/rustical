@@ -12,12 +12,11 @@ use rustical_dav::extensions::{
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
 use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner, SupportedReportSet};
-use rustical_dav_push::{DavPushExtension, DavPushExtensionProp};
+use rustical_dav_push::{DavPushExtension, DavPushExtensionProp, VapidPublicKeyB64};
 use rustical_store::Calendar;
 use rustical_store::auth::Principal;
 use rustical_xml::{EnumVariants, PropName};
 use rustical_xml::{XmlDeserialize, XmlSerialize};
-use serde::Deserialize;
 use std::borrow::Cow;
 use std::str::FromStr;
 
@@ -68,10 +67,11 @@ pub enum CalendarPropWrapper {
     Common(CommonPropertiesProp),
 }
 
-#[derive(Clone, Debug, From, Into, Deserialize)]
+#[derive(Clone, Debug, From, Into)]
 pub struct CalendarResource {
     pub cal: Calendar,
     pub read_only: bool,
+    pub vapid_public_key: Option<VapidPublicKeyB64>,
 }
 
 impl ResourceName for CalendarResource {
@@ -95,6 +95,10 @@ impl SyncTokenExtension for CalendarResource {
 impl DavPushExtension for CalendarResource {
     fn get_topic(&self) -> String {
         self.cal.push_topic.clone()
+    }
+
+    fn get_vapid_public_key(&self) -> Option<&VapidPublicKeyB64> {
+        self.vapid_public_key.as_ref()
     }
 }
 

@@ -7,9 +7,10 @@ use principal::PrincipalResourceService;
 use rustical_dav::resource::{PrincipalUri, ResourceService};
 use rustical_dav::resources::RootResourceService;
 use rustical_dav::rfc_3986_percent_encode;
+use rustical_dav_push::SubscriptionStore;
+use rustical_store::CalendarStore;
 use rustical_store::auth::middleware::AuthenticationLayer;
 use rustical_store::auth::{AuthenticationProvider, Principal};
-use rustical_store::{CalendarStore, SubscriptionStore};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -45,7 +46,10 @@ pub fn caldav_router<AP: AuthenticationProvider, C: CalendarStore, S: Subscripti
     subscription_store: Arc<S>,
     simplified_home_set: bool,
     config: Arc<CalDavConfig>,
-) -> Router {
+) -> Router
+where
+    Error: From<S::Error>,
+{
     Router::new().nest(
         prefix,
         RootResourceService::<_, Principal, CalDavPrincipalUri>::new(PrincipalResourceService {

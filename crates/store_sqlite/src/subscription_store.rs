@@ -1,10 +1,26 @@
 use crate::SqliteStore;
 use async_trait::async_trait;
-use rustical_store::{Error, Subscription, SubscriptionStore};
+use rustical_dav_push::{
+    Subscription, SubscriptionReadStore, SubscriptionStore, SubscriptionWriteStore, VapidKeyStore,
+    VapidKeypair,
+};
+use rustical_store::Error;
+
+impl rustical_dav_push::WithError for SqliteStore {
+    type Error = crate::Error;
+}
 
 #[async_trait]
-impl SubscriptionStore for SqliteStore {
-    async fn get_subscriptions(&self, topic: &str) -> Result<Vec<Subscription>, Error> {
+impl VapidKeyStore for SqliteStore {
+    async fn get_vapid_keypair(&self) -> Result<VapidKeypair, Self::Error> {
+        // TODO: implement
+        Ok(VapidKeypair::generate_p256().map_err(rustical_dav_push::Error::VapidError)?)
+    }
+}
+
+#[async_trait]
+impl SubscriptionReadStore for SqliteStore {
+    async fn get_subscriptions(&self, topic: &str) -> Result<Vec<Subscription>, Self::Error> {
         Ok(sqlx::query_as!(
             Subscription,
             r#"SELECT id, topic, expiration, push_resource, public_key, public_key_type, auth_secret
@@ -13,11 +29,10 @@ impl SubscriptionStore for SqliteStore {
             topic
         )
         .fetch_all(&self.db)
-        .await
-        .map_err(crate::Error::from)?)
+        .await?)
     }
 
-    async fn get_subscription(&self, id: &str) -> Result<Subscription, Error> {
+    async fn get_subscription(&self, id: &str) -> Result<Subscription, Self::Error> {
         Ok(sqlx::query_as!(
             Subscription,
             r#"SELECT id, topic, expiration, push_resource, public_key, public_key_type, auth_secret
@@ -26,14 +41,16 @@ impl SubscriptionStore for SqliteStore {
             id
         )
         .fetch_one(&self.db)
-        .await
-        .map_err(crate::Error::from)?)
+        .await?)
     }
+}
 
-    async fn upsert_subscription(&self, sub: Subscription) -> Result<bool, Error> {
+#[async_trait]
+impl SubscriptionWriteStore for SqliteStore {
+    async fn upsert_subscription(&self, sub: Subscription) -> Result<bool, Self::Error> {
         let already_exists = match self.get_subscription(&sub.id).await {
             Ok(_) => true,
-            Err(Error::NotFound) => false,
+            Err(crate::Error::StoreError(Error::NotFound)) => false,
             Err(err) => return Err(err),
         };
         sqlx::query!(
@@ -45,14 +62,15 @@ impl SubscriptionStore for SqliteStore {
             sub.public_key,
             sub.public_key_type,
             sub.auth_secret
-        ).execute(&self.db).await.map_err(crate::Error::from)?;
+        ).execute(&self.db).await?;
         Ok(already_exists)
     }
-    async fn delete_subscription(&self, id: &str) -> Result<(), Error> {
+    async fn delete_subscription(&self, id: &str) -> Result<(), Self::Error> {
         sqlx::query!(r#"DELETE FROM davpush_subscriptions WHERE id = ? "#, id)
             .execute(&self.db)
-            .await
-            .map_err(crate::Error::from)?;
+            .await?;
         Ok(())
     }
 }
+
+impl SubscriptionStore for SqliteStore {}

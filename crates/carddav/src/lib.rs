@@ -10,9 +10,10 @@ use principal::PrincipalResourceService;
 use rustical_dav::resource::{PrincipalUri, ResourceService};
 use rustical_dav::resources::RootResourceService;
 use rustical_dav::rfc_3986_percent_encode;
+use rustical_dav_push::SubscriptionStore;
 use rustical_store::auth::middleware::AuthenticationLayer;
 use rustical_store::{
-    AddressbookStore, SubscriptionStore,
+    AddressbookStore,
     auth::{AuthenticationProvider, Principal},
 };
 use std::sync::Arc;
@@ -46,7 +47,10 @@ pub fn carddav_router<AP: AuthenticationProvider, A: AddressbookStore, S: Subscr
     auth_provider: Arc<AP>,
     store: Arc<A>,
     subscription_store: Arc<S>,
-) -> Router {
+) -> Router
+where
+    error::Error: std::convert::From<S::Error>,
+{
     let principal_service =
         PrincipalResourceService::new(store, auth_provider.clone(), subscription_store);
     Router::new()

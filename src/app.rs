@@ -11,13 +11,13 @@ use http::header::CONNECTION;
 use http::{HeaderValue, StatusCode};
 use rustical_caldav::{CalDavConfig, caldav_router};
 use rustical_carddav::carddav_router;
+use rustical_dav_push::SubscriptionStore;
 use rustical_frontend::nextcloud_login::nextcloud_login_router;
 use rustical_frontend::{FrontendConfig, frontend_router};
 use rustical_oidc::OidcConfig;
 use rustical_store::auth::AuthenticationProvider;
 use rustical_store::{
     AddressbookStore, CalendarStore, CombinedCalendarStore, PrefixedCalendarStore,
-    SubscriptionStore,
 };
 use std::sync::Arc;
 use std::time::Duration;
@@ -51,7 +51,11 @@ pub fn make_app<
     dav_push_enabled: bool,
     session_cookie_samesite_strict: bool,
     payload_limit_mb: usize,
-) -> Router<()> {
+) -> Router<()>
+where
+    rustical_caldav::Error: From<S::Error>,
+    rustical_carddav::Error: From<S::Error>,
+{
     let birthday_store = addr_store.clone();
     let combined_cal_store =
         Arc::new(CombinedCalendarStore::new(cal_store).with_store(birthday_store));

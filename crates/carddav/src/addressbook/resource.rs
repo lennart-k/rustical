@@ -9,13 +9,13 @@ use rustical_dav::extensions::{CommonPropertiesExtension, SyncTokenExtension};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
 use rustical_dav::xml::{Resourcetype, ResourcetypeInner, SupportedReportSet};
-use rustical_dav_push::DavPushExtension;
+use rustical_dav_push::{DavPushExtension, VapidPublicKeyB64};
 use rustical_store::Addressbook;
 use rustical_store::auth::Principal;
 use std::borrow::Cow;
 
 #[derive(Clone, Debug, From, Into)]
-pub struct AddressbookResource(pub(crate) Addressbook);
+pub struct AddressbookResource(pub(crate) Addressbook, pub Option<VapidPublicKeyB64>);
 
 impl ResourceName for AddressbookResource {
     fn get_name(&self) -> Cow<'_, str> {
@@ -32,6 +32,10 @@ impl SyncTokenExtension for AddressbookResource {
 impl DavPushExtension for AddressbookResource {
     fn get_topic(&self) -> String {
         self.0.push_topic.clone()
+    }
+
+    fn get_vapid_public_key(&self) -> Option<&VapidPublicKeyB64> {
+        self.1.as_ref()
     }
 }
 
