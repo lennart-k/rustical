@@ -4,7 +4,7 @@ use crate::{Error, calendar_object::CalendarObjectPropWrapperName};
 use http::Uri;
 use rustical_dav::{resolve_child_uri, xml::PropfindType};
 use rustical_ical::CalendarObject;
-use rustical_store::CalendarStore;
+use rustical_store::CalendarReadStore;
 use rustical_xml::XmlDeserialize;
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
@@ -18,7 +18,7 @@ pub struct CalendarMultigetRequest {
     pub(crate) href: Vec<String>,
 }
 
-pub async fn get_objects_calendar_multiget<C: CalendarStore>(
+pub async fn get_objects_calendar_multiget<C: CalendarReadStore>(
     request: &CalendarMultigetRequest,
     collection_uri: &Uri,
     principal: &str,
@@ -62,7 +62,7 @@ mod tests {
     };
     use http::Uri;
     use rustical_ical::CalendarObject;
-    use rustical_store::CalendarStore;
+    use rustical_store::CalendarReadStore;
     use std::panic;
 
     struct MockCalStore {
@@ -71,7 +71,7 @@ mod tests {
     }
 
     #[async_trait::async_trait]
-    impl CalendarStore for MockCalStore {
+    impl CalendarReadStore for MockCalStore {
         fn is_read_only(&self, _cal_id: &str) -> bool {
             true
         }
@@ -95,48 +95,6 @@ mod tests {
             &self,
             _principal: &str,
         ) -> Result<Vec<rustical_store::Calendar>, rustical_store::Error> {
-            panic!()
-        }
-
-        async fn update_calendar(
-            &self,
-            _principal: &str,
-            _id: &str,
-            _calendar: rustical_store::Calendar,
-        ) -> Result<(), rustical_store::Error> {
-            panic!()
-        }
-
-        async fn insert_calendar(
-            &self,
-            _calendar: rustical_store::Calendar,
-        ) -> Result<(), rustical_store::Error> {
-            panic!()
-        }
-
-        async fn delete_calendar(
-            &self,
-            _principal: &str,
-            _name: &str,
-            _use_trashbin: bool,
-        ) -> Result<(), rustical_store::Error> {
-            panic!()
-        }
-
-        async fn restore_calendar(
-            &self,
-            _principal: &str,
-            _name: &str,
-        ) -> Result<(), rustical_store::Error> {
-            panic!()
-        }
-
-        async fn import_calendar(
-            &self,
-            _calendar: rustical_store::Calendar,
-            _objects: Vec<rustical_ical::CalendarObject>,
-            _merge_existing: bool,
-        ) -> Result<(), rustical_store::Error> {
             panic!()
         }
 
@@ -206,46 +164,6 @@ END:VCALENDAR"
                     .to_string(),
             )
             .unwrap())
-        }
-
-        async fn put_objects(
-            &self,
-            _principal: &str,
-            _cal_id: &str,
-            _objects: Vec<(String, rustical_ical::CalendarObject)>,
-            _overwrite: bool,
-        ) -> Result<(), rustical_store::Error> {
-            panic!()
-        }
-
-        async fn put_object(
-            &self,
-            _principal: &str,
-            _cal_id: &str,
-            _object_id: &str,
-            _object: rustical_ical::CalendarObject,
-            _overwrite: bool,
-        ) -> Result<(), rustical_store::Error> {
-            panic!()
-        }
-
-        async fn delete_object(
-            &self,
-            _principal: &str,
-            _cal_id: &str,
-            _object_id: &str,
-            _use_trashbin: bool,
-        ) -> Result<(), rustical_store::Error> {
-            panic!()
-        }
-
-        async fn restore_object(
-            &self,
-            _principal: &str,
-            _cal_id: &str,
-            _object_id: &str,
-        ) -> Result<(), rustical_store::Error> {
-            panic!()
         }
     }
 

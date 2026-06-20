@@ -7,9 +7,9 @@ use chrono::TimeDelta;
 use derive_more::derive::Constructor;
 use regex::Regex;
 use rustical_ical::{CalendarObject, CalendarObjectType};
-use rustical_store::calendar_store::CalendarQuery;
+use rustical_store::calendar_store::{CalendarQuery, CalendarReadStore, CalendarWriteStore};
 use rustical_store::synctoken::format_synctoken;
-use rustical_store::{Calendar, CalendarMetadata, CalendarStore, CollectionMetadata, Error};
+use rustical_store::{Calendar, CalendarMetadata, CollectionMetadata, Error};
 use rustical_store::{CollectionOperation, CollectionOperationInfo};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};
@@ -732,7 +732,7 @@ impl SqliteCalendarStore {
 }
 
 #[async_trait]
-impl CalendarStore for SqliteCalendarStore {
+impl CalendarReadStore for SqliteCalendarStore {
     #[instrument]
     async fn get_calendar(
         &self,
@@ -753,6 +753,93 @@ impl CalendarStore for SqliteCalendarStore {
         Self::_get_deleted_calendars(&self.db, principal).await
     }
 
+    #[instrument]
+    async fn calendar_query(
+        &self,
+        principal: &str,
+        cal_id: &str,
+        query: CalendarQuery,
+    ) -> Result<Vec<(String, CalendarObject)>, Error> {
+        let objects = Self::_calendar_query(&self.db, principal, cal_id, query).await?;
+        if self.skip_broken {
+            Ok(objects
+                .filter_map(|(id, res)| Some((id, res.ok()?)))
+                .collect())
+        } else {
+            Ok(objects
+                .map(|(id, res)| res.map(|obj| (id, obj)))
+                .collect::<Result<Vec<_>, _>>()?)
+        }
+    }
+
+    async fn calendar_metadata(
+        &self,
+        principal: &str,
+        cal_id: &str,
+    ) -> Result<CollectionMetadata, Error> {
+        let mut sizes = vec![];
+        let mut deleted_sizes = vec![];
+        for (size, deleted) in Self::_list_objects(&self.db, principal, cal_id).await? {
+            if deleted {
+                deleted_sizes.push(size);
+            } else {
+                sizes.push(size);
+            }
+        }
+        Ok(CollectionMetadata {
+            len: sizes.len(),
+            deleted_len: deleted_sizes.len(),
+            size: sizes.iter().sum(),
+            deleted_size: deleted_sizes.iter().sum(),
+        })
+    }
+
+    #[instrument]
+    async fn get_objects(
+        &self,
+        principal: &str,
+        cal_id: &str,
+    ) -> Result<Vec<(String, CalendarObject)>, Error> {
+        let objects = Self::_get_objects(&self.db, principal, cal_id).await?;
+        if self.skip_broken {
+            Ok(objects
+                .filter_map(|(id, res)| Some((id, res.ok()?)))
+                .collect())
+        } else {
+            Ok(objects
+                .map(|(id, res)| res.map(|obj| (id, obj)))
+                .collect::<Result<Vec<_>, _>>()?)
+        }
+    }
+
+    #[instrument]
+    async fn get_object(
+        &self,
+        principal: &str,
+        cal_id: &str,
+        object_id: &str,
+        show_deleted: bool,
+    ) -> Result<CalendarObject, Error> {
+        Self::_get_object(&self.db, principal, cal_id, object_id, show_deleted).await
+    }
+
+    #[instrument]
+    async fn sync_changes(
+        &self,
+        principal: &str,
+        cal_id: &str,
+        synctoken: i64,
+    ) -> Result<(Vec<(String, CalendarObject)>, Vec<String>, i64), Error> {
+        Self::_sync_changes(&self.db, principal, cal_id, synctoken, self.skip_broken).await
+    }
+
+    fn is_read_only(&self, _cal_id: &str) -> bool {
+        false
+    }
+}
+
+#[async_trait]
+impl CalendarWriteStore for SqliteCalendarStore {
     #[instrument]
     async fn insert_calendar(&self, calendar: Calendar) -> Result<(), Error> {
         Self::_insert_calendar(&self.db, calendar).await
@@ -867,76 +954,6 @@ impl CalendarStore for SqliteCalendarStore {
     }
 
     #[instrument]
-    async fn calendar_query(
-        &self,
-        principal: &str,
-        cal_id: &str,
-        query: CalendarQuery,
-    ) -> Result<Vec<(String, CalendarObject)>, Error> {
-        let objects = Self::_calendar_query(&self.db, principal, cal_id, query).await?;
-        if self.skip_broken {
-            Ok(objects
-                .filter_map(|(id, res)| Some((id, res.ok()?)))
-                .collect())
-        } else {
-            Ok(objects
-                .map(|(id, res)| res.map(|obj| (id, obj)))
-                .collect::<Result<Vec<_>, _>>()?)
-        }
-    }
-
-    async fn calendar_metadata(
-        &self,
-        principal: &str,
-        cal_id: &str,
-    ) -> Result<CollectionMetadata, Error> {
-        let mut sizes = vec![];
-        let mut deleted_sizes = vec![];
-        for (size, deleted) in Self::_list_objects(&self.db, principal, cal_id).await? {
-            if deleted {
-                deleted_sizes.push(size);
-            } else {
-                sizes.push(size);
-            }
-        }
-        Ok(CollectionMetadata {
-            len: sizes.len(),
-            deleted_len: deleted_sizes.len(),
-            size: sizes.iter().sum(),
-            deleted_size: deleted_sizes.iter().sum(),
-        })
-    }
-
-    #[instrument]
-    async fn get_objects(
-        &self,
-        principal: &str,
-        cal_id: &str,
-    ) -> Result<Vec<(String, CalendarObject)>, Error> {
-        let objects = Self::_get_objects(&self.db, principal, cal_id).await?;
-        if self.skip_broken {
-            Ok(objects
-                .filter_map(|(id, res)| Some((id, res.ok()?)))
-                .collect())
-        } else {
-            Ok(objects
-                .map(|(id, res)| res.map(|obj| (id, obj)))
-                .collect::<Result<Vec<_>, _>>()?)
-        }
-    }
-
-    #[instrument]
-    async fn get_object(
-        &self,
-        principal: &str,
-        cal_id: &str,
-        object_id: &str,
-        show_deleted: bool,
-    ) -> Result<CalendarObject, Error> {
-        Self::_get_object(&self.db, principal, cal_id, object_id, show_deleted).await
-    }
-
-    #[instrument]
     async fn put_objects(
         &self,
         principal: &str,
@@ -1036,19 +1053,5 @@ impl CalendarStore for SqliteCalendarStore {
             self.get_calendar(principal, cal_id, true).await?.push_topic,
         );
         Ok(())
-    }
-
-    #[instrument]
-    async fn sync_changes(
-        &self,
-        principal: &str,
-        cal_id: &str,
-        synctoken: i64,
-    ) -> Result<(Vec<(String, CalendarObject)>, Vec<String>, i64), Error> {
-        Self::_sync_changes(&self.db, principal, cal_id, synctoken, self.skip_broken).await
-    }
-
-    fn is_read_only(&self, _cal_id: &str) -> bool {
-        false
     }
 }

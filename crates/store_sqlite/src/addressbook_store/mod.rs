@@ -5,8 +5,8 @@ use caldata::parser::ParserError;
 use derive_more::derive::Constructor;
 use rustical_ical::AddressObject;
 use rustical_store::{
-    Addressbook, AddressbookStore, CollectionMetadata, CollectionOperation,
-    CollectionOperationInfo, Error, synctoken::format_synctoken,
+    Addressbook, AddressbookReadStore, AddressbookWriteStore, CollectionMetadata,
+    CollectionOperation, CollectionOperationInfo, Error, synctoken::format_synctoken,
 };
 use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};
 use tokio::sync::mpsc::Sender;
@@ -514,7 +514,7 @@ impl SqliteAddressbookStore {
 }
 
 #[async_trait]
-impl AddressbookStore for SqliteAddressbookStore {
+impl AddressbookReadStore for SqliteAddressbookStore {
     #[instrument]
     async fn get_addressbook(
         &self,
@@ -541,6 +541,71 @@ impl AddressbookStore for SqliteAddressbookStore {
         Self::_get_deleted_addressbooks(&self.db, principal).await
     }
 
+    #[instrument]
+    async fn sync_changes(
+        &self,
+        principal: &str,
+        addressbook_id: &str,
+        synctoken: i64,
+    ) -> Result<(Vec<(String, AddressObject)>, Vec<String>, i64), rustical_store::Error> {
+        Self::_sync_changes(&self.db, principal, addressbook_id, synctoken).await
+    }
+
+    #[instrument]
+    async fn addressbook_metadata(
+        &self,
+        principal: &str,
+        addressbook_id: &str,
+    ) -> Result<CollectionMetadata, rustical_store::Error> {
+        let mut sizes = vec![];
+        let mut deleted_sizes = vec![];
+        for (size, deleted) in Self::_list_objects(&self.db, principal, addressbook_id).await? {
+            if deleted {
+                deleted_sizes.push(size);
+            } else {
+                sizes.push(size);
+            }
+        }
+        Ok(CollectionMetadata {
+            len: sizes.len(),
+            deleted_len: deleted_sizes.len(),
+            size: sizes.iter().sum(),
+            deleted_size: deleted_sizes.iter().sum(),
+        })
+    }
+
+    #[instrument]
+    async fn get_objects(
+        &self,
+        principal: &str,
+        addressbook_id: &str,
+    ) -> Result<Vec<(String, AddressObject)>, rustical_store::Error> {
+        let objects = Self::_get_objects(&self.db, principal, addressbook_id).await?;
+        if self.skip_broken {
+            Ok(objects
+                .filter_map(|(id, res)| Some((id, res.ok()?)))
+                .collect())
+        } else {
+            Ok(objects
+                .map(|(id, res)| res.map(|obj| (id, obj)))
+                .collect::<Result<Vec<_>, _>>()?)
+        }
+    }
+
+    #[instrument]
+    async fn get_object(
+        &self,
+        principal: &str,
+        addressbook_id: &str,
+        object_id: &str,
+        show_deleted: bool,
+    ) -> Result<AddressObject, rustical_store::Error> {
+        Self::_get_object(&self.db, principal, addressbook_id, object_id, show_deleted).await
+    }
+}
+
+#[async_trait]
+impl AddressbookWriteStore for SqliteAddressbookStore {
     #[instrument]
     async fn update_addressbook(
         &self,
@@ -607,68 +672,6 @@ impl AddressbookStore for SqliteAddressbookStore {
         addressbook_id: &str,
     ) -> Result<(), rustical_store::Error> {
         Self::_restore_addressbook(&self.db, principal, addressbook_id).await
-    }
-
-    #[instrument]
-    async fn sync_changes(
-        &self,
-        principal: &str,
-        addressbook_id: &str,
-        synctoken: i64,
-    ) -> Result<(Vec<(String, AddressObject)>, Vec<String>, i64), rustical_store::Error> {
-        Self::_sync_changes(&self.db, principal, addressbook_id, synctoken).await
-    }
-
-    #[instrument]
-    async fn addressbook_metadata(
-        &self,
-        principal: &str,
-        addressbook_id: &str,
-    ) -> Result<CollectionMetadata, rustical_store::Error> {
-        let mut sizes = vec![];
-        let mut deleted_sizes = vec![];
-        for (size, deleted) in Self::_list_objects(&self.db, principal, addressbook_id).await? {
-            if deleted {
-                deleted_sizes.push(size);
-            } else {
-                sizes.push(size);
-            }
-        }
-        Ok(CollectionMetadata {
-            len: sizes.len(),
-            deleted_len: deleted_sizes.len(),
-            size: sizes.iter().sum(),
-            deleted_size: deleted_sizes.iter().sum(),
-        })
-    }
-
-    #[instrument]
-    async fn get_objects(
-        &self,
-        principal: &str,
-        addressbook_id: &str,
-    ) -> Result<Vec<(String, AddressObject)>, rustical_store::Error> {
-        let objects = Self::_get_objects(&self.db, principal, addressbook_id).await?;
-        if self.skip_broken {
-            Ok(objects
-                .filter_map(|(id, res)| Some((id, res.ok()?)))
-                .collect())
-        } else {
-            Ok(objects
-                .map(|(id, res)| res.map(|obj| (id, obj)))
-                .collect::<Result<Vec<_>, _>>()?)
-        }
-    }
-
-    #[instrument]
-    async fn get_object(
-        &self,
-        principal: &str,
-        addressbook_id: &str,
-        object_id: &str,
-        show_deleted: bool,
-    ) -> Result<AddressObject, rustical_store::Error> {
-        Self::_get_object(&self.db, principal, addressbook_id, object_id, show_deleted).await
     }
 
     #[instrument]

@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use rustical_ical::AddressObject;
 
 #[async_trait]
-pub trait AddressbookStore: Send + Sync + 'static {
+pub trait AddressbookReadStore: Send + Sync + 'static {
     async fn get_addressbook(
         &self,
         principal: &str,
@@ -12,21 +12,6 @@ pub trait AddressbookStore: Send + Sync + 'static {
     ) -> Result<Addressbook, Error>;
     async fn get_addressbooks(&self, principal: &str) -> Result<Vec<Addressbook>, Error>;
     async fn get_deleted_addressbooks(&self, principal: &str) -> Result<Vec<Addressbook>, Error>;
-
-    async fn update_addressbook(
-        &self,
-        principal: &str,
-        id: &str,
-        addressbook: Addressbook,
-    ) -> Result<(), Error>;
-    async fn insert_addressbook(&self, addressbook: Addressbook) -> Result<(), Error>;
-    async fn delete_addressbook(
-        &self,
-        principal: &str,
-        name: &str,
-        use_trashbin: bool,
-    ) -> Result<(), Error>;
-    async fn restore_addressbook(&self, principal: &str, name: &str) -> Result<(), Error>;
 
     async fn sync_changes(
         &self,
@@ -53,6 +38,26 @@ pub trait AddressbookStore: Send + Sync + 'static {
         object_id: &str,
         show_deleted: bool,
     ) -> Result<AddressObject, Error>;
+}
+
+#[async_trait]
+pub trait AddressbookWriteStore: Send + Sync + 'static {
+    async fn update_addressbook(
+        &self,
+        principal: &str,
+        id: &str,
+        addressbook: Addressbook,
+    ) -> Result<(), Error>;
+    async fn insert_addressbook(&self, addressbook: Addressbook) -> Result<(), Error>;
+
+    async fn delete_addressbook(
+        &self,
+        principal: &str,
+        name: &str,
+        use_trashbin: bool,
+    ) -> Result<(), Error>;
+    async fn restore_addressbook(&self, principal: &str, name: &str) -> Result<(), Error>;
+
     async fn put_object(
         &self,
         principal: &str,
@@ -61,6 +66,7 @@ pub trait AddressbookStore: Send + Sync + 'static {
         object: AddressObject,
         overwrite: bool,
     ) -> Result<(), Error>;
+
     async fn delete_object(
         &self,
         principal: &str,
@@ -68,6 +74,7 @@ pub trait AddressbookStore: Send + Sync + 'static {
         object_id: &str,
         use_trashbin: bool,
     ) -> Result<(), Error>;
+
     async fn restore_object(
         &self,
         principal: &str,
@@ -82,3 +89,7 @@ pub trait AddressbookStore: Send + Sync + 'static {
         merge_existing: bool,
     ) -> Result<(), Error>;
 }
+
+pub trait AddressbookStore: AddressbookReadStore + AddressbookWriteStore {}
+
+impl<T: AddressbookReadStore + AddressbookWriteStore> AddressbookStore for T {}

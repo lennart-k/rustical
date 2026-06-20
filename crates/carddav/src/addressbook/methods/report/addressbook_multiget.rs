@@ -13,7 +13,7 @@ use rustical_dav::{
     xml::{MultistatusElement, PropfindType, multistatus::ResponseElement},
 };
 use rustical_ical::AddressObject;
-use rustical_store::{AddressbookStore, auth::Principal};
+use rustical_store::{AddressbookStore, addressbook_store::AddressbookReadStore, auth::Principal};
 use rustical_xml::XmlDeserialize;
 
 #[derive(XmlDeserialize, Clone, Debug, PartialEq, Eq)]
@@ -26,7 +26,7 @@ pub struct AddressbookMultigetRequest {
     pub(crate) href: Vec<String>,
 }
 
-pub async fn get_objects_addressbook_multiget<AS: AddressbookStore>(
+pub async fn get_objects_addressbook_multiget<AS: AddressbookReadStore>(
     request: &AddressbookMultigetRequest,
     collection_uri: &Uri,
     principal: &str,
@@ -125,7 +125,7 @@ mod tests {
     };
     use http::Uri;
     use rustical_ical::AddressObject;
-    use rustical_store::AddressbookStore;
+    use rustical_store::addressbook_store::AddressbookReadStore;
 
     struct MockAddrStore {
         principal: &'static str,
@@ -133,7 +133,7 @@ mod tests {
     }
 
     #[async_trait::async_trait]
-    impl AddressbookStore for MockAddrStore {
+    impl AddressbookReadStore for MockAddrStore {
         async fn get_addressbook(
             &self,
             _principal: &str,
@@ -173,39 +173,6 @@ mod tests {
             panic!()
         }
 
-        async fn update_addressbook(
-            &self,
-            _principal: &str,
-            _id: &str,
-            _addressbook: rustical_store::Addressbook,
-        ) -> Result<(), rustical_store::Error> {
-            panic!()
-        }
-
-        async fn insert_addressbook(
-            &self,
-            _addressbook: rustical_store::Addressbook,
-        ) -> Result<(), rustical_store::Error> {
-            panic!()
-        }
-
-        async fn delete_addressbook(
-            &self,
-            _principal: &str,
-            _name: &str,
-            _use_trashbin: bool,
-        ) -> Result<(), rustical_store::Error> {
-            panic!()
-        }
-
-        async fn restore_addressbook(
-            &self,
-            _principal: &str,
-            _name: &str,
-        ) -> Result<(), rustical_store::Error> {
-            panic!()
-        }
-
         async fn addressbook_metadata(
             &self,
             _principal: &str,
@@ -219,45 +186,6 @@ mod tests {
             _principal: &str,
             _addressbook_id: &str,
         ) -> Result<Vec<(String, rustical_ical::AddressObject)>, rustical_store::Error> {
-            panic!()
-        }
-
-        async fn put_object(
-            &self,
-            _principal: &str,
-            _addressbook_id: &str,
-            _object_id: &str,
-            _object: rustical_ical::AddressObject,
-            _overwrite: bool,
-        ) -> Result<(), rustical_store::Error> {
-            panic!()
-        }
-
-        async fn delete_object(
-            &self,
-            _principal: &str,
-            _addressbook_id: &str,
-            _object_id: &str,
-            _use_trashbin: bool,
-        ) -> Result<(), rustical_store::Error> {
-            panic!()
-        }
-
-        async fn restore_object(
-            &self,
-            _principal: &str,
-            _addressbook_id: &str,
-            _object_id: &str,
-        ) -> Result<(), rustical_store::Error> {
-            panic!()
-        }
-
-        async fn import_addressbook(
-            &self,
-            _addressbook: rustical_store::Addressbook,
-            _objects: Vec<(String, rustical_ical::AddressObject)>,
-            _merge_existing: bool,
-        ) -> Result<(), rustical_store::Error> {
             panic!()
         }
 

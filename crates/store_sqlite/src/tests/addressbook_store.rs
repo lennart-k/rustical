@@ -2,7 +2,7 @@
 mod tests {
     use crate::tests::{TestStoreContext, test_store_context};
     use rstest::rstest;
-    use rustical_store::{Addressbook, AddressbookStore};
+    use rustical_store::{Addressbook, AddressbookReadStore, AddressbookWriteStore};
 
     #[rstest]
     #[tokio::test]

@@ -2,7 +2,7 @@
 mod tests {
     use crate::tests::{TestStoreContext, test_store_context};
     use rstest::rstest;
-    use rustical_store::{Calendar, CalendarMetadata, CalendarStore};
+    use rustical_store::{Calendar, CalendarMetadata, CalendarReadStore, CalendarWriteStore};
 
     #[rstest]
     #[tokio::test]

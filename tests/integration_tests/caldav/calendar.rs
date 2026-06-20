@@ -4,7 +4,7 @@ use axum::extract::Request;
 use headers::{Authorization, HeaderMapExt};
 use http::{HeaderValue, StatusCode};
 use rstest::rstest;
-use rustical_store::{CalendarMetadata, CalendarStore};
+use rustical_store::{CalendarMetadata, calendar_store::CalendarReadStore};
 use rustical_store_sqlite::tests::{TestStoreContext, test_store_context};
 use tower::ServiceExt;
 

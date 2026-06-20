@@ -1,4 +1,7 @@
-use crate::{Calendar, CalendarStore, calendar_store::CalendarQuery};
+use crate::{
+    Calendar, CalendarStore,
+    calendar_store::{CalendarQuery, CalendarReadStore, CalendarWriteStore},
+};
 use async_trait::async_trait;
 use rustical_ical::CalendarObject;
 use std::{collections::HashMap, sync::Arc};
@@ -22,8 +25,11 @@ impl CombinedCalendarStore {
     }
 
     #[must_use]
-    pub fn with_store<CS: PrefixedCalendarStore>(mut self, store: Arc<CS>) -> Self {
-        let store: Arc<dyn CalendarStore> = store;
+    pub fn with_store<CS: PrefixedCalendarStore + CalendarStore + 'static>(
+        mut self,
+        store: Arc<CS>,
+    ) -> Self {
+        let store: Arc<dyn CalendarStore> = store as Arc<dyn CalendarStore>;
         self.stores.insert(CS::PREFIX, store);
         self
     }
@@ -37,7 +43,7 @@ impl CombinedCalendarStore {
 }
 
 #[async_trait]
-impl CalendarStore for CombinedCalendarStore {
+impl CalendarReadStore for CombinedCalendarStore {
     #[inline]
     async fn get_calendar(
         &self,
@@ -47,40 +53,6 @@ impl CalendarStore for CombinedCalendarStore {
     ) -> Result<crate::Calendar, crate::Error> {
         self.store_for_id(id)
             .get_calendar(principal, id, show_deleted)
-            .await
-    }
-
-    async fn update_calendar(
-        &self,
-        principal: &str,
-        id: &str,
-        calendar: Calendar,
-    ) -> Result<(), crate::Error> {
-        self.store_for_id(id)
-            .update_calendar(principal, id, calendar)
-            .await
-    }
-
-    async fn insert_calendar(&self, calendar: crate::Calendar) -> Result<(), crate::Error> {
-        self.store_for_id(&calendar.id)
-            .insert_calendar(calendar)
-            .await
-    }
-
-    async fn delete_calendar(
-        &self,
-        principal: &str,
-        name: &str,
-        use_trashbin: bool,
-    ) -> Result<(), crate::Error> {
-        self.store_for_id(name)
-            .delete_calendar(principal, name, use_trashbin)
-            .await
-    }
-
-    async fn restore_calendar(&self, principal: &str, name: &str) -> Result<(), crate::Error> {
-        self.store_for_id(name)
-            .restore_calendar(principal, name)
             .await
     }
 
@@ -95,17 +67,6 @@ impl CalendarStore for CombinedCalendarStore {
             .await
     }
 
-    async fn import_calendar(
-        &self,
-        calendar: crate::Calendar,
-        objects: Vec<CalendarObject>,
-        merge_existing: bool,
-    ) -> Result<(), crate::Error> {
-        self.store_for_id(&calendar.id)
-            .import_calendar(calendar, objects, merge_existing)
-            .await
-    }
-
     async fn calendar_query(
         &self,
         principal: &str,
@@ -114,17 +75,6 @@ impl CalendarStore for CombinedCalendarStore {
     ) -> Result<Vec<(String, CalendarObject)>, crate::Error> {
         self.store_for_id(cal_id)
             .calendar_query(principal, cal_id, query)
-            .await
-    }
-
-    async fn restore_object(
-        &self,
-        principal: &str,
-        cal_id: &str,
-        object_id: &str,
-    ) -> Result<(), crate::Error> {
-        self.store_for_id(cal_id)
-            .restore_object(principal, cal_id, object_id)
             .await
     }
 
@@ -145,30 +95,6 @@ impl CalendarStore for CombinedCalendarStore {
     ) -> Result<Vec<(String, CalendarObject)>, crate::Error> {
         self.store_for_id(cal_id)
             .get_objects(principal, cal_id)
-            .await
-    }
-
-    async fn put_objects(
-        &self,
-        principal: &str,
-        cal_id: &str,
-        objects: Vec<(String, CalendarObject)>,
-        overwrite: bool,
-    ) -> Result<(), crate::Error> {
-        self.store_for_id(cal_id)
-            .put_objects(principal, cal_id, objects, overwrite)
-            .await
-    }
-
-    async fn delete_object(
-        &self,
-        principal: &str,
-        cal_id: &str,
-        object_id: &str,
-        use_trashbin: bool,
-    ) -> Result<(), crate::Error> {
-        self.store_for_id(cal_id)
-            .delete_object(principal, cal_id, object_id, use_trashbin)
             .await
     }
 
@@ -205,5 +131,88 @@ impl CalendarStore for CombinedCalendarStore {
 
     fn is_read_only(&self, cal_id: &str) -> bool {
         self.store_for_id(cal_id).is_read_only(cal_id)
+    }
+}
+
+#[async_trait]
+impl CalendarWriteStore for CombinedCalendarStore {
+    async fn update_calendar(
+        &self,
+        principal: &str,
+        id: &str,
+        calendar: Calendar,
+    ) -> Result<(), crate::Error> {
+        self.store_for_id(id)
+            .update_calendar(principal, id, calendar)
+            .await
+    }
+
+    async fn insert_calendar(&self, calendar: crate::Calendar) -> Result<(), crate::Error> {
+        self.store_for_id(&calendar.id)
+            .insert_calendar(calendar)
+            .await
+    }
+
+    async fn delete_calendar(
+        &self,
+        principal: &str,
+        name: &str,
+        use_trashbin: bool,
+    ) -> Result<(), crate::Error> {
+        self.store_for_id(name)
+            .delete_calendar(principal, name, use_trashbin)
+            .await
+    }
+
+    async fn restore_calendar(&self, principal: &str, name: &str) -> Result<(), crate::Error> {
+        self.store_for_id(name)
+            .restore_calendar(principal, name)
+            .await
+    }
+
+    async fn import_calendar(
+        &self,
+        calendar: crate::Calendar,
+        objects: Vec<CalendarObject>,
+        merge_existing: bool,
+    ) -> Result<(), crate::Error> {
+        self.store_for_id(&calendar.id)
+            .import_calendar(calendar, objects, merge_existing)
+            .await
+    }
+
+    async fn restore_object(
+        &self,
+        principal: &str,
+        cal_id: &str,
+        object_id: &str,
+    ) -> Result<(), crate::Error> {
+        self.store_for_id(cal_id)
+            .restore_object(principal, cal_id, object_id)
+            .await
+    }
+
+    async fn put_objects(
+        &self,
+        principal: &str,
+        cal_id: &str,
+        objects: Vec<(String, CalendarObject)>,
+        overwrite: bool,
+    ) -> Result<(), crate::Error> {
+        self.store_for_id(cal_id)
+            .put_objects(principal, cal_id, objects, overwrite)
+            .await
+    }
+
+    async fn delete_object(
+        &self,
+        principal: &str,
+        cal_id: &str,
+        object_id: &str,
+        use_trashbin: bool,
+    ) -> Result<(), crate::Error> {
+        self.store_for_id(cal_id)
+            .delete_object(principal, cal_id, object_id, use_trashbin)
+            .await
     }
 }

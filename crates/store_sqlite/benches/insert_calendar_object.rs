@@ -1,6 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use rustical_ical::{CalendarObject, CalendarObjectType};
-use rustical_store::{Calendar, CalendarMetadata, CalendarStore};
+use rustical_store::{Calendar, CalendarMetadata, CalendarWriteStore};
 use rustical_store_sqlite::tests::test_store_context;
 
 fn benchmark(c: &mut Criterion) {

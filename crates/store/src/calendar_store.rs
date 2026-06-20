@@ -10,7 +10,7 @@ pub struct CalendarQuery {
 }
 
 #[async_trait]
-pub trait CalendarStore: Send + Sync + 'static {
+pub trait CalendarReadStore: Send + Sync + 'static {
     async fn get_calendar(
         &self,
         principal: &str,
@@ -19,27 +19,6 @@ pub trait CalendarStore: Send + Sync + 'static {
     ) -> Result<Calendar, Error>;
     async fn get_calendars(&self, principal: &str) -> Result<Vec<Calendar>, Error>;
     async fn get_deleted_calendars(&self, principal: &str) -> Result<Vec<Calendar>, Error>;
-
-    async fn update_calendar(
-        &self,
-        principal: &str,
-        id: &str,
-        calendar: Calendar,
-    ) -> Result<(), Error>;
-    async fn insert_calendar(&self, calendar: Calendar) -> Result<(), Error>;
-    async fn delete_calendar(
-        &self,
-        principal: &str,
-        name: &str,
-        use_trashbin: bool,
-    ) -> Result<(), Error>;
-    async fn restore_calendar(&self, principal: &str, name: &str) -> Result<(), Error>;
-    async fn import_calendar(
-        &self,
-        calendar: Calendar,
-        objects: Vec<CalendarObject>,
-        merge_existing: bool,
-    ) -> Result<(), Error>;
 
     async fn sync_changes(
         &self,
@@ -77,6 +56,34 @@ pub trait CalendarStore: Send + Sync + 'static {
         object_id: &str,
         show_deleted: bool,
     ) -> Result<CalendarObject, Error>;
+
+    // read_only refers to objects, metadata may still be updated
+    fn is_read_only(&self, cal_id: &str) -> bool;
+}
+
+#[async_trait]
+pub trait CalendarWriteStore: Send + Sync + 'static {
+    async fn update_calendar(
+        &self,
+        principal: &str,
+        id: &str,
+        calendar: Calendar,
+    ) -> Result<(), Error>;
+    async fn insert_calendar(&self, calendar: Calendar) -> Result<(), Error>;
+    async fn delete_calendar(
+        &self,
+        principal: &str,
+        name: &str,
+        use_trashbin: bool,
+    ) -> Result<(), Error>;
+    async fn restore_calendar(&self, principal: &str, name: &str) -> Result<(), Error>;
+    async fn import_calendar(
+        &self,
+        calendar: Calendar,
+        objects: Vec<CalendarObject>,
+        merge_existing: bool,
+    ) -> Result<(), Error>;
+
     async fn put_objects(
         &self,
         principal: &str,
@@ -113,7 +120,8 @@ pub trait CalendarStore: Send + Sync + 'static {
         cal_id: &str,
         object_id: &str,
     ) -> Result<(), Error>;
-
-    // read_only refers to objects, metadata may still be updated
-    fn is_read_only(&self, cal_id: &str) -> bool;
 }
+
+pub trait CalendarStore: CalendarReadStore + CalendarWriteStore {}
+
+impl<T: CalendarReadStore + CalendarWriteStore> CalendarStore for T {}

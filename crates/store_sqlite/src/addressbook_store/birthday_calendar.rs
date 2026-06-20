@@ -4,8 +4,9 @@ use chrono::NaiveDateTime;
 use hex::ToHex;
 use rustical_ical::{CalendarObject, CalendarObjectType};
 use rustical_store::{
-    Addressbook, AddressbookStore, Calendar, CalendarMetadata, CalendarStore, CollectionMetadata,
-    Error, PrefixedCalendarStore,
+    Addressbook, Calendar, CalendarMetadata, CollectionMetadata, Error, PrefixedCalendarStore,
+    addressbook_store::AddressbookReadStore,
+    calendar_store::{CalendarReadStore, CalendarWriteStore},
 };
 use sha2::{Digest, Sha256};
 use sqlx::{Executor, Sqlite};
@@ -247,7 +248,7 @@ impl SqliteAddressbookStore {
 }
 
 #[async_trait]
-impl CalendarStore for SqliteAddressbookStore {
+impl CalendarReadStore for SqliteAddressbookStore {
     #[instrument]
     async fn get_calendar(
         &self,
@@ -269,6 +270,112 @@ impl CalendarStore for SqliteAddressbookStore {
         Self::_get_birthday_calendars(&self.db, principal, true).await
     }
 
+    #[instrument]
+    async fn sync_changes(
+        &self,
+        principal: &str,
+        cal_id: &str,
+        synctoken: i64,
+    ) -> Result<(Vec<(String, CalendarObject)>, Vec<String>, i64), Error> {
+        let cal_id = cal_id
+            .strip_prefix(BIRTHDAYS_PREFIX)
+            .ok_or(Error::NotFound)?;
+        let (objects, deleted_objects, new_synctoken) =
+            AddressbookReadStore::sync_changes(self, principal, cal_id, synctoken).await?;
+
+        let mut out_objects = vec![];
+
+        for (object_id, object) in objects {
+            if let Some(birthday) = object.get_birthday_object()? {
+                out_objects.push((format!("{object_id}-birthday"), birthday));
+            }
+            if let Some(anniversary) = object.get_anniversary_object()? {
+                out_objects.push((format!("{object_id}-anniversary"), anniversary));
+            }
+        }
+
+        let deleted_objects = deleted_objects
+            .into_iter()
+            .flat_map(|object_id| {
+                [
+                    format!("{object_id}-birthday"),
+                    format!("{object_id}-anniversary"),
+                ]
+            })
+            .collect();
+
+        Ok((out_objects, deleted_objects, new_synctoken))
+    }
+
+    #[instrument]
+    async fn calendar_metadata(
+        &self,
+        principal: &str,
+        cal_id: &str,
+    ) -> Result<CollectionMetadata, Error> {
+        let cal_id = cal_id
+            .strip_prefix(BIRTHDAYS_PREFIX)
+            .ok_or(Error::NotFound)?;
+        self.addressbook_metadata(principal, cal_id).await
+    }
+
+    #[instrument]
+    async fn get_objects(
+        &self,
+        principal: &str,
+        cal_id: &str,
+    ) -> Result<Vec<(String, CalendarObject)>, Error> {
+        let mut objects = vec![];
+        let cal_id = cal_id
+            .strip_prefix(BIRTHDAYS_PREFIX)
+            .ok_or(Error::NotFound)?;
+        for (object_id, object) in
+            AddressbookReadStore::get_objects(self, principal, cal_id).await?
+        {
+            if let Some(birthday) = object.get_birthday_object()? {
+                objects.push((format!("{object_id}-birthday"), birthday));
+            }
+            if let Some(anniversary) = object.get_anniversary_object()? {
+                objects.push((format!("{object_id}-anniversary"), anniversary));
+            }
+        }
+        Ok(objects)
+    }
+
+    #[instrument]
+    async fn get_object(
+        &self,
+        principal: &str,
+        cal_id: &str,
+        object_id: &str,
+        show_deleted: bool,
+    ) -> Result<CalendarObject, Error> {
+        let cal_id = cal_id
+            .strip_prefix(BIRTHDAYS_PREFIX)
+            .ok_or(Error::NotFound)?;
+        let (addressobject_id, date_type) = object_id.rsplit_once('-').ok_or(Error::NotFound)?;
+        let obj = AddressbookReadStore::get_object(
+            self,
+            principal,
+            cal_id,
+            addressobject_id,
+            show_deleted,
+        )
+        .await?;
+        match date_type {
+            "birthday" => Ok(obj.get_birthday_object()?.ok_or(Error::NotFound)?),
+            "anniversary" => Ok(obj.get_anniversary_object()?.ok_or(Error::NotFound)?),
+            _ => Err(Error::NotFound),
+        }
+    }
+
+    fn is_read_only(&self, _cal_id: &str) -> bool {
+        true
+    }
+}
+
+#[async_trait]
+impl CalendarWriteStore for SqliteAddressbookStore {
     #[instrument]
     async fn update_calendar(
         &self,
@@ -323,98 +430,6 @@ impl CalendarStore for SqliteAddressbookStore {
     }
 
     #[instrument]
-    async fn sync_changes(
-        &self,
-        principal: &str,
-        cal_id: &str,
-        synctoken: i64,
-    ) -> Result<(Vec<(String, CalendarObject)>, Vec<String>, i64), Error> {
-        let cal_id = cal_id
-            .strip_prefix(BIRTHDAYS_PREFIX)
-            .ok_or(Error::NotFound)?;
-        let (objects, deleted_objects, new_synctoken) =
-            AddressbookStore::sync_changes(self, principal, cal_id, synctoken).await?;
-
-        let mut out_objects = vec![];
-
-        for (object_id, object) in objects {
-            if let Some(birthday) = object.get_birthday_object()? {
-                out_objects.push((format!("{object_id}-birthday"), birthday));
-            }
-            if let Some(anniversary) = object.get_anniversary_object()? {
-                out_objects.push((format!("{object_id}-anniversary"), anniversary));
-            }
-        }
-
-        let deleted_objects = deleted_objects
-            .into_iter()
-            .flat_map(|object_id| {
-                [
-                    format!("{object_id}-birthday"),
-                    format!("{object_id}-anniversary"),
-                ]
-            })
-            .collect();
-
-        Ok((out_objects, deleted_objects, new_synctoken))
-    }
-
-    #[instrument]
-    async fn calendar_metadata(
-        &self,
-        principal: &str,
-        cal_id: &str,
-    ) -> Result<CollectionMetadata, Error> {
-        let cal_id = cal_id
-            .strip_prefix(BIRTHDAYS_PREFIX)
-            .ok_or(Error::NotFound)?;
-        self.addressbook_metadata(principal, cal_id).await
-    }
-
-    #[instrument]
-    async fn get_objects(
-        &self,
-        principal: &str,
-        cal_id: &str,
-    ) -> Result<Vec<(String, CalendarObject)>, Error> {
-        let mut objects = vec![];
-        let cal_id = cal_id
-            .strip_prefix(BIRTHDAYS_PREFIX)
-            .ok_or(Error::NotFound)?;
-        for (object_id, object) in AddressbookStore::get_objects(self, principal, cal_id).await? {
-            if let Some(birthday) = object.get_birthday_object()? {
-                objects.push((format!("{object_id}-birthday"), birthday));
-            }
-            if let Some(anniversary) = object.get_anniversary_object()? {
-                objects.push((format!("{object_id}-anniversary"), anniversary));
-            }
-        }
-        Ok(objects)
-    }
-
-    #[instrument]
-    async fn get_object(
-        &self,
-        principal: &str,
-        cal_id: &str,
-        object_id: &str,
-        show_deleted: bool,
-    ) -> Result<CalendarObject, Error> {
-        let cal_id = cal_id
-            .strip_prefix(BIRTHDAYS_PREFIX)
-            .ok_or(Error::NotFound)?;
-        let (addressobject_id, date_type) = object_id.rsplit_once('-').ok_or(Error::NotFound)?;
-        let obj =
-            AddressbookStore::get_object(self, principal, cal_id, addressobject_id, show_deleted)
-                .await?;
-        match date_type {
-            "birthday" => Ok(obj.get_birthday_object()?.ok_or(Error::NotFound)?),
-            "anniversary" => Ok(obj.get_anniversary_object()?.ok_or(Error::NotFound)?),
-            _ => Err(Error::NotFound),
-        }
-    }
-
-    #[instrument]
     async fn put_objects(
         &self,
         _principal: &str,
@@ -444,9 +459,5 @@ impl CalendarStore for SqliteAddressbookStore {
         _object_id: &str,
     ) -> Result<(), Error> {
         Err(Error::ReadOnly)
-    }
-
-    fn is_read_only(&self, _cal_id: &str) -> bool {
-        true
     }
 }
