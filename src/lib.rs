@@ -6,7 +6,7 @@ use axum::ServiceExt;
 use axum::extract::Request;
 use clap::{Parser, Subcommand};
 use config::{DataStoreConfig, SqliteDataStoreConfig};
-use rustical_dav_push::DavPushController;
+use rustical_dav_push::{DavPushController, VapidKeypair};
 use rustical_store::auth::AuthenticationProvider;
 use rustical_store::{
     AddressbookStore, CalendarStore, CollectionOperation, PrefixedCalendarStore, SubscriptionStore,
@@ -56,6 +56,7 @@ pub enum Command {
 #[allow(clippy::missing_errors_doc)]
 pub async fn get_data_stores(
     migrate: bool,
+    load_vapid_key: bool,
     config: &DataStoreConfig,
 ) -> Result<(
     Arc<impl AddressbookStore + PrefixedCalendarStore>,
@@ -63,6 +64,7 @@ pub async fn get_data_stores(
     Arc<impl SubscriptionStore>,
     Arc<impl AuthenticationProvider>,
     Receiver<CollectionOperation>,
+    Option<Arc<VapidKeypair>>,
 )> {
     Ok(match &config {
         DataStoreConfig::Sqlite(SqliteDataStoreConfig {
@@ -90,6 +92,17 @@ pub async fn get_data_stores(
             let subscription_store = Arc::new(SqliteStore::new(db.clone()));
             let principal_store = Arc::new(SqlitePrincipalStore::new(db));
 
+            // VAPID keypair for DAV Push: generated and persisted on first run so
+            // the advertised public key (clients pin their subscription to it)
+            // stays stable across restarts. Only loaded when push is actually in
+            // use, so CLI commands and `dav_push.enabled = false` don't require
+            // the table to exist or a key to be writable.
+            let vapid = if load_vapid_key {
+                Some(Arc::new(load_or_create_vapid_key(&subscription_store).await?))
+            } else {
+                None
+            };
+
             // Validate all calendar objects
             for principal in principal_store.get_principals().await? {
                 cal_store.validate_objects(&principal.id).await?;
@@ -102,9 +115,25 @@ pub async fn get_data_stores(
                 subscription_store,
                 principal_store,
                 recv,
+                vapid,
             )
         }
     })
+}
+
+/// Load the persisted DAV-Push VAPID keypair, generating and storing one on the
+/// first run so the advertised public key stays stable across restarts.
+async fn load_or_create_vapid_key(store: &SqliteStore) -> Result<VapidKeypair> {
+    if let Some(pem) = store.get_vapid_key().await? {
+        return Ok(VapidKeypair::from_pem(pem.as_bytes())?);
+    }
+    // First run: generate and persist a keypair so the advertised public key
+    // stays stable across restarts.
+    let keypair = VapidKeypair::generate()?;
+    store
+        .set_vapid_key(&String::from_utf8(keypair.to_pem()?)?)
+        .await?;
+    Ok(keypair)
 }
 
 #[allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]
@@ -118,13 +147,25 @@ pub async fn cmd_default(
         setup_tracing(&config.tracing);
     }
 
-    let (addr_store, cal_store, subscription_store, principal_store, update_recv) =
-        get_data_stores(!args.no_migrations, &config.data_store).await?;
+    let (addr_store, cal_store, subscription_store, principal_store, update_recv, vapid) =
+        get_data_stores(!args.no_migrations, config.dav_push.enabled, &config.data_store).await?;
+
+    // The advertised VAPID public key, leaked to `'static` once at startup: it's a
+    // single value that lives for the whole process, so the resource services can
+    // carry a zero-cost `Copy` of it and stamp it onto the resources they build.
+    let vapid_public_key: Option<&'static str> = match &vapid {
+        Some(vapid) => Some(Box::leak(vapid.public_key_b64url()?.into_boxed_str())),
+        None => None,
+    };
 
     if config.dav_push.enabled {
+        let vapid = vapid.expect("VAPID key is loaded when dav_push is enabled");
+        let vapid_sub = config.dav_push.vapid_sub.clone();
         let dav_push_controller = DavPushController::new(
             config.dav_push.allowed_push_servers,
             subscription_store.clone(),
+            vapid,
+            vapid_sub,
         );
         // Atm we never join this task
         tokio::spawn(async move {
@@ -142,6 +183,7 @@ pub async fn cmd_default(
         config.caldav,
         &config.nextcloud_login,
         config.dav_push.enabled,
+        vapid_public_key,
         config.http.session_cookie_samesite_strict,
         config.http.payload_limit_mb,
     );

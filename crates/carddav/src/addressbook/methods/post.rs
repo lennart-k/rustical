@@ -27,7 +27,7 @@ pub async fn route_post<AS: AddressbookStore, S: SubscriptionStore>(
         .addr_store
         .get_addressbook(&principal, &addr_id, false)
         .await?;
-    let addressbook_resource = AddressbookResource(addressbook);
+    let addressbook_resource = AddressbookResource(addressbook, None);
     if !addressbook_resource
         .get_user_privileges(&user)?
         .has(&UserPrivilege::Read)

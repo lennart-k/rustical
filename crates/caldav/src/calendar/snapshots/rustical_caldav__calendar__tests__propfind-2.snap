@@ -158,7 +158,8 @@ END:VCALENDAR
             <sync-token xmlns="DAV:">github.com/lennart-k/rustical/ns/12</sync-token>
             <getctag xmlns="http://calendarserver.org/ns/">github.com/lennart-k/rustical/ns/12</getctag>
             <transports xmlns="https://bitfire.at/webdav-push">
-                <web-push xmlns="https://bitfire.at/webdav-push"/>
+                <web-push xmlns="https://bitfire.at/webdav-push">
+                </web-push>
             </transports>
             <topic xmlns="https://bitfire.at/webdav-push">b28b41e9-8801-4fc5-ae29-8efb5fadeb36</topic>
             <supported-triggers xmlns="https://bitfire.at/webdav-push">

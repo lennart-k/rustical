@@ -19,6 +19,10 @@ pub enum DavPushExtensionProp {
 pub trait DavPushExtension {
     fn get_topic(&self) -> String;
 
+    fn vapid_public_key(&self) -> Option<&str> {
+        None
+    }
+
     fn supported_triggers(&self) -> SupportedTriggers {
         SupportedTriggers(vec![
             Trigger::ContentUpdate(ContentUpdate(Depth::One)),
@@ -31,9 +35,9 @@ pub trait DavPushExtension {
         prop: &DavPushExtensionPropName,
     ) -> Result<DavPushExtensionProp, rustical_dav::Error> {
         Ok(match &prop {
-            DavPushExtensionPropName::Transports => {
-                DavPushExtensionProp::Transports(Transports::default())
-            }
+            DavPushExtensionPropName::Transports => DavPushExtensionProp::Transports(
+                Transports::new(self.vapid_public_key().map(ToOwned::to_owned)),
+            ),
             DavPushExtensionPropName::Topic => DavPushExtensionProp::Topic(self.get_topic()),
             DavPushExtensionPropName::SupportedTriggers => {
                 DavPushExtensionProp::SupportedTriggers(self.supported_triggers())
@@ -47,5 +51,61 @@ pub trait DavPushExtension {
 
     fn remove_prop(&self, _prop: &DavPushExtensionPropName) -> Result<(), rustical_dav::Error> {
         Err(rustical_dav::Error::PropReadOnly)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{DavPushExtension, DavPushExtensionProp, DavPushExtensionPropName};
+    use crate::Transports;
+    use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
+
+    struct TestCollection {
+        vapid_public_key: Option<&'static str>,
+    }
+
+    impl DavPushExtension for TestCollection {
+        fn get_topic(&self) -> String {
+            "test-topic".to_owned()
+        }
+        fn vapid_public_key(&self) -> Option<&str> {
+            self.vapid_public_key
+        }
+    }
+
+    #[derive(XmlSerialize, XmlRootTag)]
+    #[xml(root = "document")]
+    struct Document {
+        transports: Transports,
+    }
+
+    fn advertised_transports(collection: &impl DavPushExtension) -> String {
+        let DavPushExtensionProp::Transports(transports) = collection
+            .get_prop(&DavPushExtensionPropName::Transports)
+            .expect("transports prop")
+        else {
+            panic!("expected the transports prop");
+        };
+        Document { transports }.serialize_to_string().unwrap()
+    }
+
+    #[test]
+    fn get_prop_advertises_the_instances_vapid_key() {
+        let with_key = TestCollection {
+            vapid_public_key: Some("BNcRexamplekey"),
+        };
+        let out = advertised_transports(&with_key);
+        assert!(out.contains("vapid-public-key"), "{out}");
+        assert!(out.contains("BNcRexamplekey"), "{out}");
+    }
+
+    #[test]
+    fn get_prop_omits_vapid_key_when_the_instance_has_none() {
+        let without_key = TestCollection {
+            vapid_public_key: None,
+        };
+        let out = advertised_transports(&without_key);
+        assert!(out.contains("web-push"), "{out}");
+        assert!(!out.contains("vapid-public-key"), "{out}");
     }
 }

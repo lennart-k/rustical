@@ -34,6 +34,27 @@ impl SqliteStore {
     pub const fn new(db: SqlitePool) -> Self {
         Self { db }
     }
+
+    /// Read the persisted DAV Push VAPID keypair PEM, if one has been generated.
+    /// The single `server_settings` row is seeded by the migration; the column is
+    /// NULL until a key is stored.
+    pub async fn get_vapid_key(&self) -> Result<Option<String>, rustical_store::Error> {
+        Ok(
+            sqlx::query_scalar!("SELECT vapid_key FROM server_settings WHERE id = 1")
+                .fetch_one(&self.db)
+                .await
+                .map_err(crate::Error::from)?,
+        )
+    }
+
+    /// Persist the DAV Push VAPID keypair PEM into the single settings row.
+    pub async fn set_vapid_key(&self, pem: &str) -> Result<(), rustical_store::Error> {
+        sqlx::query!("UPDATE server_settings SET vapid_key = ? WHERE id = 1", pem)
+            .execute(&self.db)
+            .await
+            .map_err(crate::Error::from)?;
+        Ok(())
+    }
 }
 
 pub async fn create_db_pool(db_url: &str, migrate: bool) -> Result<Pool<Sqlite>, sqlx::Error> {

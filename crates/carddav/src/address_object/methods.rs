@@ -36,7 +36,7 @@ pub async fn get_object<AS: AddressbookStore>(
     let addressbook = addr_store
         .get_addressbook(&principal, &addressbook_id, false)
         .await?;
-    let addressbook_resource = AddressbookResource(addressbook);
+    let addressbook_resource = AddressbookResource(addressbook, None);
     if !addressbook_resource
         .get_user_privileges(&user)?
         .has(&UserPrivilege::Read)

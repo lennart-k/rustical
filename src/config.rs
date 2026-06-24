@@ -216,6 +216,10 @@ pub struct DavPushConfig {
     // Allowed Push servers, accepts any by default
     // Specify as URL origins
     pub allowed_push_servers: Option<Vec<String>>,
+    // VAPID `sub` claim (RFC 8292): an optional contact URI (`mailto:` or
+    // `https:`) the push service can use to reach this server's operator.
+    #[serde(default)]
+    pub vapid_sub: Option<String>,
 }
 
 impl Default for DavPushConfig {
@@ -223,6 +227,7 @@ impl Default for DavPushConfig {
         Self {
             enabled: true,
             allowed_push_servers: None,
+            vapid_sub: None,
         }
     }
 }
