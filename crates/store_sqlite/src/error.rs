@@ -33,7 +33,7 @@ impl From<Error> for rustical_store::Error {
     fn from(value: Error) -> Self {
         match value {
             Error::SqlxError(err) => Self::Other(err.into()),
-            Error::IcalError(err) => Self::Other(err.into()),
+            Error::IcalError(err) => Self::IcalError(err),
             Error::StoreError(err) => err,
         }
     }

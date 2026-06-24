@@ -41,7 +41,7 @@ impl From<CalendarObjectRow> for (String, Result<CalendarObject, ParserError>) {
 }
 
 impl TryFrom<CalendarObjectRow> for (String, CalendarObject) {
-    type Error = rustical_store::Error;
+    type Error = caldata::parser::ParserError;
 
     fn try_from(row: CalendarObjectRow) -> Result<Self, Self::Error> {
         let object = CalendarObject::from_ics(row.ics)?;

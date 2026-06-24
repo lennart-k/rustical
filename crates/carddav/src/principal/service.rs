@@ -1,7 +1,8 @@
+use crate::CardDavPrincipalUri;
+use crate::Error;
 use crate::addressbook::AddressbookResourceService;
 use crate::addressbook::resource::AddressbookResource;
 use crate::principal::PrincipalResource;
-use crate::{CardDavPrincipalUri, Error};
 use async_trait::async_trait;
 use axum::Router;
 use rustical_dav::resource::{AxumMethods, ResourceService};

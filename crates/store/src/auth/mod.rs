@@ -15,18 +15,18 @@ pub use principal::{AppToken, Principal};
 #[async_trait]
 pub trait AuthenticationProvider: Send + Sync + 'static {
     /// Returns a list of all principals
-    async fn get_principals(&self) -> Result<Vec<Principal>, crate::Error>;
+    async fn get_principals(&self) -> Result<Vec<Principal>, Error>;
 
     /// Returns a principal by its `id` as an `Option<Principal>`.
     /// If the principal does not exist `Ok(None)` is returned.
-    async fn get_principal(&self, id: &str) -> Result<Option<Principal>, crate::Error>;
+    async fn get_principal(&self, id: &str) -> Result<Option<Principal>, Error>;
 
-    async fn remove_principal(&self, id: &str) -> Result<(), crate::Error>;
+    async fn remove_principal(&self, id: &str) -> Result<(), Error>;
 
     /// Inserts a principal and upserts it if `overwrite=true`.
     /// Ignores `Principal.membership` field which is instead managed
     /// via the `*_membership´ methods.
-    async fn insert_principal(&self, user: Principal, overwrite: bool) -> Result<(), crate::Error>;
+    async fn insert_principal(&self, user: Principal, overwrite: bool) -> Result<(), Error>;
 
     /// Validates a password input for a principal.
     /// If the password input is correct returns `Ok(Some(principal))`.

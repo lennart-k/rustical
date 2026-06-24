@@ -2,6 +2,8 @@ use axum::response::IntoResponse;
 use http::StatusCode;
 use tracing::error;
 
+use crate::auth::InvalidPrincipalTypeError;
+
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("Not found")]
@@ -10,20 +12,17 @@ pub enum Error {
     #[error("Resource already exists and overwrite=false")]
     AlreadyExists,
 
-    #[error("Invalid principal type: {0}")]
-    InvalidPrincipalType(String),
+    #[error("Read-only")]
+    ReadOnly,
 
     #[error("Invalid principal id: Id cannot contain ':' or '$'.")]
     InvalidPrincipalId,
 
-    #[error("Read-only")]
-    ReadOnly,
+    #[error(transparent)]
+    InvalidPrincipalType(#[from] InvalidPrincipalTypeError),
 
     #[error("Error generating password hash")]
     PasswordHash,
-
-    #[error(transparent)]
-    IO(#[from] std::io::Error),
 
     #[error(transparent)]
     Other(#[from] anyhow::Error),
@@ -39,8 +38,8 @@ impl Error {
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::AlreadyExists => StatusCode::CONFLICT,
             Self::ReadOnly => StatusCode::FORBIDDEN,
+            Self::InvalidPrincipalId | Self::InvalidPrincipalType(_) => StatusCode::BAD_REQUEST,
             Self::IcalError(_err) => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::InvalidPrincipalType(_) => StatusCode::BAD_REQUEST,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

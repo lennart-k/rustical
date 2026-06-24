@@ -3,6 +3,10 @@ use std::fmt::Display;
 use rustical_xml::ValueSerialize;
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, thiserror::Error)]
+#[error("Invalid principal type: {0}")]
+pub struct InvalidPrincipalTypeError(String);
+
 /// <https://datatracker.ietf.org/doc/html/rfc5545#section-3.2.3>
 #[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq, Eq, clap::ValueEnum)]
 #[serde(rename_all = "lowercase")]
@@ -17,7 +21,7 @@ pub enum PrincipalType {
 }
 
 impl TryFrom<&str> for PrincipalType {
-    type Error = crate::Error;
+    type Error = InvalidPrincipalTypeError;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         Ok(match value {
@@ -27,9 +31,7 @@ impl TryFrom<&str> for PrincipalType {
             "ROOM" => Self::Room,
             "UNKNOWN" => Self::Unknown,
             _ => {
-                return Err(crate::Error::InvalidPrincipalType(
-                    "Invalid principal type".to_owned(),
-                ));
+                return Err(InvalidPrincipalTypeError(value.to_string()));
             }
         })
     }
