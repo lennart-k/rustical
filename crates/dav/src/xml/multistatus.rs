@@ -103,9 +103,13 @@ impl<T1: XmlSerialize, T2: XmlSerialize> axum::response::IntoResponse
     fn into_response(self) -> axum::response::Response {
         use axum::body::Body;
 
-        let output = match self.serialize_to_string() {
-            Ok(out) => out,
-            Err(err) => return crate::Error::from(err).into_response(),
+        let Ok(output) = self.serialize_to_string() else {
+            // Should never throw since the std::io::Write implementation for Vec<u8> never throws
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "IO error when serialising output",
+            )
+                .into_response();
         };
 
         let mut resp = axum::response::Response::builder().status(StatusCode::MULTI_STATUS);

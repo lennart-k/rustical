@@ -23,8 +23,13 @@ impl IntoResponse for Precondition {
         let mut writer = quick_xml::Writer::new_with_indent(&mut output, b' ', 4);
 
         let error = rustical_dav::xml::ErrorElement(&self);
-        if let Err(err) = error.serialize_root(&mut writer) {
-            return rustical_dav::Error::from(err).into_response();
+        if error.serialize_root(&mut writer).is_err() {
+            // Should never throw since the std::io::Write implementation for Vec<u8> never throws
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "IO error when serialising output",
+            )
+                .into_response();
         }
         let mut res = Response::builder().status(StatusCode::FORBIDDEN);
         res.headers_mut().unwrap().typed_insert(ContentType::xml());

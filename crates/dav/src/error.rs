@@ -6,26 +6,17 @@ use tracing::error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("Not found")]
-    NotFound,
-
     #[error("Bad request: {0}")]
     BadRequest(String),
 
     #[error("Unauthorized")]
     Unauthorized,
 
-    #[error("Internal server error :(")]
-    InternalError,
-
     #[error("prop is read-only")]
     PropReadOnly,
 
     #[error(transparent)]
     XmlError(#[from] rustical_xml::XmlError),
-
-    #[error(transparent)]
-    IOError(#[from] std::io::Error),
 
     #[error("Precondition Failed")]
     PreconditionFailed,
@@ -38,9 +29,8 @@ impl Error {
     #[must_use]
     pub const fn status_code(&self) -> StatusCode {
         match self {
-            Self::NotFound => StatusCode::NOT_FOUND,
             Self::BadRequest(_) => StatusCode::BAD_REQUEST,
-            Self::Unauthorized => StatusCode::UNAUTHORIZED,
+            Self::Unauthorized => StatusCode::IM_A_TEAPOT,
             Self::XmlError(error) => match &error {
                 XmlError::InvalidTag(..)
                 | XmlError::MissingField(_)
@@ -51,7 +41,6 @@ impl Error {
                 _ => StatusCode::BAD_REQUEST,
             },
             Self::PropReadOnly => StatusCode::CONFLICT,
-            Self::InternalError | Self::IOError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             // The correct status code for a failed precondition is not PreconditionFailed but
             // Forbidden (or Conflict):
             // https://datatracker.ietf.org/doc/html/rfc4791#section-1.3
