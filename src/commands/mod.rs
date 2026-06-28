@@ -1,6 +1,6 @@
 use crate::config::{
-    Config, DataStoreConfig, DavPushConfig, HttpConfig, NextcloudLoginConfig,
-    SqliteDataStoreConfig, TracingConfig, MaintenanceConfig
+    Config, DataStoreConfig, DavPushConfig, HttpConfig, MaintenanceConfig, NextcloudLoginConfig,
+    SqliteDataStoreConfig, TracingConfig,
 };
 use clap::Parser;
 use rustical_caldav::CalDavConfig;

@@ -28,6 +28,7 @@ use tracing::{info, warn};
 
 pub mod app;
 mod commands;
+mod tasks;
 pub use commands::*;
 pub mod config;
 mod setup_tracing;
@@ -151,6 +152,13 @@ pub async fn cmd_default(
     );
 
     let mut provided_listeners = ProvidedListeners::from_env()?;
+    if config.maintenance.trashbin.calendar.is_cleanup_required() {
+        tokio::spawn(tasks::cleanup_trashed_calendar_entities(
+            cal_store.clone(),
+            config.maintenance.trashbin.calendar,
+            shutdown_signal(),
+        ));
+    }
 
     let bind_config = config.http.bind_config()?;
     let serve_task = match bind_config {

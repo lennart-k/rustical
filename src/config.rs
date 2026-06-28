@@ -1,5 +1,5 @@
-use std::{path::PathBuf, str::FromStr};
 use core::num::NonZeroU32;
+use std::{path::PathBuf, str::FromStr};
 
 use anyhow::anyhow;
 use reqwest::Url;
@@ -252,8 +252,9 @@ pub struct MaintenanceCalendarTrashbinConfig {
 }
 
 impl MaintenanceCalendarTrashbinConfig {
+    #[must_use]
     #[inline]
-    pub fn is_cleanup_required(&self) -> bool {
+    pub const fn is_cleanup_required(&self) -> bool {
         self.deleted_calendar_lifetime.is_some() || self.deleted_object_lifetime.is_some()
     }
 }
@@ -261,7 +262,7 @@ impl MaintenanceCalendarTrashbinConfig {
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
 #[serde(deny_unknown_fields, default)]
 pub struct MaintenanceTrashbinConfig {
-    pub calendar: MaintenanceCalendarTrashbinConfig
+    pub calendar: MaintenanceCalendarTrashbinConfig,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
