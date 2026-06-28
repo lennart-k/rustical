@@ -478,6 +478,21 @@ impl SqliteCalendarStore {
         Ok(())
     }
 
+    async fn _delete_trashed_calendar_until<'e, E: Executor<'e, Database = Sqlite>>(
+        executor: E,
+        limit: chrono::NaiveDate,
+    ) -> Result<u64, Error> {
+        sqlx::query!(
+            r"DELETE FROM calendars WHERE deleted_at IS NOT NULL AND date(deleted_at) < date(?)",
+            limit,
+        )
+        .execute(executor)
+        .await
+        .map(|result| result.rows_affected())
+        .map_err(crate::Error::from)
+        .map_err(Into::into)
+    }
+
     async fn _list_objects<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
@@ -729,6 +744,21 @@ impl SqliteCalendarStore {
 
         Ok((objects, deleted_objects, new_synctoken))
     }
+
+    async fn _delete_trashed_objects_until<'e, E: Executor<'e, Database = Sqlite>>(
+        executor: E,
+        limit: chrono::NaiveDate,
+    ) -> Result<u64, Error> {
+        sqlx::query!(
+            r"DELETE FROM calendarobjects WHERE deleted_at IS NOT NULL AND date(deleted_at) < date(?)",
+            limit,
+        )
+        .execute(executor)
+        .await
+        .map(|result| result.rows_affected())
+        .map_err(crate::Error::from)
+        .map_err(Into::into)
+    }
 }
 
 #[async_trait]
@@ -887,6 +917,13 @@ impl CalendarWriteStore for SqliteCalendarStore {
     #[instrument]
     async fn restore_calendar(&self, principal: &str, id: &str) -> Result<(), Error> {
         Self::_restore_calendar(&self.db, principal, id).await
+    }
+
+    #[instrument(skip(self), fields(count = tracing::field::Empty))]
+    async fn delete_trashed_calendar_until(&self, limit: chrono::NaiveDate) -> Result<(), Error> {
+        let count = Self::_delete_trashed_calendar_until(&self.db, limit).await?;
+        tracing::Span::current().record("count", count);
+        Ok(())
     }
 
     #[instrument]
@@ -1052,6 +1089,13 @@ impl CalendarWriteStore for SqliteCalendarStore {
             CollectionOperationInfo::Content { sync_token },
             self.get_calendar(principal, cal_id, true).await?.push_topic,
         );
+        Ok(())
+    }
+
+    #[instrument(skip(self), fields(count = tracing::field::Empty))]
+    async fn delete_trashed_objects_until(&self, until: chrono::NaiveDate) -> Result<(), Error> {
+        let count = Self::_delete_trashed_objects_until(&self.db, until).await?;
+        tracing::Span::current().record("count", count);
         Ok(())
     }
 }

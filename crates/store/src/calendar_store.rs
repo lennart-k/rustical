@@ -77,6 +77,8 @@ pub trait CalendarWriteStore: Send + Sync + 'static {
         use_trashbin: bool,
     ) -> Result<(), Error>;
     async fn restore_calendar(&self, principal: &str, name: &str) -> Result<(), Error>;
+    /// Removes all calendars marked for deletion before `until`
+    async fn delete_trashed_calendar_until(&self, limit: NaiveDate) -> Result<(), Error>;
     async fn import_calendar(
         &self,
         calendar: Calendar,
@@ -120,6 +122,8 @@ pub trait CalendarWriteStore: Send + Sync + 'static {
         cal_id: &str,
         object_id: &str,
     ) -> Result<(), Error>;
+    /// Removes all objects marked for deletion before `until`
+    async fn delete_trashed_objects_until(&self, limit: NaiveDate) -> Result<(), Error>;
 }
 
 pub trait CalendarStore: CalendarReadStore + CalendarWriteStore {}

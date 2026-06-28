@@ -170,6 +170,17 @@ impl CalendarWriteStore for CombinedCalendarStore {
             .await
     }
 
+    async fn delete_trashed_calendar_until(
+        &self,
+        limit: chrono::NaiveDate,
+    ) -> Result<(), crate::Error> {
+        self.default.delete_trashed_calendar_until(limit).await?;
+        for cal in self.stores.values() {
+            cal.delete_trashed_calendar_until(limit).await?;
+        }
+        Ok(())
+    }
+
     async fn import_calendar(
         &self,
         calendar: crate::Calendar,
@@ -214,5 +225,16 @@ impl CalendarWriteStore for CombinedCalendarStore {
         self.store_for_id(cal_id)
             .delete_object(principal, cal_id, object_id, use_trashbin)
             .await
+    }
+
+    async fn delete_trashed_objects_until(
+        &self,
+        limit: chrono::NaiveDate,
+    ) -> Result<(), crate::Error> {
+        self.default.delete_trashed_objects_until(limit).await?;
+        for cal in self.stores.values() {
+            cal.delete_trashed_calendar_until(limit).await?;
+        }
+        Ok(())
     }
 }
