@@ -1,4 +1,5 @@
 use std::{path::PathBuf, str::FromStr};
+use core::num::NonZeroU32;
 
 use anyhow::anyhow;
 use reqwest::Url;
@@ -239,6 +240,36 @@ impl Default for NextcloudLoginConfig {
     }
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
+#[serde(deny_unknown_fields, default)]
+pub struct MaintenanceCalendarTrashbinConfig {
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub deleted_calendar_lifetime: Option<NonZeroU32>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub deleted_object_lifetime: Option<NonZeroU32>,
+}
+
+impl MaintenanceCalendarTrashbinConfig {
+    #[inline]
+    pub fn is_cleanup_required(&self) -> bool {
+        self.deleted_calendar_lifetime.is_some() || self.deleted_object_lifetime.is_some()
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
+#[serde(deny_unknown_fields, default)]
+pub struct MaintenanceTrashbinConfig {
+    pub calendar: MaintenanceCalendarTrashbinConfig
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
+#[serde(deny_unknown_fields, default)]
+pub struct MaintenanceConfig {
+    pub trashbin: MaintenanceTrashbinConfig,
+}
+
 #[derive(Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
@@ -257,4 +288,6 @@ pub struct Config {
     pub nextcloud_login: NextcloudLoginConfig,
     #[serde(default)]
     pub caldav: CalDavConfig,
+    #[serde(default)]
+    pub maintenance: MaintenanceConfig,
 }

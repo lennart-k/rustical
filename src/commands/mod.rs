@@ -1,6 +1,6 @@
 use crate::config::{
     Config, DataStoreConfig, DavPushConfig, HttpConfig, NextcloudLoginConfig,
-    SqliteDataStoreConfig, TracingConfig,
+    SqliteDataStoreConfig, TracingConfig, MaintenanceConfig
 };
 use clap::Parser;
 use rustical_caldav::CalDavConfig;
@@ -34,6 +34,7 @@ pub fn cmd_gen_config(_args: GenConfigArgs) -> anyhow::Result<()> {
         oidc: None,
         dav_push: DavPushConfig::default(),
         nextcloud_login: NextcloudLoginConfig::default(),
+        maintenance: MaintenanceConfig::default(),
     };
     let generated_config = toml::to_string(&config)?;
     println!("{generated_config}");
