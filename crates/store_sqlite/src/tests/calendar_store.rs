@@ -2,7 +2,24 @@
 mod tests {
     use crate::tests::{TestStoreContext, test_store_context};
     use rstest::rstest;
+    use rustical_ical::CalendarObject;
     use rustical_store::{Calendar, CalendarMetadata, CalendarReadStore, CalendarWriteStore};
+
+    const CALENDAR_OBJECT_ICS: &str = r#"
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//iCalendar Event//EN
+CALSCALE:GREGORIAN
+BEGIN:VEVENT
+UID:20260628T153000Z-123456@domain.com
+DTSTAMP:20260628T153000Z
+DTSTART:20260715T100000Z
+DTEND:20260715T110000Z
+SUMMARY:iCal Event
+DESCRIPTION:Basic calendar event.
+LOCATION:Meeting Room A
+END:VEVENT
+END:VCALENDAR"#;
 
     #[rstest]
     #[tokio::test]
@@ -51,6 +68,14 @@ mod tests {
             cal
         );
 
+        let object_id = "test-object";
+        let object =
+            CalendarObject::from_ics(CALENDAR_OBJECT_ICS.to_owned()).expect("to parse ics");
+
+        cal_store
+            .put_object(&cal.principal, &cal.id, object_id, object.clone(), false)
+            .await
+            .expect("to insert object");
         cal_store
             .delete_calendar("user", "cal", true)
             .await
@@ -60,6 +85,12 @@ mod tests {
             panic!()
         };
         assert!(err.is_not_found());
+
+        let fetched_object = cal_store
+            .get_object(&cal.principal, &cal.id, object_id, false)
+            .await
+            .expect("object remains");
+        assert_eq!(fetched_object.get_uid(), object.get_uid());
 
         cal_store.get_calendar("user", "cal", true).await.unwrap();
 
@@ -74,5 +105,13 @@ mod tests {
             panic!()
         };
         assert!(err.is_not_found());
+
+        match cal_store
+            .get_object(&cal.principal, &cal.id, object_id, false)
+            .await
+        {
+            Ok(_object) => panic!("Calendar deletion should cascade to relevant objects deletion"),
+            Err(error) => assert!(error.is_not_found()),
+        }
     }
 }
