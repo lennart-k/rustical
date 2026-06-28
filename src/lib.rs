@@ -6,6 +6,7 @@ use axum::ServiceExt;
 use axum::extract::Request;
 use clap::{Parser, Subcommand};
 use config::{DataStoreConfig, SqliteDataStoreConfig};
+use provided_listeners::ProvidedListeners;
 use rustical_dav_push::DavPushController;
 use rustical_store::auth::AuthenticationProvider;
 use rustical_store::{
@@ -149,10 +150,15 @@ pub async fn cmd_default(
         NormalizePathLayer::trim_trailing_slash().layer(app),
     );
 
+    let mut provided_listeners = ProvidedListeners::from_env()?;
+
     let bind_config = config.http.bind_config()?;
     let serve_task = match bind_config {
         HttpBindConfig::Tcp(address) => {
-            let listener = tokio::net::TcpListener::bind(&address).await?;
+            let listener = provided_listeners
+                .tcp_tokio_resolved_or_bind(&address)
+                .await?;
+
             tokio::spawn(async move {
                 info!("RustiCal serving on http://{address}");
                 if let Some(start_notifier) = start_notifier {
@@ -166,19 +172,25 @@ pub async fn cmd_default(
         }
 
         HttpBindConfig::Unix(path) => {
-            if path.exists() {
-                let metadata = fs::metadata(&path)?;
-                if metadata.file_type().is_socket() {
-                    // Only remove existing file if it's a socket
-                    fs::remove_file(&path)?;
-                } else {
-                    return Err(anyhow!(
-                        "Path {path} exists and is not a socket",
-                        path = path.display()
-                    ));
+            let listener = if let Some(listener) = provided_listeners.unix_tokio(path.as_path()) {
+                listener?
+            } else {
+                if path.exists() {
+                    let metadata = fs::metadata(&path)?;
+                    if metadata.file_type().is_socket() {
+                        // Only remove existing file if it's a socket
+                        fs::remove_file(&path)?;
+                    } else {
+                        return Err(anyhow!(
+                            "Path {path} exists and is not a socket",
+                            path = path.display()
+                        ));
+                    }
                 }
-            }
-            let listener = tokio::net::UnixListener::bind(&path)?;
+
+                tokio::net::UnixListener::bind(&path)?
+            };
+
             tokio::spawn(async move {
                 info!("RustiCal serving on unix://{path}", path = path.display());
                 if let Some(start_notifier) = start_notifier {
