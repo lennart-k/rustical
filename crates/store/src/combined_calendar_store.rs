@@ -233,7 +233,7 @@ impl CalendarWriteStore for CombinedCalendarStore {
     ) -> Result<(), crate::Error> {
         self.default.delete_trashed_objects_until(limit).await?;
         for cal in self.stores.values() {
-            cal.delete_trashed_calendar_until(limit).await?;
+            cal.delete_trashed_objects_until(limit).await?;
         }
         Ok(())
     }
