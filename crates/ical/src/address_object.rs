@@ -18,19 +18,21 @@ use caldata::{
 use chrono::{NaiveDate, Utc};
 use hex::ToHex;
 use sha2::{Digest, Sha256};
-use std::collections::BTreeMap;
 use std::str::FromStr;
+use std::{collections::BTreeMap, sync::OnceLock};
 
 #[derive(Debug, Clone)]
 pub struct AddressObject {
-    vcf: String,
-    vcard: VcardContact,
+    inner: VcardContact,
+    vcf: OnceLock<String>,
 }
 
 impl From<VcardContact> for AddressObject {
     fn from(vcard: VcardContact) -> Self {
-        let vcf = vcard.generate();
-        Self { vcf, vcard }
+        Self {
+            inner: vcard,
+            vcf: OnceLock::new(),
+        }
     }
 }
 
@@ -38,7 +40,10 @@ impl AddressObject {
     pub fn from_vcf(vcf: String) -> Result<Self, Error> {
         let parser = VcardParser::from_slice(vcf.as_bytes());
         let vcard = parser.expect_one()?;
-        Ok(Self { vcf, vcard })
+        Ok(Self {
+            inner: vcard,
+            vcf: vcf.into(),
+        })
     }
 
     #[must_use]
@@ -53,7 +58,7 @@ impl AddressObject {
 
     #[must_use]
     pub fn get_vcf(&self) -> &str {
-        &self.vcf
+        self.vcf.get_or_init(|| self.inner.generate())
     }
 
     fn get_significant_date_object(
@@ -62,7 +67,7 @@ impl AddressObject {
         summary_prefix: &str,
         suffix: &str,
     ) -> Result<Option<CalendarObject>, Error> {
-        let Some(uid) = self.vcard.get_uid() else {
+        let Some(uid) = self.inner.get_uid() else {
             return Ok(None);
         };
         let uid = format!("{uid}{suffix}");
@@ -82,7 +87,7 @@ impl AddressObject {
             // start_date is MAX_DATE, this should never happen but FAPP also not raise an error
             return Ok(None);
         };
-        let Some(VcardFNProperty(fullname, _)) = self.vcard.full_name.first() else {
+        let Some(VcardFNProperty(fullname, _)) = self.inner.full_name.first() else {
             return Ok(None);
         };
         let summary = format!("{summary_prefix} {fullname}{year_suffix}");
@@ -146,7 +151,7 @@ impl AddressObject {
     }
 
     pub fn get_anniversary_object(&self) -> Result<Option<CalendarObject>, Error> {
-        let Some(VcardANNIVERSARYProperty(anniversary, _)) = &self.vcard.anniversary else {
+        let Some(VcardANNIVERSARYProperty(anniversary, _)) = &self.inner.anniversary else {
             return Ok(None);
         };
         let Some(date) = &anniversary.date else {
@@ -157,7 +162,7 @@ impl AddressObject {
     }
 
     pub fn get_birthday_object(&self) -> Result<Option<CalendarObject>, Error> {
-        let Some(VcardBDAYProperty(bday, _)) = &self.vcard.birthday else {
+        let Some(VcardBDAYProperty(bday, _)) = &self.inner.birthday else {
             return Ok(None);
         };
         let Some(date) = &bday.date else {
@@ -169,6 +174,6 @@ impl AddressObject {
 
     #[must_use]
     pub const fn get_vcard(&self) -> &VcardContact {
-        &self.vcard
+        &self.inner
     }
 }
