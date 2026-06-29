@@ -72,7 +72,7 @@ pub fn setup_tracing(config: &TracingConfig) {
         {
             registry.init();
             warn!(
-                "This version of RustiCal is compiled without the opentelemetry feature. tracing.opentelemtry = true has no effect"
+                "This version of RustiCal is compiled without the opentelemetry feature. tracing.opentelemetry = true has no effect"
             );
         }
     } else {
