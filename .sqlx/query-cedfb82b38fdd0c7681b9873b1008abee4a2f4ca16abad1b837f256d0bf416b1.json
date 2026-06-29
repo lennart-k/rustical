@@ -6,72 +6,156 @@
       {
         "name": "principal",
         "ordinal": 0,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "principal"
+          }
+        }
       },
       {
         "name": "id",
         "ordinal": 1,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "id"
+          }
+        }
       },
       {
         "name": "synctoken",
         "ordinal": 2,
-        "type_info": "Integer"
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "synctoken"
+          }
+        }
       },
       {
         "name": "displayname",
         "ordinal": 3,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "displayname"
+          }
+        }
       },
       {
         "name": "description",
         "ordinal": 4,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "description"
+          }
+        }
       },
       {
         "name": "order",
         "ordinal": 5,
-        "type_info": "Integer"
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "order"
+          }
+        }
       },
       {
         "name": "color",
         "ordinal": 6,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "color"
+          }
+        }
       },
       {
         "name": "timezone_id",
         "ordinal": 7,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "timezone_id"
+          }
+        }
       },
       {
         "name": "deleted_at",
         "ordinal": 8,
-        "type_info": "Datetime"
+        "type_info": "Datetime",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "deleted_at"
+          }
+        }
       },
       {
         "name": "subscription_url",
         "ordinal": 9,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "subscription_url"
+          }
+        }
       },
       {
         "name": "push_topic",
         "ordinal": 10,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "push_topic"
+          }
+        }
       },
       {
         "name": "comp_event",
         "ordinal": 11,
-        "type_info": "Bool"
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "comp_event"
+          }
+        }
       },
       {
         "name": "comp_todo",
         "ordinal": 12,
-        "type_info": "Bool"
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "comp_todo"
+          }
+        }
       },
       {
         "name": "comp_journal",
         "ordinal": 13,
-        "type_info": "Bool"
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "comp_journal"
+          }
+        }
       }
     ],
     "parameters": {

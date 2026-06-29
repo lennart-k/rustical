@@ -6,12 +6,19 @@
       {
         "name": "object_id",
         "ordinal": 0,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressobjectchangelog",
+            "name": "object_id"
+          }
+        }
       },
       {
         "name": "synctoken!: i64",
         "ordinal": 1,
-        "type_info": "Null"
+        "type_info": "Null",
+        "origin": "Expression"
       }
     ],
     "parameters": {

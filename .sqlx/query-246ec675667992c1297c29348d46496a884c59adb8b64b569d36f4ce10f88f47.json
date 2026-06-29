@@ -6,12 +6,24 @@
       {
         "name": "id",
         "ordinal": 0,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressobjects",
+            "name": "id"
+          }
+        }
       },
       {
         "name": "vcf",
         "ordinal": 1,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressobjects",
+            "name": "vcf"
+          }
+        }
       }
     ],
     "parameters": {

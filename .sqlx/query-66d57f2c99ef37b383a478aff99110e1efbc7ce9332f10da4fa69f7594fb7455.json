@@ -6,52 +6,112 @@
       {
         "name": "principal",
         "ordinal": 0,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "birthday_calendars",
+            "name": "principal"
+          }
+        }
       },
       {
         "name": "id",
         "ordinal": 1,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "birthday_calendars",
+            "name": "id"
+          }
+        }
       },
       {
         "name": "displayname",
         "ordinal": 2,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "birthday_calendars",
+            "name": "displayname"
+          }
+        }
       },
       {
         "name": "description",
         "ordinal": 3,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "birthday_calendars",
+            "name": "description"
+          }
+        }
       },
       {
         "name": "order",
         "ordinal": 4,
-        "type_info": "Integer"
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "birthday_calendars",
+            "name": "order"
+          }
+        }
       },
       {
         "name": "color",
         "ordinal": 5,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "birthday_calendars",
+            "name": "color"
+          }
+        }
       },
       {
         "name": "timezone_id",
         "ordinal": 6,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "birthday_calendars",
+            "name": "timezone_id"
+          }
+        }
       },
       {
         "name": "deleted_at",
         "ordinal": 7,
-        "type_info": "Datetime"
+        "type_info": "Datetime",
+        "origin": {
+          "Table": {
+            "table": "birthday_calendars",
+            "name": "deleted_at"
+          }
+        }
       },
       {
         "name": "addr_synctoken",
         "ordinal": 8,
-        "type_info": "Integer"
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "addressbooks",
+            "name": "synctoken"
+          }
+        }
       },
       {
         "name": "push_topic",
         "ordinal": 9,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "birthday_calendars",
+            "name": "push_topic"
+          }
+        }
       }
     ],
     "parameters": {

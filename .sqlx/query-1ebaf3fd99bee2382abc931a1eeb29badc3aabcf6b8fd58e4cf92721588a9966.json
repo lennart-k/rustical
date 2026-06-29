@@ -6,22 +6,46 @@
       {
         "name": "id",
         "ordinal": 0,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "app_tokens",
+            "name": "id"
+          }
+        }
       },
       {
         "name": "name",
         "ordinal": 1,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "app_tokens",
+            "name": "displayname"
+          }
+        }
       },
       {
         "name": "token",
         "ordinal": 2,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "app_tokens",
+            "name": "token"
+          }
+        }
       },
       {
         "name": "created_at: _",
         "ordinal": 3,
-        "type_info": "Datetime"
+        "type_info": "Datetime",
+        "origin": {
+          "Table": {
+            "table": "app_tokens",
+            "name": "created_at"
+          }
+        }
       }
     ],
     "parameters": {

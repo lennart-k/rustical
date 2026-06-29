@@ -6,27 +6,52 @@
       {
         "name": "id",
         "ordinal": 0,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "principals",
+            "name": "id"
+          }
+        }
       },
       {
         "name": "displayname",
         "ordinal": 1,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "principals",
+            "name": "displayname"
+          }
+        }
       },
       {
         "name": "principal_type",
         "ordinal": 2,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "principals",
+            "name": "principal_type"
+          }
+        }
       },
       {
         "name": "password_hash",
         "ordinal": 3,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "principals",
+            "name": "password_hash"
+          }
+        }
       },
       {
         "name": "memberships: Json<Vec<Option<String>>>",
         "ordinal": 4,
-        "type_info": "Null"
+        "type_info": "Text",
+        "origin": "Expression"
       }
     ],
     "parameters": {
@@ -37,7 +62,7 @@
       true,
       false,
       true,
-      null
+      true
     ]
   },
   "hash": "95dce97b2e3224c327690c36777e3ece84a9529551696198b745dd8c743c8a38"

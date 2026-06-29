@@ -6,12 +6,19 @@
       {
         "name": "length!: u64",
         "ordinal": 0,
-        "type_info": "Null"
+        "type_info": "Null",
+        "origin": "Expression"
       },
       {
         "name": "deleted!: bool",
         "ordinal": 1,
-        "type_info": "Datetime"
+        "type_info": "Datetime",
+        "origin": {
+          "Table": {
+            "table": "calendarobjects",
+            "name": "deleted_at"
+          }
+        }
       }
     ],
     "parameters": {

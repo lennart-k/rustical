@@ -6,7 +6,13 @@
       {
         "name": "synctoken",
         "ordinal": 0,
-        "type_info": "Integer"
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "addressbooks",
+            "name": "synctoken"
+          }
+        }
       }
     ],
     "parameters": {

@@ -6,37 +6,79 @@
       {
         "name": "id",
         "ordinal": 0,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "davpush_subscriptions",
+            "name": "id"
+          }
+        }
       },
       {
         "name": "topic",
         "ordinal": 1,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "davpush_subscriptions",
+            "name": "topic"
+          }
+        }
       },
       {
         "name": "expiration",
         "ordinal": 2,
-        "type_info": "Datetime"
+        "type_info": "Datetime",
+        "origin": {
+          "Table": {
+            "table": "davpush_subscriptions",
+            "name": "expiration"
+          }
+        }
       },
       {
         "name": "push_resource",
         "ordinal": 3,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "davpush_subscriptions",
+            "name": "push_resource"
+          }
+        }
       },
       {
         "name": "public_key",
         "ordinal": 4,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "davpush_subscriptions",
+            "name": "public_key"
+          }
+        }
       },
       {
         "name": "public_key_type",
         "ordinal": 5,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "davpush_subscriptions",
+            "name": "public_key_type"
+          }
+        }
       },
       {
         "name": "auth_secret",
         "ordinal": 6,
-        "type_info": "Text"
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "davpush_subscriptions",
+            "name": "auth_secret"
+          }
+        }
       }
     ],
     "parameters": {
