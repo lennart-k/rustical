@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM calendarobjects WHERE deleted_at IS NOT NULL AND date(deleted_at) < date(?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "0617307f008d45002076227d9db8300b4348b4c9987647234d4cdfa02c1c5ceb"
+}

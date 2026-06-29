@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM birthday_calendars WHERE deleted_at IS NOT NULL AND date(deleted_at) < date(?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "2c8fa8077dbadf4a328b0eb4350091a14c2d30a3b467dc8079619afaf98c770a"
+}
