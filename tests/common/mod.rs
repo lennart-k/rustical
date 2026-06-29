@@ -66,6 +66,7 @@ pub fn rustical_process(
                     dav_push: Default::default(),
                     nextcloud_login: Default::default(),
                     caldav: Default::default(),
+                    maintenance: Default::default(),
                 },
                 Some(cloned_start_notify),
                 false,
