@@ -14,7 +14,19 @@ pub async fn cleanup_trashed_calendar_entities(
         cal_store: &dyn CalendarStore,
         trash_retention_days: NonZeroU32,
     ) {
-        let before = time - chrono::Duration::days(trash_retention_days.get().into());
+        //Default sub operation can panic so avoid it
+        let before =
+            match time.checked_sub_days(chrono::Days::new(trash_retention_days.get().into())) {
+                Some(before) => before,
+                None => {
+                    const UTC: chrono::NaiveDate = match chrono::NaiveDate::from_epoch_days(0) {
+                        Some(utc) => utc,
+                        None => unreachable!(),
+                    };
+                    UTC
+                }
+            };
+
         if let Err(error) = cal_store.prune_deleted_calendars(before).await {
             tracing::error!(
                 ?error,
