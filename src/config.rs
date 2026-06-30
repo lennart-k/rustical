@@ -1,3 +1,4 @@
+use core::num::NonZeroU32;
 use std::{path::PathBuf, str::FromStr};
 
 use anyhow::anyhow;
@@ -239,6 +240,14 @@ impl Default for NextcloudLoginConfig {
     }
 }
 
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
+#[serde(deny_unknown_fields, default)]
+pub struct MaintenanceConfig {
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub trash_retention_days: Option<NonZeroU32>,
+}
+
 #[derive(Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
@@ -257,4 +266,6 @@ pub struct Config {
     pub nextcloud_login: NextcloudLoginConfig,
     #[serde(default)]
     pub caldav: CalDavConfig,
+    #[serde(default)]
+    pub maintenance: MaintenanceConfig,
 }
