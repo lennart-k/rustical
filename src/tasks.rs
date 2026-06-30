@@ -66,3 +66,72 @@ pub async fn cleanup_trashed_calendar_entities(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use core::future;
+    use core::num::NonZeroU32;
+    use std::sync::Arc;
+
+    use super::cleanup_trashed_calendar_entities;
+    use rustical_store::auth::AuthenticationProvider;
+    use rustical_store::{CalendarReadStore, CalendarWriteStore};
+    use rustical_store_sqlite::calendar_store::SqliteCalendarStore;
+    use rustical_store_sqlite::create_db_pool;
+    use rustical_store_sqlite::principal_store::SqlitePrincipalStore;
+
+    const CONFIG_RETENTION_DAYS: NonZeroU32 = match NonZeroU32::new(1) {
+        Some(result) => result,
+        None => unreachable!(),
+    };
+
+    #[tokio::test]
+    async fn should_shutdown_cleanup_task_on_demand() {
+        let db = create_db_pool("sqlite://:memory:", true)
+            .await
+            .expect("to create db");
+        let (send, _recv) = tokio::sync::mpsc::channel(1000);
+        let cal_store = Arc::new(SqliteCalendarStore::new(db.clone(), send, true));
+        let principal_store = SqlitePrincipalStore::new(db);
+        let principal = rustical_store::auth::Principal {
+            id: "user".to_owned(),
+            displayname: None,
+            password: None,
+            principal_type: rustical_store::auth::PrincipalType::Individual,
+            memberships: Vec::new(),
+        };
+        principal_store
+            .insert_principal(principal, false)
+            .await
+            .expect("to insert principal");
+
+        let calendar = rustical_store::Calendar {
+            meta: Default::default(),
+            principal: "user".to_owned(),
+            id: "id".to_owned(),
+            ..Default::default()
+        };
+        cal_store
+            .insert_calendar(calendar)
+            .await
+            .expect("insert calendar");
+        cal_store
+            .delete_calendar("user", "id", true)
+            .await
+            .expect("delete into trashbin");
+
+        //should exit task as soon as it enters loop
+        cleanup_trashed_calendar_entities(
+            cal_store.clone(),
+            CONFIG_RETENTION_DAYS,
+            future::ready(()),
+        )
+        .await;
+
+        let result = cal_store
+            .get_calendar("user", "id", true)
+            .await
+            .expect("should not be deleted on the same day creation");
+        assert_eq!(result.id, "id");
+    }
+}
