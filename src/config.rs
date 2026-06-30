@@ -242,33 +242,10 @@ impl Default for NextcloudLoginConfig {
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
 #[serde(deny_unknown_fields, default)]
-pub struct MaintenanceCalendarTrashbinConfig {
-    #[serde(default)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub deleted_calendar_lifetime: Option<NonZeroU32>,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub deleted_object_lifetime: Option<NonZeroU32>,
-}
-
-impl MaintenanceCalendarTrashbinConfig {
-    #[must_use]
-    #[inline]
-    pub const fn is_cleanup_required(&self) -> bool {
-        self.deleted_calendar_lifetime.is_some() || self.deleted_object_lifetime.is_some()
-    }
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, Default)]
-#[serde(deny_unknown_fields, default)]
-pub struct MaintenanceTrashbinConfig {
-    pub calendar: MaintenanceCalendarTrashbinConfig,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize, Default)]
-#[serde(deny_unknown_fields, default)]
 pub struct MaintenanceConfig {
-    pub trashbin: MaintenanceTrashbinConfig,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub trash_retention_days: Option<NonZeroU32>,
 }
 
 #[derive(Deserialize, Serialize, Clone)]

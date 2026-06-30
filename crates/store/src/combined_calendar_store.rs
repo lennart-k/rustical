@@ -170,13 +170,10 @@ impl CalendarWriteStore for CombinedCalendarStore {
             .await
     }
 
-    async fn delete_trashed_calendar_until(
-        &self,
-        limit: chrono::NaiveDate,
-    ) -> Result<(), crate::Error> {
-        self.default.delete_trashed_calendar_until(limit).await?;
+    async fn prune_deleted_calendars(&self, before: chrono::NaiveDate) -> Result<(), crate::Error> {
+        self.default.prune_deleted_calendars(before).await?;
         for cal in self.stores.values() {
-            cal.delete_trashed_calendar_until(limit).await?;
+            cal.prune_deleted_calendars(before).await?;
         }
         Ok(())
     }
@@ -227,13 +224,10 @@ impl CalendarWriteStore for CombinedCalendarStore {
             .await
     }
 
-    async fn delete_trashed_objects_until(
-        &self,
-        limit: chrono::NaiveDate,
-    ) -> Result<(), crate::Error> {
-        self.default.delete_trashed_objects_until(limit).await?;
+    async fn prune_deleted_objects(&self, before: chrono::NaiveDate) -> Result<(), crate::Error> {
+        self.default.prune_deleted_objects(before).await?;
         for cal in self.stores.values() {
-            cal.delete_trashed_objects_until(limit).await?;
+            cal.prune_deleted_objects(before).await?;
         }
         Ok(())
     }

@@ -220,13 +220,13 @@ impl SqliteAddressbookStore {
         Ok(())
     }
 
-    async fn _delete_trashed_calendar_until<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn _prune_deleted_calendars<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
-        limit: chrono::NaiveDate,
+        before: chrono::NaiveDate,
     ) -> Result<u64, Error> {
         sqlx::query!(
             r"DELETE FROM birthday_calendars WHERE deleted_at IS NOT NULL AND date(deleted_at) < date(?)",
-            limit,
+            before,
         )
         .execute(executor)
         .await
@@ -435,8 +435,8 @@ impl CalendarWriteStore for SqliteAddressbookStore {
     }
 
     #[instrument(skip(self), fields(count = tracing::field::Empty))]
-    async fn delete_trashed_calendar_until(&self, limit: chrono::NaiveDate) -> Result<(), Error> {
-        let count = Self::_delete_trashed_calendar_until(&self.db, limit).await?;
+    async fn prune_deleted_calendars(&self, before: chrono::NaiveDate) -> Result<(), Error> {
+        let count = Self::_prune_deleted_calendars(&self.db, before).await?;
         tracing::Span::current().record("count", count);
         Ok(())
     }
@@ -484,7 +484,7 @@ impl CalendarWriteStore for SqliteAddressbookStore {
     }
 
     #[instrument]
-    async fn delete_trashed_objects_until(&self, _limit: chrono::NaiveDate) -> Result<(), Error> {
+    async fn prune_deleted_objects(&self, _before: chrono::NaiveDate) -> Result<(), Error> {
         Ok(())
     }
 }

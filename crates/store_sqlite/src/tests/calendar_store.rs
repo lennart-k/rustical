@@ -161,16 +161,13 @@ END:VCALENDAR"#;
             .unwrap();
 
         //Verify we delete only BEFORE timestamp
-        cal_store
-            .delete_trashed_objects_until(now)
-            .await
-            .expect("success");
+        cal_store.prune_deleted_objects(now).await.expect("success");
         cal_store
             .get_object(&cal.principal, &cal.id, object_id, true)
             .await
             .expect("Nothing deleted yet");
         cal_store
-            .delete_trashed_calendar_until(now)
+            .prune_deleted_calendars(now)
             .await
             .expect("success");
         cal_store
@@ -180,7 +177,7 @@ END:VCALENDAR"#;
 
         //delete everything that was marked for deletion before tomorrow
         cal_store
-            .delete_trashed_objects_until(now + chrono::Duration::days(1))
+            .prune_deleted_objects(now + chrono::Duration::days(1))
             .await
             .expect("success");
         let error = cal_store
@@ -189,7 +186,7 @@ END:VCALENDAR"#;
             .expect_err("object should be deleted");
         assert!(error.is_not_found());
         cal_store
-            .delete_trashed_calendar_until(now + chrono::Duration::days(1))
+            .prune_deleted_calendars(now + chrono::Duration::days(1))
             .await
             .expect("success");
         let error = cal_store

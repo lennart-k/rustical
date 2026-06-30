@@ -152,10 +152,10 @@ pub async fn cmd_default(
     );
 
     let mut provided_listeners = ProvidedListeners::from_env()?;
-    if config.maintenance.trashbin.calendar.is_cleanup_required() {
+    if let Some(trash_retention_days) = config.maintenance.trash_retention_days {
         tokio::spawn(tasks::cleanup_trashed_calendar_entities(
             cal_store.clone(),
-            config.maintenance.trashbin.calendar,
+            trash_retention_days,
             shutdown_signal(),
         ));
     }
