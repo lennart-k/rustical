@@ -2,6 +2,7 @@ use core::future::Future;
 use core::num::NonZeroU32;
 use std::sync::Arc;
 
+use chrono::NaiveDate;
 use rustical_store::CalendarStore;
 
 pub async fn cleanup_trashed_calendar_entities(
@@ -15,17 +16,9 @@ pub async fn cleanup_trashed_calendar_entities(
         trash_retention_days: NonZeroU32,
     ) {
         //Default sub operation can panic so avoid it
-        let before =
-            match time.checked_sub_days(chrono::Days::new(trash_retention_days.get().into())) {
-                Some(before) => before,
-                None => {
-                    const UTC: chrono::NaiveDate = match chrono::NaiveDate::from_epoch_days(0) {
-                        Some(utc) => utc,
-                        None => unreachable!(),
-                    };
-                    UTC
-                }
-            };
+        let before = time
+            .checked_sub_days(chrono::Days::new(trash_retention_days.get().into()))
+            .unwrap_or(NaiveDate::MIN);
 
         if let Err(error) = cal_store.prune_deleted_calendars(before).await {
             tracing::error!(
