@@ -172,6 +172,7 @@ sqlx.workspace = true
 async-trait.workspace = true
 uuid.workspace = true
 axum.workspace = true
+chrono.workspace = true
 
 opentelemetry = { version = "0.32", optional = true }
 opentelemetry-otlp = { version = "0.32", optional = true, features = [
