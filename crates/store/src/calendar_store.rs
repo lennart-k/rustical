@@ -77,8 +77,6 @@ pub trait CalendarWriteStore: Send + Sync + 'static {
         use_trashbin: bool,
     ) -> Result<(), Error>;
     async fn restore_calendar(&self, principal: &str, name: &str) -> Result<(), Error>;
-    /// Removes all calendars marked for deletion before specified date
-    async fn prune_deleted_calendars(&self, before: NaiveDate) -> Result<(), Error>;
     async fn import_calendar(
         &self,
         calendar: Calendar,
@@ -122,10 +120,21 @@ pub trait CalendarWriteStore: Send + Sync + 'static {
         cal_id: &str,
         object_id: &str,
     ) -> Result<(), Error>;
+}
+
+#[async_trait]
+pub trait CalendarStorePruneDeleted: Send + Sync + 'static {
+    /// Removes all calendars marked for deletion before specified date
+    async fn prune_deleted_calendars(&self, before: NaiveDate) -> Result<(), Error>;
+
     /// Removes all objects marked for deletion before specified date
     async fn prune_deleted_objects(&self, before: NaiveDate) -> Result<(), Error>;
 }
 
-pub trait CalendarStore: CalendarReadStore + CalendarWriteStore {}
+#[async_trait]
+pub trait CalendarStore:
+    CalendarReadStore + CalendarWriteStore + CalendarStorePruneDeleted
+{
+}
 
-impl<T: CalendarReadStore + CalendarWriteStore> CalendarStore for T {}
+impl<T: CalendarReadStore + CalendarWriteStore + CalendarStorePruneDeleted> CalendarStore for T {}

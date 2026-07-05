@@ -1,5 +1,5 @@
 use crate::{
-    Calendar, CalendarStore,
+    Calendar, CalendarStore, CalendarStorePruneDeleted,
     calendar_store::{CalendarQuery, CalendarReadStore, CalendarWriteStore},
 };
 use async_trait::async_trait;
@@ -170,14 +170,6 @@ impl CalendarWriteStore for CombinedCalendarStore {
             .await
     }
 
-    async fn prune_deleted_calendars(&self, before: chrono::NaiveDate) -> Result<(), crate::Error> {
-        self.default.prune_deleted_calendars(before).await?;
-        for cal in self.stores.values() {
-            cal.prune_deleted_calendars(before).await?;
-        }
-        Ok(())
-    }
-
     async fn import_calendar(
         &self,
         calendar: crate::Calendar,
@@ -222,6 +214,17 @@ impl CalendarWriteStore for CombinedCalendarStore {
         self.store_for_id(cal_id)
             .delete_object(principal, cal_id, object_id, use_trashbin)
             .await
+    }
+}
+
+#[async_trait]
+impl CalendarStorePruneDeleted for CombinedCalendarStore {
+    async fn prune_deleted_calendars(&self, before: chrono::NaiveDate) -> Result<(), crate::Error> {
+        self.default.prune_deleted_calendars(before).await?;
+        for cal in self.stores.values() {
+            cal.prune_deleted_calendars(before).await?;
+        }
+        Ok(())
     }
 
     async fn prune_deleted_objects(&self, before: chrono::NaiveDate) -> Result<(), crate::Error> {

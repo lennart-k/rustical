@@ -4,7 +4,8 @@ use chrono::NaiveDateTime;
 use hex::ToHex;
 use rustical_ical::{CalendarObject, CalendarObjectType};
 use rustical_store::{
-    Addressbook, Calendar, CalendarMetadata, CollectionMetadata, Error, PrefixedCalendarStore,
+    Addressbook, Calendar, CalendarMetadata, CalendarStorePruneDeleted, CollectionMetadata, Error,
+    PrefixedCalendarStore,
     addressbook_store::AddressbookReadStore,
     calendar_store::{CalendarReadStore, CalendarWriteStore},
 };
@@ -434,13 +435,6 @@ impl CalendarWriteStore for SqliteAddressbookStore {
         Self::_restore_birthday_calendar(&self.db, principal, id).await
     }
 
-    #[instrument(skip(self), fields(count = tracing::field::Empty))]
-    async fn prune_deleted_calendars(&self, before: chrono::NaiveDate) -> Result<(), Error> {
-        let count = Self::_prune_deleted_calendars(&self.db, before).await?;
-        tracing::Span::current().record("count", count);
-        Ok(())
-    }
-
     #[instrument]
     async fn import_calendar(
         &self,
@@ -481,6 +475,16 @@ impl CalendarWriteStore for SqliteAddressbookStore {
         _object_id: &str,
     ) -> Result<(), Error> {
         Err(Error::ReadOnly)
+    }
+}
+
+#[async_trait]
+impl CalendarStorePruneDeleted for SqliteAddressbookStore {
+    #[instrument(skip(self), fields(count = tracing::field::Empty))]
+    async fn prune_deleted_calendars(&self, before: chrono::NaiveDate) -> Result<(), Error> {
+        let count = Self::_prune_deleted_calendars(&self.db, before).await?;
+        tracing::Span::current().record("count", count);
+        Ok(())
     }
 
     #[instrument]

@@ -3,9 +3,12 @@ mod tests {
     use crate::tests::{TestStoreContext, test_store_context};
     use rstest::rstest;
     use rustical_ical::CalendarObject;
-    use rustical_store::{Calendar, CalendarMetadata, CalendarReadStore, CalendarWriteStore};
+    use rustical_store::{
+        Calendar, CalendarMetadata, CalendarReadStore, CalendarStorePruneDeleted,
+        CalendarWriteStore,
+    };
 
-    const CALENDAR_OBJECT_ICS: &str = r#"
+    const CALENDAR_OBJECT_ICS: &str = r"
 BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//iCalendar Event//EN
@@ -19,7 +22,7 @@ SUMMARY:iCal Event
 DESCRIPTION:Basic calendar event.
 LOCATION:Meeting Room A
 END:VEVENT
-END:VCALENDAR"#;
+END:VCALENDAR";
 
     #[rstest]
     #[tokio::test]
