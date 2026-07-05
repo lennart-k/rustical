@@ -17,12 +17,12 @@ jobs:
   docker-build:
     strategy:
       fail-fast: false
-    matrix:
-      include:
-        - platform: linux/amd64
-          runner: ubuntu-26.04
-        - platform: linux/arm64
-          runner: ubuntu-26.04-arm
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-26.04
+          - platform: linux/arm64
+            runner: ubuntu-26.04-arm
 
     permissions:
       contents: read
