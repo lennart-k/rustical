@@ -6,7 +6,7 @@ ARG BUILDPLATFORM
 # the compiler will otherwise ask for aarch64-linux-musl-gcc
 ENV CC_aarch64_unknown_linux_musl="clang"
 ENV AR_aarch64_unknown_linux_musl="llvm21-ar"
-ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-Clink-self-contained=yes  -Clinker=clang -Clink-arg=-fuse-ld=mold"
+ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-Clink-self-contained=yes"
 
 # Stupid workaound with tempfiles since environment variables
 # from RUN commands don't persist across stages
