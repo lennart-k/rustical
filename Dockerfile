@@ -6,7 +6,7 @@ ARG BUILDPLATFORM
 # the compiler will otherwise ask for aarch64-linux-musl-gcc
 ENV CC_aarch64_unknown_linux_musl="clang"
 ENV AR_aarch64_unknown_linux_musl="llvm21-ar"
-ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-Clink-self-contained=yes -Clinker=rust-lld"
+ENV CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-Clink-self-contained=yes  -Clinker=clang -Clink-arg=-fuse-ld=mold"
 
 # Stupid workaound with tempfiles since environment variables
 # from RUN commands don't persist across stages
@@ -16,7 +16,7 @@ RUN case $TARGETPLATFORM in \
   *) echo "Unsupported platform ${TARGETPLATFORM}"; exit 1;;  \
   esac
 
-RUN apk add --no-cache musl-dev llvm21 clang perl pkgconf make gcc \
+RUN apk add --no-cache musl-dev llvm21 clang perl pkgconf make gcc mold \
   && rustup target add "$(cat /tmp/rust_target)" \
   && cargo install cargo-chef --locked \
   && rm -rf "$CARGO_HOME/registry"
