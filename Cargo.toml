@@ -189,6 +189,7 @@ tracing-subscriber = { version = "0.3", features = [
   "registry",
 ] }
 figment = { version = "0.10", features = ["env", "toml"] }
+figment_file_env_provider = "0.2"
 tower-sessions.workspace = true
 rpassword.workspace = true
 tower.workspace = true

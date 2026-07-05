@@ -3,6 +3,7 @@ use anyhow::Result;
 use clap::Parser;
 use figment::Figment;
 use figment::providers::{Env, Format, Toml};
+use figment_file_env_provider::FileEnv;
 use rustical::config::Config;
 use rustical::{Args, Command};
 use rustical::{cmd_default, cmd_gen_config, cmd_health, cmd_principals};
@@ -15,7 +16,7 @@ async fn main() -> Result<()> {
     let parse_config = || {
         Figment::new()
             .merge(Toml::file(&args.config_file))
-            .merge(Env::prefixed("RUSTICAL_").split("__"))
+            .merge(FileEnv::from_env(Env::prefixed("RUSTICAL_").split("__")))
             .extract()
             // Clippy appeasement clippy::result_large_err
             .map_err(anyhow::Error::from)

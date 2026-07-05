@@ -1366,6 +1366,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "figment_file_env_provider"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5697e4c3f577031bec1c4b8faacf86d056d80251a85546cefed29f053e67c129"
+dependencies = [
+ "figment",
+]
+
+[[package]]
 name = "find-msvc-tools"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3636,6 +3645,7 @@ dependencies = [
  "chrono",
  "clap",
  "figment",
+ "figment_file_env_provider",
  "futures-util",
  "headers",
  "http",
