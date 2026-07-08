@@ -3,6 +3,8 @@ FROM --platform=$BUILDPLATFORM rust:1.95-alpine AS chef
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 
+RUN echo "target=$TARGETPLATFORM build=$BUILDPLATFORM"
+
 # the compiler will otherwise ask for aarch64-linux-musl-gcc
 ENV CC_aarch64_unknown_linux_musl="clang"
 ENV AR_aarch64_unknown_linux_musl="llvm21-ar"
