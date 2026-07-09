@@ -31,6 +31,7 @@ mod commands;
 mod tasks;
 pub use commands::*;
 pub mod config;
+pub mod env_file;
 mod setup_tracing;
 
 #[derive(Parser, Debug)]

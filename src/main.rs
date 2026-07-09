@@ -4,6 +4,7 @@ use clap::Parser;
 use figment::Figment;
 use figment::providers::{Env, Format, Toml};
 use rustical::config::Config;
+use rustical::env_file::EnvFile;
 use rustical::{Args, Command};
 use rustical::{cmd_default, cmd_gen_config, cmd_health, cmd_principals};
 use tracing::warn;
@@ -15,7 +16,13 @@ async fn main() -> Result<()> {
     let parse_config = || {
         Figment::new()
             .merge(Toml::file(&args.config_file))
-            .merge(Env::prefixed("RUSTICAL_").split("__"))
+            .merge(
+                Env::prefixed("RUSTICAL_")
+                    // *_FILE variables are handled by the EnvFile provider below
+                    .filter(|key| !key.as_str().to_ascii_lowercase().ends_with("_file"))
+                    .split("__"),
+            )
+            .merge(EnvFile::prefixed("RUSTICAL_").split("__"))
             .extract()
             // Clippy appeasement clippy::result_large_err
             .map_err(anyhow::Error::from)
