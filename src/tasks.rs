@@ -3,18 +3,21 @@ use core::num::NonZeroU32;
 use std::sync::Arc;
 
 use chrono::NaiveDate;
-use rustical_store::CalendarStore;
+use rustical_store::CalendarStorePruneDeleted;
 
 pub async fn cleanup_trashed_calendar_entities(
-    cal_store: Arc<dyn CalendarStore>,
+    cal_store: Arc<dyn CalendarStorePruneDeleted>,
     trash_retention_days: NonZeroU32,
     shutdown_signal: impl Future + Send + 'static,
 ) {
     async fn delete_trashed_calendar_entities(
         time: chrono::NaiveDate,
-        cal_store: &dyn CalendarStore,
+        cal_store: &dyn CalendarStorePruneDeleted,
         trash_retention_days: NonZeroU32,
     ) {
+        tracing::info!(
+            "Running meantenance cleanup of deleted calendars and calendar objects. Removing objects deleted for longer than {trash_retention_days} days."
+        );
         //Default sub operation can panic so avoid it
         let before = time
             .checked_sub_days(chrono::Days::new(trash_retention_days.get().into()))
@@ -36,14 +39,6 @@ pub async fn cleanup_trashed_calendar_entities(
             );
         }
     }
-
-    // Perform initial cleanup in case user doesn't let server run for more than 24 hours
-    delete_trashed_calendar_entities(
-        chrono::Utc::now().naive_utc().date(),
-        &*cal_store,
-        trash_retention_days,
-    )
-    .await;
 
     let mut shutdown_signal = core::pin::pin!(shutdown_signal);
     // Deletion is unlikely to be frequent hence daily
@@ -68,7 +63,7 @@ mod tests {
 
     use super::cleanup_trashed_calendar_entities;
     use rustical_store::auth::AuthenticationProvider;
-    use rustical_store::{CalendarReadStore, CalendarWriteStore};
+    use rustical_store::{CalendarMetadata, CalendarReadStore, CalendarWriteStore};
     use rustical_store_sqlite::calendar_store::SqliteCalendarStore;
     use rustical_store_sqlite::create_db_pool;
     use rustical_store_sqlite::principal_store::SqlitePrincipalStore;
@@ -99,7 +94,7 @@ mod tests {
             .expect("to insert principal");
 
         let calendar = rustical_store::Calendar {
-            meta: Default::default(),
+            meta: CalendarMetadata::default(),
             principal: "user".to_owned(),
             id: "id".to_owned(),
             ..Default::default()

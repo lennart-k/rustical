@@ -4,14 +4,14 @@ crates/*/target
 crates/*/Cargo.lock
 
 **/*.sqlite3*
-config.toml
+/config.toml
 principals.toml
 
 /.idea
 
 .env
 
-site
+/site
 
 # Frontend
 **/node_modules

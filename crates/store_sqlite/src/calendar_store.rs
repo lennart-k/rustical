@@ -9,7 +9,9 @@ use regex::Regex;
 use rustical_ical::{CalendarObject, CalendarObjectType};
 use rustical_store::calendar_store::{CalendarQuery, CalendarReadStore, CalendarWriteStore};
 use rustical_store::synctoken::format_synctoken;
-use rustical_store::{Calendar, CalendarMetadata, CollectionMetadata, Error};
+use rustical_store::{
+    Calendar, CalendarMetadata, CalendarStorePruneDeleted, CollectionMetadata, Error,
+};
 use rustical_store::{CollectionOperation, CollectionOperationInfo};
 use sqlx::types::chrono::NaiveDateTime;
 use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};
@@ -919,13 +921,6 @@ impl CalendarWriteStore for SqliteCalendarStore {
         Self::_restore_calendar(&self.db, principal, id).await
     }
 
-    #[instrument(skip(self), fields(count = tracing::field::Empty))]
-    async fn prune_deleted_calendars(&self, before: chrono::NaiveDate) -> Result<(), Error> {
-        let count = Self::_prune_deleted_calendars(&self.db, before).await?;
-        tracing::Span::current().record("count", count);
-        Ok(())
-    }
-
     #[instrument]
     async fn import_calendar(
         &self,
@@ -1089,6 +1084,16 @@ impl CalendarWriteStore for SqliteCalendarStore {
             CollectionOperationInfo::Content { sync_token },
             self.get_calendar(principal, cal_id, true).await?.push_topic,
         );
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl CalendarStorePruneDeleted for SqliteCalendarStore {
+    #[instrument(skip(self), fields(count = tracing::field::Empty))]
+    async fn prune_deleted_calendars(&self, before: chrono::NaiveDate) -> Result<(), Error> {
+        let count = Self::_prune_deleted_calendars(&self.db, before).await?;
+        tracing::Span::current().record("count", count);
         Ok(())
     }
 
