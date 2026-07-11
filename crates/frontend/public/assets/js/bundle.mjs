@@ -4,7 +4,10 @@
 * Copyright 2019 Google LLC
 * SPDX-License-Identifier: BSD-3-Clause
 */
-var t$4 = globalThis, e$5 = t$4.ShadowRoot && (void 0 === t$4.ShadyCSS || t$4.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype, s$4 = Symbol(), o$6 = /* @__PURE__ */ new WeakMap();
+var t$4 = globalThis;
+var e$5 = t$4.ShadowRoot && (void 0 === t$4.ShadyCSS || t$4.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype;
+var s$4 = Symbol();
+var o$6 = /* @__PURE__ */ new WeakMap();
 var n$6 = class {
 	constructor(t, e, o) {
 		if (this._$cssResult$ = !0, o !== s$4) throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");
@@ -22,13 +25,16 @@ var n$6 = class {
 	toString() {
 		return this.cssText;
 	}
-}, r$5 = (t) => new n$6("string" == typeof t ? t : t + "", void 0, s$4), S$1 = (s, o) => {
+};
+var r$5 = (t) => new n$6("string" == typeof t ? t : t + "", void 0, s$4);
+var S$1 = (s, o) => {
 	if (e$5) s.adoptedStyleSheets = o.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
 	else for (const e of o) {
 		const o = document.createElement("style"), n = t$4.litNonce;
 		void 0 !== n && o.setAttribute("nonce", n), o.textContent = e.cssText, s.appendChild(o);
 	}
-}, c$4 = e$5 ? (t) => t : (t) => t instanceof CSSStyleSheet ? ((t) => {
+};
+var c$4 = e$5 ? (t) => t : (t) => t instanceof CSSStyleSheet ? ((t) => {
 	let e = "";
 	for (const s of t.cssRules) e += s.cssText;
 	return r$5(e);
@@ -264,19 +270,44 @@ var y$1 = class extends HTMLElement {
 };
 y$1.elementStyles = [], y$1.shadowRootOptions = { mode: "open" }, y$1[d$2("elementProperties")] = /* @__PURE__ */ new Map(), y$1[d$2("finalized")] = /* @__PURE__ */ new Map(), p$2?.({ ReactiveElement: y$1 }), (a$1.reactiveElementVersions ??= []).push("2.1.2");
 //#endregion
-//#region node_modules/.deno/lit-html@3.3.2/node_modules/lit-html/lit-html.js
+//#region node_modules/.deno/lit-html@3.3.3/node_modules/lit-html/lit-html.js
 /**
 * @license
 * Copyright 2017 Google LLC
 * SPDX-License-Identifier: BSD-3-Clause
 */
-var t$3 = globalThis, i$3 = (t) => t, s$3 = t$3.trustedTypes, e$3 = s$3 ? s$3.createPolicy("lit-html", { createHTML: (t) => t }) : void 0, h$3 = "$lit$", o$4 = `lit$${Math.random().toFixed(9).slice(2)}$`, n$4 = "?" + o$4, r$3 = `<${n$4}>`, l$1 = document, c$2 = () => l$1.createComment(""), a = (t) => null === t || "object" != typeof t && "function" != typeof t, u$1 = Array.isArray, d$1 = (t) => u$1(t) || "function" == typeof t?.[Symbol.iterator], f$2 = "[ 	\n\f\r]", v$1 = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, _ = /-->/g, m$1 = />/g, p$1 = RegExp(`>|${f$2}(?:([^\\s"'>=/]+)(${f$2}*=${f$2}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`, "g"), g = /'/g, $ = /"/g, y = /^(?:script|style|textarea|title)$/i, x = (t) => (i, ...s) => ({
+var t$3 = globalThis;
+var i$3 = (t) => t;
+var s$3 = t$3.trustedTypes;
+var e$3 = s$3 ? s$3.createPolicy("lit-html", { createHTML: (t) => t }) : void 0;
+var h$3 = "$lit$";
+var o$4 = `lit$${Math.random().toFixed(9).slice(2)}$`;
+var n$4 = "?" + o$4;
+var r$3 = `<${n$4}>`;
+var l$1 = document;
+var c$2 = () => l$1.createComment("");
+var a = (t) => null === t || "object" != typeof t && "function" != typeof t;
+var u$1 = Array.isArray;
+var d$1 = (t) => u$1(t) || "function" == typeof t?.[Symbol.iterator];
+var f$2 = "[ 	\n\f\r]";
+var v$1 = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g;
+var _ = /-->/g;
+var m$1 = />/g;
+var p$1 = RegExp(`>|${f$2}(?:([^\\s"'>=/]+)(${f$2}*=${f$2}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`, "g");
+var g = /'/g;
+var $ = /"/g;
+var y = /^(?:script|style|textarea|title)$/i;
+var x = (t) => (i, ...s) => ({
 	_$litType$: t,
 	strings: i,
 	values: s
-}), b = x(1), w = x(2);
-x(3);
-var E = Symbol.for("lit-noChange"), A = Symbol.for("lit-nothing"), C = /* @__PURE__ */ new WeakMap(), P = l$1.createTreeWalker(l$1, 129);
+});
+var b = x(1);
+var w = x(2);
+var E = Symbol.for("lit-noChange");
+var A = Symbol.for("lit-nothing");
+var C = /* @__PURE__ */ new WeakMap();
+var P = l$1.createTreeWalker(l$1, 129);
 function V(t, i) {
 	if (!u$1(t) || !t.hasOwnProperty("raw")) throw Error("invalid template strings array");
 	return void 0 !== e$3 ? e$3.createHTML(i) : i;
@@ -521,8 +552,9 @@ var j$1 = {
 	U: z,
 	B: I,
 	F: Z
-}, B = t$3.litHtmlPolyfillSupport;
-B?.(S, k), (t$3.litHtmlVersions ??= []).push("3.3.2");
+};
+var B = t$3.litHtmlPolyfillSupport;
+B?.(S, k), (t$3.litHtmlVersions ??= []).push("3.3.3");
 var D = (t, i, s) => {
 	const e = s?.renderBefore ?? i;
 	let h = e._$litPart$;
@@ -589,7 +621,8 @@ var t$2 = (t) => (e, o) => {
 	converter: u$2,
 	reflect: !1,
 	hasChanged: f$3
-}, r$2 = (t = o$2, e, r) => {
+};
+var r$2 = (t = o$2, e, r) => {
 	const { kind: n, metadata: i } = r;
 	let s = globalThis.litPropertyMetadata.get(i);
 	if (void 0 === s && globalThis.litPropertyMetadata.set(i, s = /* @__PURE__ */ new Map()), "setter" === n && ((t = Object.create(t)).wrapped = !0), s.set(r.name, t), "accessor" === n) {
@@ -620,14 +653,21 @@ function n$3(t) {
 	})(t, e, o);
 }
 //#endregion
-//#region node_modules/.deno/lit-html@3.3.2/node_modules/lit-html/directive-helpers.js
+//#region node_modules/.deno/@lit+reactive-element@2.1.2/node_modules/@lit/reactive-element/decorators/state.js
+/**
+* @license
+* Copyright 2017 Google LLC
+* SPDX-License-Identifier: BSD-3-Clause
+*/
+//#endregion
+//#region node_modules/.deno/lit-html@3.3.3/node_modules/lit-html/directive-helpers.js
 /**
 * @license
 * Copyright 2020 Google LLC
 * SPDX-License-Identifier: BSD-3-Clause
 */ var { I: t$1 } = j$1, r$1 = (o) => void 0 === o.strings;
 //#endregion
-//#region node_modules/.deno/lit-html@3.3.2/node_modules/lit-html/directive.js
+//#region node_modules/.deno/lit-html@3.3.3/node_modules/lit-html/directive.js
 /**
 * @license
 * Copyright 2017 Google LLC
@@ -640,7 +680,8 @@ var t = {
 	BOOLEAN_ATTRIBUTE: 4,
 	EVENT: 5,
 	ELEMENT: 6
-}, e$1 = (t) => (...e) => ({
+};
+var e$1 = (t) => (...e) => ({
 	_$litDirective$: t,
 	values: e
 });
@@ -660,7 +701,7 @@ var i = class {
 	}
 };
 //#endregion
-//#region node_modules/.deno/lit-html@3.3.2/node_modules/lit-html/async-directive.js
+//#region node_modules/.deno/lit-html@3.3.3/node_modules/lit-html/async-directive.js
 /**
 * @license
 * Copyright 2017 Google LLC
@@ -670,13 +711,15 @@ var i = class {
 	if (void 0 === e) return !1;
 	for (const i of e) i._$AO?.(t, !1), s(i, t);
 	return !0;
-}, o$1 = (i) => {
+};
+var o$1 = (i) => {
 	let t, e;
 	do {
 		if (void 0 === (t = i._$AM)) break;
 		e = t._$AN, e.delete(i), i = t;
 	} while (0 === e?.size);
-}, r = (i) => {
+};
+var r = (i) => {
 	for (let t; t = i._$AM; i = t) {
 		let e = t._$AN;
 		if (void 0 === e) t._$AN = e = /* @__PURE__ */ new Set();
@@ -717,23 +760,24 @@ var f = class extends i {
 	reconnected() {}
 };
 //#endregion
-//#region node_modules/.deno/lit-html@3.3.2/node_modules/lit-html/directives/ref.js
+//#region node_modules/.deno/lit-html@3.3.3/node_modules/lit-html/directives/ref.js
 /**
 * @license
 * Copyright 2020 Google LLC
 * SPDX-License-Identifier: BSD-3-Clause
 */ var e = () => new h();
 var h = class {};
-var o = /* @__PURE__ */ new WeakMap(), n = e$1(class extends f {
+var o = /* @__PURE__ */ new WeakMap();
+var n = e$1(class extends f {
 	render(i) {
 		return A;
 	}
 	update(i, [s]) {
 		const e = s !== this.G;
-		return e && void 0 !== this.G && this.rt(void 0), (e || this.lt !== this.ct) && (this.G = s, this.ht = i.options?.host, this.rt(this.ct = i.element)), A;
+		return e && this.rt(void 0), (e || this.lt !== this.ct) && (this.G = s, this.ht = i.options?.host, this.rt(this.ct = i.element)), A;
 	}
 	rt(t) {
-		if (this.isConnected || (t = void 0), "function" == typeof this.G) {
+		if (void 0 !== this.G) if (this.isConnected || (t = void 0), "function" == typeof this.G) {
 			const i = this.ht ?? globalThis;
 			let s = o.get(i);
 			void 0 === s && (s = /* @__PURE__ */ new WeakMap(), o.set(i, s)), void 0 !== s.get(this.G) && this.G.call(this.ht, void 0), s.set(this.G, t), void 0 !== t && this.G.call(this.ht, t);
@@ -773,7 +817,7 @@ var SVG_ICON_INTERNET = w`<!-- Adapted from https://iconoir.com/ -->
 </svg>
 `;
 //#endregion
-//#region \0@oxc-project+runtime@0.127.0/helpers/decorate.js
+//#region \0@oxc-project+runtime@0.139.0/helpers/esm/decorate.js
 function __decorate(decorators, target, key, desc) {
 	var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
 	if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
@@ -1001,7 +1045,7 @@ var CreateCalendarForm = class CreateCalendarForm extends i$2 {
 		this.color = "";
 		this.isSubscription = false;
 		this.subscriptionUrl = null;
-		this.components = new Set(["VEVENT", "VTODO"]);
+		this.components = /* @__PURE__ */ new Set(["VEVENT", "VTODO"]);
 	}
 	async fetchTimezones() {
 		this.timezones = await getTimezones();
@@ -1564,7 +1608,7 @@ var GenerateAppTokenForm = class GenerateAppTokenForm extends i$2 {
 	constructor(..._args) {
 		super(..._args);
 		this.user = "";
-		this.uaApple = navigator.userAgent.includes("Apple") || navigator.userAgent.includes("macOS");
+		this.uaApple = navigator.userAgent.includes("Apple") || navigator.userAgent.includes("macOS") || navigator.userAgent.includes("Macintosh");
 		this.form = e();
 	}
 	createRenderRoot() {

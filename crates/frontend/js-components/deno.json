@@ -5,7 +5,7 @@
   },
   "imports": {
     "@deno/vite-plugin": "npm:@deno/vite-plugin@^1.0.6",
-    "lit": "npm:lit@^3.3.2",
-    "vite": "npm:vite@^8.0.10"
+    "lit": "npm:lit@^3.3.3",
+    "vite": "npm:vite@^8.1.4"
   }
 }
