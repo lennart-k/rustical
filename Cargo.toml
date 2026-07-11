@@ -76,7 +76,7 @@ tokio-util = { version = "0.7", features = ["rt"] }
 url = "2.5"
 base64 = "0.22"
 thiserror = "2.0"
-quick-xml = { version = "0.40" }
+quick-xml = { version = "0.41" }
 rust-embed = "8.9"
 tower-sessions = "0.15"
 futures-core = "0.3"
