@@ -9,9 +9,11 @@ use http::Uri;
 use rustical_dav::extensions::{
     CommonPropertiesExtension, CommonPropertiesProp, SyncTokenExtension, SyncTokenExtensionProp,
 };
+use rustical_dav::namespace::{NS_CALDAV, NS_CALENDARSERVER, NS_DAV};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
-use rustical_dav::xml::{HrefElement, Resourcetype, ResourcetypeInner, SupportedReportSet};
+use rustical_dav::resourcetype;
+use rustical_dav::xml::{HrefElement, Resourcetype, SupportedReportSet};
 use rustical_dav_push::{DavPushExtension, DavPushExtensionProp};
 use rustical_store::Calendar;
 use rustical_store::auth::Principal;
@@ -109,18 +111,9 @@ impl Resource for CalendarResource {
 
     fn get_resourcetype(&self) -> Resourcetype {
         if self.cal.subscription_url.is_none() {
-            Resourcetype(&[
-                ResourcetypeInner(Some(rustical_dav::namespace::NS_DAV), "collection"),
-                ResourcetypeInner(Some(rustical_dav::namespace::NS_CALDAV), "calendar"),
-            ])
+            resourcetype!((NS_DAV, "collection"), (NS_CALDAV, "calendar"),)
         } else {
-            Resourcetype(&[
-                ResourcetypeInner(Some(rustical_dav::namespace::NS_DAV), "collection"),
-                ResourcetypeInner(
-                    Some(rustical_dav::namespace::NS_CALENDARSERVER),
-                    "subscribed",
-                ),
-            ])
+            resourcetype!((NS_DAV, "collection"), (NS_CALENDARSERVER, "subscribed"),)
         }
     }
 

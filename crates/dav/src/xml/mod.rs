@@ -6,7 +6,7 @@ pub use multistatus::MultistatusElement;
 mod href;
 pub use href::HrefElement;
 pub use propfind::{PropElement, PropfindElement, PropfindType};
-pub use resourcetype::{Resourcetype, ResourcetypeInner};
+pub use resourcetype::*;
 pub use tag_list::TagList;
 mod error;
 pub mod sync_collection;

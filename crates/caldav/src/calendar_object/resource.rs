@@ -9,6 +9,7 @@ use rustical_dav::{
     extensions::CommonPropertiesExtension,
     privileges::UserPrivilegeSet,
     resource::{PrincipalUri, Resource, ResourceName},
+    resourcetype,
     xml::Resourcetype,
 };
 use rustical_ical::CalendarObject;
@@ -38,7 +39,7 @@ impl Resource for CalendarObjectResource {
     }
 
     fn get_resourcetype(&self) -> Resourcetype {
-        Resourcetype(&[])
+        resourcetype!()
     }
 
     fn get_prop(

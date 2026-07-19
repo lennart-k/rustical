@@ -1,9 +1,11 @@
 use crate::Error;
 use rustical_dav::extensions::CommonPropertiesExtension;
+use rustical_dav::namespace::NS_DAV;
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
+use rustical_dav::resourcetype;
 use rustical_dav::xml::{
-    GroupMemberSet, GroupMembership, Resourcetype, ResourcetypeInner, SupportedReportSet,
+    GroupMemberSet, GroupMembership, Resourcetype, SupportedReportSet,
 };
 use rustical_store::auth::Principal;
 use std::borrow::Cow;
@@ -39,10 +41,7 @@ impl Resource for PrincipalResource {
     }
 
     fn get_resourcetype(&self) -> Resourcetype {
-        Resourcetype(&[
-            ResourcetypeInner(Some(rustical_dav::namespace::NS_DAV), "collection"),
-            ResourcetypeInner(Some(rustical_dav::namespace::NS_DAV), "principal"),
-        ])
+        resourcetype!((NS_DAV, "collection"), (NS_DAV, "principal"),)
     }
 
     fn get_prop(

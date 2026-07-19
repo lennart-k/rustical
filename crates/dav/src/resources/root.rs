@@ -2,6 +2,7 @@ use crate::Principal;
 use crate::extensions::{
     CommonPropertiesExtension, CommonPropertiesProp, CommonPropertiesPropName,
 };
+use crate::namespace::NS_DAV;
 use crate::privileges::UserPrivilegeSet;
 use crate::resource::{AxumMethods, PrincipalUri, Resource, ResourceName, ResourceService};
 use crate::xml::{Resourcetype, ResourcetypeInner};
@@ -29,10 +30,7 @@ impl<PR: Resource, P: Principal> Resource for RootResource<PR, P> {
     }
 
     fn get_resourcetype(&self) -> Resourcetype {
-        Resourcetype(&[ResourcetypeInner(
-            Some(crate::namespace::NS_DAV),
-            "collection",
-        )])
+        Resourcetype(&[ResourcetypeInner(Some(NS_DAV), "collection")])
     }
 
     fn get_displayname(&self) -> Option<&str> {

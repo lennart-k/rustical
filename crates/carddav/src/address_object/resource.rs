@@ -13,6 +13,7 @@ use rustical_dav::{
     extensions::CommonPropertiesExtension,
     privileges::UserPrivilegeSet,
     resource::{PrincipalUri, Resource, ResourceName},
+    resourcetype,
     xml::Resourcetype,
 };
 use rustical_ical::AddressObject;
@@ -41,7 +42,7 @@ impl Resource for AddressObjectResource {
     }
 
     fn get_resourcetype(&self) -> Resourcetype {
-        Resourcetype(&[])
+        resourcetype!()
     }
 
     fn get_prop(

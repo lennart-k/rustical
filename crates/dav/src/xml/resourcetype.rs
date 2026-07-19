@@ -3,6 +3,17 @@ use rustical_xml::XmlSerialize;
 #[derive(Debug, Clone, PartialEq, Eq, XmlSerialize)]
 pub struct Resourcetype(#[xml(flatten, ty = "untagged")] pub &'static [ResourcetypeInner]);
 
+#[macro_export]
+macro_rules! resourcetype {
+    ($(($ns:expr, $name:expr)),* $(,)?) => {
+        ::rustical_dav::xml::Resourcetype(&[
+            $(::rustical_dav::xml::ResourcetypeInner(Some($ns), $name)),*
+        ])
+    };
+}
+
+pub use resourcetype;
+
 #[derive(Debug, Clone, PartialEq, Eq, XmlSerialize)]
 pub struct ResourcetypeInner(
     #[xml(ty = "namespace")] pub Option<quick_xml::name::Namespace<'static>>,
@@ -12,6 +23,8 @@ pub struct ResourcetypeInner(
 #[cfg(test)]
 mod tests {
     use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
+
+    use crate::namespace::{NS_CALENDARSERVER, NS_DAV};
 
     use super::{Resourcetype, ResourcetypeInner};
 
@@ -25,8 +38,8 @@ mod tests {
     fn test_serialize_resourcetype() {
         let out = Document {
             resourcetype: Resourcetype(&[
-                ResourcetypeInner(Some(crate::namespace::NS_DAV), "displayname"),
-                ResourcetypeInner(Some(crate::namespace::NS_CALENDARSERVER), "calendar-color"),
+                ResourcetypeInner(Some(NS_DAV), "displayname"),
+                ResourcetypeInner(Some(NS_CALENDARSERVER), "calendar-color"),
             ]),
         }
         .serialize_to_string()

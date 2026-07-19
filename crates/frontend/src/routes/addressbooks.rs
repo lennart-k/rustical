@@ -45,7 +45,7 @@ pub async fn route_addressbooks<AS: AddressbookStore + PrefixedCalendarStore>(
 
     let mut addressbook_infos = vec![];
     for addressbook in addressbooks {
-        let birthday_id = format!("{}{}", AS::PREFIX, &addressbook.id);
+        let birthday_id = format!("{}{}", AS::PREFIX, addressbook.id);
         let birthday_cal = match addr_store
             .get_calendar(&addressbook.principal, &birthday_id, true)
             .await
@@ -66,7 +66,7 @@ pub async fn route_addressbooks<AS: AddressbookStore + PrefixedCalendarStore>(
 
     let mut deleted_addressbook_infos = vec![];
     for addressbook in deleted_addressbooks {
-        let birthday_id = format!("{}{}", AS::PREFIX, &addressbook.id);
+        let birthday_id = format!("{}{}", AS::PREFIX, addressbook.id);
         let birthday_cal = match addr_store
             .get_calendar(&addressbook.principal, &birthday_id, true)
             .await

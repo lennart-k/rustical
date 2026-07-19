@@ -6,9 +6,11 @@ use crate::addressbook::prop::{
 };
 use derive_more::derive::{From, Into};
 use rustical_dav::extensions::{CommonPropertiesExtension, SyncTokenExtension};
+use rustical_dav::namespace::{NS_CARDDAV, NS_DAV};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
-use rustical_dav::xml::{Resourcetype, ResourcetypeInner, SupportedReportSet};
+use rustical_dav::resourcetype;
+use rustical_dav::xml::{Resourcetype, SupportedReportSet};
 use rustical_dav_push::DavPushExtension;
 use rustical_store::Addressbook;
 use rustical_store::auth::Principal;
@@ -45,10 +47,7 @@ impl Resource for AddressbookResource {
     }
 
     fn get_resourcetype(&self) -> Resourcetype {
-        Resourcetype(&[
-            ResourcetypeInner(Some(rustical_dav::namespace::NS_DAV), "collection"),
-            ResourcetypeInner(Some(rustical_dav::namespace::NS_CARDDAV), "addressbook"),
-        ])
+        resourcetype!((NS_DAV, "collection"), (NS_CARDDAV, "addressbook"))
     }
 
     fn get_prop(
