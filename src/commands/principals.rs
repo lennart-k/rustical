@@ -69,7 +69,6 @@ pub enum PrincipalsCommand {
 )]
 pub async fn cmd_principals(args: PrincipalsArgs, config: Config) -> anyhow::Result<()> {
     let (_, _, _, principal_store, _) = get_data_stores(true, &config.data_store).await?;
-
     match args.command {
         PrincipalsCommand::List => {
             for principal in principal_store.get_principals().await? {
@@ -91,7 +90,12 @@ pub async fn cmd_principals(args: PrincipalsArgs, config: Config) -> anyhow::Res
             let password = if let Some(pass) = for_testing_password_from_arg {
                 Some(pass)
             } else if password {
-                Some(rpassword::read_password()?)
+                Some(rpassword::prompt_password_with_config(
+                    "Type in a password: ",
+                    rpassword::ConfigBuilder::new()
+                        .password_feedback_mask('*')
+                        .build(),
+                )?)
             } else {
                 None
             };
@@ -143,7 +147,12 @@ pub async fn cmd_principals(args: PrincipalsArgs, config: Config) -> anyhow::Res
             let password = if let Some(pass) = for_testing_password_from_arg {
                 Some(pass)
             } else if password {
-                Some(rpassword::read_password()?)
+                Some(rpassword::prompt_password_with_config(
+                    "Type in a new password: ",
+                    rpassword::ConfigBuilder::new()
+                        .password_feedback_mask('*')
+                        .build(),
+                )?)
             } else {
                 None
             };
