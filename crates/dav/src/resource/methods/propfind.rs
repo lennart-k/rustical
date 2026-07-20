@@ -5,6 +5,7 @@ use crate::resource::PrincipalUri;
 use crate::resource::Resource;
 use crate::resource::ResourceName;
 use crate::resource::ResourceService;
+use crate::rfc_3986_percent_encode;
 use crate::xml::MultistatusElement;
 use axum::extract::{Extension, OriginalUri, Path, State};
 use axum_extra::TypedHeader;
@@ -64,7 +65,16 @@ pub async fn route_propfind<R: ResourceService>(
         // TODO: authorization check for member resources
         for member in resource_service.get_members(path_components).await? {
             member_responses.push(member.propfind(
-                &format!("{}/{}", path.trim_end_matches('/'), member.get_name()),
+                &format!(
+                    "{}/{}{}",
+                    path.trim_end_matches('/'),
+                    rfc_3986_percent_encode(member.get_name().as_ref()),
+                    if member.is_collection() {
+                        "/"
+                    } else {
+                        Default::default()
+                    }
+                ),
                 &propfind_member.prop,
                 propfind_member.include.as_ref(),
                 puri,
