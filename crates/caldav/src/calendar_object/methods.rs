@@ -6,7 +6,7 @@ use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Response};
 use axum_extra::TypedHeader;
 use caldata::parser::ParserOptions;
-use headers::{ContentType, ETag, HeaderMapExt, IfNoneMatch};
+use headers::{ContentType, ETag, HeaderMapExt, IfMatch, IfNoneMatch};
 use http::{HeaderMap, HeaderValue, Method, StatusCode};
 use rustical_ical::CalendarObject;
 use rustical_store::CalendarStore;
@@ -65,6 +65,7 @@ pub async fn put_event<C: CalendarStore>(
         CalendarObjectResourceService<C>,
     >,
     user: Principal,
+    mut if_match: Option<TypedHeader<IfMatch>>,
     mut if_none_match: Option<TypedHeader<IfNoneMatch>>,
     header_map: HeaderMap,
     body: String,
@@ -74,8 +75,33 @@ pub async fn put_event<C: CalendarStore>(
     }
 
     // https://github.com/hyperium/headers/issues/204
+    if !header_map.contains_key("If-Match") {
+        if_match = None;
+    }
     if !header_map.contains_key("If-None-Match") {
         if_none_match = None;
+    }
+
+    if let Some(TypedHeader(if_match)) = if_match {
+        let existing = match cal_store
+            .get_object(&principal, &calendar_id, &object_id, false)
+            .await
+        {
+            Ok(existing) => Some(existing),
+            Err(rustical_store::Error::NotFound) => None,
+            Err(err) => Err(err)?,
+        };
+        let matches = existing.is_some_and(|existing| {
+            if_match.precondition_passes(
+                &existing
+                    .get_etag()
+                    .parse()
+                    .expect("We only generate valid ETags"),
+            )
+        });
+        if !matches {
+            return Err(rustical_dav::Error::PreconditionFailed.into());
+        }
     }
 
     let overwrite = if let Some(TypedHeader(if_none_match)) = if_none_match {
