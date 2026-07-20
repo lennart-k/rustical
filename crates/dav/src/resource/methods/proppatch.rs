@@ -169,23 +169,30 @@ pub async fn route_proppatch<R: ResourceService>(
             .await?;
     }
 
+    let mut propstats = Vec::with_capacity(3);
+    if !props_ok.is_empty() {
+        propstats.push(PropstatWrapper::TagList(PropstatElement {
+            prop: TagList::from(props_ok),
+            status: StatusCode::OK,
+        }));
+    }
+    if !props_not_found.is_empty() {
+        propstats.push(PropstatWrapper::TagList(PropstatElement {
+            prop: TagList::from(props_not_found),
+            status: StatusCode::NOT_FOUND,
+        }));
+    }
+    if !props_conflict.is_empty() {
+        propstats.push(PropstatWrapper::TagList(PropstatElement {
+            prop: TagList::from(props_conflict),
+            status: StatusCode::CONFLICT,
+        }));
+    }
+
     Ok(MultistatusElement {
         responses: vec![ResponseElement {
             href: Uri::from_str(path).unwrap(),
-            propstat: vec![
-                PropstatWrapper::TagList(PropstatElement {
-                    prop: TagList::from(props_ok),
-                    status: StatusCode::OK,
-                }),
-                PropstatWrapper::TagList(PropstatElement {
-                    prop: TagList::from(props_not_found),
-                    status: StatusCode::NOT_FOUND,
-                }),
-                PropstatWrapper::TagList(PropstatElement {
-                    prop: TagList::from(props_conflict),
-                    status: StatusCode::CONFLICT,
-                }),
-            ],
+            propstat: propstats,
             status: None,
         }],
         ..Default::default()
