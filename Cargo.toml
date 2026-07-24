@@ -74,7 +74,7 @@ tokio = { version = "1.53", features = [
 ] }
 tokio-util = { version = "0.7", features = ["rt"] }
 url = "2.5"
-base64 = "0.22"
+base64 = "0.23"
 thiserror = "2.0"
 quick-xml = { version = "0.41" }
 rust-embed = "8.12"
