@@ -5,8 +5,9 @@ use axum::{
     routing::delete,
 };
 use http::StatusCode;
-use rustical_store::SubscriptionStore;
 use std::sync::Arc;
+
+use crate::SubscriptionStore;
 
 async fn handle_delete<S: SubscriptionStore>(
     State(store): State<Arc<S>>,

@@ -9,14 +9,15 @@ use caldata::parser::ContentLine;
 use headers::{ContentType, HeaderMapExt};
 use http::{HeaderValue, Method, StatusCode, header};
 use rustical_dav::rfc_3986_percent_encode;
-use rustical_store::{CalendarStore, SubscriptionStore, auth::Principal};
+use rustical_dav_push::DavPushStore;
+use rustical_store::{CalendarStore, auth::Principal};
 use std::str::FromStr;
 use tracing::instrument;
 
 #[instrument(skip(cal_store))]
-pub async fn route_get<C: CalendarStore, S: SubscriptionStore>(
+pub async fn route_get<C: CalendarStore, DP: DavPushStore>(
     Path((principal, calendar_id)): Path<(String, String)>,
-    State(CalendarResourceService { cal_store, .. }): State<CalendarResourceService<C, S>>,
+    State(CalendarResourceService { cal_store, .. }): State<CalendarResourceService<C, DP>>,
     user: Principal,
     method: Method,
 ) -> Result<Response, Error> {

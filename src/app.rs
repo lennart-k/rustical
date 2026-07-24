@@ -11,13 +11,13 @@ use http::header::CONNECTION;
 use http::{HeaderValue, StatusCode};
 use rustical_caldav::{CalDavConfig, caldav_router};
 use rustical_carddav::carddav_router;
+use rustical_dav_push::DavPushStore;
 use rustical_frontend::nextcloud_login::nextcloud_login_router;
 use rustical_frontend::{FrontendConfig, frontend_router};
 use rustical_oidc::OidcConfig;
 use rustical_store::auth::AuthenticationProvider;
 use rustical_store::{
     AddressbookStore, CalendarStore, CombinedCalendarStore, PrefixedCalendarStore,
-    SubscriptionStore,
 };
 use std::sync::Arc;
 use std::time::Duration;
@@ -38,11 +38,11 @@ use tracing::field::display;
 pub fn make_app<
     AS: AddressbookStore + PrefixedCalendarStore,
     CS: CalendarStore,
-    S: SubscriptionStore,
+    DP: DavPushStore,
 >(
     addr_store: Arc<AS>,
     cal_store: Arc<CS>,
-    subscription_store: Arc<S>,
+    subscription_store: Arc<DP>,
     auth_provider: Arc<impl AuthenticationProvider>,
     frontend_config: FrontendConfig,
     oidc_config: Option<OidcConfig>,

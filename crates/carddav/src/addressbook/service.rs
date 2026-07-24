@@ -14,38 +14,39 @@ use axum::handler::Handler;
 use axum::response::Response;
 use futures_util::future::BoxFuture;
 use rustical_dav::resource::{AxumMethods, ResourceService};
+use rustical_dav_push::DavPushStore;
+use rustical_store::AddressbookStore;
 use rustical_store::auth::Principal;
-use rustical_store::{AddressbookStore, SubscriptionStore};
 use std::convert::Infallible;
 use std::sync::Arc;
 use tower::Service;
 
-pub struct AddressbookResourceService<AS: AddressbookStore, S: SubscriptionStore> {
+pub struct AddressbookResourceService<AS: AddressbookStore, DP: DavPushStore> {
     pub(crate) addr_store: Arc<AS>,
-    pub(crate) sub_store: Arc<S>,
+    pub(crate) dav_push_store: Arc<DP>,
 }
 
-impl<A: AddressbookStore, S: SubscriptionStore> AddressbookResourceService<A, S> {
-    pub const fn new(addr_store: Arc<A>, sub_store: Arc<S>) -> Self {
+impl<A: AddressbookStore, DP: DavPushStore> AddressbookResourceService<A, DP> {
+    pub const fn new(addr_store: Arc<A>, dav_push_store: Arc<DP>) -> Self {
         Self {
             addr_store,
-            sub_store,
+            dav_push_store,
         }
     }
 }
 
-impl<A: AddressbookStore, S: SubscriptionStore> Clone for AddressbookResourceService<A, S> {
+impl<A: AddressbookStore, DP: DavPushStore> Clone for AddressbookResourceService<A, DP> {
     fn clone(&self) -> Self {
         Self {
             addr_store: self.addr_store.clone(),
-            sub_store: self.sub_store.clone(),
+            dav_push_store: self.dav_push_store.clone(),
         }
     }
 }
 
 #[async_trait]
-impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
-    for AddressbookResourceService<AS, S>
+impl<AS: AddressbookStore, DP: DavPushStore> ResourceService
+    for AddressbookResourceService<AS, DP>
 {
     type MemberType = AddressObjectResource;
     type PathComponents = (String, String); // principal, addressbook_id
@@ -118,38 +119,38 @@ impl<AS: AddressbookStore, S: SubscriptionStore> ResourceService
     }
 }
 
-impl<AS: AddressbookStore, S: SubscriptionStore> AxumMethods for AddressbookResourceService<AS, S> {
+impl<AS: AddressbookStore, DP: DavPushStore> AxumMethods for AddressbookResourceService<AS, DP> {
     fn report() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
         Some(|state, req| {
-            let mut service = Handler::with_state(route_report_addressbook::<AS, S>, state);
+            let mut service = Handler::with_state(route_report_addressbook::<AS, DP>, state);
             Box::pin(Service::call(&mut service, req))
         })
     }
 
     fn get() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
         Some(|state, req| {
-            let mut service = Handler::with_state(route_get::<AS, S>, state);
+            let mut service = Handler::with_state(route_get::<AS, DP>, state);
             Box::pin(Service::call(&mut service, req))
         })
     }
 
     fn post() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
         Some(|state, req| {
-            let mut service = Handler::with_state(route_post::<AS, S>, state);
+            let mut service = Handler::with_state(route_post::<AS, DP>, state);
             Box::pin(Service::call(&mut service, req))
         })
     }
 
     fn import() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
         Some(|state, req| {
-            let mut service = Handler::with_state(route_import::<AS, S>, state);
+            let mut service = Handler::with_state(route_import::<AS, DP>, state);
             Box::pin(Service::call(&mut service, req))
         })
     }
 
     fn mkcol() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
         Some(|state, req| {
-            let mut service = Handler::with_state(route_mkcol::<AS, S>, state);
+            let mut service = Handler::with_state(route_mkcol::<AS, DP>, state);
             Box::pin(Service::call(&mut service, req))
         })
     }

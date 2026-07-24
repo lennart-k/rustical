@@ -7,16 +7,17 @@ use http::{HeaderMap, HeaderValue, StatusCode, header};
 use rustical_dav::privileges::UserPrivilege;
 use rustical_dav::resource::Resource;
 use rustical_dav_push::register::PushRegister;
+use rustical_dav_push::{DavPushStore, Subscription};
+use rustical_store::AddressbookStore;
 use rustical_store::auth::Principal;
-use rustical_store::{AddressbookStore, Subscription, SubscriptionStore};
 use rustical_xml::XmlDocument;
 use tracing::instrument;
 
 #[instrument(skip(resource_service))]
-pub async fn route_post<AS: AddressbookStore, S: SubscriptionStore>(
+pub async fn route_post<AS: AddressbookStore, DP: DavPushStore>(
     Path((principal, addr_id)): Path<(String, String)>,
     user: Principal,
-    State(resource_service): State<AddressbookResourceService<AS, S>>,
+    State(resource_service): State<AddressbookResourceService<AS, DP>>,
     body: String,
 ) -> Result<Response, Error> {
     if !user.is_principal(&principal) {
@@ -66,7 +67,7 @@ pub async fn route_post<AS: AddressbookStore, S: SubscriptionStore>(
         auth_secret: request.subscription.web_push_subscription.auth_secret,
     };
     resource_service
-        .sub_store
+        .dav_push_store
         .upsert_subscription(subscription)
         .await?;
 

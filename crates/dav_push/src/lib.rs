@@ -10,9 +10,7 @@ pub use extension::*;
 use http::{HeaderValue, Method, header};
 pub use prop::*;
 use reqwest::{Body, Url};
-use rustical_store::{
-    CollectionOperation, CollectionOperationInfo, Subscription, SubscriptionStore,
-};
+use rustical_store::{CollectionOperation, CollectionOperationInfo};
 use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::mpsc::Receiver;
@@ -20,6 +18,12 @@ use tracing::{error, info, warn};
 
 mod endpoints;
 pub use endpoints::subscription_service;
+
+mod store;
+pub use store::*;
+
+mod subscription;
+pub use subscription::*;
 
 #[derive(XmlSerialize, Debug)]
 pub struct ContentUpdate {
@@ -234,11 +238,10 @@ impl NotifierError {
 
 #[cfg(test)]
 mod tests {
-    use crate::send_payload;
+    use crate::{Subscription, send_payload};
     use base64::Engine;
     use chrono::NaiveDateTime;
     use ece::generate_keypair_and_auth_secret;
-    use rustical_store::Subscription;
 
     #[tokio::test]
     async fn test_ntfy_request() {

@@ -131,7 +131,6 @@ pub trait CalendarStorePruneDeleted: Send + Sync + 'static {
     async fn prune_deleted_objects(&self, before: NaiveDate) -> Result<(), Error>;
 }
 
-#[async_trait]
 pub trait CalendarStore:
     CalendarReadStore + CalendarWriteStore + CalendarStorePruneDeleted
 {

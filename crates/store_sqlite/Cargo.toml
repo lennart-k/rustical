@@ -40,3 +40,4 @@ sha2.workspace = true
 regex.workspace = true
 rand.workspace = true
 hex.workspace = true
+rustical_dav_push.workspace = true

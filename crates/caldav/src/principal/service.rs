@@ -5,31 +5,29 @@ use crate::{CalDavConfig, CalDavPrincipalUri, Error};
 use async_trait::async_trait;
 use axum::Router;
 use rustical_dav::resource::{AxumMethods, ResourceService};
+use rustical_dav_push::DavPushStore;
+use rustical_store::CalendarStore;
 use rustical_store::auth::{AuthenticationProvider, Principal};
-use rustical_store::{CalendarStore, SubscriptionStore};
 use std::sync::Arc;
 
 #[derive(Debug)]
-pub struct PrincipalResourceService<
-    AP: AuthenticationProvider,
-    S: SubscriptionStore,
-    CS: CalendarStore,
-> {
+pub struct PrincipalResourceService<AP: AuthenticationProvider, DP: DavPushStore, CS: CalendarStore>
+{
     pub(crate) auth_provider: Arc<AP>,
-    pub(crate) sub_store: Arc<S>,
+    pub(crate) dav_push_store: Arc<DP>,
     pub(crate) cal_store: Arc<CS>,
     // If true only return the principal as the calendar home set, otherwise also groups
     pub(crate) simplified_home_set: bool,
     pub(crate) config: Arc<CalDavConfig>,
 }
 
-impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Clone
-    for PrincipalResourceService<AP, S, CS>
+impl<AP: AuthenticationProvider, DP: DavPushStore, CS: CalendarStore> Clone
+    for PrincipalResourceService<AP, DP, CS>
 {
     fn clone(&self) -> Self {
         Self {
             auth_provider: self.auth_provider.clone(),
-            sub_store: self.sub_store.clone(),
+            dav_push_store: self.dav_push_store.clone(),
             cal_store: self.cal_store.clone(),
             simplified_home_set: self.simplified_home_set,
             config: self.config.clone(),
@@ -38,8 +36,8 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Clone
 }
 
 #[async_trait]
-impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> ResourceService
-    for PrincipalResourceService<AP, S, CS>
+impl<AP: AuthenticationProvider, DP: DavPushStore, CS: CalendarStore> ResourceService
+    for PrincipalResourceService<AP, DP, CS>
 {
     type PathComponents = (String,);
     type MemberType = CalendarResource;
@@ -88,7 +86,7 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Resour
                 "/{calendar_id}",
                 CalendarResourceService::new(
                     self.cal_store.clone(),
-                    self.sub_store.clone(),
+                    self.dav_push_store.clone(),
                     self.config.clone(),
                 )
                 .axum_router(),
@@ -97,7 +95,7 @@ impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> Resour
     }
 }
 
-impl<AP: AuthenticationProvider, S: SubscriptionStore, CS: CalendarStore> AxumMethods
-    for PrincipalResourceService<AP, S, CS>
+impl<AP: AuthenticationProvider, DP: DavPushStore, CS: CalendarStore> AxumMethods
+    for PrincipalResourceService<AP, DP, CS>
 {
 }

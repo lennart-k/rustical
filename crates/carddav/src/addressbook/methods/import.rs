@@ -10,14 +10,15 @@ use caldata::{
     parser::{ContentLine, ParserOptions},
 };
 use http::StatusCode;
-use rustical_store::{Addressbook, AddressbookStore, SubscriptionStore, auth::Principal};
+use rustical_dav_push::DavPushStore;
+use rustical_store::{Addressbook, AddressbookStore, auth::Principal};
 use tracing::instrument;
 
 #[instrument(skip(resource_service))]
-pub async fn route_import<AS: AddressbookStore, S: SubscriptionStore>(
+pub async fn route_import<AS: AddressbookStore, DP: DavPushStore>(
     Path((principal, addressbook_id)): Path<(String, String)>,
     user: Principal,
-    State(resource_service): State<AddressbookResourceService<AS, S>>,
+    State(resource_service): State<AddressbookResourceService<AS, DP>>,
     body: String,
 ) -> Result<Response, Error> {
     if !user.is_principal(&principal) {

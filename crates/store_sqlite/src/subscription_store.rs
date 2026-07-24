@@ -1,6 +1,7 @@
 use crate::SqliteStore;
 use async_trait::async_trait;
-use rustical_store::{Error, Subscription, SubscriptionStore};
+use rustical_dav_push::{Subscription, SubscriptionStore};
+use rustical_store::Error;
 
 #[async_trait]
 impl SubscriptionStore for SqliteStore {

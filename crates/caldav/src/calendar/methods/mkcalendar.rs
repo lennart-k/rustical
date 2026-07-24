@@ -7,9 +7,10 @@ use axum::response::{IntoResponse, Response};
 use caldata::IcalParser;
 use http::{Method, StatusCode};
 use rustical_dav::xml::HrefElement;
+use rustical_dav_push::DavPushStore;
 use rustical_ical::CalendarObjectType;
 use rustical_store::auth::Principal;
-use rustical_store::{Calendar, CalendarMetadata, CalendarStore, SubscriptionStore};
+use rustical_store::{Calendar, CalendarMetadata, CalendarStore};
 use rustical_xml::{Unparsed, XmlDeserialize, XmlDocument, XmlRootTag};
 use std::str::FromStr;
 use tracing::instrument;
@@ -64,10 +65,10 @@ struct MkcolRequest {
 }
 
 #[instrument(skip(cal_store))]
-pub async fn route_mkcalendar<C: CalendarStore, S: SubscriptionStore>(
+pub async fn route_mkcalendar<C: CalendarStore, DP: DavPushStore>(
     Path((principal, cal_id)): Path<(String, String)>,
     user: Principal,
-    State(CalendarResourceService { cal_store, .. }): State<CalendarResourceService<C, S>>,
+    State(CalendarResourceService { cal_store, .. }): State<CalendarResourceService<C, DP>>,
     method: Method,
     body: String,
 ) -> Result<Response, Error> {

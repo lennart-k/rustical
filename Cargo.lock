@@ -3941,6 +3941,7 @@ dependencies = [
  "rand 0.10.2",
  "regex",
  "rstest",
+ "rustical_dav_push",
  "rustical_ical",
  "rustical_store",
  "serde",

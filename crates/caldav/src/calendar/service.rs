@@ -9,45 +9,48 @@ use crate::calendar_object::resource::CalendarObjectResource;
 use crate::{CalDavConfig, CalDavPrincipalUri, Error};
 use async_trait::async_trait;
 use axum::Router;
+use axum::body::Body;
 use axum::extract::Request;
 use axum::handler::Handler;
-use axum::response::Response;
-use futures_util::future::BoxFuture;
-use rustical_dav::resource::{AxumMethods, ResourceService};
+use rustical_dav::resource::{AxumMethods, MethodFunction, ResourceService};
+use rustical_dav_push::DavPushStore;
+use rustical_store::CalendarStore;
 use rustical_store::auth::Principal;
-use rustical_store::{CalendarStore, SubscriptionStore};
-use std::convert::Infallible;
 use std::sync::Arc;
 use tower::Service;
 
-pub struct CalendarResourceService<C: CalendarStore, S: SubscriptionStore> {
+pub struct CalendarResourceService<C: CalendarStore, DP: DavPushStore> {
     pub(crate) cal_store: Arc<C>,
-    pub(crate) sub_store: Arc<S>,
+    pub(crate) dav_push_store: Arc<DP>,
     pub(crate) config: Arc<CalDavConfig>,
 }
 
-impl<C: CalendarStore, S: SubscriptionStore> Clone for CalendarResourceService<C, S> {
+impl<C: CalendarStore, DP: DavPushStore> Clone for CalendarResourceService<C, DP> {
     fn clone(&self) -> Self {
         Self {
             cal_store: self.cal_store.clone(),
-            sub_store: self.sub_store.clone(),
+            dav_push_store: self.dav_push_store.clone(),
             config: self.config.clone(),
         }
     }
 }
 
-impl<C: CalendarStore, S: SubscriptionStore> CalendarResourceService<C, S> {
-    pub const fn new(cal_store: Arc<C>, sub_store: Arc<S>, config: Arc<CalDavConfig>) -> Self {
+impl<C: CalendarStore, DP: DavPushStore> CalendarResourceService<C, DP> {
+    pub const fn new(
+        cal_store: Arc<C>,
+        dav_push_store: Arc<DP>,
+        config: Arc<CalDavConfig>,
+    ) -> Self {
         Self {
             cal_store,
-            sub_store,
+            dav_push_store,
             config,
         }
     }
 }
 
 #[async_trait]
-impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourceService<C, S> {
+impl<C: CalendarStore, DP: DavPushStore> ResourceService for CalendarResourceService<C, DP> {
     type MemberType = CalendarObjectResource;
     type PathComponents = (String, String); // principal, calendar_id
     type Resource = CalendarResource;
@@ -122,47 +125,46 @@ impl<C: CalendarStore, S: SubscriptionStore> ResourceService for CalendarResourc
     }
 }
 
-impl<C: CalendarStore, S: SubscriptionStore> AxumMethods for CalendarResourceService<C, S> {
-    fn report() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
+impl<C: CalendarStore, DP: DavPushStore> AxumMethods for CalendarResourceService<C, DP> {
+    fn report() -> Option<MethodFunction<Self>> {
         Some(|state, req| {
-            let mut service = Handler::with_state(route_report_calendar::<C, S>, state);
+            let mut service = Handler::with_state(route_report_calendar::<C, DP>, state);
             Box::pin(Service::call(&mut service, req))
         })
     }
 
-    fn get() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
+    fn get() -> Option<MethodFunction<Self>> {
         Some(|state, req| {
-            let mut service = Handler::with_state(route_get::<C, S>, state);
+            let mut service = Handler::with_state(route_get::<C, DP>, state);
             Box::pin(Service::call(&mut service, req))
         })
     }
 
-    fn post() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
+    fn post() -> Option<MethodFunction<Self>> {
         Some(|state, req| {
-            let mut service = Handler::with_state(route_post::<C, S>, state);
+            let mut service = Handler::with_state(route_post::<C, DP>, state);
             Box::pin(Service::call(&mut service, req))
         })
     }
 
-    fn import() -> Option<rustical_dav::resource::MethodFunction<Self>> {
+    fn import() -> Option<MethodFunction<Self>> {
         Some(|state, req| {
-            let mut service = Handler::with_state(route_import::<C, S>, state);
+            let mut service = Handler::with_state(route_import::<C, DP>, state);
             Box::pin(Service::call(&mut service, req))
         })
     }
 
-    fn mkcalendar() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>>
-    {
+    fn mkcalendar() -> Option<MethodFunction<Self>> {
         Some(|state, req| {
-            let mut service = Handler::with_state(route_mkcalendar::<C, S>, state);
-            Box::pin(Service::call(&mut service, req))
+            let mut service = Handler::with_state(route_mkcalendar::<C, DP>, state);
+            Box::pin(Service::<Request<Body>>::call(&mut service, req))
         })
     }
 
-    fn mkcol() -> Option<fn(Self, Request) -> BoxFuture<'static, Result<Response, Infallible>>> {
+    fn mkcol() -> Option<MethodFunction<Self>> {
         Some(|state, req| {
-            let mut service = Handler::with_state(route_mkcalendar::<C, S>, state);
-            Box::pin(Service::call(&mut service, req))
+            let mut service = Handler::with_state(route_mkcalendar::<C, DP>, state);
+            Box::pin(Service::<Request<Body>>::call(&mut service, req))
         })
     }
 }

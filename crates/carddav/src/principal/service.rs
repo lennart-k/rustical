@@ -6,47 +6,48 @@ use crate::principal::PrincipalResource;
 use async_trait::async_trait;
 use axum::Router;
 use rustical_dav::resource::{AxumMethods, ResourceService};
+use rustical_dav_push::DavPushStore;
+use rustical_store::AddressbookStore;
 use rustical_store::auth::{AuthenticationProvider, Principal};
-use rustical_store::{AddressbookStore, SubscriptionStore};
 use std::sync::Arc;
 
 pub struct PrincipalResourceService<
     A: AddressbookStore,
     AP: AuthenticationProvider,
-    S: SubscriptionStore,
+    DP: DavPushStore,
 > {
     addr_store: Arc<A>,
     auth_provider: Arc<AP>,
-    sub_store: Arc<S>,
+    dav_push_store: Arc<DP>,
 }
 
-impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> Clone
-    for PrincipalResourceService<A, AP, S>
+impl<A: AddressbookStore, AP: AuthenticationProvider, DP: DavPushStore> Clone
+    for PrincipalResourceService<A, AP, DP>
 {
     fn clone(&self) -> Self {
         Self {
             addr_store: self.addr_store.clone(),
             auth_provider: self.auth_provider.clone(),
-            sub_store: self.sub_store.clone(),
+            dav_push_store: self.dav_push_store.clone(),
         }
     }
 }
 
-impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore>
-    PrincipalResourceService<A, AP, S>
+impl<A: AddressbookStore, AP: AuthenticationProvider, DP: DavPushStore>
+    PrincipalResourceService<A, AP, DP>
 {
-    pub const fn new(addr_store: Arc<A>, auth_provider: Arc<AP>, sub_store: Arc<S>) -> Self {
+    pub const fn new(addr_store: Arc<A>, auth_provider: Arc<AP>, dav_push_store: Arc<DP>) -> Self {
         Self {
             addr_store,
             auth_provider,
-            sub_store,
+            dav_push_store,
         }
     }
 }
 
 #[async_trait]
-impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> ResourceService
-    for PrincipalResourceService<A, AP, S>
+impl<A: AddressbookStore, AP: AuthenticationProvider, DP: DavPushStore> ResourceService
+    for PrincipalResourceService<A, AP, DP>
 {
     type PathComponents = (String,);
     type MemberType = AddressbookResource;
@@ -88,14 +89,17 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> Reso
         Router::new()
             .nest(
                 "/{addressbook_id}",
-                AddressbookResourceService::new(self.addr_store.clone(), self.sub_store.clone())
-                    .axum_router(),
+                AddressbookResourceService::new(
+                    self.addr_store.clone(),
+                    self.dav_push_store.clone(),
+                )
+                .axum_router(),
             )
             .route_service("/", self.axum_service())
     }
 }
 
-impl<A: AddressbookStore, AP: AuthenticationProvider, S: SubscriptionStore> AxumMethods
-    for PrincipalResourceService<A, AP, S>
+impl<A: AddressbookStore, AP: AuthenticationProvider, DP: DavPushStore> AxumMethods
+    for PrincipalResourceService<A, AP, DP>
 {
 }

@@ -9,15 +9,16 @@ use http::{HeaderValue, Method, StatusCode, header};
 use rustical_dav::privileges::UserPrivilege;
 use rustical_dav::resource::Resource;
 use rustical_dav::rfc_3986_percent_encode;
+use rustical_dav_push::DavPushStore;
+use rustical_store::AddressbookStore;
 use rustical_store::auth::Principal;
-use rustical_store::{AddressbookStore, SubscriptionStore};
 use std::str::FromStr;
 use tracing::instrument;
 
 #[instrument(skip(addr_store))]
-pub async fn route_get<AS: AddressbookStore, S: SubscriptionStore>(
+pub async fn route_get<AS: AddressbookStore, DP: DavPushStore>(
     Path((principal, addressbook_id)): Path<(String, String)>,
-    State(AddressbookResourceService { addr_store, .. }): State<AddressbookResourceService<AS, S>>,
+    State(AddressbookResourceService { addr_store, .. }): State<AddressbookResourceService<AS, DP>>,
     user: Principal,
     method: Method,
 ) -> Result<Response, Error> {

@@ -9,17 +9,16 @@ use caldata::component::{Component, ComponentMut};
 use caldata::{IcalParser, parser::ParserOptions};
 use http::StatusCode;
 use rustical_dav::header::Overwrite;
+use rustical_dav_push::DavPushStore;
 use rustical_ical::CalendarObjectType;
-use rustical_store::{
-    Calendar, CalendarMetadata, CalendarStore, SubscriptionStore, auth::Principal,
-};
+use rustical_store::{Calendar, CalendarMetadata, CalendarStore, auth::Principal};
 use tracing::instrument;
 
 #[instrument(skip(resource_service))]
-pub async fn route_import<C: CalendarStore, S: SubscriptionStore>(
+pub async fn route_import<C: CalendarStore, DP: DavPushStore>(
     Path((principal, cal_id)): Path<(String, String)>,
     user: Principal,
-    State(resource_service): State<CalendarResourceService<C, S>>,
+    State(resource_service): State<CalendarResourceService<C, DP>>,
     overwrite: Option<TypedHeader<Overwrite>>,
     body: String,
 ) -> Result<Response, Error> {

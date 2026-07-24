@@ -21,8 +21,9 @@ use rustical_dav::{
         sync_collection::SyncCollectionRequest,
     },
 };
+use rustical_dav_push::DavPushStore;
 use rustical_ical::CalendarObject;
-use rustical_store::{CalendarStore, SubscriptionStore, auth::Principal};
+use rustical_store::{CalendarStore, auth::Principal};
 use rustical_xml::{XmlDeserialize, XmlDocument};
 use std::str::FromStr;
 use sync_collection::handle_sync_collection;
@@ -95,11 +96,11 @@ fn objects_response(
 }
 
 #[instrument(skip(cal_store))]
-pub async fn route_report_calendar<C: CalendarStore, S: SubscriptionStore>(
+pub async fn route_report_calendar<C: CalendarStore, DP: DavPushStore>(
     Path((principal, cal_id)): Path<(String, String)>,
     user: Principal,
     Extension(puri): Extension<CalDavPrincipalUri>,
-    State(CalendarResourceService { cal_store, .. }): State<CalendarResourceService<C, S>>,
+    State(CalendarResourceService { cal_store, .. }): State<CalendarResourceService<C, DP>>,
     OriginalUri(uri): OriginalUri,
     matched_path: MatchedPath,
     body: String,

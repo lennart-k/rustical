@@ -27,8 +27,9 @@ use rustical_dav::{
         sync_collection::SyncCollectionRequest,
     },
 };
+use rustical_dav_push::DavPushStore;
 use rustical_ical::AddressObject;
-use rustical_store::{AddressbookStore, SubscriptionStore, auth::Principal};
+use rustical_store::{AddressbookStore, auth::Principal};
 use rustical_xml::{XmlDeserialize, XmlDocument};
 use sync_collection::handle_sync_collection;
 use tracing::instrument;
@@ -100,12 +101,12 @@ fn objects_response(
 }
 
 #[instrument(skip(addr_store))]
-pub async fn route_report_addressbook<AS: AddressbookStore, S: SubscriptionStore>(
+pub async fn route_report_addressbook<AS: AddressbookStore, DP: DavPushStore>(
     Path((principal, addressbook_id)): Path<(String, String)>,
     user: Principal,
     OriginalUri(uri): OriginalUri,
     Extension(puri): Extension<CardDavPrincipalUri>,
-    State(AddressbookResourceService { addr_store, .. }): State<AddressbookResourceService<AS, S>>,
+    State(AddressbookResourceService { addr_store, .. }): State<AddressbookResourceService<AS, DP>>,
     body: String,
 ) -> Result<impl IntoResponse, Error> {
     if !user.is_principal(&principal) {
