@@ -4,9 +4,7 @@ use rustical_dav::namespace::NS_DAV;
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
 use rustical_dav::resourcetype;
-use rustical_dav::xml::{
-    GroupMemberSet, GroupMembership, Resourcetype, SupportedReportSet,
-};
+use rustical_dav::xml::{GroupMemberSet, GroupMembership, Resourcetype, SupportedReportSet};
 use rustical_store::auth::Principal;
 use std::borrow::Cow;
 
