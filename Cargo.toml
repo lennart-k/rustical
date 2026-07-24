@@ -2,7 +2,7 @@
 members = ["crates/*"]
 
 [workspace.package]
-version = "0.14.0"
+version = "0.14.1"
 rust-version = "1.97"
 edition = "2024"
 description = "A CalDAV server"
