@@ -5,7 +5,7 @@ permissions:
   pull-requests: write
 
 env:
-  RUST_VERSION: "1.95"
+  RUST_VERSION: "1.97"
   CARGO_TERM_COLOR: always
 
 jobs:
