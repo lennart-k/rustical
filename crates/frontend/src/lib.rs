@@ -149,7 +149,7 @@ async fn unauthorized_handler(mut request: Request, next: Next) -> Response {
         hdrs.typed_insert(ContentType::html());
         return resp
             .body(Body::new(format!(
-                r#"<!Doctype html>
+                r#"<!doctype html>
 <html>
     <head>
         <meta http-equiv="refresh" content="1; url={login_url}" />
