@@ -33,6 +33,8 @@ futures-core.workspace = true
 tower-sessions.workspace = true
 vtimezones-rs.workspace = true
 password-auth.workspace = true
+openssl.workspace = true
+ct-codecs.workspace = true
 
 [dev-dependencies]
 rstest.workspace = true

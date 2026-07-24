@@ -50,6 +50,7 @@ rustical_xml = { path = "./crates/xml/" }
 rustical_oidc = { path = "./crates/oidc/" }
 rustical_ical = { path = "./crates/ical/" }
 
+ct-codecs = "1.1"
 pbkdf2 = { version = "0.13", features = ["phc"] }
 matchit = "0.9"
 uuid = { version = "1.19", features = ["v4", "fast-rng"] }

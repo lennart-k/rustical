@@ -1007,6 +1007,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "ct-codecs"
+version = "1.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "49fb0c6640b4507ebd99ff67677009e381ba5eee1d14df78de4a3d16eb123c39"
+
+[[package]]
 name = "ctutils"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3808,6 +3814,7 @@ dependencies = [
  "axum",
  "base64 0.23.0",
  "chrono",
+ "ct-codecs",
  "derive_more",
  "ece",
  "futures-util",
@@ -3909,10 +3916,12 @@ dependencies = [
  "chrono",
  "chrono-tz",
  "clap",
+ "ct-codecs",
  "derive_more",
  "futures-core",
  "headers",
  "http",
+ "openssl",
  "password-auth",
  "regex",
  "rstest",

@@ -1,4 +1,4 @@
-use crate::Subscription;
+use crate::{Subscription, vapid::VapidPublicKey};
 use async_trait::async_trait;
 use rustical_store::Error;
 
@@ -9,6 +9,11 @@ pub trait SubscriptionStore: Send + Sync + 'static {
     /// Returns whether a subscription under the id already existed
     async fn upsert_subscription(&self, sub: Subscription) -> Result<bool, Error>;
     async fn delete_subscription(&self, id: &str) -> Result<(), Error>;
+}
+
+#[async_trait]
+pub trait VapidStore: Send + Sync + 'static {
+    async fn get_vapid_pubkey(&self) -> Result<VapidPublicKey, Error>;
 }
 
 pub trait DavPushStore: SubscriptionStore {}

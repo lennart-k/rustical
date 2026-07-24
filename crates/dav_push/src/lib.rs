@@ -19,6 +19,8 @@ use tracing::{error, info, warn};
 mod endpoints;
 pub use endpoints::subscription_service;
 
+pub mod vapid;
+
 mod store;
 pub use store::*;
 
