@@ -30,7 +30,7 @@ impl Error {
     pub const fn status_code(&self) -> StatusCode {
         match self {
             Self::BadRequest(_) => StatusCode::BAD_REQUEST,
-            Self::Unauthorized => StatusCode::IM_A_TEAPOT,
+            Self::Unauthorized => StatusCode::UNAUTHORIZED,
             Self::XmlError(error) => match &error {
                 XmlError::InvalidTag(..)
                 | XmlError::MissingField(_)
