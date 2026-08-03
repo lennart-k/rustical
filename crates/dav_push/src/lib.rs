@@ -19,6 +19,9 @@ use tracing::{error, info, warn};
 mod endpoints;
 pub use endpoints::subscription_service;
 
+pub(crate) mod vapid;
+pub use vapid::{VapidError, VapidKeypair, VapidPublicKey, VapidPublicKeyB64};
+
 mod store;
 pub use store::*;
 
