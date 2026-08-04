@@ -22,3 +22,4 @@ principals.toml
 **/*.drawio
 
 .direnv
+.envrc.local
