@@ -23,6 +23,7 @@ pub struct Transports {
 }
 
 impl Transports {
+    #[must_use]
     pub fn new(vapid_public_key: Option<VapidPublicKeyB64>) -> Self {
         Self {
             transports: vec![Transport::WebPush(WebPushTransport { vapid_public_key })],

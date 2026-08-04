@@ -92,6 +92,12 @@ impl XmlSerialize for VapidPublicKeyB64 {
 
 pub struct VapidPublicKey(pub openssl::ec::EcPoint);
 
+impl std::fmt::Debug for VapidPublicKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("VapidPublicKey").finish_non_exhaustive()
+    }
+}
+
 impl VapidPublicKey {
     pub fn encode_b64(&self) -> Result<VapidPublicKeyB64, VapidError> {
         let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?;

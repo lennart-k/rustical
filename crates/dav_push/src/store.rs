@@ -1,4 +1,4 @@
-use crate::{Subscription, vapid::VapidPublicKey};
+use crate::{Subscription, VapidKeypair, VapidPublicKeyB64, vapid::VapidPublicKey};
 use async_trait::async_trait;
 use rustical_store::Error;
 
@@ -13,7 +13,8 @@ pub trait SubscriptionStore: Send + Sync + 'static {
 
 #[async_trait]
 pub trait VapidStore: Send + Sync + 'static {
-    async fn get_vapid_pubkey(&self) -> Result<VapidPublicKey, Error>;
+    async fn get_vapid_keypair(&self) -> Result<&VapidKeypair, Error>;
+    async fn get_vapid_pubkey_b64(&self) -> Result<&VapidPublicKeyB64, Error>;
 }
 
 pub trait DavPushStore: SubscriptionStore {}
