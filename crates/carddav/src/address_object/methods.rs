@@ -1,7 +1,6 @@
 use super::AddressObjectPathComponents;
 use super::AddressObjectResourceService;
 use crate::Error;
-use crate::addressbook::resource::AddressbookResource;
 use axum::body::Body;
 use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Response};
@@ -11,8 +10,6 @@ use axum_extra::headers::{ContentType, ETag, HeaderMapExt, IfNoneMatch};
 use http::HeaderValue;
 use http::Method;
 use http::{HeaderMap, StatusCode};
-use rustical_dav::privileges::UserPrivilege;
-use rustical_dav::resource::Resource;
 use rustical_ical::AddressObject;
 use rustical_store::AddressbookStore;
 use rustical_store::auth::Principal;
@@ -31,17 +28,6 @@ pub async fn get_object<AS: AddressbookStore>(
     method: Method,
 ) -> Result<Response, Error> {
     if !user.is_principal(&principal) {
-        return Err(Error::Unauthorized);
-    }
-
-    let addressbook = addr_store
-        .get_addressbook(&principal, &addressbook_id, false)
-        .await?;
-    let addressbook_resource = AddressbookResource(addressbook);
-    if !addressbook_resource
-        .get_user_privileges(&user)?
-        .has(&UserPrivilege::Read)
-    {
         return Err(Error::Unauthorized);
     }
 

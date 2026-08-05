@@ -4,36 +4,42 @@ use crate::addressbook::prop::{
     AddressbookProp, AddressbookPropName, AddressbookPropWrapper, AddressbookPropWrapperName,
     SupportedCollationSet,
 };
-use derive_more::derive::{From, Into};
 use rustical_dav::extensions::{CommonPropertiesExtension, SyncTokenExtension};
 use rustical_dav::namespace::{NS_CARDDAV, NS_DAV};
 use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
 use rustical_dav::resourcetype;
 use rustical_dav::xml::{Resourcetype, SupportedReportSet};
-use rustical_dav_push::DavPushExtension;
+use rustical_dav_push::{DavPushExtension, VapidPublicKeyB64};
 use rustical_store::Addressbook;
 use rustical_store::auth::Principal;
 use std::borrow::Cow;
 
-#[derive(Clone, Debug, From, Into)]
-pub struct AddressbookResource(pub(crate) Addressbook);
+#[derive(Clone, Debug)]
+pub struct AddressbookResource {
+    pub(crate) addressbook: Addressbook,
+    pub(crate) vapid_pubkey: VapidPublicKeyB64,
+}
 
 impl ResourceName for AddressbookResource {
     fn get_name(&self) -> Cow<'_, str> {
-        Cow::from(&self.0.id)
+        Cow::from(&self.addressbook.id)
     }
 }
 
 impl SyncTokenExtension for AddressbookResource {
     fn get_synctoken(&self) -> String {
-        self.0.format_synctoken()
+        self.addressbook.format_synctoken()
     }
 }
 
 impl DavPushExtension for AddressbookResource {
     fn get_topic(&self) -> String {
-        self.0.push_topic.clone()
+        self.addressbook.push_topic.clone()
+    }
+
+    fn get_vapid_public_key(&self) -> Option<VapidPublicKeyB64> {
+        Some(self.vapid_pubkey.clone())
     }
 }
 
@@ -69,7 +75,9 @@ impl Resource for AddressbookResource {
                         AddressbookProp::SupportedReportSet(SupportedReportSet::all())
                     }
                     AddressbookPropName::AddressbookDescription => {
-                        AddressbookProp::AddressbookDescription(self.0.description.clone())
+                        AddressbookProp::AddressbookDescription(
+                            self.addressbook.description.clone(),
+                        )
                     }
                     AddressbookPropName::SupportedAddressData => {
                         AddressbookProp::SupportedAddressData(SupportedAddressData::default())
@@ -93,7 +101,7 @@ impl Resource for AddressbookResource {
         match prop {
             AddressbookPropWrapper::Addressbook(prop) => match prop {
                 AddressbookProp::AddressbookDescription(description) => {
-                    self.0.description = description;
+                    self.addressbook.description = description;
                     Ok(())
                 }
                 AddressbookProp::MaxResourceSize(_)
@@ -116,7 +124,7 @@ impl Resource for AddressbookResource {
         match prop {
             AddressbookPropWrapperName::Addressbook(prop) => match prop {
                 AddressbookPropName::AddressbookDescription => {
-                    self.0.description = None;
+                    self.addressbook.description = None;
                     Ok(())
                 }
                 AddressbookPropName::MaxResourceSize
@@ -137,20 +145,20 @@ impl Resource for AddressbookResource {
     }
 
     fn get_displayname(&self) -> Option<&str> {
-        self.0.displayname.as_deref()
+        self.addressbook.displayname.as_deref()
     }
     fn set_displayname(&mut self, name: Option<String>) -> Result<(), rustical_dav::Error> {
-        self.0.displayname = name;
+        self.addressbook.displayname = name;
         Ok(())
     }
 
     fn get_owner(&self) -> Option<&str> {
-        Some(&self.0.principal)
+        Some(&self.addressbook.principal)
     }
 
     fn get_user_privileges(&self, user: &Principal) -> Result<UserPrivilegeSet, Self::Error> {
         Ok(UserPrivilegeSet::owner_only(
-            user.is_principal(&self.0.principal),
+            user.is_principal(&self.addressbook.principal),
         ))
     }
 }

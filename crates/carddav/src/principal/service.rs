@@ -79,9 +79,13 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, DP: DavPushStore> Resource
         (principal,): &Self::PathComponents,
     ) -> Result<Vec<Self::MemberType>, Self::Error> {
         let addressbooks = self.addr_store.get_addressbooks(principal).await?;
+        let vapid_pubkey = self.dav_push_store.get_vapid_pubkey_b64().await?;
         Ok(addressbooks
             .into_iter()
-            .map(AddressbookResource::from)
+            .map(|addressbook| AddressbookResource {
+                addressbook,
+                vapid_pubkey: vapid_pubkey.clone(),
+            })
             .collect())
     }
 

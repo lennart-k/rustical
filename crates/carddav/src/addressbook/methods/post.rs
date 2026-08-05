@@ -28,7 +28,15 @@ pub async fn route_post<AS: AddressbookStore, DP: DavPushStore>(
         .addr_store
         .get_addressbook(&principal, &addr_id, false)
         .await?;
-    let addressbook_resource = AddressbookResource(addressbook);
+    let vapid_pubkey = resource_service
+        .dav_push_store
+        .get_vapid_pubkey_b64()
+        .await?
+        .clone();
+    let addressbook_resource = AddressbookResource {
+        addressbook,
+        vapid_pubkey,
+    };
     if !addressbook_resource
         .get_user_privileges(&user)?
         .has(&UserPrivilege::Read)
@@ -52,7 +60,7 @@ pub async fn route_post<AS: AddressbookStore, DP: DavPushStore>(
             .web_push_subscription
             .push_resource
             .clone(),
-        topic: addressbook_resource.0.push_topic,
+        topic: addressbook_resource.addressbook.push_topic,
         expiration: expires.naive_local(),
         public_key: request
             .subscription

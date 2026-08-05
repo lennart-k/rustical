@@ -70,12 +70,14 @@ impl<AP: AuthenticationProvider, DP: DavPushStore, CS: CalendarStore> ResourceSe
         (principal,): &Self::PathComponents,
     ) -> Result<Vec<Self::MemberType>, Self::Error> {
         let calendars = self.cal_store.get_calendars(principal).await?;
+        let vapid_pubkey = self.dav_push_store.get_vapid_pubkey_b64().await?;
 
         Ok(calendars
             .into_iter()
             .map(|cal| CalendarResource {
                 read_only: self.cal_store.is_read_only(&cal.id),
                 cal,
+                vapid_pubkey: vapid_pubkey.clone(),
             })
             .collect())
     }
