@@ -6,6 +6,7 @@ use axum::body::Body;
 use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Response};
 use axum_extra::TypedHeader;
+use axum_extra::headers::IfMatch;
 use axum_extra::headers::{ContentType, ETag, HeaderMapExt, IfNoneMatch};
 use http::HeaderValue;
 use http::Method;
@@ -69,6 +70,7 @@ pub async fn put_object<AS: AddressbookStore>(
     State(AddressObjectResourceService { addr_store }): State<AddressObjectResourceService<AS>>,
     user: Principal,
     mut if_none_match: Option<TypedHeader<IfNoneMatch>>,
+    mut if_match: Option<TypedHeader<IfMatch>>,
     header_map: HeaderMap,
     body: String,
 ) -> Result<Response, Error> {
@@ -80,8 +82,11 @@ pub async fn put_object<AS: AddressbookStore>(
     if !header_map.contains_key("If-None-Match") {
         if_none_match = None;
     }
+    if !header_map.contains_key("If-Match") {
+        if_match = None;
+    }
 
-    let overwrite = if let Some(TypedHeader(if_none_match)) = if_none_match {
+    if if_match.is_some() || if_none_match.is_some() {
         // TODO: Put into transaction?
         let existing = match addr_store
             .get_object(&principal, &addressbook_id, &object_id, false)
@@ -91,17 +96,43 @@ pub async fn put_object<AS: AddressbookStore>(
             Err(rustical_store::Error::NotFound) => None,
             Err(err) => Err(err)?,
         };
-        existing.is_none_or(|existing| {
-            if_none_match.precondition_passes(
-                &existing
-                    .get_etag()
-                    .parse()
-                    .expect("We only generate valid ETags"),
-            )
-        })
-    } else {
-        true
-    };
+
+        // There's an already existing object
+        if let Some(existing) = existing {
+            let etag: Option<ETag> = existing.get_etag().parse().ok();
+
+            if let Some(if_match) = if_match.as_ref()
+                && etag
+                    .as_ref()
+                    // If ETag is None If-Match will also fail
+                    .is_none_or(|etag| !if_match.precondition_passes(etag))
+            {
+                return Err(Error::DavError(rustical_dav::Error::PreconditionFailed));
+            }
+
+            if let Some(if_none_match) = if_none_match.as_ref()
+                && etag
+                    .as_ref()
+                    // If ETag is None If-None-Match will succeed as it will not match
+                    .is_some_and(|etag| !if_none_match.precondition_passes(etag))
+            {
+                return Err(Error::DavError(rustical_dav::Error::PreconditionFailed));
+            }
+        }
+        // No existing object but we still expect a match
+        // From https://datatracker.ietf.org/doc/html/rfc2616#section-14.24
+        // ```
+        // If none of the entity tags match, or if "*" is given and no current
+        // entity exists, the server MUST NOT perform the requested method, and
+        // MUST return a 412 (Precondition Failed) response. This behavior is
+        // most useful when the client wants to prevent an updating method, such
+        // as PUT, from modifying a resource that has changed since the client
+        // last retrieved it.
+        // ```
+        else if if_match.is_some() {
+            return Err(Error::DavError(rustical_dav::Error::PreconditionFailed));
+        }
+    }
 
     let object = match AddressObject::from_vcf(body) {
         Ok(object) => object,
@@ -109,7 +140,7 @@ pub async fn put_object<AS: AddressbookStore>(
     };
     let etag = object.get_etag();
     addr_store
-        .put_object(&principal, &addressbook_id, &object_id, object, overwrite)
+        .put_object(&principal, &addressbook_id, &object_id, object, true)
         .await?;
 
     let mut headers = HeaderMap::new();
