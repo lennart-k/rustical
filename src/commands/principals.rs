@@ -1,11 +1,36 @@
+use std::io::IsTerminal;
+
 use super::membership::MembershipArgs;
 use crate::{config::Config, get_data_stores, membership::cmd_membership};
+use anyhow::anyhow;
 use argon2::password_hash::{PasswordHasher, SaltString, rand_core::OsRng};
 use clap::{Parser, Subcommand};
 use rustical_store::{
     Secret,
     auth::{AuthenticationProvider, Principal, PrincipalType},
 };
+
+fn prompt_password_or_read_stdio() -> anyhow::Result<String> {
+    let stdin = std::io::stdin();
+    let password = if stdin.is_terminal() {
+        rpassword::prompt_password_with_config(
+            "Type in a password: ",
+            rpassword::ConfigBuilder::new()
+                .password_feedback_mask('*')
+                .build(),
+        )?
+    } else {
+        let mut password = String::new();
+        let _ = stdin.read_line(&mut password)?;
+        password.trim_end().to_string()
+    };
+
+    if password.is_empty() {
+        return Err(anyhow!("Password is empty"));
+    }
+
+    Ok(password)
+}
 
 #[derive(Parser, Debug)]
 pub struct PrincipalsArgs {
@@ -26,6 +51,8 @@ pub struct CreateArgs {
     pub for_testing_password_from_arg: Option<String>,
     #[arg(long, help = "Ask for password input")]
     pub password: bool,
+    #[arg(long, help = "Overwrite existing principal")]
+    pub overwrite: bool,
 }
 
 #[derive(Parser, Debug)]
@@ -86,16 +113,12 @@ pub async fn cmd_principals(args: PrincipalsArgs, config: Config) -> anyhow::Res
             name,
             password,
             for_testing_password_from_arg,
+            overwrite,
         }) => {
             let password = if let Some(pass) = for_testing_password_from_arg {
                 Some(pass)
             } else if password {
-                Some(rpassword::prompt_password_with_config(
-                    "Type in a password: ",
-                    rpassword::ConfigBuilder::new()
-                        .password_feedback_mask('*')
-                        .build(),
-                )?)
+                Some(prompt_password_or_read_stdio()?)
             } else {
                 None
             };
@@ -118,7 +141,7 @@ pub async fn cmd_principals(args: PrincipalsArgs, config: Config) -> anyhow::Res
                         password,
                         memberships: vec![],
                     },
-                    false,
+                    overwrite,
                 )
                 .await?;
             println!("Principal created");
@@ -147,12 +170,7 @@ pub async fn cmd_principals(args: PrincipalsArgs, config: Config) -> anyhow::Res
             let password = if let Some(pass) = for_testing_password_from_arg {
                 Some(pass)
             } else if password {
-                Some(rpassword::prompt_password_with_config(
-                    "Type in a new password: ",
-                    rpassword::ConfigBuilder::new()
-                        .password_feedback_mask('*')
-                        .build(),
-                )?)
+                Some(prompt_password_or_read_stdio()?)
             } else {
                 None
             };
