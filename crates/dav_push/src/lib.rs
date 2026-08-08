@@ -184,6 +184,8 @@ async fn send_payload(payload: &str, subsciption: &Subscription) -> Result<(), N
         .map_err(|_| NotifierError::InvalidKeyEncoding)?;
 
     let client = reqwest::ClientBuilder::new()
+        .timeout(Duration::from_secs(30))
+        .connect_timeout(Duration::from_secs(10))
         .build()
         .map_err(NotifierError::from)?;
 
