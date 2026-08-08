@@ -68,28 +68,21 @@ pub async fn route_mkcol<AS: AddressbookStore, DP: DavPushStore>(
         push_topic: uuid::Uuid::new_v4().to_string(),
     };
 
-    match addr_store
-        .get_addressbook(&principal, &addressbook_id, true)
-        .await
-    {
-        Err(rustical_store::Error::NotFound) => {
-            // No conflict, no worries
-        }
-        Ok(_) => {
-            // oh no, there's a conflict
+    match addr_store.insert_addressbook(addressbook).await {
+        // oh no, there's a conflict
+        // Correct status is Method Not Allowed
+        // https://datatracker.ietf.org/doc/html/rfc4918#section-9.3.1
+        Err(rustical_store::Error::AlreadyExists) => {
             return Ok((
-                StatusCode::CONFLICT,
+                StatusCode::METHOD_NOT_ALLOWED,
                 "An addressbook already exists at this URI",
             )
                 .into_response());
         }
-        Err(err) => {
-            // some other error
-            return Err(err.into());
-        }
+        Err(err) => return Err(err.into()),
+        _ => {}
     }
-
-    addr_store.insert_addressbook(addressbook).await?;
+    // The spec says we don't have to return a response everything was successful
     Ok(StatusCode::CREATED.into_response())
 }
 

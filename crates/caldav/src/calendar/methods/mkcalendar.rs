@@ -148,7 +148,20 @@ pub async fn route_mkcalendar<C: CalendarStore, DP: DavPushStore>(
         ),
     };
 
-    cal_store.insert_calendar(calendar).await?;
+    match cal_store.insert_calendar(calendar).await {
+        // oh no, there's a conflict
+        // Correct status is Method Not Allowed
+        // https://datatracker.ietf.org/doc/html/rfc4918#section-9.3.1
+        Err(rustical_store::Error::AlreadyExists) => {
+            return Ok((
+                StatusCode::METHOD_NOT_ALLOWED,
+                "A calendar already exists at this URI",
+            )
+                .into_response());
+        }
+        Err(err) => return Err(err.into()),
+        _ => {}
+    }
     // The spec says we don't have to return a response everything was successful
     Ok(StatusCode::CREATED.into_response())
 }
