@@ -6,6 +6,7 @@ use clap::Parser;
 use rustical_caldav::CalDavConfig;
 use rustical_frontend::FrontendConfig;
 
+pub mod app_token;
 mod health;
 pub mod membership;
 pub mod principals;

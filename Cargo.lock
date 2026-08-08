@@ -3665,6 +3665,7 @@ dependencies = [
  "pbkdf2 0.13.0",
  "provided-listeners",
  "quick-xml",
+ "rand 0.10.2",
  "reqwest 0.13.4",
  "rpassword",
  "rstest",

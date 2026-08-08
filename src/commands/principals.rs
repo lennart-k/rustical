@@ -1,7 +1,12 @@
 use std::io::IsTerminal;
 
 use super::membership::MembershipArgs;
-use crate::{config::Config, get_data_stores, membership::cmd_membership};
+use crate::{
+    app_token::{AppTokenArgs, cmd_app_token},
+    config::Config,
+    get_data_stores,
+    membership::cmd_membership,
+};
 use anyhow::anyhow;
 use argon2::password_hash::{PasswordHasher, SaltString, rand_core::OsRng};
 use clap::{Parser, Subcommand};
@@ -87,6 +92,7 @@ pub enum PrincipalsCommand {
     Remove(RemoveArgs),
     Edit(EditArgs),
     Membership(MembershipArgs),
+    AppToken(AppTokenArgs),
 }
 
 #[allow(
@@ -198,6 +204,9 @@ pub async fn cmd_principals(args: PrincipalsArgs, config: Config) -> anyhow::Res
         }
         PrincipalsCommand::Membership(args) => {
             cmd_membership(principal_store.as_ref(), args).await?;
+        }
+        PrincipalsCommand::AppToken(args) => {
+            cmd_app_token(principal_store.as_ref(), args).await?;
         }
     }
     Ok(())
