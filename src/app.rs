@@ -188,7 +188,9 @@ pub fn make_app<
                                 // logging 401's as errors would clog up our logs
                                 tracing::debug!("unauthorized");
                             }
-                            StatusCode::NOT_FOUND => {
+                            StatusCode::NOT_FOUND
+                            | StatusCode::PRECONDITION_FAILED
+                            | StatusCode::CONFLICT => {
                                 // Clients like GNOME Calendar will try to reach /remote.php/webdav
                                 // quite often clogging up the logs
                                 tracing::info!("client error");
