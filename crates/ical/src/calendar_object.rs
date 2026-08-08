@@ -146,3 +146,31 @@ impl From<IcalCalendarObject> for CalendarObject {
         }
     }
 }
+
+#[cfg(any(test, feature = "test"))]
+impl CalendarObject {
+    #[must_use]
+    pub fn example_1() -> Self {
+        Self::from_ics(
+            "BEGIN:VCALENDAR
+CALSCALE:GREGORIAN
+PRODID:-//Ximian//NONSGML Evolution Calendar//EN
+VERSION:2.0
+BEGIN:VEVENT
+UID:fa915b604e6e3f36772501ff869439e6a3c5cf67
+DTSTAMP:20250726T112617Z
+DTSTART;VALUE=DATE:20250806
+DTEND;VALUE=DATE:20250807
+SEQUENCE:2
+SUMMARY:all day event
+TRANSP:OPAQUE
+CLASS:PUBLIC
+CREATED:20250726T144426Z
+LAST-MODIFIED:20250726T144426Z
+END:VEVENT
+END:VCALENDAR"
+                .to_string(),
+        )
+        .unwrap()
+    }
+}

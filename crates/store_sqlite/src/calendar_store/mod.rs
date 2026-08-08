@@ -18,6 +18,9 @@ use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};
 use tokio::sync::mpsc::Sender;
 use tracing::{error, error_span, instrument, warn};
 
+#[cfg(test)]
+mod tests;
+
 #[derive(Debug, Clone)]
 struct CalendarObjectRow {
     id: String,
@@ -709,7 +712,6 @@ impl SqliteCalendarStore {
     ) -> Result<(Vec<(String, CalendarObject)>, Vec<String>, i64), Error> {
         struct Row {
             object_id: String,
-            synctoken: i64,
         }
 
         let mut conn = acquire.acquire().await.map_err(crate::Error::from)?;
@@ -717,9 +719,17 @@ impl SqliteCalendarStore {
         let changes = sqlx::query_as!(
             Row,
             r#"
-                SELECT DISTINCT object_id, max(0, synctoken) as "synctoken!: i64" from calendarobjectchangelog
-                WHERE (principal, cal_id) = (?, ?)
-                AND synctoken > ?
+                SELECT DISTINCT object_id
+                FROM (
+                    SELECT
+                        object_id,
+                        synctoken,
+                        ROW_NUMBER() OVER (PARTITION BY object_id ORDER BY synctoken DESC) as rn
+                    FROM calendarobjectchangelog
+                    WHERE (principal, cal_id) = (?, ?)
+                    AND synctoken > ?
+                )
+                WHERE rn = 1
                 ORDER BY synctoken ASC
             "#,
             principal,
@@ -727,16 +737,17 @@ impl SqliteCalendarStore {
             synctoken
         )
         .fetch_all(&mut *conn)
-        .await.map_err(crate::Error::from)?;
+        .await
+        .map_err(crate::Error::from)?;
 
-        let mut objects = vec![];
+        let calendar = Self::_get_calendar(&mut *conn, principal, cal_id, false).await?;
+
+        let mut updated_objects = vec![];
         let mut deleted_objects = vec![];
-
-        let new_synctoken = changes.last().map_or(0, |&Row { synctoken, .. }| synctoken);
 
         for Row { object_id, .. } in changes {
             match Self::_get_object(&mut *conn, principal, cal_id, &object_id, false).await {
-                Ok(object) => objects.push((object_id, object)),
+                Ok(object) => updated_objects.push((object_id, object)),
                 Err(rustical_store::Error::NotFound) => deleted_objects.push(object_id),
                 // Skip broken object
                 Err(rustical_store::Error::IcalError(_)) if skip_broken => (),
@@ -744,7 +755,7 @@ impl SqliteCalendarStore {
             }
         }
 
-        Ok((objects, deleted_objects, new_synctoken))
+        Ok((updated_objects, deleted_objects, calendar.synctoken))
     }
 
     async fn _prune_deleted_objects<'e, E: Executor<'e, Database = Sqlite>>(

@@ -14,6 +14,9 @@ use tracing::{error, error_span, instrument, warn};
 
 pub mod birthday_calendar;
 
+#[cfg(test)]
+mod tests;
+
 #[derive(Debug, Clone)]
 struct AddressObjectRow {
     id: String,
@@ -154,13 +157,12 @@ impl SqliteAddressbookStore {
         sqlx::query!(
         r#"
         INSERT INTO addressobjectchangelog (principal, addressbook_id, object_id, "operation", synctoken)
-        VALUES (?1, ?2, ?3, ?4, (
-            SELECT synctoken FROM addressbooks WHERE (principal, id) = (?1, ?2)
-        ))"#,
+        VALUES (?1, ?2, ?3, ?4, ?5)"#,
         principal,
         addressbook_id,
         object_id,
-        operation
+        operation,
+        synctoken
     )
     .execute(&mut **tx)
     .await
@@ -331,7 +333,6 @@ impl SqliteAddressbookStore {
     ) -> Result<(Vec<(String, AddressObject)>, Vec<String>, i64), rustical_store::Error> {
         struct Row {
             object_id: String,
-            synctoken: i64,
         }
 
         let mut conn = acquire.acquire().await.map_err(crate::Error::from)?;
@@ -339,9 +340,17 @@ impl SqliteAddressbookStore {
         let changes = sqlx::query_as!(
             Row,
             r#"
-                SELECT DISTINCT object_id, max(0, synctoken) as "synctoken!: i64" from addressobjectchangelog
-                WHERE (principal, addressbook_id) = (?, ?)
-                AND synctoken > ?
+                SELECT DISTINCT object_id
+                FROM (
+                    SELECT
+                        object_id,
+                        synctoken,
+                        ROW_NUMBER() OVER (PARTITION BY object_id ORDER BY synctoken DESC) as rn
+                    FROM addressobjectchangelog
+                    WHERE (principal, addressbook_id) = (?, ?)
+                    AND synctoken > ?
+                )
+                WHERE rn = 1
                 ORDER BY synctoken ASC
             "#,
             principal,
@@ -349,23 +358,25 @@ impl SqliteAddressbookStore {
             synctoken
         )
         .fetch_all(&mut *conn)
-        .await.map_err(crate::Error::from)?;
+        .await
+        .map_err(crate::Error::from)?;
 
-        let mut objects = vec![];
+        let addressbook =
+            Self::_get_addressbook(&mut *conn, principal, addressbook_id, false).await?;
+
+        let mut updated_objects = vec![];
         let mut deleted_objects = vec![];
-
-        let new_synctoken = changes.last().map_or(0, |&Row { synctoken, .. }| synctoken);
 
         for Row { object_id, .. } in changes {
             match Self::_get_object(&mut *conn, principal, addressbook_id, &object_id, false).await
             {
-                Ok(object) => objects.push((object_id, object)),
+                Ok(object) => updated_objects.push((object_id, object)),
                 Err(rustical_store::Error::NotFound) => deleted_objects.push(object_id),
                 Err(err) => return Err(err),
             }
         }
 
-        Ok((objects, deleted_objects, new_synctoken))
+        Ok((updated_objects, deleted_objects, addressbook.synctoken))
     }
 
     async fn _list_objects<'e, E: Executor<'e, Database = Sqlite>>(

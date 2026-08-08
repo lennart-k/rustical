@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT DISTINCT object_id\n                FROM (\n                    SELECT\n                        object_id,\n                        synctoken,\n                        ROW_NUMBER() OVER (PARTITION BY object_id ORDER BY synctoken DESC) as rn\n                    FROM addressobjectchangelog\n                    WHERE (principal, addressbook_id) = (?, ?)\n                    AND synctoken > ?\n                )\n                WHERE rn = 1\n                ORDER BY synctoken ASC\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "object_id",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressobjectchangelog",
+            "name": "object_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "0d99bb65b2ecef0c83ea622daf5365419a30bcf662685469be995e98003837b3"
+}

@@ -18,6 +18,7 @@ harness = false
 [dev-dependencies]
 rstest.workspace = true
 criterion.workspace = true
+rustical_ical = { workspace = true, features = ["test"] }
 
 [dependencies]
 caldata.workspace = true

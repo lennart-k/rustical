@@ -8,6 +8,8 @@ repository.workspace = true
 license.workspace = true
 publish = false
 
+[features]
+test = []
 
 [dependencies]
 chrono.workspace = true
