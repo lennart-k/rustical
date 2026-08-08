@@ -177,3 +177,19 @@ impl AddressObject {
         &self.inner
     }
 }
+
+#[cfg(any(test, feature = "test"))]
+impl AddressObject {
+    #[must_use]
+    pub fn example_minimal() -> Self {
+        Self::from_vcf(
+            "BEGIN:VCARD
+VERSION:4.0
+FN:Jon Doe
+N:Doe;Jon;;;
+END:VCARD"
+                .to_string(),
+        )
+        .unwrap()
+    }
+}
