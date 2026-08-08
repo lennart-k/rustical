@@ -15,3 +15,10 @@ docs-dev:
 
 coverage:
   cargo tarpaulin --workspace --exclude xml_derive
+
+test-setup:
+  #!/usr/bin/env bash
+  echo "password" | cargo run principals create user --password --overwrite
+  export APP_TOKEN=`cargo run principals app-token create user --name "Test Token"`
+  echo $APP_TOKEN
+
