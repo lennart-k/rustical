@@ -41,10 +41,8 @@ impl Error {
                 _ => StatusCode::BAD_REQUEST,
             },
             Self::PropReadOnly => StatusCode::CONFLICT,
-            // The correct status code for a failed precondition is not PreconditionFailed but
-            // Forbidden (or Conflict):
-            // https://datatracker.ietf.org/doc/html/rfc4791#section-1.3
-            Self::PreconditionFailed | Self::Forbidden => StatusCode::FORBIDDEN,
+            Self::PreconditionFailed => StatusCode::PRECONDITION_FAILED,
+            Self::Forbidden => StatusCode::FORBIDDEN,
         }
     }
 }
