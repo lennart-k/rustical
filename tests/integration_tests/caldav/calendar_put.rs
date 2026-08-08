@@ -151,3 +151,68 @@ async fn test_put_thunderbird(
         insta::assert_snapshot!("propfind_response", body);
     }
 }
+
+#[rstest]
+#[tokio::test]
+#[case("nice%20calendar", "nice%20event.ics")]
+#[case("nic€ calendar", "nice,evänt.ics")]
+async fn test_put_special_characters(
+    #[from(test_store_context)]
+    #[future]
+    context: TestStoreContext,
+    #[case] cal_id: &str,
+    #[case] filename: &str,
+) {
+    let context = context.await;
+    let app = get_app(context.clone());
+
+    let calendar_meta = CalendarMetadata {
+        displayname: Some("Calendar".to_string()),
+        description: Some("Description".to_string()),
+        color: Some("#00FF00".to_string()),
+        order: 0,
+    };
+    let principal = "user";
+    let url = format!("/caldav/principal/{principal}/{cal_id}");
+
+    let mut request = Request::builder()
+        .method("MKCALENDAR")
+        .uri(&url)
+        .body(Body::from(mkcalendar_template(&calendar_meta)))
+        .unwrap();
+    request
+        .headers_mut()
+        .typed_insert(Authorization::basic("user", "pass"));
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::CREATED);
+
+    let ical = include_str!("resources/ical_thunderbird.ics");
+
+    let mut request = Request::builder()
+        .method("PUT")
+        .uri(format!("{url}/{filename}"))
+        .header("If-None-Match", "*")
+        .header("Content-Type", "text/calendar")
+        .body(Body::from(ical))
+        .unwrap();
+    request
+        .headers_mut()
+        .typed_insert(Authorization::basic("user", "pass"));
+
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::CREATED);
+
+    {
+        let mut request = Request::builder()
+            .method("GET")
+            .uri(format!("{url}/{filename}"))
+            .body(Body::empty())
+            .unwrap();
+        request
+            .headers_mut()
+            .typed_insert(Authorization::basic("user", "pass"));
+        let response = app.clone().oneshot(request).await.unwrap();
+        let body = response.extract_string().await;
+        similar_asserts::assert_eq!(body.replace("\r", ""), ical);
+    }
+}
