@@ -1,5 +1,5 @@
 use rustical::{
-    Args, cmd_default,
+    Args, cmd_serve,
     config::{Config, DataStoreConfig, HttpConfig, SqliteDataStoreConfig},
 };
 use std::{
@@ -44,11 +44,11 @@ pub fn rustical_process(
     let main_process = thread::spawn(move || {
         let rt = tokio::runtime::Runtime::new().unwrap();
         let fut = async {
-            cmd_default(
+            cmd_serve(
                 Args {
                     config_file: "asldajldakjsdkj".to_owned(),
                     no_migrations: false,
-                    command: None,
+                    command: rustical::Command::Serve,
                 },
                 Config {
                     data_store: DataStoreConfig::Sqlite(SqliteDataStoreConfig {

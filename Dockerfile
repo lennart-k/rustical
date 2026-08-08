@@ -43,7 +43,7 @@ RUN mkdir -m 777 /buildertmpdir
 
 FROM scratch
 COPY --from=builder /usr/local/cargo/bin/rustical /usr/local/bin/rustical
-CMD ["/usr/local/bin/rustical"]
+CMD ["/usr/local/bin/rustical", "serve"]
 
 # Copy CA certificates from alpine Linux
 COPY --from=builder /etc/ssl/certs /etc/ssl/certs

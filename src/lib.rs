@@ -40,17 +40,19 @@ pub struct Args {
     pub no_migrations: bool,
 
     #[command(subcommand)]
-    pub command: Option<Command>,
+    pub command: Command,
 }
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
+    #[command(about = "Run the RustiCal server")]
+    Serve,
     GenConfig(commands::GenConfigArgs),
-    Principals(PrincipalsArgs),
     #[command(
         about = "Healthcheck for running instance (Used for HEALTHCHECK in Docker container)"
     )]
     Health(HealthArgs),
+    Principals(PrincipalsArgs),
 }
 
 #[allow(clippy::missing_errors_doc)]
@@ -108,7 +110,7 @@ pub async fn get_data_stores(
 }
 
 #[allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]
-pub async fn cmd_default(
+pub async fn cmd_serve(
     args: Args,
     config: Config,
     start_notifier: Option<Arc<Notify>>,
