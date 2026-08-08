@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                SELECT DISTINCT object_id\n                FROM (\n                    SELECT\n                        object_id,\n                        synctoken,\n                        ROW_NUMBER() OVER (PARTITION BY object_id ORDER BY synctoken DESC) as rn\n                    FROM calendarobjectchangelog\n                    WHERE (principal, cal_id) = (?, ?)\n                    AND synctoken > ?\n                )\n                WHERE rn = 1\n                ORDER BY synctoken ASC\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "object_id",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendarobjectchangelog",
+            "name": "object_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "7e5882a9f3dd6b5df6431e4855f389fb8de92a8eee06cff30da5394b6a2f7236"
+}
