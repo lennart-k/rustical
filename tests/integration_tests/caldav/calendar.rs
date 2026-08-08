@@ -305,7 +305,7 @@ END:VCALENDAR";
         .typed_insert(Authorization::basic("user", "pass"));
 
     let response = app.clone().oneshot(request).await.unwrap();
-    assert_eq!(response.status(), StatusCode::CONFLICT);
+    assert_eq!(response.status(), StatusCode::PRECONDITION_FAILED);
 
     let mut request = Request::builder()
         .method("REPORT")
