@@ -126,11 +126,11 @@ axum-extra = { version = "0.12", features = ["typed-header"] }
 argon2 = "0.5"
 rpassword = "7.5"
 password-hash = { version = "0.6", features = ["phc", "rand_core"] }
-syn = { version = "2.0", features = ["full"] }
+syn = { version = "3.0", features = ["full"] }
 quote = "1.0"
 proc-macro2 = "1.0"
 heck = "0.5"
-darling = "0.23"
+darling = "0.24"
 reqwest = { version = "0.13" }
 openidconnect = "4.0"
 clap = { version = "4.6", features = ["derive", "env"] }
