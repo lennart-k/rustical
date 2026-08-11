@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE davpush_vapid_key SET vapid_key = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "eeeb8fa09a1e4840c1a86a33854558ea414819929fe134cd4b3caf683ecb3caf"
+}
