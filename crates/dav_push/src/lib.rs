@@ -48,12 +48,12 @@ struct PushMessage {
 }
 
 #[derive(Debug, Constructor)]
-pub struct DavPushController<S: SubscriptionStore> {
+pub struct DavPushController<DP: DavPushStore> {
     allowed_push_servers: Option<Vec<String>>,
-    sub_store: Arc<S>,
+    sub_store: Arc<DP>,
 }
 
-impl<S: SubscriptionStore> DavPushController<S> {
+impl<DP: DavPushStore> DavPushController<DP> {
     pub async fn notifier(&self, mut recv: Receiver<CollectionOperation>) {
         loop {
             // Make sure we don't flood the subscribers
@@ -118,45 +118,45 @@ impl<S: SubscriptionStore> DavPushController<S> {
             }
         };
 
-        for subsciption in subscriptions {
-            if subsciption.is_expired(&Utc::now()) {
+        for subscription in subscriptions {
+            if subscription.is_expired(&Utc::now()) {
                 info!(
                     "Deleting subscription {} on topic {} because it is expired",
-                    subsciption.id, subsciption.topic
+                    subscription.id, subscription.topic
                 );
-                self.try_delete_subscription(&subsciption.id).await;
+                self.try_delete_subscription(&subscription.id).await;
                 continue;
             }
 
             if let Some(allowed_push_servers) = &self.allowed_push_servers {
-                if let Ok(url) = Url::parse(&subsciption.push_resource) {
+                if let Ok(url) = Url::parse(&subscription.push_resource) {
                     let origin = url.origin().unicode_serialization();
                     if !allowed_push_servers.contains(&origin) {
                         warn!(
                             "Deleting subscription {} on topic {} because the endpoint is not in the list of allowed push servers",
-                            subsciption.id, subsciption.topic
+                            subscription.id, subscription.topic
                         );
-                        self.try_delete_subscription(&subsciption.id).await;
+                        self.try_delete_subscription(&subscription.id).await;
                         continue;
                     }
                 } else {
                     warn!(
                         "Deleting subscription {} on topic {} because of invalid URL",
-                        subsciption.id, subsciption.topic
+                        subscription.id, subscription.topic
                     );
-                    self.try_delete_subscription(&subsciption.id).await;
+                    self.try_delete_subscription(&subscription.id).await;
                     continue;
                 }
             }
 
-            if let Err(err) = send_payload(&payload, &subsciption).await {
+            if let Err(err) = send_payload(&payload, &subscription).await {
                 error!("An error occured sending out a push notification: {err}");
                 if err.is_permament_error() {
                     warn!(
                         "Deleting subscription {} on topic {}",
-                        subsciption.id, subsciption.topic
+                        subscription.id, subscription.topic
                     );
-                    self.try_delete_subscription(&subsciption.id).await;
+                    self.try_delete_subscription(&subscription.id).await;
                 }
             }
         }

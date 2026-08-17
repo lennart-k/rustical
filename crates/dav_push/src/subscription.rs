@@ -8,6 +8,7 @@ pub struct Subscription {
     pub expiration: NaiveDateTime,
     pub push_resource: String,
     pub public_key: String,
+    // Currently, only p256dh
     pub public_key_type: String,
     pub auth_secret: String,
 }
