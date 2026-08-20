@@ -1,20 +1,15 @@
 use ct_codecs::Encoder;
-use openssl::ec::EcGroup;
-use openssl::nid::Nid;
-use openssl::{
-    bn::BigNumContext,
-    ec::{EcKey, PointConversionForm},
-    error::ErrorStack,
-    pkey::Private,
-};
 use rustical_xml::XmlSerialize;
 use serde::Deserialize;
 use thiserror::Error;
+use web_push::VapidKey;
 
 #[derive(Debug, Error)]
 pub enum VapidError {
     #[error(transparent)]
-    OpenSslError(#[from] ErrorStack),
+    JwtError(#[from] jwt_simple::Error),
+    #[error(transparent)]
+    WebPushError(#[from] web_push::WebPushError),
     #[error(transparent)]
     EncodingError(#[from] ct_codecs::Error),
     #[error(transparent)]
@@ -22,7 +17,7 @@ pub enum VapidError {
 }
 
 #[derive(Clone)]
-pub struct VapidKeypair(pub openssl::ec::EcKey<Private>);
+pub struct VapidKeypair(pub VapidKey);
 
 impl std::fmt::Debug for VapidKeypair {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -31,21 +26,22 @@ impl std::fmt::Debug for VapidKeypair {
 }
 
 impl VapidKeypair {
-    pub fn generate_p256() -> Result<Self, VapidError> {
-        let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?;
-        Ok(Self(EcKey::generate(&group)?))
+    #[must_use]
+    pub fn generate_p256() -> Self {
+        let vapid_key = VapidKey::new(jwt_simple::algorithms::ES256KeyPair::generate());
+        Self(vapid_key)
     }
-    pub fn public(&self) -> Result<VapidPublicKey, VapidError> {
-        let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?;
-        Ok(VapidPublicKey(self.0.public_key().to_owned(&group)?))
+    #[must_use]
+    pub fn public(&self) -> VapidPublicKey {
+        VapidPublicKey(self.0.public_key())
     }
 
     pub fn from_pem(pem: &str) -> Result<Self, VapidError> {
-        Ok(Self(EcKey::private_key_from_pem(pem.as_bytes())?))
+        Ok(Self(VapidKey::from_pem(pem)?))
     }
 
     pub fn to_pem(&self) -> Result<String, VapidError> {
-        Ok(String::from_utf8(self.0.private_key_to_pem()?)?)
+        Ok(self.0.0.to_pem()?)
     }
 }
 
@@ -90,7 +86,7 @@ impl XmlSerialize for VapidPublicKeyB64 {
     }
 }
 
-pub struct VapidPublicKey(pub openssl::ec::EcPoint);
+pub struct VapidPublicKey(Vec<u8>);
 
 impl std::fmt::Debug for VapidPublicKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -100,13 +96,8 @@ impl std::fmt::Debug for VapidPublicKey {
 
 impl VapidPublicKey {
     pub fn encode_b64(&self) -> Result<VapidPublicKeyB64, VapidError> {
-        let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1)?;
-        let mut ctx = BigNumContext::new()?;
-        let bytes = self
-            .0
-            .to_bytes(&group, PointConversionForm::UNCOMPRESSED, &mut ctx)?;
         Ok(VapidPublicKeyB64(
-            ct_codecs::Base64UrlSafeNoPadding::encode_to_string(bytes)?,
+            ct_codecs::Base64UrlSafeNoPadding::encode_to_string(&self.0)?,
         ))
     }
 }
@@ -115,11 +106,11 @@ impl VapidPublicKey {
 pub mod tests {
     use crate::vapid::VapidKeypair;
 
-    pub const PRIVATE_KEY_PEM: &str = "-----BEGIN EC PRIVATE KEY-----
-MHcCAQEEIEwd72r0k15vsPb+kPXgsFRcEYZy31rjt8tlcKXyoWIPoAoGCCqGSM49
-AwEHoUQDQgAEUSehGxDcAaqozer/to8bGpUb6hClK96AS3EroSmk4eVKxRPZEFMV
-p5n7dMi9+ckZhx0qUsg9wOKalItLGrbyKQ==
------END EC PRIVATE KEY-----
+    pub const PRIVATE_KEY_PEM: &str = "-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgTB3vavSTXm+w9v6Q
+9eCwVFwRhnLfWuO3y2VwpfKhYg+hRANCAARRJ6EbENwBqqjN6v+2jxsalRvqEKUr
+3oBLcSuhKaTh5UrFE9kQUxWnmft0yL35yRmHHSpSyD3A4pqUi0satvIp
+-----END PRIVATE KEY-----
 ";
 
     pub const PUBLIC_KEY_B64: &str =
@@ -127,10 +118,10 @@ p5n7dMi9+ckZhx0qUsg9wOKalItLGrbyKQ==
 
     #[test]
     fn test_generate_key() {
-        let key = VapidKeypair::generate_p256().unwrap();
+        let key = VapidKeypair::generate_p256();
         let pem = key.to_pem().unwrap();
-        assert!(pem.starts_with("-----BEGIN EC PRIVATE KEY-----\n"));
-        assert!(pem.ends_with("-----END EC PRIVATE KEY-----\n"));
+        assert!(pem.starts_with("-----BEGIN PRIVATE KEY-----\n"));
+        assert!(pem.ends_with("-----END PRIVATE KEY-----\n"));
     }
 
     #[test]
@@ -142,9 +133,6 @@ p5n7dMi9+ckZhx0qUsg9wOKalItLGrbyKQ==
     #[test]
     fn test_public_key() {
         let key = VapidKeypair::from_pem(PRIVATE_KEY_PEM).unwrap();
-        assert_eq!(
-            key.public().unwrap().encode_b64().unwrap().0,
-            PUBLIC_KEY_B64
-        );
+        assert_eq!(key.public().encode_b64().unwrap().0, PUBLIC_KEY_B64);
     }
 }

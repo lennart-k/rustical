@@ -134,7 +134,7 @@ impl SqliteDavPushStore {
             return Ok(key);
         }
 
-        let key = VapidKeypair::generate_p256().map_err(|err| Error::Other(err.into()))?;
+        let key = VapidKeypair::generate_p256();
         Self::insert_vapid_key(&mut *tx, &key).await?;
         tx.commit().await.map_err(crate::Error::from)?;
         Ok(key)
@@ -157,7 +157,7 @@ impl VapidStore for SqliteDavPushStore {
             ._vapid_pubkey_cache
             .get_or_try_init(async || {
                 let key = self.get_vapid_keypair().await?;
-                let pubkey = key.public().map_err(|err| Error::Other(err.into()))?;
+                let pubkey = key.public();
 
                 pubkey.encode_b64().map_err(|err| Error::Other(err.into()))
             })
@@ -215,7 +215,7 @@ mod tests {
         let store = context.await.dav_push_store;
 
         let key1 = store.get_vapid_keypair().await.unwrap();
-        let pubkey1 = key1.public().unwrap().encode_b64().unwrap();
+        let pubkey1 = key1.public().encode_b64().unwrap();
         let pubkey2 = store.get_vapid_pubkey_b64().await.unwrap();
         assert_eq!(
             &pubkey1, pubkey2,
