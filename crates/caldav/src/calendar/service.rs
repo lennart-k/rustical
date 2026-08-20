@@ -69,9 +69,11 @@ impl<C: CalendarStore, DP: DavPushStore> ResourceService for CalendarResourceSer
             .cal_store
             .get_calendar(principal, cal_id, show_deleted)
             .await?;
+        let vapid_pubkey = self.dav_push_store.get_vapid_pubkey_b64().await?.clone();
         Ok(CalendarResource {
             cal: calendar,
             read_only: self.cal_store.is_read_only(cal_id),
+            vapid_pubkey,
         })
     }
 

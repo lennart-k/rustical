@@ -13,14 +13,14 @@ pub fn get_app(context: TestStoreContext) -> axum::Router {
         addr_store,
         cal_store,
         principal_store,
-        sub_store,
+        dav_push_store,
         ..
     } = context;
 
     make_app(
         Arc::new(addr_store),
         Arc::new(cal_store),
-        Arc::new(sub_store),
+        Arc::new(dav_push_store),
         Arc::new(principal_store),
         FrontendConfig {
             enabled: true,

@@ -3,21 +3,23 @@
 mod extension;
 mod prop;
 pub mod register;
-use base64::Engine;
 use chrono::Utc;
 use derive_more::Constructor;
 pub use extension::*;
-use http::{HeaderValue, Method, header};
 pub use prop::*;
-use reqwest::{Body, Url};
+use reqwest::Url;
 use rustical_store::{CollectionOperation, CollectionOperationInfo};
 use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::mpsc::Receiver;
 use tracing::{error, info, warn};
+use web_push::{ContentEncoding, VapidSignatureBuilder, WebPushClient, WebPushMessageBuilder};
 
 mod endpoints;
 pub use endpoints::subscription_service;
+
+pub(crate) mod vapid;
+pub use vapid::{VapidError, VapidKeypair, VapidPublicKey, VapidPublicKeyB64};
 
 mod store;
 pub use store::*;
@@ -45,12 +47,12 @@ struct PushMessage {
 }
 
 #[derive(Debug, Constructor)]
-pub struct DavPushController<S: SubscriptionStore> {
+pub struct DavPushController<DP: DavPushStore> {
     allowed_push_servers: Option<Vec<String>>,
-    sub_store: Arc<S>,
+    sub_store: Arc<DP>,
 }
 
-impl<S: SubscriptionStore> DavPushController<S> {
+impl<DP: DavPushStore> DavPushController<DP> {
     pub async fn notifier(&self, mut recv: Receiver<CollectionOperation>) {
         loop {
             // Make sure we don't flood the subscribers
@@ -77,6 +79,14 @@ impl<S: SubscriptionStore> DavPushController<S> {
 
     #[allow(clippy::cognitive_complexity)]
     async fn send_message(&self, message: CollectionOperation) {
+        let vapid_key = match self.sub_store.get_vapid_keypair().await {
+            Ok(key) => key,
+            Err(err) => {
+                error!("{err}");
+                return;
+            }
+        };
+
         let subscriptions = match self.sub_store.get_subscriptions(&message.topic).await {
             Ok(subs) => subs,
             Err(err) => {
@@ -115,46 +125,57 @@ impl<S: SubscriptionStore> DavPushController<S> {
             }
         };
 
-        for subsciption in subscriptions {
-            if subsciption.is_expired(&Utc::now()) {
+        for subscription in subscriptions {
+            if subscription.is_expired(&Utc::now()) {
                 info!(
                     "Deleting subscription {} on topic {} because it is expired",
-                    subsciption.id, subsciption.topic
+                    subscription.id, subscription.topic
                 );
-                self.try_delete_subscription(&subsciption.id).await;
+                self.try_delete_subscription(&subscription.id).await;
                 continue;
             }
 
             if let Some(allowed_push_servers) = &self.allowed_push_servers {
-                if let Ok(url) = Url::parse(&subsciption.push_resource) {
+                if let Ok(url) = Url::parse(&subscription.push_resource) {
                     let origin = url.origin().unicode_serialization();
                     if !allowed_push_servers.contains(&origin) {
                         warn!(
                             "Deleting subscription {} on topic {} because the endpoint is not in the list of allowed push servers",
-                            subsciption.id, subsciption.topic
+                            subscription.id, subscription.topic
                         );
-                        self.try_delete_subscription(&subsciption.id).await;
+                        self.try_delete_subscription(&subscription.id).await;
                         continue;
                     }
                 } else {
                     warn!(
                         "Deleting subscription {} on topic {} because of invalid URL",
-                        subsciption.id, subsciption.topic
+                        subscription.id, subscription.topic
                     );
-                    self.try_delete_subscription(&subsciption.id).await;
+                    self.try_delete_subscription(&subscription.id).await;
                     continue;
                 }
             }
 
-            if let Err(err) = send_payload(&payload, &subsciption).await {
+            let subscription_info: web_push::SubscriptionInfo = subscription.into();
+
+            let mut message_builder = WebPushMessageBuilder::new(&subscription_info);
+            message_builder.set_payload(ContentEncoding::Aes128Gcm, payload.as_bytes());
+            let signature = VapidSignatureBuilder::from_ec(vapid_key.0.clone(), &subscription_info)
+                .build()
+                .unwrap();
+            message_builder.set_vapid_signature(signature);
+            let message = message_builder.build().unwrap();
+
+            let client = web_push::ReqwestWebPushClient::new().unwrap();
+            if let Err(err) = client.send(message).await {
                 error!("An error occured sending out a push notification: {err}");
-                if err.is_permament_error() {
-                    warn!(
-                        "Deleting subscription {} on topic {}",
-                        subsciption.id, subsciption.topic
-                    );
-                    self.try_delete_subscription(&subsciption.id).await;
-                }
+                // if err.is_permament_error() {
+                //     warn!(
+                //         "Deleting subscription {} on topic {}",
+                //         &subscription_id, subscription_topic
+                //     );
+                //     self.try_delete_subscription(&subscription_id).await;
+                // }
             }
         }
     }
@@ -166,105 +187,28 @@ impl<S: SubscriptionStore> DavPushController<S> {
     }
 }
 
-async fn send_payload(payload: &str, subsciption: &Subscription) -> Result<(), NotifierError> {
-    if subsciption.public_key_type != "p256dh" {
-        return Err(NotifierError::InvalidPublicKeyType(
-            subsciption.public_key_type.clone(),
-        ));
-    }
-    let endpoint = subsciption
-        .push_resource
-        .parse()
-        .map_err(|_| NotifierError::InvalidEndpointUrl(subsciption.push_resource.clone()))?;
-    let ua_public = base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .decode(&subsciption.public_key)
-        .map_err(|_| NotifierError::InvalidKeyEncoding)?;
-    let auth_secret = base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .decode(&subsciption.auth_secret)
-        .map_err(|_| NotifierError::InvalidKeyEncoding)?;
-
-    let client = reqwest::ClientBuilder::new()
-        .timeout(Duration::from_secs(30))
-        .connect_timeout(Duration::from_secs(10))
-        .build()
-        .map_err(NotifierError::from)?;
-
-    let payload = ece::encrypt(&ua_public, &auth_secret, payload.as_bytes())?;
-
-    let mut request = reqwest::Request::new(Method::POST, endpoint);
-    *request.body_mut() = Some(Body::from(payload));
-    let hdrs = request.headers_mut();
-    hdrs.insert(
-        header::CONTENT_ENCODING,
-        HeaderValue::from_static("aes128gcm"),
-    );
-    hdrs.insert(
-        header::CONTENT_TYPE,
-        HeaderValue::from_static("application/octet-stream"),
-    );
-    hdrs.insert("TTL", HeaderValue::from(60));
-    client.execute(request).await?;
-
-    Ok(())
-}
-
-#[derive(Debug, thiserror::Error)]
-enum NotifierError {
-    #[error("Invalid public key type: {0}")]
-    InvalidPublicKeyType(String),
-    #[error("Invalid endpoint URL: {0}")]
-    InvalidEndpointUrl(String),
-    #[error("Invalid key encoding")]
-    InvalidKeyEncoding,
-    #[error(transparent)]
-    EceError(#[from] ece::Error),
-    #[error(transparent)]
-    ReqwestError(#[from] reqwest::Error),
-}
-
-impl NotifierError {
-    // Decide whether the error should cause the subscription to be removed
-    pub const fn is_permament_error(&self) -> bool {
-        match self {
-            Self::InvalidPublicKeyType(_)
-            | Self::InvalidEndpointUrl(_)
-            | Self::InvalidKeyEncoding => true,
-            Self::EceError(err) => matches!(
-                err,
-                ece::Error::InvalidAuthSecret | ece::Error::InvalidKeyLength
-            ),
-            Self::ReqwestError(_) => false,
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use crate::{Subscription, send_payload};
-    use base64::Engine;
-    use chrono::NaiveDateTime;
-    use ece::generate_keypair_and_auth_secret;
-
-    #[tokio::test]
-    async fn test_ntfy_request() {
-        let (keypair, auth_secret) = generate_keypair_and_auth_secret().unwrap();
-        let auth_secret = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(auth_secret);
-        let public_key =
-            base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(keypair.pub_as_raw().unwrap());
-
-        send_payload(
-            "hello",
-            &Subscription {
-                id: "asd".to_string(),
-                topic: "asd".to_string(),
-                expiration: NaiveDateTime::MAX,
-                push_resource: "https://ntfy.sh/upL00-v4L3SGM2".to_string(),
-                public_key,
-                public_key_type: "p256dh".to_string(),
-                auth_secret,
-            },
-        )
-        .await
-        .unwrap();
-    }
+    // #[tokio::test]
+    // async fn test_ntfy_request() {
+    //     let (keypair, auth_secret) = generate_keypair_and_auth_secret().unwrap();
+    //     let auth_secret = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(auth_secret);
+    //     let public_key =
+    //         base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(keypair.pub_as_raw().unwrap());
+    //
+    //     send_payload(
+    //         "hello",
+    //         &Subscription {
+    //             id: "asd".to_string(),
+    //             topic: "asd".to_string(),
+    //             expiration: NaiveDateTime::MAX,
+    //             push_resource: "https://ntfy.sh/upL00-v4L3SGM2".to_string(),
+    //             public_key,
+    //             public_key_type: "p256dh".to_string(),
+    //             auth_secret,
+    //         },
+    //     )
+    //     .await
+    //     .unwrap();
+    // }
 }

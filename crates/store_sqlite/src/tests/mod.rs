@@ -1,6 +1,6 @@
 use crate::{
-    SqliteStore, addressbook_store::SqliteAddressbookStore, calendar_store::SqliteCalendarStore,
-    create_db_pool, principal_store::SqlitePrincipalStore,
+    SqliteDavPushStore, addressbook_store::SqliteAddressbookStore,
+    calendar_store::SqliteCalendarStore, create_db_pool, principal_store::SqlitePrincipalStore,
 };
 use rstest::{fixture, rstest};
 use rustical_store::auth::{AuthenticationProvider, Principal, PrincipalType};
@@ -15,7 +15,7 @@ pub struct TestStoreContext {
     pub addr_store: SqliteAddressbookStore,
     pub cal_store: SqliteCalendarStore,
     pub principal_store: SqlitePrincipalStore,
-    pub sub_store: SqliteStore,
+    pub dav_push_store: SqliteDavPushStore,
 }
 
 #[fixture]
@@ -49,7 +49,7 @@ pub async fn test_store_context() -> TestStoreContext {
         addr_store: SqliteAddressbookStore::new(db.clone(), send_addr, false),
         cal_store: SqliteCalendarStore::new(db.clone(), send_cal, false),
         principal_store,
-        sub_store: SqliteStore::new(db),
+        dav_push_store: SqliteDavPushStore::new(db),
     }
 }
 

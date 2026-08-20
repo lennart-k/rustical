@@ -64,9 +64,9 @@ mod tests {
     use super::cleanup_trashed_calendar_entities;
     use rustical_store::auth::AuthenticationProvider;
     use rustical_store::{CalendarMetadata, CalendarReadStore, CalendarWriteStore};
-    use rustical_store_sqlite::calendar_store::SqliteCalendarStore;
+    use rustical_store_sqlite::SqliteCalendarStore;
+    use rustical_store_sqlite::SqlitePrincipalStore;
     use rustical_store_sqlite::create_db_pool;
-    use rustical_store_sqlite::principal_store::SqlitePrincipalStore;
 
     const CONFIG_RETENTION_DAYS: NonZeroU32 = match NonZeroU32::new(1) {
         Some(result) => result,

@@ -29,3 +29,9 @@ base64.workspace = true
 ece.workspace = true
 axum.workspace = true
 openssl.workspace = true
+ct-codecs.workspace = true
+web-push = { git = "https://github.com/lennart-k/rust-web-push", branch = "feat/update-deps-hyper-to-reqwest", default-features = false, features = ["reqwest-client"] }
+jwt-simple = { version = "0.13", default-features = false, features = ["pure-rust"] }
+
+[dev-dependencies]
+insta.workspace = true

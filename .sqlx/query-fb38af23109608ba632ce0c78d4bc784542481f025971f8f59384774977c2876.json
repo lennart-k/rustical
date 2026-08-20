@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT vapid_key FROM davpush_vapid_key",
+  "describe": {
+    "columns": [
+      {
+        "name": "vapid_key",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "davpush_vapid_key",
+            "name": "vapid_key"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "fb38af23109608ba632ce0c78d4bc784542481f025971f8f59384774977c2876"
+}

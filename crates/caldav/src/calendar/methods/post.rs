@@ -28,9 +28,15 @@ pub async fn route_post<C: CalendarStore, DP: DavPushStore>(
         .cal_store
         .get_calendar(&principal, &cal_id, false)
         .await?;
+    let vapid_pubkey = resource_service
+        .dav_push_store
+        .get_vapid_pubkey_b64()
+        .await?
+        .clone();
     let calendar_resource = CalendarResource {
         cal: calendar,
         read_only: true,
+        vapid_pubkey,
     };
 
     if !calendar_resource

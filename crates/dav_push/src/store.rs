@@ -1,4 +1,4 @@
-use crate::Subscription;
+use crate::{Subscription, VapidKeypair, VapidPublicKeyB64};
 use async_trait::async_trait;
 use rustical_store::Error;
 
@@ -11,6 +11,12 @@ pub trait SubscriptionStore: Send + Sync + 'static {
     async fn delete_subscription(&self, id: &str) -> Result<(), Error>;
 }
 
-pub trait DavPushStore: SubscriptionStore {}
+#[async_trait]
+pub trait VapidStore: Send + Sync + 'static {
+    async fn get_vapid_keypair(&self) -> Result<&VapidKeypair, Error>;
+    async fn get_vapid_pubkey_b64(&self) -> Result<&VapidPublicKeyB64, Error>;
+}
 
-impl<T: SubscriptionStore> DavPushStore for T {}
+pub trait DavPushStore: SubscriptionStore + VapidStore {}
+
+impl<T: SubscriptionStore + VapidStore> DavPushStore for T {}

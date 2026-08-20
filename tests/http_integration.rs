@@ -10,7 +10,7 @@ use rustical::{
     principals::{CreateArgs, EditArgs, PrincipalsCommand},
 };
 use rustical_store::auth::{AuthenticationProvider, PrincipalType};
-use rustical_store_sqlite::{create_db_pool, principal_store::SqlitePrincipalStore};
+use rustical_store_sqlite::{SqlitePrincipalStore, create_db_pool};
 use std::{collections::HashMap, time::Duration};
 
 mod common;

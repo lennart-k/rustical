@@ -14,7 +14,7 @@ use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
 use rustical_dav::resourcetype;
 use rustical_dav::xml::{HrefElement, Resourcetype, SupportedReportSet};
-use rustical_dav_push::{DavPushExtension, DavPushExtensionProp};
+use rustical_dav_push::{DavPushExtension, DavPushExtensionProp, VapidPublicKeyB64};
 use rustical_store::Calendar;
 use rustical_store::auth::Principal;
 use rustical_xml::{EnumVariants, PropName};
@@ -74,6 +74,7 @@ pub enum CalendarPropWrapper {
 pub struct CalendarResource {
     pub cal: Calendar,
     pub read_only: bool,
+    pub vapid_pubkey: VapidPublicKeyB64,
 }
 
 impl ResourceName for CalendarResource {
@@ -97,6 +98,10 @@ impl SyncTokenExtension for CalendarResource {
 impl DavPushExtension for CalendarResource {
     fn get_topic(&self) -> String {
         self.cal.push_topic.clone()
+    }
+
+    fn get_vapid_public_key(&self) -> Option<VapidPublicKeyB64> {
+        Some(self.vapid_pubkey.clone())
     }
 }
 

@@ -1,5 +1,6 @@
 use crate::{CardDavPrincipalUri, addressbook::resource::AddressbookResource};
 use rustical_dav::resource::Resource;
+use rustical_dav_push::VapidPublicKeyB64;
 use rustical_store::{Addressbook, auth::Principal};
 use rustical_xml::XmlSerializeRoot;
 
@@ -30,7 +31,15 @@ fn test_propfind() {
         push_topic: "asdasd".to_string(),
     };
 
-    let resource = AddressbookResource(addressbook.clone());
+    let vapid_pubkey = VapidPublicKeyB64(
+        "BPtEpPcF_eXYV3KXYOYRJvnrvdhNVFNfHzvV5GgTQQ_oXDwm-AKFJw_DLnc_d4reJc7SFiuFtYRUkCisT_4TRz"
+            .to_string(),
+    );
+
+    let resource = AddressbookResource {
+        addressbook: addressbook.clone(),
+        vapid_pubkey,
+    };
     let response = resource
         .propfind(
             &format!(

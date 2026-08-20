@@ -67,7 +67,11 @@ impl<AS: AddressbookStore, DP: DavPushStore> ResourceService
             .get_addressbook(principal, addressbook_id, show_deleted)
             .await
             .map_err(|_e| Error::NotFound)?;
-        Ok(addressbook.into())
+        let vapid_pubkey = self.dav_push_store.get_vapid_pubkey_b64().await?.clone();
+        Ok(AddressbookResource {
+            addressbook,
+            vapid_pubkey,
+        })
     }
 
     async fn get_members(
@@ -93,7 +97,7 @@ impl<AS: AddressbookStore, DP: DavPushStore> ResourceService
         file: Self::Resource,
     ) -> Result<(), Self::Error> {
         self.addr_store
-            .update_addressbook(principal, addressbook_id, file.into())
+            .update_addressbook(principal, addressbook_id, file.addressbook)
             .await?;
         Ok(())
     }

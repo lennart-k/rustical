@@ -4,11 +4,15 @@ pub use error::Error;
 use serde::Serialize;
 use sqlx::{Pool, Sqlite, SqlitePool, sqlite::SqliteConnectOptions};
 use tracing::info;
-pub mod addressbook_store;
-pub mod calendar_store;
+mod addressbook_store;
+pub use addressbook_store::SqliteAddressbookStore;
+mod calendar_store;
+pub use calendar_store::SqliteCalendarStore;
+mod dav_push_store;
+pub use dav_push_store::SqliteDavPushStore;
 pub mod error;
-pub mod principal_store;
-pub mod subscription_store;
+mod principal_store;
+pub use principal_store::SqlitePrincipalStore;
 
 // Begin statement for write transactions
 pub const BEGIN_IMMEDIATE: &str = "BEGIN IMMEDIATE";
@@ -22,18 +26,6 @@ pub(crate) enum ChangeOperation {
     // There's no distinction between Add and Modify
     Add,
     Delete,
-}
-
-#[derive(Debug, Clone)]
-pub struct SqliteStore {
-    db: SqlitePool,
-}
-
-impl SqliteStore {
-    #[must_use]
-    pub const fn new(db: SqlitePool) -> Self {
-        Self { db }
-    }
 }
 
 pub async fn create_db_pool(db_url: &str, migrate: bool) -> Result<Pool<Sqlite>, sqlx::Error> {

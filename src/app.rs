@@ -42,7 +42,7 @@ pub fn make_app<
 >(
     addr_store: Arc<AS>,
     cal_store: Arc<CS>,
-    subscription_store: Arc<DP>,
+    dav_push_store: Arc<DP>,
     auth_provider: Arc<impl AuthenticationProvider>,
     frontend_config: FrontendConfig,
     oidc_config: Option<OidcConfig>,
@@ -65,7 +65,7 @@ pub fn make_app<
             "/caldav",
             auth_provider.clone(),
             combined_cal_store.clone(),
-            subscription_store.clone(),
+            dav_push_store.clone(),
             false,
             caldav_config.clone(),
         ))
@@ -73,7 +73,7 @@ pub fn make_app<
             "/caldav-compat",
             auth_provider.clone(),
             combined_cal_store.clone(),
-            subscription_store.clone(),
+            dav_push_store.clone(),
             true,
             caldav_config,
         ))
@@ -100,7 +100,7 @@ pub fn make_app<
             "/carddav",
             auth_provider.clone(),
             addr_store.clone(),
-            subscription_store.clone(),
+            dav_push_store.clone(),
         ));
 
     // GNOME Accounts needs to discover a WebDAV Files endpoint to complete the setup
@@ -138,7 +138,7 @@ pub fn make_app<
     }
 
     if dav_push_enabled {
-        router = router.merge(rustical_dav_push::subscription_service(subscription_store));
+        router = router.merge(rustical_dav_push::subscription_service(dav_push_store));
     }
 
     router

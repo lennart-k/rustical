@@ -1,10 +1,18 @@
 use rustical_dav::header::Depth;
 use rustical_xml::{Unparsed, XmlDeserialize, XmlSerialize};
 
+use crate::VapidPublicKeyB64;
+
+#[derive(Debug, Clone, XmlSerialize, PartialEq, Eq)]
+pub struct WebPushTransport {
+    #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
+    pub vapid_public_key: Option<VapidPublicKeyB64>,
+}
+
 #[derive(Debug, Clone, XmlSerialize, PartialEq, Eq)]
 pub enum Transport {
     #[xml(ns = "rustical_dav::namespace::NS_DAVPUSH")]
-    WebPush,
+    WebPush(WebPushTransport),
 }
 
 #[derive(Debug, Clone, XmlSerialize, PartialEq, Eq)]
@@ -14,10 +22,11 @@ pub struct Transports {
     transports: Vec<Transport>,
 }
 
-impl Default for Transports {
-    fn default() -> Self {
+impl Transports {
+    #[must_use]
+    pub fn new(vapid_public_key: Option<VapidPublicKeyB64>) -> Self {
         Self {
-            transports: vec![Transport::WebPush],
+            transports: vec![Transport::WebPush(WebPushTransport { vapid_public_key })],
         }
     }
 }
@@ -56,5 +65,54 @@ impl XmlDeserialize for PropertyUpdate {
         );
         let FakePropertyUpdate(depth, _) = FakePropertyUpdate::deserialize(reader, start, empty)?;
         Ok(Self(depth))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
+
+    use crate::{Transports, VapidPublicKeyB64};
+
+    #[derive(XmlRootTag, XmlSerialize)]
+    #[xml(root = "document")]
+    struct Document {
+        transports: Transports,
+    }
+
+    #[test]
+    fn test_serialize_transports() {
+        let pubkey = VapidPublicKeyB64(crate::vapid::tests::PUBLIC_KEY_B64.to_owned());
+        let doc = Document {
+            transports: Transports::new(Some(pubkey)),
+        };
+        let xml = doc.serialize_to_string().unwrap();
+        insta::assert_snapshot!(xml, @r#"
+        <?xml version="1.0" encoding="utf-8"?>
+        <document>
+            <transports>
+                <web-push xmlns="https://bitfire.at/webdav-push">
+                    <vapid-public-key xmlns="https://bitfire.at/webdav-push" type="p256ecdsa">BFEnoRsQ3AGqqM3q_7aPGxqVG-oQpSvegEtxK6EppOHlSsUT2RBTFaeZ-3TIvfnJGYcdKlLIPcDimpSLSxq28ik</vapid-public-key>
+                </web-push>
+            </transports>
+        </document>
+        "#);
+    }
+
+    #[test]
+    fn test_serialize_transports_empty() {
+        let doc = Document {
+            transports: Transports::new(None),
+        };
+        let xml = doc.serialize_to_string().unwrap();
+        insta::assert_snapshot!(xml, @r#"
+        <?xml version="1.0" encoding="utf-8"?>
+        <document>
+            <transports>
+                <web-push xmlns="https://bitfire.at/webdav-push">
+                </web-push>
+            </transports>
+        </document>
+        "#);
     }
 }

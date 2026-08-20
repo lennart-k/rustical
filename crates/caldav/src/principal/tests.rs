@@ -18,13 +18,13 @@ async fn test_principal_resource(
 ) {
     let TestStoreContext {
         cal_store,
-        sub_store,
+        dav_push_store,
         principal_store: auth_provider,
         ..
     } = context.await;
     let service = PrincipalResourceService {
         cal_store: Arc::new(cal_store),
-        dav_push_store: Arc::new(sub_store),
+        dav_push_store: Arc::new(dav_push_store),
         auth_provider: Arc::new(auth_provider),
         simplified_home_set: false,
         config: Arc::default(),
