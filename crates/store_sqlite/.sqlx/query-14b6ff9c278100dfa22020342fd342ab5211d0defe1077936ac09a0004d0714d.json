@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO principals\n            (id, displayname, principal_type, password_hash) VALUES (?, ?, ?, ?)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "14b6ff9c278100dfa22020342fd342ab5211d0defe1077936ac09a0004d0714d"
+}

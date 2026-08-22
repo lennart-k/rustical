@@ -116,7 +116,7 @@ impl PostgresAddressbookStore {
                 );
             } else {
                 error!(
-                    "Not all address objects are valid. Since data_store.postgres.skip_broken=false this causes a panic. Remove or repair the broken objects manually or set data_store.postgres.skip_broken=false as a temporary solution to ignore the error. If you need help feel free to open up an issue on GitHub."
+                    "Not all address objects are valid. Since data_store.postgres.skip_broken=false this causes a panic. Remove or repair the broken objects manually or set data_store.postgres.skip_broken=true as a temporary solution to ignore the error. If you need help feel free to open up an issue on GitHub."
                 );
                 panic!();
             }
@@ -325,6 +325,7 @@ impl PostgresAddressbookStore {
         principal: &str,
         addressbook_id: &str,
         synctoken: i64,
+        skip_broken: bool,
     ) -> Result<(Vec<(String, AddressObject)>, Vec<String>, i64), rustical_store::Error> {
         struct Row {
             object_id: String,
@@ -367,6 +368,7 @@ impl PostgresAddressbookStore {
             {
                 Ok(object) => updated_objects.push((object_id, object)),
                 Err(rustical_store::Error::NotFound) => deleted_objects.push(object_id),
+                Err(rustical_store::Error::IcalError(_)) if skip_broken => (),
                 Err(err) => return Err(err),
             }
         }
@@ -490,7 +492,8 @@ impl PostgresAddressbookStore {
             .await.map_err(crate::Error::from)?;
         } else {
             sqlx::query!(
-                "DELETE FROM addressobjects WHERE addressbook_id = $1 AND id = $2",
+                "DELETE FROM addressobjects WHERE (principal, addressbook_id, id) = ($1, $2, $3)",
+                principal,
                 addressbook_id,
                 object_id
             )
@@ -554,7 +557,14 @@ impl AddressbookReadStore for PostgresAddressbookStore {
         addressbook_id: &str,
         synctoken: i64,
     ) -> Result<(Vec<(String, AddressObject)>, Vec<String>, i64), rustical_store::Error> {
-        Self::_sync_changes(&self.db, principal, addressbook_id, synctoken).await
+        Self::_sync_changes(
+            &self.db,
+            principal,
+            addressbook_id,
+            synctoken,
+            self.skip_broken,
+        )
+        .await
     }
 
     #[instrument]
@@ -802,6 +812,8 @@ impl AddressbookWriteStore for PostgresAddressbookStore {
         }
         if existing.is_none() {
             Self::_insert_addressbook(&mut *tx, &addressbook).await?;
+            let birthday_cal = Self::default_birthday_calendar(addressbook.clone());
+            Self::_insert_birthday_calendar(&mut *tx, &birthday_cal).await?;
         }
 
         let mut sync_token = None;

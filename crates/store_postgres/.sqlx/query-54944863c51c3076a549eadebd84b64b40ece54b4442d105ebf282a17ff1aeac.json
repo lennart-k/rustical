@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM addressobjects WHERE (principal, addressbook_id, id) = ($1, $2, $3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "54944863c51c3076a549eadebd84b64b40ece54b4442d105ebf282a17ff1aeac"
+}

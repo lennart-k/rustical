@@ -11,7 +11,7 @@ CREATE TABLE app_tokens (
     principal TEXT NOT NULL,
     token TEXT NOT NULL,
     displayname TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     FOREIGN KEY (principal)
     REFERENCES principals (id) ON DELETE CASCADE

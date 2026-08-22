@@ -108,28 +108,40 @@ impl AuthenticationProvider for SqlitePrincipalStore {
             return Err(rustical_store::Error::InvalidPrincipalId);
         }
 
-        // Would be cleaner to put this into a transaction but for now it will be fine
-        if !overwrite && self.get_principal(&user.id).await?.is_some() {
-            return Err(Error::AlreadyExists);
-        }
         let principal_type = user.principal_type.as_str();
         let password = user.password.map(Secret::into_inner);
-        sqlx::query!(
-            r#"
+        if overwrite {
+            sqlx::query!(
+                r#"
             INSERT INTO principals
             (id, displayname, principal_type, password_hash) VALUES (?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 (displayname, principal_type, password_hash)
                 = (excluded.displayname, excluded.principal_type, excluded.password_hash)
         "#,
-            user.id,
-            user.displayname,
-            principal_type,
-            password
-        )
-        .execute(&self.db)
-        .await
-        .map_err(crate::Error::from)?;
+                user.id,
+                user.displayname,
+                principal_type,
+                password
+            )
+            .execute(&self.db)
+            .await
+            .map_err(crate::Error::from)?;
+        } else {
+            sqlx::query!(
+                r#"
+            INSERT INTO principals
+            (id, displayname, principal_type, password_hash) VALUES (?, ?, ?, ?)
+        "#,
+                user.id,
+                user.displayname,
+                principal_type,
+                password
+            )
+            .execute(&self.db)
+            .await
+            .map_err(crate::Error::from)?;
+        }
         Ok(())
     }
 

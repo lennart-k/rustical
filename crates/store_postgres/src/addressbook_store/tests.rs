@@ -2,8 +2,12 @@ use std::collections::HashSet;
 
 use rstest::rstest;
 use rustical_ical::AddressObject;
-use rustical_store::{Addressbook, AddressbookReadStore, AddressbookWriteStore};
+use rustical_store::{
+    Addressbook, AddressbookReadStore, AddressbookWriteStore,
+    auth::{AuthenticationProvider, Principal, PrincipalType},
+};
 
+use crate::addressbook_store::PostgresAddressbookStore;
 use crate::tests::{TestStoreContext, test_store_context};
 
 #[rstest]
@@ -257,4 +261,145 @@ async fn test_sync_no_changes_token(
             ))
             .unwrap(),
     );
+}
+
+#[rstest]
+#[tokio::test]
+async fn test_hard_delete_scoped_to_principal(
+    #[from(test_store_context)]
+    #[future]
+    context: TestStoreContext,
+) {
+    let ctx = context.await;
+    ctx.principal_store
+        .insert_principal(
+            Principal {
+                id: "other".to_owned(),
+                displayname: None,
+                memberships: vec![],
+                password: None,
+                principal_type: PrincipalType::Individual,
+            },
+            false,
+        )
+        .await
+        .unwrap();
+
+    let object = AddressObject::example_minimal();
+    for (principal, topic) in [("user", "topic-user"), ("other", "topic-other")] {
+        ctx.addr_store
+            .insert_addressbook(Addressbook {
+                id: "addr".into(),
+                principal: principal.into(),
+                displayname: None,
+                description: None,
+                deleted_at: None,
+                synctoken: 0,
+                push_topic: topic.into(),
+            })
+            .await
+            .unwrap();
+        ctx.addr_store
+            .put_object(principal, "addr", "obj", object.clone(), false)
+            .await
+            .unwrap();
+    }
+
+    ctx.addr_store
+        .delete_object("other", "addr", "obj", false)
+        .await
+        .unwrap();
+
+    ctx.addr_store
+        .get_object("user", "addr", "obj", false)
+        .await
+        .unwrap();
+    assert!(
+        ctx.addr_store
+            .get_object("other", "addr", "obj", true)
+            .await
+            .unwrap_err()
+            .is_not_found()
+    );
+}
+
+#[rstest]
+#[tokio::test]
+async fn test_import_creates_birthday_calendar(
+    #[from(test_store_context)]
+    #[future]
+    context: TestStoreContext,
+) {
+    let addr_store = context.await.addr_store;
+    addr_store
+        .import_addressbook(
+            Addressbook {
+                id: "imported".into(),
+                principal: "user".into(),
+                displayname: None,
+                description: None,
+                deleted_at: None,
+                synctoken: 0,
+                push_topic: "import-topic".into(),
+            },
+            vec![],
+            false,
+        )
+        .await
+        .unwrap();
+    rustical_store::CalendarReadStore::get_calendar(
+        &addr_store,
+        "user",
+        "_birthdays_imported",
+        false,
+    )
+    .await
+    .unwrap();
+}
+
+#[rstest]
+#[tokio::test]
+async fn test_sync_changes_skip_broken(
+    #[from(test_store_context)]
+    #[future]
+    context: TestStoreContext,
+) {
+    let ctx = context.await;
+    ctx.addr_store
+        .insert_addressbook(Addressbook {
+            id: "addr".into(),
+            principal: "user".into(),
+            displayname: None,
+            description: None,
+            deleted_at: None,
+            synctoken: 0,
+            push_topic: "skip".into(),
+        })
+        .await
+        .unwrap();
+    ctx.addr_store
+        .put_object(
+            "user",
+            "addr",
+            "obj",
+            AddressObject::example_minimal(),
+            false,
+        )
+        .await
+        .unwrap();
+    sqlx::query("UPDATE addressobjects SET vcf = 'nope' WHERE id = $1")
+        .bind("obj")
+        .execute(&ctx.db)
+        .await
+        .unwrap();
+
+    assert!(matches!(
+        ctx.addr_store.sync_changes("user", "addr", 0).await,
+        Err(rustical_store::Error::IcalError(_))
+    ));
+
+    let (send, _recv) = tokio::sync::mpsc::channel(1);
+    let skipping = PostgresAddressbookStore::new(ctx.db.clone(), send, true);
+    let (added, removed, _) = skipping.sync_changes("user", "addr", 0).await.unwrap();
+    assert!(added.is_empty() && removed.is_empty());
 }

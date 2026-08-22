@@ -190,7 +190,7 @@ impl PostgresCalendarStore {
                 );
             } else {
                 error!(
-                    "Not all calendar objects are valid. Since data_store.postgres.skip_broken=false this causes a panic. Remove or repair the broken objects manually or set data_store.postgres.skip_broken=false as a temporary solution to ignore the error. If you need help feel free to open up an issue on GitHub."
+                    "Not all calendar objects are valid. Since data_store.postgres.skip_broken=false this causes a panic. Remove or repair the broken objects manually or set data_store.postgres.skip_broken=true as a temporary solution to ignore the error. If you need help feel free to open up an issue on GitHub."
                 );
                 panic!();
             }
@@ -678,7 +678,8 @@ impl PostgresCalendarStore {
             .await.map_err(crate::Error::from)?;
         } else {
             sqlx::query!(
-                "DELETE FROM calendarobjects WHERE cal_id = $1 AND id = $2",
+                "DELETE FROM calendarobjects WHERE (principal, cal_id, id) = ($1, $2, $3)",
+                principal,
                 cal_id,
                 object_id
             )

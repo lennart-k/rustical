@@ -194,7 +194,9 @@ pub struct SqliteDataStoreConfig {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields)]
 pub struct PostgresDataStoreConfig {
-    pub url: String,
+    pub db_url: String,
+    #[serde(default = "default_true")]
+    pub run_repairs: bool,
     #[serde(default = "default_true")]
     pub skip_broken: bool,
 }

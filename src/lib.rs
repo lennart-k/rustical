@@ -106,7 +106,11 @@ pub(crate) async fn get_sqlite_data_stores(
 #[allow(clippy::missing_errors_doc)]
 pub(crate) async fn get_postgres_data_stores(
     migrate: bool,
-    PostgresDataStoreConfig { url, skip_broken }: &PostgresDataStoreConfig,
+    PostgresDataStoreConfig {
+        db_url,
+        run_repairs,
+        skip_broken,
+    }: &PostgresDataStoreConfig,
 ) -> Result<(
     Arc<PostgresAddressbookStore>,
     Arc<PostgresCalendarStore>,
@@ -114,7 +118,7 @@ pub(crate) async fn get_postgres_data_stores(
     Arc<PostgresPrincipalStore>,
     Receiver<CollectionOperation>,
 )> {
-    let db = create_postgres_pool(url, migrate).await?;
+    let db = create_postgres_pool(db_url, migrate).await?;
     let (send, recv) = tokio::sync::mpsc::channel(1000);
     let addressbook_store = Arc::new(PostgresAddressbookStore::new(
         db.clone(),
@@ -122,6 +126,12 @@ pub(crate) async fn get_postgres_data_stores(
         *skip_broken,
     ));
     let cal_store = Arc::new(PostgresCalendarStore::new(db.clone(), send, *skip_broken));
+    if *run_repairs {
+        info!("Running repair tasks");
+        addressbook_store.repair_orphans().await?;
+        cal_store.repair_invalid_version_4_0().await?;
+        cal_store.repair_orphans().await?;
+    }
     let subscription_store = Arc::new(PostgresStore::new(db.clone()));
     let principal_store = Arc::new(PostgresPrincipalStore::new(db));
     for principal in principal_store.get_principals().await? {
