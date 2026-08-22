@@ -17,7 +17,7 @@ use sqlx::{Acquire, Executor, PgConnection, PgPool, Postgres, Transaction};
 use tokio::sync::mpsc::Sender;
 use tracing::{error, error_span, instrument, warn};
 
-#[cfg(test)]
+#[cfg(all(test, feature = "test"))]
 mod tests;
 
 #[derive(Debug, Clone)]
@@ -216,7 +216,7 @@ impl PostgresCalendarStore {
 
         let repairs: Vec<Row> = sqlx::query_as!(
             Row,
-            r#"SELECT principal, cal_id, id, ics FROM calendarobjects WHERE ics LIKE '%VERSION:4.0%';"#
+            r#"SELECT principal, cal_id, id, ics FROM calendarobjects WHERE ics ILIKE '%VERSION:4.0%';"#
         )
         .fetch_all(&mut *tx)
         .await

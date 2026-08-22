@@ -10,7 +10,7 @@ pub mod error;
 pub mod principal_store;
 pub mod subscription_store;
 
-#[cfg(any(test, feature = "test"))]
+#[cfg(feature = "test")]
 pub mod tests;
 
 #[derive(Debug, Clone, Copy, Serialize)]

@@ -344,3 +344,49 @@ async fn test_hard_delete_scoped_to_principal(
             .is_not_found()
     );
 }
+
+#[rstest]
+#[tokio::test]
+async fn test_repair_invalid_version_is_case_insensitive(
+    #[from(test_store_context)]
+    #[future]
+    context: TestStoreContext,
+) {
+    let ctx = context.await;
+    ctx.cal_store
+        .insert_calendar(Calendar {
+            id: "cal".into(),
+            principal: "user".into(),
+            timezone_id: None,
+            meta: CalendarMetadata::default(),
+            deleted_at: None,
+            synctoken: 0,
+            push_topic: "topic".into(),
+            components: vec![CalendarObjectType::Event],
+            subscription_url: None,
+        })
+        .await
+        .unwrap();
+    ctx.cal_store
+        .put_object("user", "cal", "object", CalendarObject::example_1(), false)
+        .await
+        .unwrap();
+    sqlx::query("UPDATE calendarobjects SET ics = replace(ics, 'VERSION:2.0', 'version:4.0')")
+        .execute(&ctx.db)
+        .await
+        .unwrap();
+
+    ctx.cal_store.repair_invalid_version_4_0().await.unwrap();
+
+    let ics: String = sqlx::query_scalar(
+        "SELECT ics FROM calendarobjects WHERE (principal, cal_id, id) = ($1, $2, $3)",
+    )
+    .bind("user")
+    .bind("cal")
+    .bind("object")
+    .fetch_one(&ctx.db)
+    .await
+    .unwrap();
+    assert!(ics.contains("VERSION:2.0"));
+    assert!(!ics.contains("version:4.0"));
+}

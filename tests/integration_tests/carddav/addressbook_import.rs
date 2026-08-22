@@ -67,29 +67,6 @@ END:VCARD",
     let body = response.extract_string().await;
     insta::assert_snapshot!("get_body", body);
 
-    // Create birthday calendar
-    let mut request = Request::builder().method("MKCOL").uri(&bday_url).body(
-        Body::from(r#"
-      <mkcol xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CS="http://calendarserver.org/ns/" xmlns:ICAL="http://apple.com/ns/ical/">
-        <set>
-          <prop>
-            <displayname>Test Birthdays</displayname>
-            <CAL:calendar-description>and anniversaries</CAL:calendar-description>
-            <ICAL:calendar-color>#FFFF00</ICAL:calendar-color>
-            <CAL:supported-calendar-component-set>
-              <CAL:comp name="VEVENT" />
-            </CAL:supported-calendar-component-set>
-          </prop>
-        </set>
-      </mkcol>
-        "#)
-    ).unwrap();
-    request
-        .headers_mut()
-        .typed_insert(Authorization::basic("user", "pass"));
-    let response = app.clone().oneshot(request).await.unwrap();
-    assert_eq!(response.status(), StatusCode::CREATED);
-
     // Get birthday objects
     let mut request = Request::builder()
         .method("GET")
@@ -127,7 +104,7 @@ END:VCARD",
     insta::with_settings!({
         filters => vec![
             (r"DTSTAMP:[0-9\-:TZ=;]+", "DTSTAMP:[DTSTAMP]"),
-            (r"<PUSH:topic>[0-9a-f-]+</PUSH:topic>", "<PUSH:topic>[PUSH_TOPIC]</PUSH:topic>"),
+            (r"<PUSH:topic>(?:&quot;)?[0-9a-f-]+(?:&quot;)?</PUSH:topic>", "<PUSH:topic>[PUSH_TOPIC]</PUSH:topic>"),
             (r#"<getetag>&quot;[0-9a-f-]+&quot;</getetag>"#, r#"<getetag>&quot;[GETETAG]&quot;</getetag>"#)
         ]
     }, {

@@ -14,9 +14,9 @@ pub mod principals;
 pub use health::{HealthArgs, cmd_health};
 pub use principals::{PrincipalsArgs, cmd_principals};
 
-#[derive(Debug, Parser)]
+#[derive(Debug, Parser, Clone, Copy)]
 pub struct GenConfigArgs {
-    /// Emit a PostgreSQL data_store instead of SQLite
+    /// Emit a `PostgreSQL` data store instead of `SQLite`
     #[arg(long)]
     pub postgres: bool,
 }

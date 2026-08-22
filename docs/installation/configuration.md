@@ -19,11 +19,11 @@ The options in `config.toml` can also be configured using environment variables.
 Names translate the following:
 
 ```toml title="Example config.toml"
-[data_store.toml]
-path = "asd"
+[data_store.sqlite]
+db_url = "/var/lib/rustical/db.sqlite3"
 ```
 
-becomes `RUSTICAL_DATA_STORE__TOML__PATH`.
+becomes `RUSTICAL_DATA_STORE__SQLITE__DB_URL`.
 Every variable is
 
 - uppercase
@@ -40,4 +40,4 @@ run_repairs = true
 skip_broken = true
 ```
 
-`db_url` is a standard PostgreSQL URL. Environment equivalent: `RUSTICAL_DATA_STORE__POSTGRES__DB_URL`.
+`db_url` is a standard PostgreSQL URL. The environment equivalent is `RUSTICAL_DATA_STORE__POSTGRES__DB_URL`. RustiCal sets PostgreSQL connections to UTC.

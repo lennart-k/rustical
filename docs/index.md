@@ -12,7 +12,7 @@ a CalDAV/CardDAV server
 
 ## Features
 
-- easy to backup, everything saved in one SQLite database
+- SQLite for simple single-file backups, with PostgreSQL available as an alternative
   - also export feature in the frontend
 - Import your existing calendars in the frontend
 - **[WebDAV Push](https://github.com/bitfireAT/webdav-push/)** support, so near-instant synchronisation to DAVx5

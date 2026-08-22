@@ -13,7 +13,7 @@ use tracing::{error, error_span, instrument, warn};
 
 pub mod birthday_calendar;
 
-#[cfg(test)]
+#[cfg(all(test, feature = "test"))]
 mod tests;
 
 #[derive(Debug, Clone)]
