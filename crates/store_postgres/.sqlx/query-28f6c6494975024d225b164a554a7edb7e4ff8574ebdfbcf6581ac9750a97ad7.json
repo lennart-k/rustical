@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE addressbooks SET deleted_at = NULL WHERE (principal, id) = ($1, $2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "28f6c6494975024d225b164a554a7edb7e4ff8574ebdfbcf6581ac9750a97ad7"
+}

@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE calendars\n        SET synctoken = synctoken + 1\n        WHERE (principal, id) = ($1, $2)\n        RETURNING synctoken",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "synctoken",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "synctoken"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b87500a2810df639a87e07cb9f5dc9bd06a6bffe8b18c3093199c270e40137bd"
+}

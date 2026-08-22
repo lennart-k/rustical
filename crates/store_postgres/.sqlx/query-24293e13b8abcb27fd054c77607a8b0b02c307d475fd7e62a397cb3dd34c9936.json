@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM birthday_calendars WHERE deleted_at IS NOT NULL AND deleted_at::date < $1::date",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Date"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "24293e13b8abcb27fd054c77607a8b0b02c307d475fd7e62a397cb3dd34c9936"
+}

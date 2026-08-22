@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO memberships (principal, member_of) VALUES ($1, $2) ON CONFLICT (principal, member_of) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "8b08f4633370b371cf8f2be7cb22386fb0e035022b060b4bdcdb6aca0306e5d6"
+}

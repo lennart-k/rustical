@@ -1,0 +1,39 @@
+[package]
+name = "rustical_store_postgres"
+version.workspace = true
+rust-version.workspace = true
+edition.workspace = true
+description.workspace = true
+repository.workspace = true
+license.workspace = true
+publish = false
+
+[features]
+test = ["dep:rstest"]
+
+[dev-dependencies]
+rstest.workspace = true
+rustical_ical = { workspace = true, features = ["test"] }
+
+[dependencies]
+caldata.workspace = true
+tokio.workspace = true
+rustical_store.workspace = true
+async-trait.workspace = true
+serde.workspace = true
+sqlx = { workspace = true, features = ["postgres", "sqlx-postgres"] }
+thiserror.workspace = true
+tracing.workspace = true
+derive_more.workspace = true
+chrono.workspace = true
+password-auth.workspace = true
+password-hash.workspace = true
+uuid.workspace = true
+pbkdf2.workspace = true
+rustical_ical.workspace = true
+rstest = { workspace = true, optional = true }
+sha2.workspace = true
+regex.workspace = true
+rand.workspace = true
+hex.workspace = true
+rustical_dav_push.workspace = true

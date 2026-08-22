@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO principals\n            (id, displayname, principal_type, password_hash) VALUES ($1, $2, $3, $4)\n            ON CONFLICT(id) DO UPDATE SET\n                (displayname, principal_type, password_hash)\n                = (excluded.displayname, excluded.principal_type, excluded.password_hash)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "670aabfe4ce93d7aa6591e175e64bb0c897f4a25629e874eeb6bc52404a4c93a"
+}

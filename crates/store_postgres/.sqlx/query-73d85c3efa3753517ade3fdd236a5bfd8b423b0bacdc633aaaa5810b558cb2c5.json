@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO birthday_calendars (principal, id, displayname, description, \"order\", color, push_topic)\n                VALUES ($1, $2, $3, $4, $5, $6, $7)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Int8",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "73d85c3efa3753517ade3fdd236a5bfd8b423b0bacdc633aaaa5810b558cb2c5"
+}

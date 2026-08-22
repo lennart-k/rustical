@@ -1,0 +1,43 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, vcf FROM addressobjects WHERE (principal, addressbook_id, id) = ($1, $2, $3) AND ((deleted_at IS NULL) OR $4)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressobjects",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "vcf",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressobjects",
+            "name": "vcf"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "775fe65376ba3016c553843e2879bfcc9b9c1975c122fc7c7504cc4b0487110a"
+}

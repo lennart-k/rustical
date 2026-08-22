@@ -3808,6 +3808,7 @@ dependencies = [
  "rustical_frontend",
  "rustical_oidc",
  "rustical_store",
+ "rustical_store_postgres",
  "rustical_store_sqlite",
  "serde",
  "similar-asserts",
@@ -4062,6 +4063,33 @@ dependencies = [
  "tower-sessions",
  "tracing",
  "vtimezones-rs",
+]
+
+[[package]]
+name = "rustical_store_postgres"
+version = "0.15.0"
+dependencies = [
+ "async-trait",
+ "caldata",
+ "chrono",
+ "derive_more",
+ "hex",
+ "password-auth",
+ "password-hash 0.6.1",
+ "pbkdf2 0.13.0",
+ "rand 0.10.2",
+ "regex",
+ "rstest",
+ "rustical_dav_push",
+ "rustical_ical",
+ "rustical_store",
+ "serde",
+ "sha2 0.11.0",
+ "sqlx",
+ "thiserror 2.0.20",
+ "tokio",
+ "tracing",
+ "uuid",
 ]
 
 [[package]]

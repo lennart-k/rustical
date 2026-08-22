@@ -5,11 +5,15 @@ use app::make_app;
 use axum::ServiceExt;
 use axum::extract::Request;
 use clap::{Parser, Subcommand};
-use config::{DataStoreConfig, SqliteDataStoreConfig};
+use config::{DataStoreConfig, PostgresDataStoreConfig, SqliteDataStoreConfig};
 use provided_listeners::ProvidedListeners;
 use rustical_dav_push::{DavPushController, DavPushStore};
 use rustical_store::auth::AuthenticationProvider;
 use rustical_store::{AddressbookStore, CalendarStore, CollectionOperation, PrefixedCalendarStore};
+use rustical_store_postgres::addressbook_store::PostgresAddressbookStore;
+use rustical_store_postgres::calendar_store::PostgresCalendarStore;
+use rustical_store_postgres::principal_store::PostgresPrincipalStore;
+use rustical_store_postgres::{PostgresStore, create_db_pool as create_postgres_pool};
 use rustical_store_sqlite::addressbook_store::SqliteAddressbookStore;
 use rustical_store_sqlite::calendar_store::SqliteCalendarStore;
 use rustical_store_sqlite::principal_store::SqlitePrincipalStore;
@@ -56,57 +60,81 @@ pub enum Command {
 }
 
 #[allow(clippy::missing_errors_doc)]
-pub async fn get_data_stores(
+pub(crate) async fn get_sqlite_data_stores(
     migrate: bool,
-    config: &DataStoreConfig,
+    SqliteDataStoreConfig {
+        db_url,
+        run_repairs,
+        skip_broken,
+    }: &SqliteDataStoreConfig,
 ) -> Result<(
-    Arc<impl AddressbookStore + PrefixedCalendarStore>,
-    Arc<impl CalendarStore>,
-    Arc<impl DavPushStore>,
-    Arc<impl AuthenticationProvider>,
+    Arc<SqliteAddressbookStore>,
+    Arc<SqliteCalendarStore>,
+    Arc<SqliteStore>,
+    Arc<SqlitePrincipalStore>,
     Receiver<CollectionOperation>,
 )> {
-    Ok(match &config {
-        DataStoreConfig::Sqlite(SqliteDataStoreConfig {
-            db_url,
-            run_repairs,
-            skip_broken,
-        }) => {
-            let db = create_db_pool(db_url, migrate).await?;
+    let db = create_db_pool(db_url, migrate).await?;
+    let (send, recv) = tokio::sync::mpsc::channel(1000);
+    let addressbook_store = Arc::new(SqliteAddressbookStore::new(
+        db.clone(),
+        send.clone(),
+        *skip_broken,
+    ));
+    let cal_store = Arc::new(SqliteCalendarStore::new(db.clone(), send, *skip_broken));
+    if *run_repairs {
+        info!("Running repair tasks");
+        addressbook_store.repair_orphans().await?;
+        cal_store.repair_invalid_version_4_0().await?;
+        cal_store.repair_orphans().await?;
+    }
+    let subscription_store = Arc::new(SqliteStore::new(db.clone()));
+    let principal_store = Arc::new(SqlitePrincipalStore::new(db));
+    for principal in principal_store.get_principals().await? {
+        cal_store.validate_objects(&principal.id).await?;
+        addressbook_store.validate_objects(&principal.id).await?;
+    }
+    Ok((
+        addressbook_store,
+        cal_store,
+        subscription_store,
+        principal_store,
+        recv,
+    ))
+}
 
-            // Channel to watch for changes (for DAV Push)
-            let (send, recv) = tokio::sync::mpsc::channel(1000);
-
-            let addressbook_store = Arc::new(SqliteAddressbookStore::new(
-                db.clone(),
-                send.clone(),
-                *skip_broken,
-            ));
-            let cal_store = Arc::new(SqliteCalendarStore::new(db.clone(), send, *skip_broken));
-            if *run_repairs {
-                info!("Running repair tasks");
-                addressbook_store.repair_orphans().await?;
-                cal_store.repair_invalid_version_4_0().await?;
-                cal_store.repair_orphans().await?;
-            }
-            let subscription_store = Arc::new(SqliteStore::new(db.clone()));
-            let principal_store = Arc::new(SqlitePrincipalStore::new(db));
-
-            // Validate all calendar objects
-            for principal in principal_store.get_principals().await? {
-                cal_store.validate_objects(&principal.id).await?;
-                addressbook_store.validate_objects(&principal.id).await?;
-            }
-
-            (
-                addressbook_store,
-                cal_store,
-                subscription_store,
-                principal_store,
-                recv,
-            )
-        }
-    })
+#[allow(clippy::missing_errors_doc)]
+pub(crate) async fn get_postgres_data_stores(
+    migrate: bool,
+    PostgresDataStoreConfig { url, skip_broken }: &PostgresDataStoreConfig,
+) -> Result<(
+    Arc<PostgresAddressbookStore>,
+    Arc<PostgresCalendarStore>,
+    Arc<PostgresStore>,
+    Arc<PostgresPrincipalStore>,
+    Receiver<CollectionOperation>,
+)> {
+    let db = create_postgres_pool(url, migrate).await?;
+    let (send, recv) = tokio::sync::mpsc::channel(1000);
+    let addressbook_store = Arc::new(PostgresAddressbookStore::new(
+        db.clone(),
+        send.clone(),
+        *skip_broken,
+    ));
+    let cal_store = Arc::new(PostgresCalendarStore::new(db.clone(), send, *skip_broken));
+    let subscription_store = Arc::new(PostgresStore::new(db.clone()));
+    let principal_store = Arc::new(PostgresPrincipalStore::new(db));
+    for principal in principal_store.get_principals().await? {
+        cal_store.validate_objects(&principal.id).await?;
+        addressbook_store.validate_objects(&principal.id).await?;
+    }
+    Ok((
+        addressbook_store,
+        cal_store,
+        subscription_store,
+        principal_store,
+        recv,
+    ))
 }
 
 #[allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]
@@ -120,9 +148,57 @@ pub async fn cmd_serve(
         setup_tracing(&config.tracing);
     }
 
-    let (addr_store, cal_store, subscription_store, principal_store, update_recv) =
-        get_data_stores(!args.no_migrations, &config.data_store).await?;
+    match &config.data_store {
+        DataStoreConfig::Sqlite(cfg) => {
+            let (addr_store, cal_store, subscription_store, principal_store, update_recv) =
+                get_sqlite_data_stores(!args.no_migrations, cfg).await?;
+            serve_with_stores(
+                config,
+                start_notifier,
+                addr_store,
+                cal_store,
+                subscription_store,
+                principal_store,
+                update_recv,
+            )
+            .await
+        }
+        DataStoreConfig::Postgres(cfg) => {
+            let (addr_store, cal_store, subscription_store, principal_store, update_recv) =
+                get_postgres_data_stores(!args.no_migrations, cfg).await?;
+            serve_with_stores(
+                config,
+                start_notifier,
+                addr_store,
+                cal_store,
+                subscription_store,
+                principal_store,
+                update_recv,
+            )
+            .await
+        }
+    }
+}
 
+#[allow(
+    clippy::too_many_arguments,
+    clippy::missing_errors_doc,
+    clippy::missing_panics_doc
+)]
+async fn serve_with_stores<
+    AS: AddressbookStore + PrefixedCalendarStore + 'static,
+    CS: CalendarStore + 'static,
+    DP: DavPushStore + 'static,
+    AP: AuthenticationProvider + 'static,
+>(
+    config: Config,
+    start_notifier: Option<Arc<Notify>>,
+    addr_store: Arc<AS>,
+    cal_store: Arc<CS>,
+    subscription_store: Arc<DP>,
+    principal_store: Arc<AP>,
+    update_recv: Receiver<CollectionOperation>,
+) -> Result<()> {
     if config.dav_push.enabled {
         let dav_push_controller = DavPushController::new(
             config.dav_push.allowed_push_servers,

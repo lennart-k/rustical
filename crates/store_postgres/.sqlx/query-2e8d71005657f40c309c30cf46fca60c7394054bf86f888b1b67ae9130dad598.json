@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO calendarobjectchangelog (principal, cal_id, object_id, \"operation\", synctoken)\n        VALUES ($1, $2, $3, $4, (\n            SELECT synctoken FROM calendars WHERE (principal, id) = ($1, $2)\n        ))",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2e8d71005657f40c309c30cf46fca60c7394054bf86f888b1b67ae9130dad598"
+}

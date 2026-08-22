@@ -7,6 +7,7 @@ permissions:
 env:
   RUST_VERSION: "1.97"
   CARGO_TERM_COLOR: always
+  SQLX_OFFLINE: "true"
 
 jobs:
   check:
@@ -23,6 +24,22 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: rustical
+          POSTGRES_USER: rustical
+          POSTGRES_DB: rustical
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rustical"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgres://rustical:rustical@localhost:5432/rustical
     steps:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
@@ -34,6 +51,22 @@ jobs:
   coverage:
     name: Test Coverage
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: rustical
+          POSTGRES_USER: rustical
+          POSTGRES_DB: rustical
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rustical"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgres://rustical:rustical@localhost:5432/rustical
     steps:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:

@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, vcf FROM addressobjects WHERE principal = $1 AND addressbook_id = $2 AND deleted_at IS NULL",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressobjects",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "vcf",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressobjects",
+            "name": "vcf"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "dec61261f1a63052bbab8d262f90853c729735226a6baade1366fae3097aa93f"
+}

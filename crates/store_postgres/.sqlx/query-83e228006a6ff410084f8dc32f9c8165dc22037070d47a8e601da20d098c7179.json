@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM calendarobjectchangelog WHERE (principal, cal_id, object_id) = ($1, $2, $3);",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "83e228006a6ff410084f8dc32f9c8165dc22037070d47a8e601da20d098c7179"
+}

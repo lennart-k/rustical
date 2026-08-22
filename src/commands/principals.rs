@@ -3,8 +3,7 @@ use std::io::IsTerminal;
 use super::membership::MembershipArgs;
 use crate::{
     app_token::{AppTokenArgs, cmd_app_token},
-    config::Config,
-    get_data_stores,
+    config::{Config, DataStoreConfig},
     membership::cmd_membership,
 };
 use anyhow::anyhow;
@@ -95,13 +94,25 @@ pub enum PrincipalsCommand {
     AppToken(AppTokenArgs),
 }
 
-#[allow(
-    clippy::missing_errors_doc,
-    clippy::missing_panics_doc,
-    clippy::too_many_lines
-)]
+#[allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]
 pub async fn cmd_principals(args: PrincipalsArgs, config: Config) -> anyhow::Result<()> {
-    let (_, _, _, principal_store, _) = get_data_stores(true, &config.data_store).await?;
+    match &config.data_store {
+        DataStoreConfig::Sqlite(cfg) => {
+            let (_, _, _, principal_store, _) = crate::get_sqlite_data_stores(true, cfg).await?;
+            run_principals(args, principal_store).await
+        }
+        DataStoreConfig::Postgres(cfg) => {
+            let (_, _, _, principal_store, _) = crate::get_postgres_data_stores(true, cfg).await?;
+            run_principals(args, principal_store).await
+        }
+    }
+}
+
+#[allow(clippy::too_many_lines)]
+async fn run_principals(
+    args: PrincipalsArgs,
+    principal_store: std::sync::Arc<impl AuthenticationProvider>,
+) -> anyhow::Result<()> {
     match args.command {
         PrincipalsCommand::List => {
             for principal in principal_store.get_principals().await? {

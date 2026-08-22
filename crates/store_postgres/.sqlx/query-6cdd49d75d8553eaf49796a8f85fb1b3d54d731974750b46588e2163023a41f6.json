@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO davpush_subscriptions (id, topic, expiration, push_resource, public_key, public_key_type, auth_secret) VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (id) DO UPDATE SET topic = EXCLUDED.topic, expiration = EXCLUDED.expiration, push_resource = EXCLUDED.push_resource, public_key = EXCLUDED.public_key, public_key_type = EXCLUDED.public_key_type, auth_secret = EXCLUDED.auth_secret",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Timestamp",
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6cdd49d75d8553eaf49796a8f85fb1b3d54d731974750b46588e2163023a41f6"
+}

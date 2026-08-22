@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE addressbooks\n        SET synctoken = synctoken + 1\n        WHERE (principal, id) = ($1, $2)\n        RETURNING synctoken",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "synctoken",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "addressbooks",
+            "name": "synctoken"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "c020f2176681f715a74ac113e98d4f695b76a599860065031c9fc7a15ab935a0"
+}

@@ -192,10 +192,19 @@ pub struct SqliteDataStoreConfig {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub struct PostgresDataStoreConfig {
+    pub url: String,
+    #[serde(default = "default_true")]
+    pub skip_broken: bool,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "snake_case")]
 #[serde(deny_unknown_fields)]
 pub enum DataStoreConfig {
     Sqlite(SqliteDataStoreConfig),
+    Postgres(PostgresDataStoreConfig),
 }
 
 #[derive(Debug, Deserialize, Serialize, Default, Clone)]

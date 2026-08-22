@@ -1,0 +1,30 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT object_id\n                FROM (\n                    SELECT\n                        object_id,\n                        synctoken,\n                        ROW_NUMBER() OVER (PARTITION BY object_id ORDER BY synctoken DESC) as rn\n                    FROM calendarobjectchangelog\n                    WHERE (principal, cal_id) = ($1, $2)\n                    AND synctoken > $3\n                ) AS latest\n                WHERE rn = 1\n                ORDER BY synctoken ASC\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "object_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendarobjectchangelog",
+            "name": "object_id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "fa42ed5b6ba5e2922df8f67a6ff44218ecdd48bff592058a2444b46b3c39cd27"
+}
