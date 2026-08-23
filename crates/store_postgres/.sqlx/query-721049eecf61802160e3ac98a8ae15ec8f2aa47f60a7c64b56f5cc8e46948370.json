@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE addressbooks SET principal = $1, id = $2, displayname = $3, description = $4, push_topic = $5\n                WHERE (principal, id) = ($6, $7)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "721049eecf61802160e3ac98a8ae15ec8f2aa47f60a7c64b56f5cc8e46948370"
+}

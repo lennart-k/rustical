@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO calendarobjects (principal, cal_id, id, uid, ics, first_occurence, last_occurence, etag, object_type) VALUES ($1, $2, $3, $4, $5, $6::date, $7::date, $8, $9) ON CONFLICT (principal, cal_id, id) DO UPDATE SET uid = EXCLUDED.uid, ics = EXCLUDED.ics, first_occurence = EXCLUDED.first_occurence, last_occurence = EXCLUDED.last_occurence, etag = EXCLUDED.etag, object_type = EXCLUDED.object_type, deleted_at = NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Date",
+        "Date",
+        "Text",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6272430f4752384b4ee66ed422570eb9d83b4cc0b25fa4e396697ba087d24ef7"
+}

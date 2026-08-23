@@ -1,6 +1,6 @@
 // This integration test checks whether the HTTP server works by actually running rustical in a new
 // thread.
-use common::rustical_process;
+use common::{postgres_store, rustical_process, sqlite_store};
 use http::{Method, StatusCode};
 use reqwest::redirect::Policy;
 use rustical::{
@@ -15,14 +15,12 @@ use std::{collections::HashMap, time::Duration};
 
 mod common;
 
-pub async fn test_runner<O, F>(db_path: Option<String>, inner: F)
+pub async fn test_runner<O, F>(data_store: rustical::config::DataStoreConfig, inner: F)
 where
     O: IntoFuture<Output = ()>,
-    // <O as IntoFuture>::IntoFuture: UnwindSafe,
     F: FnOnce(u16) -> O,
 {
-    // Start RustiCal process
-    let (token, port, main_process, start_notify) = rustical_process(db_path);
+    let (token, port, main_process, start_notify) = rustical_process(data_store);
 
     // Wait for RustiCal server to listen
     tokio::time::timeout(Duration::new(2, 0), start_notify.notified())
@@ -40,7 +38,7 @@ where
 
 #[tokio::test]
 async fn test_ping() {
-    test_runner(None, async |port| {
+    test_runner(sqlite_store(None), async |port| {
         let origin = format!("http://localhost:{port}");
         let resp = reqwest::get(origin.clone() + "/ping").await.unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
@@ -62,6 +60,19 @@ async fn test_ping() {
     .await
 }
 
+#[tokio::test]
+async fn test_ping_postgres() {
+    let Some(data_store) = postgres_store().await else {
+        return;
+    };
+    test_runner(data_store, async |port| {
+        let origin = format!("http://localhost:{port}");
+        let resp = reqwest::get(origin + "/ping").await.unwrap();
+        assert_eq!(resp.status(), StatusCode::OK);
+    })
+    .await;
+}
+
 // When setting a use password from the CLI we effectively have two processes accessing the same
 // database: The server and the CLI.
 // This test ensures that the server correctly picks up the changes made by the CLI.
@@ -70,7 +81,7 @@ async fn test_initial_setup() {
     let db_tempfile = tempfile::NamedTempFile::with_suffix(".rustical-test.sqlite3").unwrap();
     let db_path = db_tempfile.path().to_string_lossy().into_owned();
 
-    test_runner(Some(db_path.clone()), async |port| {
+    test_runner(sqlite_store(Some(db_path.clone())), async |port| {
         let origin = format!("http://localhost:{port}");
         // Create principal
         cmd_principals(
@@ -219,7 +230,7 @@ async fn test_principal_impersonation() {
     let db_tempfile = tempfile::NamedTempFile::with_suffix(".rustical-test.sqlite3").unwrap();
     let db_path = db_tempfile.path().to_string_lossy().into_owned();
 
-    test_runner(Some(db_path.clone()), async |port| {
+    test_runner(sqlite_store(Some(db_path.clone())), async |port| {
         let origin = format!("http://localhost:{port}");
         let config = Config {
             data_store: DataStoreConfig::Sqlite(SqliteDataStoreConfig {

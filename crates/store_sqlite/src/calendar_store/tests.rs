@@ -2,7 +2,10 @@ use std::collections::HashSet;
 
 use rstest::rstest;
 use rustical_ical::{CalendarObject, CalendarObjectType};
-use rustical_store::{Calendar, CalendarMetadata, CalendarReadStore, CalendarWriteStore};
+use rustical_store::{
+    Calendar, CalendarMetadata, CalendarReadStore, CalendarWriteStore,
+    auth::{AuthenticationProvider, Principal, PrincipalType},
+};
 
 use crate::tests::{TestStoreContext, test_store_context};
 
@@ -46,11 +49,11 @@ async fn test_sync_full(
     // https://github.com/lennart-k/rustical/issues/251
     let operations = [
         (true, id1, 1),
-        (true, id2, 2),
-        (false, id1, 3),
-        (true, id1, 4),
-        (true, id3, 5),
-        (false, id4, 6),
+        (true, id2, 3),
+        (false, id1, 4),
+        (true, id1, 6),
+        (true, id3, 8),
+        (false, id4, 9),
     ];
 
     for (add, id, synctoken_after) in operations {
@@ -66,7 +69,7 @@ async fn test_sync_full(
                 .unwrap();
         }
 
-        // Check that sync token gets incremented after every operation
+        // Replacing a same-UID href records both its deletion and addition.
         assert_eq!(
             cal_store
                 .get_calendar(&principal, &cal_id, false)
@@ -277,5 +280,67 @@ async fn test_sync_no_changes_token(
                 token
             ))
             .unwrap(),
+    );
+}
+
+#[rstest]
+#[tokio::test]
+async fn test_hard_delete_scoped_to_principal(
+    #[from(test_store_context)]
+    #[future]
+    context: TestStoreContext,
+) {
+    let ctx = context.await;
+    ctx.principal_store
+        .insert_principal(
+            Principal {
+                id: "other".to_owned(),
+                displayname: None,
+                memberships: vec![],
+                password: None,
+                principal_type: PrincipalType::Individual,
+            },
+            false,
+        )
+        .await
+        .unwrap();
+
+    let object = CalendarObject::example_1();
+    for (principal, topic) in [("user", "topic-user"), ("other", "topic-other")] {
+        ctx.cal_store
+            .insert_calendar(Calendar {
+                id: "cal".into(),
+                principal: principal.into(),
+                timezone_id: None,
+                meta: CalendarMetadata::default(),
+                deleted_at: None,
+                synctoken: 0,
+                push_topic: topic.into(),
+                components: vec![CalendarObjectType::Event],
+                subscription_url: None,
+            })
+            .await
+            .unwrap();
+        ctx.cal_store
+            .put_object(principal, "cal", "obj", object.clone(), false)
+            .await
+            .unwrap();
+    }
+
+    ctx.cal_store
+        .delete_object("other", "cal", "obj", false)
+        .await
+        .unwrap();
+
+    ctx.cal_store
+        .get_object("user", "cal", "obj", false)
+        .await
+        .unwrap();
+    assert!(
+        ctx.cal_store
+            .get_object("other", "cal", "obj", true)
+            .await
+            .unwrap_err()
+            .is_not_found()
     );
 }

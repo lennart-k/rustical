@@ -14,7 +14,7 @@ use rustical_store::{
 };
 use rustical_store::{CollectionOperation, CollectionOperationInfo};
 use sqlx::types::chrono::NaiveDateTime;
-use sqlx::{Acquire, Executor, Sqlite, SqlitePool, Transaction};
+use sqlx::{Acquire, Executor, Sqlite, SqliteConnection, SqlitePool, Transaction};
 use tokio::sync::mpsc::Sender;
 use tracing::{error, error_span, instrument, warn};
 
@@ -191,7 +191,7 @@ impl SqliteCalendarStore {
                 );
             } else {
                 error!(
-                    "Not all calendar objects are valid. Since data_store.sqlite.skip_broken=false this causes a panic. Remove or repair the broken objects manually or set data_store.sqlite.skip_broken=false as a temporary solution to ignore the error. If you need help feel free to open up an issue on GitHub."
+                    "Not all calendar objects are valid. Since data_store.sqlite.skip_broken=false this causes a panic. Remove or repair the broken objects manually or set data_store.sqlite.skip_broken=true as a temporary solution to ignore the error. If you need help feel free to open up an issue on GitHub."
                 );
                 panic!();
             }
@@ -595,14 +595,14 @@ impl SqliteCalendarStore {
     }
 
     #[instrument]
-    async fn _put_object<'e, E: Executor<'e, Database = Sqlite>>(
-        executor: E,
+    async fn _put_object(
+        conn: &mut SqliteConnection,
         principal: &str,
         cal_id: &str,
         object_id: &str,
         object: &CalendarObject,
         overwrite: bool,
-    ) -> Result<(), Error> {
+    ) -> Result<Option<String>, Error> {
         let (uid, ics) = (object.get_uid(), object.get_ics());
 
         let first_occurence = object
@@ -620,9 +620,24 @@ impl SqliteCalendarStore {
         let etag = object.get_etag();
         let object_type = object.get_object_type() as u8;
 
+        let evicted = if overwrite {
+            sqlx::query_scalar!(
+                "DELETE FROM calendarobjects WHERE principal = ? AND cal_id = ? AND uid = ? AND id <> ? RETURNING id",
+                principal,
+                cal_id,
+                uid,
+                object_id,
+            )
+            .fetch_optional(&mut *conn)
+            .await
+            .map_err(crate::Error::from)?
+        } else {
+            None
+        };
+
         (if overwrite {
             sqlx::query!(
-                "REPLACE INTO calendarobjects (principal, cal_id, id, uid, ics, first_occurence, last_occurence, etag, object_type) VALUES (?, ?, ?, ?, ?, date(?), date(?), ?, ?)",
+                "INSERT INTO calendarobjects (principal, cal_id, id, uid, ics, first_occurence, last_occurence, etag, object_type) VALUES (?, ?, ?, ?, ?, date(?), date(?), ?, ?) ON CONFLICT (principal, cal_id, id) DO UPDATE SET uid = excluded.uid, ics = excluded.ics, first_occurence = excluded.first_occurence, last_occurence = excluded.last_occurence, etag = excluded.etag, object_type = excluded.object_type, deleted_at = NULL",
                 principal,
                 cal_id,
                 object_id,
@@ -648,11 +663,11 @@ impl SqliteCalendarStore {
                 object_type,
             )
         })
-        .execute(executor)
+        .execute(&mut *conn)
         .await
         .map_err(crate::Error::from)?;
 
-        Ok(())
+        Ok(evicted)
     }
 
     #[instrument]
@@ -674,7 +689,8 @@ impl SqliteCalendarStore {
             .await.map_err(crate::Error::from)?;
         } else {
             sqlx::query!(
-                "DELETE FROM calendarobjects WHERE cal_id = ? AND id = ?",
+                "DELETE FROM calendarobjects WHERE (principal, cal_id, id) = (?, ?, ?)",
+                principal,
                 cal_id,
                 object_id
             )
@@ -962,7 +978,7 @@ impl CalendarWriteStore for SqliteCalendarStore {
         for object in objects {
             let object_id = object.get_uid();
             Self::_put_object(
-                &mut *tx,
+                &mut tx,
                 &calendar.principal,
                 &calendar.id,
                 object_id,
@@ -1018,6 +1034,19 @@ impl CalendarWriteStore for SqliteCalendarStore {
 
         let mut sync_token = None;
         for (object_id, object) in objects {
+            let evicted =
+                Self::_put_object(&mut tx, principal, cal_id, &object_id, &object, overwrite)
+                    .await?;
+            if let Some(evicted) = evicted {
+                Self::log_object_operation(
+                    &mut tx,
+                    principal,
+                    cal_id,
+                    &evicted,
+                    ChangeOperation::Delete,
+                )
+                .await?;
+            }
             sync_token = Some(
                 Self::log_object_operation(
                     &mut tx,
@@ -1028,7 +1057,6 @@ impl CalendarWriteStore for SqliteCalendarStore {
                 )
                 .await?,
             );
-            Self::_put_object(&mut *tx, principal, cal_id, &object_id, &object, overwrite).await?;
         }
 
         tx.commit().await.map_err(crate::Error::from)?;

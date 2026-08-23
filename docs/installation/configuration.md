@@ -8,6 +8,7 @@ To see the options you can generate a default configuration using
 
 ```sh title="Generate default config.toml"
 rustical gen-config
+rustical gen-config --postgres
 ```
 
 To see all configuration options available you can browse the [Cargo docs](/rustical/_crate/rustical/config/struct.Config.html).
@@ -18,14 +19,35 @@ The options in `config.toml` can also be configured using environment variables.
 Names translate the following:
 
 ```toml title="Example config.toml"
-[data_store.toml]
-path = "asd"
+[data_store.sqlite]
+db_url = "/var/lib/rustical/db.sqlite3"
 ```
 
-becomes `RUSTICAL_DATA_STORE__TOML__PATH`.
+becomes `RUSTICAL_DATA_STORE__SQLITE__DB_URL`.
 Every variable is
 
 - uppercase
 - prefixed by `RUSTICAL_`
 - Dots become `__`
 - Arrays are JSON-encoded
+
+## PostgreSQL
+
+```toml
+[data_store]
+backend = "postgres"
+
+[data_store.postgres]
+db_url = "postgres://user@localhost/rustical"
+run_repairs = true
+skip_broken = true
+```
+
+`db_url` is a standard PostgreSQL URL. RustiCal sets PostgreSQL connections to UTC.
+
+The official container defines a default SQLite URL. To select PostgreSQL with environment variables, set both:
+
+```sh
+RUSTICAL_DATA_STORE__BACKEND=postgres
+RUSTICAL_DATA_STORE__POSTGRES__DB_URL=postgres://user@localhost/rustical
+```

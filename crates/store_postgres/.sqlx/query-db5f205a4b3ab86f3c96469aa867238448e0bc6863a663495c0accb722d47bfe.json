@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE addressbooks SET deleted_at = CURRENT_TIMESTAMP WHERE (principal, id) = ($1, $2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "db5f205a4b3ab86f3c96469aa867238448e0bc6863a663495c0accb722d47bfe"
+}

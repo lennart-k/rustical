@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE calendarobjects SET ics = $1 WHERE (principal, cal_id, id) = ($2, $3, $4);",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "77b64920eb79cc00792f62e852d39fb388d55105b9e6f53bbf520c98649c84c2"
+}

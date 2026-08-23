@@ -1,0 +1,102 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT principal, id, synctoken, displayname, description, deleted_at, push_topic\n                FROM addressbooks\n                WHERE (principal, id) = ($1, $2)\n                AND ((deleted_at IS NULL) OR $3) ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "principal",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressbooks",
+            "name": "principal"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressbooks",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "synctoken",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "addressbooks",
+            "name": "synctoken"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "displayname",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressbooks",
+            "name": "displayname"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "description",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressbooks",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "deleted_at",
+        "type_info": "Timestamp",
+        "origin": {
+          "Table": {
+            "table": "addressbooks",
+            "name": "deleted_at"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "push_topic",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressbooks",
+            "name": "push_topic"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "fb888a3e5d685fb97548ddaa63e13a8d08f3848b8213929ad57b7fe5cd61fb50"
+}

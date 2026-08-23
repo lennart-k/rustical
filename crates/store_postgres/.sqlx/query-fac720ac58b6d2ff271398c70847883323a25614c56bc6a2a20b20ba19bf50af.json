@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE calendarobjects SET deleted_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE (principal, cal_id, id) = ($1, $2, $3)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "fac720ac58b6d2ff271398c70847883323a25614c56bc6a2a20b20ba19bf50af"
+}

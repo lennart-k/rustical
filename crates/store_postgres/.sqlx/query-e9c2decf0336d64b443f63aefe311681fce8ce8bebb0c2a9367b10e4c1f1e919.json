@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE birthday_calendars SET deleted_at = CURRENT_TIMESTAMP WHERE (principal, id) = ($1, $2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e9c2decf0336d64b443f63aefe311681fce8ce8bebb0c2a9367b10e4c1f1e919"
+}

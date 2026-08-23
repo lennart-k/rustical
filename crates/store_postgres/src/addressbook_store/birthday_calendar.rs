@@ -1,0 +1,494 @@
+use crate::addressbook_store::PostgresAddressbookStore;
+use async_trait::async_trait;
+use chrono::NaiveDateTime;
+use hex::ToHex;
+use rustical_ical::{CalendarObject, CalendarObjectType};
+use rustical_store::{
+    Addressbook, Calendar, CalendarMetadata, CalendarStorePruneDeleted, CollectionMetadata, Error,
+    PrefixedCalendarStore,
+    addressbook_store::AddressbookReadStore,
+    calendar_store::{CalendarReadStore, CalendarWriteStore},
+};
+use sha2::{Digest, Sha256};
+use sqlx::{Executor, Postgres};
+use tracing::instrument;
+
+pub const BIRTHDAYS_PREFIX: &str = "_birthdays_";
+
+struct BirthdayCalendarJoinRow {
+    principal: String,
+    id: String,
+    displayname: Option<String>,
+    description: Option<String>,
+    order: i64,
+    color: Option<String>,
+    timezone_id: Option<String>,
+    deleted_at: Option<NaiveDateTime>,
+    push_topic: String,
+
+    addr_synctoken: i64,
+}
+
+impl From<BirthdayCalendarJoinRow> for Calendar {
+    fn from(value: BirthdayCalendarJoinRow) -> Self {
+        Self {
+            principal: value.principal,
+            id: format!("{}{}", BIRTHDAYS_PREFIX, value.id),
+            meta: CalendarMetadata {
+                displayname: value.displayname,
+                order: value.order,
+                description: value.description,
+                color: value.color,
+            },
+            deleted_at: value.deleted_at,
+            components: vec![CalendarObjectType::Event],
+            timezone_id: value.timezone_id,
+            synctoken: value.addr_synctoken,
+            subscription_url: None,
+            push_topic: value.push_topic,
+        }
+    }
+}
+
+impl PrefixedCalendarStore for PostgresAddressbookStore {
+    const PREFIX: &'static str = BIRTHDAYS_PREFIX;
+}
+
+impl PostgresAddressbookStore {
+    #[instrument]
+    pub async fn _get_birthday_calendar<'e, E: Executor<'e, Database = Postgres>>(
+        executor: E,
+        principal: &str,
+        id: &str,
+        show_deleted: bool,
+    ) -> Result<Calendar, Error> {
+        let cal = sqlx::query_as!(
+            BirthdayCalendarJoinRow,
+            r#"SELECT principal, id, displayname, description, "order", color, timezone_id, deleted_at, addr_synctoken, push_topic
+                FROM birthday_calendars
+                INNER JOIN (
+                    SELECT principal AS addr_principal,
+                        id AS addr_id,
+                        synctoken AS addr_synctoken
+                    FROM addressbooks
+                    ) ON (principal, id) = (addr_principal, addr_id)
+                WHERE (principal, id) = ($1, $2)
+                AND ((deleted_at IS NULL) OR $3)
+            "#,
+            principal,
+            id,
+            show_deleted
+        )
+        .fetch_one(executor)
+        .await
+        .map_err(crate::Error::from)?;
+        Ok(cal.into())
+    }
+
+    #[instrument]
+    pub async fn _get_birthday_calendars<'e, E: Executor<'e, Database = Postgres>>(
+        executor: E,
+        principal: &str,
+        deleted: bool,
+    ) -> Result<Vec<Calendar>, Error> {
+        Ok(
+        sqlx::query_as!(
+            BirthdayCalendarJoinRow,
+            r#"SELECT principal, id, displayname, description, "order", color, timezone_id, deleted_at, addr_synctoken, push_topic
+                FROM birthday_calendars
+                INNER JOIN (
+                    SELECT principal AS addr_principal,
+                        id AS addr_id,
+                        synctoken AS addr_synctoken
+                    FROM addressbooks
+                    ) ON (principal, id) = (addr_principal, addr_id)
+                WHERE principal = $1
+                AND (
+                    (deleted_at IS NULL AND NOT $2) -- not deleted, want not deleted
+                    OR (deleted_at IS NOT NULL AND $3) -- deleted, want deleted
+                )
+            "#,
+            principal,
+            deleted,
+            deleted
+        )
+        .fetch_all(executor)
+        .await
+        .map_err(crate::Error::from).map(|cals| cals.into_iter().map(BirthdayCalendarJoinRow::into).collect())?)
+    }
+
+    #[must_use]
+    pub fn default_birthday_calendar(addressbook: Addressbook) -> Calendar {
+        let birthday_name = addressbook
+            .displayname
+            .as_ref()
+            .map(|name| format!("{name} birthdays"));
+        let birthday_push_topic = {
+            let mut hasher = Sha256::new();
+            hasher.update("birthdays");
+            hasher.update(&addressbook.push_topic);
+            format!(
+                "\"{}\"",
+                hasher.finalize().as_slice().encode_hex::<String>()
+            )
+        };
+        Calendar {
+            principal: addressbook.principal,
+            meta: CalendarMetadata {
+                displayname: birthday_name,
+                order: 0,
+                description: None,
+                color: None,
+            },
+            id: format!("{}{}", Self::PREFIX, addressbook.id),
+            components: vec![CalendarObjectType::Event],
+            timezone_id: None,
+            deleted_at: None,
+            synctoken: Default::default(),
+            subscription_url: None,
+            push_topic: birthday_push_topic,
+        }
+    }
+
+    #[instrument]
+    pub async fn _insert_birthday_calendar<'e, E: Executor<'e, Database = Postgres>>(
+        executor: E,
+        calendar: &Calendar,
+    ) -> Result<(), rustical_store::Error> {
+        let id = calendar
+            .id
+            .strip_prefix(BIRTHDAYS_PREFIX)
+            .ok_or(Error::NotFound)?;
+
+        sqlx::query!(
+            r#"INSERT INTO birthday_calendars (principal, id, displayname, description, "order", color, push_topic)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)"#,
+            calendar.principal,
+            id,
+            calendar.meta.displayname,
+            calendar.meta.description,
+            calendar.meta.order,
+            calendar.meta.color,
+            calendar.push_topic,
+        )
+        .execute(executor)
+        .await
+        .map_err(crate::Error::from)?;
+        Ok(())
+    }
+
+    async fn _delete_birthday_calendar<'e, E: Executor<'e, Database = Postgres>>(
+        executor: E,
+        principal: &str,
+        id: &str,
+        use_trashbin: bool,
+    ) -> Result<(), Error> {
+        if use_trashbin {
+            sqlx::query!(
+                r#"UPDATE birthday_calendars SET deleted_at = CURRENT_TIMESTAMP WHERE (principal, id) = ($1, $2)"#,
+                principal,
+                id
+            )
+            .execute(executor)
+            .await
+            .map_err(crate::Error::from)?
+        } else {
+            sqlx::query!(
+                r#"DELETE FROM birthday_calendars WHERE (principal, id) = ($1, $2)"#,
+                principal,
+                id
+            )
+            .execute(executor)
+            .await
+            .map_err(crate::Error::from)?
+        };
+        Ok(())
+    }
+
+    async fn _restore_birthday_calendar<'e, E: Executor<'e, Database = Postgres>>(
+        executor: E,
+        principal: &str,
+        id: &str,
+    ) -> Result<(), Error> {
+        sqlx::query!(
+            r"UPDATE birthday_calendars SET deleted_at = NULL WHERE (principal, id) = ($1, $2)",
+            principal,
+            id
+        )
+        .execute(executor)
+        .await
+        .map_err(crate::Error::from)?;
+        Ok(())
+    }
+
+    async fn _prune_deleted_calendars<'e, E: Executor<'e, Database = Postgres>>(
+        executor: E,
+        before: chrono::NaiveDate,
+    ) -> Result<u64, Error> {
+        sqlx::query!(
+            r"DELETE FROM birthday_calendars WHERE deleted_at IS NOT NULL AND deleted_at::date < $1::date",
+            before,
+        )
+        .execute(executor)
+        .await
+        .map(|result| result.rows_affected())
+        .map_err(crate::Error::from)
+        .map_err(Into::into)
+    }
+
+    #[instrument]
+    async fn _update_birthday_calendar<'e, E: Executor<'e, Database = Postgres>>(
+        executor: E,
+        principal: &str,
+        calendar: &Calendar,
+    ) -> Result<(), Error> {
+        let result = sqlx::query!(
+            r#"UPDATE birthday_calendars SET principal = $1, id = $2, displayname = $3, description = $4, "order" = $5, color = $6, timezone_id = $7, push_topic = $8
+                WHERE (principal, id) = ($9, $10)"#,
+            calendar.principal,
+            calendar.id,
+            calendar.meta.displayname,
+            calendar.meta.description,
+            calendar.meta.order,
+            calendar.meta.color,
+            calendar.timezone_id,
+            calendar.push_topic,
+            principal,
+            calendar.id,
+        ).execute(executor).await.map_err(crate::Error::from)?;
+        if result.rows_affected() == 0 {
+            return Err(rustical_store::Error::NotFound);
+        }
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl CalendarReadStore for PostgresAddressbookStore {
+    #[instrument]
+    async fn get_calendar(
+        &self,
+        principal: &str,
+        id: &str,
+        show_deleted: bool,
+    ) -> Result<Calendar, Error> {
+        let id = id.strip_prefix(BIRTHDAYS_PREFIX).ok_or(Error::NotFound)?;
+        Self::_get_birthday_calendar(&self.db, principal, id, show_deleted).await
+    }
+
+    #[instrument]
+    async fn get_calendars(&self, principal: &str) -> Result<Vec<Calendar>, Error> {
+        Self::_get_birthday_calendars(&self.db, principal, false).await
+    }
+
+    #[instrument]
+    async fn get_deleted_calendars(&self, principal: &str) -> Result<Vec<Calendar>, Error> {
+        Self::_get_birthday_calendars(&self.db, principal, true).await
+    }
+
+    #[instrument]
+    async fn sync_changes(
+        &self,
+        principal: &str,
+        cal_id: &str,
+        synctoken: i64,
+    ) -> Result<(Vec<(String, CalendarObject)>, Vec<String>, i64), Error> {
+        let cal_id = cal_id
+            .strip_prefix(BIRTHDAYS_PREFIX)
+            .ok_or(Error::NotFound)?;
+        let (objects, deleted_objects, new_synctoken) =
+            AddressbookReadStore::sync_changes(self, principal, cal_id, synctoken).await?;
+
+        let mut out_objects = vec![];
+
+        for (object_id, object) in objects {
+            if let Some(birthday) = object.get_birthday_object()? {
+                out_objects.push((format!("{object_id}-birthday"), birthday));
+            }
+            if let Some(anniversary) = object.get_anniversary_object()? {
+                out_objects.push((format!("{object_id}-anniversary"), anniversary));
+            }
+        }
+
+        let deleted_objects = deleted_objects
+            .into_iter()
+            .flat_map(|object_id| {
+                [
+                    format!("{object_id}-birthday"),
+                    format!("{object_id}-anniversary"),
+                ]
+            })
+            .collect();
+
+        Ok((out_objects, deleted_objects, new_synctoken))
+    }
+
+    #[instrument]
+    async fn calendar_metadata(
+        &self,
+        principal: &str,
+        cal_id: &str,
+    ) -> Result<CollectionMetadata, Error> {
+        let cal_id = cal_id
+            .strip_prefix(BIRTHDAYS_PREFIX)
+            .ok_or(Error::NotFound)?;
+        self.addressbook_metadata(principal, cal_id).await
+    }
+
+    #[instrument]
+    async fn get_objects(
+        &self,
+        principal: &str,
+        cal_id: &str,
+    ) -> Result<Vec<(String, CalendarObject)>, Error> {
+        let mut objects = vec![];
+        let cal_id = cal_id
+            .strip_prefix(BIRTHDAYS_PREFIX)
+            .ok_or(Error::NotFound)?;
+        for (object_id, object) in
+            AddressbookReadStore::get_objects(self, principal, cal_id).await?
+        {
+            if let Some(birthday) = object.get_birthday_object()? {
+                objects.push((format!("{object_id}-birthday"), birthday));
+            }
+            if let Some(anniversary) = object.get_anniversary_object()? {
+                objects.push((format!("{object_id}-anniversary"), anniversary));
+            }
+        }
+        Ok(objects)
+    }
+
+    #[instrument]
+    async fn get_object(
+        &self,
+        principal: &str,
+        cal_id: &str,
+        object_id: &str,
+        show_deleted: bool,
+    ) -> Result<CalendarObject, Error> {
+        let cal_id = cal_id
+            .strip_prefix(BIRTHDAYS_PREFIX)
+            .ok_or(Error::NotFound)?;
+        let (addressobject_id, date_type) = object_id.rsplit_once('-').ok_or(Error::NotFound)?;
+        let obj = AddressbookReadStore::get_object(
+            self,
+            principal,
+            cal_id,
+            addressobject_id,
+            show_deleted,
+        )
+        .await?;
+        match date_type {
+            "birthday" => Ok(obj.get_birthday_object()?.ok_or(Error::NotFound)?),
+            "anniversary" => Ok(obj.get_anniversary_object()?.ok_or(Error::NotFound)?),
+            _ => Err(Error::NotFound),
+        }
+    }
+
+    fn is_read_only(&self, _cal_id: &str) -> bool {
+        true
+    }
+}
+
+#[async_trait]
+impl CalendarWriteStore for PostgresAddressbookStore {
+    #[instrument]
+    async fn update_calendar(
+        &self,
+        principal: &str,
+        id: &str,
+        mut calendar: Calendar,
+    ) -> Result<(), Error> {
+        assert_eq!(principal, calendar.principal);
+        assert_eq!(id, calendar.id);
+        calendar.id = calendar
+            .id
+            .strip_prefix(BIRTHDAYS_PREFIX)
+            .ok_or(Error::NotFound)?
+            .to_string();
+        Self::_update_birthday_calendar(&self.db, principal, &calendar).await
+    }
+
+    #[instrument]
+    async fn insert_calendar(&self, calendar: Calendar) -> Result<(), Error> {
+        Self::_insert_birthday_calendar(&self.db, &calendar).await
+    }
+
+    #[instrument]
+    async fn delete_calendar(
+        &self,
+        principal: &str,
+        id: &str,
+        use_trashbin: bool,
+    ) -> Result<(), Error> {
+        let Some(id) = id.strip_prefix(BIRTHDAYS_PREFIX) else {
+            return Ok(());
+        };
+        Self::_delete_birthday_calendar(&self.db, principal, id, use_trashbin).await
+    }
+
+    #[instrument]
+    async fn restore_calendar(&self, principal: &str, id: &str) -> Result<(), Error> {
+        let Some(id) = id.strip_prefix(BIRTHDAYS_PREFIX) else {
+            return Err(Error::NotFound);
+        };
+        Self::_restore_birthday_calendar(&self.db, principal, id).await
+    }
+
+    #[instrument]
+    async fn import_calendar(
+        &self,
+        _calendar: Calendar,
+        _objects: Vec<CalendarObject>,
+        _merge_existing: bool,
+    ) -> Result<(), Error> {
+        Err(Error::ReadOnly)
+    }
+
+    #[instrument]
+    async fn put_objects(
+        &self,
+        _principal: &str,
+        _cal_id: &str,
+        _objects: Vec<(String, CalendarObject)>,
+        _overwrite: bool,
+    ) -> Result<(), Error> {
+        Err(Error::ReadOnly)
+    }
+
+    #[instrument]
+    async fn delete_object(
+        &self,
+        _principal: &str,
+        _cal_id: &str,
+        _object_id: &str,
+        _use_trashbin: bool,
+    ) -> Result<(), Error> {
+        Err(Error::ReadOnly)
+    }
+
+    #[instrument]
+    async fn restore_object(
+        &self,
+        _principal: &str,
+        _cal_id: &str,
+        _object_id: &str,
+    ) -> Result<(), Error> {
+        Err(Error::ReadOnly)
+    }
+}
+
+#[async_trait]
+impl CalendarStorePruneDeleted for PostgresAddressbookStore {
+    #[instrument(skip(self), fields(count = tracing::field::Empty))]
+    async fn prune_deleted_calendars(&self, before: chrono::NaiveDate) -> Result<(), Error> {
+        let count = Self::_prune_deleted_calendars(&self.db, before).await?;
+        tracing::Span::current().record("count", count);
+        Ok(())
+    }
+
+    #[instrument]
+    async fn prune_deleted_objects(&self, _before: chrono::NaiveDate) -> Result<(), Error> {
+        Ok(())
+    }
+}

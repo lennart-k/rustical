@@ -8,8 +8,6 @@ expression: body
         <href>/caldav/principal/user/_birthdays_contacts/</href>
         <propstat>
             <prop>
-                <calendar-color xmlns="http://apple.com/ns/ical/">#FFFF00</calendar-color>
-                <CAL:calendar-description>and anniversaries</CAL:calendar-description>
                 <CAL:timezone-service-set>
                     <href>https://www.iana.org/time-zones</href>
                 </CAL:timezone-service-set>
@@ -63,7 +61,6 @@ expression: body
                     <collection/>
                     <CAL:calendar/>
                 </resourcetype>
-                <displayname>Test Birthdays</displayname>
                 <current-user-principal>
                     <href>/caldav/principal/user/</href>
                 </current-user-principal>

@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM calendarobjects WHERE principal = $1 AND cal_id = $2 AND uid = $3 AND id <> $4 RETURNING id",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendarobjects",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "e81f44ab010baf5f0db84949c1ed1917979954a0fe93a45d0a4f391940b72064"
+}

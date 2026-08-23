@@ -1,0 +1,62 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT principal, cal_id, id, ics FROM calendarobjects WHERE ics ILIKE '%VERSION:4.0%';",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "principal",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendarobjects",
+            "name": "principal"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "cal_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendarobjects",
+            "name": "cal_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendarobjects",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "ics",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendarobjects",
+            "name": "ics"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "bfc7e1dbc29b2084640d9c75f11390e78d96864b67c255bb8a382b54cb9fa84f"
+}

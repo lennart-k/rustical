@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE birthday_calendars SET principal = $1, id = $2, displayname = $3, description = $4, \"order\" = $5, color = $6, timezone_id = $7, push_topic = $8\n                WHERE (principal, id) = ($9, $10)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Int8",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "29d3e8e556dd2745aea970d30d3ee75f3e960cfca6bfd07e74e51e3ffce43ba9"
+}

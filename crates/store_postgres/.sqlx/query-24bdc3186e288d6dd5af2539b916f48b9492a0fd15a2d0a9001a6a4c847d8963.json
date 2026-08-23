@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE calendars SET principal = $1, id = $2, displayname = $3, description = $4, \"order\" = $5, color = $6, timezone_id = $7, push_topic = $8, comp_event = $9, comp_todo = $10, comp_journal = $11\n                WHERE (principal, id) = ($12, $13)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Int8",
+        "Text",
+        "Text",
+        "Text",
+        "Bool",
+        "Bool",
+        "Bool",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "24bdc3186e288d6dd5af2539b916f48b9492a0fd15a2d0a9001a6a4c847d8963"
+}

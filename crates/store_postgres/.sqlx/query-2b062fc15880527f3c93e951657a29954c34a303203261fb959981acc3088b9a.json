@@ -1,0 +1,138 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT principal, id, displayname, description, \"order\", color, timezone_id, deleted_at, addr_synctoken, push_topic\n                FROM birthday_calendars\n                INNER JOIN (\n                    SELECT principal AS addr_principal,\n                        id AS addr_id,\n                        synctoken AS addr_synctoken\n                    FROM addressbooks\n                    ) ON (principal, id) = (addr_principal, addr_id)\n                WHERE principal = $1\n                AND (\n                    (deleted_at IS NULL AND NOT $2) -- not deleted, want not deleted\n                    OR (deleted_at IS NOT NULL AND $3) -- deleted, want deleted\n                )\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "principal",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "birthday_calendars",
+            "name": "principal"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "birthday_calendars",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "displayname",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "birthday_calendars",
+            "name": "displayname"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "description",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "birthday_calendars",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "order",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "birthday_calendars",
+            "name": "order"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "color",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "birthday_calendars",
+            "name": "color"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "timezone_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "birthday_calendars",
+            "name": "timezone_id"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "deleted_at",
+        "type_info": "Timestamp",
+        "origin": {
+          "Table": {
+            "table": "birthday_calendars",
+            "name": "deleted_at"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "addr_synctoken",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "addressbooks",
+            "name": "synctoken"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "push_topic",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "birthday_calendars",
+            "name": "push_topic"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Bool",
+        "Bool"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "2b062fc15880527f3c93e951657a29954c34a303203261fb959981acc3088b9a"
+}

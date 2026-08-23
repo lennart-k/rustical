@@ -100,3 +100,52 @@ async fn test_invalid_principal_id(
         ": not allowed since '$' symbol is reserved for principal impersonation"
     );
 }
+
+#[rstest]
+#[tokio::test]
+async fn test_insert_principal_no_overwrite(
+    #[from(test_store_context)]
+    #[future]
+    context: TestStoreContext,
+) {
+    let principal_store = context.await.principal_store;
+    principal_store
+        .insert_principal(
+            Principal {
+                id: "user".to_owned(),
+                displayname: None,
+                memberships: vec![],
+                password: Some("keep".to_owned().into()),
+                principal_type: PrincipalType::Individual,
+            },
+            true,
+        )
+        .await
+        .unwrap();
+    assert!(matches!(
+        principal_store
+            .insert_principal(
+                Principal {
+                    id: "user".to_owned(),
+                    displayname: None,
+                    memberships: vec![],
+                    password: Some("clobber".to_owned().into()),
+                    principal_type: PrincipalType::Individual,
+                },
+                false,
+            )
+            .await,
+        Err(rustical_store::Error::AlreadyExists)
+    ));
+    assert_eq!(
+        principal_store
+            .get_principal("user")
+            .await
+            .unwrap()
+            .unwrap()
+            .password
+            .unwrap()
+            .into_inner(),
+        "keep"
+    );
+}

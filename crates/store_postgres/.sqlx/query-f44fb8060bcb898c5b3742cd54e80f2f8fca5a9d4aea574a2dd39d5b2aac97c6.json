@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM birthday_calendars WHERE (principal, id) = ($1, $2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f44fb8060bcb898c5b3742cd54e80f2f8fca5a9d4aea574a2dd39d5b2aac97c6"
+}

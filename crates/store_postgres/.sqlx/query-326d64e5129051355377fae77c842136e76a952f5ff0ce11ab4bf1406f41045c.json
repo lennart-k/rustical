@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE calendars SET deleted_at = NULL WHERE (principal, id) = ($1, $2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "326d64e5129051355377fae77c842136e76a952f5ff0ce11ab4bf1406f41045c"
+}

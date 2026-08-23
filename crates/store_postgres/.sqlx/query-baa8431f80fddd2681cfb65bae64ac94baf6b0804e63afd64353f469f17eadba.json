@@ -1,0 +1,71 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT id, displayname, principal_type, password_hash, json_agg(member_of) AS \"memberships: Json<Vec<Option<String>>>\"\n            FROM (SELECT * FROM principals WHERE id = $1) AS principals\n            LEFT JOIN memberships ON principals.id = memberships.principal\n            GROUP BY principals.id, displayname, principal_type, password_hash\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "principals",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "displayname",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "principals",
+            "name": "displayname"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "principal_type",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "principals",
+            "name": "principal_type"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "password_hash",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "principals",
+            "name": "password_hash"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "memberships: Json<Vec<Option<String>>>",
+        "type_info": "Json",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      true,
+      null
+    ]
+  },
+  "hash": "baa8431f80fddd2681cfb65bae64ac94baf6b0804e63afd64353f469f17eadba"
+}

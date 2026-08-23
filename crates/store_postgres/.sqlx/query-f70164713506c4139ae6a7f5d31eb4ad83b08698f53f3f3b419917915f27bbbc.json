@@ -1,0 +1,184 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT *\n                FROM calendars\n                WHERE principal = $1 AND deleted_at IS NULL",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "principal",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "principal"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "synctoken",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "synctoken"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "displayname",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "displayname"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "description",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "description"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "order",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "order"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "color",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "color"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "timezone_id",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "timezone_id"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "deleted_at",
+        "type_info": "Timestamp",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "deleted_at"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "subscription_url",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "subscription_url"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "push_topic",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "push_topic"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "comp_event",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "comp_event"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "comp_todo",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "comp_todo"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "comp_journal",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "comp_journal"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "f70164713506c4139ae6a7f5d31eb4ad83b08698f53f3f3b419917915f27bbbc"
+}

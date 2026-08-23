@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM calendarobjects WHERE deleted_at IS NOT NULL AND deleted_at::date < $1::date",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Date"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ce9fbee1392c4503f0dae09f424b2222bd9b47b2f3c02f37afcc21afd41d36ce"
+}

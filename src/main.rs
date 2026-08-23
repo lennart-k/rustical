@@ -43,7 +43,7 @@ mod test_config {
         Figment, Jail,
         providers::{Env, Format, Toml},
     };
-    use rustical::config::{Config, HttpBindConfig};
+    use rustical::config::{Config, DataStoreConfig, HttpBindConfig};
 
     #[test]
     fn test_config_toml_http_host() {
@@ -166,6 +166,91 @@ allow_sign_up = true
                 config.http.bind_config().unwrap(),
                 HttpBindConfig::Unix("/run/rustical/socket".parse().unwrap())
             );
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn test_config_toml_postgres_db_url() {
+        let config: Config = Figment::new()
+            .merge(Toml::string(
+                r#"
+[data_store.postgres]
+db_url = "postgres://user@localhost/rustical"
+"#,
+            ))
+            .extract()
+            .unwrap();
+        match config.data_store {
+            DataStoreConfig::Postgres(pg) => {
+                assert_eq!(pg.db_url, "postgres://user@localhost/rustical");
+                assert!(pg.run_repairs);
+                assert!(pg.skip_broken);
+            }
+            DataStoreConfig::Sqlite(_) => panic!("expected postgres"),
+        }
+    }
+
+    #[test]
+    fn test_config_env_postgres_db_url() {
+        Jail::expect_with(|jail| {
+            jail.set_env(
+                "RUSTICAL_DATA_STORE__POSTGRES__DB_URL",
+                "postgres://user@localhost/rustical",
+            );
+
+            let config: Config = Figment::new()
+                .merge(Env::prefixed("RUSTICAL_").split("__"))
+                .extract()
+                .unwrap();
+            match config.data_store {
+                DataStoreConfig::Postgres(pg) => {
+                    assert_eq!(pg.db_url, "postgres://user@localhost/rustical");
+                }
+                DataStoreConfig::Sqlite(_) => panic!("expected postgres"),
+            }
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn test_config_env_backend_selects_postgres_over_docker_sqlite_default() {
+        Jail::expect_with(|jail| {
+            jail.set_env("RUSTICAL_DATA_STORE__BACKEND", "postgres");
+            jail.set_env(
+                "RUSTICAL_DATA_STORE__SQLITE__DB_URL",
+                "/var/lib/rustical/db.sqlite3",
+            );
+            jail.set_env(
+                "RUSTICAL_DATA_STORE__POSTGRES__DB_URL",
+                "postgres://user@localhost/rustical",
+            );
+
+            let config: Config = Figment::new()
+                .merge(Env::prefixed("RUSTICAL_").split("__"))
+                .extract()
+                .unwrap();
+            assert!(matches!(config.data_store, DataStoreConfig::Postgres(_)));
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn test_config_env_requires_backend_for_two_stores() {
+        Jail::expect_with(|jail| {
+            jail.set_env(
+                "RUSTICAL_DATA_STORE__SQLITE__DB_URL",
+                "/var/lib/rustical/db.sqlite3",
+            );
+            jail.set_env(
+                "RUSTICAL_DATA_STORE__POSTGRES__DB_URL",
+                "postgres://user@localhost/rustical",
+            );
+
+            let config = Figment::new()
+                .merge(Env::prefixed("RUSTICAL_").split("__"))
+                .extract::<Config>();
+            assert!(config.is_err());
             Ok(())
         });
     }

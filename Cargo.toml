@@ -43,6 +43,7 @@ rustical_dav = { path = "./crates/dav/", features = ["ical"] }
 rustical_dav_push = { path = "./crates/dav_push/" }
 rustical_store = { path = "./crates/store/" }
 rustical_store_sqlite = { path = "./crates/store_sqlite/" }
+rustical_store_postgres = { path = "./crates/store_postgres/" }
 rustical_caldav = { path = "./crates/caldav/" }
 rustical_carddav = { path = "./crates/carddav/" }
 rustical_frontend = { path = "./crates/frontend/" }
@@ -157,6 +158,7 @@ figment = { version = "0.10", features = ["env", "toml", "test"] }
 [dependencies]
 rustical_store.workspace = true
 rustical_store_sqlite.workspace = true
+rustical_store_postgres.workspace = true
 rustical_caldav.workspace = true
 rustical_carddav.workspace = true
 rustical_frontend.workspace = true
