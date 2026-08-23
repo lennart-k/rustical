@@ -147,8 +147,8 @@ pub async fn get_postgres_data_stores(
     ))
 }
 
-/// Creates the SQLite stores selected by configurations supported before PostgreSQL was added.
-/// Use [`get_postgres_data_stores`] for PostgreSQL configurations.
+/// Creates the `SQLite` stores selected by configurations supported before `PostgreSQL` was added.
+/// Use [`get_postgres_data_stores`] for `PostgreSQL` configurations.
 #[allow(clippy::missing_errors_doc)]
 pub async fn get_data_stores(
     migrate: bool,
