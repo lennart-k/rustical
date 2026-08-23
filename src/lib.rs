@@ -154,10 +154,10 @@ pub async fn get_data_stores(
     migrate: bool,
     config: &DataStoreConfig,
 ) -> Result<(
-    Arc<impl AddressbookStore + PrefixedCalendarStore>,
-    Arc<impl CalendarStore>,
-    Arc<impl DavPushStore>,
-    Arc<impl AuthenticationProvider>,
+    Arc<SqliteAddressbookStore>,
+    Arc<SqliteCalendarStore>,
+    Arc<SqliteStore>,
+    Arc<SqlitePrincipalStore>,
     Receiver<CollectionOperation>,
 )> {
     let DataStoreConfig::Sqlite(config) = config else {
