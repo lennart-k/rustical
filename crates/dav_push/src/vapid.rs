@@ -106,12 +106,19 @@ impl VapidPublicKey {
 pub mod tests {
     use crate::vapid::VapidKeypair;
 
+    // pkcs8-encoded private key
     pub const PRIVATE_KEY_PEM: &str = "-----BEGIN PRIVATE KEY-----
 MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgTB3vavSTXm+w9v6Q
 9eCwVFwRhnLfWuO3y2VwpfKhYg+hRANCAARRJ6EbENwBqqjN6v+2jxsalRvqEKUr
 3oBLcSuhKaTh5UrFE9kQUxWnmft0yL35yRmHHSpSyD3A4pqUi0satvIp
 -----END PRIVATE KEY-----
 ";
+
+    pub const PRIVATE_KEY_PEM_SEC1: &str = "-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEIMwug/U2ds75hkEIeou9s0kj1ziCJETswt5S9ztJ2L5SoAoGCCqGSM49
+AwEHoUQDQgAEyjUeooXqyQxljKSu17126pjAEPTyYNApO6dGQl0PexMn0T7LI3qw
+mU9ZOko2Gn7LYp5LqgA0cX6rfDftsKVvtQ==
+-----END EC PRIVATE KEY-----";
 
     pub const PUBLIC_KEY_B64: &str =
         "BFEnoRsQ3AGqqM3q_7aPGxqVG-oQpSvegEtxK6EppOHlSsUT2RBTFaeZ-3TIvfnJGYcdKlLIPcDimpSLSxq28ik";
@@ -134,5 +141,15 @@ MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgTB3vavSTXm+w9v6Q
     fn test_public_key() {
         let key = VapidKeypair::from_pem(PRIVATE_KEY_PEM).unwrap();
         assert_eq!(key.public().encode_b64().unwrap().0, PUBLIC_KEY_B64);
+    }
+
+    #[test]
+    fn test_parse_pkcs8() {
+        VapidKeypair::from_pem(PRIVATE_KEY_PEM).unwrap();
+    }
+
+    #[test]
+    fn test_parse_sec1() {
+        VapidKeypair::from_pem(PRIVATE_KEY_PEM_SEC1).unwrap();
     }
 }

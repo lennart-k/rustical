@@ -128,7 +128,11 @@ async fn test_carddav_addressbook(
     let body = response.extract_string().await;
     insta::with_settings!({
         filters => vec![
-            (r"<PUSH:topic>[0-9a-f-]+</PUSH:topic>", "<PUSH:topic>[PUSH_TOPIC]</PUSH:topic>")
+            (r"<PUSH:topic>[0-9a-f-]+</PUSH:topic>", "<PUSH:topic>[PUSH_TOPIC]</PUSH:topic>"),
+            (
+                r#"<PUSH:vapid-public-key type=\"p256ecdsa\">.*</PUSH:vapid-public-key>"#,
+                r#"<PUSH:vapid-public-key type="p256ecdsa">[pubkey]</PUSH:vapid-public-key>"#,
+            ),
         ]
     }, {
         insta::assert_snapshot!("propfind_body", body);

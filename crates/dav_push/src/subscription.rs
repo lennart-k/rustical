@@ -1,16 +1,21 @@
 use chrono::{DateTime, NaiveDateTime, TimeZone};
 use web_push::SubscriptionKeys;
 
+// Represents a DAV Push subscription in the database
 pub struct Subscription {
     pub id: String,
     pub topic: String,
     // Naive because sqlite has no concept of timezones
     // In reality, this is UTC
     pub expiration: NaiveDateTime,
+    // The endpoint where the push message is sent to
     pub push_resource: String,
+    // The public key from the client, currently only p256dh
+    /// Base64-encoded, URL-safe alphabet, no padding.
     pub public_key: String,
     // Currently, only p256dh
     pub public_key_type: String,
+    /// Authentication secret. Base64-encoded, URL-safe alphabet, no padding.
     pub auth_secret: String,
 }
 

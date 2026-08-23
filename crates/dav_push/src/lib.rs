@@ -4,7 +4,6 @@ mod extension;
 mod prop;
 pub mod register;
 use chrono::Utc;
-use derive_more::Constructor;
 pub use extension::*;
 pub use prop::*;
 use reqwest::Url;
@@ -13,7 +12,9 @@ use rustical_xml::{XmlRootTag, XmlSerialize, XmlSerializeRoot};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::mpsc::Receiver;
 use tracing::{error, info, warn};
-use web_push::{ContentEncoding, VapidSignatureBuilder, WebPushClient, WebPushMessageBuilder};
+use web_push::{
+    ContentEncoding, VapidSignatureBuilder, WebPushClient, WebPushMessage, WebPushMessageBuilder,
+};
 
 mod endpoints;
 pub use endpoints::subscription_service;
@@ -30,7 +31,7 @@ pub use subscription::*;
 #[derive(XmlSerialize, Debug)]
 pub struct ContentUpdate {
     #[xml(ns = "rustical_dav::namespace::NS_DAV")]
-    sync_token: Option<String>,
+    sync_token: String,
 }
 
 #[derive(XmlSerialize, XmlRootTag, Debug)]
@@ -46,84 +47,89 @@ struct PushMessage {
     content_update: Option<ContentUpdate>,
 }
 
-#[derive(Debug, Constructor)]
-pub struct DavPushController<DP: DavPushStore> {
-    allowed_push_servers: Option<Vec<String>>,
-    sub_store: Arc<DP>,
+#[derive(Debug, thiserror::Error)]
+pub enum DavPushError {
+    #[error(transparent)]
+    StoreError(#[from] rustical_store::Error),
+    #[error("Could not serialize push message: {0}")]
+    XmlError(#[from] std::io::Error),
+    #[error("Web Push error: {0}")]
+    WebPushError(#[from] web_push::WebPushError),
 }
 
-impl<DP: DavPushStore> DavPushController<DP> {
-    pub async fn notifier(&self, mut recv: Receiver<CollectionOperation>) {
+#[derive(Debug)]
+pub struct DavPushService<DP: SubscriptionStore> {
+    allowed_push_servers: Option<Vec<String>>,
+    dav_push_store: Arc<DP>,
+    client: reqwest::Client,
+    vapid_key: VapidKeypair,
+}
+
+impl<DP: SubscriptionStore> DavPushService<DP> {
+    pub fn new(
+        allowed_push_servers: Option<Vec<String>>,
+        dav_push_store: Arc<DP>,
+        vapid_key: VapidKeypair,
+    ) -> Result<Self, reqwest::Error> {
+        let client = reqwest::Client::builder()
+            .timeout(Duration::from_secs(30))
+            .connect_timeout(Duration::from_secs(10))
+            .read_timeout(Duration::from_secs(10))
+            .build()?;
+        Ok(Self {
+            allowed_push_servers,
+            dav_push_store,
+            client,
+            vapid_key,
+        })
+    }
+
+    /// This is the entrypoint of the service
+    pub async fn notifier_loop(&self, mut recv: Receiver<CollectionOperation>) {
         loop {
             // Make sure we don't flood the subscribers
             tokio::time::sleep(Duration::from_secs(10)).await;
-            let mut messages = vec![];
-            recv.recv_many(&mut messages, 100).await;
+            let mut operations = Vec::new();
+            recv.recv_many(&mut operations, 100).await;
 
             // Right now we just have to show the latest content update by topic
             // This might become more complicated in the future depending on what kind of updates
             // we add
-            let mut latest_messages = HashMap::new();
-            for message in messages {
-                if matches!(message.data, CollectionOperationInfo::Content { .. }) {
-                    latest_messages.insert(message.topic.clone(), message);
-                }
-            }
-            let messages = latest_messages.into_values();
 
-            for message in messages {
-                self.send_message(message).await;
+            let changes: Vec<(String, String)> = operations
+                .into_iter()
+                .filter_map(|operation| {
+                    if let CollectionOperationInfo::Content { sync_token } = operation.data {
+                        Some((operation.topic, sync_token))
+                    } else {
+                        None
+                    }
+                })
+                // Deduplicate by topic, keep latest change
+                .collect::<HashMap<_, _>>()
+                .into_iter()
+                .collect();
+
+            for (topic, synctoken) in changes {
+                if let Err(err) = self.send_update(topic, synctoken).await {
+                    error!("{err}");
+                }
             }
         }
     }
 
-    #[allow(clippy::cognitive_complexity)]
-    async fn send_message(&self, message: CollectionOperation) {
-        let vapid_key = match self.sub_store.get_vapid_keypair().await {
-            Ok(key) => key,
-            Err(err) => {
-                error!("{err}");
-                return;
-            }
-        };
-
-        let subscriptions = match self.sub_store.get_subscriptions(&message.topic).await {
-            Ok(subs) => subs,
-            Err(err) => {
-                error!("{err}");
-                return;
-            }
-        };
-
+    async fn send_update(&self, topic: String, sync_token: String) -> Result<(), DavPushError> {
+        let subscriptions = self.dav_push_store.get_subscriptions(&topic).await?;
         if subscriptions.is_empty() {
-            return;
+            return Ok(());
         }
-
-        if matches!(message.data, CollectionOperationInfo::Delete) {
-            // Collection has been deleted, but we cannot handle that
-            return;
-        }
-
-        let content_update = if let CollectionOperationInfo::Content { sync_token } = message.data {
-            Some(ContentUpdate {
-                sync_token: Some(sync_token),
-            })
-        } else {
-            None
-        };
 
         let push_message = PushMessage {
-            topic: message.topic,
-            content_update,
+            topic,
+            content_update: Some(ContentUpdate { sync_token }),
         };
 
-        let payload = match push_message.serialize_to_string() {
-            Ok(payload) => payload,
-            Err(err) => {
-                error!("Could not serialize push message: {}", err);
-                return;
-            }
-        };
+        let payload = push_message.serialize_to_string()?;
 
         for subscription in subscriptions {
             if subscription.is_expired(&Utc::now()) {
@@ -132,59 +138,65 @@ impl<DP: DavPushStore> DavPushController<DP> {
                     subscription.id, subscription.topic
                 );
                 self.try_delete_subscription(&subscription.id).await;
-                continue;
+                return Ok(());
             }
 
-            if let Some(allowed_push_servers) = &self.allowed_push_servers {
-                if let Ok(url) = Url::parse(&subscription.push_resource) {
-                    let origin = url.origin().unicode_serialization();
-                    if !allowed_push_servers.contains(&origin) {
-                        warn!(
-                            "Deleting subscription {} on topic {} because the endpoint is not in the list of allowed push servers",
-                            subscription.id, subscription.topic
-                        );
-                        self.try_delete_subscription(&subscription.id).await;
-                        continue;
-                    }
-                } else {
-                    warn!(
-                        "Deleting subscription {} on topic {} because of invalid URL",
-                        subscription.id, subscription.topic
-                    );
-                    self.try_delete_subscription(&subscription.id).await;
-                    continue;
-                }
+            let Ok(url) = Url::parse(&subscription.push_resource) else {
+                warn!(
+                    "Deleting subscription {} on topic {} because of invalid URL",
+                    subscription.id, subscription.topic
+                );
+                self.try_delete_subscription(&subscription.id).await;
+                return Ok(());
+            };
+
+            if let Some(allowed_push_servers) = &self.allowed_push_servers
+                && !allowed_push_servers.contains(&url.origin().unicode_serialization())
+            {
+                return Ok(());
             }
 
-            let subscription_info: web_push::SubscriptionInfo = subscription.into();
-
-            let mut message_builder = WebPushMessageBuilder::new(&subscription_info);
-            message_builder.set_payload(ContentEncoding::Aes128Gcm, payload.as_bytes());
-            let signature = VapidSignatureBuilder::from_ec(vapid_key.0.clone(), &subscription_info)
-                .build()
-                .unwrap();
-            message_builder.set_vapid_signature(signature);
-            let message = message_builder.build().unwrap();
-
-            let client = web_push::ReqwestWebPushClient::new().unwrap();
-            if let Err(err) = client.send(message).await {
-                error!("An error occured sending out a push notification: {err}");
-                // if err.is_permament_error() {
-                //     warn!(
-                //         "Deleting subscription {} on topic {}",
-                //         &subscription_id, subscription_topic
-                //     );
-                //     self.try_delete_subscription(&subscription_id).await;
-                // }
+            if let Err(err) = self
+                .send_payload_to_subscriber(subscription, &payload)
+                .await
+            {
+                error!("An error occured sending a WebDAV Push notification: {err}");
             }
         }
+
+        Ok(())
+    }
+    async fn send_payload_to_subscriber(
+        &self,
+        subscription: Subscription,
+        payload: &str,
+    ) -> Result<(), DavPushError> {
+        let message = build_message(self.vapid_key.clone(), subscription, payload)?;
+        let client = web_push::ReqwestWebPushClient::from_client(self.client.clone());
+        client.send(message).await?;
+        Ok(())
     }
 
+    // Try to delete a subscription ignoring any errors
     async fn try_delete_subscription(&self, sub_id: &str) {
-        if let Err(err) = self.sub_store.delete_subscription(sub_id).await {
+        if let Err(err) = self.dav_push_store.delete_subscription(sub_id).await {
             error!("Error deleting subsciption: {err}");
         }
     }
+}
+
+fn build_message(
+    vapid_key: VapidKeypair,
+    subscription: Subscription,
+    payload: &str,
+) -> Result<WebPushMessage, DavPushError> {
+    let subscription_info: web_push::SubscriptionInfo = subscription.into();
+    let signature = VapidSignatureBuilder::from_ec(vapid_key.0, &subscription_info).build()?;
+
+    Ok(WebPushMessageBuilder::new(&subscription_info)
+        .payload(ContentEncoding::Aes128Gcm, payload.as_bytes())
+        .vapid_signature(signature)
+        .build()?)
 }
 
 #[cfg(test)]

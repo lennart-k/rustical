@@ -34,7 +34,9 @@ expression: body
                 <sync-token>github.com/lennart-k/rustical/ns/0</sync-token>
                 <CS:getctag>github.com/lennart-k/rustical/ns/0</CS:getctag>
                 <PUSH:transports>
-                    <PUSH:web-push/>
+                    <PUSH:web-push>
+                        <PUSH:vapid-public-key type="p256ecdsa">[pubkey]</PUSH:vapid-public-key>
+                    </PUSH:web-push>
                 </PUSH:transports>
                 <PUSH:topic>[PUSH_TOPIC]</PUSH:topic>
                 <PUSH:supported-triggers>

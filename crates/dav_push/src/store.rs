@@ -13,7 +13,9 @@ pub trait SubscriptionStore: Send + Sync + 'static {
 
 #[async_trait]
 pub trait VapidStore: Send + Sync + 'static {
+    // Returns a VapidKeypair. Generates a new one if none exists yet
     async fn get_vapid_keypair(&self) -> Result<&VapidKeypair, Error>;
+    // Returns the base64-encoded public key
     async fn get_vapid_pubkey_b64(&self) -> Result<&VapidPublicKeyB64, Error>;
 }
 

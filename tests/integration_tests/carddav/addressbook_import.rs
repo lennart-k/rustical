@@ -128,7 +128,11 @@ END:VCARD",
         filters => vec![
             (r"DTSTAMP:[0-9\-:TZ=;]+", "DTSTAMP:[DTSTAMP]"),
             (r"<PUSH:topic>[0-9a-f-]+</PUSH:topic>", "<PUSH:topic>[PUSH_TOPIC]</PUSH:topic>"),
-            (r#"<getetag>&quot;[0-9a-f-]+&quot;</getetag>"#, r#"<getetag>&quot;[GETETAG]&quot;</getetag>"#)
+            (r#"<getetag>&quot;[0-9a-f-]+&quot;</getetag>"#, r#"<getetag>&quot;[GETETAG]&quot;</getetag>"#),
+            (
+                r#"<PUSH:vapid-public-key type=\"p256ecdsa\">.*</PUSH:vapid-public-key>"#,
+                r#"<PUSH:vapid-public-key type="p256ecdsa">[pubkey]</PUSH:vapid-public-key>"#,
+            ),
         ]
     }, {
         insta::assert_snapshot!("birthdays_propfind", body);

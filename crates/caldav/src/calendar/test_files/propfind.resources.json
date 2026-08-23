@@ -17,7 +17,8 @@
         "VTODO"
       ]
     },
-    "read_only": true
+    "read_only": true,
+    "vapid_pubkey": "BFtNHbLMxDV6FInTMCUfqFO-khwq-zge2MV6JmWTIykK6Ujz34E8mqhBHTfA2m9_fDTrT5KVPRZgD4MRtPlAoR"
   },
   {
     "cal": {
@@ -37,6 +38,7 @@
         "VTODO"
       ]
     },
-    "read_only": true
+    "read_only": true,
+    "vapid_pubkey": "BFtNHbLMxDV6FInTMCUfqFO-khwq-zge2MV6JmWTIykK6Ujz34E8mqhBHTfA2m9_fDTrT5KVPRZgD4MRtPlAoR"
   }
 ]
