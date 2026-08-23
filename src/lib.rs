@@ -60,7 +60,7 @@ pub enum Command {
 }
 
 #[allow(clippy::missing_errors_doc)]
-pub(crate) async fn get_sqlite_data_stores(
+pub async fn get_sqlite_data_stores(
     migrate: bool,
     SqliteDataStoreConfig {
         db_url,
@@ -104,7 +104,7 @@ pub(crate) async fn get_sqlite_data_stores(
 }
 
 #[allow(clippy::missing_errors_doc)]
-pub(crate) async fn get_postgres_data_stores(
+pub async fn get_postgres_data_stores(
     migrate: bool,
     PostgresDataStoreConfig {
         db_url,
@@ -145,6 +145,27 @@ pub(crate) async fn get_postgres_data_stores(
         principal_store,
         recv,
     ))
+}
+
+/// Creates the SQLite stores selected by configurations supported before PostgreSQL was added.
+/// Use [`get_postgres_data_stores`] for PostgreSQL configurations.
+#[allow(clippy::missing_errors_doc)]
+pub async fn get_data_stores(
+    migrate: bool,
+    config: &DataStoreConfig,
+) -> Result<(
+    Arc<impl AddressbookStore + PrefixedCalendarStore>,
+    Arc<impl CalendarStore>,
+    Arc<impl DavPushStore>,
+    Arc<impl AuthenticationProvider>,
+    Receiver<CollectionOperation>,
+)> {
+    let DataStoreConfig::Sqlite(config) = config else {
+        return Err(anyhow!(
+            "get_data_stores only supports SQLite; use get_postgres_data_stores"
+        ));
+    };
+    get_sqlite_data_stores(migrate, config).await
 }
 
 #[allow(clippy::missing_errors_doc, clippy::missing_panics_doc)]

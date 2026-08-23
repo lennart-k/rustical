@@ -49,11 +49,11 @@ async fn test_sync_full(
     // https://github.com/lennart-k/rustical/issues/251
     let operations = [
         (true, id1, 1),
-        (true, id2, 2),
-        (false, id1, 3),
-        (true, id1, 4),
-        (true, id3, 5),
-        (false, id4, 6),
+        (true, id2, 3),
+        (false, id1, 4),
+        (true, id1, 6),
+        (true, id3, 8),
+        (false, id4, 9),
     ];
 
     for (add, id, synctoken_after) in operations {
@@ -69,7 +69,7 @@ async fn test_sync_full(
                 .unwrap();
         }
 
-        // Check that sync token gets incremented after every operation
+        // Replacing a same-UID href records both its deletion and addition.
         assert_eq!(
             cal_store
                 .get_calendar(&principal, &cal_id, false)

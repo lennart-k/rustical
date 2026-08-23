@@ -212,4 +212,46 @@ db_url = "postgres://user@localhost/rustical"
             Ok(())
         });
     }
+
+    #[test]
+    fn test_config_env_backend_selects_postgres_over_docker_sqlite_default() {
+        Jail::expect_with(|jail| {
+            jail.set_env("RUSTICAL_DATA_STORE__BACKEND", "postgres");
+            jail.set_env(
+                "RUSTICAL_DATA_STORE__SQLITE__DB_URL",
+                "/var/lib/rustical/db.sqlite3",
+            );
+            jail.set_env(
+                "RUSTICAL_DATA_STORE__POSTGRES__DB_URL",
+                "postgres://user@localhost/rustical",
+            );
+
+            let config: Config = Figment::new()
+                .merge(Env::prefixed("RUSTICAL_").split("__"))
+                .extract()
+                .unwrap();
+            assert!(matches!(config.data_store, DataStoreConfig::Postgres(_)));
+            Ok(())
+        });
+    }
+
+    #[test]
+    fn test_config_env_requires_backend_for_two_stores() {
+        Jail::expect_with(|jail| {
+            jail.set_env(
+                "RUSTICAL_DATA_STORE__SQLITE__DB_URL",
+                "/var/lib/rustical/db.sqlite3",
+            );
+            jail.set_env(
+                "RUSTICAL_DATA_STORE__POSTGRES__DB_URL",
+                "postgres://user@localhost/rustical",
+            );
+
+            let config = Figment::new()
+                .merge(Env::prefixed("RUSTICAL_").split("__"))
+                .extract::<Config>();
+            assert!(config.is_err());
+            Ok(())
+        });
+    }
 }

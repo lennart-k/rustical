@@ -34,10 +34,20 @@ Every variable is
 ## PostgreSQL
 
 ```toml
+[data_store]
+backend = "postgres"
+
 [data_store.postgres]
 db_url = "postgres://user@localhost/rustical"
 run_repairs = true
 skip_broken = true
 ```
 
-`db_url` is a standard PostgreSQL URL. The environment equivalent is `RUSTICAL_DATA_STORE__POSTGRES__DB_URL`. RustiCal sets PostgreSQL connections to UTC.
+`db_url` is a standard PostgreSQL URL. RustiCal sets PostgreSQL connections to UTC.
+
+The official container defines a default SQLite URL. To select PostgreSQL with environment variables, set both:
+
+```sh
+RUSTICAL_DATA_STORE__BACKEND=postgres
+RUSTICAL_DATA_STORE__POSTGRES__DB_URL=postgres://user@localhost/rustical
+```

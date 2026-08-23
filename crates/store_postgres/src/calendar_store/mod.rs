@@ -593,7 +593,7 @@ impl PostgresCalendarStore {
         object_id: &str,
         object: &CalendarObject,
         overwrite: bool,
-    ) -> Result<(), Error> {
+    ) -> Result<Option<String>, Error> {
         let (uid, ics) = (object.get_uid(), object.get_ics());
 
         let first_occurence = object
@@ -611,18 +611,22 @@ impl PostgresCalendarStore {
         let etag = object.get_etag();
         let object_type = i32::from(object.get_object_type() as u8);
 
-        if overwrite {
-            // ponytail: sqlite REPLACE evicts any unique key; CTE+INSERT shares a snapshot
-            sqlx::query!(
-                "DELETE FROM calendarobjects WHERE principal = $1 AND cal_id = $2 AND uid = $3 AND id <> $4",
+        let evicted = if overwrite {
+            sqlx::query_scalar!(
+                "DELETE FROM calendarobjects WHERE principal = $1 AND cal_id = $2 AND uid = $3 AND id <> $4 RETURNING id",
                 principal,
                 cal_id,
                 uid,
                 object_id,
             )
-            .execute(&mut *conn)
+            .fetch_optional(&mut *conn)
             .await
-            .map_err(crate::Error::from)?;
+            .map_err(crate::Error::from)?
+        } else {
+            None
+        };
+
+        if overwrite {
             sqlx::query!(
                 "INSERT INTO calendarobjects (principal, cal_id, id, uid, ics, first_occurence, last_occurence, etag, object_type) VALUES ($1, $2, $3, $4, $5, $6::date, $7::date, $8, $9) ON CONFLICT (principal, cal_id, id) DO UPDATE SET uid = EXCLUDED.uid, ics = EXCLUDED.ics, first_occurence = EXCLUDED.first_occurence, last_occurence = EXCLUDED.last_occurence, etag = EXCLUDED.etag, object_type = EXCLUDED.object_type, deleted_at = NULL",
                 principal,
@@ -656,7 +660,7 @@ impl PostgresCalendarStore {
             .map_err(crate::Error::from)?;
         }
 
-        Ok(())
+        Ok(evicted)
     }
 
     #[instrument]
@@ -1003,7 +1007,16 @@ impl CalendarWriteStore for PostgresCalendarStore {
     ) -> Result<(), Error> {
         let mut tx = self.db.begin().await.map_err(crate::Error::from)?;
 
-        let calendar = Self::_get_calendar(&mut *tx, principal, cal_id, true).await?;
+        let calendar: Calendar = sqlx::query_as!(
+            CalendarRow,
+            r#"SELECT * FROM calendars WHERE (principal, id) = ($1, $2) FOR UPDATE"#,
+            principal,
+            cal_id
+        )
+        .fetch_one(&mut *tx)
+        .await
+        .map_err(crate::Error::from)?
+        .into();
         if calendar.subscription_url.is_some() {
             // We cannot commit an object to a subscription calendar
             return Err(Error::ReadOnly);
@@ -1011,6 +1024,19 @@ impl CalendarWriteStore for PostgresCalendarStore {
 
         let mut sync_token = None;
         for (object_id, object) in objects {
+            let evicted =
+                Self::_put_object(&mut tx, principal, cal_id, &object_id, &object, overwrite)
+                    .await?;
+            if let Some(evicted) = evicted {
+                Self::log_object_operation(
+                    &mut tx,
+                    principal,
+                    cal_id,
+                    &evicted,
+                    ChangeOperation::Delete,
+                )
+                .await?;
+            }
             sync_token = Some(
                 Self::log_object_operation(
                     &mut tx,
@@ -1021,7 +1047,6 @@ impl CalendarWriteStore for PostgresCalendarStore {
                 )
                 .await?,
             );
-            Self::_put_object(&mut tx, principal, cal_id, &object_id, &object, overwrite).await?;
         }
 
         tx.commit().await.map_err(crate::Error::from)?;

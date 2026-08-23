@@ -6,7 +6,7 @@ use reqwest::Url;
 use rustical_caldav::CalDavConfig;
 use rustical_frontend::FrontendConfig;
 use rustical_oidc::OidcConfig;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(deny_unknown_fields, default)]
@@ -201,12 +201,81 @@ pub struct PostgresDataStoreConfig {
     pub skip_broken: bool,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Copy)]
 #[serde(rename_all = "snake_case")]
-#[serde(deny_unknown_fields)]
+pub enum DataStoreBackend {
+    Sqlite,
+    Postgres,
+}
+
+#[derive(Debug, Clone)]
 pub enum DataStoreConfig {
     Sqlite(SqliteDataStoreConfig),
     Postgres(PostgresDataStoreConfig),
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct DataStoreConfigRepr {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    backend: Option<DataStoreBackend>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    sqlite: Option<SqliteDataStoreConfig>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    postgres: Option<PostgresDataStoreConfig>,
+}
+
+impl<'de> Deserialize<'de> for DataStoreConfig {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let DataStoreConfigRepr {
+            backend,
+            sqlite,
+            postgres,
+        } = DataStoreConfigRepr::deserialize(deserializer)?;
+
+        match (backend, sqlite, postgres) {
+            (Some(DataStoreBackend::Sqlite), Some(config), _) | (None, Some(config), None) => {
+                Ok(Self::Sqlite(config))
+            }
+            (Some(DataStoreBackend::Postgres), _, Some(config)) | (None, None, Some(config)) => {
+                Ok(Self::Postgres(config))
+            }
+            (Some(DataStoreBackend::Sqlite), None, _) => Err(de::Error::custom(
+                "data_store.sqlite is required for the sqlite backend",
+            )),
+            (Some(DataStoreBackend::Postgres), _, None) => Err(de::Error::custom(
+                "data_store.postgres is required for the postgres backend",
+            )),
+            (None, Some(_), Some(_)) => Err(de::Error::custom(
+                "data_store.backend is required when both sqlite and postgres are configured",
+            )),
+            (None, None, None) => Err(de::Error::custom("a data store must be configured")),
+        }
+    }
+}
+
+impl Serialize for DataStoreConfig {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            Self::Sqlite(config) => DataStoreConfigRepr {
+                backend: Some(DataStoreBackend::Sqlite),
+                sqlite: Some(config.clone()),
+                postgres: None,
+            },
+            Self::Postgres(config) => DataStoreConfigRepr {
+                backend: Some(DataStoreBackend::Postgres),
+                sqlite: None,
+                postgres: Some(config.clone()),
+            },
+        }
+        .serialize(serializer)
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Default, Clone)]

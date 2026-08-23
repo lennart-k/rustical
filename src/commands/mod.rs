@@ -62,7 +62,8 @@ mod tests {
 
     #[test]
     fn gen_config_postgres_emits_postgres_store() {
-        match sample_config(true).data_store {
+        let config = sample_config(true);
+        match config.data_store.clone() {
             DataStoreConfig::Postgres(pg) => {
                 assert!(pg.db_url.starts_with("postgres://"));
                 assert!(pg.run_repairs);
@@ -70,5 +71,10 @@ mod tests {
             }
             DataStoreConfig::Sqlite(_) => panic!("expected postgres"),
         }
+        assert!(
+            toml::to_string(&config)
+                .unwrap()
+                .contains("backend = \"postgres\"")
+        );
     }
 }

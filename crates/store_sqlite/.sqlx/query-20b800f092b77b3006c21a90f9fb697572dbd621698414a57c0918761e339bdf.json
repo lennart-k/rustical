@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO calendarobjects (principal, cal_id, id, uid, ics, first_occurence, last_occurence, etag, object_type) VALUES (?, ?, ?, ?, ?, date(?), date(?), ?, ?) ON CONFLICT (principal, cal_id, id) DO UPDATE SET uid = excluded.uid, ics = excluded.ics, first_occurence = excluded.first_occurence, last_occurence = excluded.last_occurence, etag = excluded.etag, object_type = excluded.object_type, deleted_at = NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 9
+    },
+    "nullable": []
+  },
+  "hash": "20b800f092b77b3006c21a90f9fb697572dbd621698414a57c0918761e339bdf"
+}

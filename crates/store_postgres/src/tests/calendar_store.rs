@@ -120,6 +120,69 @@ END:VCALENDAR";
 
     #[rstest]
     #[tokio::test]
+    async fn overwrite_reports_evicted_object_and_serializes_writers(
+        #[future]
+        #[from(test_store_context)]
+        context: TestStoreContext,
+    ) {
+        let TestStoreContext { cal_store, .. } = context.await;
+        let cal = Calendar {
+            principal: "user".to_owned(),
+            timezone_id: None,
+            deleted_at: None,
+            meta: CalendarMetadata::default(),
+            id: "overwrite".to_owned(),
+            synctoken: 0,
+            subscription_url: None,
+            push_topic: "overwrite".to_owned(),
+            components: vec![],
+        };
+        cal_store.insert_calendar(cal.clone()).await.unwrap();
+        let object = CalendarObject::from_ics(CALENDAR_OBJECT_ICS.to_owned()).unwrap();
+        cal_store
+            .put_object(&cal.principal, &cal.id, "old", object.clone(), false)
+            .await
+            .unwrap();
+        let synctoken = cal_store
+            .get_calendar(&cal.principal, &cal.id, false)
+            .await
+            .unwrap()
+            .synctoken;
+
+        cal_store
+            .put_object(&cal.principal, &cal.id, "new", object.clone(), true)
+            .await
+            .unwrap();
+        let (updated, deleted, _) = cal_store
+            .sync_changes(&cal.principal, &cal.id, synctoken)
+            .await
+            .unwrap();
+        assert_eq!(deleted, ["old"]);
+        assert_eq!(updated[0].0, "new");
+
+        let first = cal_store.put_object(
+            &cal.principal,
+            &cal.id,
+            "concurrent-1",
+            object.clone(),
+            true,
+        );
+        let second = cal_store.put_object(&cal.principal, &cal.id, "concurrent-2", object, true);
+        let (first, second) = tokio::join!(first, second);
+        first.unwrap();
+        second.unwrap();
+        assert_eq!(
+            cal_store
+                .get_objects(&cal.principal, &cal.id)
+                .await
+                .unwrap()
+                .len(),
+            1
+        );
+    }
+
+    #[rstest]
+    #[tokio::test]
     async fn should_deleted_trashed_calendar_andobjects_by_date_limit(
         #[future]
         #[from(test_store_context)]
