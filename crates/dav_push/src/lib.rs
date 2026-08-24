@@ -227,29 +227,5 @@ mod tests {
         assert_debug_snapshot!(message.ttl, @"2419200");
         assert_debug_snapshot!(message.urgency, @"None");
         assert_debug_snapshot!(message.topic, @"None");
-        assert_debug_snapshot!(message.payload);
     }
-
-    // #[tokio::test]
-    // async fn test_ntfy_request() {
-    //     let (keypair, auth_secret) = generate_keypair_and_auth_secret().unwrap();
-    //     let auth_secret = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(auth_secret);
-    //     let public_key =
-    //         base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(keypair.pub_as_raw().unwrap());
-    //
-    //     send_payload(
-    //         "hello",
-    //         &Subscription {
-    //             id: "asd".to_string(),
-    //             topic: "asd".to_string(),
-    //             expiration: NaiveDateTime::MAX,
-    //             push_resource: "https://ntfy.sh/upL00-v4L3SGM2".to_string(),
-    //             public_key,
-    //             public_key_type: "p256dh".to_string(),
-    //             auth_secret,
-    //         },
-    //     )
-    //     .await
-    //     .unwrap();
-    // }
 }

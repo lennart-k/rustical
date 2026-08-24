@@ -75,7 +75,6 @@ tokio = { version = "1.53", features = [
 ] }
 tokio-util = { version = "0.7", features = ["rt"] }
 url = "2.5"
-base64 = "0.23"
 thiserror = "2.0"
 quick-xml = { version = "0.41" }
 rust-embed = "8.12"
@@ -145,6 +144,8 @@ async-std = { version = "1.13", features = ["attributes"] }
 similar-asserts = "2.0"
 insta = { version = "1.48", features = ["filters"] }
 criterion = { version = "0.8", features = ["async_tokio"] }
+web-push = { git = "https://github.com/lennart-k/rust-web-push", rev = "46214267", default-features = false, features = ["reqwest-client"] }
+jwt-simple = { version = "0.13", default-features = false, features = ["pure-rust"] }
 
 [dev-dependencies]
 rstest.workspace = true
