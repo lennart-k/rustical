@@ -201,6 +201,35 @@ fn build_message(
 
 #[cfg(test)]
 mod tests {
+    use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+    use insta::assert_debug_snapshot;
+
+    use crate::{Subscription, VapidKeypair, build_message, vapid};
+
+    #[test]
+    fn test_build_message_valid() {
+        let vapid_key = VapidKeypair::from_pem(vapid::tests::PRIVATE_KEY_PEM).unwrap();
+        let subscription = Subscription {
+            topic: "d0be5c46-36a4-4019-a0f9-e47a3e386096".to_string(),
+            id: "adaf9631-4497-47a9-8550-cd5fee203448".to_string(),
+            expiration: NaiveDateTime::new(
+                NaiveDate::from_ymd_opt(2021, 1, 1).unwrap(),
+                NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
+            ),
+            auth_secret: "VG60BKYQf6ZFIEIfLB5CdQ".to_string(),
+            push_resource: "https://ntfy.example.com/upL00-v4L3SGM2".to_string(),
+            public_key: "BNfY5sCh5FqswvkO3KNHeR3vjzOSV0sSmvwS0mePb86ve6CBaoiyQYuX7PIJ0rvDLvOIa2HDWFxnDCyMB7HrqlE".to_string(),
+            public_key_type: "p256dh".to_string(),
+        };
+        let payload = "asd";
+        let message = build_message(vapid_key, subscription, payload).unwrap();
+        assert_debug_snapshot!(message.endpoint, @"https://ntfy.example.com/upL00-v4L3SGM2");
+        assert_debug_snapshot!(message.ttl, @"2419200");
+        assert_debug_snapshot!(message.urgency, @"None");
+        assert_debug_snapshot!(message.topic, @"None");
+        assert_debug_snapshot!(message.payload);
+    }
+
     // #[tokio::test]
     // async fn test_ntfy_request() {
     //     let (keypair, auth_secret) = generate_keypair_and_auth_secret().unwrap();
