@@ -30,6 +30,7 @@
 
             cargo-vet
             cargo-about
+            cargo-deny
           ];
         };
       }

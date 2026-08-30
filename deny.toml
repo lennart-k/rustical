@@ -1,0 +1,25 @@
+[licenses]
+allow = [
+  "Apache-2.0",
+  "MIT",
+  "BSD-3-Clause",
+  "BSD-2-Clause",
+  "ISC",
+  "Unicode-3.0",
+  "CDLA-Permissive-2.0",
+  "Zlib",
+  "MPL-2.0",
+  "AGPL-3.0-or-later",
+  "GPL-3.0-or-later",
+]
+
+
+[advisories]
+ignore = [
+  { id = "RUSTSEC-2023-0071", reason = "We don't really use RSA" }
+]
+
+[bans]
+deny = [
+    { crate = "openssl-sys", reason = "If we need openssl we need to watch out with linking" },
+]
