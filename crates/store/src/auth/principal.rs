@@ -63,25 +63,27 @@ impl rustical_dav::Principal for Principal {
 impl<S: Send + Sync + Clone> FromRequestParts<S> for Principal {
     type Rejection = UnauthorizedError;
 
-    async fn from_request_parts(
+    fn from_request_parts(
         parts: &mut http::request::Parts,
         _state: &S,
-    ) -> Result<Self, Self::Rejection> {
-        parts
-            .extensions
-            .get::<Self>()
-            .cloned()
-            .ok_or(UnauthorizedError)
+    ) -> impl Future<Output = Result<Self, Self::Rejection>> {
+        std::future::ready(
+            parts
+                .extensions
+                .get::<Self>()
+                .cloned()
+                .ok_or(UnauthorizedError),
+        )
     }
 }
 
 impl<S: Send + Sync + Clone> OptionalFromRequestParts<S> for Principal {
     type Rejection = Infallible;
 
-    async fn from_request_parts(
+    fn from_request_parts(
         parts: &mut http::request::Parts,
         _state: &S,
-    ) -> Result<Option<Self>, Self::Rejection> {
-        Ok(parts.extensions.get::<Self>().cloned())
+    ) -> impl Future<Output = Result<Option<Self>, Self::Rejection>> {
+        std::future::ready(Ok(parts.extensions.get::<Self>().cloned()))
     }
 }
