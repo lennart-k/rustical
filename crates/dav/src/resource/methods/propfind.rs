@@ -1,14 +1,15 @@
 use crate::Error;
 use crate::header::Depth;
 use crate::privileges::UserPrivilege;
+use crate::resource::DavPath;
 use crate::resource::PrincipalUri;
 use crate::resource::Resource;
 use crate::resource::ResourceName;
 use crate::resource::ResourceService;
-use crate::rfc_3986_percent_encode;
 use crate::xml::MultistatusElement;
 use axum::extract::{Extension, OriginalUri, Path, State};
 use axum_extra::TypedHeader;
+use http::uri::PathAndQuery;
 use tracing::instrument;
 
 type RSMultistatus<R> = MultistatusElement<
@@ -22,14 +23,18 @@ pub async fn axum_route_propfind<R: ResourceService>(
     State(resource_service): State<R>,
     depth: Option<TypedHeader<Depth>>,
     principal: R::Principal,
-    uri: OriginalUri,
+    OriginalUri(uri): OriginalUri,
     Extension(puri): Extension<R::PrincipalUri>,
     body: String,
 ) -> Result<RSMultistatus<R>, R::Error> {
     let depth = depth.map(|TypedHeader(depth)| depth).unwrap_or_default();
     route_propfind::<R>(
         &path,
-        uri.path(),
+        // If path is empty then it's the root path
+        uri.into_parts()
+            .path_and_query
+            .unwrap_or(PathAndQuery::from_static("/"))
+            .into(),
         &body,
         &principal,
         &depth,
@@ -41,7 +46,7 @@ pub async fn axum_route_propfind<R: ResourceService>(
 
 pub async fn route_propfind<R: ResourceService>(
     path_components: &R::PathComponents,
-    path: &str,
+    path: DavPath,
     body: &str,
     principal: &R::Principal,
     depth: &Depth,
@@ -65,16 +70,7 @@ pub async fn route_propfind<R: ResourceService>(
         // TODO: authorization check for member resources
         for member in resource_service.get_members(path_components).await? {
             member_responses.push(member.propfind(
-                &format!(
-                    "{}/{}{}",
-                    path.trim_end_matches('/'),
-                    rfc_3986_percent_encode(member.get_name().as_ref()),
-                    if member.is_collection() {
-                        "/"
-                    } else {
-                        Default::default()
-                    }
-                ),
+                path.subpath(&member.get_name()).unwrap(),
                 &propfind_member.prop,
                 propfind_member.include.as_ref(),
                 puri,
