@@ -2325,7 +2325,7 @@ checksum = "8863b587001c1b9a8a4e36008cebc6b3612cb1226fe2de94858e06092687b608"
 [[package]]
 name = "matchit-serde"
 version = "0.1.0"
-source = "git+https://github.com/lennart-k/matchit-serde?rev=e18e65d7#e18e65d75cb20ab5f6a193c84a87ee2db8e6ae0b"
+source = "git+https://github.com/lennart-k/matchit-serde?rev=94e4a5a#94e4a5a2a27b44fed9ddc165cea5fe56f52ec712"
 dependencies = [
  "derive_more",
  "matchit 0.9.2",

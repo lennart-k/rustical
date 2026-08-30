@@ -134,7 +134,7 @@ darling = "0.24"
 reqwest = { version = "0.13" }
 openidconnect = "4.0"
 clap = { version = "4.6", features = ["derive", "env"] }
-matchit-serde = { git = "https://github.com/lennart-k/matchit-serde", rev = "e18e65d7" }
+matchit-serde = { git = "https://github.com/lennart-k/matchit-serde", rev = "94e4a5a" }
 vtimezones-rs = "0.3"
 similar-asserts = "2.0"
 insta = { version = "1.48", features = ["filters"] }
