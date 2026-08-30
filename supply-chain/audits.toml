@@ -6,6 +6,25 @@ who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
 criteria = "safe-to-deploy"
 version = "0.11.0"
 
+[[audits.web-push]]
+who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.11.0"
+notes = "It is a fork I maintain"
+
+[[audits.web-push]]
+who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.11.0"
+notes = "It's a fork I maintain"
+
+[[audits.web-push]]
+who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.11.0 -> 0.11.0@git:cc1c80086cb4b87c0b8d38f786463ec66bb0db97"
+importable = false
+notes = "It's a fork I maintain"
+
 [[trusted.aho-corasick]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)

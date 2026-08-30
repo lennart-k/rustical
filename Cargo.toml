@@ -50,7 +50,7 @@ rustical_xml = { path = "./crates/xml/" }
 rustical_oidc = { path = "./crates/oidc/" }
 rustical_ical = { path = "./crates/ical/" }
 
-ct-codecs = "1.1"
+base64ct = "1.8"
 pbkdf2 = { version = "0.13", features = ["phc"] }
 matchit = "0.9"
 uuid = { version = "1.19", features = ["v4", "fast-rng"] }
@@ -136,10 +136,6 @@ openidconnect = "4.0"
 clap = { version = "4.6", features = ["derive", "env"] }
 matchit-serde = { git = "https://github.com/lennart-k/matchit-serde", rev = "e18e65d7" }
 vtimezones-rs = "0.3"
-ece = { version = "2.3", default-features = false, features = [
-  "backend-openssl",
-] }
-openssl = { version = "0.10", features = ["vendored"] }
 similar-asserts = "2.0"
 insta = { version = "1.48", features = ["filters"] }
 criterion = { version = "0.8", features = ["async_tokio"] }

@@ -29,6 +29,7 @@
             python314Packages.mkdocs-material
 
             cargo-vet
+            cargo-about
           ];
         };
       }

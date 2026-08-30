@@ -25,11 +25,9 @@ tokio.workspace = true
 rustical_dav.workspace = true
 rustical_store.workspace = true
 http.workspace = true
-ece.workspace = true
 axum.workspace = true
-openssl.workspace = true
-ct-codecs.workspace = true
 web-push.workspace = true
+base64ct.workspace = true
 
 [dev-dependencies]
 insta.workspace = true

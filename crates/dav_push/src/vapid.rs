@@ -1,4 +1,4 @@
-use ct_codecs::Encoder;
+use base64ct::{Base64UrlUnpadded, Encoding};
 use rustical_xml::XmlSerialize;
 use serde::Deserialize;
 use thiserror::Error;
@@ -8,8 +8,6 @@ use web_push::VapidKey;
 pub enum VapidError {
     #[error(transparent)]
     WebPushError(#[from] web_push::WebPushError),
-    #[error(transparent)]
-    EncodingError(#[from] ct_codecs::Error),
     #[error(transparent)]
     FromUtf8Error(#[from] std::string::FromUtf8Error),
 }
@@ -92,10 +90,9 @@ impl std::fmt::Debug for VapidPublicKey {
 }
 
 impl VapidPublicKey {
-    pub fn encode_b64(&self) -> Result<VapidPublicKeyB64, VapidError> {
-        Ok(VapidPublicKeyB64(
-            ct_codecs::Base64UrlSafeNoPadding::encode_to_string(&self.0)?,
-        ))
+    #[must_use]
+    pub fn encode_b64(&self) -> VapidPublicKeyB64 {
+        VapidPublicKeyB64(Base64UrlUnpadded::encode_string(&self.0))
     }
 }
 
@@ -137,7 +134,7 @@ mU9ZOko2Gn7LYp5LqgA0cX6rfDftsKVvtQ==
     #[test]
     fn test_public_key() {
         let key = VapidKeypair::from_pem(PRIVATE_KEY_PEM).unwrap();
-        assert_eq!(key.public().encode_b64().unwrap().0, PUBLIC_KEY_B64);
+        assert_eq!(key.public().encode_b64().0, PUBLIC_KEY_B64);
     }
 
     #[test]

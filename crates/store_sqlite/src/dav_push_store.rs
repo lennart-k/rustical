@@ -157,9 +157,7 @@ impl VapidStore for SqliteDavPushStore {
             ._vapid_pubkey_cache
             .get_or_try_init(async || {
                 let key = self.get_vapid_keypair().await?;
-                let pubkey = key.public();
-
-                pubkey.encode_b64().map_err(|err| Error::Other(err.into()))
+                Result::<_, Error>::Ok(key.public().encode_b64())
             })
             .await?;
 
@@ -215,7 +213,7 @@ mod tests {
         let store = context.await.dav_push_store;
 
         let key1 = store.get_vapid_keypair().await.unwrap();
-        let pubkey1 = key1.public().encode_b64().unwrap();
+        let pubkey1 = key1.public().encode_b64();
         let pubkey2 = store.get_vapid_pubkey_b64().await.unwrap();
         assert_eq!(
             &pubkey1, pubkey2,
