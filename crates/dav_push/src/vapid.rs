@@ -7,8 +7,6 @@ use web_push::VapidKey;
 #[derive(Debug, Error)]
 pub enum VapidError {
     #[error(transparent)]
-    JwtError(#[from] jwt_simple::Error),
-    #[error(transparent)]
     WebPushError(#[from] web_push::WebPushError),
     #[error(transparent)]
     EncodingError(#[from] ct_codecs::Error),
@@ -28,8 +26,7 @@ impl std::fmt::Debug for VapidKeypair {
 impl VapidKeypair {
     #[must_use]
     pub fn generate_p256() -> Self {
-        let vapid_key = VapidKey::new(jwt_simple::algorithms::ES256KeyPair::generate());
-        Self(vapid_key)
+        Self(VapidKey::generate())
     }
     #[must_use]
     pub fn public(&self) -> VapidPublicKey {
@@ -41,7 +38,7 @@ impl VapidKeypair {
     }
 
     pub fn to_pem(&self) -> Result<String, VapidError> {
-        Ok(self.0.0.to_pem()?)
+        Ok(self.0.to_pem()?)
     }
 }
 

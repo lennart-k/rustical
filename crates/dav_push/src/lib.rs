@@ -13,7 +13,8 @@ use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::mpsc::Receiver;
 use tracing::{error, info, warn};
 use web_push::{
-    ContentEncoding, VapidSignatureBuilder, WebPushClient, WebPushMessage, WebPushMessageBuilder,
+    Claims, ContentEncoding, VapidSignatureBuilder, WebPushClient, WebPushMessage,
+    WebPushMessageBuilder,
 };
 
 mod endpoints;
@@ -191,7 +192,8 @@ fn build_message(
     payload: &str,
 ) -> Result<WebPushMessage, DavPushError> {
     let subscription_info: web_push::SubscriptionInfo = subscription.into();
-    let signature = VapidSignatureBuilder::from_ec(vapid_key.0, &subscription_info).build()?;
+    let signature =
+        VapidSignatureBuilder::from_ec(vapid_key.0, &subscription_info).build(Claims::new())?;
 
     Ok(WebPushMessageBuilder::new(&subscription_info)
         .payload(ContentEncoding::Aes128Gcm, payload.as_bytes())

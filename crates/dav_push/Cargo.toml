@@ -30,7 +30,6 @@ axum.workspace = true
 openssl.workspace = true
 ct-codecs.workspace = true
 web-push.workspace = true
-jwt-simple.workspace = true
 
 [dev-dependencies]
 insta.workspace = true

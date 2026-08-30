@@ -6,13 +6,6 @@ who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
 criteria = "safe-to-deploy"
 version = "0.11.0"
 
-[[audits.web-push]]
-who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
-criteria = "safe-to-deploy"
-delta = "0.11.0 -> 0.11.0@git:46214267530531f9b48abd0862c3ccf0fb946da1"
-importable = false
-notes = "The changes are part of my own fork (github.com/lennart-k/rust-web-push)"
-
 [[trusted.aho-corasick]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)

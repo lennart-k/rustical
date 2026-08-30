@@ -143,8 +143,7 @@ openssl = { version = "0.10", features = ["vendored"] }
 similar-asserts = "2.0"
 insta = { version = "1.48", features = ["filters"] }
 criterion = { version = "0.8", features = ["async_tokio"] }
-web-push = { git = "https://github.com/lennart-k/rust-web-push", rev = "46214267", default-features = false, features = ["reqwest-client"] }
-jwt-simple = { version = "0.13", default-features = false, features = ["pure-rust"] }
+web-push = { git = "https://github.com/lennart-k/rust-web-push" }
 
 [dev-dependencies]
 rstest.workspace = true
