@@ -27,6 +27,8 @@
             # For documentation
             mkdocs
             python314Packages.mkdocs-material
+
+            cargo-vet
           ];
         };
       }
