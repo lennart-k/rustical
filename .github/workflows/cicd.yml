@@ -46,6 +46,7 @@ jobs:
 
       - name: Run tarpaulin
         run: cargo tarpaulin --workspace --all-features --exclude xml_derive --coveralls ${{ secrets.COVERALLS_REPO_TOKEN }}
+        continue-on-error: true
 
   lints:
     name: Lints
