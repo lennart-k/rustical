@@ -2,12 +2,10 @@ name: Docker
 
 on:
   push:
-    branches:
-      - main
-      - dev
-      - feat/*
+    branches: [main]
   release:
     types: ["published"]
+  pull_request:
 
 env:
   REGISTRY: ghcr.io

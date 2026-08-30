@@ -1,8 +1,7 @@
 name: docs
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 permissions:
   contents: write
   id-token: write
