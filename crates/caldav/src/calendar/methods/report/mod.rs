@@ -52,6 +52,7 @@ impl ReportRequest {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn objects_response(
     objects: Vec<(String, CalendarObject)>,
     not_found: Vec<Uri>,
