@@ -19,6 +19,7 @@ use std::borrow::Cow;
 pub struct AddressbookResource {
     pub(crate) addressbook: Addressbook,
     pub(crate) vapid_pubkey: VapidPublicKeyB64,
+    pub(crate) advertise_vcard4: bool,
 }
 
 impl ResourceName for AddressbookResource {
@@ -80,7 +81,9 @@ impl Resource for AddressbookResource {
                         )
                     }
                     AddressbookPropName::SupportedAddressData => {
-                        AddressbookProp::SupportedAddressData(SupportedAddressData::default())
+                        AddressbookProp::SupportedAddressData(SupportedAddressData::new(
+                            self.advertise_vcard4,
+                        ))
                     }
                 })
             }

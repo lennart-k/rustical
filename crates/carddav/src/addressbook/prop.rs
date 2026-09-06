@@ -46,20 +46,35 @@ pub struct SupportedAddressData {
     address_data_type: &'static [AddressDataType],
 }
 
+const ADDRESS_DATA_VCARD3: AddressDataType = AddressDataType {
+    content_type: "text/vcard",
+    version: "3.0",
+};
+const ADDRESS_DATA_VCARD4: AddressDataType = AddressDataType {
+    content_type: "text/vcard",
+    version: "4.0",
+};
+
+const SUPPORTED_ADDRESS_DATA_3: &[AddressDataType] = &[ADDRESS_DATA_VCARD3];
+const SUPPORTED_ADDRESS_DATA_3_AND_4: &[AddressDataType] =
+    &[ADDRESS_DATA_VCARD3, ADDRESS_DATA_VCARD4];
+
+impl SupportedAddressData {
+    #[must_use]
+    pub const fn new(advertise_vcard4: bool) -> Self {
+        Self {
+            address_data_type: if advertise_vcard4 {
+                SUPPORTED_ADDRESS_DATA_3_AND_4
+            } else {
+                SUPPORTED_ADDRESS_DATA_3
+            },
+        }
+    }
+}
+
 impl Default for SupportedAddressData {
     fn default() -> Self {
-        Self {
-            address_data_type: &[
-                AddressDataType {
-                    content_type: "text/vcard",
-                    version: "3.0",
-                },
-                AddressDataType {
-                    content_type: "text/vcard",
-                    version: "4.0",
-                },
-            ],
-        }
+        Self::new(true)
     }
 }
 
