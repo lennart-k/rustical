@@ -60,6 +60,7 @@ fn objects_response(
     puri: &impl PrincipalUri,
     user: &Principal,
     prop: &PropfindType<CalendarObjectPropWrapperName>,
+    omit_outside_time_range: bool,
 ) -> Result<MultistatusElement<CalendarObjectPropWrapper, String>, Error> {
     let mut responses = Vec::new();
     for (object_id, object) in objects {
@@ -68,14 +69,21 @@ fn objects_response(
             path = path.trim_end_matches('/'),
             object_id = rfc_3986_percent_encode(&object_id)
         );
-        responses.push(
-            CalendarObjectResource {
-                object,
-                object_id,
-                principal: principal.to_owned(),
-            }
-            .propfind(&path, prop, None, puri, user)?,
-        );
+
+        let resource = CalendarObjectResource {
+            object,
+            object_id,
+            principal: principal.to_owned(),
+        };
+        let response = match resource.propfind(&path, prop, None, puri, user) {
+            Ok(response) => response,
+            // NotFound is thrown when the expanded calendar object doesn't fall into the request
+            // time range
+            Err(Error::NotFound) if omit_outside_time_range => continue,
+            Err(err) => return Err(err),
+        };
+
+        responses.push(response);
     }
 
     let not_found_responses = not_found
@@ -116,7 +124,16 @@ pub async fn route_report_calendar<C: CalendarStore, DP: DavPushStore>(
             let objects =
                 get_objects_calendar_query(cal_query, &principal, &cal_id, cal_store.as_ref())
                     .await?;
-            objects_response(objects, vec![], uri.path(), &principal, &puri, &user, props)?
+            objects_response(
+                objects,
+                vec![],
+                uri.path(),
+                &principal,
+                &puri,
+                &user,
+                props,
+                true,
+            )?
         }
         ReportRequest::CalendarMultiget(cal_multiget) => {
             let (objects, not_found) = get_objects_calendar_multiget(
@@ -135,6 +152,7 @@ pub async fn route_report_calendar<C: CalendarStore, DP: DavPushStore>(
                 &puri,
                 &user,
                 props,
+                false,
             )?
         }
         ReportRequest::SyncCollection(sync_collection) => {
@@ -158,6 +176,7 @@ mod tests {
     use crate::calendar_object::{CalendarData, CalendarObjectPropName, ExpandElement};
     use axum::{Router, body::Body};
     use calendar_query::{CompFilterElement, FilterElement, TimeRangeElement};
+    use chrono::{TimeZone, Utc};
     use http::Request;
     use rstest::rstest;
     use rustical_dav::{extensions::CommonPropertiesPropName, xml::PropElement};
@@ -342,6 +361,7 @@ END:VCALENDAR"
                 memberships: vec![],
             },
             &PropfindType::Propname,
+            false,
         )
         .unwrap();
 
@@ -360,5 +380,58 @@ END:VCALENDAR"
             // Make sure periods are not escaped
             assert!(resp.href.path().contains('.'));
         }
+    }
+
+    #[rstest]
+    fn test_objects_outside_time_range() {
+        let response = objects_response(
+            vec![(
+                "no-occurence-in-range".to_string(),
+                CalendarObject::from_ics(
+                    r"BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Example Corp.//CalDAV Client//EN
+BEGIN:VEVENT
+UID:20010712T182145Z-123401@example.com
+DTSTAMP:20060712T182145Z
+DTSTART:20060714T170000Z
+RRULE:FREQ=YEARLY;COUNT=1
+DTEND:20060715T040000Z
+SUMMARY:Bastille Day Party
+END:VEVENT
+END:VCALENDAR"
+                        .to_string(),
+                )
+                .unwrap(),
+            )],
+            vec![],
+            "/caldav/principal/user%40rustical.dev/cal",
+            "user@rustical.dev",
+            &CalDavPrincipalUri::new("/caldav"),
+            &Principal {
+                id: "user@rustical.dev".to_string(),
+                displayname: None,
+                principal_type: rustical_store::auth::PrincipalType::Individual,
+                password: None,
+                memberships: vec![],
+            },
+            &PropfindType::Prop(PropElement(
+                vec![CalendarObjectPropWrapperName::CalendarObject(
+                    CalendarObjectPropName::CalendarData(CalendarData {
+                        expand: Some(ExpandElement {
+                            start: UtcDateTime(Utc.with_ymd_and_hms(1900, 1, 1, 0, 0, 0).unwrap()),
+                            end: UtcDateTime(Utc.with_ymd_and_hms(1901, 1, 1, 0, 0, 0).unwrap()),
+                        }),
+                        ..Default::default()
+                    }),
+                )],
+                vec![],
+            )),
+            true,
+        )
+        .unwrap();
+
+        // Make sure we get responses for both
+        assert!(response.responses.is_empty());
     }
 }

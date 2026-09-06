@@ -70,7 +70,7 @@ fn xml_serialize_optional_status(
 // RFC 2518
 // <!ELEMENT multistatus (response+, responsedescription?) >
 // Extended by sync-token as specified in RFC 6578
-#[derive(XmlSerialize, XmlRootTag)]
+#[derive(Debug, XmlSerialize, XmlRootTag)]
 #[xml(root = "multistatus", ns = "crate::namespace::NS_DAV")]
 #[xml(ns_prefix(
     crate::namespace::NS_DAV = "",

@@ -2,7 +2,7 @@ use rustical_dav::extensions::CommonPropertiesProp;
 use rustical_ical::UtcDateTime;
 use rustical_xml::{EnumVariants, PropName, Unparsed, XmlDeserialize, XmlSerialize};
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, EnumVariants, PropName)]
+#[derive(Debug, XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "CalendarObjectPropName")]
 pub enum CalendarObjectProp {
     // WebDAV (RFC 2518)
@@ -17,7 +17,7 @@ pub enum CalendarObjectProp {
     CalendarData(String),
 }
 
-#[derive(XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, EnumVariants, PropName)]
+#[derive(Debug, XmlDeserialize, XmlSerialize, PartialEq, Eq, Clone, EnumVariants, PropName)]
 #[xml(unit_variants_ident = "CalendarObjectPropWrapperName", untagged)]
 pub enum CalendarObjectPropWrapper {
     CalendarObject(CalendarObjectProp),
