@@ -146,6 +146,7 @@ pub async fn cmd_serve(
         config.frontend.clone(),
         config.oidc.clone(),
         config.caldav,
+        config.carddav,
         &config.nextcloud_login,
         config.dav_push.enabled,
         config.http.session_cookie_samesite_strict,
