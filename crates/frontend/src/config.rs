@@ -11,6 +11,12 @@ pub struct FrontendConfig {
     pub enabled: bool,
     #[serde(default = "default_true")]
     pub allow_password_login: bool,
+    /// Send visitors of the login page straight to the OIDC provider instead of
+    /// showing the "Login with <provider>" button. Only takes effect when OIDC is
+    /// configured and `allow_password_login` is `false`, i.e. when the button is
+    /// the only thing the page could offer.
+    #[serde(default)]
+    pub oidc_auto_redirect: bool,
 }
 
 impl Default for FrontendConfig {
@@ -18,6 +24,7 @@ impl Default for FrontendConfig {
         Self {
             enabled: true,
             allow_password_login: true,
+            oidc_auto_redirect: false,
         }
     }
 }
