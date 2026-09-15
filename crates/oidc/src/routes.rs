@@ -78,6 +78,21 @@ pub async fn route_post_oidc(
     TypedHeader(host): TypedHeader<Host>,
     Form(GetOidcForm { redirect_uri }): Form<GetOidcForm>,
 ) -> Result<Response, OidcError> {
+    start_oidc_flow(&oidc_config, &service_config, &session, &host, redirect_uri).await
+}
+
+/// Starts the authorization code flow: generates state, nonce and PKCE verifier,
+/// stores them in the session and returns the redirect to the authorize endpoint.
+///
+/// Shared by the POST endpoint above and by callers that want to send a user
+/// straight to the identity provider without rendering a login page first.
+pub async fn start_oidc_flow(
+    oidc_config: &OidcConfig,
+    service_config: &OidcServiceConfig,
+    session: &Session,
+    host: &Host,
+    redirect_uri: Option<String>,
+) -> Result<Response, OidcError> {
     let callback_uri = format!("https://{host}{path}", path = service_config.callback_path);
 
     let oidc_client = get_oidc_client(

@@ -1,4 +1,4 @@
-use crate::{FrontendConfig, OidcConfig, pages::DefaultLayoutData};
+use crate::{FRONTEND_OIDC_SERVICE_CONFIG, FrontendConfig, OidcConfig, pages::DefaultLayoutData};
 use askama::Template;
 use askama_web::WebTemplate;
 use axum::{
@@ -9,6 +9,7 @@ use axum::{
 use axum_extra::TypedHeader;
 use headers::Host;
 use http::StatusCode;
+use rustical_oidc::start_oidc_flow;
 use rustical_store::auth::AuthenticationProvider;
 use serde::Deserialize;
 use std::sync::Arc;
@@ -40,12 +41,32 @@ pub struct GetLoginQuery {
     redirect_uri: Option<String>,
 }
 
-#[instrument(skip(config, oidc_config))]
+#[instrument(skip(config, oidc_config, session, host))]
 pub async fn route_get_login(
     Query(GetLoginQuery { redirect_uri }): Query<GetLoginQuery>,
     Extension(config): Extension<FrontendConfig>,
     Extension(oidc_config): Extension<Option<OidcConfig>>,
+    session: Session,
+    TypedHeader(host): TypedHeader<Host>,
 ) -> Response {
+    // With password login disabled the page would only show the OIDC button, so
+    // skip it and start the flow right away when configured to do so. Password
+    // login enabled keeps the page: the form must stay reachable.
+    if config.oidc_auto_redirect
+        && !config.allow_password_login
+        && let Some(oidc_config) = oidc_config.as_ref()
+    {
+        return start_oidc_flow(
+            oidc_config,
+            &FRONTEND_OIDC_SERVICE_CONFIG,
+            &session,
+            &host,
+            redirect_uri,
+        )
+        .await
+        .into_response();
+    }
+
     let oidc_data = oidc_config
         .as_ref()
         .as_ref()
