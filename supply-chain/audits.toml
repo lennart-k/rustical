@@ -4,6 +4,11 @@
 [[audits.caldata]]
 who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
 criteria = "safe-to-deploy"
+version = "0.17.3"
+
+[[audits.caldata]]
+who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
+criteria = "safe-to-deploy"
 delta = "0.16.2 -> 0.17.1"
 
 [[audits.caldata]]

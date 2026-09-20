@@ -135,10 +135,6 @@ criteria = "safe-to-deploy"
 version = "1.12.1"
 criteria = "safe-to-deploy"
 
-[[exemptions.caldata]]
-version = "0.16.2"
-criteria = "safe-to-deploy"
-
 [[exemptions.cfg_aliases]]
 version = "0.1.1"
 criteria = "safe-to-deploy"
