@@ -6,6 +6,21 @@ who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
 criteria = "safe-to-deploy"
 delta = "0.16.2 -> 0.17.1"
 
+[[audits.caldata]]
+who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.17.1 -> 0.17.2"
+
+[[audits.ece]]
+who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "2.3.1 -> 2.4.2"
+
+[[audits.hybrid-array]]
+who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.4.14 -> 0.4.15"
+
 [[audits.matchit-serde]]
 who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
 criteria = "safe-to-deploy"
@@ -100,11 +115,41 @@ user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2019-04-02"
 end = "2027-08-30"
 
+[[trusted.cc]]
+criteria = "safe-to-deploy"
+user-id = 55123 # rust-lang-owner
+start = "2022-10-29"
+end = "2027-09-20"
+
+[[trusted.cc]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:rust-lang/cc-rs"
+start = "2025-09-01"
+end = "2027-09-20"
+
+[[trusted.cfg-if]]
+criteria = "safe-to-deploy"
+user-id = 55123 # rust-lang-owner
+start = "2025-06-09"
+end = "2027-09-20"
+
+[[trusted.clap]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2021-12-08"
+end = "2027-09-20"
+
 [[trusted.clap_builder]]
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2023-03-28"
 end = "2027-08-30"
+
+[[trusted.clap_derive]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2021-12-08"
+end = "2027-09-20"
 
 [[trusted.clap_lex]]
 criteria = "safe-to-deploy"
@@ -117,6 +162,18 @@ criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2023-04-13"
 end = "2027-08-30"
+
+[[trusted.console]]
+criteria = "safe-to-deploy"
+user-id = 39 # Armin Ronacher (mitsuhiko)
+start = "2019-06-17"
+end = "2027-09-20"
+
+[[trusted.console]]
+criteria = "safe-to-deploy"
+user-id = 4556 # Dirkjan Ochtman (djc)
+start = "2024-12-16"
+end = "2027-09-20"
 
 [[trusted.dyn-clone]]
 criteria = "safe-to-deploy"
@@ -232,6 +289,12 @@ user-id = 1 # Alex Crichton (alexcrichton)
 start = "2019-03-04"
 end = "2027-09-06"
 
+[[trusted.jsonwebtoken]]
+criteria = "safe-to-deploy"
+user-id = 2876 # Vincent Prouillet (Keats)
+start = "2019-04-21"
+end = "2027-09-20"
+
 [[trusted.linux-raw-sys]]
 criteria = "safe-to-deploy"
 user-id = 6825 # Dan Gohman (sunfishcode)
@@ -292,6 +355,24 @@ user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-04-23"
 end = "2027-08-30"
 
+[[trusted.quinn]]
+criteria = "safe-to-deploy"
+user-id = 4556 # Dirkjan Ochtman (djc)
+start = "2019-09-09"
+end = "2027-09-20"
+
+[[trusted.quinn-proto]]
+criteria = "safe-to-deploy"
+user-id = 4556 # Dirkjan Ochtman (djc)
+start = "2019-09-09"
+end = "2027-09-20"
+
+[[trusted.rand]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:rust-random/rand"
+start = "2026-01-26"
+end = "2027-09-20"
+
 [[trusted.ref-cast]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
@@ -333,6 +414,12 @@ criteria = "safe-to-deploy"
 user-id = 6825 # Dan Gohman (sunfishcode)
 start = "2021-10-29"
 end = "2027-08-30"
+
+[[trusted.rustls]]
+criteria = "safe-to-deploy"
+user-id = 209038 # Daniel McCarney (cpu)
+start = "2023-07-05"
+end = "2027-09-20"
 
 [[trusted.rustversion]]
 criteria = "safe-to-deploy"
@@ -394,11 +481,29 @@ user-id = 6743 # Ed Page (epage)
 start = "2023-01-20"
 end = "2027-08-30"
 
+[[trusted.smallvec]]
+criteria = "safe-to-deploy"
+user-id = 2017
+start = "2019-10-28"
+end = "2027-09-20"
+
+[[trusted.smallvec]]
+criteria = "safe-to-deploy"
+user-id = 2396 # Josh Bowman-Matthews (jdm)
+start = "2019-06-10"
+end = "2027-09-20"
+
 [[trusted.syn]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-03-01"
 end = "2027-08-30"
+
+[[trusted.synstructure]]
+criteria = "safe-to-deploy"
+user-id = 1947 # Nika Layzell (mystor)
+start = "2019-05-14"
+end = "2027-09-20"
 
 [[trusted.thiserror]]
 criteria = "safe-to-deploy"
@@ -423,6 +528,12 @@ criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2022-10-21"
 end = "2027-08-30"
+
+[[trusted.toml_edit]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2021-09-13"
+end = "2027-09-20"
 
 [[trusted.toml_parser]]
 criteria = "safe-to-deploy"
@@ -465,6 +576,12 @@ criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2021-10-02"
 end = "2027-08-30"
+
+[[trusted.uuid]]
+criteria = "safe-to-deploy"
+user-id = 3204 # Ashley Mannix (KodrAus)
+start = "2019-10-18"
+end = "2027-09-20"
 
 [[trusted.walkdir]]
 criteria = "safe-to-deploy"
@@ -579,6 +696,36 @@ criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2023-02-22"
 end = "2027-08-30"
+
+[[trusted.yoke-derive]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2021-07-02"
+end = "2027-09-20"
+
+[[trusted.yoke-derive]]
+criteria = "safe-to-deploy"
+user-id = 128408 # Shane F. Carr (sffc)
+start = "2023-09-22"
+end = "2027-09-20"
+
+[[trusted.zerocopy-derive]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:google/zerocopy"
+start = "2026-09-08"
+end = "2027-09-20"
+
+[[trusted.zerofrom-derive]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2022-04-06"
+end = "2027-09-20"
+
+[[trusted.zerofrom-derive]]
+criteria = "safe-to-deploy"
+user-id = 128408 # Shane F. Carr (sffc)
+start = "2023-09-22"
+end = "2027-09-20"
 
 [[trusted.zmij]]
 criteria = "safe-to-deploy"
