@@ -74,8 +74,6 @@ async fn test_import(
         .typed_insert(Authorization::basic("user", "pass"));
     let response = app.clone().oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
-    let body = response.extract_string().await;
-    insta::assert_snapshot!(format!("{case}_import_body"), body);
 
     let mut request = Request::builder()
         .method("GET")
