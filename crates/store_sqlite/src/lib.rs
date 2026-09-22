@@ -34,7 +34,13 @@ pub async fn create_db_pool(db_url: &str, migrate: bool) -> Result<Pool<Sqlite>,
     let db = SqlitePool::connect_with(
         options
             .journal_mode(sqlx::sqlite::SqliteJournalMode::Wal)
-            .create_if_missing(true),
+            .create_if_missing(true)
+            // Statements that write a row larger than 64 KiB inside a transaction (a vCard
+            // carrying a photo easily is) need a statement journal, which SQLite spills into a
+            // temporary file. Processes without a writable temp directory (e.g. a hardened quadlet)
+            // then fail with SQLITE_IOERR_GETTEMPPATH. We never need those journals on disk,
+            // so keep them in memory.
+            .pragma("temp_store", "MEMORY"),
     )
     .await?;
     if migrate {
