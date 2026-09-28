@@ -29,6 +29,119 @@ fn mkcol_template(displayname: &str, description: &str) -> String {
 }
 
 #[rstest]
+#[case("plain.vcf")]
+#[case("space%20name.vcf")]
+#[case("question%3Fmark.vcf")]
+#[case("hash%23name.vcf")]
+#[case("slash%2Fname.vcf")]
+#[case("Ren%C3%A9.vcf")]
+#[tokio::test]
+async fn test_carddav_multiget_encoded_hrefs(
+    #[from(test_store_context)]
+    #[future]
+    context: TestStoreContext,
+    #[case] filename: &str,
+) {
+    let app = get_app(context.await);
+    let collection = "/carddav/principal/user/contacts";
+    let href = format!("{collection}/{filename}");
+    let missing_href = format!("{collection}/missing-{filename}");
+    let vcard =
+        "BEGIN:VCARD\r\nVERSION:3.0\r\nUID:multiget-test\r\nFN:Test Contact\r\nEND:VCARD\r\n";
+
+    for (method, uri, body, expected_status) in [
+        (
+            "MKCOL",
+            collection,
+            mkcol_template("Contacts", "Test contacts"),
+            StatusCode::CREATED,
+        ),
+        ("PUT", href.as_str(), vcard.to_owned(), StatusCode::CREATED),
+    ] {
+        let mut request = Request::builder()
+            .method(method)
+            .uri(uri)
+            .body(Body::from(body))
+            .unwrap();
+        request
+            .headers_mut()
+            .typed_insert(Authorization::basic("user", "pass"));
+        let response = app.clone().oneshot(request).await.unwrap();
+        assert_eq!(response.status(), expected_status);
+    }
+
+    let mut request = Request::builder()
+        .method("REPORT")
+        .uri(collection)
+        .body(Body::from(format!(
+            r#"<CARD:addressbook-multiget xmlns:D="DAV:" xmlns:CARD="urn:ietf:params:xml:ns:carddav">
+                <D:prop><D:getetag /></D:prop>
+                <D:href>{href}</D:href>
+                <D:href>{missing_href}</D:href>
+            </CARD:addressbook-multiget>"#
+        )))
+        .unwrap();
+    request
+        .headers_mut()
+        .typed_insert(Authorization::basic("user", "pass"));
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::MULTI_STATUS);
+    let body = response.extract_string().await;
+    assert!(body.contains(&format!("<href>{href}</href>")), "{body}");
+    assert!(
+        body.contains(&format!("<href>{missing_href}</href>")),
+        "{body}"
+    );
+    assert!(body.contains("HTTP/1.1 404 Not Found"), "{body}");
+
+    let returned_href = body
+        .split_once("<href>")
+        .unwrap()
+        .1
+        .split_once("</href>")
+        .unwrap()
+        .0;
+    let mut request = Request::builder()
+        .uri(returned_href)
+        .body(Body::empty())
+        .unwrap();
+    request
+        .headers_mut()
+        .typed_insert(Authorization::basic("user", "pass"));
+    let response = app.oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+    assert!(response.extract_string().await.contains("FN:Test Contact"));
+}
+
+#[rstest]
+#[case("/carddav/principal/user/contacts/bad name.vcf")]
+#[case("http://[invalid")]
+#[tokio::test]
+async fn test_carddav_multiget_invalid_hrefs(
+    #[from(test_store_context)]
+    #[future]
+    context: TestStoreContext,
+    #[case] href: &str,
+) {
+    let app = get_app(context.await);
+    let mut request = Request::builder()
+        .method("REPORT")
+        .uri("/carddav/principal/user/contacts")
+        .body(Body::from(format!(
+            r#"<CARD:addressbook-multiget xmlns:D="DAV:" xmlns:CARD="urn:ietf:params:xml:ns:carddav">
+                <D:prop><D:getetag /></D:prop>
+                <D:href>{href}</D:href>
+            </CARD:addressbook-multiget>"#
+        )))
+        .unwrap();
+    request
+        .headers_mut()
+        .typed_insert(Authorization::basic("user", "pass"));
+    let response = app.oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+}
+
+#[rstest]
 #[tokio::test]
 async fn test_carddav_addressbook(
     #[from(test_store_context)]
