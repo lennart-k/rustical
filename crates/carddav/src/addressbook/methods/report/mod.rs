@@ -219,17 +219,18 @@ mod tests {
         assert_eq!(
             report_request,
             ReportRequest::AddressbookMultiget(AddressbookMultigetRequest {
-                prop: rustical_dav::xml::PropfindType::Prop(PropElement(vec![
+                prop: rustical_dav::xml::PropfindType::Prop(PropElement(
+                    vec![
+                        AddressObjectPropWrapperName::AddressObject(AddressObjectPropName::Getetag),
                         AddressObjectPropWrapperName::AddressObject(
-                        AddressObjectPropName::Getetag
-                    ),
-                        AddressObjectPropWrapperName::AddressObject(
-                        AddressObjectPropName::AddressData
-                    ),
-                ], vec![])),
-                href: vec![
-                    "/carddav/user/user/6f787542-5256-401a-8db97003260da/ae7a998fdfd1d84a20391168962c62b".to_owned()
-                ]
+                            AddressObjectPropName::AddressData
+                        ),
+                    ],
+                    vec![]
+                )),
+                href: vec![Uri::from_static(
+                    "/carddav/user/user/6f787542-5256-401a-8db97003260da/ae7a998fdfd1d84a20391168962c62b"
+                )]
             })
         );
     }

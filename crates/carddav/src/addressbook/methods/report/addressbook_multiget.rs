@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use crate::{
     Error,
     address_object::{
@@ -10,6 +8,7 @@ use http::{StatusCode, Uri};
 use rustical_dav::{
     resolve_child_uri,
     resource::{PrincipalUri, Resource},
+    rfc_3986_percent_encode,
     xml::{MultistatusElement, PropfindType, multistatus::ResponseElement},
 };
 use rustical_ical::AddressObject;
@@ -23,7 +22,7 @@ pub struct AddressbookMultigetRequest {
     #[xml(ns = "rustical_dav::namespace::NS_DAV", ty = "untagged")]
     pub(crate) prop: PropfindType<AddressObjectPropWrapperName>,
     #[xml(ns = "rustical_dav::namespace::NS_DAV", flatten)]
-    pub(crate) href: Vec<String>,
+    pub(crate) href: Vec<Uri>,
 }
 
 pub async fn get_objects_addressbook_multiget<AS: AddressbookReadStore>(
@@ -32,16 +31,12 @@ pub async fn get_objects_addressbook_multiget<AS: AddressbookReadStore>(
     principal: &str,
     addressbook_id: &str,
     store: &AS,
-) -> Result<(Vec<(String, AddressObject)>, Vec<String>), Error> {
+) -> Result<(Vec<(String, AddressObject)>, Vec<Uri>), Error> {
     let mut result = vec![];
     let mut not_found = vec![];
 
     for href in &request.href {
-        let Ok(child_uri) = Uri::from_str(href) else {
-            not_found.push(href.clone());
-            continue;
-        };
-        let Some(subpath) = resolve_child_uri(collection_uri, &child_uri) else {
+        let Some(subpath) = resolve_child_uri(collection_uri, href) else {
             not_found.push(href.clone());
             continue;
         };
@@ -90,7 +85,8 @@ pub async fn handle_addressbook_multiget<AS: AddressbookStore>(
     for (object_id, object) in objects {
         let path = format!(
             "{path}/{object_id}.vcf",
-            path = collection_uri.path().trim_end_matches('/')
+            path = collection_uri.path().trim_end_matches('/'),
+            object_id = rfc_3986_percent_encode(&object_id)
         );
         responses.push(
             AddressObjectResource {
@@ -104,8 +100,8 @@ pub async fn handle_addressbook_multiget<AS: AddressbookStore>(
 
     let not_found_responses = not_found
         .into_iter()
-        .map(|path| ResponseElement {
-            href: Uri::from_str(&path).unwrap(),
+        .map(|href| ResponseElement {
+            href,
             status: Some(StatusCode::NOT_FOUND),
             propstat: vec![],
         })
@@ -220,13 +216,12 @@ END:VCARD"
         let req = AddressbookMultigetRequest {
             prop: rustical_dav::xml::PropfindType::Propname,
             href: vec![
-                "/carddav/principal/user%40example%2Ecom/contacts/hello.vcf".to_string(),
-                "/carddav/principal/user@example.com/contacts/unescaped.vcf".to_string(),
-                "/carddav/principal/user%40example.com/contacts/shouldwork.vcf".to_string(),
-                "/carddav/principal/user%40example.com/contacts/notfound".to_string(),
-                "/carddav/principal/user%40example%2Ecom/wrongcontacts/hello.vcf".to_string(),
-                "asd asd".to_string(),
-                "/carddav/principal/user%40example.com/contacts".to_string(),
+                Uri::from_static("/carddav/principal/user%40example%2Ecom/contacts/hello.vcf"),
+                Uri::from_static("/carddav/principal/user@example.com/contacts/unescaped.vcf"),
+                Uri::from_static("/carddav/principal/user%40example.com/contacts/shouldwork.vcf"),
+                Uri::from_static("/carddav/principal/user%40example.com/contacts/notfound"),
+                Uri::from_static("/carddav/principal/user%40example%2Ecom/wrongcontacts/hello.vcf"),
+                Uri::from_static("/carddav/principal/user%40example.com/contacts"),
             ],
         };
 
@@ -256,10 +251,9 @@ END:VCARD"
         similar_asserts::assert_eq!(
             not_found,
             vec![
-                "/carddav/principal/user%40example.com/contacts/notfound".to_string(),
-                "/carddav/principal/user%40example%2Ecom/wrongcontacts/hello.vcf".to_string(),
-                "asd asd".to_string(),
-                "/carddav/principal/user%40example.com/contacts".to_string(),
+                Uri::from_static("/carddav/principal/user%40example.com/contacts/notfound"),
+                Uri::from_static("/carddav/principal/user%40example%2Ecom/wrongcontacts/hello.vcf"),
+                Uri::from_static("/carddav/principal/user%40example.com/contacts"),
             ]
         );
     }
