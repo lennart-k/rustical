@@ -79,8 +79,8 @@ user-login = "fitzgen"
 user-name = "Nick Fitzgerald"
 
 [[publisher.cc]]
-version = "1.4.7"
-when = "2026-09-18"
+version = "1.6.0"
+when = "2026-10-03"
 trusted-publisher = "github:rust-lang/cc-rs"
 
 [[publisher.cfg-if]]
@@ -153,11 +153,16 @@ user-login = "jrconlin"
 user-name = "JR Conlin"
 
 [[publisher.encoding_rs]]
-version = "0.8.41"
-when = "2026-09-09"
+version = "0.8.42"
+when = "2026-09-24"
 user-id = 4484
 user-login = "hsivonen"
 user-name = "Henri Sivonen"
+
+[[publisher.find-msvc-tools]]
+version = "0.1.14"
+when = "2026-09-25"
+trusted-publisher = "github:rust-lang/cc-rs"
 
 [[publisher.h2]]
 version = "0.4.19"
@@ -167,8 +172,8 @@ user-login = "seanmonstar"
 user-name = "Sean McArthur"
 
 [[publisher.headers]]
-version = "0.4.1"
-when = "2025-06-02"
+version = "0.4.2"
+when = "2026-09-24"
 user-id = 359
 user-login = "seanmonstar"
 user-name = "Sean McArthur"
@@ -209,15 +214,15 @@ user-login = "seanmonstar"
 user-name = "Sean McArthur"
 
 [[publisher.hyper-util]]
-version = "0.1.20"
-when = "2026-02-02"
+version = "0.1.21"
+when = "2026-09-24"
 user-id = 359
 user-login = "seanmonstar"
 user-name = "Sean McArthur"
 
 [[publisher.insta]]
-version = "1.48.0"
-when = "2026-06-11"
+version = "1.49.0"
+when = "2026-10-03"
 user-id = 39
 user-login = "mitsuhiko"
 user-name = "Armin Ronacher"
@@ -278,6 +283,12 @@ user-id = 2876
 user-login = "Keats"
 user-name = "Vincent Prouillet"
 
+[[publisher.lazy_static]]
+version = "1.5.1"
+when = "2026-10-01"
+user-id = 55123
+user-login = "rust-lang-owner"
+
 [[publisher.linux-raw-sys]]
 version = "0.12.1"
 when = "2025-12-23"
@@ -300,8 +311,8 @@ user-login = "seanmonstar"
 user-name = "Sean McArthur"
 
 [[publisher.mio]]
-version = "1.2.3"
-when = "2026-09-02"
+version = "1.2.4"
+when = "2026-10-03"
 user-id = 6025
 user-login = "Thomasdezeeuw"
 user-name = "Thomas de Zeeuw"
@@ -398,8 +409,15 @@ user-login = "djc"
 user-name = "Dirkjan Ochtman"
 
 [[publisher.quinn-proto]]
-version = "0.11.18"
-when = "2026-09-14"
+version = "0.11.19"
+when = "2026-09-30"
+user-id = 4556
+user-login = "djc"
+user-name = "Dirkjan Ochtman"
+
+[[publisher.quinn-udp]]
+version = "0.5.16"
+when = "2026-09-30"
 user-id = 4556
 user-login = "djc"
 user-name = "Dirkjan Ochtman"
@@ -560,8 +578,8 @@ user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.smallvec]]
-version = "1.16.1"
-when = "2026-09-11"
+version = "1.16.2"
+when = "2026-09-25"
 user-id = 2396
 user-login = "jdm"
 user-name = "Josh Bowman-Matthews"
@@ -595,8 +613,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.thiserror]]
-version = "2.0.20"
-when = "2026-08-08"
+version = "2.0.21"
+when = "2026-09-23"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -609,11 +627,25 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.thiserror-impl]]
-version = "2.0.20"
-when = "2026-08-08"
+version = "2.0.21"
+when = "2026-09-23"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
+
+[[publisher.tokio]]
+version = "1.53.2"
+when = "2026-10-03"
+user-id = 6741
+user-login = "Darksonn"
+user-name = "Alice Ryhl"
+
+[[publisher.tokio-rustls]]
+version = "0.26.6"
+when = "2026-09-28"
+user-id = 4556
+user-login = "djc"
+user-name = "Dirkjan Ochtman"
 
 [[publisher.toml]]
 version = "0.8.23"
@@ -742,8 +774,8 @@ user-login = "hsivonen"
 user-name = "Henri Sivonen"
 
 [[publisher.uuid]]
-version = "1.26.1"
-when = "2026-09-10"
+version = "1.27.0"
+when = "2026-10-02"
 user-id = 3204
 user-login = "KodrAus"
 user-name = "Ashley Mannix"
@@ -866,15 +898,20 @@ when = "2026-04-17"
 trusted-publisher = "github:bytecodealliance/wit-bindgen"
 
 [[publisher.yoke-derive]]
-version = "0.8.3"
-when = "2026-09-15"
-user-id = 128408
-user-login = "sffc"
-user-name = "Shane F. Carr"
+version = "0.8.4"
+when = "2026-09-30"
+user-id = 166196
+user-login = "robertbastian"
+user-name = "Robert Bastian"
+
+[[publisher.zerocopy]]
+version = "0.8.59"
+when = "2026-09-25"
+trusted-publisher = "github:google/zerocopy"
 
 [[publisher.zerocopy-derive]]
-version = "0.8.57"
-when = "2026-09-08"
+version = "0.8.59"
+when = "2026-09-25"
 trusted-publisher = "github:google/zerocopy"
 
 [[publisher.zerofrom-derive]]
@@ -1263,27 +1300,6 @@ who = "George Burgess IV <gbiv@google.com>"
 criteria = "safe-to-deploy"
 version = "1.0.3"
 aggregated-from = "https://chromium.googlesource.com/chromiumos/third_party/rust_crates/+/refs/heads/main/cargo-vet/audits.toml?format=TEXT"
-
-[[audits.google.audits.lazy_static]]
-who = "Lukasz Anforowicz <lukasza@chromium.org>"
-criteria = "safe-to-deploy"
-version = "1.4.0"
-notes = '''
-I grepped for \"crypt\", \"cipher\", \"fs\", \"net\" - there were no hits.
-
-There are two places where `unsafe` is used.  Unsafe review notes can be found
-in https://crrev.com/c/5347418.
-
-This crate has been added to Chromium in https://crrev.com/c/3321895.
-'''
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
-
-[[audits.google.audits.lazy_static]]
-who = "Lukasz Anforowicz <lukasza@chromium.org>"
-criteria = "safe-to-deploy"
-delta = "1.4.0 -> 1.5.0"
-notes = "Unsafe review notes: https://crrev.com/c/5650836"
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
 
 [[audits.google.audits.num-traits]]
 who = "Manish Goregaokar <manishearth@google.com>"
@@ -1713,16 +1729,6 @@ aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-ch
 who = "edgul <ed.guloien@gmail.com>"
 criteria = "safe-to-deploy"
 delta = "2.3.1 -> 2.3.2"
-aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
-
-[[audits.mozilla.audits.powerfmt]]
-who = "Alex Franchuk <afranchuk@mozilla.com>"
-criteria = "safe-to-deploy"
-version = "0.2.0"
-notes = """
-A tiny bit of unsafe code to implement functionality that isn't in stable rust
-yet, but it's all valid. Otherwise it's a pretty simple crate.
-"""
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
 [[audits.mozilla.audits.quote]]

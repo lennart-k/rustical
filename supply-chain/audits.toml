@@ -192,6 +192,12 @@ user-id = 539
 start = "2025-08-29"
 end = "2027-09-06"
 
+[[trusted.find-msvc-tools]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:rust-lang/cc-rs"
+start = "2025-09-05"
+end = "2027-10-05"
+
 [[trusted.h2]]
 criteria = "safe-to-deploy"
 user-id = 359 # Sean McArthur (seanmonstar)
@@ -233,6 +239,12 @@ criteria = "safe-to-deploy"
 user-id = 359 # Sean McArthur (seanmonstar)
 start = "2019-03-01"
 end = "2027-08-30"
+
+[[trusted.hyper-rustls]]
+criteria = "safe-to-deploy"
+user-id = 209038 # Daniel McCarney (cpu)
+start = "2024-01-04"
+end = "2027-10-05"
 
 [[trusted.hyper-util]]
 criteria = "safe-to-deploy"
@@ -299,6 +311,18 @@ criteria = "safe-to-deploy"
 user-id = 2876 # Vincent Prouillet (Keats)
 start = "2019-04-21"
 end = "2027-09-20"
+
+[[trusted.lazy_static]]
+criteria = "safe-to-deploy"
+user-id = 55123 # rust-lang-owner
+start = "2026-10-01"
+end = "2027-10-05"
+
+[[trusted.libc]]
+criteria = "safe-to-deploy"
+user-id = 55123 # rust-lang-owner
+start = "2024-08-15"
+end = "2027-10-05"
 
 [[trusted.linux-raw-sys]]
 criteria = "safe-to-deploy"
@@ -372,6 +396,12 @@ user-id = 4556 # Dirkjan Ochtman (djc)
 start = "2019-09-09"
 end = "2027-09-20"
 
+[[trusted.quinn-udp]]
+criteria = "safe-to-deploy"
+user-id = 4556 # Dirkjan Ochtman (djc)
+start = "2021-10-07"
+end = "2027-10-05"
+
 [[trusted.rand]]
 criteria = "safe-to-deploy"
 trusted-publisher = "github:rust-random/rand"
@@ -425,6 +455,18 @@ criteria = "safe-to-deploy"
 user-id = 209038 # Daniel McCarney (cpu)
 start = "2023-07-05"
 end = "2027-09-20"
+
+[[trusted.rustls-platform-verifier]]
+criteria = "safe-to-deploy"
+user-id = 4556 # Dirkjan Ochtman (djc)
+start = "2024-12-18"
+end = "2027-10-05"
+
+[[trusted.rustls-platform-verifier-android]]
+criteria = "safe-to-deploy"
+user-id = 209038 # Daniel McCarney (cpu)
+start = "2024-07-29"
+end = "2027-10-05"
 
 [[trusted.rustversion]]
 criteria = "safe-to-deploy"
@@ -522,6 +564,18 @@ user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-10-09"
 end = "2027-08-30"
 
+[[trusted.tokio]]
+criteria = "safe-to-deploy"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2020-12-25"
+end = "2027-10-05"
+
+[[trusted.tokio-rustls]]
+criteria = "safe-to-deploy"
+user-id = 4556 # Dirkjan Ochtman (djc)
+start = "2023-06-09"
+end = "2027-10-05"
+
 [[trusted.toml]]
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
@@ -599,6 +653,12 @@ criteria = "safe-to-deploy"
 user-id = 359 # Sean McArthur (seanmonstar)
 start = "2019-03-19"
 end = "2027-08-30"
+
+[[trusted.wasm-bindgen]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-03-04"
+end = "2027-10-05"
 
 [[trusted.wasm-bindgen-futures]]
 criteria = "safe-to-deploy"
@@ -713,6 +773,18 @@ criteria = "safe-to-deploy"
 user-id = 128408 # Shane F. Carr (sffc)
 start = "2023-09-22"
 end = "2027-09-20"
+
+[[trusted.yoke-derive]]
+criteria = "safe-to-deploy"
+user-id = 166196 # Robert Bastian (robertbastian)
+start = "2023-01-26"
+end = "2027-10-05"
+
+[[trusted.zerocopy]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:google/zerocopy"
+start = "2026-09-08"
+end = "2027-10-05"
 
 [[trusted.zerocopy-derive]]
 criteria = "safe-to-deploy"
