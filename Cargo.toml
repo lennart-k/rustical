@@ -63,7 +63,7 @@ futures-util = "0.3"
 password-auth = { version = "1.0", features = ["argon2", "pbkdf2"] }
 chrono = { version = "0.4", features = ["serde"] }
 regex = "1.12"
-rstest = "0.26"
+rstest = "0.27"
 rstest_reuse = "0.7"
 sha2 = "0.11"
 tokio = { version = "1.53", features = [
@@ -171,15 +171,15 @@ axum.workspace = true
 chrono.workspace = true
 rand.workspace = true
 
-opentelemetry = { version = "0.32", optional = true }
-opentelemetry-otlp = { version = "0.32", optional = true, features = [
+opentelemetry = { version = "0.33", optional = true }
+opentelemetry-otlp = { version = "0.33", optional = true, features = [
   "grpc-tonic",
 ] }
-opentelemetry_sdk = { version = "0.32", features = [
+opentelemetry_sdk = { version = "0.33", features = [
   "rt-tokio",
 ], optional = true }
-opentelemetry-semantic-conventions = { version = "0.32", optional = true }
-tracing-opentelemetry = { version = "0.33", optional = true }
+opentelemetry-semantic-conventions = { version = "0.33", optional = true }
+tracing-opentelemetry = { version = "0.34", optional = true }
 tracing-subscriber = { version = "0.3", features = [
   "env-filter",
   "fmt",
