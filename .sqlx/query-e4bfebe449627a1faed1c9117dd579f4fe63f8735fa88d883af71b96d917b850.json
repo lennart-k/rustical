@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM addressobjects WHERE (principal, addressbook_id, id) = (?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "e4bfebe449627a1faed1c9117dd579f4fe63f8735fa88d883af71b96d917b850"
+}

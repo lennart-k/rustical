@@ -674,7 +674,8 @@ impl SqliteCalendarStore {
             .await.map_err(crate::Error::from)?;
         } else {
             sqlx::query!(
-                "DELETE FROM calendarobjects WHERE cal_id = ? AND id = ?",
+                "DELETE FROM calendarobjects WHERE (principal, cal_id, id) = (?, ?, ?)",
+                principal,
                 cal_id,
                 object_id
             )

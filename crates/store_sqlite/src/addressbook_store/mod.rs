@@ -495,7 +495,8 @@ impl SqliteAddressbookStore {
             .await.map_err(crate::Error::from)?;
         } else {
             sqlx::query!(
-                "DELETE FROM addressobjects WHERE addressbook_id = ? AND id = ?",
+                "DELETE FROM addressobjects WHERE (principal, addressbook_id, id) = (?, ?, ?)",
+                principal,
                 addressbook_id,
                 object_id
             )
