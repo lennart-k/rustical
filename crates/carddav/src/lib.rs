@@ -16,6 +16,7 @@ use rustical_store::{
     AddressbookStore,
     auth::{AuthenticationProvider, Principal},
 };
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 pub mod address_object;
@@ -42,14 +43,41 @@ impl PrincipalUri for CardDavPrincipalUri {
     }
 }
 
+const fn default_true() -> bool {
+    true
+}
+
+/// `CardDAV` server options.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields, default)]
+pub struct CardDavConfig {
+    /// Advertise vCard 4.0 in `supported-address-data`.
+    ///
+    /// Set to `false` when macOS Contacts shares the address book. Apple's
+    /// client rejects vCard 4.0 and fails the whole sync; `DAVx5` writes 4.0
+    /// whenever the server advertises it. RFC 6352 only requires accepting
+    /// advertised versions, so 4.0 PUTs still work.
+    #[serde(default = "default_true")]
+    pub advertise_vcard4: bool,
+}
+
+impl Default for CardDavConfig {
+    fn default() -> Self {
+        Self {
+            advertise_vcard4: true,
+        }
+    }
+}
+
 pub fn carddav_router<AP: AuthenticationProvider, A: AddressbookStore, DP: DavPushStore>(
     prefix: &'static str,
     auth_provider: Arc<AP>,
     store: Arc<A>,
     dav_push_store: Arc<DP>,
+    config: Arc<CardDavConfig>,
 ) -> Router {
     let principal_service =
-        PrincipalResourceService::new(store, auth_provider.clone(), dav_push_store);
+        PrincipalResourceService::new(store, auth_provider.clone(), dav_push_store, config);
     Router::new()
         .nest(
             prefix,
@@ -78,5 +106,10 @@ mod tests {
             CardDavPrincipalUri("/carddav").principal_uri(principal),
             output
         );
+    }
+
+    #[test]
+    fn carddav_config_defaults_to_advertising_vcard4() {
+        assert!(crate::CardDavConfig::default().advertise_vcard4);
     }
 }

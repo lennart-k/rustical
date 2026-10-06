@@ -4,6 +4,7 @@ use std::{path::PathBuf, str::FromStr};
 use anyhow::anyhow;
 use reqwest::Url;
 use rustical_caldav::CalDavConfig;
+use rustical_carddav::CardDavConfig;
 use rustical_frontend::FrontendConfig;
 use rustical_oidc::OidcConfig;
 use serde::{Deserialize, Serialize};
@@ -266,6 +267,9 @@ pub struct Config {
     pub nextcloud_login: NextcloudLoginConfig,
     #[serde(default)]
     pub caldav: CalDavConfig,
+    /// `CardDAV` options. Set `advertise_vcard4 = false` when macOS Contacts shares the address book.
+    #[serde(default)]
+    pub carddav: CardDavConfig,
     #[serde(default)]
     pub maintenance: MaintenanceConfig,
 }

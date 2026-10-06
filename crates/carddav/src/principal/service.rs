@@ -1,3 +1,4 @@
+use crate::CardDavConfig;
 use crate::CardDavPrincipalUri;
 use crate::Error;
 use crate::addressbook::AddressbookResourceService;
@@ -19,6 +20,7 @@ pub struct PrincipalResourceService<
     addr_store: Arc<A>,
     auth_provider: Arc<AP>,
     dav_push_store: Arc<DP>,
+    config: Arc<CardDavConfig>,
 }
 
 impl<A: AddressbookStore, AP: AuthenticationProvider, DP: DavPushStore> Clone
@@ -29,6 +31,7 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, DP: DavPushStore> Clone
             addr_store: self.addr_store.clone(),
             auth_provider: self.auth_provider.clone(),
             dav_push_store: self.dav_push_store.clone(),
+            config: self.config.clone(),
         }
     }
 }
@@ -36,11 +39,17 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, DP: DavPushStore> Clone
 impl<A: AddressbookStore, AP: AuthenticationProvider, DP: DavPushStore>
     PrincipalResourceService<A, AP, DP>
 {
-    pub const fn new(addr_store: Arc<A>, auth_provider: Arc<AP>, dav_push_store: Arc<DP>) -> Self {
+    pub const fn new(
+        addr_store: Arc<A>,
+        auth_provider: Arc<AP>,
+        dav_push_store: Arc<DP>,
+        config: Arc<CardDavConfig>,
+    ) -> Self {
         Self {
             addr_store,
             auth_provider,
             dav_push_store,
+            config,
         }
     }
 }
@@ -85,6 +94,7 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, DP: DavPushStore> Resource
             .map(|addressbook| AddressbookResource {
                 addressbook,
                 vapid_pubkey: vapid_pubkey.clone(),
+                advertise_vcard4: self.config.advertise_vcard4,
             })
             .collect())
     }
@@ -96,6 +106,7 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, DP: DavPushStore> Resource
                 AddressbookResourceService::new(
                     self.addr_store.clone(),
                     self.dav_push_store.clone(),
+                    self.config.clone(),
                 )
                 .axum_router(),
             )

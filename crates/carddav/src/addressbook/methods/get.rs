@@ -15,13 +15,13 @@ use rustical_store::auth::Principal;
 use std::str::FromStr;
 use tracing::instrument;
 
-#[instrument(skip(addr_store, dav_push_store))]
+#[instrument(skip(addr_store, dav_push_store, config))]
 pub async fn route_get<AS: AddressbookStore, DP: DavPushStore>(
     Path((principal, addressbook_id)): Path<(String, String)>,
     State(AddressbookResourceService {
         addr_store,
         dav_push_store,
-        ..
+        config,
     }): State<AddressbookResourceService<AS, DP>>,
     user: Principal,
     method: Method,
@@ -37,6 +37,7 @@ pub async fn route_get<AS: AddressbookStore, DP: DavPushStore>(
     let addressbook_resource = AddressbookResource {
         addressbook: addressbook.clone(),
         vapid_pubkey,
+        advertise_vcard4: config.advertise_vcard4,
     };
     if !addressbook_resource
         .get_user_privileges(&user)?
