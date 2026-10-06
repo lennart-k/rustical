@@ -7,6 +7,7 @@ use axum::{
 };
 pub use config::OidcConfig;
 use openidconnect::{CsrfToken, Nonce, PkceCodeVerifier};
+pub use routes::start_oidc_flow;
 use serde::{Deserialize, Serialize};
 pub use user_store::UserStore;
 

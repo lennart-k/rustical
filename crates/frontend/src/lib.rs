@@ -39,6 +39,14 @@ use crate::routes::{
 #[cfg(not(feature = "dev"))]
 use assets::{Assets, EmbedService};
 
+/// Where the frontend's OIDC flow lives; shared by the nested OIDC router and by
+/// the login page's auto-redirect so the two cannot disagree on the callback path.
+pub(crate) const FRONTEND_OIDC_SERVICE_CONFIG: OidcServiceConfig = OidcServiceConfig {
+    default_redirect_path: "/frontend/user",
+    session_key_user_id: "user",
+    callback_path: "/frontend/login/oidc/callback",
+};
+
 pub fn frontend_router<
     AP: AuthenticationProvider,
     CS: CalendarStore,
@@ -103,11 +111,7 @@ pub fn frontend_router<
             "/login/oidc",
             oidc_router(
                 oidc_config,
-                OidcServiceConfig {
-                    default_redirect_path: "/frontend/user",
-                    session_key_user_id: "user",
-                    callback_path: "/frontend/login/oidc/callback",
-                },
+                FRONTEND_OIDC_SERVICE_CONFIG,
                 OidcUserStore(auth_provider.clone()),
             ),
         );
