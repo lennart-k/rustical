@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, displayname AS name, token, created_at AS \"created_at: _\" FROM app_tokens WHERE principal = ?",
+  "query": "SELECT id, displayname AS name, token, created_at AS \"created_at: _\", last_used AS \"last_used: _\" FROM app_tokens WHERE principal = ?",
   "describe": {
     "columns": [
       {
@@ -46,6 +46,17 @@
             "name": "created_at"
           }
         }
+      },
+      {
+        "name": "last_used: _",
+        "ordinal": 4,
+        "type_info": "Datetime",
+        "origin": {
+          "Table": {
+            "table": "app_tokens",
+            "name": "last_used"
+          }
+        }
       }
     ],
     "parameters": {
@@ -55,8 +66,9 @@
       false,
       false,
       false,
+      true,
       true
     ]
   },
-  "hash": "1ebaf3fd99bee2382abc931a1eeb29badc3aabcf6b8fd58e4cf92721588a9966"
+  "hash": "932f84430a119e05f99de6102794d3ff8c27f0cb26a3f0ea7d36b5bed96d33fe"
 }

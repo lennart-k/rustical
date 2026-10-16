@@ -8,6 +8,7 @@ use sqlx::SqlitePool;
 
 mod addressbook_store;
 mod calendar_store;
+mod principal_store;
 
 #[derive(Debug, Clone)]
 pub struct TestStoreContext {
