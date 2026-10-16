@@ -84,6 +84,32 @@ mod tests {
         assert!(store.get_app_tokens("user").await.unwrap().is_empty());
     }
 
+    #[rstest]
+    #[tokio::test]
+    async fn test_app_token_valid_when_recording_its_use_fails(
+        #[from(test_store_context)]
+        #[future]
+        context: TestStoreContext,
+    ) {
+        let context = context.await;
+        sqlx::query(
+            "CREATE TRIGGER no_touch BEFORE UPDATE OF last_used ON app_tokens BEGIN SELECT RAISE(ABORT, 'read-only'); END",
+        )
+        .execute(&context.db)
+        .await
+        .unwrap();
+        let store = context.principal_store;
+        assert!(
+            store
+                .validate_app_token("user", "pass")
+                .await
+                .unwrap()
+                .is_some(),
+            "a failed write must not reject a valid token"
+        );
+        assert_eq!(last_used(&store).await, None);
+    }
+
     #[tokio::test]
     async fn test_app_token_last_used_migration_keeps_tokens() {
         // A database migrated by the previous release, with a token in it.

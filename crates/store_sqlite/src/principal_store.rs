@@ -14,9 +14,8 @@ use std::{
 };
 use tracing::instrument;
 
-/// The use of one app token is written at most this often. Every write changes the
-/// database, which wakes up anything that watches it for changes; a client that syncs
-/// every few minutes should not cause a write per request.
+/// The use of one app token is written at most this often, so that a client which syncs
+/// every few minutes does not cause a database write per request.
 const TOUCH_INTERVAL: Duration = Duration::from_hours(1);
 
 #[derive(Debug, Default, Clone)]
@@ -193,14 +192,18 @@ impl AuthenticationProvider for SqlitePrincipalStore {
 
     #[instrument]
     async fn touch_app_token(&self, user_id: &str, token_id: &str) -> Result<(), Error> {
-        let recent = self
-            .touched
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .get(token_id)
-            .is_some_and(|at| at.elapsed() < TOUCH_INTERVAL);
-        if recent {
-            return Ok(());
+        {
+            // Claimed before the write: concurrent first requests write once, and a busy or
+            // failing database costs one attempt per interval instead of one per request
+            // (each attempt may wait for the busy timeout).
+            let mut touched = self.touched.lock().unwrap_or_else(PoisonError::into_inner);
+            if touched
+                .get(token_id)
+                .is_some_and(|at| at.elapsed() < TOUCH_INTERVAL)
+            {
+                return Ok(());
+            }
+            touched.insert(token_id.to_owned(), Instant::now());
         }
         sqlx::query!(
             r#"UPDATE app_tokens SET last_used = CURRENT_TIMESTAMP WHERE (principal, id) = (?, ?)"#,
@@ -210,10 +213,6 @@ impl AuthenticationProvider for SqlitePrincipalStore {
         .execute(&self.db)
         .await
         .map_err(crate::Error::from)?;
-        self.touched
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .insert(token_id.to_owned(), Instant::now());
         Ok(())
     }
 
