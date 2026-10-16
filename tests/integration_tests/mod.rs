@@ -25,6 +25,7 @@ pub fn get_app(context: TestStoreContext) -> axum::Router {
         FrontendConfig {
             enabled: true,
             allow_password_login: true,
+            oidc_auto_redirect: false,
         },
         None,
         CalDavConfig::default(),
