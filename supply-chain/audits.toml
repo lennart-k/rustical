@@ -36,6 +36,16 @@ who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
 criteria = "safe-to-deploy"
 version = "0.1.0"
 
+[[audits.provided-listeners]]
+who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.3.1 -> 0.3.2"
+
+[[audits.provided-listeners]]
+who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.3.1 -> 0.3.2"
+
 [[audits.web-push]]
 who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
 criteria = "safe-to-deploy"
@@ -186,9 +196,15 @@ user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-12-23"
 end = "2027-08-30"
 
+[[trusted.equivalent]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2023-02-05"
+end = "2027-10-21"
+
 [[trusted.find-msvc-tools]]
 criteria = "safe-to-deploy"
-user-id = 539
+user-id = 539 # Josh Stone (cuviper)
 start = "2025-08-29"
 end = "2027-09-06"
 
@@ -456,6 +472,12 @@ user-id = 209038 # Daniel McCarney (cpu)
 start = "2023-07-05"
 end = "2027-09-20"
 
+[[trusted.rustls-native-certs]]
+criteria = "safe-to-deploy"
+user-id = 4556 # Dirkjan Ochtman (djc)
+start = "2023-06-14"
+end = "2027-10-21"
+
 [[trusted.rustls-platform-verifier]]
 criteria = "safe-to-deploy"
 user-id = 4556 # Dirkjan Ochtman (djc)
@@ -576,6 +598,12 @@ user-id = 4556 # Dirkjan Ochtman (djc)
 start = "2023-06-09"
 end = "2027-10-05"
 
+[[trusted.tokio-util]]
+criteria = "safe-to-deploy"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2021-01-12"
+end = "2027-10-21"
+
 [[trusted.toml]]
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
@@ -689,6 +717,18 @@ criteria = "safe-to-deploy"
 user-id = 1 # Alex Crichton (alexcrichton)
 start = "2019-03-04"
 end = "2027-09-06"
+
+[[trusted.webpki-root-certs]]
+criteria = "safe-to-deploy"
+user-id = 209038 # Daniel McCarney (cpu)
+start = "2024-08-07"
+end = "2027-10-21"
+
+[[trusted.webpki-roots]]
+criteria = "safe-to-deploy"
+user-id = 209038 # Daniel McCarney (cpu)
+start = "2023-11-22"
+end = "2027-10-21"
 
 [[trusted.winapi-util]]
 criteria = "safe-to-deploy"
