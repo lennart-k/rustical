@@ -169,4 +169,30 @@ allow_sign_up = true
             Ok(())
         });
     }
+
+    #[test]
+    fn test_config_toml_carddav_advertise_vcard4() {
+        let with_flag = r#"
+[data_store.sqlite]
+db_url = "/var/lib/rustical/db.sqlite3"
+
+[carddav]
+advertise_vcard4 = false
+"#;
+        let config: Config = Figment::new()
+            .merge(Toml::string(with_flag))
+            .extract()
+            .unwrap();
+        assert!(!config.carddav.advertise_vcard4);
+
+        let omitted = r#"
+[data_store.sqlite]
+db_url = "/var/lib/rustical/db.sqlite3"
+"#;
+        let config: Config = Figment::new()
+            .merge(Toml::string(omitted))
+            .extract()
+            .unwrap();
+        assert!(config.carddav.advertise_vcard4);
+    }
 }

@@ -97,6 +97,7 @@ async fn test_initial_setup() {
                 dav_push: Default::default(),
                 nextcloud_login: Default::default(),
                 caldav: Default::default(),
+                carddav: Default::default(),
                 maintenance: Default::default(),
             },
         )
@@ -127,6 +128,7 @@ async fn test_initial_setup() {
                 dav_push: Default::default(),
                 nextcloud_login: Default::default(),
                 caldav: Default::default(),
+                carddav: Default::default(),
                 maintenance: Default::default(),
             },
         )
@@ -234,6 +236,7 @@ async fn test_principal_impersonation() {
             dav_push: Default::default(),
             nextcloud_login: Default::default(),
             caldav: Default::default(),
+            carddav: Default::default(),
             maintenance: Default::default(),
         };
 

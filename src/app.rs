@@ -10,7 +10,7 @@ use headers::{HeaderMapExt, UserAgent};
 use http::header::CONNECTION;
 use http::{HeaderValue, StatusCode};
 use rustical_caldav::{CalDavConfig, caldav_router};
-use rustical_carddav::carddav_router;
+use rustical_carddav::{CardDavConfig, carddav_router};
 use rustical_dav_push::DavPushStore;
 use rustical_frontend::nextcloud_login::nextcloud_login_router;
 use rustical_frontend::{FrontendConfig, frontend_router};
@@ -47,6 +47,7 @@ pub fn make_app<
     frontend_config: FrontendConfig,
     oidc_config: Option<OidcConfig>,
     caldav_config: CalDavConfig,
+    carddav_config: CardDavConfig,
     nextcloud_login_config: &NextcloudLoginConfig,
     dav_push_enabled: bool,
     session_cookie_samesite_strict: bool,
@@ -101,6 +102,7 @@ pub fn make_app<
             auth_provider.clone(),
             addr_store.clone(),
             dav_push_store.clone(),
+            Arc::new(carddav_config),
         ));
 
     // GNOME Accounts needs to discover a WebDAV Files endpoint to complete the setup
