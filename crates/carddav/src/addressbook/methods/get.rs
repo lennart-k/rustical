@@ -11,6 +11,7 @@ use rustical_dav::resource::Resource;
 use rustical_dav::rfc_3986_percent_encode;
 use rustical_dav_push::DavPushStore;
 use rustical_store::AddressbookStore;
+use rustical_store::access::{self, Need};
 use rustical_store::auth::Principal;
 use std::str::FromStr;
 use tracing::instrument;
@@ -26,13 +27,11 @@ pub async fn route_get<AS: AddressbookStore, DP: DavPushStore>(
     user: Principal,
     method: Method,
 ) -> Result<Response, Error> {
-    if !user.is_principal(&principal) {
-        return Err(Error::Unauthorized);
-    }
-
-    let addressbook = addr_store
-        .get_addressbook(&principal, &addressbook_id, false)
-        .await?;
+    access::check_home(&user, &principal)?;
+    let (resolved, addressbook) =
+        access::resolve_addressbook(addr_store.as_ref(), &principal, &addressbook_id, false)
+            .await?;
+    resolved.check(Need::Read)?;
     let vapid_pubkey = dav_push_store.get_vapid_pubkey_b64().await?.clone();
     let addressbook_resource = AddressbookResource {
         addressbook: addressbook.clone(),
@@ -42,10 +41,12 @@ pub async fn route_get<AS: AddressbookStore, DP: DavPushStore>(
         .get_user_privileges(&user)?
         .has(&UserPrivilege::Read)
     {
-        return Err(Error::Unauthorized);
+        return Err(rustical_store::Error::Forbidden.into());
     }
 
-    let objects = addr_store.get_objects(&principal, &addressbook_id).await?;
+    let objects = addr_store
+        .get_objects(resolved.owner(), resolved.id())
+        .await?;
     let vcf = objects
         .iter()
         .map(|(_id, obj)| obj.get_vcf())

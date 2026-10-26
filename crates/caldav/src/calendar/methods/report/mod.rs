@@ -1,6 +1,6 @@
 use crate::{
     CalDavPrincipalUri, Error,
-    calendar::CalendarResourceService,
+    calendar::{CalendarResourceService, resource::objects_read_only},
     calendar_object::{
         CalendarObjectPropWrapper, CalendarObjectPropWrapperName, resource::CalendarObjectResource,
     },
@@ -23,7 +23,11 @@ use rustical_dav::{
 };
 use rustical_dav_push::DavPushStore;
 use rustical_ical::CalendarObject;
-use rustical_store::{CalendarStore, auth::Principal};
+use rustical_store::{
+    CalendarStore,
+    access::{self, Need},
+    auth::Principal,
+};
 use rustical_xml::{XmlDeserialize, XmlDocument};
 use sync_collection::handle_sync_collection;
 use tracing::instrument;
@@ -58,6 +62,7 @@ fn objects_response(
     not_found: Vec<Uri>,
     path: &str,
     principal: &str,
+    read_only: bool,
     puri: &impl PrincipalUri,
     user: &Principal,
     prop: &PropfindType<CalendarObjectPropWrapperName>,
@@ -75,6 +80,7 @@ fn objects_response(
             object,
             object_id,
             principal: principal.to_owned(),
+            read_only,
         };
         let response = match resource.propfind(&path, prop, None, puri, user) {
             Ok(response) => response,
@@ -113,9 +119,11 @@ pub async fn route_report_calendar<C: CalendarStore, DP: DavPushStore>(
     matched_path: MatchedPath,
     body: String,
 ) -> Result<impl IntoResponse, Error> {
-    if !user.is_principal(&principal) {
-        return Err(Error::Unauthorized);
-    }
+    access::check_home(&user, &principal)?;
+    let (resolved, calendar) =
+        access::resolve_calendar(cal_store.as_ref(), &principal, &cal_id, false).await?;
+    resolved.check(Need::Read)?;
+    let read_only = objects_read_only(cal_store.as_ref(), &calendar);
 
     let request = ReportRequest::parse_str(&body)?;
     let props = request.props();
@@ -130,6 +138,7 @@ pub async fn route_report_calendar<C: CalendarStore, DP: DavPushStore>(
                 vec![],
                 uri.path(),
                 &principal,
+                read_only,
                 &puri,
                 &user,
                 props,
@@ -150,6 +159,7 @@ pub async fn route_report_calendar<C: CalendarStore, DP: DavPushStore>(
                 not_found,
                 uri.path(),
                 &principal,
+                read_only,
                 &puri,
                 &user,
                 props,
@@ -164,6 +174,7 @@ pub async fn route_report_calendar<C: CalendarStore, DP: DavPushStore>(
                 &user,
                 &principal,
                 &cal_id,
+                read_only,
                 cal_store.as_ref(),
             )
             .await?
@@ -353,6 +364,7 @@ END:VCALENDAR"
             vec!["/caldav/principal/user/not%20found.ics".parse().unwrap()],
             "/caldav/principal/user%40rustical.dev/cal",
             "user@rustical.dev",
+            false,
             &CalDavPrincipalUri::new("/caldav"),
             &Principal {
                 id: "user@rustical.dev".to_string(),
@@ -408,6 +420,7 @@ END:VCALENDAR"
             vec![],
             "/caldav/principal/user%40rustical.dev/cal",
             "user@rustical.dev",
+            false,
             &CalDavPrincipalUri::new("/caldav"),
             &Principal {
                 id: "user@rustical.dev".to_string(),

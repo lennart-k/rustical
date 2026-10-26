@@ -13,6 +13,7 @@ use rustical_dav::{
     xml::Resourcetype,
 };
 use rustical_ical::CalendarObject;
+use rustical_store::access;
 use rustical_store::auth::Principal;
 use std::borrow::Cow;
 
@@ -21,6 +22,8 @@ pub struct CalendarObjectResource {
     pub object: CalendarObject,
     pub object_id: String,
     pub principal: String,
+    /// The calendar's objects are read-only (subscription or read-only store)
+    pub read_only: bool,
 }
 
 impl ResourceName for CalendarObjectResource {
@@ -97,9 +100,11 @@ impl Resource for CalendarObjectResource {
     }
 
     fn get_user_privileges(&self, user: &Principal) -> Result<UserPrivilegeSet, Self::Error> {
-        Ok(UserPrivilegeSet::owner_only(
-            user.is_principal(&self.principal),
-        ))
+        let may_use = access::may_use_home(user, &self.principal);
+        if self.read_only {
+            return Ok(UserPrivilegeSet::owner_read(may_use));
+        }
+        Ok(UserPrivilegeSet::owner_only(may_use))
     }
 }
 
@@ -123,6 +128,7 @@ mod tests {
         let resource = CalendarObjectResource {
             principal: "user@rustical.dev".to_string(),
             object_id: "asd".to_string(),
+            read_only: false,
             object: CalendarObject::from_ics(
                 r"BEGIN:VCALENDAR
 VERSION:2.0

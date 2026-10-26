@@ -5,7 +5,7 @@ use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
 use rustical_dav::resourcetype;
 use rustical_dav::xml::{GroupMemberSet, GroupMembership, Resourcetype, SupportedReportSet};
-use rustical_store::auth::Principal;
+use rustical_store::{access, auth::Principal};
 use std::borrow::Cow;
 
 mod service;
@@ -119,8 +119,9 @@ impl Resource for PrincipalResource {
     }
 
     fn get_user_privileges(&self, user: &Principal) -> Result<UserPrivilegeSet, Self::Error> {
-        Ok(UserPrivilegeSet::owner_only(
-            user.is_principal(&self.principal.id),
-        ))
+        Ok(UserPrivilegeSet::owner_only(access::may_use_home(
+            user,
+            &self.principal.id,
+        )))
     }
 }

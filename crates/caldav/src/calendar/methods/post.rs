@@ -9,6 +9,7 @@ use rustical_dav::resource::Resource;
 use rustical_dav_push::register::PushRegister;
 use rustical_dav_push::{DavPushStore, Subscription};
 use rustical_store::CalendarStore;
+use rustical_store::access::{self, Need};
 use rustical_store::auth::Principal;
 use rustical_xml::XmlDocument;
 use tracing::instrument;
@@ -20,14 +21,15 @@ pub async fn route_post<C: CalendarStore, DP: DavPushStore>(
     State(resource_service): State<CalendarResourceService<C, DP>>,
     body: String,
 ) -> Result<Response, Error> {
-    if !user.is_principal(&principal) {
-        return Err(Error::Unauthorized);
-    }
-
-    let calendar = resource_service
-        .cal_store
-        .get_calendar(&principal, &cal_id, false)
-        .await?;
+    access::check_home(&user, &principal)?;
+    let (resolved, calendar) = access::resolve_calendar(
+        resource_service.cal_store.as_ref(),
+        &principal,
+        &cal_id,
+        false,
+    )
+    .await?;
+    resolved.check(Need::Read)?;
     let vapid_pubkey = resource_service
         .dav_push_store
         .get_vapid_pubkey_b64()
@@ -43,7 +45,7 @@ pub async fn route_post<C: CalendarStore, DP: DavPushStore>(
         .get_user_privileges(&user)?
         .has(&UserPrivilege::Read)
     {
-        return Err(Error::Unauthorized);
+        return Err(rustical_store::Error::Forbidden.into());
     }
 
     let request = PushRegister::parse_str(&body)?;

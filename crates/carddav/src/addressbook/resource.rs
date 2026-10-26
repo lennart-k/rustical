@@ -11,8 +11,8 @@ use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
 use rustical_dav::resourcetype;
 use rustical_dav::xml::{Resourcetype, SupportedReportSet};
 use rustical_dav_push::{DavPushExtension, VapidPublicKeyB64};
-use rustical_store::Addressbook;
 use rustical_store::auth::Principal;
+use rustical_store::{Addressbook, access};
 use std::borrow::Cow;
 
 #[derive(Clone, Debug)]
@@ -157,8 +157,9 @@ impl Resource for AddressbookResource {
     }
 
     fn get_user_privileges(&self, user: &Principal) -> Result<UserPrivilegeSet, Self::Error> {
-        Ok(UserPrivilegeSet::owner_only(
-            user.is_principal(&self.addressbook.principal),
-        ))
+        Ok(UserPrivilegeSet::owner_only(access::may_use_home(
+            user,
+            &self.addressbook.principal,
+        )))
     }
 }

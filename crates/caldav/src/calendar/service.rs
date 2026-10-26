@@ -3,7 +3,7 @@ use crate::calendar::methods::import::route_import;
 use crate::calendar::methods::mkcalendar::route_mkcalendar;
 use crate::calendar::methods::post::route_post;
 use crate::calendar::methods::report::route_report_calendar;
-use crate::calendar::resource::CalendarResource;
+use crate::calendar::resource::{CalendarResource, objects_read_only};
 use crate::calendar_object::CalendarObjectResourceService;
 use crate::calendar_object::resource::CalendarObjectResource;
 use crate::{CalDavConfig, CalDavPrincipalUri, Error};
@@ -14,8 +14,8 @@ use axum::extract::Request;
 use axum::handler::Handler;
 use rustical_dav::resource::{AxumMethods, MethodFunction, ResourceService};
 use rustical_dav_push::DavPushStore;
-use rustical_store::CalendarStore;
 use rustical_store::auth::Principal;
+use rustical_store::{CalendarStore, access};
 use std::sync::Arc;
 use tower::Service;
 
@@ -65,10 +65,9 @@ impl<C: CalendarStore, DP: DavPushStore> ResourceService for CalendarResourceSer
         (principal, cal_id): &Self::PathComponents,
         show_deleted: bool,
     ) -> Result<Self::Resource, Error> {
-        let calendar = self
-            .cal_store
-            .get_calendar(principal, cal_id, show_deleted)
-            .await?;
+        let (_resolved, calendar) =
+            access::resolve_calendar(self.cal_store.as_ref(), principal, cal_id, show_deleted)
+                .await?;
         let vapid_pubkey = self.dav_push_store.get_vapid_pubkey_b64().await?.clone();
         Ok(CalendarResource {
             cal: calendar,
@@ -81,15 +80,19 @@ impl<C: CalendarStore, DP: DavPushStore> ResourceService for CalendarResourceSer
         &self,
         (principal, cal_id): &Self::PathComponents,
     ) -> Result<Vec<Self::MemberType>, Self::Error> {
+        let (resolved, calendar) =
+            access::resolve_calendar(self.cal_store.as_ref(), principal, cal_id, true).await?;
+        let read_only = objects_read_only(self.cal_store.as_ref(), &calendar);
         Ok(self
             .cal_store
-            .get_objects(principal, cal_id)
+            .get_objects(resolved.owner(), resolved.id())
             .await?
             .into_iter()
             .map(|(object_id, object)| CalendarObjectResource {
                 object,
                 object_id,
                 principal: principal.to_owned(),
+                read_only,
             })
             .collect())
     }

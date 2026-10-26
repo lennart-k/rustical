@@ -71,7 +71,9 @@ impl Error {
             Self::StoreError(err) => match err {
                 rustical_store::Error::NotFound => StatusCode::NOT_FOUND,
                 rustical_store::Error::AlreadyExists => StatusCode::CONFLICT,
-                rustical_store::Error::ReadOnly => StatusCode::FORBIDDEN,
+                rustical_store::Error::ReadOnly | rustical_store::Error::Forbidden => {
+                    StatusCode::FORBIDDEN
+                }
                 _ => StatusCode::INTERNAL_SERVER_ERROR,
             },
             Self::DavError(err) => StatusCode::try_from(err.status_code().as_u16())
@@ -92,6 +94,9 @@ impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
         if let Self::PreconditionFailed(precondition) = self {
             return precondition.into_response();
+        }
+        if let Self::DavError(err @ rustical_dav::Error::InvalidSyncToken) = self {
+            return err.into_response();
         }
         if matches!(self.status_code(), StatusCode::INTERNAL_SERVER_ERROR) {
             error!("{self}");

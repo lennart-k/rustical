@@ -20,6 +20,7 @@ use rustical_store::{
     synctoken::{format_synctoken, parse_synctoken},
 };
 
+#[allow(clippy::too_many_arguments)]
 pub async fn handle_sync_collection<C: CalendarStore>(
     sync_collection: &SyncCollectionRequest<CalendarObjectPropWrapperName>,
     path: &str,
@@ -27,12 +28,24 @@ pub async fn handle_sync_collection<C: CalendarStore>(
     user: &Principal,
     principal: &str,
     cal_id: &str,
+    read_only: bool,
     cal_store: &C,
 ) -> Result<MultistatusElement<CalendarObjectPropWrapper, String>, Error> {
-    let old_synctoken = parse_synctoken(&sync_collection.sync_token).unwrap_or(0);
-    let (new_objects, deleted_objects, new_synctoken) = cal_store
+    // RFC 6578 section 3.2: an empty token asks for the initial sync, an unknown one is an error
+    let sync_token = sync_collection.sync_token.trim();
+    let initial_sync = sync_token.is_empty();
+    let old_synctoken = if initial_sync {
+        0
+    } else {
+        parse_synctoken(sync_token).ok_or(rustical_dav::Error::InvalidSyncToken)?
+    };
+    let (new_objects, mut deleted_objects, new_synctoken) = cal_store
         .sync_changes(principal, cal_id, old_synctoken)
         .await?;
+    // RFC 6578 section 3.4: the initial sync reports no removed members
+    if initial_sync {
+        deleted_objects.clear();
+    }
 
     let mut responses = Vec::new();
     for (object_id, object) in new_objects {
@@ -42,6 +55,7 @@ pub async fn handle_sync_collection<C: CalendarStore>(
                 object,
                 object_id,
                 principal: principal.to_owned(),
+                read_only,
             }
             .propfind(&path, &sync_collection.prop, None, puri, user)?,
         );

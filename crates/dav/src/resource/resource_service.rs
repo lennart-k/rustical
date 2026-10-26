@@ -49,7 +49,7 @@ pub trait ResourceService: Clone + Sized + Send + Sync + AxumMethods + 'static {
         _path: &Self::PathComponents,
         _file: Self::Resource,
     ) -> Result<(), Self::Error> {
-        Err(crate::Error::Unauthorized.into())
+        Err(crate::Error::Forbidden.into())
     }
 
     async fn delete_resource(
@@ -57,7 +57,7 @@ pub trait ResourceService: Clone + Sized + Send + Sync + AxumMethods + 'static {
         _path: &Self::PathComponents,
         _use_trashbin: bool,
     ) -> Result<(), Self::Error> {
-        Err(crate::Error::Unauthorized.into())
+        Err(crate::Error::Forbidden.into())
     }
 
     // Returns whether an existing resource was overwritten

@@ -15,8 +15,9 @@ use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
 use rustical_dav::resourcetype;
 use rustical_dav::xml::{HrefElement, Resourcetype, SupportedReportSet};
 use rustical_dav_push::{DavPushExtension, DavPushExtensionProp, VapidPublicKeyB64};
-use rustical_store::Calendar;
+use rustical_store::access;
 use rustical_store::auth::Principal;
+use rustical_store::{Calendar, CalendarStore};
 use rustical_xml::{EnumVariants, PropName};
 use rustical_xml::{XmlDeserialize, XmlSerialize};
 use serde::Deserialize;
@@ -75,6 +76,11 @@ pub struct CalendarResource {
     pub cal: Calendar,
     pub read_only: bool,
     pub vapid_pubkey: VapidPublicKeyB64,
+}
+
+/// Whether the objects of `calendar` are read-only (a subscription or a read-only store)
+pub fn objects_read_only<C: CalendarStore + ?Sized>(store: &C, calendar: &Calendar) -> bool {
+    calendar.subscription_url.is_some() || store.is_read_only(&calendar.id)
 }
 
 impl ResourceName for CalendarResource {
@@ -331,13 +337,14 @@ impl Resource for CalendarResource {
     fn get_user_privileges(&self, user: &Principal) -> Result<UserPrivilegeSet, Self::Error> {
         if self.cal.subscription_url.is_some() || self.read_only {
             return Ok(UserPrivilegeSet::owner_write_properties(
-                user.is_principal(&self.cal.principal),
+                access::may_use_home(user, &self.cal.principal),
             ));
         }
 
-        Ok(UserPrivilegeSet::owner_only(
-            user.is_principal(&self.cal.principal),
-        ))
+        Ok(UserPrivilegeSet::owner_only(access::may_use_home(
+            user,
+            &self.cal.principal,
+        )))
     }
 }
 

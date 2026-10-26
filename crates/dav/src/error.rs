@@ -23,6 +23,10 @@ pub enum Error {
 
     #[error("Forbidden")]
     Forbidden,
+
+    /// RFC 6578 section 3.2: the sync token of a sync-collection report is not valid
+    #[error("Invalid sync token")]
+    InvalidSyncToken,
 }
 
 impl Error {
@@ -42,7 +46,7 @@ impl Error {
             },
             Self::PropReadOnly => StatusCode::CONFLICT,
             Self::PreconditionFailed => StatusCode::PRECONDITION_FAILED,
-            Self::Forbidden => StatusCode::FORBIDDEN,
+            Self::Forbidden | Self::InvalidSyncToken => StatusCode::FORBIDDEN,
         }
     }
 }
@@ -54,6 +58,14 @@ impl axum::response::IntoResponse for Error {
         }
 
         let mut resp = axum::response::Response::builder().status(self.status_code());
+        if matches!(&self, &Self::InvalidSyncToken) {
+            return resp
+                .header(http::header::CONTENT_TYPE, "application/xml; charset=utf-8")
+                .body(Body::from(
+                    "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<error xmlns=\"DAV:\">\n    <valid-sync-token/>\n</error>\n",
+                ))
+                .expect("This should always work");
+        }
         if matches!(&self, &Self::Unauthorized) {
             resp.headers_mut()
                 .expect("This must always work")

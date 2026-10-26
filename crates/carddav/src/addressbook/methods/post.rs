@@ -9,6 +9,7 @@ use rustical_dav::resource::Resource;
 use rustical_dav_push::register::PushRegister;
 use rustical_dav_push::{DavPushStore, Subscription};
 use rustical_store::AddressbookStore;
+use rustical_store::access::{self, Need};
 use rustical_store::auth::Principal;
 use rustical_xml::XmlDocument;
 use tracing::instrument;
@@ -20,14 +21,15 @@ pub async fn route_post<AS: AddressbookStore, DP: DavPushStore>(
     State(resource_service): State<AddressbookResourceService<AS, DP>>,
     body: String,
 ) -> Result<Response, Error> {
-    if !user.is_principal(&principal) {
-        return Err(Error::Unauthorized);
-    }
-
-    let addressbook = resource_service
-        .addr_store
-        .get_addressbook(&principal, &addr_id, false)
-        .await?;
+    access::check_home(&user, &principal)?;
+    let (resolved, addressbook) = access::resolve_addressbook(
+        resource_service.addr_store.as_ref(),
+        &principal,
+        &addr_id,
+        false,
+    )
+    .await?;
+    resolved.check(Need::Read)?;
     let vapid_pubkey = resource_service
         .dav_push_store
         .get_vapid_pubkey_b64()
@@ -41,7 +43,7 @@ pub async fn route_post<AS: AddressbookStore, DP: DavPushStore>(
         .get_user_privileges(&user)?
         .has(&UserPrivilege::Read)
     {
-        return Err(Error::Unauthorized);
+        return Err(rustical_store::Error::Forbidden.into());
     }
 
     let request = PushRegister::parse_str(&body)?;

@@ -12,6 +12,7 @@ use http::Method;
 use http::{HeaderMap, StatusCode};
 use rustical_ical::AddressObject;
 use rustical_store::AddressbookStore;
+use rustical_store::access::{self, Need};
 use rustical_store::auth::Principal;
 use std::str::FromStr;
 use tracing::instrument;
@@ -27,12 +28,14 @@ pub async fn get_object<AS: AddressbookStore>(
     user: Principal,
     method: Method,
 ) -> Result<Response, Error> {
-    if !user.is_principal(&principal) {
-        return Err(Error::Unauthorized);
-    }
+    access::check_home(&user, &principal)?;
+    let (resolved, _addressbook) =
+        access::resolve_addressbook(addr_store.as_ref(), &principal, &addressbook_id, false)
+            .await?;
+    resolved.check(Need::Read)?;
 
     let object = addr_store
-        .get_object(&principal, &addressbook_id, &object_id, false)
+        .get_object(resolved.owner(), resolved.id(), &object_id, false)
         .await?;
 
     let mut resp = Response::builder().status(StatusCode::OK);
@@ -60,9 +63,10 @@ pub async fn put_object<AS: AddressbookStore>(
     header_map: HeaderMap,
     body: String,
 ) -> Result<Response, Error> {
-    if !user.is_principal(&principal) {
-        return Err(Error::Unauthorized);
-    }
+    access::check_home(&user, &principal)?;
+    let (resolved, _addressbook) =
+        access::resolve_addressbook(addr_store.as_ref(), &principal, &addressbook_id, true).await?;
+    resolved.check(Need::Write)?;
 
     // https://github.com/hyperium/headers/issues/204
     if !header_map.contains_key("If-None-Match") {
@@ -75,7 +79,7 @@ pub async fn put_object<AS: AddressbookStore>(
     if if_match.is_some() || if_none_match.is_some() {
         // TODO: Put into transaction?
         let existing = match addr_store
-            .get_object(&principal, &addressbook_id, &object_id, false)
+            .get_object(resolved.owner(), resolved.id(), &object_id, false)
             .await
         {
             Ok(existing) => Some(existing),
@@ -126,7 +130,7 @@ pub async fn put_object<AS: AddressbookStore>(
     };
     let etag = object.get_etag();
     addr_store
-        .put_object(&principal, &addressbook_id, &object_id, object, true)
+        .put_object(resolved.owner(), resolved.id(), &object_id, object, true)
         .await?;
 
     let mut headers = HeaderMap::new();

@@ -1,3 +1,4 @@
+use crate::calendar::resource::objects_read_only;
 use crate::{
     CalDavConfig, CalDavPrincipalUri, Error,
     calendar_object::{
@@ -9,7 +10,7 @@ use async_trait::async_trait;
 use axum::{extract::Request, handler::Handler, response::Response};
 use futures_util::future::BoxFuture;
 use rustical_dav::resource::{AxumMethods, ResourceService};
-use rustical_store::{CalendarStore, auth::Principal};
+use rustical_store::{CalendarStore, access, auth::Principal};
 use serde::{Deserialize, Deserializer};
 use std::{convert::Infallible, sync::Arc};
 use tower::Service;
@@ -62,14 +63,17 @@ impl<C: CalendarStore> ResourceService for CalendarObjectResourceService<C> {
         }: &Self::PathComponents,
         show_deleted: bool,
     ) -> Result<Self::Resource, Self::Error> {
+        let (resolved, calendar) =
+            access::resolve_calendar(self.cal_store.as_ref(), principal, calendar_id, true).await?;
         let object = self
             .cal_store
-            .get_object(principal, calendar_id, object_id, show_deleted)
+            .get_object(resolved.owner(), resolved.id(), object_id, show_deleted)
             .await?;
         Ok(CalendarObjectResource {
             object,
             object_id: object_id.to_owned(),
             principal: principal.to_owned(),
+            read_only: objects_read_only(self.cal_store.as_ref(), &calendar),
         })
     }
 

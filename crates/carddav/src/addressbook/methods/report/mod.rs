@@ -29,7 +29,11 @@ use rustical_dav::{
 };
 use rustical_dav_push::DavPushStore;
 use rustical_ical::AddressObject;
-use rustical_store::{AddressbookStore, auth::Principal};
+use rustical_store::{
+    AddressbookStore,
+    access::{self, Need},
+    auth::Principal,
+};
 use rustical_xml::{XmlDeserialize, XmlDocument};
 use sync_collection::handle_sync_collection;
 use tracing::instrument;
@@ -109,9 +113,11 @@ pub async fn route_report_addressbook<AS: AddressbookStore, DP: DavPushStore>(
     State(AddressbookResourceService { addr_store, .. }): State<AddressbookResourceService<AS, DP>>,
     body: String,
 ) -> Result<impl IntoResponse, Error> {
-    if !user.is_principal(&principal) {
-        return Err(Error::Unauthorized);
-    }
+    access::check_home(&user, &principal)?;
+    let (resolved, _addressbook) =
+        access::resolve_addressbook(addr_store.as_ref(), &principal, &addressbook_id, false)
+            .await?;
+    resolved.check(Need::Read)?;
 
     let request = ReportRequest::parse_str(&body)?;
 

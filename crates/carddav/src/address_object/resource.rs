@@ -17,7 +17,7 @@ use rustical_dav::{
     xml::Resourcetype,
 };
 use rustical_ical::AddressObject;
-use rustical_store::auth::Principal;
+use rustical_store::{access, auth::Principal};
 
 #[derive(Clone, From, Into)]
 pub struct AddressObjectResource {
@@ -88,8 +88,9 @@ impl Resource for AddressObjectResource {
     }
 
     fn get_user_privileges(&self, user: &Principal) -> Result<UserPrivilegeSet, Self::Error> {
-        Ok(UserPrivilegeSet::owner_only(
-            user.is_principal(&self.principal),
-        ))
+        Ok(UserPrivilegeSet::owner_only(access::may_use_home(
+            user,
+            &self.principal,
+        )))
     }
 }

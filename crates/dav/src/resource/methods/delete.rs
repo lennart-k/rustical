@@ -49,7 +49,7 @@ pub async fn route_delete<R: ResourceService>(
     // Kind of a bodge since we don't get unbind from the parent
     let privileges = resource.get_user_privileges(principal)?;
     if !privileges.has(&UserPrivilege::WriteProperties) {
-        return Err(Error::Unauthorized.into());
+        return Err(Error::Forbidden.into());
     }
 
     if let Some(if_match) = if_match

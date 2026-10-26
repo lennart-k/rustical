@@ -10,6 +10,7 @@ use headers::{ContentType, ETag, HeaderMapExt, IfMatch, IfNoneMatch};
 use http::{HeaderMap, HeaderValue, Method, StatusCode};
 use rustical_ical::CalendarObject;
 use rustical_store::CalendarStore;
+use rustical_store::access::{self, Need};
 use rustical_store::auth::Principal;
 use std::str::FromStr;
 use tracing::{instrument, warn};
@@ -28,19 +29,13 @@ pub async fn get_event<C: CalendarStore>(
     user: Principal,
     method: Method,
 ) -> Result<Response, Error> {
-    if !user.is_principal(&principal) {
-        return Err(crate::Error::Unauthorized);
-    }
-
-    let calendar = cal_store
-        .get_calendar(&principal, &calendar_id, false)
-        .await?;
-    if !user.is_principal(&calendar.principal) {
-        return Err(crate::Error::Unauthorized);
-    }
+    access::check_home(&user, &principal)?;
+    let (resolved, _calendar) =
+        access::resolve_calendar(cal_store.as_ref(), &principal, &calendar_id, false).await?;
+    resolved.check(Need::Read)?;
 
     let event = cal_store
-        .get_object(&principal, &calendar_id, &object_id, false)
+        .get_object(resolved.owner(), resolved.id(), &object_id, false)
         .await?;
 
     let mut resp = Response::builder().status(StatusCode::OK);
@@ -70,9 +65,10 @@ pub async fn put_event<C: CalendarStore>(
     header_map: HeaderMap,
     body: String,
 ) -> Result<Response, Error> {
-    if !user.is_principal(&principal) {
-        return Err(crate::Error::Unauthorized);
-    }
+    access::check_home(&user, &principal)?;
+    let (resolved, _calendar) =
+        access::resolve_calendar(cal_store.as_ref(), &principal, &calendar_id, true).await?;
+    resolved.check(Need::Write)?;
 
     // https://github.com/hyperium/headers/issues/204
     if !header_map.contains_key("If-None-Match") {
@@ -85,7 +81,7 @@ pub async fn put_event<C: CalendarStore>(
     if if_match.is_some() || if_none_match.is_some() {
         // TODO: Put into transaction?
         let existing = match cal_store
-            .get_object(&principal, &calendar_id, &object_id, false)
+            .get_object(resolved.owner(), resolved.id(), &object_id, false)
             .await
         {
             Ok(existing) => Some(existing),
@@ -145,7 +141,7 @@ pub async fn put_event<C: CalendarStore>(
     };
     let etag = object.get_etag();
     cal_store
-        .put_object(&principal, &calendar_id, &object_id, object, true)
+        .put_object(resolved.owner(), resolved.id(), &object_id, object, true)
         .await?;
 
     let mut headers = HeaderMap::new();

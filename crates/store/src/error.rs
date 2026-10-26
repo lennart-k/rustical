@@ -15,6 +15,9 @@ pub enum Error {
     #[error("Read-only")]
     ReadOnly,
 
+    #[error("Forbidden")]
+    Forbidden,
+
     #[error("Invalid principal id: Id cannot contain ':' or '$'.")]
     InvalidPrincipalId,
 
@@ -37,7 +40,7 @@ impl Error {
         match self {
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::AlreadyExists => StatusCode::CONFLICT,
-            Self::ReadOnly => StatusCode::FORBIDDEN,
+            Self::ReadOnly | Self::Forbidden => StatusCode::FORBIDDEN,
             Self::InvalidPrincipalId | Self::InvalidPrincipalType(_) => StatusCode::BAD_REQUEST,
             Self::IcalError(_err) => StatusCode::INTERNAL_SERVER_ERROR,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
