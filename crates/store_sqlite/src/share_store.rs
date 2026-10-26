@@ -1,15 +1,20 @@
-use crate::BEGIN_IMMEDIATE;
+use crate::calendar_store::ObjectColumns;
+use crate::{BEGIN_IMMEDIATE, ChangeOperation, SqliteAddressbookStore, SqliteCalendarStore};
 use async_trait::async_trait;
 use derive_more::Constructor;
+use rustical_ical::visibility::{self, FULL, HIDDEN, Policy};
+use rustical_ical::{AddressObject, CalendarObject};
 use rustical_store::{
-    Access, AddressbookShare, CalendarShare, CollectionOperation, Error, ShareRejection,
-    ShareStore, ShareViewUpdate,
+    Access, AddressbookShare, CalendarShare, CollectionOperation, CollectionOperationInfo,
+    CopyRule, Error, Preconditions, ShareRejection, ShareStore, ShareViewUpdate,
 };
 use sqlx::types::chrono::NaiveDateTime;
-use sqlx::{Sqlite, SqlitePool, Transaction};
+use sqlx::{Sqlite, SqliteConnection, SqlitePool, Transaction};
 use tokio::sync::mpsc::Sender;
-use tracing::{instrument, warn};
+use tracing::{error_span, instrument, warn};
 
+#[cfg(test)]
+mod copy_tests;
 #[cfg(test)]
 mod tests;
 
@@ -20,7 +25,6 @@ const BIRTHDAYS_PREFIX: &str = "_birthdays_";
 pub struct SqliteShareStore {
     db: SqlitePool,
     // Push notifications for changes made through shares
-    #[allow(dead_code)]
     sender: Sender<CollectionOperation>,
 }
 
@@ -749,5 +753,467 @@ impl ShareStore for SqliteShareStore {
         .fetch_optional(&self.db)
         .await
         .map_err(crate::Error::from)?)
+    }
+
+    #[instrument]
+    async fn get_visibility(&self, principal: &str) -> Result<Policy, Error> {
+        let mut conn = self.db.acquire().await.map_err(crate::Error::from)?;
+        Self::_get_visibility(&mut conn, principal).await
+    }
+
+    #[instrument]
+    async fn set_visibility(&self, principal: &str, policy: Policy) -> Result<(), Error> {
+        let policy =
+            Policy::new(policy.private, policy.confidential).ok_or(Error::InvalidVisibility)?;
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
+        sqlx::query!(
+            r#"INSERT INTO principal_visibility (principal, private, confidential) VALUES (?, ?, ?)
+                ON CONFLICT(principal) DO UPDATE SET (private, confidential) = (excluded.private, excluded.confidential)"#,
+            principal,
+            policy.private,
+            policy.confidential
+        )
+        .execute(&mut *tx)
+        .await
+        .map_err(crate::Error::from)?;
+
+        // Sharees pick the new views up with their next sync
+        let calendars = sqlx::query!(
+            r#"SELECT DISTINCT c.id, c.push_topic FROM calendar_shares AS s
+                JOIN calendars AS c ON (c.principal, c.id) = (s.owner, s.cal_id)
+                WHERE s.owner = ?"#,
+            principal
+        )
+        .fetch_all(&mut *tx)
+        .await
+        .map_err(crate::Error::from)?;
+        let mut notifications = vec![];
+        for calendar in calendars {
+            let objects = sqlx::query!(
+                r#"SELECT id, ics FROM calendarobjects
+                    WHERE (principal, cal_id) = (?, ?) AND deleted_at IS NULL"#,
+                principal,
+                calendar.id
+            )
+            .fetch_all(&mut *tx)
+            .await
+            .map_err(crate::Error::from)?;
+            let mut sync_token = None;
+            for object in objects {
+                let depends = CalendarObject::from_ics(object.ics)
+                    .map_or(true, |parsed| visibility::depends_on_policy(&parsed));
+                if depends {
+                    sync_token = Some(
+                        SqliteCalendarStore::log_object_operation(
+                            &mut tx,
+                            principal,
+                            &calendar.id,
+                            &object.id,
+                            ChangeOperation::Add,
+                        )
+                        .await?,
+                    );
+                }
+            }
+            if let Some(sync_token) = sync_token {
+                notifications.push((calendar.push_topic, sync_token));
+            }
+        }
+        tx.commit().await.map_err(crate::Error::from)?;
+        for (topic, sync_token) in notifications {
+            self.notify(topic, sync_token);
+        }
+        Ok(())
+    }
+
+    #[instrument(skip(object))]
+    async fn put_copy_object(
+        &self,
+        owner: &str,
+        cal_id: &str,
+        object_id: &str,
+        object: CalendarObject,
+        preconditions: Preconditions<'_>,
+    ) -> Result<Option<String>, Error> {
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
+        let topic = Self::writable_calendar(&mut tx, owner, cal_id).await?;
+        let policy = Self::_get_visibility(&mut tx, owner).await?;
+        let row = sqlx::query!(
+            r#"SELECT uid, ics, deleted_at IS NOT NULL AS "deleted!: bool" FROM calendarobjects
+                WHERE (principal, cal_id, id) = (?, ?, ?)"#,
+            owner,
+            cal_id,
+            object_id
+        )
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(crate::Error::from)?;
+
+        let stored = match row {
+            // The owner's trash bin is never overwritten nor revived
+            Some(row) if row.deleted => return Err(CopyRule::TrashHref.into()),
+            Some(row) => {
+                let stored = CalendarObject::from_ics(row.ics)?;
+                if visibility::level_of(&stored, policy) < FULL {
+                    return Err(CopyRule::Level.into());
+                }
+                let seen = visibility::view(&stored, FULL);
+                preconditions.check(seen.as_ref().map(CalendarObject::get_etag).as_deref())?;
+                if object.get_uid() != row.uid {
+                    return Err(CopyRule::UidChanged.into());
+                }
+                Some(stored)
+            }
+            None => {
+                preconditions.check(None)?;
+                let uid = object.get_uid();
+                let taken = sqlx::query_scalar!(
+                    r#"SELECT EXISTS(SELECT 1 FROM calendarobjects WHERE (principal, cal_id, uid) = (?, ?, ?)) AS "taken!: bool""#,
+                    owner,
+                    cal_id,
+                    uid
+                )
+                .fetch_one(&mut *tx)
+                .await
+                .map_err(crate::Error::from)?;
+                if taken {
+                    return Err(CopyRule::ForeignUid.into());
+                }
+                None
+            }
+        };
+
+        // Alarms are the owner's: kept from what is stored, never taken from the sharee
+        let merged = visibility::with_stored_alarms(&object, stored.as_ref()).ok_or_else(|| {
+            Error::Other(
+                std::io::Error::other(format!("calendar object {object_id} cannot be merged"))
+                    .into(),
+            )
+        })?;
+        let ObjectColumns {
+            uid,
+            ics,
+            first_occurence,
+            last_occurence,
+            etag,
+            object_type,
+        } = ObjectColumns::of(&merged);
+        let written = if stored.is_some() {
+            sqlx::query!(
+                r#"UPDATE calendarobjects
+                    SET uid = ?, ics = ?, first_occurence = date(?), last_occurence = date(?), etag = ?, object_type = ?, updated_at = datetime()
+                    WHERE (principal, cal_id, id) = (?, ?, ?) AND deleted_at IS NULL"#,
+                uid,
+                ics,
+                first_occurence,
+                last_occurence,
+                etag,
+                object_type,
+                owner,
+                cal_id,
+                object_id
+            )
+            .execute(&mut *tx)
+            .await
+        } else {
+            sqlx::query!(
+                r#"INSERT INTO calendarobjects (principal, cal_id, id, uid, ics, first_occurence, last_occurence, etag, object_type)
+                    VALUES (?, ?, ?, ?, ?, date(?), date(?), ?, ?)"#,
+                owner,
+                cal_id,
+                object_id,
+                uid,
+                ics,
+                first_occurence,
+                last_occurence,
+                etag,
+                object_type
+            )
+            .execute(&mut *tx)
+            .await
+        };
+        match written.map_err(crate::Error::from).map_err(Error::from) {
+            // The checks above make this impossible; the database stays the second guard
+            Err(Error::AlreadyExists) => return Err(CopyRule::ForeignUid.into()),
+            Err(err) => return Err(err),
+            Ok(_) => {}
+        }
+        let sync_token = SqliteCalendarStore::log_object_operation(
+            &mut tx,
+            owner,
+            cal_id,
+            object_id,
+            ChangeOperation::Add,
+        )
+        .await?;
+        tx.commit().await.map_err(crate::Error::from)?;
+        self.notify(topic, sync_token);
+
+        let seen = visibility::view_for(&merged, policy);
+        Ok(seen
+            .filter(|seen| seen.get_ics() == object.get_ics())
+            .map(|seen| seen.get_etag()))
+    }
+
+    #[instrument]
+    async fn delete_copy_object(
+        &self,
+        owner: &str,
+        cal_id: &str,
+        object_id: &str,
+        preconditions: Preconditions<'_>,
+    ) -> Result<(), Error> {
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
+        let topic = Self::writable_calendar(&mut tx, owner, cal_id).await?;
+        let policy = Self::_get_visibility(&mut tx, owner).await?;
+        let ics = sqlx::query_scalar!(
+            r#"SELECT ics FROM calendarobjects
+                WHERE (principal, cal_id, id) = (?, ?, ?) AND deleted_at IS NULL"#,
+            owner,
+            cal_id,
+            object_id
+        )
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(crate::Error::from)?
+        .ok_or(Error::NotFound)?;
+        let stored = CalendarObject::from_ics(ics)?;
+        match visibility::level_of(&stored, policy) {
+            HIDDEN => return Err(Error::NotFound),
+            FULL => {}
+            _ => return Err(CopyRule::Level.into()),
+        }
+        let seen = visibility::view(&stored, FULL);
+        preconditions.check(seen.as_ref().map(CalendarObject::get_etag).as_deref())?;
+        // Always into the owner's trash bin
+        sqlx::query!(
+            r#"UPDATE calendarobjects SET deleted_at = datetime(), updated_at = datetime()
+                WHERE (principal, cal_id, id) = (?, ?, ?)"#,
+            owner,
+            cal_id,
+            object_id
+        )
+        .execute(&mut *tx)
+        .await
+        .map_err(crate::Error::from)?;
+        let sync_token = SqliteCalendarStore::log_object_operation(
+            &mut tx,
+            owner,
+            cal_id,
+            object_id,
+            ChangeOperation::Delete,
+        )
+        .await?;
+        tx.commit().await.map_err(crate::Error::from)?;
+        self.notify(topic, sync_token);
+        Ok(())
+    }
+
+    #[instrument(skip(object))]
+    async fn put_copy_address_object(
+        &self,
+        owner: &str,
+        addressbook_id: &str,
+        object_id: &str,
+        object: AddressObject,
+        preconditions: Preconditions<'_>,
+    ) -> Result<Option<String>, Error> {
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
+        let topic = Self::live_addressbook(&mut tx, owner, addressbook_id).await?;
+        let row = sqlx::query!(
+            r#"SELECT vcf, deleted_at IS NOT NULL AS "deleted!: bool" FROM addressobjects
+                WHERE (principal, addressbook_id, id) = (?, ?, ?)"#,
+            owner,
+            addressbook_id,
+            object_id
+        )
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(crate::Error::from)?;
+        let vcf = object.get_vcf();
+        match row {
+            Some(row) if row.deleted => return Err(CopyRule::TrashHref.into()),
+            Some(row) => {
+                let stored = AddressObject::from_vcf(row.vcf)?;
+                preconditions.check(Some(&stored.get_etag()))?;
+                sqlx::query!(
+                    r#"UPDATE addressobjects SET vcf = ?, updated_at = datetime()
+                        WHERE (principal, addressbook_id, id) = (?, ?, ?) AND deleted_at IS NULL"#,
+                    vcf,
+                    owner,
+                    addressbook_id,
+                    object_id
+                )
+                .execute(&mut *tx)
+                .await
+                .map_err(crate::Error::from)?;
+            }
+            None => {
+                preconditions.check(None)?;
+                let inserted = sqlx::query!(
+                    r#"INSERT INTO addressobjects (principal, addressbook_id, id, vcf) VALUES (?, ?, ?, ?)"#,
+                    owner,
+                    addressbook_id,
+                    object_id,
+                    vcf
+                )
+                .execute(&mut *tx)
+                .await
+                .map_err(crate::Error::from)
+                .map_err(Error::from);
+                match inserted {
+                    Err(Error::AlreadyExists) => return Err(CopyRule::TrashHref.into()),
+                    Err(err) => return Err(err),
+                    Ok(_) => {}
+                }
+            }
+        }
+        let sync_token = SqliteAddressbookStore::log_object_operation(
+            &mut tx,
+            owner,
+            addressbook_id,
+            object_id,
+            ChangeOperation::Add,
+        )
+        .await?;
+        tx.commit().await.map_err(crate::Error::from)?;
+        self.notify(topic, sync_token);
+        Ok(Some(object.get_etag()))
+    }
+
+    #[instrument]
+    async fn delete_copy_address_object(
+        &self,
+        owner: &str,
+        addressbook_id: &str,
+        object_id: &str,
+        preconditions: Preconditions<'_>,
+    ) -> Result<(), Error> {
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
+        let topic = Self::live_addressbook(&mut tx, owner, addressbook_id).await?;
+        let vcf = sqlx::query_scalar!(
+            r#"SELECT vcf FROM addressobjects
+                WHERE (principal, addressbook_id, id) = (?, ?, ?) AND deleted_at IS NULL"#,
+            owner,
+            addressbook_id,
+            object_id
+        )
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(crate::Error::from)?
+        .ok_or(Error::NotFound)?;
+        let stored = AddressObject::from_vcf(vcf)?;
+        preconditions.check(Some(&stored.get_etag()))?;
+        sqlx::query!(
+            r#"UPDATE addressobjects SET deleted_at = datetime(), updated_at = datetime()
+                WHERE (principal, addressbook_id, id) = (?, ?, ?)"#,
+            owner,
+            addressbook_id,
+            object_id
+        )
+        .execute(&mut *tx)
+        .await
+        .map_err(crate::Error::from)?;
+        let sync_token = SqliteAddressbookStore::log_object_operation(
+            &mut tx,
+            owner,
+            addressbook_id,
+            object_id,
+            ChangeOperation::Delete,
+        )
+        .await?;
+        tx.commit().await.map_err(crate::Error::from)?;
+        self.notify(topic, sync_token);
+        Ok(())
+    }
+}
+
+impl SqliteShareStore {
+    fn notify(&self, topic: String, sync_token: String) {
+        if let Err(err) = self.sender.try_send(CollectionOperation {
+            topic,
+            data: CollectionOperationInfo::Content { sync_token },
+        }) {
+            error_span!(
+                "Error trying to send update notification:",
+                err = format!("{err}"),
+            );
+        }
+    }
+
+    async fn _get_visibility(
+        conn: &mut SqliteConnection,
+        principal: &str,
+    ) -> Result<Policy, Error> {
+        let row = sqlx::query!(
+            r#"SELECT private AS "private: u8", confidential AS "confidential: u8"
+                FROM principal_visibility WHERE principal = ?"#,
+            principal
+        )
+        .fetch_optional(&mut *conn)
+        .await
+        .map_err(crate::Error::from)?;
+        Ok(row
+            .and_then(|row| Policy::new(row.private, row.confidential))
+            .unwrap_or_default())
+    }
+
+    /// The push topic of a live calendar that takes objects
+    async fn writable_calendar(
+        tx: &mut Transaction<'_, Sqlite>,
+        owner: &str,
+        cal_id: &str,
+    ) -> Result<String, Error> {
+        let calendar = sqlx::query!(
+            r#"SELECT push_topic, subscription_url IS NOT NULL AS "subscription!: bool"
+                FROM calendars WHERE (principal, id) = (?, ?) AND deleted_at IS NULL"#,
+            owner,
+            cal_id
+        )
+        .fetch_optional(&mut **tx)
+        .await
+        .map_err(crate::Error::from)?
+        .ok_or(Error::NotFound)?;
+        if calendar.subscription {
+            return Err(Error::ReadOnly);
+        }
+        Ok(calendar.push_topic)
+    }
+
+    /// The push topic of a live addressbook
+    async fn live_addressbook(
+        tx: &mut Transaction<'_, Sqlite>,
+        owner: &str,
+        addressbook_id: &str,
+    ) -> Result<String, Error> {
+        sqlx::query_scalar!(
+            r#"SELECT push_topic FROM addressbooks WHERE (principal, id) = (?, ?) AND deleted_at IS NULL"#,
+            owner,
+            addressbook_id
+        )
+        .fetch_optional(&mut **tx)
+        .await
+        .map_err(crate::Error::from)?
+        .ok_or(Error::NotFound)
     }
 }

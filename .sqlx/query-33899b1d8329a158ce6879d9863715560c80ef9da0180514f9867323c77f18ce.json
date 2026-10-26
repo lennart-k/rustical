@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT private AS \"private: u8\", confidential AS \"confidential: u8\"\n                FROM principal_visibility WHERE principal = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "private: u8",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "principal_visibility",
+            "name": "private"
+          }
+        }
+      },
+      {
+        "name": "confidential: u8",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "principal_visibility",
+            "name": "confidential"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "33899b1d8329a158ce6879d9863715560c80ef9da0180514f9867323c77f18ce"
+}

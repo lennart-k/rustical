@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT DISTINCT c.id, c.push_topic FROM calendar_shares AS s\n                JOIN calendars AS c ON (c.principal, c.id) = (s.owner, s.cal_id)\n                WHERE s.owner = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "push_topic",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "push_topic"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "b0f280a35939a219c696f8e98f9567b8273a86e6109f590dfcef5a8a1f532688"
+}

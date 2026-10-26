@@ -143,7 +143,7 @@ impl SqliteAddressbookStore {
     }
 
     // Logs an operation to an address object
-    async fn log_object_operation(
+    pub(crate) async fn log_object_operation(
         tx: &mut Transaction<'_, Sqlite>,
         principal: &str,
         addressbook_id: &str,

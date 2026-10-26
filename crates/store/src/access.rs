@@ -11,7 +11,10 @@
 //! a collection is. Keeping this decision in one place lets later kinds of collections
 //! (for example collections shared by another principal) plug in without touching every
 //! route again.
-use crate::{Addressbook, AddressbookStore, Calendar, CalendarStore, Error, auth::Principal};
+use crate::{
+    Access, Addressbook, AddressbookStore, Calendar, CalendarStore, Error, auth::Principal,
+};
+use rustical_ical::visibility::Policy;
 
 /// What a route needs from a collection.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -29,6 +32,9 @@ pub enum Need {
 pub enum ResolvedKind {
     /// A collection of the home itself (for a group home: the group's own collection).
     Own,
+    /// A collection another principal shares with the home. Everyone using it sees it as a
+    /// sharee: objects as `policy` (the owner's) shows them, writes only with `Access::Write`.
+    Copy { access: Access, policy: Policy },
 }
 
 /// The collection behind a path `(home, name)`.
@@ -65,6 +71,11 @@ impl Resolved {
         match self.kind {
             // The home's own collection: everything, as before sharing existed
             ResolvedKind::Own => matches!(need, Need::Read | Need::Write | Need::Own),
+            ResolvedKind::Copy { access, .. } => match need {
+                Need::Read => true,
+                Need::Write => matches!(access, Access::Write),
+                Need::Own => false,
+            },
         }
     }
 
@@ -80,12 +91,26 @@ impl Resolved {
         }
     }
 
+    #[must_use]
+    pub const fn is_own(&self) -> bool {
+        matches!(self.kind, ResolvedKind::Own)
+    }
+
     const fn own(owner: String, id: String) -> Self {
         Self {
             owner,
             id,
             kind: ResolvedKind::Own,
         }
+    }
+}
+
+#[cfg(any(test, feature = "test"))]
+impl Resolved {
+    /// A resolved collection for tests that cannot resolve one through a store
+    #[must_use]
+    pub const fn for_tests(owner: String, id: String, kind: ResolvedKind) -> Self {
+        Self { owner, id, kind }
     }
 }
 
@@ -166,6 +191,34 @@ mod tests {
         assert!(check_home(&alice, "alice").is_ok());
         assert!(check_home(&alice, "group.team").is_ok());
         assert!(matches!(check_home(&alice, "bob"), Err(Error::Forbidden)));
+    }
+
+    #[test]
+    fn copy_allows_by_access() {
+        let policy = Policy::default();
+        let read = Resolved::for_tests(
+            "alice".to_owned(),
+            "cal".to_owned(),
+            ResolvedKind::Copy {
+                access: Access::Read,
+                policy,
+            },
+        );
+        assert!(read.allows(Need::Read));
+        assert!(!read.allows(Need::Write));
+        assert!(!read.allows(Need::Own));
+        let write = Resolved::for_tests(
+            "alice".to_owned(),
+            "cal".to_owned(),
+            ResolvedKind::Copy {
+                access: Access::Write,
+                policy,
+            },
+        );
+        assert!(write.allows(Need::Read));
+        assert!(write.allows(Need::Write));
+        assert!(!write.allows(Need::Own));
+        assert!(!write.is_own());
     }
 
     #[test]

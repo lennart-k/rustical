@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT vcf FROM addressobjects\n                WHERE (principal, addressbook_id, id) = (?, ?, ?) AND deleted_at IS NULL",
+  "describe": {
+    "columns": [
+      {
+        "name": "vcf",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressobjects",
+            "name": "vcf"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "7d1e39fabee40404e15d513cb6974477a55d0ebabca6eb4ff08fca03e8501555"
+}

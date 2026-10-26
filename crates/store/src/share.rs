@@ -6,6 +6,9 @@
 use crate::Error;
 use async_trait::async_trait;
 use chrono::NaiveDateTime;
+use headers::{ETag, IfMatch, IfNoneMatch};
+use rustical_ical::visibility::Policy;
+use rustical_ical::{AddressObject, CalendarObject};
 use serde::Serialize;
 use std::str::FromStr;
 
@@ -56,6 +59,51 @@ pub enum ShareRejection {
     AmbiguousSharee,
     #[error("birthday calendars and subscriptions cannot be shared")]
     NotShareable,
+}
+
+/// Why the store refused a write through a share with write access.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
+pub enum CopyRule {
+    #[error("an object of the owner's trash bin has this name")]
+    TrashHref,
+    #[error("another object of the calendar has this UID")]
+    ForeignUid,
+    #[error("the UID of an existing object cannot change")]
+    UidChanged,
+    #[error("only fully visible objects can be changed")]
+    Level,
+}
+
+/// The conditions of a write through a share, compared with the object as the sharee sees it.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Preconditions<'a> {
+    pub if_match: Option<&'a IfMatch>,
+    pub if_none_match: Option<&'a IfNoneMatch>,
+}
+
+impl Preconditions<'_> {
+    /// Checks the conditions for the visible object with `etag` (`None`: there is none).
+    ///
+    /// # Errors
+    /// [`Error::PreconditionFailed`] unless the conditions hold.
+    pub fn check(&self, etag: Option<&str>) -> Result<(), Error> {
+        let etag: Option<ETag> = etag.and_then(|etag| etag.parse().ok());
+        if let Some(if_match) = self.if_match
+            && etag
+                .as_ref()
+                .is_none_or(|etag| !if_match.precondition_passes(etag))
+        {
+            return Err(Error::PreconditionFailed);
+        }
+        if let Some(if_none_match) = self.if_none_match
+            && etag
+                .as_ref()
+                .is_some_and(|etag| !if_none_match.precondition_passes(etag))
+        {
+            return Err(Error::PreconditionFailed);
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -180,4 +228,49 @@ pub trait ShareStore: Send + Sync + 'static {
     async fn principal_email(&self, principal: &str) -> Result<Option<String>, Error>;
     /// The principal with exactly this e-mail address (compared in lowercase)
     async fn resolve_email(&self, email: &str) -> Result<Option<String>, Error>;
+
+    /// How objects of `principal` with CLASS:PRIVATE/CONFIDENTIAL appear in its shares
+    async fn get_visibility(&self, principal: &str) -> Result<Policy, Error>;
+    /// Changes the policy; every object of a shared calendar whose view depends on it is
+    /// logged as changed, so sharees pick the new views up with their next sync.
+    async fn set_visibility(&self, principal: &str, policy: Policy) -> Result<(), Error>;
+
+    /// Writes an object of `(owner, cal_id)` for a sharee with write access, in one transaction:
+    /// only a fully visible, live object can be replaced (its UID unchanged, its alarms kept);
+    /// a new object needs a name and a UID unused in the calendar, also in the trash bin.
+    /// The conditions are checked against the sharee's view. Returns the `ETag` of that view
+    /// if what is stored is what was sent.
+    async fn put_copy_object(
+        &self,
+        owner: &str,
+        cal_id: &str,
+        object_id: &str,
+        object: CalendarObject,
+        preconditions: Preconditions<'_>,
+    ) -> Result<Option<String>, Error>;
+    /// Moves a fully visible object of `(owner, cal_id)` to the trash bin for a sharee
+    async fn delete_copy_object(
+        &self,
+        owner: &str,
+        cal_id: &str,
+        object_id: &str,
+        preconditions: Preconditions<'_>,
+    ) -> Result<(), Error>;
+    /// [`Self::put_copy_object`] for addressbooks (contacts are always fully visible)
+    async fn put_copy_address_object(
+        &self,
+        owner: &str,
+        addressbook_id: &str,
+        object_id: &str,
+        object: AddressObject,
+        preconditions: Preconditions<'_>,
+    ) -> Result<Option<String>, Error>;
+    /// [`Self::delete_copy_object`] for addressbooks
+    async fn delete_copy_address_object(
+        &self,
+        owner: &str,
+        addressbook_id: &str,
+        object_id: &str,
+        preconditions: Preconditions<'_>,
+    ) -> Result<(), Error>;
 }

@@ -8,6 +8,10 @@ repository.workspace = true
 license.workspace = true
 publish = false
 
+[features]
+# Constructors for tests only (never enabled in a release build)
+test = []
+
 [dependencies]
 anyhow.workspace = true
 async-trait.workspace = true

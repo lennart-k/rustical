@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO principal_visibility (principal, private, confidential) VALUES (?, ?, ?)\n                ON CONFLICT(principal) DO UPDATE SET (private, confidential) = (excluded.private, excluded.confidential)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "a32033fd368d1789e12c44f7e94fd182c41daf911e75fb5131ecdc2be9380018"
+}

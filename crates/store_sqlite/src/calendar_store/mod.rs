@@ -111,6 +111,39 @@ impl From<CalendarRow> for Calendar {
     }
 }
 
+/// The columns of a calendar object row that are derived from the object
+pub struct ObjectColumns<'a> {
+    pub uid: &'a str,
+    pub ics: &'a str,
+    pub first_occurence: Option<chrono::NaiveDate>,
+    pub last_occurence: Option<chrono::NaiveDate>,
+    pub etag: String,
+    pub object_type: u8,
+}
+
+impl<'a> ObjectColumns<'a> {
+    pub fn of(object: &'a CalendarObject) -> Self {
+        Self {
+            uid: object.get_uid(),
+            ics: object.get_ics(),
+            first_occurence: object
+                .get_inner()
+                .get_inner()
+                .get_first_occurence()
+                .as_ref()
+                .map(CalDateTime::date_floor),
+            last_occurence: object
+                .get_inner()
+                .get_inner()
+                .get_last_occurence()
+                .as_ref()
+                .map(CalDateTime::date_ceil),
+            etag: object.get_etag(),
+            object_type: object.get_object_type() as u8,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct SqliteCalendarStore {
     db: SqlitePool,
@@ -133,7 +166,7 @@ impl SqliteCalendarStore {
     }
 
     // Logs an operation to the events
-    async fn log_object_operation(
+    pub(crate) async fn log_object_operation(
         tx: &mut Transaction<'_, Sqlite>,
         principal: &str,
         cal_id: &str,
@@ -616,22 +649,14 @@ impl SqliteCalendarStore {
         object: &CalendarObject,
         overwrite: bool,
     ) -> Result<(), Error> {
-        let (uid, ics) = (object.get_uid(), object.get_ics());
-
-        let first_occurence = object
-            .get_inner()
-            .get_inner()
-            .get_first_occurence()
-            .as_ref()
-            .map(CalDateTime::date_floor);
-        let last_occurence = object
-            .get_inner()
-            .get_inner()
-            .get_last_occurence()
-            .as_ref()
-            .map(CalDateTime::date_ceil);
-        let etag = object.get_etag();
-        let object_type = object.get_object_type() as u8;
+        let ObjectColumns {
+            uid,
+            ics,
+            first_occurence,
+            last_occurence,
+            etag,
+            object_type,
+        } = ObjectColumns::of(object);
 
         (if overwrite {
             sqlx::query!(

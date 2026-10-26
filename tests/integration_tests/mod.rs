@@ -68,3 +68,4 @@ async fn test_ping(
 mod access;
 mod caldav;
 mod carddav;
+mod visibility;

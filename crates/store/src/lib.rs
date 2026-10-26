@@ -10,6 +10,7 @@ mod calendar;
 mod combined_calendar_store;
 mod secret;
 pub mod share;
+pub mod shared;
 pub mod synctoken;
 
 #[cfg(test)]
@@ -20,7 +21,8 @@ pub use calendar_store::*;
 pub use combined_calendar_store::{CombinedCalendarStore, PrefixedCalendarStore};
 pub use secret::Secret;
 pub use share::{
-    Access, AddressbookShare, CalendarShare, ShareRejection, ShareStore, ShareViewUpdate,
+    Access, AddressbookShare, CalendarShare, CopyRule, Preconditions, ShareRejection, ShareStore,
+    ShareViewUpdate,
 };
 
 pub use addressbook::Addressbook;
