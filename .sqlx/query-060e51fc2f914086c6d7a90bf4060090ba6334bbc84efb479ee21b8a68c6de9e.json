@@ -1,0 +1,21 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT EXISTS(SELECT 1 FROM memberships WHERE (principal, member_of) = (?, ?)) AS \"member!: bool\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "member!: bool",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "060e51fc2f914086c6d7a90bf4060090ba6334bbc84efb479ee21b8a68c6de9e"
+}

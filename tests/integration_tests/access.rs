@@ -669,3 +669,64 @@ async fn test_read_only_objects_cannot_be_deleted(
     let (status, _) = send(&app, "GET", object, Some(USER), &[], "").await;
     assert_eq!(status, StatusCode::OK);
 }
+
+#[rstest]
+#[tokio::test]
+async fn test_collections_cannot_take_a_share_name(
+    #[from(test_store_context)]
+    #[future]
+    context: TestStoreContext,
+) {
+    use rustical_store::{Access, ShareStore};
+    let context = context.await;
+    add_principal(
+        &context,
+        "other",
+        PrincipalType::Individual,
+        Some("otherpass"),
+    )
+    .await;
+    let app = get_app(context.clone());
+    seed_user(&app).await;
+    let calendar = context
+        .share_store
+        .share_calendar("user", "cal", "other", Access::Read, None)
+        .await
+        .unwrap();
+    let addressbook = context
+        .share_store
+        .share_addressbook("user", "book", "other", Access::Read, None)
+        .await
+        .unwrap();
+
+    // As for any existing collection: MKCALENDAR/MKCOL 405 (RFC 4791 section 5.3.1), IMPORT 409
+    for (method, uri, body, expected) in [
+        (
+            "MKCALENDAR",
+            format!("/caldav/principal/other/{}", calendar.name),
+            MKCALENDAR.to_owned(),
+            StatusCode::METHOD_NOT_ALLOWED,
+        ),
+        (
+            "IMPORT",
+            format!("/caldav/principal/other/{}", calendar.name),
+            event("imported-uid", "Imported"),
+            StatusCode::CONFLICT,
+        ),
+        (
+            "MKCOL",
+            format!("/carddav/principal/other/{}", addressbook.name),
+            MKCOL_ADDRESSBOOK.to_owned(),
+            StatusCode::METHOD_NOT_ALLOWED,
+        ),
+        (
+            "IMPORT",
+            format!("/carddav/principal/other/{}", addressbook.name),
+            vcard("imported-card", "Imported"),
+            StatusCode::CONFLICT,
+        ),
+    ] {
+        let (status, body) = send(&app, method, &uri, Some(OTHER), &[], &body).await;
+        assert_eq!(status, expected, "{method} {uri}: {body}");
+    }
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM addressbook_shares WHERE (owner, addressbook_id, sharee) = (?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "c352d3821e5a8cd80ce1fe9b483e2135d3c7f6b3d86d0d6a029238834338e7cc"
+}

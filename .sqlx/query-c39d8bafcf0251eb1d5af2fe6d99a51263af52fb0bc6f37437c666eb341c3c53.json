@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT OR IGNORE INTO memberships (principal, member_of)\n                    SELECT ?1, ?2 WHERE EXISTS(SELECT 1 FROM principals WHERE id = ?1)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "c39d8bafcf0251eb1d5af2fe6d99a51263af52fb0bc6f37437c666eb341c3c53"
+}

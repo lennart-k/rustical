@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO addressbook_shares (owner, addressbook_id, sharee, name, access, created_by)\n                    VALUES (?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "f0821ebb96fa36713af998143f2c066c6633af219acd03f884b2ce06c2b1c92c"
+}

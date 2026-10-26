@@ -13,6 +13,8 @@ pub use dav_push_store::SqliteDavPushStore;
 pub mod error;
 mod principal_store;
 pub use principal_store::SqlitePrincipalStore;
+mod share_store;
+pub use share_store::SqliteShareStore;
 
 // Begin statement for write transactions
 pub const BEGIN_IMMEDIATE: &str = "BEGIN IMMEDIATE";

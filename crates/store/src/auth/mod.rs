@@ -99,6 +99,13 @@ pub trait AuthenticationProvider: Send + Sync + 'static {
     async fn remove_membership(&self, principal: &str, member_of: &str) -> Result<(), Error>;
 
     async fn list_members(&self, principal: &str) -> Result<Vec<String>, Error>;
+
+    /// Removes every member of `group` in one transaction and returns who they were.
+    async fn clear_memberships(&self, group: &str) -> Result<Vec<String>, Error>;
+
+    /// Makes `members` members of `group` in one transaction. Principals that no longer
+    /// exist are skipped.
+    async fn set_memberships(&self, group: &str, members: &[String]) -> Result<(), Error>;
 }
 
 pub use middleware::AuthenticationMiddleware;

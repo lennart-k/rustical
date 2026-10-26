@@ -9,10 +9,13 @@ use config::{DataStoreConfig, SqliteDataStoreConfig};
 use provided_listeners::ProvidedListeners;
 use rustical_dav_push::{DavPushService, DavPushStore, VapidStore};
 use rustical_store::auth::AuthenticationProvider;
-use rustical_store::{AddressbookStore, CalendarStore, CollectionOperation, PrefixedCalendarStore};
+use rustical_store::{
+    AddressbookStore, CalendarStore, CollectionOperation, PrefixedCalendarStore, ShareStore,
+};
 use rustical_store_sqlite::SqliteAddressbookStore;
 use rustical_store_sqlite::SqliteCalendarStore;
 use rustical_store_sqlite::SqlitePrincipalStore;
+use rustical_store_sqlite::SqliteShareStore;
 use rustical_store_sqlite::{SqliteDavPushStore, create_db_pool};
 use setup_tracing::setup_tracing;
 use std::fs;
@@ -53,6 +56,8 @@ pub enum Command {
     )]
     Health(HealthArgs),
     Principals(PrincipalsArgs),
+    #[command(about = "Share calendars and addressbooks with other principals")]
+    Share(ShareArgs),
 }
 
 #[allow(clippy::missing_errors_doc)]
@@ -64,6 +69,7 @@ pub async fn get_data_stores(
     Arc<impl CalendarStore>,
     Arc<impl DavPushStore>,
     Arc<impl AuthenticationProvider>,
+    Arc<impl ShareStore>,
     Receiver<CollectionOperation>,
 )> {
     Ok(match &config {
@@ -82,6 +88,7 @@ pub async fn get_data_stores(
                 send.clone(),
                 *skip_broken,
             ));
+            let share_store = Arc::new(SqliteShareStore::new(db.clone(), send.clone()));
             let cal_store = Arc::new(SqliteCalendarStore::new(db.clone(), send, *skip_broken));
             if *run_repairs {
                 info!("Running repair tasks");
@@ -105,6 +112,7 @@ pub async fn get_data_stores(
                 cal_store,
                 dav_push_store,
                 principal_store,
+                share_store,
                 recv,
             )
         }
@@ -122,7 +130,7 @@ pub async fn cmd_serve(
         setup_tracing(&config.tracing);
     }
 
-    let (addr_store, cal_store, dav_push_store, principal_store, update_recv) =
+    let (addr_store, cal_store, dav_push_store, principal_store, _share_store, update_recv) =
         get_data_stores(!args.no_migrations, &config.data_store).await?;
 
     if config.dav_push.enabled {

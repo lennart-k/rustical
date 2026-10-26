@@ -1,3 +1,4 @@
+use crate::BEGIN_IMMEDIATE;
 use async_trait::async_trait;
 use password_hash::{CustomizedPasswordHasher, phc::Salt};
 use pbkdf2::Params;
@@ -276,6 +277,46 @@ impl AuthenticationProvider for SqlitePrincipalStore {
         .execute(&self.db)
         .await
         .map_err(crate::Error::from)?;
+        Ok(())
+    }
+
+    #[instrument]
+    async fn clear_memberships(&self, group: &str) -> Result<Vec<String>, Error> {
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
+        let members = sqlx::query_scalar!(
+            r#"DELETE FROM memberships WHERE member_of = ? RETURNING principal"#,
+            group
+        )
+        .fetch_all(&mut *tx)
+        .await
+        .map_err(crate::Error::from)?;
+        tx.commit().await.map_err(crate::Error::from)?;
+        Ok(members)
+    }
+
+    #[instrument]
+    async fn set_memberships(&self, group: &str, members: &[String]) -> Result<(), Error> {
+        let mut tx = self
+            .db
+            .begin_with(BEGIN_IMMEDIATE)
+            .await
+            .map_err(crate::Error::from)?;
+        for member in members {
+            sqlx::query!(
+                r#"INSERT OR IGNORE INTO memberships (principal, member_of)
+                    SELECT ?1, ?2 WHERE EXISTS(SELECT 1 FROM principals WHERE id = ?1)"#,
+                member,
+                group
+            )
+            .execute(&mut *tx)
+            .await
+            .map_err(crate::Error::from)?;
+        }
+        tx.commit().await.map_err(crate::Error::from)?;
         Ok(())
     }
 

@@ -18,6 +18,9 @@ pub enum Error {
     #[error("Forbidden")]
     Forbidden,
 
+    #[error(transparent)]
+    ShareRejected(#[from] crate::share::ShareRejection),
+
     #[error("Invalid principal id: Id cannot contain ':' or '$'.")]
     InvalidPrincipalId,
 
@@ -41,7 +44,9 @@ impl Error {
             Self::NotFound => StatusCode::NOT_FOUND,
             Self::AlreadyExists => StatusCode::CONFLICT,
             Self::ReadOnly | Self::Forbidden => StatusCode::FORBIDDEN,
-            Self::InvalidPrincipalId | Self::InvalidPrincipalType(_) => StatusCode::BAD_REQUEST,
+            Self::InvalidPrincipalId | Self::InvalidPrincipalType(_) | Self::ShareRejected(_) => {
+                StatusCode::BAD_REQUEST
+            }
             Self::IcalError(_err) => StatusCode::INTERNAL_SERVER_ERROR,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }

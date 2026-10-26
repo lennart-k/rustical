@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE addressbook_shares SET color = ? WHERE (sharee, name) = (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "2792d72e4d2446f90a379d6ce927b3dea7602dcfc5bfd94992ba507bafb13dfb"
+}

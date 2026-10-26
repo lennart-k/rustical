@@ -1,5 +1,6 @@
 use super::ChangeOperation;
 use crate::BEGIN_IMMEDIATE;
+use crate::share_store::addressbook_name_shared;
 use async_trait::async_trait;
 use caldata::parser::ParserError;
 use rustical_ical::AddressObject;
@@ -652,6 +653,10 @@ impl AddressbookWriteStore for SqliteAddressbookStore {
             .begin_with(BEGIN_IMMEDIATE)
             .await
             .map_err(crate::Error::from)?;
+        // The name may not be taken by an addressbook shared with this principal
+        if addressbook_name_shared(&mut tx, &addressbook.principal, &addressbook.id).await? {
+            return Err(Error::AlreadyExists);
+        }
         Self::_insert_addressbook(&mut *tx, &addressbook).await?;
         let birthday_cal = Self::default_birthday_calendar(addressbook);
         Self::_insert_birthday_calendar(&mut *tx, &birthday_cal).await?;
@@ -843,6 +848,9 @@ impl AddressbookWriteStore for SqliteAddressbookStore {
             return Err(Error::AlreadyExists);
         }
         if existing.is_none() {
+            if addressbook_name_shared(&mut tx, &addressbook.principal, &addressbook.id).await? {
+                return Err(Error::AlreadyExists);
+            }
             Self::_insert_addressbook(&mut *tx, &addressbook).await?;
         }
 
