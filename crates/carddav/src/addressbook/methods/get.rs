@@ -1,6 +1,5 @@
 use crate::Error;
 use crate::addressbook::AddressbookResourceService;
-use crate::addressbook::resource::AddressbookResource;
 use axum::body::Body;
 use axum::extract::{Path, State};
 use axum::response::Response;
@@ -13,40 +12,31 @@ use rustical_dav_push::DavPushStore;
 use rustical_store::AddressbookStore;
 use rustical_store::access::{self, Need};
 use rustical_store::auth::Principal;
+use rustical_store::shared;
 use std::str::FromStr;
 use tracing::instrument;
 
-#[instrument(skip(addr_store, dav_push_store))]
+#[instrument(skip(service))]
 pub async fn route_get<AS: AddressbookStore, DP: DavPushStore>(
     Path((principal, addressbook_id)): Path<(String, String)>,
-    State(AddressbookResourceService {
-        addr_store,
-        dav_push_store,
-        ..
-    }): State<AddressbookResourceService<AS, DP>>,
+    State(service): State<AddressbookResourceService<AS, DP>>,
     user: Principal,
     method: Method,
 ) -> Result<Response, Error> {
     access::check_home(&user, &principal)?;
-    let (resolved, addressbook) =
-        access::resolve_addressbook(addr_store.as_ref(), &principal, &addressbook_id, false)
-            .await?;
-    resolved.check(Need::Read)?;
-    let vapid_pubkey = dav_push_store.get_vapid_pubkey_b64().await?.clone();
-    let addressbook_resource = AddressbookResource {
-        addressbook: addressbook.clone(),
-        vapid_pubkey,
-    };
+    let addressbook_resource = service.resource(&principal, &addressbook_id, false).await?;
+    addressbook_resource.resolved.check(Need::Read)?;
     if !addressbook_resource
         .get_user_privileges(&user)?
         .has(&UserPrivilege::Read)
     {
         return Err(rustical_store::Error::Forbidden.into());
     }
+    let addressbook = addressbook_resource.addressbook;
 
-    let objects = addr_store
-        .get_objects(resolved.owner(), resolved.id())
-        .await?;
+    let objects =
+        shared::address_objects(service.addr_store.as_ref(), &addressbook_resource.resolved)
+            .await?;
     let vcf = objects
         .iter()
         .map(|(_id, obj)| obj.get_vcf())

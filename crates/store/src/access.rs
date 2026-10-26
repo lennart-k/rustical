@@ -12,9 +12,10 @@
 //! (for example collections shared by another principal) plug in without touching every
 //! route again.
 use crate::{
-    Access, Addressbook, AddressbookStore, Calendar, CalendarStore, Error, auth::Principal,
+    Access, Addressbook, AddressbookShare, AddressbookStore, Calendar, CalendarShare,
+    CalendarStore, Error, ShareStore, auth::Principal,
 };
-use rustical_ical::visibility::Policy;
+use rustical_ical::visibility::{FULL, Policy};
 
 /// What a route needs from a collection.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -103,6 +104,14 @@ impl Resolved {
             kind: ResolvedKind::Own,
         }
     }
+
+    const fn copy(owner: String, id: String, access: Access, policy: Policy) -> Self {
+        Self {
+            owner,
+            id,
+            kind: ResolvedKind::Copy { access, policy },
+        }
+    }
 }
 
 #[cfg(any(test, feature = "test"))]
@@ -132,42 +141,196 @@ pub fn check_home(user: &Principal, home: &str) -> Result<(), Error> {
     }
 }
 
-/// Resolves the calendar at `(home, name)`.
+/// Resolves the calendar at `(home, name)`: a calendar of the home, or a calendar shared
+/// with the home.
 ///
-/// Returns the calendar as the path presents it together with what it is.
+/// Returns the calendar as the path presents it (for a share with the sharee's display name,
+/// color and order) together with what it is. A shared calendar in the owner's trash bin does
+/// not exist for the sharee, whatever `show_deleted` says.
 ///
 /// # Errors
-/// [`Error::NotFound`] if there is no such calendar, or any error of the store.
+/// [`Error::NotFound`] if there is no such calendar, or any error of the stores.
 pub async fn resolve_calendar(
+    shares: &dyn ShareStore,
     store: &dyn CalendarStore,
     home: &str,
     name: &str,
     show_deleted: bool,
 ) -> Result<(Resolved, Calendar), Error> {
-    let calendar = store.get_calendar(home, name, show_deleted).await?;
+    match store.get_calendar(home, name, show_deleted).await {
+        Ok(calendar) => {
+            return Ok((
+                Resolved::own(calendar.principal.clone(), calendar.id.clone()),
+                calendar,
+            ));
+        }
+        Err(Error::NotFound) => {}
+        Err(err) => return Err(err),
+    }
+    let share = shares
+        .get_calendar_share(home, name)
+        .await?
+        .ok_or(Error::NotFound)?;
+    shared_calendar(shares, store, share).await
+}
+
+/// A share in the home of its sharee as [`resolve_calendar`] presents it
+async fn shared_calendar(
+    shares: &dyn ShareStore,
+    store: &dyn CalendarStore,
+    share: CalendarShare,
+) -> Result<(Resolved, Calendar), Error> {
+    let mut calendar = store
+        .get_calendar(&share.owner, &share.cal_id, false)
+        .await?;
+    let policy = shares.get_visibility(&share.owner).await?;
+    if share.displayname.is_some() {
+        calendar.meta.displayname = share.displayname;
+    }
+    if share.color.is_some() {
+        calendar.meta.color = share.color;
+    }
+    if let Some(order) = share.order {
+        calendar.meta.order = order;
+    }
     Ok((
-        Resolved::own(calendar.principal.clone(), calendar.id.clone()),
+        Resolved::copy(share.owner, share.cal_id, share.access, policy),
         calendar,
     ))
 }
 
-/// Resolves the addressbook at `(home, name)`.
-///
-/// Returns the addressbook as the path presents it together with what it is.
+/// The live calendars of `home` itself, resolved.
 ///
 /// # Errors
-/// [`Error::NotFound`] if there is no such addressbook, or any error of the store.
+/// Any error of the store.
+pub async fn own_calendars(
+    store: &dyn CalendarStore,
+    home: &str,
+) -> Result<Vec<(Resolved, Calendar)>, Error> {
+    Ok(store
+        .get_calendars(home)
+        .await?
+        .into_iter()
+        .map(|calendar| {
+            (
+                Resolved::own(calendar.principal.clone(), calendar.id.clone()),
+                calendar,
+            )
+        })
+        .collect())
+}
+
+/// The live addressbooks of `home` itself, resolved.
+///
+/// # Errors
+/// Any error of the store.
+pub async fn own_addressbooks(
+    store: &dyn AddressbookStore,
+    home: &str,
+) -> Result<Vec<(Resolved, Addressbook)>, Error> {
+    Ok(store
+        .get_addressbooks(home)
+        .await?
+        .into_iter()
+        .map(|addressbook| {
+            (
+                Resolved::own(addressbook.principal.clone(), addressbook.id.clone()),
+                addressbook,
+            )
+        })
+        .collect())
+}
+
+/// The calendars shared with `home`, as [`resolve_calendar`] presents them, with their names in
+/// the home. A share whose calendar cannot be read is left out (never an error for the listing).
+///
+/// # Errors
+/// Any error of the share store listing the shares.
+pub async fn shared_calendars(
+    shares: &dyn ShareStore,
+    store: &dyn CalendarStore,
+    home: &str,
+) -> Result<Vec<(String, Resolved, Calendar)>, Error> {
+    let mut result = vec![];
+    for share in shares.calendars_shared_with(home).await? {
+        let name = share.name.clone();
+        match shared_calendar(shares, store, share).await {
+            Ok((resolved, calendar)) => result.push((name, resolved, calendar)),
+            Err(err) => tracing::warn!("Skipping shared calendar {home}/{name}: {err}"),
+        }
+    }
+    Ok(result)
+}
+
+/// Resolves the addressbook at `(home, name)`: an addressbook of the home, or one shared with
+/// the home. See [`resolve_calendar`].
+///
+/// # Errors
+/// [`Error::NotFound`] if there is no such addressbook, or any error of the stores.
 pub async fn resolve_addressbook(
+    shares: &dyn ShareStore,
     store: &dyn AddressbookStore,
     home: &str,
     name: &str,
     show_deleted: bool,
 ) -> Result<(Resolved, Addressbook), Error> {
-    let addressbook = store.get_addressbook(home, name, show_deleted).await?;
+    match store.get_addressbook(home, name, show_deleted).await {
+        Ok(addressbook) => {
+            return Ok((
+                Resolved::own(addressbook.principal.clone(), addressbook.id.clone()),
+                addressbook,
+            ));
+        }
+        Err(Error::NotFound) => {}
+        Err(err) => return Err(err),
+    }
+    let share = shares
+        .get_addressbook_share(home, name)
+        .await?
+        .ok_or(Error::NotFound)?;
+    shared_addressbook(store, share).await
+}
+
+async fn shared_addressbook(
+    store: &dyn AddressbookStore,
+    share: AddressbookShare,
+) -> Result<(Resolved, Addressbook), Error> {
+    let mut addressbook = store
+        .get_addressbook(&share.owner, &share.addressbook_id, false)
+        .await?;
+    if share.displayname.is_some() {
+        addressbook.displayname = share.displayname;
+    }
     Ok((
-        Resolved::own(addressbook.principal.clone(), addressbook.id.clone()),
+        // Contacts have no CLASS: always fully visible
+        Resolved::copy(
+            share.owner,
+            share.addressbook_id,
+            share.access,
+            Policy::new(FULL, FULL).expect("valid levels"),
+        ),
         addressbook,
     ))
+}
+
+/// The addressbooks shared with `home`; see [`shared_calendars`].
+///
+/// # Errors
+/// Any error of the share store listing the shares.
+pub async fn shared_addressbooks(
+    shares: &dyn ShareStore,
+    store: &dyn AddressbookStore,
+    home: &str,
+) -> Result<Vec<(String, Resolved, Addressbook)>, Error> {
+    let mut result = vec![];
+    for share in shares.addressbooks_shared_with(home).await? {
+        let name = share.name.clone();
+        match shared_addressbook(store, share).await {
+            Ok((resolved, addressbook)) => result.push((name, resolved, addressbook)),
+            Err(err) => tracing::warn!("Skipping shared addressbook {home}/{name}: {err}"),
+        }
+    }
+    Ok(result)
 }
 
 #[cfg(test)]

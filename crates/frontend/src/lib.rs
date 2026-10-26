@@ -12,7 +12,7 @@ use http::{Method, StatusCode};
 use routes::{addressbooks::route_addressbooks, calendars::route_calendars};
 use rustical_oidc::{OidcConfig, OidcServiceConfig, oidc_router};
 use rustical_store::{
-    AddressbookStore, CalendarStore, PrefixedCalendarStore,
+    AddressbookStore, CalendarStore, PrefixedCalendarStore, ShareStore,
     auth::{AuthenticationProvider, middleware::AuthenticationLayer},
 };
 use std::sync::Arc;
@@ -26,7 +26,7 @@ pub(crate) mod pages;
 mod routes;
 
 pub use config::FrontendConfig;
-use oidc_user_store::OidcUserStore;
+pub use oidc_user_store::OidcUserStore;
 
 use crate::routes::{
     addressbook::{route_addressbook, route_addressbook_restore},
@@ -48,6 +48,7 @@ pub fn frontend_router<
     auth_provider: Arc<AP>,
     cal_store: Arc<CS>,
     addr_store: Arc<AS>,
+    share_store: Arc<dyn ShareStore>,
     frontend_config: FrontendConfig,
     oidc_config: Option<OidcConfig>,
 ) -> Router {
@@ -118,6 +119,7 @@ pub fn frontend_router<
         .layer(Extension(auth_provider))
         .layer(Extension(cal_store))
         .layer(Extension(addr_store))
+        .layer(Extension(share_store))
         .layer(Extension(frontend_config))
         .layer(Extension(oidc_config));
 

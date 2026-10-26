@@ -130,7 +130,7 @@ pub async fn cmd_serve(
         setup_tracing(&config.tracing);
     }
 
-    let (addr_store, cal_store, dav_push_store, principal_store, _share_store, update_recv) =
+    let (addr_store, cal_store, dav_push_store, principal_store, share_store, update_recv) =
         get_data_stores(!args.no_migrations, &config.data_store).await?;
 
     if config.dav_push.enabled {
@@ -151,6 +151,7 @@ pub async fn cmd_serve(
         cal_store.clone(),
         dav_push_store.clone(),
         principal_store.clone(),
+        share_store,
         config.frontend.clone(),
         config.oidc.clone(),
         config.caldav,

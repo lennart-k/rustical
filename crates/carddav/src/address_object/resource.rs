@@ -8,22 +8,25 @@ use crate::{
     },
 };
 use caldata::property::VcardFNProperty;
-use derive_more::derive::{From, Into};
 use rustical_dav::{
     extensions::CommonPropertiesExtension,
-    privileges::UserPrivilegeSet,
+    privileges::{UserPrivilege, UserPrivilegeSet},
     resource::{PrincipalUri, Resource, ResourceName},
     resourcetype,
     xml::Resourcetype,
 };
 use rustical_ical::AddressObject;
-use rustical_store::{access, auth::Principal};
+use rustical_store::access::{self, Resolved, ResolvedKind};
+use rustical_store::{Access, auth::Principal};
 
-#[derive(Clone, From, Into)]
+#[derive(Clone)]
 pub struct AddressObjectResource {
     pub object: AddressObject,
+    /// The home of the path
     pub principal: String,
     pub object_id: String,
+    /// The addressbook the object belongs to
+    pub resolved: Resolved,
 }
 
 impl ResourceName for AddressObjectResource {
@@ -80,7 +83,7 @@ impl Resource for AddressObjectResource {
     }
 
     fn get_owner(&self) -> Option<&str> {
-        Some(&self.principal)
+        Some(self.resolved.owner())
     }
 
     fn get_etag(&self) -> Option<String> {
@@ -88,9 +91,20 @@ impl Resource for AddressObjectResource {
     }
 
     fn get_user_privileges(&self, user: &Principal) -> Result<UserPrivilegeSet, Self::Error> {
-        Ok(UserPrivilegeSet::owner_only(access::may_use_home(
-            user,
-            &self.principal,
-        )))
+        let may_use = access::may_use_home(user, &self.principal);
+        Ok(match self.resolved.kind() {
+            ResolvedKind::Own => UserPrivilegeSet::owner_only(may_use),
+            ResolvedKind::Copy {
+                access: Access::Write,
+                ..
+            } if may_use => UserPrivilegeSet::from([
+                UserPrivilege::Read,
+                UserPrivilege::ReadCurrentUserPrivilegeSet,
+                UserPrivilege::Write,
+                UserPrivilege::WriteProperties,
+                UserPrivilege::WriteContent,
+            ]),
+            ResolvedKind::Copy { .. } => UserPrivilegeSet::owner_read(may_use),
+        })
     }
 }

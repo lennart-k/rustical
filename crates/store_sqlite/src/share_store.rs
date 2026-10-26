@@ -127,6 +127,57 @@ pub async fn addressbook_name_shared(
     .map_err(crate::Error::from)?)
 }
 
+/// Sets or removes the e-mail address of a principal; an address another principal had moves
+/// to this one (the newest claim of the identity provider wins). The one implementation for the
+/// share store and the principal store.
+pub async fn set_principal_email(
+    db: &SqlitePool,
+    principal: &str,
+    email: Option<&str>,
+) -> Result<(), Error> {
+    let mut tx = db
+        .begin_with(BEGIN_IMMEDIATE)
+        .await
+        .map_err(crate::Error::from)?;
+    match email.map(str::trim).filter(|email| !email.is_empty()) {
+        None => {
+            sqlx::query!(
+                r#"DELETE FROM principal_emails WHERE principal = ?"#,
+                principal
+            )
+            .execute(&mut *tx)
+            .await
+            .map_err(crate::Error::from)?;
+        }
+        Some(email) => {
+            let email = email.to_lowercase();
+            // The newest claim wins: the identity provider is the authority on addresses
+            let moved = sqlx::query!(
+                r#"DELETE FROM principal_emails WHERE email = ? AND principal != ?"#,
+                email,
+                principal
+            )
+            .execute(&mut *tx)
+            .await
+            .map_err(crate::Error::from)?;
+            if moved.rows_affected() > 0 {
+                warn!("E-mail address {email} moved to principal {principal}");
+            }
+            sqlx::query!(
+                r#"INSERT INTO principal_emails (principal, email) VALUES (?, ?)
+                    ON CONFLICT(principal) DO UPDATE SET email = excluded.email"#,
+                principal,
+                email
+            )
+            .execute(&mut *tx)
+            .await
+            .map_err(crate::Error::from)?;
+        }
+    }
+    tx.commit().await.map_err(crate::Error::from)?;
+    Ok(())
+}
+
 impl SqliteShareStore {
     /// Resolves a principal id or an e-mail address to a principal id.
     async fn resolve_sharee(
@@ -688,48 +739,7 @@ impl ShareStore for SqliteShareStore {
 
     #[instrument]
     async fn set_principal_email(&self, principal: &str, email: Option<&str>) -> Result<(), Error> {
-        let mut tx = self
-            .db
-            .begin_with(BEGIN_IMMEDIATE)
-            .await
-            .map_err(crate::Error::from)?;
-        match email.map(str::trim).filter(|email| !email.is_empty()) {
-            None => {
-                sqlx::query!(
-                    r#"DELETE FROM principal_emails WHERE principal = ?"#,
-                    principal
-                )
-                .execute(&mut *tx)
-                .await
-                .map_err(crate::Error::from)?;
-            }
-            Some(email) => {
-                let email = email.to_lowercase();
-                // The newest claim wins: the identity provider is the authority on addresses
-                let moved = sqlx::query!(
-                    r#"DELETE FROM principal_emails WHERE email = ? AND principal != ?"#,
-                    email,
-                    principal
-                )
-                .execute(&mut *tx)
-                .await
-                .map_err(crate::Error::from)?;
-                if moved.rows_affected() > 0 {
-                    warn!("E-mail address {email} moved to principal {principal}");
-                }
-                sqlx::query!(
-                    r#"INSERT INTO principal_emails (principal, email) VALUES (?, ?)
-                        ON CONFLICT(principal) DO UPDATE SET email = excluded.email"#,
-                    principal,
-                    email
-                )
-                .execute(&mut *tx)
-                .await
-                .map_err(crate::Error::from)?;
-            }
-        }
-        tx.commit().await.map_err(crate::Error::from)?;
-        Ok(())
+        set_principal_email(&self.db, principal, email).await
     }
 
     #[instrument]

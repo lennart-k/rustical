@@ -153,7 +153,7 @@ impl ShareViewUpdate {
 
 /// The store of shares and of the principal data sharing needs (e-mail addresses).
 #[async_trait]
-pub trait ShareStore: Send + Sync + 'static {
+pub trait ShareStore: std::fmt::Debug + Send + Sync + 'static {
     /// Shares a calendar with `sharee` (a principal id or an e-mail address).
     /// Sharing again with the same principal changes only the access.
     async fn share_calendar(

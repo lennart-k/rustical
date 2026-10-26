@@ -16,12 +16,26 @@ pub struct CalendarMultigetRequest {
     pub(crate) href: Vec<Uri>,
 }
 
+#[cfg(test)]
 pub async fn get_objects_calendar_multiget<C: CalendarReadStore>(
     request: &CalendarMultigetRequest,
     collection_uri: &Uri,
     principal: &str,
     cal_id: &str,
     store: &C,
+) -> Result<(Vec<(String, CalendarObject)>, Vec<Uri>), Error> {
+    get_objects_calendar_multiget_presented(request, collection_uri, principal, cal_id, store, Some)
+        .await
+}
+
+/// [`get_objects_calendar_multiget`] with each object as `present` shows it (`None`: not found)
+pub async fn get_objects_calendar_multiget_presented<C: CalendarReadStore + ?Sized>(
+    request: &CalendarMultigetRequest,
+    collection_uri: &Uri,
+    principal: &str,
+    cal_id: &str,
+    store: &C,
+    present: impl Fn(CalendarObject) -> Option<CalendarObject>,
 ) -> Result<(Vec<(String, CalendarObject)>, Vec<Uri>), Error> {
     let mut result = vec![];
     let mut not_found = vec![];
@@ -40,7 +54,10 @@ pub async fn get_objects_calendar_multiget<C: CalendarReadStore>(
             continue;
         };
         match store.get_object(principal, cal_id, object_id, false).await {
-            Ok(object) => result.push((object_id.to_owned(), object)),
+            Ok(object) => match present(object) {
+                Some(object) => result.push((object_id.to_owned(), object)),
+                None => not_found.push(href.clone()),
+            },
             Err(rustical_store::Error::NotFound) => not_found.push(href.clone()),
             Err(err) => return Err(err.into()),
         }

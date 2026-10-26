@@ -106,6 +106,16 @@ pub trait AuthenticationProvider: Send + Sync + 'static {
     /// Makes `members` members of `group` in one transaction. Principals that no longer
     /// exist are skipped.
     async fn set_memberships(&self, group: &str, members: &[String]) -> Result<(), Error>;
+
+    /// Sets the e-mail address an identity provider asserts for a principal; see
+    /// `ShareStore::set_principal_email`. Providers without e-mail addresses ignore it.
+    async fn set_principal_email(
+        &self,
+        _principal: &str,
+        _email: Option<&str>,
+    ) -> Result<(), Error> {
+        Ok(())
+    }
 }
 
 pub use middleware::AuthenticationMiddleware;

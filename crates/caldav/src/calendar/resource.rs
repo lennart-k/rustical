@@ -4,23 +4,23 @@ use crate::calendar::prop::{ReportMethod, SupportedCollationSet};
 use caldata::IcalParser;
 use caldata::types::CalDateTime;
 use chrono::{DateTime, Utc};
-use derive_more::derive::{From, Into};
 use http::Uri;
 use rustical_dav::extensions::{
-    CommonPropertiesExtension, CommonPropertiesProp, SyncTokenExtension, SyncTokenExtensionProp,
+    CommonPropertiesExtension, CommonPropertiesProp, CommonPropertiesPropName, SyncTokenExtension,
+    SyncTokenExtensionProp,
 };
 use rustical_dav::namespace::{NS_CALDAV, NS_CALENDARSERVER, NS_DAV};
-use rustical_dav::privileges::UserPrivilegeSet;
+use rustical_dav::privileges::{UserPrivilege, UserPrivilegeSet};
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
 use rustical_dav::resourcetype;
 use rustical_dav::xml::{HrefElement, Resourcetype, SupportedReportSet};
 use rustical_dav_push::{DavPushExtension, DavPushExtensionProp, VapidPublicKeyB64};
-use rustical_store::access;
+use rustical_store::Access;
+use rustical_store::access::{self, Resolved, ResolvedKind};
 use rustical_store::auth::Principal;
 use rustical_store::{Calendar, CalendarStore};
 use rustical_xml::{EnumVariants, PropName};
 use rustical_xml::{XmlDeserialize, XmlSerialize};
-use serde::Deserialize;
 use std::borrow::Cow;
 use std::str::FromStr;
 
@@ -71,11 +71,46 @@ pub enum CalendarPropWrapper {
     Common(CommonPropertiesProp),
 }
 
-#[derive(Clone, Debug, From, Into, Deserialize)]
+#[derive(Clone, Debug)]
 pub struct CalendarResource {
     pub cal: Calendar,
     pub read_only: bool,
     pub vapid_pubkey: VapidPublicKeyB64,
+    /// The home of the path
+    pub home: String,
+    /// The name of the calendar in the home (for a share not the owner's id)
+    pub name: String,
+    /// What the calendar is: the owner, the id and whether the home owns it or it is shared
+    pub resolved: Resolved,
+}
+
+impl CalendarResource {
+    /// The access a sharee has to the calendar itself
+    fn copy_privileges(access: Access) -> UserPrivilegeSet {
+        match access {
+            Access::Read => UserPrivilegeSet::from([
+                UserPrivilege::Read,
+                UserPrivilege::ReadCurrentUserPrivilegeSet,
+                // The sharee's own name, color and order
+                UserPrivilege::WriteProperties,
+            ]),
+            Access::Write => UserPrivilegeSet::from([
+                UserPrivilege::Read,
+                UserPrivilege::ReadCurrentUserPrivilegeSet,
+                UserPrivilege::WriteProperties,
+                UserPrivilege::Write,
+                UserPrivilege::WriteContent,
+            ]),
+        }
+    }
+
+    /// Calendar properties a sharee may change: only its own view of the share
+    const fn is_view_prop(prop: &CalendarPropName) -> bool {
+        matches!(
+            prop,
+            CalendarPropName::CalendarColor | CalendarPropName::CalendarOrder
+        )
+    }
 }
 
 /// Whether the objects of `calendar` are read-only (a subscription or a read-only store)
@@ -83,9 +118,35 @@ pub fn objects_read_only<C: CalendarStore + ?Sized>(store: &C, calendar: &Calend
     calendar.subscription_url.is_some() || store.is_read_only(&calendar.id)
 }
 
+/// Test data describes own calendars by the calendar alone
+#[cfg(test)]
+impl<'de> serde::Deserialize<'de> for CalendarResource {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        #[derive(serde::Deserialize)]
+        struct Data {
+            cal: Calendar,
+            read_only: bool,
+            vapid_pubkey: VapidPublicKeyB64,
+        }
+        let Data {
+            cal,
+            read_only,
+            vapid_pubkey,
+        } = Data::deserialize(deserializer)?;
+        Ok(Self {
+            home: cal.principal.clone(),
+            name: cal.id.clone(),
+            resolved: Resolved::for_tests(cal.principal.clone(), cal.id.clone(), ResolvedKind::Own),
+            cal,
+            read_only,
+            vapid_pubkey,
+        })
+    }
+}
+
 impl ResourceName for CalendarResource {
     fn get_name(&self) -> Cow<'_, str> {
-        Cow::from(&self.cal.id)
+        Cow::from(&self.name)
     }
 }
 
@@ -212,6 +273,18 @@ impl Resource for CalendarResource {
     }
 
     fn set_prop(&mut self, prop: Self::Prop) -> Result<(), rustical_dav::Error> {
+        if !self.resolved.is_own() {
+            let allowed = match &prop {
+                CalendarPropWrapper::Calendar(prop) => {
+                    Self::is_view_prop(&CalendarPropName::from(prop.clone()))
+                }
+                CalendarPropWrapper::Common(CommonPropertiesProp::Displayname(_)) => true,
+                _ => false,
+            };
+            if !allowed {
+                return Err(rustical_dav::Error::PropReadOnly);
+            }
+        }
         match prop {
             CalendarPropWrapper::Calendar(prop) => match prop {
                 CalendarProp::CalendarColor(color) => {
@@ -284,6 +357,16 @@ impl Resource for CalendarResource {
     }
 
     fn remove_prop(&mut self, prop: &CalendarPropWrapperName) -> Result<(), rustical_dav::Error> {
+        if !self.resolved.is_own() {
+            let allowed = match prop {
+                CalendarPropWrapperName::Calendar(prop) => Self::is_view_prop(prop),
+                CalendarPropWrapperName::Common(CommonPropertiesPropName::Displayname) => true,
+                _ => false,
+            };
+            if !allowed {
+                return Err(rustical_dav::Error::PropReadOnly);
+            }
+        }
         match prop {
             CalendarPropWrapperName::Calendar(prop) => match prop {
                 CalendarPropName::CalendarColor => {
@@ -331,20 +414,24 @@ impl Resource for CalendarResource {
     }
 
     fn get_owner(&self) -> Option<&str> {
-        Some(&self.cal.principal)
+        Some(self.resolved.owner())
     }
 
     fn get_user_privileges(&self, user: &Principal) -> Result<UserPrivilegeSet, Self::Error> {
-        if self.cal.subscription_url.is_some() || self.read_only {
-            return Ok(UserPrivilegeSet::owner_write_properties(
-                access::may_use_home(user, &self.cal.principal),
-            ));
+        let may_use = access::may_use_home(user, &self.home);
+        match self.resolved.kind() {
+            ResolvedKind::Copy { access, .. } => Ok(if may_use {
+                Self::copy_privileges(*access)
+            } else {
+                UserPrivilegeSet::default()
+            }),
+            ResolvedKind::Own => {
+                if self.cal.subscription_url.is_some() || self.read_only {
+                    return Ok(UserPrivilegeSet::owner_write_properties(may_use));
+                }
+                Ok(UserPrivilegeSet::owner_only(may_use))
+            }
         }
-
-        Ok(UserPrivilegeSet::owner_only(access::may_use_home(
-            user,
-            &self.cal.principal,
-        )))
     }
 }
 

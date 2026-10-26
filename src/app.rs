@@ -17,7 +17,7 @@ use rustical_frontend::{FrontendConfig, frontend_router};
 use rustical_oidc::OidcConfig;
 use rustical_store::auth::AuthenticationProvider;
 use rustical_store::{
-    AddressbookStore, CalendarStore, CombinedCalendarStore, PrefixedCalendarStore,
+    AddressbookStore, CalendarStore, CombinedCalendarStore, PrefixedCalendarStore, ShareStore,
 };
 use std::sync::Arc;
 use std::time::Duration;
@@ -44,6 +44,7 @@ pub fn make_app<
     cal_store: Arc<CS>,
     dav_push_store: Arc<DP>,
     auth_provider: Arc<impl AuthenticationProvider>,
+    share_store: Arc<dyn ShareStore>,
     frontend_config: FrontendConfig,
     oidc_config: Option<OidcConfig>,
     caldav_config: CalDavConfig,
@@ -65,6 +66,7 @@ pub fn make_app<
             "/caldav",
             auth_provider.clone(),
             combined_cal_store.clone(),
+            share_store.clone(),
             dav_push_store.clone(),
             false,
             caldav_config.clone(),
@@ -73,6 +75,7 @@ pub fn make_app<
             "/caldav-compat",
             auth_provider.clone(),
             combined_cal_store.clone(),
+            share_store.clone(),
             dav_push_store.clone(),
             true,
             caldav_config,
@@ -100,6 +103,7 @@ pub fn make_app<
             "/carddav",
             auth_provider.clone(),
             addr_store.clone(),
+            share_store.clone(),
             dav_push_store.clone(),
         ));
 
@@ -128,6 +132,7 @@ pub fn make_app<
             auth_provider.clone(),
             combined_cal_store,
             addr_store,
+            share_store,
             frontend_config,
             oidc_config,
         ));

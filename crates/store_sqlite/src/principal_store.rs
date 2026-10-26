@@ -321,6 +321,11 @@ impl AuthenticationProvider for SqlitePrincipalStore {
     }
 
     #[instrument]
+    async fn set_principal_email(&self, principal: &str, email: Option<&str>) -> Result<(), Error> {
+        crate::share_store::set_principal_email(&self.db, principal, email).await
+    }
+
+    #[instrument]
     async fn list_members(&self, principal: &str) -> Result<Vec<String>, Error> {
         Ok(sqlx::query!(
             r#"SELECT principal FROM memberships WHERE member_of = ?"#,

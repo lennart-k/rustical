@@ -15,6 +15,19 @@ pub enum Precondition {
     #[error("calendar-timezone error: {0}")]
     #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
     CalendarTimezone(&'static str),
+    // RFC 4791 section 5.3.2.1: another object of the calendar has this UID
+    #[error("no-uid-conflict")]
+    #[xml(ns = "rustical_dav::namespace::NS_CALDAV")]
+    NoUidConflict,
+}
+
+impl Precondition {
+    const fn status_code(&self) -> StatusCode {
+        match self {
+            Self::NoUidConflict => StatusCode::CONFLICT,
+            Self::ValidCalendarData | Self::CalendarTimezone(_) => StatusCode::FORBIDDEN,
+        }
+    }
 }
 
 impl IntoResponse for Precondition {
@@ -31,7 +44,7 @@ impl IntoResponse for Precondition {
             )
                 .into_response();
         }
-        let mut res = Response::builder().status(StatusCode::FORBIDDEN);
+        let mut res = Response::builder().status(self.status_code());
         res.headers_mut().unwrap().typed_insert(ContentType::xml());
         res.body(Body::from(output)).unwrap()
     }
@@ -68,14 +81,8 @@ impl Error {
     #[must_use]
     pub fn status_code(&self) -> StatusCode {
         match self {
-            Self::StoreError(err) => match err {
-                rustical_store::Error::NotFound => StatusCode::NOT_FOUND,
-                rustical_store::Error::AlreadyExists => StatusCode::CONFLICT,
-                rustical_store::Error::ReadOnly | rustical_store::Error::Forbidden => {
-                    StatusCode::FORBIDDEN
-                }
-                _ => StatusCode::INTERNAL_SERVER_ERROR,
-            },
+            Self::StoreError(err) => StatusCode::try_from(err.status_code().as_u16())
+                .expect("Just converting between versions"),
             Self::DavError(err) => StatusCode::try_from(err.status_code().as_u16())
                 .expect("Just converting between versions"),
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
@@ -85,7 +92,7 @@ impl Error {
             // The correct status code for a failed precondition is not PreconditionFailed but
             // Forbidden (or Conflict):
             // https://datatracker.ietf.org/doc/html/rfc4791#section-1.3
-            Self::PreconditionFailed(_err) => StatusCode::FORBIDDEN,
+            Self::PreconditionFailed(err) => err.status_code(),
         }
     }
 }
@@ -94,6 +101,14 @@ impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
         if let Self::PreconditionFailed(precondition) = self {
             return precondition.into_response();
+        }
+        if matches!(
+            self,
+            Self::StoreError(rustical_store::Error::CopyRule(
+                rustical_store::CopyRule::ForeignUid
+            ))
+        ) {
+            return Precondition::NoUidConflict.into_response();
         }
         if let Self::DavError(err @ rustical_dav::Error::InvalidSyncToken) = self {
             return err.into_response();

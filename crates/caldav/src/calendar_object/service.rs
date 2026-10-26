@@ -10,7 +10,8 @@ use async_trait::async_trait;
 use axum::{extract::Request, handler::Handler, response::Response};
 use futures_util::future::BoxFuture;
 use rustical_dav::resource::{AxumMethods, ResourceService};
-use rustical_store::{CalendarStore, access, auth::Principal};
+use rustical_store::access::{self, Resolved};
+use rustical_store::{Calendar, CalendarStore, Preconditions, ShareStore, auth::Principal, shared};
 use serde::{Deserialize, Deserializer};
 use std::{convert::Infallible, sync::Arc};
 use tower::Service;
@@ -25,6 +26,7 @@ pub struct CalendarObjectPathComponents {
 
 pub struct CalendarObjectResourceService<C: CalendarStore> {
     pub(crate) cal_store: Arc<C>,
+    pub(crate) share_store: Arc<dyn ShareStore>,
     pub(crate) config: Arc<CalDavConfig>,
 }
 
@@ -32,14 +34,40 @@ impl<C: CalendarStore> Clone for CalendarObjectResourceService<C> {
     fn clone(&self) -> Self {
         Self {
             cal_store: self.cal_store.clone(),
+            share_store: self.share_store.clone(),
             config: self.config.clone(),
         }
     }
 }
 
 impl<C: CalendarStore> CalendarObjectResourceService<C> {
-    pub const fn new(cal_store: Arc<C>, config: Arc<CalDavConfig>) -> Self {
-        Self { cal_store, config }
+    pub fn new(
+        cal_store: Arc<C>,
+        share_store: Arc<dyn ShareStore>,
+        config: Arc<CalDavConfig>,
+    ) -> Self {
+        Self {
+            cal_store,
+            share_store,
+            config,
+        }
+    }
+
+    /// The calendar of an object path
+    pub(crate) async fn calendar(
+        &self,
+        principal: &str,
+        calendar_id: &str,
+        show_deleted: bool,
+    ) -> Result<(Resolved, Calendar), Error> {
+        Ok(access::resolve_calendar(
+            self.share_store.as_ref(),
+            self.cal_store.as_ref(),
+            principal,
+            calendar_id,
+            show_deleted,
+        )
+        .await?)
     }
 }
 
@@ -63,18 +91,18 @@ impl<C: CalendarStore> ResourceService for CalendarObjectResourceService<C> {
         }: &Self::PathComponents,
         show_deleted: bool,
     ) -> Result<Self::Resource, Self::Error> {
-        let (resolved, calendar) =
-            access::resolve_calendar(self.cal_store.as_ref(), principal, calendar_id, true).await?;
-        let object = self
-            .cal_store
-            .get_object(resolved.owner(), resolved.id(), object_id, show_deleted)
-            .await?;
-        Ok(CalendarObjectResource {
+        let (resolved, calendar) = self.calendar(principal, calendar_id, true).await?;
+        let object =
+            shared::object(self.cal_store.as_ref(), &resolved, object_id, show_deleted).await?;
+        let level = shared::level(&resolved, &object);
+        Ok(CalendarObjectResource::new(
             object,
-            object_id: object_id.to_owned(),
-            principal: principal.to_owned(),
-            read_only: objects_read_only(self.cal_store.as_ref(), &calendar),
-        })
+            object_id.to_owned(),
+            principal,
+            &resolved,
+            objects_read_only(self.cal_store.as_ref(), &calendar),
+            level,
+        ))
     }
 
     async fn delete_resource(
@@ -86,9 +114,17 @@ impl<C: CalendarStore> ResourceService for CalendarObjectResourceService<C> {
         }: &Self::PathComponents,
         use_trashbin: bool,
     ) -> Result<(), Self::Error> {
-        self.cal_store
-            .delete_object(principal, calendar_id, object_id, use_trashbin)
-            .await?;
+        let (resolved, _calendar) = self.calendar(principal, calendar_id, true).await?;
+        // The generic DELETE route checked the preconditions on the sharee's view
+        shared::delete_object(
+            self.cal_store.as_ref(),
+            self.share_store.as_ref(),
+            &resolved,
+            object_id,
+            use_trashbin,
+            Preconditions::default(),
+        )
+        .await?;
         Ok(())
     }
 }
