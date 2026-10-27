@@ -21,6 +21,8 @@ pub struct PrincipalResource {
     members: Vec<String>,
     // If true only return the principal as the calendar home set, otherwise also groups
     simplified_home_set: bool,
+    /// Whom this principal shares calendars with: they see the principal, but only its name
+    sharees: Vec<String>,
 }
 
 impl ResourceName for PrincipalResource {
@@ -49,6 +51,8 @@ impl Resource for PrincipalResource {
         prop: &PrincipalPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
         let principal_url = puri.principal_uri(&self.principal.id);
+        // A sharee learns who the owner is, not its homes, groups or members
+        let full = access::may_use_home(user, &self.principal.id);
 
         Ok(match prop {
             PrincipalPropWrapperName::Principal(prop) => {
@@ -59,8 +63,10 @@ impl Resource for PrincipalResource {
                     PrincipalPropName::PrincipalUrl => {
                         PrincipalProp::PrincipalUrl(principal_url.into())
                     }
-                    PrincipalPropName::CalendarHomeSet => PrincipalProp::CalendarHomeSet(
-                        CalendarHomeSet(if self.simplified_home_set {
+                    PrincipalPropName::CalendarHomeSet => {
+                        PrincipalProp::CalendarHomeSet(CalendarHomeSet(if !full {
+                            vec![]
+                        } else if self.simplified_home_set {
                             vec![principal_url.into()]
                         } else {
                             self.principal
@@ -68,8 +74,8 @@ impl Resource for PrincipalResource {
                                 .iter()
                                 .map(|principal| puri.principal_uri(principal).into())
                                 .collect()
-                        }),
-                    ),
+                        }))
+                    }
                     PrincipalPropName::CalendarUserAddressSet => {
                         PrincipalProp::CalendarUserAddressSet(principal_url.into())
                     }
@@ -77,6 +83,7 @@ impl Resource for PrincipalResource {
                         PrincipalProp::GroupMemberSet(GroupMemberSet(
                             self.members
                                 .iter()
+                                .filter(|_| full)
                                 .map(|principal| puri.principal_uri(principal).into())
                                 .collect(),
                         ))
@@ -86,6 +93,7 @@ impl Resource for PrincipalResource {
                             self.principal
                                 .memberships_without_self()
                                 .iter()
+                                .filter(|_| full)
                                 .map(|principal| puri.principal_uri(principal).into())
                                 .collect(),
                         ))
@@ -119,9 +127,14 @@ impl Resource for PrincipalResource {
     }
 
     fn get_user_privileges(&self, user: &Principal) -> Result<UserPrivilegeSet, Self::Error> {
-        Ok(UserPrivilegeSet::owner_only(access::may_use_home(
-            user,
-            &self.principal.id,
-        )))
+        if access::may_use_home(user, &self.principal.id) {
+            Ok(UserPrivilegeSet::all())
+        } else {
+            Ok(UserPrivilegeSet::owner_read(access::may_see_principal(
+                user,
+                &self.principal.id,
+                &self.sharees,
+            )))
+        }
     }
 }

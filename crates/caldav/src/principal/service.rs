@@ -62,6 +62,12 @@ impl<AP: AuthenticationProvider, DP: DavPushStore, CS: CalendarStore> ResourceSe
             .ok_or(crate::Error::NotFound)?;
         Ok(PrincipalResource {
             members: self.auth_provider.list_members(&user.id).await?,
+            sharees: access::calendar_sharees(
+                self.share_store.as_ref(),
+                self.cal_store.as_ref(),
+                &user.id,
+            )
+            .await?,
             principal: user,
             simplified_home_set: self.simplified_home_set,
         })

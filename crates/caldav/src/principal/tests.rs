@@ -75,6 +75,7 @@ async fn test_propfind() {
         principal: principal.clone(),
         members: vec![],
         simplified_home_set: false,
+        sharees: vec![],
     };
 
     let response = resource

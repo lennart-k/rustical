@@ -283,13 +283,9 @@ async fn test_sharees_see_the_shared_collections() {
     let card = ok(&app, "GET", &format!("{BOB_BOOK}/card.vcf"), BOB, "").await;
     assert!(card.body.contains("FN:Card"));
 
-    // Neither the owner's principal nor the shares of others
-    for (uri, auth) in [
-        ("/caldav/principal/user", BOB),
-        (BOB_CAL, OTHER),
-        (TEAM_CAL, BOB),
-        (BOB_BOOK, OTHER),
-    ] {
+    // Not the shares of others (the owner's principal shows its name only:
+    // test_sharees_see_who_shares)
+    for (uri, auth) in [(BOB_CAL, OTHER), (TEAM_CAL, BOB), (BOB_BOOK, OTHER)] {
         let answer = call(&app, "PROPFIND", uri, Some(auth), &[], "").await;
         assert_eq!(answer.status, StatusCode::FORBIDDEN, "{uri} as {}", auth.0);
     }
@@ -1702,4 +1698,117 @@ mod frontend {
         .await;
         assert_eq!(answer.status, StatusCode::FORBIDDEN);
     }
+}
+
+/// What a sharee's client asks to show who shares (DAVx5 and Apple look up `DAV:owner`)
+const PRINCIPAL_PROPS: &str = r#"<?xml version="1.0" encoding="utf-8"?>
+<propfind xmlns="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav" xmlns:CR="urn:ietf:params:xml:ns:carddav">
+  <prop><displayname/><resourcetype/><principal-URL/><C:calendar-home-set/><CR:addressbook-home-set/><group-membership/><group-member-set/></prop>
+</propfind>"#;
+
+#[rstest]
+#[tokio::test]
+async fn test_sharees_see_who_shares() {
+    let (context, app) = setup().await;
+    context
+        .principal_store
+        .add_membership("user", "group.team")
+        .await
+        .unwrap();
+    let propfind = |uri: &'static str, auth: (&'static str, &'static str), depth: &'static str| {
+        let app = app.clone();
+        async move {
+            call(
+                &app,
+                "PROPFIND",
+                uri,
+                Some(auth),
+                &[("Depth", depth)],
+                PRINCIPAL_PROPS,
+            )
+            .await
+        }
+    };
+
+    // The owner sees its homes and groups
+    let own = propfind("/caldav/principal/user", USER, "0").await;
+    assert_eq!(own.status, StatusCode::MULTI_STATUS);
+    assert!(
+        own.body.contains("/caldav/principal/group.team"),
+        "{}",
+        own.body
+    );
+
+    // A sharee (directly, through a group, over the Apple path) sees the name only: no homes,
+    // no groups, no collections
+    for (uri, auth) in [
+        ("/caldav/principal/user", BOB),
+        ("/caldav-compat/principal/user", BOB),
+        ("/caldav/principal/user", ERIN),
+        ("/carddav/principal/user", BOB),
+    ] {
+        for depth in ["0", "1"] {
+            let answer = propfind(uri, auth, depth).await;
+            assert_eq!(
+                answer.status,
+                StatusCode::MULTI_STATUS,
+                "{uri} as {}",
+                auth.0
+            );
+            assert!(answer.body.contains("<displayname>"), "{}", answer.body);
+            assert!(
+                !answer.body.contains("group.team"),
+                "{uri} as {}: {}",
+                auth.0,
+                answer.body
+            );
+            assert_eq!(
+                answer.body.matches("<href>").count(),
+                2,
+                "{uri} as {} depth {depth}: the response and the principal URL only: {}",
+                auth.0,
+                answer.body
+            );
+            assert_eq!(
+                answer.body.matches("<response>").count(),
+                1,
+                "{}",
+                answer.body
+            );
+        }
+    }
+    // Not shared with: nothing (erin's group has the calendar, not the addressbook)
+    for (uri, auth) in [
+        ("/carddav/principal/user", ERIN),
+        ("/caldav/principal/user", OTHER),
+        ("/carddav/principal/user", OTHER),
+    ] {
+        assert_eq!(
+            propfind(uri, auth, "0").await.status,
+            StatusCode::FORBIDDEN,
+            "{uri} as {}",
+            auth.0
+        );
+    }
+    // And no more after the share ended
+    context
+        .share_store
+        .unshare_calendar("user", "cal", "bob")
+        .await
+        .unwrap();
+    assert_eq!(
+        propfind("/caldav/principal/user", BOB, "0").await.status,
+        StatusCode::FORBIDDEN
+    );
+    // Writing stays the owner's
+    let answer = call(
+        &app,
+        "PROPPATCH",
+        "/caldav/principal/user",
+        Some(ERIN),
+        &[],
+        PROPPATCH_DISPLAYNAME,
+    )
+    .await;
+    assert_eq!(answer.status, StatusCode::FORBIDDEN);
 }

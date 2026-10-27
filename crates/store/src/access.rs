@@ -241,6 +241,61 @@ pub async fn own_addressbooks(
         .collect())
 }
 
+/// The principals the live calendars of `owner` are shared with (users and groups).
+///
+/// They may see the principal `owner` itself: its name, not its homes or memberships.
+///
+/// # Errors
+/// Any error of the stores.
+pub async fn calendar_sharees(
+    shares: &dyn ShareStore,
+    store: &dyn CalendarStore,
+    owner: &str,
+) -> Result<Vec<String>, Error> {
+    let mut principals = vec![];
+    for calendar in store.get_calendars(owner).await? {
+        for share in shares.list_calendar_shares(owner, &calendar.id).await? {
+            if !principals.contains(&share.sharee) {
+                principals.push(share.sharee);
+            }
+        }
+    }
+    Ok(principals)
+}
+
+/// The principals the live addressbooks of `owner` are shared with; see [`calendar_sharees`].
+///
+/// # Errors
+/// Any error of the stores.
+pub async fn addressbook_sharees(
+    shares: &dyn ShareStore,
+    store: &dyn AddressbookStore,
+    owner: &str,
+) -> Result<Vec<String>, Error> {
+    let mut principals = vec![];
+    for addressbook in store.get_addressbooks(owner).await? {
+        for share in shares
+            .list_addressbook_shares(owner, &addressbook.id)
+            .await?
+        {
+            if !principals.contains(&share.sharee) {
+                principals.push(share.sharee);
+            }
+        }
+    }
+    Ok(principals)
+}
+
+/// Whether `user` may see the principal resource of `owner`.
+///
+/// It may see its own (or one of its groups'), and that of someone who shares with it or one of
+/// its groups (`sharees` of `owner`). A sharee sees only who the owner is (see the principal
+/// resources).
+#[must_use]
+pub fn may_see_principal(user: &Principal, owner: &str, sharees: &[String]) -> bool {
+    may_use_home(user, owner) || sharees.iter().any(|sharee| user.is_principal(sharee))
+}
+
 /// The calendars shared with `home`, as [`resolve_calendar`] presents them, with their names in
 /// the home. A share whose calendar cannot be read is left out (never an error for the listing).
 ///

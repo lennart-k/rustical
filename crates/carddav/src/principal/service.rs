@@ -78,6 +78,12 @@ impl<A: AddressbookStore, AP: AuthenticationProvider, DP: DavPushStore> Resource
             .ok_or(crate::Error::NotFound)?;
         Ok(PrincipalResource {
             members: self.auth_provider.list_members(&user.id).await?,
+            sharees: access::addressbook_sharees(
+                self.share_store.as_ref(),
+                self.addr_store.as_ref(),
+                &user.id,
+            )
+            .await?,
             principal: user,
         })
     }
