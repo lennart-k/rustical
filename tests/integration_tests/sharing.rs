@@ -294,7 +294,24 @@ async fn test_sharees_see_the_shared_collections() {
 #[rstest]
 #[tokio::test]
 async fn test_reads_through_a_share_show_views() {
-    let (_context, app) = setup().await;
+    let (context, app) = setup().await;
+
+    // Without a setting of the calendar PRIVATE is hidden too
+    let private = call(
+        &app,
+        "GET",
+        &format!("{BOB_CAL}/private.ics"),
+        Some(BOB),
+        &[],
+        "",
+    )
+    .await;
+    assert_eq!(private.status, StatusCode::NOT_FOUND);
+    context
+        .share_store
+        .set_visibility("user", "cal", Policy::new(1, 0).unwrap())
+        .await
+        .unwrap();
 
     // PUBLIC in full but without alarms; PRIVATE busy only; CONFIDENTIAL hidden
     let public = ok(&app, "GET", &format!("{BOB_CAL}/public.ics"), BOB, "").await;
@@ -481,7 +498,7 @@ async fn test_canary_never_leaks() {
     // Title and location: exactly those two markers
     context
         .share_store
-        .set_visibility("user", Policy::new(3, 0).unwrap())
+        .set_visibility("user", "cal", Policy::new(3, 0).unwrap())
         .await
         .unwrap();
     for (name, body) in canary_bodies(&app, &token).await {
@@ -519,7 +536,7 @@ async fn test_canary_never_leaks() {
     // Hidden: only as a removed member of an incremental sync
     context
         .share_store
-        .set_visibility("user", Policy::new(0, 0).unwrap())
+        .set_visibility("user", "cal", Policy::new(0, 0).unwrap())
         .await
         .unwrap();
     for (name, body) in canary_bodies(&app, &token).await {
@@ -1296,10 +1313,10 @@ mod frontend {
         let answer = call(
             &app,
             "POST",
-            "/frontend/user/user/sharing/visibility",
+            &format!("{SHARES}/visibility"),
             Some(USER),
             &[("Host", "localhost"), ("Origin", "http://evil.example")],
-            "home=user&private=4&confidential=4",
+            "private=4&confidential=4",
         )
         .await;
         assert_eq!(answer.status, StatusCode::FORBIDDEN);
@@ -1313,7 +1330,11 @@ mod frontend {
             2
         );
         assert_eq!(
-            context.share_store.get_visibility("user").await.unwrap(),
+            context
+                .share_store
+                .get_visibility("user", "cal")
+                .await
+                .unwrap(),
             Policy::default()
         );
         // A Referer of this host is enough
@@ -1651,16 +1672,30 @@ mod frontend {
     #[tokio::test]
     async fn test_visibility_levels() {
         let (context, app) = setup().await;
-        let page = ok(&app, "GET", "/frontend/user/user/sharing", USER, "").await;
+        // Per calendar, on its shares page; the user's sharing page has none
+        let page = ok(&app, "GET", SHARES, USER, "").await;
         assert!(page.body.contains("Busy (time only)"), "{}", page.body);
+        let section = ok(&app, "GET", "/frontend/user/user/sharing", USER, "").await;
+        assert!(
+            !section.body.contains("Busy (time only)"),
+            "{}",
+            section.body
+        );
+        let visibility = |context: TestStoreContext| async move {
+            context
+                .share_store
+                .get_visibility("user", "cal")
+                .await
+                .unwrap()
+        };
         // CONFIDENTIAL never above PRIVATE
         let answer = call(
             &app,
             "POST",
-            "/frontend/user/user/sharing/visibility",
+            &format!("{SHARES}/visibility"),
             Some(USER),
             SAME_SITE,
-            "home=user&private=1&confidential=3",
+            "private=1&confidential=3",
         )
         .await;
         assert!(
@@ -1668,35 +1703,46 @@ mod frontend {
             "{}",
             answer.body
         );
-        assert_eq!(
-            context.share_store.get_visibility("user").await.unwrap(),
-            Policy::default()
-        );
+        assert_eq!(visibility(context.clone()).await, Policy::default());
         let answer = call(
             &app,
             "POST",
-            "/frontend/user/user/sharing/visibility",
+            &format!("{SHARES}/visibility"),
             Some(USER),
             SAME_SITE,
-            "home=user&private=3&confidential=2",
+            "private=3&confidential=2",
         )
         .await;
         assert_eq!(answer.status, StatusCode::SEE_OTHER);
         assert_eq!(
-            context.share_store.get_visibility("user").await.unwrap(),
+            visibility(context.clone()).await,
             Policy::new(3, 2).unwrap()
         );
-        // Only for the user and its groups
+        // Only the owner sets it, and only for a calendar
         let answer = call(
             &app,
             "POST",
-            "/frontend/user/user/sharing/visibility",
-            Some(USER),
+            &format!("{SHARES}/visibility"),
+            Some(BOB),
             SAME_SITE,
-            "home=bob&private=4&confidential=4",
+            "private=4&confidential=4",
         )
         .await;
-        assert_eq!(answer.status, StatusCode::FORBIDDEN);
+        assert!(answer.status.is_client_error(), "{}", answer.status);
+        assert_eq!(
+            visibility(context.clone()).await,
+            Policy::new(3, 2).unwrap()
+        );
+        let answer = call(
+            &app,
+            "POST",
+            "/frontend/user/user/addressbook/book/shares/visibility",
+            Some(USER),
+            SAME_SITE,
+            "private=4&confidential=4",
+        )
+        .await;
+        assert_eq!(answer.status, StatusCode::NOT_FOUND);
     }
 }
 

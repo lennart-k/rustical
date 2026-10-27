@@ -723,7 +723,7 @@ async fn test_visibility_table_rules() {
         let db = context.db.clone();
         async move {
             sqlx::query(
-                "INSERT OR REPLACE INTO principal_visibility (principal, private, confidential) VALUES ('user', ?, ?)",
+                "INSERT OR REPLACE INTO calendar_visibility (principal, cal_id, private, confidential) VALUES ('user', 'cal', ?, ?)",
             )
             .bind(private)
             .bind(confidential)
@@ -737,4 +737,11 @@ async fn test_visibility_table_rules() {
     assert!(insert(1, 2).await.is_err());
     assert!(insert(5, 0).await.is_err());
     assert!(insert(-1, -1).await.is_err());
+    // Only for an existing calendar, and gone with it
+    let orphan = sqlx::query(
+        "INSERT INTO calendar_visibility (principal, cal_id, private, confidential) VALUES ('user', 'nope', 1, 0)",
+    )
+    .execute(&context.db)
+    .await;
+    assert!(orphan.is_err());
 }

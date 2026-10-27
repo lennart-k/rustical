@@ -766,13 +766,13 @@ impl ShareStore for SqliteShareStore {
     }
 
     #[instrument]
-    async fn get_visibility(&self, principal: &str) -> Result<Policy, Error> {
+    async fn get_visibility(&self, owner: &str, cal_id: &str) -> Result<Policy, Error> {
         let mut conn = self.db.acquire().await.map_err(crate::Error::from)?;
-        Self::_get_visibility(&mut conn, principal).await
+        Self::_get_visibility(&mut conn, owner, cal_id).await
     }
 
     #[instrument]
-    async fn set_visibility(&self, principal: &str, policy: Policy) -> Result<(), Error> {
+    async fn set_visibility(&self, owner: &str, cal_id: &str, policy: Policy) -> Result<(), Error> {
         let policy =
             Policy::new(policy.private, policy.confidential).ok_or(Error::InvalidVisibility)?;
         let mut tx = self
@@ -780,10 +780,21 @@ impl ShareStore for SqliteShareStore {
             .begin_with(BEGIN_IMMEDIATE)
             .await
             .map_err(crate::Error::from)?;
+        let calendar = sqlx::query!(
+            r#"SELECT push_topic FROM calendars
+                WHERE (principal, id) = (?, ?) AND deleted_at IS NULL"#,
+            owner,
+            cal_id
+        )
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(crate::Error::from)?
+        .ok_or(Error::NotFound)?;
         sqlx::query!(
-            r#"INSERT INTO principal_visibility (principal, private, confidential) VALUES (?, ?, ?)
-                ON CONFLICT(principal) DO UPDATE SET (private, confidential) = (excluded.private, excluded.confidential)"#,
-            principal,
+            r#"INSERT INTO calendar_visibility (principal, cal_id, private, confidential) VALUES (?, ?, ?, ?)
+                ON CONFLICT(principal, cal_id) DO UPDATE SET (private, confidential) = (excluded.private, excluded.confidential)"#,
+            owner,
+            cal_id,
             policy.private,
             policy.confidential
         )
@@ -792,27 +803,26 @@ impl ShareStore for SqliteShareStore {
         .map_err(crate::Error::from)?;
 
         // Sharees pick the new views up with their next sync
-        let calendars = sqlx::query!(
-            r#"SELECT DISTINCT c.id, c.push_topic FROM calendar_shares AS s
-                JOIN calendars AS c ON (c.principal, c.id) = (s.owner, s.cal_id)
-                WHERE s.owner = ?"#,
-            principal
+        let shared = sqlx::query!(
+            r#"SELECT 1 AS "one: i64" FROM calendar_shares WHERE (owner, cal_id) = (?, ?) LIMIT 1"#,
+            owner,
+            cal_id
         )
-        .fetch_all(&mut *tx)
+        .fetch_optional(&mut *tx)
         .await
-        .map_err(crate::Error::from)?;
-        let mut notifications = vec![];
-        for calendar in calendars {
+        .map_err(crate::Error::from)?
+        .is_some();
+        let mut sync_token = None;
+        if shared {
             let objects = sqlx::query!(
                 r#"SELECT id, ics FROM calendarobjects
                     WHERE (principal, cal_id) = (?, ?) AND deleted_at IS NULL"#,
-                principal,
-                calendar.id
+                owner,
+                cal_id
             )
             .fetch_all(&mut *tx)
             .await
             .map_err(crate::Error::from)?;
-            let mut sync_token = None;
             for object in objects {
                 let depends = CalendarObject::from_ics(object.ics)
                     .map_or(true, |parsed| visibility::depends_on_policy(&parsed));
@@ -820,8 +830,8 @@ impl ShareStore for SqliteShareStore {
                     sync_token = Some(
                         SqliteCalendarStore::log_object_operation(
                             &mut tx,
-                            principal,
-                            &calendar.id,
+                            owner,
+                            cal_id,
                             &object.id,
                             ChangeOperation::Add,
                         )
@@ -829,13 +839,10 @@ impl ShareStore for SqliteShareStore {
                     );
                 }
             }
-            if let Some(sync_token) = sync_token {
-                notifications.push((calendar.push_topic, sync_token));
-            }
         }
         tx.commit().await.map_err(crate::Error::from)?;
-        for (topic, sync_token) in notifications {
-            self.notify(topic, sync_token);
+        if let Some(sync_token) = sync_token {
+            self.notify(calendar.push_topic, sync_token);
         }
         Ok(())
     }
@@ -855,7 +862,7 @@ impl ShareStore for SqliteShareStore {
             .await
             .map_err(crate::Error::from)?;
         let topic = Self::writable_calendar(&mut tx, owner, cal_id).await?;
-        let policy = Self::_get_visibility(&mut tx, owner).await?;
+        let policy = Self::_get_visibility(&mut tx, owner, cal_id).await?;
         let row = sqlx::query!(
             r#"SELECT uid, ics, deleted_at IS NOT NULL AS "deleted!: bool" FROM calendarobjects
                 WHERE (principal, cal_id, id) = (?, ?, ?)"#,
@@ -987,7 +994,7 @@ impl ShareStore for SqliteShareStore {
             .await
             .map_err(crate::Error::from)?;
         let topic = Self::writable_calendar(&mut tx, owner, cal_id).await?;
-        let policy = Self::_get_visibility(&mut tx, owner).await?;
+        let policy = Self::_get_visibility(&mut tx, owner, cal_id).await?;
         let ics = sqlx::query_scalar!(
             r#"SELECT ics FROM calendarobjects
                 WHERE (principal, cal_id, id) = (?, ?, ?) AND deleted_at IS NULL"#,
@@ -1173,12 +1180,14 @@ impl SqliteShareStore {
 
     async fn _get_visibility(
         conn: &mut SqliteConnection,
-        principal: &str,
+        owner: &str,
+        cal_id: &str,
     ) -> Result<Policy, Error> {
         let row = sqlx::query!(
             r#"SELECT private AS "private: u8", confidential AS "confidential: u8"
-                FROM principal_visibility WHERE principal = ?"#,
-            principal
+                FROM calendar_visibility WHERE (principal, cal_id) = (?, ?)"#,
+            owner,
+            cal_id
         )
         .fetch_optional(&mut *conn)
         .await

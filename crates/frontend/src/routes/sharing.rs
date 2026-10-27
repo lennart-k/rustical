@@ -178,7 +178,14 @@ pub struct SharesPage {
     pub id: String,
     pub displayname: String,
     pub shares: Vec<ShareRow>,
+    /// A calendar's policy: how its private and confidential objects appear to its sharees
+    pub visibility: Option<Policy>,
     pub error: Option<String>,
+}
+
+impl SharesPage {
+    /// The names of the visibility levels, by level
+    pub const LEVELS: [&str; 5] = LEVELS;
 }
 
 impl DefaultLayoutData for SharesPage {
@@ -264,6 +271,10 @@ async fn shares_page<AP: AuthenticationProvider>(
             access,
         });
     }
+    let visibility = match kind {
+        Kind::Calendar => Some(share_store.get_visibility(&owner, &id).await?),
+        Kind::Addressbook => None,
+    };
     Ok(SharesPage {
         user,
         kind,
@@ -271,6 +282,7 @@ async fn shares_page<AP: AuthenticationProvider>(
         id,
         displayname,
         shares: rows,
+        visibility,
         error,
     }
     .into_response())
@@ -314,7 +326,8 @@ pub async fn route_shares<AP: AuthenticationProvider, CS: CalendarStore, AS: Add
 }
 
 /// The forms of the shares page: `preview` (step 1 of adding: who is it?), `add` (step 2),
-/// `access` (change one share) and `remove` (end one or several shares)
+/// `access` (change one share), `remove` (end one or several shares) and, for a calendar,
+/// `visibility` (its policy)
 #[allow(clippy::too_many_arguments, clippy::too_many_lines)]
 pub async fn route_post_shares<
     AP: AuthenticationProvider,
@@ -419,6 +432,16 @@ pub async fn route_post_shares<
             }
             result
         }
+        "visibility" if kind == Kind::Calendar => {
+            let level = |name: &str| field(&form, name).and_then(|value| value.parse::<u8>().ok());
+            match (level("private"), level("confidential")) {
+                (Some(private), Some(confidential)) => match Policy::new(private, confidential) {
+                    Some(policy) => share_store.set_visibility(&owner, &id, policy).await,
+                    None => Err(Error::InvalidVisibility),
+                },
+                _ => Err(Error::InvalidVisibility),
+            }
+        }
         _ => return Ok(StatusCode::NOT_FOUND.into_response()),
     };
     match result {
@@ -451,13 +474,6 @@ pub struct SharedRow {
     pub access: Access,
 }
 
-/// The policy of one owner the user manages (the user or one of its groups)
-pub struct VisibilityRow {
-    pub principal: String,
-    pub private: u8,
-    pub confidential: u8,
-}
-
 impl Section for SharingSection {
     fn name() -> &'static str {
         "sharing"
@@ -469,7 +485,6 @@ impl Section for SharingSection {
 pub struct SharingSection {
     pub user: Principal,
     pub shared: Vec<SharedRow>,
-    pub visibility: Vec<VisibilityRow>,
     pub error: Option<String>,
 }
 
@@ -490,7 +505,6 @@ async fn sharing_section<CS: CalendarStore, AS: AddressbookStore>(
     error: Option<String>,
 ) -> Result<Response, Error> {
     let mut shared = vec![];
-    let mut visibility = vec![];
     for home in user.memberships() {
         for share in share_store.calendars_shared_with(home).await? {
             let Ok(calendar) =
@@ -540,18 +554,11 @@ async fn sharing_section<CS: CalendarStore, AS: AddressbookStore>(
                 access: share.access,
             });
         }
-        let policy = share_store.get_visibility(home).await?;
-        visibility.push(VisibilityRow {
-            principal: home.to_owned(),
-            private: policy.private,
-            confidential: policy.confidential,
-        });
     }
     Ok(UserPage {
         section: SharingSection {
             user: user.clone(),
             shared,
-            visibility,
             error,
         },
         user,
@@ -579,8 +586,8 @@ pub async fn route_sharing<CS: CalendarStore, AS: AddressbookStore>(
     .await
 }
 
-/// The forms of the sharing page: `view` (own name and color of a share), `remove` (end a
-/// share in one of the user's homes) and `visibility` (the policy of the user or a group)
+/// The forms of the sharing page: `view` (own name and color of a share) and `remove` (end a
+/// share in one of the user's homes)
 pub async fn route_post_sharing<CS: CalendarStore, AS: AddressbookStore>(
     Path((user_id, action)): Path<(String, String)>,
     Extension(cal_store): Extension<Arc<CS>>,
@@ -651,16 +658,6 @@ pub async fn route_post_sharing<CS: CalendarStore, AS: AddressbookStore>(
                 None => Err(Error::NotFound),
             },
         },
-        ("visibility", None) => {
-            let level = |name: &str| field(&form, name).and_then(|value| value.parse::<u8>().ok());
-            match (level("private"), level("confidential")) {
-                (Some(private), Some(confidential)) => match Policy::new(private, confidential) {
-                    Some(policy) => share_store.set_visibility(home, policy).await,
-                    None => Err(Error::InvalidVisibility),
-                },
-                _ => Err(Error::InvalidVisibility),
-            }
-        }
         _ => return Ok(StatusCode::NOT_FOUND.into_response()),
     };
     match result {

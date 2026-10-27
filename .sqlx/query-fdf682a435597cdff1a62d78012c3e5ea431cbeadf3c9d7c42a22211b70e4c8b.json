@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT private AS \"private: u8\", confidential AS \"confidential: u8\"\n                FROM principal_visibility WHERE principal = ?",
+  "query": "SELECT private AS \"private: u8\", confidential AS \"confidential: u8\"\n                FROM calendar_visibility WHERE (principal, cal_id) = (?, ?)",
   "describe": {
     "columns": [
       {
@@ -9,7 +9,7 @@
         "type_info": "Integer",
         "origin": {
           "Table": {
-            "table": "principal_visibility",
+            "table": "calendar_visibility",
             "name": "private"
           }
         }
@@ -20,19 +20,19 @@
         "type_info": "Integer",
         "origin": {
           "Table": {
-            "table": "principal_visibility",
+            "table": "calendar_visibility",
             "name": "confidential"
           }
         }
       }
     ],
     "parameters": {
-      "Right": 1
+      "Right": 2
     },
     "nullable": [
       false,
       false
     ]
   },
-  "hash": "33899b1d8329a158ce6879d9863715560c80ef9da0180514f9867323c77f18ce"
+  "hash": "fdf682a435597cdff1a62d78012c3e5ea431cbeadf3c9d7c42a22211b70e4c8b"
 }

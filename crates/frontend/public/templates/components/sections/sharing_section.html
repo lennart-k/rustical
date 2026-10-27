@@ -41,26 +41,3 @@
   {% endfor %}
 </ul>
 
-<h2>What others see of private events</h2>
-<p>How events and tasks marked private or confidential appear to those you share calendars with, in every app. Confidential ones never show more than private ones.</p>
-{% for row in visibility %}
-<form action="/frontend/user/{{ user.id }}/sharing/visibility" method="POST">
-  <h3>{{ row.principal }}</h3>
-  <input type="hidden" name="home" value="{{ row.principal }}">
-  <label>Private
-    <select name="private">
-      {% for (level, label) in LEVELS.iter().enumerate() %}
-      <option value="{{ level }}" {% if level == row.private as usize %}selected{% endif %}>{{ label }}</option>
-      {% endfor %}
-    </select>
-  </label>
-  <label>Confidential
-    <select name="confidential">
-      {% for (level, label) in LEVELS.iter().enumerate() %}
-      <option value="{{ level }}" {% if level == row.confidential as usize %}selected{% endif %}>{{ label }}</option>
-      {% endfor %}
-    </select>
-  </label>
-  <button type="submit">Save</button>
-</form>
-{% endfor %}

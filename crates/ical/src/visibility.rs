@@ -20,8 +20,8 @@ pub const TITLE_LOCATION: u8 = 3;
 /// Everything except alarms
 pub const FULL: u8 = 4;
 
-/// How objects with CLASS:PRIVATE and CLASS:CONFIDENTIAL appear to sharees.
-/// `confidential` is never above `private`.
+/// How objects of a calendar with CLASS:PRIVATE and CLASS:CONFIDENTIAL appear to its sharees
+/// (hidden unless its owner sets otherwise). `confidential` is never above `private`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Policy {
     pub private: u8,
@@ -31,7 +31,7 @@ pub struct Policy {
 impl Default for Policy {
     fn default() -> Self {
         Self {
-            private: BUSY,
+            private: HIDDEN,
             confidential: HIDDEN,
         }
     }

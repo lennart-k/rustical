@@ -250,7 +250,8 @@ fn test_series_with_stricter_override() {
 
 #[test]
 fn test_policy_rules() {
-    assert_eq!(Policy::default(), Policy::new(1, 0).unwrap());
+    // Without a setting of its calendar: both hidden
+    assert_eq!(Policy::default(), Policy::new(0, 0).unwrap());
     assert!(Policy::new(4, 4).is_some());
     // CONFIDENTIAL never shows more than PRIVATE
     assert!(Policy::new(1, 2).is_none());

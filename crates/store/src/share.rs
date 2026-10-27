@@ -229,11 +229,13 @@ pub trait ShareStore: std::fmt::Debug + Send + Sync + 'static {
     /// The principal with exactly this e-mail address (compared in lowercase)
     async fn resolve_email(&self, email: &str) -> Result<Option<String>, Error>;
 
-    /// How objects of `principal` with CLASS:PRIVATE/CONFIDENTIAL appear in its shares
-    async fn get_visibility(&self, principal: &str) -> Result<Policy, Error>;
-    /// Changes the policy; every object of a shared calendar whose view depends on it is
-    /// logged as changed, so sharees pick the new views up with their next sync.
-    async fn set_visibility(&self, principal: &str, policy: Policy) -> Result<(), Error>;
+    /// How objects of the calendar `(owner, cal_id)` with CLASS:PRIVATE/CONFIDENTIAL appear in
+    /// its shares
+    async fn get_visibility(&self, owner: &str, cal_id: &str) -> Result<Policy, Error>;
+    /// Changes the calendar's policy; if it is shared, every object whose view depends on it
+    /// is logged as changed, so sharees pick the new views up with their next sync.
+    /// [`Error::NotFound`] for no live calendar.
+    async fn set_visibility(&self, owner: &str, cal_id: &str, policy: Policy) -> Result<(), Error>;
 
     /// Writes an object of `(owner, cal_id)` for a sharee with write access, in one transaction:
     /// only a fully visible, live object can be replaced (its UID unchanged, its alarms kept);

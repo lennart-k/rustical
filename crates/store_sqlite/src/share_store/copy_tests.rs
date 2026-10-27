@@ -39,7 +39,7 @@ fn copy(access: Access) -> Resolved {
         CAL.to_owned(),
         ResolvedKind::Copy {
             access,
-            policy: Policy::default(),
+            policy: Policy::new(1, 0).unwrap(),
         },
     )
 }
@@ -72,6 +72,12 @@ async fn setup() -> TestStoreContext {
             synctoken: 0,
             push_topic: "book-topic".to_owned(),
         })
+        .await
+        .unwrap();
+    // The tests read PRIVATE as busy (the calendar's setting; without one both are hidden)
+    context
+        .share_store
+        .set_visibility(OWNER, CAL, Policy::new(1, 0).unwrap())
         .await
         .unwrap();
     context
@@ -590,14 +596,23 @@ async fn test_delete_through_a_share() {
 async fn test_visibility_changes_are_synced() {
     let context = setup().await;
     let shares = &context.share_store;
+    // No row (a calendar the setup did not set): hidden, both
     assert_eq!(
-        shares.get_visibility(OWNER).await.unwrap(),
-        Policy::default()
+        shares.get_visibility(OWNER, "other").await.unwrap(),
+        Policy::new(0, 0).unwrap()
     );
+    assert_eq!(Policy::default(), Policy::new(0, 0).unwrap());
+    assert!(matches!(
+        shares
+            .set_visibility(OWNER, "nope", Policy::new(1, 0).unwrap())
+            .await,
+        Err(Error::NotFound)
+    ));
     assert!(matches!(
         shares
             .set_visibility(
                 OWNER,
+                CAL,
                 Policy {
                     private: 1,
                     confidential: 2
@@ -640,8 +655,13 @@ async fn test_visibility_changes_are_synced() {
         .unwrap()
         .synctoken;
     let policy = Policy::new(3, 2).unwrap();
-    shares.set_visibility(OWNER, policy).await.unwrap();
-    assert_eq!(shares.get_visibility(OWNER).await.unwrap(), policy);
+    shares.set_visibility(OWNER, CAL, policy).await.unwrap();
+    assert_eq!(shares.get_visibility(OWNER, CAL).await.unwrap(), policy);
+    // Per calendar: another one of the owner keeps its own (here: none set)
+    assert_eq!(
+        shares.get_visibility(OWNER, "other").await.unwrap(),
+        Policy::default()
+    );
     let after = context
         .cal_store
         .get_calendar(OWNER, CAL, false)

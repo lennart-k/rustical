@@ -63,14 +63,17 @@ pub enum CollectionKind {
         command: ShareCommand,
     },
     #[command(
-        about = "Show or set how objects with CLASS:PRIVATE / CLASS:CONFIDENTIAL of a principal appear in its shares (0 hidden, 1 busy, 2 title, 3 title and location, 4 full)"
+        about = "Show or set how objects with CLASS:PRIVATE / CLASS:CONFIDENTIAL of a calendar appear in its shares (0 hidden, 1 busy, 2 title, 3 title and location, 4 full; default 0 for both)"
     )]
     Visibility(VisibilityArgs),
 }
 
 #[derive(Debug, Parser)]
 pub struct VisibilityArgs {
-    pub principal: String,
+    /// The owner of the calendar
+    pub owner: String,
+    /// The id of the calendar
+    pub cal_id: String,
     #[arg(long, value_parser = clap::value_parser!(u8).range(0..=4), requires = "confidential")]
     pub private: Option<u8>,
     #[arg(long, value_parser = clap::value_parser!(u8).range(0..=4), requires = "private")]
@@ -154,16 +157,17 @@ pub async fn cmd_share(args: ShareArgs, config: Config) -> anyhow::Result<()> {
             }
         },
         CollectionKind::Visibility(VisibilityArgs {
-            principal,
+            owner,
+            cal_id,
             private,
             confidential,
         }) => {
             if let (Some(private), Some(confidential)) = (private, confidential) {
                 let policy = Policy::new(private, confidential)
                     .ok_or_else(|| anyhow!("CONFIDENTIAL may not show more than PRIVATE"))?;
-                share_store.set_visibility(&principal, policy).await?;
+                share_store.set_visibility(&owner, &cal_id, policy).await?;
             }
-            let policy = share_store.get_visibility(&principal).await?;
+            let policy = share_store.get_visibility(&owner, &cal_id).await?;
             println!(
                 "private={} confidential={}",
                 policy.private, policy.confidential

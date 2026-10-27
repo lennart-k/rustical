@@ -183,7 +183,7 @@ async fn shared_calendar(
     let mut calendar = store
         .get_calendar(&share.owner, &share.cal_id, false)
         .await?;
-    let policy = shares.get_visibility(&share.owner).await?;
+    let policy = shares.get_visibility(&share.owner, &share.cal_id).await?;
     if share.displayname.is_some() {
         calendar.meta.displayname = share.displayname;
     }
