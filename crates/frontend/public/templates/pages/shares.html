@@ -1,0 +1,65 @@
+{% extends "layouts/default.html" %}
+
+{% block content %}
+<h1>Sharing {{ owner }}/{{ displayname }}</h1>
+<p><a href="/frontend/user/{{ owner }}/{{ kind.as_str() }}/{{ id }}">Back to the {{ kind.as_str() }}</a></p>
+
+{% if let Some(error) = error %}
+<p class="error" role="alert">{{ error }}</p>
+{% endif %}
+
+<h2>Shared with</h2>
+{% if shares.is_empty() %}
+<p>Not shared with anyone.</p>
+{% else %}
+<form id="remove-shares" action="/frontend/user/{{ owner }}/{{ kind.as_str() }}/{{ id }}/shares/remove" method="POST"></form>
+<table>
+  <thead>
+    <tr><th></th><th>Shared with</th><th>Access</th></tr>
+  </thead>
+  <tbody>
+    {% for share in shares %}
+    <tr>
+      <td>
+        <label><input type="checkbox" name="sharee" value="{{ share.sharee.id }}" form="remove-shares" aria-label="Select {{ share.sharee.displayname }}"></label>
+      </td>
+      <td>
+        {{ share.sharee.displayname }} ({{ share.sharee.id }})
+        {% if share.sharee.is_group %}
+        <p class="description">A group: the group manages its members itself, and members can add others.</p>
+        {% if let Some(members) = share.sharee.members %}
+        <p class="description">Members now: {% for member in members %}{{ member }}{% if !loop.last %}, {% endif %}{% endfor %}</p>
+        {% endif %}
+        {% endif %}
+      </td>
+      <td>
+        <form action="/frontend/user/{{ owner }}/{{ kind.as_str() }}/{{ id }}/shares/access" method="POST">
+          <input type="hidden" name="sharee" value="{{ share.sharee.id }}">
+          <select name="access" aria-label="Access of {{ share.sharee.displayname }}">
+            <option value="read" {% if share.access == Access::Read %}selected{% endif %}>Read only</option>
+            <option value="write" {% if share.access == Access::Write %}selected{% endif %}>Read and write</option>
+          </select>
+          <button type="submit">Change</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<button type="submit" form="remove-shares" class="delete">End the selected shares</button>
+{% endif %}
+
+<h2>Share</h2>
+<form action="/frontend/user/{{ owner }}/{{ kind.as_str() }}/{{ id }}/shares/preview" method="POST">
+  <label>User or group: name or e-mail address
+    <input type="text" name="sharee" required autocomplete="off">
+  </label>
+  <label>Access
+    <select name="access">
+      <option value="read">Read only</option>
+      <option value="write">Read and write</option>
+    </select>
+  </label>
+  <button type="submit">Continue</button>
+</form>
+{% endblock %}

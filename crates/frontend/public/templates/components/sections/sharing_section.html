@@ -1,0 +1,66 @@
+<h2>Shared with {{ user.id }}</h2>
+{% if let Some(error) = error %}
+<p class="error" role="alert">{{ error }}</p>
+{% endif %}
+<ul class="collection-list">
+  {% for share in shared %}
+  {% let color = share.color.to_owned().unwrap_or("transparent".to_owned()) %}
+  <li class="collection-list-item" style="--color: {{ color }}">
+    <div class="inner">
+      <span class="title">
+        {%- if share.home != user.id -%}{{ share.home }}/{%- endif -%}{{ share.displayname }}
+        <span class="chip">{{ share.kind.as_str() }}</span>
+      </span>
+      <span class="description">
+        Shared by {{ share.owner }}, {% if share.access == Access::Write %}read and write{% else %}read only{% endif %}
+      </span>
+      <div class="actions">
+        <form action="/frontend/user/{{ user.id }}/sharing/view" method="POST">
+          <input type="hidden" name="kind" value="{{ share.kind.as_str() }}">
+          <input type="hidden" name="home" value="{{ share.home }}">
+          <input type="hidden" name="name" value="{{ share.name }}">
+          <label>Your name for it
+            <input type="text" name="displayname" value="{{ share.own_displayname.as_deref().unwrap_or_default() }}" placeholder="{{ share.displayname }}">
+          </label>
+          <label><input type="checkbox" name="own_color" {% if share.color.is_some() %}checked{% endif %}> Your own color</label>
+          <input type="color" name="color" value="{{ share.color.as_deref().unwrap_or("#888888") }}" aria-label="Color">
+          <button type="submit">Save</button>
+        </form>
+        <form action="/frontend/user/{{ user.id }}/sharing/remove" method="POST">
+          <input type="hidden" name="kind" value="{{ share.kind.as_str() }}">
+          <input type="hidden" name="home" value="{{ share.home }}">
+          <input type="hidden" name="name" value="{{ share.name }}">
+          <button type="submit" class="delete">Remove</button>
+        </form>
+      </div>
+      <div class="color-chip"></div>
+    </div>
+  </li>
+  {% else %}
+  Nothing is shared with you yet
+  {% endfor %}
+</ul>
+
+<h2>What others see of private events</h2>
+<p>How events and tasks marked private or confidential appear to those you share calendars with, in every app. Confidential ones never show more than private ones.</p>
+{% for row in visibility %}
+<form action="/frontend/user/{{ user.id }}/sharing/visibility" method="POST">
+  <h3>{{ row.principal }}</h3>
+  <input type="hidden" name="home" value="{{ row.principal }}">
+  <label>Private
+    <select name="private">
+      {% for (level, label) in LEVELS.iter().enumerate() %}
+      <option value="{{ level }}" {% if level == row.private as usize %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Confidential
+    <select name="confidential">
+      {% for (level, label) in LEVELS.iter().enumerate() %}
+      <option value="{{ level }}" {% if level == row.confidential as usize %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button type="submit">Save</button>
+</form>
+{% endfor %}

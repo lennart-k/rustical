@@ -1263,3 +1263,443 @@ async fn test_oidc_login_keeps_the_email_current() {
         .unwrap()
         .unwrap();
 }
+
+mod frontend {
+    use super::*;
+
+    const SAME_SITE: &[(&str, &str)] = &[
+        ("Host", "localhost"),
+        ("Origin", "http://localhost"),
+        ("Content-Type", "application/x-www-form-urlencoded"),
+    ];
+    const SHARES: &str = "/frontend/user/user/calendar/cal/shares";
+
+    #[rstest]
+    #[tokio::test]
+    async fn test_posts_need_this_origin() {
+        let (context, app) = setup().await;
+        for headers in [
+            &[("Host", "localhost"), ("Origin", "http://evil.example")][..],
+            &[
+                ("Host", "localhost"),
+                ("Referer", "http://evil.example/page"),
+            ][..],
+            &[("Host", "localhost")][..],
+        ] {
+            let answer = call(
+                &app,
+                "POST",
+                &format!("{SHARES}/add"),
+                Some(USER),
+                headers,
+                "sharee=other&access=write",
+            )
+            .await;
+            assert_eq!(answer.status, StatusCode::FORBIDDEN, "{headers:?}");
+        }
+        let answer = call(
+            &app,
+            "POST",
+            "/frontend/user/user/sharing/visibility",
+            Some(USER),
+            &[("Host", "localhost"), ("Origin", "http://evil.example")],
+            "home=user&private=4&confidential=4",
+        )
+        .await;
+        assert_eq!(answer.status, StatusCode::FORBIDDEN);
+        assert_eq!(
+            context
+                .share_store
+                .list_calendar_shares("user", "cal")
+                .await
+                .unwrap()
+                .len(),
+            2
+        );
+        assert_eq!(
+            context.share_store.get_visibility("user").await.unwrap(),
+            Policy::default()
+        );
+        // A Referer of this host is enough
+        let answer = call(
+            &app,
+            "POST",
+            &format!("{SHARES}/add"),
+            Some(USER),
+            &[
+                ("Host", "localhost"),
+                ("Referer", "http://localhost/frontend/user"),
+            ],
+            "sharee=other&access=read",
+        )
+        .await;
+        assert_eq!(answer.status, StatusCode::SEE_OTHER, "{}", answer.body);
+    }
+
+    #[rstest]
+    #[tokio::test]
+    async fn test_owner_manages_shares() {
+        let (context, app) = setup().await;
+        let page = ok(&app, "GET", SHARES, USER, "").await;
+        assert!(page.body.contains("bob display (bob)"), "{}", page.body);
+        assert!(page.body.contains("group.team"));
+        assert!(page.body.contains("manages its members itself"));
+        // user is no member of group.team: no member list
+        assert!(!page.body.contains("Members now"), "{}", page.body);
+
+        // Step 1 shows whom the name or address means
+        context
+            .share_store
+            .set_principal_email("other", Some("other@example.org"))
+            .await
+            .unwrap();
+        let preview = call(
+            &app,
+            "POST",
+            &format!("{SHARES}/preview"),
+            Some(USER),
+            SAME_SITE,
+            "sharee=Other%40example.org&access=write",
+        )
+        .await;
+        assert_eq!(preview.status, StatusCode::OK);
+        assert!(
+            preview.body.contains("other display") && preview.body.contains("read and write"),
+            "{}",
+            preview.body
+        );
+        assert!(
+            context
+                .share_store
+                .list_calendar_shares("user", "cal")
+                .await
+                .unwrap()
+                .len()
+                == 2,
+            "nothing shared yet"
+        );
+        let unknown = call(
+            &app,
+            "POST",
+            &format!("{SHARES}/preview"),
+            Some(USER),
+            SAME_SITE,
+            "sharee=nobody&access=read",
+        )
+        .await;
+        assert!(
+            unknown.body.contains("no user or group"),
+            "{}",
+            unknown.body
+        );
+
+        // A group shows its members only to members
+        add_principal(&context, "group.mine", PrincipalType::Group, None).await;
+        context
+            .principal_store
+            .add_membership("user", "group.mine")
+            .await
+            .unwrap();
+        context
+            .principal_store
+            .add_membership("bob", "group.mine")
+            .await
+            .unwrap();
+        let preview = call(
+            &app,
+            "POST",
+            &format!("{SHARES}/preview"),
+            Some(USER),
+            SAME_SITE,
+            "sharee=group.mine&access=read",
+        )
+        .await;
+        assert!(
+            preview.body.contains("Members now") && preview.body.contains("bob"),
+            "{}",
+            preview.body
+        );
+        let preview = call(
+            &app,
+            "POST",
+            &format!("{SHARES}/preview"),
+            Some(USER),
+            SAME_SITE,
+            "sharee=group.team&access=read",
+        )
+        .await;
+        assert!(
+            preview.body.contains("manages its members itself")
+                && !preview.body.contains("Members now"),
+            "{}",
+            preview.body
+        );
+
+        // Step 2 shares
+        let answer = call(
+            &app,
+            "POST",
+            &format!("{SHARES}/add"),
+            Some(USER),
+            SAME_SITE,
+            "sharee=other&access=write",
+        )
+        .await;
+        assert_eq!(answer.status, StatusCode::SEE_OTHER);
+        let share = context
+            .share_store
+            .get_calendar_share("other", "cal_shared_by_user")
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            (share.access, share.created_by.as_deref()),
+            (Access::Write, Some("user"))
+        );
+
+        // Access change
+        call(
+            &app,
+            "POST",
+            &format!("{SHARES}/access"),
+            Some(USER),
+            SAME_SITE,
+            "sharee=other&access=read",
+        )
+        .await;
+        let share = context
+            .share_store
+            .get_calendar_share("other", "cal_shared_by_user")
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(share.access, Access::Read);
+
+        // Ending several at once
+        let answer = call(
+            &app,
+            "POST",
+            &format!("{SHARES}/remove"),
+            Some(USER),
+            SAME_SITE,
+            "sharee=other&sharee=bob",
+        )
+        .await;
+        assert_eq!(answer.status, StatusCode::SEE_OTHER);
+        let left: Vec<_> = context
+            .share_store
+            .list_calendar_shares("user", "cal")
+            .await
+            .unwrap()
+            .into_iter()
+            .map(|s| s.sharee)
+            .collect();
+        assert_eq!(left, ["group.team"]);
+
+        // Refusals are shown on the page
+        let answer = call(
+            &app,
+            "POST",
+            &format!("{SHARES}/add"),
+            Some(USER),
+            SAME_SITE,
+            "sharee=user&access=read",
+        )
+        .await;
+        assert!(answer.body.contains("with its owner"), "{}", answer.body);
+
+        // Addressbooks
+        let answer = call(
+            &app,
+            "POST",
+            "/frontend/user/user/addressbook/book/shares/add",
+            Some(USER),
+            SAME_SITE,
+            "sharee=other&access=read",
+        )
+        .await;
+        assert_eq!(answer.status, StatusCode::SEE_OTHER);
+        assert_eq!(
+            context
+                .share_store
+                .list_addressbook_shares("user", "book")
+                .await
+                .unwrap()
+                .len(),
+            2
+        );
+    }
+
+    #[rstest]
+    #[tokio::test]
+    async fn test_sharees_cannot_manage() {
+        let (context, app) = setup().await;
+        assert_eq!(
+            call(&app, "GET", SHARES, Some(BOB), &[], "").await.status,
+            StatusCode::FORBIDDEN
+        );
+        let answer = call(
+            &app,
+            "POST",
+            &format!("{SHARES}/add"),
+            Some(BOB),
+            SAME_SITE,
+            "sharee=other&access=write",
+        )
+        .await;
+        assert_eq!(answer.status, StatusCode::FORBIDDEN);
+        let answer = call(
+            &app,
+            "POST",
+            &format!("{SHARES}/remove"),
+            Some(ERIN),
+            SAME_SITE,
+            "sharee=group.team",
+        )
+        .await;
+        assert_eq!(answer.status, StatusCode::FORBIDDEN);
+        assert_eq!(
+            context
+                .share_store
+                .list_calendar_shares("user", "cal")
+                .await
+                .unwrap()
+                .len(),
+            2
+        );
+        // No page of a share's owner for the sharee
+        let page = ok(&app, "GET", "/frontend/user/bob/sharing", BOB, "").await;
+        assert!(!page.body.contains("/shares"), "{}", page.body);
+    }
+
+    #[rstest]
+    #[tokio::test]
+    async fn test_shared_with_me() {
+        let (context, app) = setup().await;
+        let page = ok(&app, "GET", "/frontend/user/bob/sharing", BOB, "").await;
+        assert!(page.body.contains("Shared by user"), "{}", page.body);
+        assert!(!page.body.contains("objects"), "no object counts or sizes");
+
+        let answer = call(
+            &app,
+            "POST",
+            "/frontend/user/bob/sharing/view",
+            Some(BOB),
+            SAME_SITE,
+            "kind=calendar&home=bob&name=cal_shared_by_user&displayname=Mine&own_color=on&color=%23ff0000",
+        )
+        .await;
+        assert_eq!(answer.status, StatusCode::SEE_OTHER, "{}", answer.body);
+        let share = context
+            .share_store
+            .get_calendar_share("bob", "cal_shared_by_user")
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            (share.displayname.as_deref(), share.color.as_deref()),
+            (Some("Mine"), Some("#ff0000"))
+        );
+        // Group shares in erin's group home; bob cannot act in it
+        let answer = call(
+            &app,
+            "POST",
+            "/frontend/user/bob/sharing/remove",
+            Some(BOB),
+            SAME_SITE,
+            "kind=calendar&home=group.team&name=cal_shared_by_user",
+        )
+        .await;
+        assert_eq!(answer.status, StatusCode::FORBIDDEN);
+        let page = ok(&app, "GET", "/frontend/user/erin/sharing", ERIN, "").await;
+        assert!(page.body.contains("group.team/"), "{}", page.body);
+        let answer = call(
+            &app,
+            "POST",
+            "/frontend/user/erin/sharing/remove",
+            Some(ERIN),
+            SAME_SITE,
+            "kind=calendar&home=group.team&name=cal_shared_by_user",
+        )
+        .await;
+        assert_eq!(answer.status, StatusCode::SEE_OTHER);
+        assert!(
+            context
+                .share_store
+                .get_calendar_share("group.team", "cal_shared_by_user")
+                .await
+                .unwrap()
+                .is_none()
+        );
+        let answer = call(
+            &app,
+            "POST",
+            "/frontend/user/bob/sharing/remove",
+            Some(BOB),
+            SAME_SITE,
+            "kind=addressbook&home=bob&name=book_shared_by_user",
+        )
+        .await;
+        assert_eq!(answer.status, StatusCode::SEE_OTHER);
+        assert!(
+            context
+                .share_store
+                .list_addressbook_shares("user", "book")
+                .await
+                .unwrap()
+                .is_empty()
+        );
+    }
+
+    #[rstest]
+    #[tokio::test]
+    async fn test_visibility_levels() {
+        let (context, app) = setup().await;
+        let page = ok(&app, "GET", "/frontend/user/user/sharing", USER, "").await;
+        assert!(page.body.contains("Busy (time only)"), "{}", page.body);
+        // CONFIDENTIAL never above PRIVATE
+        let answer = call(
+            &app,
+            "POST",
+            "/frontend/user/user/sharing/visibility",
+            Some(USER),
+            SAME_SITE,
+            "home=user&private=1&confidential=3",
+        )
+        .await;
+        assert!(
+            answer.body.contains("never") || answer.body.contains("may not show more"),
+            "{}",
+            answer.body
+        );
+        assert_eq!(
+            context.share_store.get_visibility("user").await.unwrap(),
+            Policy::default()
+        );
+        let answer = call(
+            &app,
+            "POST",
+            "/frontend/user/user/sharing/visibility",
+            Some(USER),
+            SAME_SITE,
+            "home=user&private=3&confidential=2",
+        )
+        .await;
+        assert_eq!(answer.status, StatusCode::SEE_OTHER);
+        assert_eq!(
+            context.share_store.get_visibility("user").await.unwrap(),
+            Policy::new(3, 2).unwrap()
+        );
+        // Only for the user and its groups
+        let answer = call(
+            &app,
+            "POST",
+            "/frontend/user/user/sharing/visibility",
+            Some(USER),
+            SAME_SITE,
+            "home=bob&private=4&confidential=4",
+        )
+        .await;
+        assert_eq!(answer.status, StatusCode::FORBIDDEN);
+    }
+}

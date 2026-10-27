@@ -79,6 +79,23 @@ pub fn frontend_router<
             "/{user}/addressbook/{addressbook}/restore",
             post(route_addressbook_restore::<AS>),
         )
+        // Sharing
+        .route(
+            "/{user}/{kind}/{id}/shares",
+            get(routes::sharing::route_shares::<AP, CS, AS>),
+        )
+        .route(
+            "/{user}/{kind}/{id}/shares/{action}",
+            post(routes::sharing::route_post_shares::<AP, CS, AS>),
+        )
+        .route(
+            "/{user}/sharing",
+            get(routes::sharing::route_sharing::<CS, AS>),
+        )
+        .route(
+            "/{user}/sharing/{action}",
+            post(routes::sharing::route_post_sharing::<CS, AS>),
+        )
         .layer(middleware::from_fn(unauthorized_handler));
 
     let router = Router::new()

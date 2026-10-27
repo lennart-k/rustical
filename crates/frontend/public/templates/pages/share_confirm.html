@@ -1,0 +1,21 @@
+{% extends "layouts/default.html" %}
+
+{% block content %}
+<h1>Share {{ owner }}/{{ displayname }}?</h1>
+<p>
+  With <strong>{{ sharee.displayname }}</strong> ({{ sharee.id }}),
+  {% if access == Access::Write %}read and write{% else %}read only{% endif %}.
+</p>
+{% if sharee.is_group %}
+<p>This is a group: the group manages its members itself, and members can add others. Everyone who is or becomes a member gets this access.</p>
+{% if let Some(members) = sharee.members %}
+<p>Members now: {% for member in members %}{{ member }}{% if !loop.last %}, {% endif %}{% endfor %}</p>
+{% endif %}
+{% endif %}
+<form action="/frontend/user/{{ owner }}/{{ kind.as_str() }}/{{ id }}/shares/add" method="POST">
+  <input type="hidden" name="sharee" value="{{ sharee.id }}">
+  <input type="hidden" name="access" value="{{ access.as_str() }}">
+  <button type="submit">Share</button>
+  <a class="button cancel" href="/frontend/user/{{ owner }}/{{ kind.as_str() }}/{{ id }}/shares">Cancel</a>
+</form>
+{% endblock %}
