@@ -299,24 +299,27 @@ pub fn may_depend_on_policy(ics: &str) -> bool {
     while let Some(start) = lines.next() {
         line.clear();
         line.push_str(start);
-        // A folded line continues on lines that start with a space or a tab
-        while let Some(continuation) = lines.peek().and_then(|part| part.strip_prefix([' ', '\t']))
+        // A folded line continues on lines that start with a space or a tab; the parser also
+        // skips empty lines within a fold (caldata's `LineReader`)
+        while let Some(part) =
+            lines.next_if(|part| part.is_empty() || part.starts_with([' ', '\t']))
         {
-            line.push_str(continuation);
-            lines.next();
+            line.push_str(part.get(1..).unwrap_or_default());
         }
-        if !line
-            .get(..5)
-            .is_some_and(|name| name.eq_ignore_ascii_case("CLASS"))
-        {
+        // The name as the parser reads it: up to the first `;` or `:`, upper-cased by Unicode
+        // rules (`claſs` is CLASS)
+        let Some(end) = line.find([';', ':']) else {
+            continue;
+        };
+        if line[..end].to_uppercase() != "CLASS" {
             continue;
         }
-        let rest = &line[5..];
+        let rest = &line[end..];
         if let Some(value) = rest.strip_prefix(':') {
             if !value.trim().eq_ignore_ascii_case("PUBLIC") {
                 return true;
             }
-        } else if rest.starts_with(';') {
+        } else {
             // Parameters: left to the parser
             return true;
         }
@@ -515,6 +518,12 @@ mod tests {
     #[case("CLA\r\n SS:PRIVATE\r\n", true)]
     #[case("CLASS:PUB\r\n\tLIC\r\n", false)]
     #[case("CLASS:PUBLIC\r\n X\r\n", true)]
+    // An empty line within a fold, as the parser skips it
+    #[case("CLA\r\n\r\n SS:PRIVATE\r\n", true)]
+    #[case("CLASS:PUBLIC\r\n\r\n X\r\n", true)]
+    // Names upper-cased by Unicode rules, as the parser does
+    #[case("cla\u{17f}s:PRIVATE\r\n", true)]
+    #[case("CLASS :PRIVATE\r\n", false)]
     fn test_prefilter(#[case] lines: &str, #[case] depends: bool) {
         assert_eq!(may_depend_on_policy(&ics(lines)), depends, "{lines:?}");
     }
@@ -524,6 +533,7 @@ mod tests {
     #[case("")]
     #[case("CLASS:PUBLIC\r\n")]
     #[case("SUMMARY:CLASS:PRIVATE\r\n")]
+    #[case("CLASS :PRIVATE\r\n")]
     fn test_prefilter_skips_only_policy_independent(#[case] lines: &str) {
         let ics = ics(lines);
         assert!(!may_depend_on_policy(&ics));
