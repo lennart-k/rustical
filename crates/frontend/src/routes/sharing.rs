@@ -194,6 +194,8 @@ impl DefaultLayoutData for SharesPage {
     }
 }
 
+/// Step 1 of adding a share. It shows only what the user typed: whom a name or an address
+/// belongs to is not for every user to learn.
 #[derive(Template, WebTemplate)]
 #[template(path = "pages/share_confirm.html")]
 pub struct ShareConfirmPage {
@@ -202,8 +204,11 @@ pub struct ShareConfirmPage {
     pub owner: String,
     pub id: String,
     pub displayname: String,
-    pub sharee: ShareeInfo,
+    /// What the user typed, shared with whom it belongs to when the share is added
+    pub input: String,
     pub access: Access,
+    /// The current members, only if the input is the id of a group the user is a member of
+    pub members: Option<Vec<String>>,
 }
 
 impl DefaultLayoutData for ShareConfirmPage {
@@ -367,17 +372,26 @@ pub async fn route_post_shares<
 
     let result: Result<(), Error> = match action.as_str() {
         "preview" => {
-            let input = field(&form, "sharee").unwrap_or_default();
+            let input = field(&form, "sharee").unwrap_or_default().trim();
             match resolve_input(auth_provider.as_ref(), share_store.as_ref(), input).await {
                 Ok(sharee) => {
+                    // Member lists only for members, and only for the group's own name
+                    let members = if sharee == input && user.is_principal(&sharee) {
+                        sharee_info(auth_provider.as_ref(), &user, &sharee)
+                            .await?
+                            .members
+                    } else {
+                        None
+                    };
                     return Ok(ShareConfirmPage {
-                        sharee: sharee_info(auth_provider.as_ref(), &user, &sharee).await?,
+                        input: input.to_owned(),
                         user,
                         kind,
                         owner,
                         id,
                         displayname,
                         access: access_of(&form),
+                        members,
                     }
                     .into_response());
                 }
@@ -399,18 +413,20 @@ pub async fn route_post_shares<
             }
         }
         "access" => {
-            // Sharing again with an existing sharee changes only the access
+            // Only an existing share: one the sharee ended in the meantime stays ended
             let sharee = field(&form, "sharee").unwrap_or_default();
             let access = access_of(&form);
             match kind {
-                Kind::Calendar => share_store
-                    .share_calendar(&owner, &id, sharee, access, Some(&user.id))
-                    .await
-                    .map(drop),
-                Kind::Addressbook => share_store
-                    .share_addressbook(&owner, &id, sharee, access, Some(&user.id))
-                    .await
-                    .map(drop),
+                Kind::Calendar => {
+                    share_store
+                        .set_calendar_share_access(&owner, &id, sharee, access)
+                        .await
+                }
+                Kind::Addressbook => {
+                    share_store
+                        .set_addressbook_share_access(&owner, &id, sharee, access)
+                        .await
+                }
             }
         }
         "remove" => {
@@ -447,6 +463,11 @@ pub async fn route_post_shares<
     match result {
         Ok(()) => Ok(Redirect::to(&back).into_response()),
         Err(err) => {
+            let message = if action == "access" && err.is_not_found() {
+                "This share does not exist any more.".to_owned()
+            } else {
+                message(&err)
+            };
             shares_page(
                 auth_provider.as_ref(),
                 share_store.as_ref(),
@@ -455,7 +476,7 @@ pub async fn route_post_shares<
                 owner,
                 id,
                 displayname,
-                Some(message(&err)),
+                Some(message),
             )
             .await
         }
@@ -472,6 +493,35 @@ pub struct SharedRow {
     pub own_displayname: Option<String>,
     pub color: Option<String>,
     pub access: Access,
+}
+
+impl SharedRow {
+    /// The color for a style attribute: the owner sets it unchecked (PROPPATCH), so only a CSS
+    /// hex color is used
+    #[must_use]
+    pub fn css_color(&self) -> &str {
+        self.color
+            .as_deref()
+            .filter(|color| is_hex_color(color))
+            .unwrap_or("transparent")
+    }
+
+    /// The color for a color input (`#rrggbb` only)
+    #[must_use]
+    pub fn picker_color(&self) -> &str {
+        match self.color.as_deref() {
+            Some(color) if is_hex_color(color) && matches!(color.len(), 7 | 9) => &color[..7],
+            _ => "#888888",
+        }
+    }
+}
+
+/// `#rgb`, `#rgba`, `#rrggbb` or `#rrggbbaa`
+#[must_use]
+pub fn is_hex_color(value: &str) -> bool {
+    value.strip_prefix('#').is_some_and(|digits| {
+        matches!(digits.len(), 3 | 4 | 6 | 8) && digits.bytes().all(|b| b.is_ascii_hexdigit())
+    })
 }
 
 impl Section for SharingSection {
@@ -671,6 +721,31 @@ pub async fn route_post_sharing<CS: CalendarStore, AS: AddressbookStore>(
                 Some(message(&err)),
             )
             .await
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_hex_color;
+
+    #[test]
+    fn test_hex_colors_only() {
+        for color in ["#abc", "#ABCD", "#123456", "#12345678"] {
+            assert!(is_hex_color(color), "{color}");
+        }
+        for color in [
+            "",
+            "#",
+            "red",
+            "#12345",
+            "#1234567",
+            "#ggg",
+            "#123456;background:url(https://evil/x)",
+            "red;background:url(https://evil/x)",
+            "#１２３",
+        ] {
+            assert!(!is_hex_color(color), "{color}");
         }
     }
 }

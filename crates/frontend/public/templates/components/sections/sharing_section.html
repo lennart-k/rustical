@@ -4,8 +4,7 @@
 {% endif %}
 <ul class="collection-list">
   {% for share in shared %}
-  {% let color = share.color.to_owned().unwrap_or("transparent".to_owned()) %}
-  <li class="collection-list-item" style="--color: {{ color }}">
+  <li class="collection-list-item" style="--color: {{ share.css_color() }}">
     <div class="inner">
       <span class="title">
         {%- if share.home != user.id -%}{{ share.home }}/{%- endif -%}{{ share.displayname }}
@@ -23,7 +22,7 @@
             <input type="text" name="displayname" value="{{ share.own_displayname.as_deref().unwrap_or_default() }}" placeholder="{{ share.displayname }}">
           </label>
           <label><input type="checkbox" name="own_color" {% if share.color.is_some() %}checked{% endif %}> Your own color</label>
-          <input type="color" name="color" value="{{ share.color.as_deref().unwrap_or("#888888") }}" aria-label="Color">
+          <input type="color" name="color" value="{{ share.picker_color() }}" aria-label="Color">
           <button type="submit">Save</button>
         </form>
         <form action="/frontend/user/{{ user.id }}/sharing/remove" method="POST">

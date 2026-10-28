@@ -1364,7 +1364,7 @@ mod frontend {
         // user is no member of group.team: no member list
         assert!(!page.body.contains("Members now"), "{}", page.body);
 
-        // Step 1 shows whom the name or address means
+        // Step 1 shows only what was typed: not whom a name or an address belongs to
         context
             .share_store
             .set_principal_email("other", Some("other@example.org"))
@@ -1376,15 +1376,28 @@ mod frontend {
             &format!("{SHARES}/preview"),
             Some(USER),
             SAME_SITE,
-            "sharee=Other%40example.org&access=write",
+            "sharee=+Other%40example.org+&access=write",
         )
         .await;
         assert_eq!(preview.status, StatusCode::OK);
         assert!(
-            preview.body.contains("other display") && preview.body.contains("read and write"),
+            preview
+                .body
+                .contains("With <strong>Other@example.org</strong>")
+                && preview
+                    .body
+                    .contains(r#"name="sharee" value="Other@example.org""#)
+                && preview.body.contains("read and write"),
             "{}",
             preview.body
         );
+        for resolved in ["other display", "(other)", r#"value="other""#] {
+            assert!(
+                !preview.body.contains(resolved),
+                "{resolved}: {}",
+                preview.body
+            );
+        }
         assert!(
             context
                 .share_store
@@ -1405,10 +1418,39 @@ mod frontend {
         )
         .await;
         assert!(
-            unknown.body.contains("no user or group"),
+            unknown
+                .body
+                .contains("There is no user or group with this name or e-mail address."),
             "{}",
             unknown.body
         );
+        // A name of one principal that is the address of another
+        context
+            .share_store
+            .set_principal_email("erin", Some("bob"))
+            .await
+            .unwrap();
+        let ambiguous = call(
+            &app,
+            "POST",
+            &format!("{SHARES}/preview"),
+            Some(USER),
+            SAME_SITE,
+            "sharee=bob&access=read",
+        )
+        .await;
+        assert!(
+            ambiguous
+                .body
+                .contains("This name and this e-mail address belong to different users."),
+            "{}",
+            ambiguous.body
+        );
+        context
+            .share_store
+            .set_principal_email("erin", None)
+            .await
+            .unwrap();
 
         // A group shows its members only to members
         add_principal(&context, "group.mine", PrincipalType::Group, None).await;
@@ -1436,6 +1478,28 @@ mod frontend {
             "{}",
             preview.body
         );
+        // Not for the group's address: the address must not tell whom it belongs to
+        context
+            .share_store
+            .set_principal_email("group.mine", Some("mine@example.org"))
+            .await
+            .unwrap();
+        let preview = call(
+            &app,
+            "POST",
+            &format!("{SHARES}/preview"),
+            Some(USER),
+            SAME_SITE,
+            "sharee=mine%40example.org&access=read",
+        )
+        .await;
+        assert!(
+            preview.body.contains("mine@example.org")
+                && !preview.body.contains("Members now")
+                && !preview.body.contains("group.mine"),
+            "{}",
+            preview.body
+        );
         let preview = call(
             &app,
             "POST",
@@ -1452,14 +1516,14 @@ mod frontend {
             preview.body
         );
 
-        // Step 2 shares
+        // Step 2 shares with whom the typed text belongs to now
         let answer = call(
             &app,
             "POST",
             &format!("{SHARES}/add"),
             Some(USER),
             SAME_SITE,
-            "sharee=other&access=write",
+            "sharee=Other%40example.org&access=write",
         )
         .await;
         assert_eq!(answer.status, StatusCode::SEE_OTHER);
@@ -1512,6 +1576,54 @@ mod frontend {
             .map(|s| s.sharee)
             .collect();
         assert_eq!(left, ["group.team"]);
+
+        // A page from before the end changes no access and makes no share again
+        let answer = call(
+            &app,
+            "POST",
+            &format!("{SHARES}/access"),
+            Some(USER),
+            SAME_SITE,
+            "sharee=other&access=write",
+        )
+        .await;
+        assert_eq!(answer.status, StatusCode::OK);
+        assert!(
+            answer.body.contains("This share does not exist any more."),
+            "{}",
+            answer.body
+        );
+        assert!(
+            context
+                .share_store
+                .get_calendar_share("other", "cal_shared_by_user")
+                .await
+                .unwrap()
+                .is_none()
+        );
+        let answer = call(
+            &app,
+            "POST",
+            "/frontend/user/user/addressbook/book/shares/access",
+            Some(USER),
+            SAME_SITE,
+            "sharee=other&access=write",
+        )
+        .await;
+        assert!(
+            answer.body.contains("This share does not exist any more."),
+            "{}",
+            answer.body
+        );
+        assert_eq!(
+            context
+                .share_store
+                .list_addressbook_shares("user", "book")
+                .await
+                .unwrap()
+                .len(),
+            1
+        );
 
         // Refusals are shown on the page
         let answer = call(
@@ -1596,6 +1708,33 @@ mod frontend {
         let page = ok(&app, "GET", "/frontend/user/bob/sharing", BOB, "").await;
         assert!(page.body.contains("Shared by user"), "{}", page.body);
         assert!(!page.body.contains("objects"), "no object counts or sizes");
+
+        // The owner's color is unchecked: only a hex color reaches the page
+        for (color, shown) in [
+            ("red;background:url(https://evil.example/x)", "transparent"),
+            ("#FFF8DCFF", "#FFF8DCFF"),
+        ] {
+            ok(
+                &app,
+                "PROPPATCH",
+                OWN_CAL,
+                USER,
+                &format!(
+                    r#"<?xml version="1.0" encoding="utf-8" ?>
+<D:propertyupdate xmlns:D="DAV:" xmlns:I="http://apple.com/ns/ical/">
+  <D:set><D:prop><I:calendar-color>{color}</I:calendar-color></D:prop></D:set>
+</D:propertyupdate>"#
+                ),
+            )
+            .await;
+            let page = ok(&app, "GET", "/frontend/user/bob/sharing", BOB, "").await;
+            assert!(!page.body.contains("evil"), "{}", page.body);
+            assert!(
+                page.body.contains(&format!(r#"style="--color: {shown}""#)),
+                "{}",
+                page.body
+            );
+        }
 
         let answer = call(
             &app,
@@ -1699,7 +1838,9 @@ mod frontend {
         )
         .await;
         assert!(
-            answer.body.contains("never") || answer.body.contains("may not show more"),
+            answer
+                .body
+                .contains("Confidential objects may not show more than private ones."),
             "{}",
             answer.body
         );
