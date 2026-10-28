@@ -8,9 +8,8 @@
 //!    ([`resolve_calendar`] / [`resolve_addressbook`], then [`Resolved::check`].)
 //!
 //! Generic DAV routes do not know the user, only the path, so the path alone decides what
-//! a collection is. Keeping this decision in one place lets later kinds of collections
-//! (for example collections shared by another principal) plug in without touching every
-//! route again.
+//! a collection is: one of the home itself, or one another principal shares with the home
+//! ([`ResolvedKind`]).
 use crate::{
     Access, Addressbook, AddressbookShare, AddressbookStore, Calendar, CalendarShare,
     CalendarStore, Error, ShareStore, auth::Principal,
@@ -34,7 +33,7 @@ pub enum ResolvedKind {
     /// A collection of the home itself (for a group home: the group's own collection).
     Own,
     /// A collection another principal shares with the home. Everyone using it sees it as a
-    /// sharee: objects as `policy` (the owner's) shows them, writes only with `Access::Write`.
+    /// sharee: objects as `policy` (the calendar's) shows them, writes only with `Access::Write`.
     Copy { access: Access, policy: Policy },
 }
 
@@ -45,6 +44,8 @@ pub enum ResolvedKind {
 pub struct Resolved {
     owner: String,
     id: String,
+    /// The home of the path
+    home: String,
     kind: ResolvedKind,
 }
 
@@ -59,6 +60,12 @@ impl Resolved {
     #[must_use]
     pub fn id(&self) -> &str {
         &self.id
+    }
+
+    /// The home of the path: the owner for its own collection, the sharee for a share.
+    #[must_use]
+    pub fn home(&self) -> &str {
+        &self.home
     }
 
     #[must_use]
@@ -97,18 +104,26 @@ impl Resolved {
         matches!(self.kind, ResolvedKind::Own)
     }
 
-    const fn own(owner: String, id: String) -> Self {
+    fn own(owner: String, id: String) -> Self {
         Self {
+            home: owner.clone(),
             owner,
             id,
             kind: ResolvedKind::Own,
         }
     }
 
-    const fn copy(owner: String, id: String, access: Access, policy: Policy) -> Self {
+    const fn copy(
+        owner: String,
+        id: String,
+        sharee: String,
+        access: Access,
+        policy: Policy,
+    ) -> Self {
         Self {
             owner,
             id,
+            home: sharee,
             kind: ResolvedKind::Copy { access, policy },
         }
     }
@@ -116,10 +131,22 @@ impl Resolved {
 
 #[cfg(any(test, feature = "test"))]
 impl Resolved {
-    /// A resolved collection for tests that cannot resolve one through a store
+    /// A resolved collection for tests that cannot resolve one through a store, in the home of
+    /// its owner
     #[must_use]
-    pub const fn for_tests(owner: String, id: String, kind: ResolvedKind) -> Self {
-        Self { owner, id, kind }
+    pub fn for_tests(owner: String, id: String, kind: ResolvedKind) -> Self {
+        Self {
+            home: owner.clone(),
+            owner,
+            id,
+            kind,
+        }
+    }
+
+    /// The same collection in the home `home` (for a share: its sharee)
+    #[must_use]
+    pub fn in_home_for_tests(self, home: String) -> Self {
+        Self { home, ..self }
     }
 }
 
@@ -194,7 +221,13 @@ async fn shared_calendar(
         calendar.meta.order = order;
     }
     Ok((
-        Resolved::copy(share.owner, share.cal_id, share.access, policy),
+        Resolved::copy(
+            share.owner,
+            share.cal_id,
+            share.sharee,
+            share.access,
+            policy,
+        ),
         calendar,
     ))
 }
@@ -297,10 +330,11 @@ pub fn may_see_principal(user: &Principal, owner: &str, sharees: &[String]) -> b
 }
 
 /// The calendars shared with `home`, as [`resolve_calendar`] presents them, with their names in
-/// the home. A share whose calendar cannot be read is left out (never an error for the listing).
+/// the home. A share whose calendar is gone in the meantime is left out.
 ///
 /// # Errors
-/// Any error of the share store listing the shares.
+/// Any error of the stores other than [`Error::NotFound`]: a listing without a collection that
+/// exists would make clients drop their copy of it.
 pub async fn shared_calendars(
     shares: &dyn ShareStore,
     store: &dyn CalendarStore,
@@ -311,7 +345,8 @@ pub async fn shared_calendars(
         let name = share.name.clone();
         match shared_calendar(shares, store, share).await {
             Ok((resolved, calendar)) => result.push((name, resolved, calendar)),
-            Err(err) => tracing::warn!("Skipping shared calendar {home}/{name}: {err}"),
+            Err(Error::NotFound) => {}
+            Err(err) => return Err(err),
         }
     }
     Ok(result)
@@ -361,6 +396,7 @@ async fn shared_addressbook(
         Resolved::copy(
             share.owner,
             share.addressbook_id,
+            share.sharee,
             share.access,
             Policy::new(FULL, FULL).expect("valid levels"),
         ),
@@ -371,7 +407,7 @@ async fn shared_addressbook(
 /// The addressbooks shared with `home`; see [`shared_calendars`].
 ///
 /// # Errors
-/// Any error of the share store listing the shares.
+/// Any error of the stores other than [`Error::NotFound`].
 pub async fn shared_addressbooks(
     shares: &dyn ShareStore,
     store: &dyn AddressbookStore,
@@ -382,7 +418,8 @@ pub async fn shared_addressbooks(
         let name = share.name.clone();
         match shared_addressbook(store, share).await {
             Ok((resolved, addressbook)) => result.push((name, resolved, addressbook)),
-            Err(err) => tracing::warn!("Skipping shared addressbook {home}/{name}: {err}"),
+            Err(Error::NotFound) => {}
+            Err(err) => return Err(err),
         }
     }
     Ok(result)

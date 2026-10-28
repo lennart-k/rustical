@@ -745,3 +745,118 @@ async fn test_visibility_table_rules() {
     .await;
     assert!(orphan.is_err());
 }
+
+#[rstest]
+#[tokio::test]
+async fn test_access_changes_only_existing_shares() {
+    let context = setup().await;
+    let shares = &context.share_store;
+    shares
+        .share_calendar("user", "cal", "bob", Access::Read, Some("user"))
+        .await
+        .unwrap();
+    shares
+        .share_addressbook("user", "book", "bob", Access::Read, Some("user"))
+        .await
+        .unwrap();
+    shares
+        .update_calendar_share_view(
+            "bob",
+            "cal_shared_by_user",
+            ShareViewUpdate {
+                displayname: Some(Some("Mine".to_owned())),
+                ..Default::default()
+            },
+        )
+        .await
+        .unwrap();
+    let synctoken = |context: TestStoreContext| async move {
+        context
+            .cal_store
+            .get_calendar("user", "cal", false)
+            .await
+            .unwrap()
+            .synctoken
+    };
+    let before = synctoken(context.clone()).await;
+
+    shares
+        .set_calendar_share_access("user", "cal", "bob", Access::Write)
+        .await
+        .unwrap();
+    shares
+        .set_addressbook_share_access("user", "book", "bob", Access::Write)
+        .await
+        .unwrap();
+    let share = shares
+        .get_calendar_share("bob", "cal_shared_by_user")
+        .await
+        .unwrap()
+        .unwrap();
+    // Only the access changes; nothing is logged (the objects look the same)
+    assert_eq!(
+        (
+            share.access,
+            share.displayname.as_deref(),
+            share.created_by.as_deref()
+        ),
+        (Access::Write, Some("Mine"), Some("user"))
+    );
+    assert_eq!(
+        shares
+            .get_addressbook_share("bob", "book_shared_by_user")
+            .await
+            .unwrap()
+            .unwrap()
+            .access,
+        Access::Write
+    );
+    assert_eq!(synctoken(context.clone()).await, before);
+    // The same access again is fine
+    shares
+        .set_calendar_share_access("user", "cal", "bob", Access::Write)
+        .await
+        .unwrap();
+
+    // Ended by the sharee: it stays ended
+    shares.unshare_calendar("user", "cal", "bob").await.unwrap();
+    shares
+        .unshare_addressbook("user", "book", "bob")
+        .await
+        .unwrap();
+    assert!(matches!(
+        shares
+            .set_calendar_share_access("user", "cal", "bob", Access::Read)
+            .await,
+        Err(Error::NotFound)
+    ));
+    assert!(matches!(
+        shares
+            .set_addressbook_share_access("user", "book", "bob", Access::Read)
+            .await,
+        Err(Error::NotFound)
+    ));
+    assert!(
+        shares
+            .list_calendar_shares("user", "cal")
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    assert!(
+        shares
+            .list_addressbook_shares("user", "book")
+            .await
+            .unwrap()
+            .is_empty()
+    );
+    // Never shared, unknown collections or principals
+    for (cal_id, sharee) in [("cal", "erin"), ("missing", "bob"), ("cal", "nobody")] {
+        assert!(matches!(
+            shares
+                .set_calendar_share_access("user", cal_id, sharee, Access::Read)
+                .await,
+            Err(Error::NotFound)
+        ));
+    }
+}

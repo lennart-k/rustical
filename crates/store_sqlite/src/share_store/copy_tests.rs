@@ -35,6 +35,7 @@ const ALARM: &str =
 const SHAREE_ALARM: &str =
     "BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:Sharee alarm\r\nTRIGGER:-PT5M\r\nEND:VALARM\r\n";
 
+/// `cal` as the path of the sharee resolves it, with `access`
 fn copy(access: Access) -> Resolved {
     Resolved::for_tests(
         OWNER.to_owned(),
@@ -44,6 +45,20 @@ fn copy(access: Access) -> Resolved {
             policy: Policy::new(1, 0).unwrap(),
         },
     )
+    .in_home_for_tests(SHAREE.to_owned())
+}
+
+/// `book` as the path of the sharee resolves it, with `access`
+fn book_copy(access: Access) -> Resolved {
+    Resolved::for_tests(
+        OWNER.to_owned(),
+        "book".to_owned(),
+        ResolvedKind::Copy {
+            access,
+            policy: Policy::default(),
+        },
+    )
+    .in_home_for_tests(SHAREE.to_owned())
 }
 
 async fn setup() -> TestStoreContext {
@@ -692,14 +707,7 @@ async fn test_visibility_changes_are_synced() {
 #[tokio::test]
 async fn test_contacts_through_a_share() {
     let context = setup().await;
-    let resolved = Resolved::for_tests(
-        OWNER.to_owned(),
-        "book".to_owned(),
-        ResolvedKind::Copy {
-            access: Access::Write,
-            policy: Policy::default(),
-        },
-    );
+    let resolved = book_copy(Access::Write);
     let card = |name: &str| {
         AddressObject::from_vcf(format!(
             "BEGIN:VCARD\r\nVERSION:3.0\r\nUID:c\r\nFN:{name}\r\nEND:VCARD\r\n"
@@ -748,6 +756,349 @@ async fn test_contacts_through_a_share() {
             .is_ok()
     );
     copy_rule(put("c", card("Third")).await, CopyRule::TrashHref);
+}
+
+#[rstest]
+#[tokio::test]
+async fn test_read_shares_write_nothing() {
+    let context = setup().await;
+    owner_put(&context, "e", object("e", "SUMMARY:Kept\r\n")).await;
+    let card = AddressObject::from_vcf(
+        "BEGIN:VCARD\r\nVERSION:3.0\r\nUID:c\r\nFN:Kept\r\nEND:VCARD\r\n".to_owned(),
+    )
+    .unwrap();
+    AddressbookWriteStore::put_object(&context.addr_store, OWNER, "book", "c", card, true)
+        .await
+        .unwrap();
+    let read = copy(Access::Read);
+    let book = book_copy(Access::Read);
+    let changed = |vcf: &str| {
+        AddressObject::from_vcf(format!(
+            "BEGIN:VCARD\r\nVERSION:3.0\r\nUID:c\r\nFN:{vcf}\r\nEND:VCARD\r\n"
+        ))
+        .unwrap()
+    };
+
+    assert!(matches!(
+        shared::put_objects(
+            &context.cal_store,
+            &context.share_store,
+            &read,
+            vec![
+                ("e".to_owned(), object("e", "SUMMARY:Changed\r\n")),
+                ("n".to_owned(), object("n", "")),
+            ],
+            true,
+        )
+        .await,
+        Err(Error::Forbidden)
+    ));
+    assert!(matches!(
+        shared::delete_object(
+            &context.cal_store,
+            &context.share_store,
+            &read,
+            "e",
+            true,
+            Preconditions::default(),
+        )
+        .await,
+        Err(Error::Forbidden)
+    ));
+    assert!(matches!(
+        shared::put_address_object(
+            &context.addr_store,
+            &context.share_store,
+            &book,
+            "c",
+            changed("Changed"),
+            true,
+            Preconditions::default(),
+        )
+        .await,
+        Err(Error::Forbidden)
+    ));
+    assert!(matches!(
+        shared::delete_address_object(
+            &context.addr_store,
+            &context.share_store,
+            &book,
+            "c",
+            true,
+            Preconditions::default(),
+        )
+        .await,
+        Err(Error::Forbidden)
+    ));
+
+    assert!(stored(&context, "e").await.contains("SUMMARY:Kept"));
+    assert!(
+        context
+            .cal_store
+            .get_object(OWNER, CAL, "n", true)
+            .await
+            .is_err()
+    );
+    assert!(
+        AddressbookReadStore::get_object(&context.addr_store, OWNER, "book", "c", false)
+            .await
+            .unwrap()
+            .get_vcf()
+            .contains("FN:Kept")
+    );
+}
+
+/// A path resolved before the owner changed the share writes nothing the share does not allow
+/// now: the store checks the share again in the transaction of the write
+#[rstest]
+#[tokio::test]
+async fn test_writes_check_the_share_they_go_through() {
+    let context = setup().await;
+    let shares = &context.share_store;
+    owner_put(&context, "e", object("e", "SUMMARY:Kept\r\n")).await;
+    let card = |name: &str| {
+        AddressObject::from_vcf(format!(
+            "BEGIN:VCARD\r\nVERSION:3.0\r\nUID:c\r\nFN:{name}\r\nEND:VCARD\r\n"
+        ))
+        .unwrap()
+    };
+    AddressbookWriteStore::put_object(&context.addr_store, OWNER, "book", "c", card("Kept"), true)
+        .await
+        .unwrap();
+    // Resolved while the share still wrote
+    let resolved = copy(Access::Write);
+    let book = book_copy(Access::Write);
+    let attempts = |context: TestStoreContext, resolved: Resolved, book: Resolved| async move {
+        [
+            shared::put_object(
+                &context.cal_store,
+                &context.share_store,
+                &resolved,
+                "e",
+                object("e", "SUMMARY:Changed\r\n"),
+                true,
+                Preconditions::default(),
+            )
+            .await
+            .map(drop),
+            shared::put_objects(
+                &context.cal_store,
+                &context.share_store,
+                &resolved,
+                vec![("n".to_owned(), object("n", ""))],
+                true,
+            )
+            .await,
+            shared::delete_object(
+                &context.cal_store,
+                &context.share_store,
+                &resolved,
+                "e",
+                true,
+                Preconditions::default(),
+            )
+            .await,
+            shared::put_address_object(
+                &context.addr_store,
+                &context.share_store,
+                &book,
+                "c",
+                card("Changed"),
+                true,
+                Preconditions::default(),
+            )
+            .await
+            .map(drop),
+            shared::delete_address_object(
+                &context.addr_store,
+                &context.share_store,
+                &book,
+                "c",
+                true,
+                Preconditions::default(),
+            )
+            .await,
+        ]
+    };
+
+    // Now read only
+    shares
+        .set_calendar_share_access(OWNER, CAL, SHAREE, Access::Read)
+        .await
+        .unwrap();
+    shares
+        .set_addressbook_share_access(OWNER, "book", SHAREE, Access::Read)
+        .await
+        .unwrap();
+    for result in attempts(context.clone(), resolved.clone(), book.clone()).await {
+        assert!(matches!(result, Err(Error::Forbidden)), "{result:?}");
+    }
+    // Now gone
+    shares.unshare_calendar(OWNER, CAL, SHAREE).await.unwrap();
+    shares
+        .unshare_addressbook(OWNER, "book", SHAREE)
+        .await
+        .unwrap();
+    for result in attempts(context.clone(), resolved, book).await {
+        assert!(matches!(result, Err(Error::NotFound)), "{result:?}");
+    }
+    // Another home than the share's never writes
+    let in_owner_home = Resolved::for_tests(
+        OWNER.to_owned(),
+        CAL.to_owned(),
+        ResolvedKind::Copy {
+            access: Access::Write,
+            policy: Policy::new(1, 0).unwrap(),
+        },
+    );
+    let book_in_owner_home = Resolved::for_tests(
+        OWNER.to_owned(),
+        "book".to_owned(),
+        ResolvedKind::Copy {
+            access: Access::Write,
+            policy: Policy::default(),
+        },
+    );
+    for result in attempts(context.clone(), in_owner_home, book_in_owner_home).await {
+        assert!(matches!(result, Err(Error::NotFound)), "{result:?}");
+    }
+
+    assert!(stored(&context, "e").await.contains("SUMMARY:Kept"));
+    assert!(
+        context
+            .cal_store
+            .get_object(OWNER, CAL, "n", true)
+            .await
+            .is_err()
+    );
+    assert!(
+        AddressbookReadStore::get_object(&context.addr_store, OWNER, "book", "c", false)
+            .await
+            .unwrap()
+            .get_vcf()
+            .contains("FN:Kept")
+    );
+}
+
+/// The conditions of a DELETE are checked in its transaction, on the sharee's view
+#[rstest]
+#[tokio::test]
+async fn test_conditional_delete_through_a_share() {
+    let context = setup().await;
+    let resolved = copy(Access::Write);
+    owner_put(
+        &context,
+        "e",
+        object("e", &format!("SUMMARY:Old\r\n{ALARM}")),
+    )
+    .await;
+    let old_view = shared::object(&context.cal_store, &resolved, "e", false)
+        .await
+        .unwrap()
+        .get_etag();
+    owner_put(
+        &context,
+        "e",
+        object("e", &format!("SUMMARY:New\r\n{ALARM}")),
+    )
+    .await;
+    let delete = |etag: String| {
+        let context = context.clone();
+        let resolved = resolved.clone();
+        async move {
+            let if_match = if_match(&etag);
+            shared::delete_object(
+                &context.cal_store,
+                &context.share_store,
+                &resolved,
+                "e",
+                true,
+                Preconditions {
+                    if_match: Some(&if_match),
+                    if_none_match: None,
+                },
+            )
+            .await
+        }
+    };
+    assert!(matches!(
+        delete(old_view).await,
+        Err(Error::PreconditionFailed)
+    ));
+    // The stored ETag (with the owner's alarm) is not the sharee's either
+    let raw = context
+        .cal_store
+        .get_object(OWNER, CAL, "e", false)
+        .await
+        .unwrap()
+        .get_etag();
+    assert!(matches!(delete(raw).await, Err(Error::PreconditionFailed)));
+    assert!(stored(&context, "e").await.contains("SUMMARY:New"));
+    let any = IfNoneMatch::any();
+    assert!(matches!(
+        shared::delete_object(
+            &context.cal_store,
+            &context.share_store,
+            &resolved,
+            "e",
+            true,
+            Preconditions {
+                if_match: None,
+                if_none_match: Some(&any),
+            },
+        )
+        .await,
+        Err(Error::PreconditionFailed)
+    ));
+    let view = shared::object(&context.cal_store, &resolved, "e", false)
+        .await
+        .unwrap()
+        .get_etag();
+    delete(view).await.unwrap();
+    assert!(
+        context
+            .cal_store
+            .get_object(OWNER, CAL, "e", false)
+            .await
+            .is_err()
+    );
+
+    // Contacts
+    let book = book_copy(Access::Write);
+    let card = |name: &str| {
+        AddressObject::from_vcf(format!(
+            "BEGIN:VCARD\r\nVERSION:3.0\r\nUID:c\r\nFN:{name}\r\nEND:VCARD\r\n"
+        ))
+        .unwrap()
+    };
+    let old = card("Old");
+    AddressbookWriteStore::put_object(&context.addr_store, OWNER, "book", "c", old.clone(), true)
+        .await
+        .unwrap();
+    AddressbookWriteStore::put_object(&context.addr_store, OWNER, "book", "c", card("New"), true)
+        .await
+        .unwrap();
+    let old_if_match = if_match(&old.get_etag());
+    assert!(matches!(
+        shared::delete_address_object(
+            &context.addr_store,
+            &context.share_store,
+            &book,
+            "c",
+            true,
+            Preconditions {
+                if_match: Some(&old_if_match),
+                if_none_match: None,
+            },
+        )
+        .await,
+        Err(Error::PreconditionFailed)
+    ));
+    assert!(
+        AddressbookReadStore::get_object(&context.addr_store, OWNER, "book", "c", false)
+            .await
+            .is_ok()
+    );
 }
 
 async fn synctoken(context: &TestStoreContext) -> i64 {

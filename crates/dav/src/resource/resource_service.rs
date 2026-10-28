@@ -5,6 +5,7 @@ use async_trait::async_trait;
 use axum::Router;
 use axum::extract::FromRequestParts;
 use axum::response::IntoResponse;
+use headers::{IfMatch, IfNoneMatch};
 use serde::Deserialize;
 
 /// A `ResourceService` is responsible for handling operations on the resource at an endpoint
@@ -58,6 +59,19 @@ pub trait ResourceService: Clone + Sized + Send + Sync + AxumMethods + 'static {
         _use_trashbin: bool,
     ) -> Result<(), Self::Error> {
         Err(crate::Error::Forbidden.into())
+    }
+
+    /// [`Self::delete_resource`] with the conditions of the request, which the DELETE route has
+    /// checked on the resource before. A service that can check them again atomically with the
+    /// deletion overrides this.
+    async fn delete_resource_with_preconditions(
+        &self,
+        path: &Self::PathComponents,
+        use_trashbin: bool,
+        _if_match: Option<&IfMatch>,
+        _if_none_match: Option<&IfNoneMatch>,
+    ) -> Result<(), Self::Error> {
+        self.delete_resource(path, use_trashbin).await
     }
 
     // Returns whether an existing resource was overwritten

@@ -133,6 +133,7 @@ pub async fn put_object(
                 .put_copy_object(
                     resolved.owner(),
                     resolved.id(),
+                    resolved.home(),
                     object_id,
                     object,
                     preconditions,
@@ -163,6 +164,7 @@ pub async fn put_objects(
                     .put_copy_object(
                         resolved.owner(),
                         resolved.id(),
+                        resolved.home(),
                         &object_id,
                         object,
                         Preconditions::default(),
@@ -192,7 +194,13 @@ pub async fn delete_object(
         }
         ResolvedKind::Copy { .. } => {
             shares
-                .delete_copy_object(resolved.owner(), resolved.id(), object_id, preconditions)
+                .delete_copy_object(
+                    resolved.owner(),
+                    resolved.id(),
+                    resolved.home(),
+                    object_id,
+                    preconditions,
+                )
                 .await
         }
     }
@@ -264,6 +272,7 @@ pub async fn put_address_object(
                 .put_copy_address_object(
                     resolved.owner(),
                     resolved.id(),
+                    resolved.home(),
                     object_id,
                     object,
                     preconditions,
@@ -294,6 +303,7 @@ pub async fn delete_address_object(
                 .delete_copy_address_object(
                     resolved.owner(),
                     resolved.id(),
+                    resolved.home(),
                     object_id,
                     preconditions,
                 )

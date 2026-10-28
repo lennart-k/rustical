@@ -415,6 +415,31 @@ impl ShareStore for SqliteShareStore {
     }
 
     #[instrument]
+    async fn set_calendar_share_access(
+        &self,
+        owner: &str,
+        cal_id: &str,
+        sharee: &str,
+        access: Access,
+    ) -> Result<(), Error> {
+        let access = access.as_str();
+        let result = sqlx::query!(
+            r#"UPDATE calendar_shares SET access = ? WHERE (owner, cal_id, sharee) = (?, ?, ?)"#,
+            access,
+            owner,
+            cal_id,
+            sharee
+        )
+        .execute(&self.db)
+        .await
+        .map_err(crate::Error::from)?;
+        if result.rows_affected() == 0 {
+            return Err(Error::NotFound);
+        }
+        Ok(())
+    }
+
+    #[instrument]
     async fn list_calendar_shares(
         &self,
         owner: &str,
@@ -615,6 +640,31 @@ impl ShareStore for SqliteShareStore {
     ) -> Result<(), Error> {
         let result = sqlx::query!(
             r#"DELETE FROM addressbook_shares WHERE (owner, addressbook_id, sharee) = (?, ?, ?)"#,
+            owner,
+            addressbook_id,
+            sharee
+        )
+        .execute(&self.db)
+        .await
+        .map_err(crate::Error::from)?;
+        if result.rows_affected() == 0 {
+            return Err(Error::NotFound);
+        }
+        Ok(())
+    }
+
+    #[instrument]
+    async fn set_addressbook_share_access(
+        &self,
+        owner: &str,
+        addressbook_id: &str,
+        sharee: &str,
+        access: Access,
+    ) -> Result<(), Error> {
+        let access = access.as_str();
+        let result = sqlx::query!(
+            r#"UPDATE addressbook_shares SET access = ? WHERE (owner, addressbook_id, sharee) = (?, ?, ?)"#,
+            access,
             owner,
             addressbook_id,
             sharee
@@ -853,6 +903,7 @@ impl ShareStore for SqliteShareStore {
         &self,
         owner: &str,
         cal_id: &str,
+        sharee: &str,
         object_id: &str,
         object: CalendarObject,
         preconditions: Preconditions<'_>,
@@ -862,6 +913,7 @@ impl ShareStore for SqliteShareStore {
             .begin_with(BEGIN_IMMEDIATE)
             .await
             .map_err(crate::Error::from)?;
+        Self::check_calendar_write(&mut tx, owner, cal_id, sharee).await?;
         let topic = Self::writable_calendar(&mut tx, owner, cal_id).await?;
         let policy = Self::_get_visibility(&mut tx, owner, cal_id).await?;
         let row = sqlx::query!(
@@ -986,6 +1038,7 @@ impl ShareStore for SqliteShareStore {
         &self,
         owner: &str,
         cal_id: &str,
+        sharee: &str,
         object_id: &str,
         preconditions: Preconditions<'_>,
     ) -> Result<(), Error> {
@@ -994,6 +1047,7 @@ impl ShareStore for SqliteShareStore {
             .begin_with(BEGIN_IMMEDIATE)
             .await
             .map_err(crate::Error::from)?;
+        Self::check_calendar_write(&mut tx, owner, cal_id, sharee).await?;
         let topic = Self::writable_calendar(&mut tx, owner, cal_id).await?;
         let policy = Self::_get_visibility(&mut tx, owner, cal_id).await?;
         let ics = sqlx::query_scalar!(
@@ -1044,6 +1098,7 @@ impl ShareStore for SqliteShareStore {
         &self,
         owner: &str,
         addressbook_id: &str,
+        sharee: &str,
         object_id: &str,
         object: AddressObject,
         preconditions: Preconditions<'_>,
@@ -1053,6 +1108,7 @@ impl ShareStore for SqliteShareStore {
             .begin_with(BEGIN_IMMEDIATE)
             .await
             .map_err(crate::Error::from)?;
+        Self::check_addressbook_write(&mut tx, owner, addressbook_id, sharee).await?;
         let topic = Self::live_addressbook(&mut tx, owner, addressbook_id).await?;
         let row = sqlx::query!(
             r#"SELECT vcf, deleted_at IS NOT NULL AS "deleted!: bool" FROM addressobjects
@@ -1120,6 +1176,7 @@ impl ShareStore for SqliteShareStore {
         &self,
         owner: &str,
         addressbook_id: &str,
+        sharee: &str,
         object_id: &str,
         preconditions: Preconditions<'_>,
     ) -> Result<(), Error> {
@@ -1128,6 +1185,7 @@ impl ShareStore for SqliteShareStore {
             .begin_with(BEGIN_IMMEDIATE)
             .await
             .map_err(crate::Error::from)?;
+        Self::check_addressbook_write(&mut tx, owner, addressbook_id, sharee).await?;
         let topic = Self::live_addressbook(&mut tx, owner, addressbook_id).await?;
         let vcf = sqlx::query_scalar!(
             r#"SELECT vcf FROM addressobjects
@@ -1196,6 +1254,53 @@ impl SqliteShareStore {
         Ok(row
             .and_then(|row| Policy::new(row.private, row.confidential))
             .unwrap_or_default())
+    }
+
+    /// That `sharee` still has write access to the calendar, checked in the transaction of the
+    /// write: [`Error::NotFound`] if the share is gone, [`Error::Forbidden`] if it only reads
+    async fn check_calendar_write(
+        tx: &mut Transaction<'_, Sqlite>,
+        owner: &str,
+        cal_id: &str,
+        sharee: &str,
+    ) -> Result<(), Error> {
+        let access = sqlx::query_scalar!(
+            r#"SELECT access FROM calendar_shares WHERE (owner, cal_id, sharee) = (?, ?, ?)"#,
+            owner,
+            cal_id,
+            sharee
+        )
+        .fetch_optional(&mut **tx)
+        .await
+        .map_err(crate::Error::from)?
+        .ok_or(Error::NotFound)?;
+        match access.parse()? {
+            Access::Write => Ok(()),
+            Access::Read => Err(Error::Forbidden),
+        }
+    }
+
+    /// See [`Self::check_calendar_write`]
+    async fn check_addressbook_write(
+        tx: &mut Transaction<'_, Sqlite>,
+        owner: &str,
+        addressbook_id: &str,
+        sharee: &str,
+    ) -> Result<(), Error> {
+        let access = sqlx::query_scalar!(
+            r#"SELECT access FROM addressbook_shares WHERE (owner, addressbook_id, sharee) = (?, ?, ?)"#,
+            owner,
+            addressbook_id,
+            sharee
+        )
+        .fetch_optional(&mut **tx)
+        .await
+        .map_err(crate::Error::from)?
+        .ok_or(Error::NotFound)?;
+        match access.parse()? {
+            Access::Write => Ok(()),
+            Access::Read => Err(Error::Forbidden),
+        }
     }
 
     /// The push topic of a live calendar that takes objects

@@ -5,6 +5,7 @@ use axum::{extract::Request, handler::Handler, response::Response};
 use futures_util::future::BoxFuture;
 use rustical_dav::resource::{AxumMethods, ResourceService};
 use rustical_store::access::{self, Resolved};
+use rustical_store::shared::{IfMatch, IfNoneMatch};
 use rustical_store::{AddressbookStore, Preconditions, ShareStore, auth::Principal, shared};
 use serde::{Deserialize, Deserializer};
 use std::{convert::Infallible, sync::Arc};
@@ -93,22 +94,36 @@ impl<AS: AddressbookStore> ResourceService for AddressObjectResourceService<AS> 
 
     async fn delete_resource(
         &self,
+        path: &Self::PathComponents,
+        use_trashbin: bool,
+    ) -> Result<(), Self::Error> {
+        self.delete_resource_with_preconditions(path, use_trashbin, None, None)
+            .await
+    }
+
+    async fn delete_resource_with_preconditions(
+        &self,
         AddressObjectPathComponents {
             principal,
             addressbook_id,
             object_id,
         }: &Self::PathComponents,
         use_trashbin: bool,
+        if_match: Option<&IfMatch>,
+        if_none_match: Option<&IfNoneMatch>,
     ) -> Result<(), Self::Error> {
         let resolved = self.addressbook(principal, addressbook_id, true).await?;
-        // The generic DELETE route checked the preconditions
+        // Through a share checked again in the transaction of the deletion
         shared::delete_address_object(
             self.addr_store.as_ref(),
             self.share_store.as_ref(),
             &resolved,
             object_id,
             use_trashbin,
-            Preconditions::default(),
+            Preconditions {
+                if_match,
+                if_none_match,
+            },
         )
         .await?;
         Ok(())

@@ -52,20 +52,25 @@ pub async fn route_delete<R: ResourceService>(
         return Err(Error::Forbidden.into());
     }
 
-    if let Some(if_match) = if_match
-        && !resource.satisfies_if_match(&if_match)
+    if let Some(if_match) = &if_match
+        && !resource.satisfies_if_match(if_match)
     {
         // Precondition failed
         return Err(crate::Error::PreconditionFailed.into());
     }
-    if let Some(if_none_match) = if_none_match
-        && resource.satisfies_if_none_match(&if_none_match)
+    if let Some(if_none_match) = &if_none_match
+        && resource.satisfies_if_none_match(if_none_match)
     {
         // Precondition failed
         return Err(crate::Error::PreconditionFailed.into());
     }
     resource_service
-        .delete_resource(path_components, !no_trash)
+        .delete_resource_with_preconditions(
+            path_components,
+            !no_trash,
+            if_match.as_ref(),
+            if_none_match.as_ref(),
+        )
         .await?;
     Ok(())
 }
