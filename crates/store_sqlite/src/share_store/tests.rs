@@ -1,5 +1,6 @@
 use crate::tests::{TestStoreContext, test_store_context};
 use rstest::rstest;
+use rustical_ical::visibility::Policy;
 use rustical_ical::{AddressObject, CalendarObject, CalendarObjectType};
 use rustical_store::auth::{AuthenticationProvider, Principal, PrincipalType};
 use rustical_store::{
@@ -535,13 +536,20 @@ async fn test_owner_writes_keep_shares() {
         )
         .await
         .unwrap();
-    let before = (
-        shares.list_calendar_shares("user", "cal").await.unwrap(),
-        shares
-            .list_addressbook_shares("user", "book")
-            .await
-            .unwrap(),
-    );
+    shares
+        .set_visibility("user", "cal", Policy::new(3, 2).unwrap())
+        .await
+        .unwrap();
+    shares
+        .set_principal_email("user", Some("user@example.org"))
+        .await
+        .unwrap();
+    shares
+        .set_principal_email("bob", Some("bob@example.org"))
+        .await
+        .unwrap();
+    let before = kept_rows(&context).await;
+    assert_eq!(before.2, Policy::new(3, 2).unwrap());
 
     // Calendar update (PROPPATCH), objects, import merge, trash and restore
     let mut changed = calendar("user", "cal");
@@ -672,14 +680,31 @@ async fn test_owner_writes_keep_shares() {
         .await
         .unwrap();
 
-    let after = (
+    assert_eq!(before, kept_rows(&context).await);
+}
+
+/// What the owner's writes must keep: the shares, the calendar's levels and the e-mail addresses
+async fn kept_rows(
+    context: &TestStoreContext,
+) -> (
+    Vec<rustical_store::CalendarShare>,
+    Vec<rustical_store::AddressbookShare>,
+    Policy,
+    Vec<(String, String)>,
+) {
+    let shares = &context.share_store;
+    (
         shares.list_calendar_shares("user", "cal").await.unwrap(),
         shares
             .list_addressbook_shares("user", "book")
             .await
             .unwrap(),
-    );
-    assert_eq!(before, after);
+        shares.get_visibility("user", "cal").await.unwrap(),
+        sqlx::query_as("SELECT principal, email FROM principal_emails ORDER BY principal")
+            .fetch_all(&context.db)
+            .await
+            .unwrap(),
+    )
 }
 
 #[rstest]
@@ -737,7 +762,7 @@ async fn test_visibility_table_rules() {
     assert!(insert(1, 2).await.is_err());
     assert!(insert(5, 0).await.is_err());
     assert!(insert(-1, -1).await.is_err());
-    // Only for an existing calendar, and gone with it
+    // Only for an existing calendar (gone with it: test_purges_remove_dependent_rows)
     let orphan = sqlx::query(
         "INSERT INTO calendar_visibility (principal, cal_id, private, confidential) VALUES ('user', 'nope', 1, 0)",
     )
@@ -859,4 +884,245 @@ async fn test_access_changes_only_existing_shares() {
             Err(Error::NotFound)
         ));
     }
+}
+
+#[rstest]
+#[tokio::test]
+async fn test_purges_remove_dependent_rows() {
+    let context = setup().await;
+    let shares = &context.share_store;
+    shares
+        .share_addressbook("user", "book", "bob", Access::Read, None)
+        .await
+        .unwrap();
+    shares
+        .set_visibility("user", "cal", Policy::new(2, 1).unwrap())
+        .await
+        .unwrap();
+    shares
+        .set_principal_email("bob", Some("bob@example.org"))
+        .await
+        .unwrap();
+    let count = |sql: &'static str| {
+        let db = context.db.clone();
+        async move {
+            sqlx::query_scalar::<_, i64>(sql)
+                .fetch_one(&db)
+                .await
+                .unwrap()
+        }
+    };
+
+    // Purging a calendar removes its levels; one made again with the same id starts hidden
+    context
+        .cal_store
+        .delete_calendar("user", "cal", false)
+        .await
+        .unwrap();
+    assert_eq!(
+        count(
+            "SELECT COUNT(*) FROM calendar_visibility WHERE (principal, cal_id) = ('user', 'cal')"
+        )
+        .await,
+        0
+    );
+    context
+        .cal_store
+        .insert_calendar(calendar("user", "cal"))
+        .await
+        .unwrap();
+    assert_eq!(
+        shares.get_visibility("user", "cal").await.unwrap(),
+        Policy::new(0, 0).unwrap()
+    );
+
+    // Purging an addressbook removes its shares
+    context
+        .addr_store
+        .delete_addressbook("user", "book", false)
+        .await
+        .unwrap();
+    assert_eq!(
+        count("SELECT COUNT(*) FROM addressbook_shares WHERE (owner, addressbook_id) = ('user', 'book')")
+            .await,
+        0
+    );
+
+    // Removing a principal removes its e-mail address
+    context
+        .principal_store
+        .remove_principal("bob")
+        .await
+        .unwrap();
+    assert_eq!(
+        count("SELECT COUNT(*) FROM principal_emails WHERE principal = 'bob'").await,
+        0
+    );
+    assert_eq!(shares.resolve_email("bob@example.org").await.unwrap(), None);
+}
+
+/// A database migrated by the migrations whose names contain none of `left_out`
+async fn migrated_without(left_out: &[&str]) -> sqlx::SqlitePool {
+    let all = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("migrations");
+    let previous = std::env::temp_dir().join(format!(
+        "rustical-migrations-{}-{}",
+        std::process::id(),
+        uuid::Uuid::new_v4()
+    ));
+    std::fs::create_dir_all(&previous).unwrap();
+    for entry in std::fs::read_dir(&all).unwrap() {
+        let entry = entry.unwrap();
+        let name = entry.file_name();
+        if !left_out
+            .iter()
+            .any(|left_out| name.to_string_lossy().contains(left_out))
+        {
+            std::fs::copy(entry.path(), previous.join(name)).unwrap();
+        }
+    }
+    let db = sqlx::SqlitePool::connect("sqlite::memory:").await.unwrap();
+    let migrated = sqlx::migrate::Migrator::new(previous.as_path())
+        .await
+        .unwrap()
+        .run(&db)
+        .await;
+    std::fs::remove_dir_all(&previous).unwrap();
+    migrated.unwrap();
+    db
+}
+
+async fn execute(db: &sqlx::SqlitePool, statements: &[&'static str]) {
+    for statement in statements {
+        sqlx::query(*statement).execute(db).await.unwrap();
+    }
+}
+
+async fn rows(db: &sqlx::SqlitePool, sql: &'static str) -> Vec<String> {
+    sqlx::query_scalar(sql).fetch_all(db).await.unwrap()
+}
+
+/// The rows of a database from before sharing (principals, calendars, objects, trashed rows,
+/// addressbooks) survive the sharing migrations, and every calendar starts hidden
+#[rstest]
+#[tokio::test]
+async fn test_sharing_migrations_keep_existing_rows() {
+    let db = migrated_without(&["_sharing.", "_calendar_visibility."]).await;
+    execute(
+        &db,
+        &[
+            "INSERT INTO principals (id, principal_type) VALUES ('user', 'individual'), ('bob', 'individual'), ('group.team', 'group')",
+            "INSERT INTO memberships (principal, member_of) VALUES ('bob', 'group.team')",
+            "INSERT INTO calendars (principal, id, displayname, push_topic, comp_event, comp_todo, comp_journal) VALUES ('user', 'cal', 'Cal', 't1', 1, 1, 0)",
+            "INSERT INTO calendars (principal, id, displayname, push_topic, comp_event, comp_todo, comp_journal, deleted_at) VALUES ('user', 'old', 'Old', 't2', 1, 0, 0, datetime())",
+            "INSERT INTO calendarobjects (principal, cal_id, id, uid, ics, object_type) VALUES ('user', 'cal', 'o', 'o-uid', 'BEGIN:VCALENDAR', 0)",
+            "INSERT INTO calendarobjects (principal, cal_id, id, uid, ics, object_type, deleted_at) VALUES ('user', 'cal', 'gone', 'gone-uid', 'BEGIN:VCALENDAR', 0, datetime())",
+            "INSERT INTO addressbooks (principal, id, displayname, push_topic) VALUES ('user', 'book', 'Book', 't3')",
+            "INSERT INTO addressobjects (principal, addressbook_id, id, vcf) VALUES ('user', 'book', 'c', 'BEGIN:VCARD')",
+        ],
+    )
+    .await;
+
+    sqlx::migrate!("./migrations").run(&db).await.unwrap();
+
+    assert_eq!(
+        rows(&db, "SELECT id FROM principals ORDER BY id").await,
+        ["bob", "group.team", "user"]
+    );
+    assert_eq!(
+        rows(&db, "SELECT principal || '>' || member_of FROM memberships").await,
+        ["bob>group.team"]
+    );
+    assert_eq!(
+        rows(
+            &db,
+            "SELECT id || ':' || (deleted_at IS NOT NULL) FROM calendars ORDER BY id"
+        )
+        .await,
+        ["cal:0", "old:1"]
+    );
+    assert_eq!(
+        rows(
+            &db,
+            "SELECT id || ':' || (deleted_at IS NOT NULL) FROM calendarobjects ORDER BY id"
+        )
+        .await,
+        ["gone:1", "o:0"]
+    );
+    assert_eq!(rows(&db, "SELECT id FROM addressbooks").await, ["book"]);
+    assert_eq!(rows(&db, "SELECT id FROM addressobjects").await, ["c"]);
+    assert!(
+        rows(&db, "SELECT principal FROM calendar_visibility")
+            .await
+            .is_empty()
+    );
+    let (send, _recv) = tokio::sync::mpsc::channel(1);
+    let shares = crate::SqliteShareStore::new(db, send);
+    for cal_id in ["cal", "old"] {
+        assert_eq!(
+            shares.get_visibility("user", cal_id).await.unwrap(),
+            Policy::new(0, 0).unwrap()
+        );
+    }
+}
+
+/// A database of the first sharing release keeps its shares and e-mail addresses when the
+/// levels move to the calendars; the per-owner levels are gone
+#[rstest]
+#[tokio::test]
+async fn test_calendar_visibility_migration_keeps_shares() {
+    let db = migrated_without(&["_calendar_visibility."]).await;
+    execute(
+        &db,
+        &[
+            "INSERT INTO principals (id, principal_type) VALUES ('user', 'individual'), ('bob', 'individual')",
+            "INSERT INTO calendars (principal, id, push_topic, comp_event, comp_todo, comp_journal) VALUES ('user', 'cal', 't1', 1, 1, 0)",
+            "INSERT INTO addressbooks (principal, id, push_topic) VALUES ('user', 'book', 't2')",
+            "INSERT INTO calendar_shares (owner, cal_id, sharee, name, access, displayname) VALUES ('user', 'cal', 'bob', 'cal_shared_by_user', 'write', 'Mine')",
+            "INSERT INTO addressbook_shares (owner, addressbook_id, sharee, name, access) VALUES ('user', 'book', 'bob', 'book_shared_by_user', 'read')",
+            "INSERT INTO principal_emails (principal, email) VALUES ('user', 'user@example.org'), ('bob', 'bob@example.org')",
+            "INSERT INTO principal_visibility (principal, private, confidential) VALUES ('user', 3, 2)",
+        ],
+    )
+    .await;
+
+    sqlx::migrate!("./migrations").run(&db).await.unwrap();
+
+    assert_eq!(
+        rows(
+            &db,
+            "SELECT sharee || ':' || name || ':' || access || ':' || displayname FROM calendar_shares"
+        )
+        .await,
+        ["bob:cal_shared_by_user:write:Mine"]
+    );
+    assert_eq!(
+        rows(
+            &db,
+            "SELECT sharee || ':' || name || ':' || access FROM addressbook_shares"
+        )
+        .await,
+        ["bob:book_shared_by_user:read"]
+    );
+    assert_eq!(
+        rows(
+            &db,
+            "SELECT principal || ':' || email FROM principal_emails ORDER BY principal"
+        )
+        .await,
+        ["bob:bob@example.org", "user:user@example.org"]
+    );
+    assert!(
+        rows(
+            &db,
+            "SELECT name FROM sqlite_master WHERE name = 'principal_visibility'"
+        )
+        .await
+        .is_empty()
+    );
+    let (send, _recv) = tokio::sync::mpsc::channel(1);
+    let shares = crate::SqliteShareStore::new(db, send);
+    assert_eq!(
+        shares.get_visibility("user", "cal").await.unwrap(),
+        Policy::new(0, 0).unwrap()
+    );
 }

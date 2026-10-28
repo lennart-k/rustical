@@ -28,6 +28,8 @@ const ERIN_AS_TEAM: (&str, &str) = ("erin$group.team", "erinpass");
 const BOB_CAL: &str = "/caldav/principal/bob/cal_shared_by_user";
 const TEAM_CAL: &str = "/caldav/principal/group.team/cal_shared_by_user";
 const BOB_BOOK: &str = "/carddav/principal/bob/book_shared_by_user";
+/// Only in the tests that share `book` read-only with erin
+const ERIN_BOOK: &str = "/carddav/principal/erin/book_shared_by_user";
 const OWN_CAL: &str = "/caldav/principal/user/cal";
 
 const ALARM: &str =
@@ -436,6 +438,19 @@ async fn canary_bodies(app: &axum::Router, token: &str) -> Vec<(String, String)>
     bodies
 }
 
+/// The markers of the canary each level shows, all others must be gone
+fn canary_markers(level: u8) -> &'static [&'static str] {
+    match level {
+        0 | 1 => &[],
+        2 => &["MARKER-SUMMARY"],
+        3 => &["MARKER-SUMMARY", "MARKER-LOCATION"],
+        _ => unreachable!(),
+    }
+}
+
+/// Endpoints whose answer carries the object's data, not only its name
+const WITH_DATA: &[&str] = &["GET object", "export", "multiget", "query"];
+
 #[rstest]
 #[tokio::test]
 async fn test_canary_never_leaks() {
@@ -459,31 +474,92 @@ async fn test_canary_never_leaks() {
     )
     .await;
 
-    // Busy (the default for PRIVATE): no marker anywhere
-    for (name, body) in canary_bodies(&app, &token).await {
-        assert!(!body.contains("MARKER-"), "{name}: {body}");
-    }
-    // A text match on a hidden field finds nothing: no yes/no oracle
-    for (prop, text) in [
-        ("SUMMARY", "MARKER-SUMMARY"),
-        ("DESCRIPTION", "MARKER-DESCRIPTION"),
-        ("LOCATION", "MARKER"),
-    ] {
-        let answer = call(
-            &app,
-            "REPORT",
-            BOB_CAL,
-            Some(BOB),
-            &[],
-            &marker_query(prop, text),
-        )
-        .await;
-        assert!(
-            !answer.body.contains("canary.ics"),
-            "{prop}: {}",
-            answer.body
+    // Hidden without a setting, then each level set explicitly, then hidden again
+    for (level, set) in [(0, false), (1, true), (2, true), (3, true), (0, true)] {
+        if set {
+            context
+                .share_store
+                .set_visibility("user", "cal", Policy::new(level, 0).unwrap())
+                .await
+                .unwrap();
+        }
+        assert_eq!(
+            context
+                .share_store
+                .get_visibility("user", "cal")
+                .await
+                .unwrap()
+                .private,
+            level
         );
+        let allowed = canary_markers(level);
+        for (name, body) in canary_bodies(&app, &token).await {
+            let context = format!("level {level}, {name}: {body}");
+            for marker in body
+                .match_indices("MARKER-")
+                .map(|(i, _)| &body[i..(i + 20).min(body.len())])
+            {
+                assert!(
+                    allowed.iter().any(|allowed| marker.starts_with(allowed)),
+                    "{marker} at {context}"
+                );
+            }
+            if level == 0 {
+                // Only as a removed member of an incremental sync; the multiget answers the
+                // href it asked for
+                if name == "incremental sync" || name == "multiget" {
+                    assert!(
+                        body.contains("canary.ics") && body.contains("404 Not Found"),
+                        "{context}"
+                    );
+                } else {
+                    assert!(
+                        !body.contains("canary.ics") && !body.contains("canary-uid"),
+                        "{context}"
+                    );
+                }
+            } else {
+                // There, with the time, and with exactly the markers of its level
+                assert!(
+                    body.contains("canary.ics") || body.contains("canary-uid"),
+                    "{context}"
+                );
+                assert!(!body.contains("404 Not Found"), "{context}");
+                if WITH_DATA.contains(&name.as_str()) {
+                    assert!(body.contains("20260105T100000"), "{context}");
+                    for marker in allowed {
+                        assert!(body.contains(marker), "{marker} missing at {context}");
+                    }
+                }
+            }
+        }
+
+        // A text match finds the canary only through what its level shows: no yes/no oracle
+        for (prop, text, visible_from) in [
+            ("SUMMARY", "MARKER-SUMMARY", 2),
+            ("LOCATION", "MARKER-LOCATION", 3),
+            ("DESCRIPTION", "MARKER-DESCRIPTION", 5),
+            ("CATEGORIES", "MARKER", 5),
+        ] {
+            let answer = call(
+                &app,
+                "REPORT",
+                BOB_CAL,
+                Some(BOB),
+                &[],
+                &marker_query(prop, text),
+            )
+            .await;
+            assert_eq!(answer.status, StatusCode::MULTI_STATUS, "{prop}");
+            assert_eq!(
+                answer.body.contains("canary.ics"),
+                level >= visible_from,
+                "level {level}, {prop}: {}",
+                answer.body
+            );
+        }
     }
+    // The owner sees everything
     let owner = call(
         &app,
         "REPORT",
@@ -494,63 +570,6 @@ async fn test_canary_never_leaks() {
     )
     .await;
     assert!(owner.body.contains("canary.ics"), "{}", owner.body);
-
-    // Title and location: exactly those two markers
-    context
-        .share_store
-        .set_visibility("user", "cal", Policy::new(3, 0).unwrap())
-        .await
-        .unwrap();
-    for (name, body) in canary_bodies(&app, &token).await {
-        for marker in body
-            .match_indices("MARKER-")
-            .map(|(i, _)| &body[i..(i + 20).min(body.len())])
-        {
-            assert!(
-                marker.starts_with("MARKER-SUMMARY") || marker.starts_with("MARKER-LOCATION"),
-                "{name}: {marker}"
-            );
-        }
-    }
-    let answer = call(
-        &app,
-        "REPORT",
-        BOB_CAL,
-        Some(BOB),
-        &[],
-        &marker_query("SUMMARY", "MARKER-SUMMARY"),
-    )
-    .await;
-    assert!(answer.body.contains("canary.ics"), "{}", answer.body);
-    let answer = call(
-        &app,
-        "REPORT",
-        BOB_CAL,
-        Some(BOB),
-        &[],
-        &marker_query("DESCRIPTION", "MARKER-DESCRIPTION"),
-    )
-    .await;
-    assert!(!answer.body.contains("canary.ics"), "{}", answer.body);
-
-    // Hidden: only as a removed member of an incremental sync
-    context
-        .share_store
-        .set_visibility("user", "cal", Policy::new(0, 0).unwrap())
-        .await
-        .unwrap();
-    for (name, body) in canary_bodies(&app, &token).await {
-        assert!(!body.contains("MARKER-"), "{name}: {body}");
-        // The removed member of an incremental sync; the multiget answers the href it asked for
-        if name == "incremental sync" || name == "multiget" {
-            assert!(
-                body.contains("canary.ics") && body.contains("404 Not Found"),
-                "{body}"
-            );
-        } else {
-            assert!(!body.contains("canary.ics"), "{name}: {body}");
-        }
-    }
 }
 
 #[rstest]
@@ -1134,7 +1153,7 @@ async fn test_push_subscriptions_expire_within_a_week() {
 #[rstest]
 #[tokio::test]
 async fn test_route_matrix_with_shares() {
-    let (_context, app) = setup().await;
+    let (context, app) = setup().await;
     let routes = |cal: &str, kind: &str| {
         vec![
             ("PROPFIND", cal.to_owned(), String::new()),
@@ -1220,6 +1239,77 @@ async fn test_route_matrix_with_shares() {
             assert_eq!(answer.status, StatusCode::FORBIDDEN, "{kind} {method}");
         }
     }
+
+    // Contacts: a read share (erin) writes nothing, an object PROPPATCH included
+    context
+        .share_store
+        .share_addressbook("user", "book", "erin", Access::Read, Some("user"))
+        .await
+        .unwrap();
+    for (kind, book, auth) in [
+        ("own", "/carddav/principal/user/book", USER),
+        ("write", BOB_BOOK, BOB),
+        ("read", ERIN_BOOK, ERIN),
+        ("other", ERIN_BOOK, OTHER),
+    ] {
+        let card = format!("{book}/m-{kind}.vcf");
+        for (method, uri, body, expected) in [
+            (
+                "PUT",
+                card.clone(),
+                vcard(&format!("m-{kind}"), "New"),
+                match kind {
+                    "own" | "write" => StatusCode::CREATED,
+                    _ => StatusCode::FORBIDDEN,
+                },
+            ),
+            (
+                "PROPPATCH",
+                format!("{book}/card.vcf"),
+                PROPPATCH_DISPLAYNAME.to_owned(),
+                match kind {
+                    "read" | "other" => StatusCode::FORBIDDEN,
+                    _ => StatusCode::MULTI_STATUS,
+                },
+            ),
+            (
+                "DELETE",
+                match kind {
+                    "own" | "write" => card.clone(),
+                    _ => format!("{book}/card.vcf"),
+                },
+                String::new(),
+                match kind {
+                    "own" | "write" => StatusCode::OK,
+                    _ => StatusCode::FORBIDDEN,
+                },
+            ),
+        ] {
+            let answer = call(
+                &app,
+                method,
+                &uri,
+                Some(auth),
+                &[("Host", "localhost")],
+                &body,
+            )
+            .await;
+            assert_eq!(
+                answer.status, expected,
+                "{kind} {method} {uri}: {}",
+                answer.body
+            );
+        }
+    }
+    let card = ok(
+        &app,
+        "GET",
+        "/carddav/principal/user/book/card.vcf",
+        USER,
+        "",
+    )
+    .await;
+    assert!(card.body.contains("FN:Card"), "{}", card.body);
 }
 
 #[rstest]
