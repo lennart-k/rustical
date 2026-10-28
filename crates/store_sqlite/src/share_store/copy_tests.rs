@@ -15,6 +15,8 @@ use rustical_store::{
 
 const OWNER: &str = "user";
 const CAL: &str = "cal";
+/// The sharee of `cal` and `book`, with write access
+const SHAREE: &str = "bob";
 
 fn ics(uid: &str, extra: &str) -> String {
     format!(
@@ -81,6 +83,30 @@ async fn setup() -> TestStoreContext {
         .await
         .unwrap();
     context
+        .principal_store
+        .insert_principal(
+            Principal {
+                id: SHAREE.to_owned(),
+                displayname: None,
+                principal_type: PrincipalType::Individual,
+                password: None,
+                memberships: vec![],
+            },
+            false,
+        )
+        .await
+        .unwrap();
+    context
+        .share_store
+        .share_calendar(OWNER, CAL, SHAREE, Access::Write, None)
+        .await
+        .unwrap();
+    context
+        .share_store
+        .share_addressbook(OWNER, "book", SHAREE, Access::Write, None)
+        .await
+        .unwrap();
+    context
 }
 
 async fn owner_put(context: &TestStoreContext, id: &str, object: CalendarObject) {
@@ -141,7 +167,7 @@ async fn test_reads_show_views_only() {
         .unwrap();
     let mut ids: Vec<_> = objects.iter().map(|(id, _)| id.as_str()).collect();
     ids.sort_unstable();
-    // CONFIDENTIAL is hidden by default, PRIVATE shows only the time
+    // The setup's levels: CONFIDENTIAL hidden, PRIVATE only the time
     assert_eq!(ids, ["private", "public"]);
     for (_, object) in &objects {
         let ics = object.get_ics();
@@ -630,24 +656,6 @@ async fn test_visibility_changes_are_synced() {
         object("confidential", "CLASS:CONFIDENTIAL\r\n"),
     )
     .await;
-    context
-        .principal_store
-        .insert_principal(
-            Principal {
-                id: "bob".to_owned(),
-                displayname: None,
-                principal_type: PrincipalType::Individual,
-                password: None,
-                memberships: vec![],
-            },
-            false,
-        )
-        .await
-        .unwrap();
-    shares
-        .share_calendar(OWNER, CAL, "bob", Access::Read, None)
-        .await
-        .unwrap();
     let before = context
         .cal_store
         .get_calendar(OWNER, CAL, false)
@@ -740,4 +748,170 @@ async fn test_contacts_through_a_share() {
             .is_ok()
     );
     copy_rule(put("c", card("Third")).await, CopyRule::TrashHref);
+}
+
+async fn synctoken(context: &TestStoreContext) -> i64 {
+    context
+        .cal_store
+        .get_calendar(OWNER, CAL, false)
+        .await
+        .unwrap()
+        .synctoken
+}
+
+/// Logged object ids since `token`, sorted
+async fn logged_since(context: &TestStoreContext, token: i64) -> Vec<String> {
+    let (changed, removed, _) = context
+        .cal_store
+        .sync_changes(OWNER, CAL, token)
+        .await
+        .unwrap();
+    let mut ids: Vec<_> = changed
+        .into_iter()
+        .map(|(id, _)| id)
+        .chain(removed)
+        .collect();
+    ids.sort_unstable();
+    ids
+}
+
+#[rstest]
+#[tokio::test]
+async fn test_visibility_logs_only_changed_levels() {
+    let context = setup().await;
+    let shares = &context.share_store;
+    owner_put(&context, "public", object("public", "CLASS:PUBLIC\r\n")).await;
+    owner_put(&context, "plain", object("plain", "")).await;
+    owner_put(&context, "private", object("private", "CLASS:PRIVATE\r\n")).await;
+    owner_put(&context, "unknown", object("unknown", "CLASS:X-OTHER\r\n")).await;
+    owner_put(
+        &context,
+        "confidential",
+        object("confidential", "CLASS:CONFIDENTIAL\r\n"),
+    )
+    .await;
+    owner_put(&context, "trashed", object("trashed", "CLASS:PRIVATE\r\n")).await;
+    context
+        .cal_store
+        .delete_object(OWNER, CAL, "trashed", true)
+        .await
+        .unwrap();
+
+    // The setup set (1, 0): the same again changes nothing
+    let before = synctoken(&context).await;
+    shares
+        .set_visibility(OWNER, CAL, Policy::new(1, 0).unwrap())
+        .await
+        .unwrap();
+    assert_eq!(synctoken(&context).await, before);
+
+    // Only PRIVATE changes: private and unknown classes, never the trash bin
+    shares
+        .set_visibility(OWNER, CAL, Policy::new(2, 0).unwrap())
+        .await
+        .unwrap();
+    assert_eq!(synctoken(&context).await, before + 2);
+    assert_eq!(logged_since(&context, before).await, ["private", "unknown"]);
+
+    // Only CONFIDENTIAL changes
+    let before = synctoken(&context).await;
+    shares
+        .set_visibility(OWNER, CAL, Policy::new(2, 1).unwrap())
+        .await
+        .unwrap();
+    assert_eq!(logged_since(&context, before).await, ["confidential"]);
+
+    // A calendar without a setting: setting the default changes nothing
+    context
+        .cal_store
+        .insert_calendar(Calendar {
+            principal: OWNER.to_owned(),
+            id: "fresh".to_owned(),
+            meta: CalendarMetadata::default(),
+            timezone_id: None,
+            deleted_at: None,
+            synctoken: 0,
+            subscription_url: None,
+            push_topic: "fresh-topic".to_owned(),
+            components: vec![CalendarObjectType::Event],
+        })
+        .await
+        .unwrap();
+    context
+        .cal_store
+        .put_object(OWNER, "fresh", "p", object("p", "CLASS:PRIVATE\r\n"), true)
+        .await
+        .unwrap();
+    let fresh = |context: TestStoreContext| async move {
+        context
+            .cal_store
+            .get_calendar(OWNER, "fresh", false)
+            .await
+            .unwrap()
+            .synctoken
+    };
+    let before = fresh(context.clone()).await;
+    shares
+        .set_visibility(OWNER, "fresh", Policy::default())
+        .await
+        .unwrap();
+    assert_eq!(fresh(context.clone()).await, before);
+}
+
+/// A sharee whose share ends and is made again (with the same name) syncs with its old token
+/// and learns what changed meanwhile, also through changes while nothing was shared
+#[rstest]
+#[tokio::test]
+async fn test_visibility_change_while_unshared_reaches_the_old_token() {
+    let context = setup().await;
+    let shares = &context.share_store;
+    shares
+        .set_visibility(OWNER, CAL, Policy::new(4, 0).unwrap())
+        .await
+        .unwrap();
+    owner_put(
+        &context,
+        "p",
+        object("p", "CLASS:PRIVATE\r\nSUMMARY:Doctor\r\n"),
+    )
+    .await;
+    let resolve = |context: TestStoreContext| async move {
+        rustical_store::access::resolve_calendar(
+            &context.share_store,
+            &context.cal_store,
+            SHAREE,
+            "cal_shared_by_user",
+            false,
+        )
+        .await
+        .unwrap()
+        .0
+    };
+    let resolved = resolve(context.clone()).await;
+    let (changed, _, token) = shared::sync_changes(&context.cal_store, &resolved, 0)
+        .await
+        .unwrap();
+    assert!(
+        changed
+            .iter()
+            .any(|(id, object)| id == "p" && object.get_ics().contains("Doctor"))
+    );
+
+    shares.unshare_calendar(OWNER, CAL, SHAREE).await.unwrap();
+    shares
+        .set_visibility(OWNER, CAL, Policy::new(0, 0).unwrap())
+        .await
+        .unwrap();
+    let share = shares
+        .share_calendar(OWNER, CAL, SHAREE, Access::Write, None)
+        .await
+        .unwrap();
+    assert_eq!(share.name, "cal_shared_by_user");
+
+    let resolved = resolve(context.clone()).await;
+    let (changed, removed, _) = shared::sync_changes(&context.cal_store, &resolved, token)
+        .await
+        .unwrap();
+    assert!(changed.is_empty());
+    assert_eq!(removed, ["p"]);
 }

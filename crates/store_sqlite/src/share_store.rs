@@ -2,7 +2,7 @@ use crate::calendar_store::ObjectColumns;
 use crate::{BEGIN_IMMEDIATE, ChangeOperation, SqliteAddressbookStore, SqliteCalendarStore};
 use async_trait::async_trait;
 use derive_more::Constructor;
-use rustical_ical::visibility::{self, FULL, HIDDEN, Policy};
+use rustical_ical::visibility::{self, Classes, FULL, HIDDEN, Policy};
 use rustical_ical::{AddressObject, CalendarObject};
 use rustical_store::{
     Access, AddressbookShare, CalendarShare, CollectionOperation, CollectionOperationInfo,
@@ -790,6 +790,10 @@ impl ShareStore for SqliteShareStore {
         .await
         .map_err(crate::Error::from)?
         .ok_or(Error::NotFound)?;
+        let old = Self::_get_visibility(&mut tx, owner, cal_id).await?;
+        if old == policy {
+            return Ok(());
+        }
         sqlx::query!(
             r#"INSERT INTO calendar_visibility (principal, cal_id, private, confidential) VALUES (?, ?, ?, ?)
                 ON CONFLICT(principal, cal_id) DO UPDATE SET (private, confidential) = (excluded.private, excluded.confidential)"#,
@@ -802,43 +806,40 @@ impl ShareStore for SqliteShareStore {
         .await
         .map_err(crate::Error::from)?;
 
-        // Sharees pick the new views up with their next sync
-        let shared = sqlx::query!(
-            r#"SELECT 1 AS "one: i64" FROM calendar_shares WHERE (owner, cal_id) = (?, ?) LIMIT 1"#,
+        // Every object whose view changes is logged, shared now or not: a share ended and
+        // created again has the same name, and its sharee may sync with a token from before.
+        // Only objects with a CLASS other than PUBLIC are parsed, the text test is cheap.
+        let objects = sqlx::query!(
+            r#"SELECT id, ics FROM calendarobjects
+                WHERE (principal, cal_id) = (?, ?) AND deleted_at IS NULL"#,
             owner,
             cal_id
         )
-        .fetch_optional(&mut *tx)
+        .fetch_all(&mut *tx)
         .await
-        .map_err(crate::Error::from)?
-        .is_some();
-        let mut sync_token = None;
-        if shared {
-            let objects = sqlx::query!(
-                r#"SELECT id, ics FROM calendarobjects
-                    WHERE (principal, cal_id) = (?, ?) AND deleted_at IS NULL"#,
-                owner,
-                cal_id
-            )
-            .fetch_all(&mut *tx)
-            .await
-            .map_err(crate::Error::from)?;
-            for object in objects {
-                let depends = CalendarObject::from_ics(object.ics)
-                    .map_or(true, |parsed| visibility::depends_on_policy(&parsed));
-                if depends {
-                    sync_token = Some(
-                        SqliteCalendarStore::log_object_operation(
-                            &mut tx,
-                            owner,
-                            cal_id,
-                            &object.id,
-                            ChangeOperation::Add,
-                        )
-                        .await?,
-                    );
+        .map_err(crate::Error::from)?;
+        let changed: Vec<String> = objects
+            .into_iter()
+            .filter(|object| {
+                visibility::may_depend_on_policy(&object.ics) && {
+                    let classes = Classes::of(&object.ics);
+                    classes.level(old) != classes.level(policy)
                 }
-            }
+            })
+            .map(|object| object.id)
+            .collect();
+        let mut sync_token = None;
+        for object_id in &changed {
+            sync_token = Some(
+                SqliteCalendarStore::log_object_operation(
+                    &mut tx,
+                    owner,
+                    cal_id,
+                    object_id,
+                    ChangeOperation::Add,
+                )
+                .await?,
+            );
         }
         tx.commit().await.map_err(crate::Error::from)?;
         if let Some(sync_token) = sync_token {

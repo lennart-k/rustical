@@ -232,8 +232,9 @@ pub trait ShareStore: std::fmt::Debug + Send + Sync + 'static {
     /// How objects of the calendar `(owner, cal_id)` with CLASS:PRIVATE/CONFIDENTIAL appear in
     /// its shares
     async fn get_visibility(&self, owner: &str, cal_id: &str) -> Result<Policy, Error>;
-    /// Changes the calendar's policy; if it is shared, every object whose view depends on it
-    /// is logged as changed, so sharees pick the new views up with their next sync.
+    /// Changes the calendar's policy. Every live object whose level differs between the old and
+    /// the new policy is logged as changed, whether the calendar is shared now or not, so sharees
+    /// pick the new views up with their next sync; an unchanged policy changes nothing.
     /// [`Error::NotFound`] for no live calendar.
     async fn set_visibility(&self, owner: &str, cal_id: &str, policy: Policy) -> Result<(), Error>;
 
