@@ -1,4 +1,4 @@
-//#region node_modules/.deno/@lit+reactive-element@2.1.2/node_modules/@lit/reactive-element/css-tag.js
+// node_modules/.deno/@lit+reactive-element@2.1.2/node_modules/@lit/reactive-element/css-tag.js
 /**
 * @license
 * Copyright 2019 Google LLC
@@ -39,8 +39,7 @@ var c$4 = e$5 ? (t) => t : (t) => t instanceof CSSStyleSheet ? ((t) => {
 	for (const s of t.cssRules) e += s.cssText;
 	return r$5(e);
 })(t) : t;
-//#endregion
-//#region node_modules/.deno/@lit+reactive-element@2.1.2/node_modules/@lit/reactive-element/reactive-element.js
+// node_modules/.deno/@lit+reactive-element@2.1.2/node_modules/@lit/reactive-element/reactive-element.js
 /**
 * @license
 * Copyright 2017 Google LLC
@@ -144,7 +143,7 @@ var y$1 = class extends HTMLElement {
 	static finalizeStyles(s) {
 		const i = [];
 		if (Array.isArray(s)) {
-			const e = new Set(s.flat(Infinity).reverse());
+			const e = new Set(s.flat(1 / 0).reverse());
 			for (const s of e) i.unshift(c$4(s));
 		} else void 0 !== s && i.push(c$4(s));
 		return i;
@@ -269,8 +268,7 @@ var y$1 = class extends HTMLElement {
 	firstUpdated(t) {}
 };
 y$1.elementStyles = [], y$1.shadowRootOptions = { mode: "open" }, y$1[d$2("elementProperties")] = /* @__PURE__ */ new Map(), y$1[d$2("finalized")] = /* @__PURE__ */ new Map(), p$2?.({ ReactiveElement: y$1 }), (a$1.reactiveElementVersions ??= []).push("2.1.2");
-//#endregion
-//#region node_modules/.deno/lit-html@3.3.3/node_modules/lit-html/lit-html.js
+// node_modules/.deno/lit-html@3.3.3/node_modules/lit-html/lit-html.js
 /**
 * @license
 * Copyright 2017 Google LLC
@@ -564,8 +562,7 @@ var D = (t, i, s) => {
 	}
 	return h._$AI(t), h;
 };
-//#endregion
-//#region node_modules/.deno/lit-element@4.2.2/node_modules/lit-element/lit-element.js
+// node_modules/.deno/lit-element@4.2.2/node_modules/lit-element/lit-element.js
 /**
 * @license
 * Copyright 2017 Google LLC
@@ -597,8 +594,7 @@ i$2._$litElement$ = !0, i$2["finalized"] = !0, s$2.litElementHydrateSupport?.({ 
 var o$3 = s$2.litElementPolyfillSupport;
 o$3?.({ LitElement: i$2 });
 (s$2.litElementVersions ??= []).push("4.2.2");
-//#endregion
-//#region node_modules/.deno/@lit+reactive-element@2.1.2/node_modules/@lit/reactive-element/decorators/custom-element.js
+// node_modules/.deno/@lit+reactive-element@2.1.2/node_modules/@lit/reactive-element/decorators/custom-element.js
 /**
 * @license
 * Copyright 2017 Google LLC
@@ -609,8 +605,7 @@ var t$2 = (t) => (e, o) => {
 		customElements.define(t, e);
 	}) : customElements.define(t, e);
 };
-//#endregion
-//#region node_modules/.deno/@lit+reactive-element@2.1.2/node_modules/@lit/reactive-element/decorators/property.js
+// node_modules/.deno/@lit+reactive-element@2.1.2/node_modules/@lit/reactive-element/decorators/property.js
 /**
 * @license
 * Copyright 2017 Google LLC
@@ -652,22 +647,19 @@ function n$3(t) {
 		return e.constructor.createProperty(o, t), r ? Object.getOwnPropertyDescriptor(e, o) : void 0;
 	})(t, e, o);
 }
-//#endregion
-//#region node_modules/.deno/@lit+reactive-element@2.1.2/node_modules/@lit/reactive-element/decorators/state.js
+// node_modules/.deno/@lit+reactive-element@2.1.2/node_modules/@lit/reactive-element/decorators/state.js
 /**
 * @license
 * Copyright 2017 Google LLC
 * SPDX-License-Identifier: BSD-3-Clause
 */
-//#endregion
-//#region node_modules/.deno/lit-html@3.3.3/node_modules/lit-html/directive-helpers.js
+// node_modules/.deno/lit-html@3.3.3/node_modules/lit-html/directive-helpers.js
 /**
 * @license
 * Copyright 2020 Google LLC
 * SPDX-License-Identifier: BSD-3-Clause
 */ var { I: t$1 } = j$1, r$1 = (o) => void 0 === o.strings;
-//#endregion
-//#region node_modules/.deno/lit-html@3.3.3/node_modules/lit-html/directive.js
+// node_modules/.deno/lit-html@3.3.3/node_modules/lit-html/directive.js
 /**
 * @license
 * Copyright 2017 Google LLC
@@ -700,8 +692,7 @@ var i = class {
 		return this.render(...e);
 	}
 };
-//#endregion
-//#region node_modules/.deno/lit-html@3.3.3/node_modules/lit-html/async-directive.js
+// node_modules/.deno/lit-html@3.3.3/node_modules/lit-html/async-directive.js
 /**
 * @license
 * Copyright 2017 Google LLC
@@ -759,8 +750,7 @@ var f = class extends i {
 	disconnected() {}
 	reconnected() {}
 };
-//#endregion
-//#region node_modules/.deno/lit-html@3.3.3/node_modules/lit-html/directives/ref.js
+// node_modules/.deno/lit-html@3.3.3/node_modules/lit-html/directives/ref.js
 /**
 * @license
 * Copyright 2020 Google LLC
@@ -793,8 +783,7 @@ var n = e$1(class extends f {
 		this.rt(this.ct);
 	}
 });
-//#endregion
-//#region lib/index.ts
+// lib/index.ts
 function escapeXml(unsafe) {
 	return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 }
@@ -816,16 +805,14 @@ var SVG_ICON_INTERNET = w`<!-- Adapted from https://iconoir.com/ -->
   <path fill-rule="evenodd" clip-rule="evenodd" d="M21.8789 17.9174C22.3727 18.2211 22.3423 18.9604 21.8337 19.0181L19.2671 19.309L18.1159 21.6213C17.8878 22.0795 17.1827 21.8552 17.0661 21.2873L15.8108 15.1713C15.7123 14.6913 16.1437 14.3892 16.561 14.646L21.8789 17.9174Z"></path>
 </svg>
 `;
-//#endregion
-//#region \0@oxc-project+runtime@0.139.0/helpers/esm/decorate.js
+// \0@oxc-project+runtime@0.156.0/helpers/esm/decorate.js
 function __decorate(decorators, target, key, desc) {
 	var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
 	if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
 	else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
 	return c > 3 && r && Object.defineProperty(target, key, r), r;
 }
-//#endregion
-//#region lib/create-addressbook-form.ts
+// lib/create-addressbook-form.ts
 var CreateAddressbookForm = class CreateAddressbookForm extends i$2 {
 	constructor() {
 		super();
@@ -918,8 +905,7 @@ __decorate([n$3()], CreateAddressbookForm.prototype, "addr_id", void 0);
 __decorate([n$3()], CreateAddressbookForm.prototype, "displayname", void 0);
 __decorate([n$3()], CreateAddressbookForm.prototype, "description", void 0);
 CreateAddressbookForm = __decorate([t$2("create-addressbook-form")], CreateAddressbookForm);
-//#endregion
-//#region lib/create-birthday-calendar-form.ts
+// lib/create-birthday-calendar-form.ts
 var CreateBirthdayCalendarForm = class CreateBirthdayCalendarForm extends i$2 {
 	constructor(..._args) {
 		super(..._args);
@@ -1010,8 +996,7 @@ __decorate([n$3()], CreateBirthdayCalendarForm.prototype, "description", void 0)
 __decorate([n$3()], CreateBirthdayCalendarForm.prototype, "color", void 0);
 __decorate([n$3()], CreateBirthdayCalendarForm.prototype, "timezones", void 0);
 CreateBirthdayCalendarForm = __decorate([t$2("create-birthday-calendar-form")], CreateBirthdayCalendarForm);
-//#endregion
-//#region lib/timezones.ts
+// lib/timezones.ts
 var timezonesPromise = null;
 async function getTimezones() {
 	timezonesPromise ||= new Promise(async (resolve, reject) => {
@@ -1023,8 +1008,7 @@ async function getTimezones() {
 	});
 	return await timezonesPromise;
 }
-//#endregion
-//#region lib/create-calendar-form.ts
+// lib/create-calendar-form.ts
 var CreateCalendarForm = class CreateCalendarForm extends i$2 {
 	constructor() {
 		super();
@@ -1197,8 +1181,7 @@ __decorate([n$3()], CreateCalendarForm.prototype, "subscriptionUrl", void 0);
 __decorate([n$3()], CreateCalendarForm.prototype, "components", void 0);
 __decorate([n$3()], CreateCalendarForm.prototype, "timezones", void 0);
 CreateCalendarForm = __decorate([t$2("create-calendar-form")], CreateCalendarForm);
-//#endregion
-//#region lib/delete-button.ts
+// lib/delete-button.ts
 var DeleteButton = class DeleteButton extends i$2 {
 	constructor() {
 		super();
@@ -1228,8 +1211,7 @@ var DeleteButton = class DeleteButton extends i$2 {
 __decorate([n$3({ type: Boolean })], DeleteButton.prototype, "trash", void 0);
 __decorate([n$3()], DeleteButton.prototype, "href", void 0);
 DeleteButton = __decorate([t$2("delete-button")], DeleteButton);
-//#endregion
-//#region lib/edit-addressbook-form.ts
+// lib/edit-addressbook-form.ts
 var EditAddressbookForm = class EditAddressbookForm extends i$2 {
 	constructor() {
 		super();
@@ -1315,8 +1297,7 @@ __decorate([n$3()], EditAddressbookForm.prototype, "addr_id", void 0);
 __decorate([n$3()], EditAddressbookForm.prototype, "displayname", void 0);
 __decorate([n$3()], EditAddressbookForm.prototype, "description", void 0);
 EditAddressbookForm = __decorate([t$2("edit-addressbook-form")], EditAddressbookForm);
-//#endregion
-//#region lib/edit-calendar-form.ts
+// lib/edit-calendar-form.ts
 var EditCalendarForm = class EditCalendarForm extends i$2 {
 	constructor() {
 		super();
@@ -1450,8 +1431,7 @@ __decorate([n$3({ converter: {
 } })], EditCalendarForm.prototype, "components", void 0);
 __decorate([n$3()], EditCalendarForm.prototype, "timezones", void 0);
 EditCalendarForm = __decorate([t$2("edit-calendar-form")], EditCalendarForm);
-//#endregion
-//#region lib/import-addressbook-form.ts
+// lib/import-addressbook-form.ts
 var ImportAddressbookForm = class ImportAddressbookForm extends i$2 {
 	constructor() {
 		super();
@@ -1526,8 +1506,7 @@ __decorate([n$3()], ImportAddressbookForm.prototype, "user", void 0);
 __decorate([n$3()], ImportAddressbookForm.prototype, "principal", void 0);
 __decorate([n$3()], ImportAddressbookForm.prototype, "addressbook_id", void 0);
 ImportAddressbookForm = __decorate([t$2("import-addressbook-form")], ImportAddressbookForm);
-//#endregion
-//#region lib/import-calendar-form.ts
+// lib/import-calendar-form.ts
 var ImportCalendarForm = class ImportCalendarForm extends i$2 {
 	constructor() {
 		super();
@@ -1602,8 +1581,7 @@ __decorate([n$3()], ImportCalendarForm.prototype, "user", void 0);
 __decorate([n$3()], ImportCalendarForm.prototype, "principal", void 0);
 __decorate([n$3()], ImportCalendarForm.prototype, "cal_id", void 0);
 ImportCalendarForm = __decorate([t$2("import-calendar-form")], ImportCalendarForm);
-//#endregion
-//#region lib/generate-app-token-form.ts
+// lib/generate-app-token-form.ts
 var GenerateAppTokenForm = class GenerateAppTokenForm extends i$2 {
 	constructor(..._args) {
 		super(..._args);
@@ -1663,5 +1641,4 @@ __decorate([n$3()], GenerateAppTokenForm.prototype, "user", void 0);
 __decorate([n$3()], GenerateAppTokenForm.prototype, "token", void 0);
 __decorate([n$3()], GenerateAppTokenForm.prototype, "uaApple", void 0);
 GenerateAppTokenForm = __decorate([t$2("generate-app-token-form")], GenerateAppTokenForm);
-//#endregion
 export { CreateAddressbookForm, CreateBirthdayCalendarForm, CreateCalendarForm, DeleteButton, EditAddressbookForm, EditCalendarForm, GenerateAppTokenForm, ImportAddressbookForm, ImportCalendarForm };
