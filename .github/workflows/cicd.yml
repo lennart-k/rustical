@@ -21,7 +21,7 @@ jobs:
         with:
           toolchain: ${{ env.RUST_VERSION }}
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - run: cargo check
 
   test:
@@ -32,7 +32,7 @@ jobs:
         with:
           toolchain: ${{ env.RUST_VERSION }}
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - run: cargo test --all-features --verbose --workspace
 
   coverage:
@@ -46,7 +46,7 @@ jobs:
         run: cargo install cargo-tarpaulin
 
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Run tarpaulin
         run: cargo tarpaulin --workspace --all-features --exclude xml_derive --coveralls ${{ secrets.COVERALLS_REPO_TOKEN }}
@@ -62,7 +62,7 @@ jobs:
           components: rustfmt, clippy
 
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Run cargo fmt
         run: cargo fmt --all -- --check
@@ -78,7 +78,7 @@ jobs:
         with:
           toolchain: ${{ env.RUST_VERSION }}
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Install cargo-vet
         run: cargo install cargo-vet
       - name: Invoke cargo-vet
@@ -92,7 +92,7 @@ jobs:
         with:
           toolchain: ${{ env.RUST_VERSION }}
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Install cargo-deny
         run: cargo install cargo-deny
       - name: Invoke cargo-deny
