@@ -4,7 +4,6 @@ use async_trait::async_trait;
 use caldata::parser::ParserError;
 use caldata::types::CalDateTime;
 use chrono::TimeDelta;
-use derive_more::derive::Constructor;
 use regex::Regex;
 use rustical_ical::{CalendarObject, CalendarObjectType};
 use rustical_store::calendar_store::{CalendarQuery, CalendarReadStore, CalendarWriteStore};
@@ -111,7 +110,7 @@ impl From<CalendarRow> for Calendar {
     }
 }
 
-#[derive(Debug, Clone, Constructor)]
+#[derive(Debug, Clone)]
 pub struct SqliteCalendarStore {
     db: SqlitePool,
     sender: Sender<CollectionOperation>,
@@ -119,6 +118,19 @@ pub struct SqliteCalendarStore {
 }
 
 impl SqliteCalendarStore {
+    #[must_use]
+    pub const fn new(
+        db: SqlitePool,
+        sender: Sender<CollectionOperation>,
+        skip_broken: bool,
+    ) -> Self {
+        Self {
+            db,
+            sender,
+            skip_broken,
+        }
+    }
+
     // Logs an operation to the events
     async fn log_object_operation(
         tx: &mut Transaction<'_, Sqlite>,

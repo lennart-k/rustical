@@ -25,7 +25,7 @@ pub trait AuthenticationProvider: Send + Sync + 'static {
 
     /// Inserts a principal and upserts it if `overwrite=true`.
     /// Ignores `Principal.membership` field which is instead managed
-    /// via the `*_membership´ methods.
+    /// via the `*_membership` methods.
     async fn insert_principal(&self, user: Principal, overwrite: bool) -> Result<(), Error>;
 
     /// Validates a password input for a principal.
