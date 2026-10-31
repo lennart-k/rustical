@@ -1,0 +1,12 @@
+version: 2
+updates:
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "04:00"
+    labels:
+      - "github-actions"
+    commit-message:
+      prefix: "chore(ci)"
