@@ -1,9 +1,11 @@
+use std::str::FromStr;
+
 use crate::{
     Error, Principal,
     extensions::{CommonPropertiesExtension, CommonPropertiesProp},
     namespace::NS_DAV,
     privileges::UserPrivilegeSet,
-    resource::{PrincipalUri, Resource},
+    resource::{DavPath, PrincipalUri, Resource},
     resources::RootResource,
     rfc_3986_percent_encode,
     xml::{Resourcetype, ResourcetypeInner},
@@ -20,7 +22,7 @@ fn test_root_resource() {
 
     let _response = resource
         .propfind(
-            "/",
+            DavPath::from_str("/").unwrap(),
             &propfind.prop,
             propfind.include.as_ref(),
             &TestPrincipalUri,
