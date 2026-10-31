@@ -8,8 +8,9 @@ use crate::{
     membership::cmd_membership,
 };
 use anyhow::anyhow;
-use argon2::password_hash::{PasswordHasher, SaltString, rand_core::OsRng};
+use argon2::password_hash::PasswordHasher;
 use clap::{Parser, Subcommand};
+use password_hash::phc::SaltString;
 use rustical_store::{
     Secret,
     auth::{AuthenticationProvider, Principal, PrincipalType},
@@ -129,10 +130,10 @@ pub async fn cmd_principals(args: PrincipalsArgs, config: Config) -> anyhow::Res
                 None
             };
             let password = password.map(|password| {
-                let salt = SaltString::generate(OsRng);
+                let salt = SaltString::generate();
                 Secret::from(
                     argon2::Argon2::default()
-                        .hash_password(password.as_bytes(), &salt)
+                        .hash_password_with_salt(password.as_bytes(), salt.as_bytes())
                         .unwrap()
                         .to_string(),
                 )
@@ -181,10 +182,10 @@ pub async fn cmd_principals(args: PrincipalsArgs, config: Config) -> anyhow::Res
                 None
             };
             let password = password.map(|password| {
-                let salt = SaltString::generate(OsRng);
+                let salt = SaltString::generate();
                 Secret::from(
                     argon2::Argon2::default()
-                        .hash_password(password.as_bytes(), &salt)
+                        .hash_password_with_salt(password.as_bytes(), salt.as_bytes())
                         .unwrap()
                         .to_string(),
                 )
