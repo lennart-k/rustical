@@ -18,8 +18,11 @@ pub struct AddressObjectResourceService<AS: AddressbookStore> {
 
 impl<AS: AddressbookStore> AddressObjectResourceService<AS> {
     #[must_use]
-    pub const fn new(addr_store: Arc<AS>) -> Self {
-        Self { addr_store }
+    pub const fn new(addr_store: Arc<AS>, share_store: Arc<dyn ShareStore>) -> Self {
+        Self {
+            addr_store,
+            share_store,
+        }
     }
 }
 

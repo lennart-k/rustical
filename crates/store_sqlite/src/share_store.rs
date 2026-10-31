@@ -1,7 +1,6 @@
 use crate::calendar_store::ObjectColumns;
 use crate::{BEGIN_IMMEDIATE, ChangeOperation, SqliteAddressbookStore, SqliteCalendarStore};
 use async_trait::async_trait;
-use derive_more::Constructor;
 use rustical_ical::visibility::{self, Classes, FULL, HIDDEN, Policy};
 use rustical_ical::{AddressObject, CalendarObject};
 use rustical_store::{
@@ -21,11 +20,18 @@ mod tests;
 /// Calendar ids with this prefix belong to the birthday calendars of addressbooks
 const BIRTHDAYS_PREFIX: &str = "_birthdays_";
 
-#[derive(Debug, Clone, Constructor)]
+#[derive(Debug, Clone)]
 pub struct SqliteShareStore {
     db: SqlitePool,
     // Push notifications for changes made through shares
     sender: Sender<CollectionOperation>,
+}
+
+impl SqliteShareStore {
+    #[must_use]
+    pub const fn new(db: SqlitePool, sender: Sender<CollectionOperation>) -> Self {
+        Self { db, sender }
+    }
 }
 
 struct CalendarShareRow {
