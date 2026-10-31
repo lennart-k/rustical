@@ -22,15 +22,8 @@ resolver = "2"
 publish = true
 
 [features]
-debug = ["opentelemetry"]
+debug = []
 frontend-dev = ["rustical_frontend/dev"]
-opentelemetry = [
-  "dep:opentelemetry",
-  "dep:opentelemetry-otlp",
-  "dep:opentelemetry_sdk",
-  "dep:opentelemetry-semantic-conventions",
-  "dep:tracing-opentelemetry",
-]
 
 [lib]
 doc = true
@@ -171,15 +164,15 @@ axum.workspace = true
 chrono.workspace = true
 rand.workspace = true
 
-opentelemetry = { version = "0.33", optional = true }
-opentelemetry-otlp = { version = "0.33", optional = true, features = [
+opentelemetry = { version = "0.33" }
+opentelemetry-otlp = { version = "0.33", features = [
   "grpc-tonic",
 ] }
 opentelemetry_sdk = { version = "0.33", features = [
   "rt-tokio",
-], optional = true }
-opentelemetry-semantic-conventions = { version = "0.33", optional = true }
-tracing-opentelemetry = { version = "0.34", optional = true }
+] }
+opentelemetry-semantic-conventions = { version = "0.33" }
+tracing-opentelemetry = { version = "0.34" }
 tracing-subscriber = { version = "0.3", features = [
   "env-filter",
   "fmt",
