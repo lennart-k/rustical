@@ -69,7 +69,7 @@ impl Resource for CalendarObjectResource {
                                         Some(expand.end.to_utc()),
                                     )
                                     .ok_or(Error::NotFound)?
-                                    .generate())
+                                    .generate_string())
                             },
                         )?)
                     }

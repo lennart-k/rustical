@@ -123,7 +123,7 @@ impl CalendarObject {
 
     #[must_use]
     pub fn get_ics(&self) -> &str {
-        self.ics.get_or_init(|| self.inner.generate())
+        self.ics.get_or_init(|| self.inner.generate_string())
     }
 
     #[must_use]
@@ -141,7 +141,7 @@ impl From<CalendarObject> for IcalCalendarObject {
 impl From<IcalCalendarObject> for CalendarObject {
     fn from(value: IcalCalendarObject) -> Self {
         Self {
-            ics: value.generate().into(),
+            ics: value.generate_string().into(),
             inner: value,
         }
     }

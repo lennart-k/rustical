@@ -458,9 +458,9 @@ checksum = "fc652a48c352aef3ea3aed32080501cf3ef6ed5da78602a020c991775b0aff04"
 
 [[package]]
 name = "caldata"
-version = "0.17.3"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9e50a7f4bb3fc5b2f6c07634d7bb4d308918eeec3c28db214cd7e229e8bb690"
+checksum = "b4c2f85ce182d29b84762786c202524a0cfccbaf473fe78f558763f9e6a749f5"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -3675,7 +3675,7 @@ dependencies = [
 
 [[package]]
 name = "rustical"
-version = "0.16.7"
+version = "0.17.0"
 dependencies = [
  "anyhow",
  "argon2",
@@ -3728,7 +3728,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_caldav"
-version = "0.16.7"
+version = "0.17.0"
 dependencies = [
  "async-trait",
  "axum",
@@ -3770,7 +3770,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_carddav"
-version = "0.16.7"
+version = "0.17.0"
 dependencies = [
  "async-trait",
  "axum",
@@ -3804,7 +3804,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_dav"
-version = "0.16.7"
+version = "0.17.0"
 dependencies = [
  "async-trait",
  "axum",
@@ -3833,7 +3833,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_dav_push"
-version = "0.16.7"
+version = "0.17.0"
 dependencies = [
  "async-trait",
  "axum",
@@ -3859,7 +3859,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_frontend"
-version = "0.16.7"
+version = "0.17.0"
 dependencies = [
  "askama",
  "askama_web",
@@ -3896,7 +3896,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_ical"
-version = "0.16.7"
+version = "0.17.0"
 dependencies = [
  "axum",
  "caldata",
@@ -3915,7 +3915,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_oidc"
-version = "0.16.7"
+version = "0.17.0"
 dependencies = [
  "async-trait",
  "axum",
@@ -3931,7 +3931,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_store"
-version = "0.16.7"
+version = "0.17.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3964,7 +3964,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_store_sqlite"
-version = "0.16.7"
+version = "0.17.0"
 dependencies = [
  "async-trait",
  "caldata",
@@ -3992,7 +3992,7 @@ dependencies = [
 
 [[package]]
 name = "rustical_xml"
-version = "0.16.7"
+version = "0.17.0"
 dependencies = [
  "http",
  "quick-xml",
@@ -5640,7 +5640,7 @@ dependencies = [
 [[package]]
 name = "web-push"
 version = "0.11.0"
-source = "git+https://github.com/lennart-k/rust-web-push#cc1c80086cb4b87c0b8d38f786463ec66bb0db97"
+source = "git+https://github.com/lennart-k/rust-web-push#b3add91b6ba14788407a77d1c5e95337a9b221f3"
 dependencies = [
  "async-trait",
  "aws-lc-rs",
@@ -5928,7 +5928,7 @@ checksum = "3ad82d2a33cdc9674dc7465672f271e096168fcdbe0f799d9e6db8c5892679dc"
 
 [[package]]
 name = "xml_derive"
-version = "0.16.7"
+version = "0.17.0"
 dependencies = [
  "darling",
  "heck",

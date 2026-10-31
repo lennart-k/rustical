@@ -16,6 +16,11 @@ who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
 criteria = "safe-to-deploy"
 delta = "0.17.1 -> 0.17.2"
 
+[[audits.caldata]]
+who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.17.3 -> 0.18.0"
+
 [[audits.ece]]
 who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
 criteria = "safe-to-deploy"
@@ -66,9 +71,8 @@ notes = "It's a fork I maintain"
 [[audits.web-push]]
 who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
 criteria = "safe-to-deploy"
-delta = "0.11.0 -> 0.11.0@git:cc1c80086cb4b87c0b8d38f786463ec66bb0db97"
+delta = "0.11.0 -> 0.11.0@git:b3add91b6ba14788407a77d1c5e95337a9b221f3"
 importable = false
-notes = "It's a fork I maintain"
 
 [[trusted.aho-corasick]]
 criteria = "safe-to-deploy"

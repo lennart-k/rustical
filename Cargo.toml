@@ -2,7 +2,7 @@
 members = ["crates/*"]
 
 [workspace.package]
-version = "0.16.7"
+version = "0.17.0"
 rust-version = "1.98"
 edition = "2024"
 description = "A CalDAV server"
@@ -110,7 +110,7 @@ strum = "0.28"
 strum_macros = "0.28"
 serde_json = { version = "1.0", features = ["raw_value"] }
 sqlx-sqlite = { version = "0.9", features = ["bundled"] }
-caldata = { version = "0.17", features = ["chrono-tz"] }
+caldata = { version = "0.18" }
 toml = "1.1"
 tower = "0.5"
 tower-http = { version = "0.7", features = [

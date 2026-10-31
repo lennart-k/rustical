@@ -58,7 +58,7 @@ impl AddressObject {
 
     #[must_use]
     pub fn get_vcf(&self) -> &str {
-        self.vcf.get_or_init(|| self.inner.generate())
+        self.vcf.get_or_init(|| self.inner.generate_string())
     }
 
     fn get_significant_date_object(

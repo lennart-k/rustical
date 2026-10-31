@@ -98,6 +98,8 @@ pub async fn route_get<C: CalendarStore, DP: DavPushStore>(
     if matches!(method, Method::HEAD) {
         Ok(resp.body(Body::empty()).unwrap())
     } else {
-        Ok(resp.body(Body::new(export_calendar.generate())).unwrap())
+        Ok(resp
+            .body(Body::new(export_calendar.generate_string()))
+            .unwrap())
     }
 }
