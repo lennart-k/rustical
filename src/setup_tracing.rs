@@ -1,31 +1,23 @@
 use crate::config::TracingConfig;
-#[cfg(feature = "opentelemetry")]
-use opentelemetry::{KeyValue, global, trace::TracerProvider};
-#[cfg(feature = "opentelemetry")]
+use opentelemetry::{KeyValue, trace::TracerProvider};
 use opentelemetry_otlp::WithExportConfig;
-#[cfg(feature = "opentelemetry")]
 use opentelemetry_sdk::{Resource, propagation::TraceContextPropagator, trace::Tracer};
-#[cfg(feature = "opentelemetry")]
 use opentelemetry_semantic_conventions::{
     SCHEMA_URL,
     resource::{SERVICE_NAME, SERVICE_VERSION},
 };
-#[cfg(feature = "opentelemetry")]
 use std::time::Duration;
 use tracing::level_filters::LevelFilter;
-#[cfg(not(feature = "opentelemetry"))]
-use tracing::warn;
-#[cfg(feature = "opentelemetry")]
 use tracing_opentelemetry::OpenTelemetryLayer;
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
-#[cfg(feature = "opentelemetry")]
-pub fn init_otel() -> Tracer {
+pub fn init_otel(endpoint: String) -> Tracer {
     let otel_exporter = opentelemetry_otlp::SpanExporter::builder()
         .with_tonic()
-        .with_timeout(Duration::from_secs(1))
+        .with_endpoint(endpoint)
+        .with_timeout(Duration::from_secs(10))
         .build()
         .unwrap();
 
@@ -44,7 +36,7 @@ pub fn init_otel() -> Tracer {
         )
         .build();
 
-    global::set_tracer_provider(tracer_provider.clone());
+    opentelemetry::global::set_tracer_provider(tracer_provider.clone());
     tracer_provider.tracer("rustical")
 }
 
@@ -62,18 +54,12 @@ pub fn setup_tracing(config: &TracingConfig) {
         .with(filter_layer)
         .with(fmt_layer);
 
-    if config.opentelemetry {
-        #[cfg(feature = "opentelemetry")]
+    if let Some(endpoint) = &config.endpoint {
         {
-            global::set_text_map_propagator(TraceContextPropagator::new());
-            registry.with(OpenTelemetryLayer::new(init_otel())).init();
-        }
-        #[cfg(not(feature = "opentelemetry"))]
-        {
-            registry.init();
-            warn!(
-                "This version of RustiCal is compiled without the opentelemetry feature. tracing.opentelemetry = true has no effect"
-            );
+            opentelemetry::global::set_text_map_propagator(TraceContextPropagator::new());
+            registry
+                .with(OpenTelemetryLayer::new(init_otel(endpoint.to_string())))
+                .init();
         }
     } else {
         registry.init();

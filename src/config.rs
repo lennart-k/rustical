@@ -201,7 +201,7 @@ pub enum DataStoreConfig {
 #[derive(Debug, Deserialize, Serialize, Default, Clone)]
 #[serde(deny_unknown_fields, default)]
 pub struct TracingConfig {
-    pub opentelemetry: bool,
+    pub endpoint: Option<Url>,
 }
 
 const fn default_true() -> bool {
