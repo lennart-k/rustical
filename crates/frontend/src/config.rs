@@ -11,10 +11,10 @@ pub struct FrontendConfig {
     pub enabled: bool,
     #[serde(default = "default_true")]
     pub allow_password_login: bool,
-    /// Send visitors of the login page straight to the OIDC provider instead of
-    /// showing the "Login with <provider>" button. Only takes effect when OIDC is
-    /// configured and `allow_password_login` is `false`, i.e. when the button is
-    /// the only thing the page could offer.
+    /// Submit the login page's "Login with <provider>" button automatically (by
+    /// JavaScript, so the flow still starts with its POST), except right after a
+    /// logout. Only takes effect when OIDC is configured and `allow_password_login`
+    /// is `false`, i.e. when the button is the only thing the page could offer.
     #[serde(default)]
     pub oidc_auto_redirect: bool,
 }

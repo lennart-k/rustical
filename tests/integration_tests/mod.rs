@@ -52,6 +52,46 @@ impl ResponseExtractString for Response {
 
 #[rstest]
 #[tokio::test]
+async fn test_logout_lands_on_the_login_page_without_auto_login(
+    #[from(test_store_context)]
+    #[future]
+    context: TestStoreContext,
+) {
+    let app = get_app(context.await);
+
+    let response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/frontend/logout")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert!(response.status().is_redirection());
+    let location = response.headers()["location"].to_str().unwrap().to_owned();
+    assert_eq!(location, "/frontend/login?logged_out");
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri(&location)
+                .header("host", "localhost")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert!(response.status().is_success());
+    let body = response.extract_string().await;
+    assert!(body.contains("You have been logged out."));
+    assert!(!body.contains("data-auto-submit"));
+}
+
+#[rstest]
+#[tokio::test]
 async fn test_ping(
     #[from(test_store_context)]
     #[future]

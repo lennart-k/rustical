@@ -1,9 +1,18 @@
 {% extends "layouts/default.html" %}
 
+{% block imports %}
+{% if auto_login %}
+<script src="/frontend/assets/js/oidc_auto_login.js" defer></script>
+{% endif %}
+{% endblock %}
+
 {% block content %}
 
 <div class="login_window">
   <h1>Login</h1>
+  {% if logged_out %}
+  <p>You have been logged out.</p>
+  {% endif %}
   {% if let Some(redirect_uri) = redirect_uri %}
   <p>and redirect to {{redirect_uri}}</p>
   {% endif %}
@@ -30,7 +39,7 @@
   {% endif %}
 
   {% if let Some(OidcProviderData {name, redirect_url}) = oidc_data %}
-  <form action="{{ redirect_url }}" method="post" id="form_login">
+  <form action="{{ redirect_url }}" method="post" id="form_login"{% if auto_login %} data-auto-submit{% endif %}>
     {% if let Some(redirect_uri) = redirect_uri %}
     <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
     {% endif %}
