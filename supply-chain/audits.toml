@@ -268,6 +268,48 @@ user-id = 359 # Sean McArthur (seanmonstar)
 start = "2022-01-15"
 end = "2027-08-30"
 
+[[trusted.icu_collections]]
+criteria = "safe-to-deploy"
+user-id = 166196 # Robert Bastian (robertbastian)
+start = "2023-01-26"
+end = "2027-10-31"
+
+[[trusted.icu_locale_core]]
+criteria = "safe-to-deploy"
+user-id = 166196 # Robert Bastian (robertbastian)
+start = "2025-05-07"
+end = "2027-10-31"
+
+[[trusted.icu_normalizer]]
+criteria = "safe-to-deploy"
+user-id = 166196 # Robert Bastian (robertbastian)
+start = "2023-01-26"
+end = "2027-10-31"
+
+[[trusted.icu_normalizer_data]]
+criteria = "safe-to-deploy"
+user-id = 166196 # Robert Bastian (robertbastian)
+start = "2023-11-16"
+end = "2027-10-31"
+
+[[trusted.icu_properties]]
+criteria = "safe-to-deploy"
+user-id = 166196 # Robert Bastian (robertbastian)
+start = "2023-01-26"
+end = "2027-10-31"
+
+[[trusted.icu_properties_data]]
+criteria = "safe-to-deploy"
+user-id = 166196 # Robert Bastian (robertbastian)
+start = "2023-11-16"
+end = "2027-10-31"
+
+[[trusted.icu_provider]]
+criteria = "safe-to-deploy"
+user-id = 166196 # Robert Bastian (robertbastian)
+start = "2022-10-08"
+end = "2027-10-31"
+
 [[trusted.insta]]
 criteria = "safe-to-deploy"
 user-id = 39 # Armin Ronacher (mitsuhiko)
@@ -346,6 +388,18 @@ user-id = 6825 # Dan Gohman (sunfishcode)
 start = "2021-06-12"
 end = "2027-08-30"
 
+[[trusted.litemap]]
+criteria = "safe-to-deploy"
+user-id = 166196 # Robert Bastian (robertbastian)
+start = "2023-01-26"
+end = "2027-10-31"
+
+[[trusted.log]]
+criteria = "safe-to-deploy"
+user-id = 3204 # Ashley Mannix (KodrAus)
+start = "2019-07-10"
+end = "2027-10-31"
+
 [[trusted.memchr]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
@@ -369,6 +423,12 @@ criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2025-05-22"
 end = "2027-08-30"
+
+[[trusted.openssl-probe]]
+criteria = "safe-to-deploy"
+user-id = 4556 # Dirkjan Ochtman (djc)
+start = "2025-12-29"
+end = "2027-10-31"
 
 [[trusted.phf]]
 criteria = "safe-to-deploy"
@@ -550,6 +610,12 @@ user-id = 6743 # Ed Page (epage)
 start = "2023-01-20"
 end = "2027-08-30"
 
+[[trusted.similar]]
+criteria = "safe-to-deploy"
+user-id = 39 # Armin Ronacher (mitsuhiko)
+start = "2021-01-24"
+end = "2027-10-31"
+
 [[trusted.smallvec]]
 criteria = "safe-to-deploy"
 user-id = 2017
@@ -558,7 +624,7 @@ end = "2027-09-20"
 
 [[trusted.smallvec]]
 criteria = "safe-to-deploy"
-user-id = 2396 # Josh Bowman-Matthews (jdm)
+user-id = 2396
 start = "2019-06-10"
 end = "2027-09-20"
 
@@ -585,6 +651,12 @@ criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-10-09"
 end = "2027-08-30"
+
+[[trusted.tinystr]]
+criteria = "safe-to-deploy"
+user-id = 166196 # Robert Bastian (robertbastian)
+start = "2023-01-26"
+end = "2027-10-31"
 
 [[trusted.tokio]]
 criteria = "safe-to-deploy"
@@ -802,6 +874,18 @@ user-id = 6743 # Ed Page (epage)
 start = "2023-02-22"
 end = "2027-08-30"
 
+[[trusted.writeable]]
+criteria = "safe-to-deploy"
+user-id = 166196 # Robert Bastian (robertbastian)
+start = "2023-01-26"
+end = "2027-10-31"
+
+[[trusted.yoke]]
+criteria = "safe-to-deploy"
+user-id = 166196 # Robert Bastian (robertbastian)
+start = "2023-01-26"
+end = "2027-10-31"
+
 [[trusted.yoke-derive]]
 criteria = "safe-to-deploy"
 user-id = 1139 # Manish Goregaokar (Manishearth)
@@ -832,6 +916,12 @@ trusted-publisher = "github:google/zerocopy"
 start = "2026-09-08"
 end = "2027-09-20"
 
+[[trusted.zerofrom]]
+criteria = "safe-to-deploy"
+user-id = 166196 # Robert Bastian (robertbastian)
+start = "2024-05-28"
+end = "2027-10-31"
+
 [[trusted.zerofrom-derive]]
 criteria = "safe-to-deploy"
 user-id = 1139 # Manish Goregaokar (Manishearth)
@@ -843,6 +933,24 @@ criteria = "safe-to-deploy"
 user-id = 128408 # Shane F. Carr (sffc)
 start = "2023-09-22"
 end = "2027-09-20"
+
+[[trusted.zerotrie]]
+criteria = "safe-to-deploy"
+user-id = 166196 # Robert Bastian (robertbastian)
+start = "2023-11-16"
+end = "2027-10-31"
+
+[[trusted.zerovec]]
+criteria = "safe-to-deploy"
+user-id = 166196 # Robert Bastian (robertbastian)
+start = "2023-01-26"
+end = "2027-10-31"
+
+[[trusted.zerovec-derive]]
+criteria = "safe-to-deploy"
+user-id = 166196 # Robert Bastian (robertbastian)
+start = "2023-01-26"
+end = "2027-10-31"
 
 [[trusted.zmij]]
 criteria = "safe-to-deploy"
