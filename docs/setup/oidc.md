@@ -17,10 +17,12 @@ allow_sign_up = true
 
 [frontend]
 allow_password_login = false  # optional
+oidc_auto_redirect = true  # (3)!
 ```
 
 1. Can be `preferred_username`, `email` or `sub`
 2. Optional: You can require a user to be in a certain group to use RustiCal
+3. Optional: Submit the login page's "Login with <provider>" button automatically, so users go straight to the identity provider. It needs JavaScript (without it the button stays) and takes effect only together with `allow_password_login = false`, because otherwise the password form has to stay reachable. After a logout the login page shows the button instead, so the user is not signed straight back in.
 
 ```yaml title="Authelia configuration"
 identity_providers:
@@ -48,6 +50,7 @@ RUSTICAL_OIDC__SCOPES: '["openid", "profile", "groups"]'
 RUSTICAL_OIDC__REQUIRE_GROUP: "app:rustical"
 RUSTICAL_OIDC__ALLOW_SIGN_UP: "true"
 RUSTICAL_FRONTEND__ALLOW_PASSWORD_LOGIN: "false"
+RUSTICAL_FRONTEND__OIDC_AUTO_REDIRECT: "true"
 ```
 
 ## Assigning memberships based on group claims
