@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO calendar_shares (owner, cal_id, sharee, name, access, created_by)\n                    VALUES (?, ?, ?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 6
+    },
+    "nullable": []
+  },
+  "hash": "c808ddede30044d450d446c3c0707015ce8db2e94cb2cb1eb55069457da06ae6"
+}

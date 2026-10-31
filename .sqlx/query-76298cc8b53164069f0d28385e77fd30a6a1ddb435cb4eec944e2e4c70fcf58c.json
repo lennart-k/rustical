@@ -1,0 +1,45 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT uid, ics, deleted_at IS NOT NULL AS \"deleted!: bool\" FROM calendarobjects\n                WHERE (principal, cal_id, id) = (?, ?, ?)",
+  "describe": {
+    "columns": [
+      {
+        "name": "uid",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendarobjects",
+            "name": "uid"
+          }
+        }
+      },
+      {
+        "name": "ics",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendarobjects",
+            "name": "ics"
+          }
+        }
+      },
+      {
+        "name": "deleted!: bool",
+        "ordinal": 2,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "76298cc8b53164069f0d28385e77fd30a6a1ddb435cb4eec944e2e4c70fcf58c"
+}

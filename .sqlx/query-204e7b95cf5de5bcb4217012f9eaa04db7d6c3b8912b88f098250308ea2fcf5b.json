@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM principal_emails WHERE email = ? AND principal != ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "204e7b95cf5de5bcb4217012f9eaa04db7d6c3b8912b88f098250308ea2fcf5b"
+}

@@ -7,6 +7,8 @@ pub use timestamp::*;
 mod calendar_object;
 pub use calendar_object::*;
 
+pub mod visibility;
+
 mod address_object;
 pub use address_object::AddressObject;
 

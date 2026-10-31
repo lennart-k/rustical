@@ -37,5 +37,6 @@ strum_macros.workspace = true
 rstest.workspace = true
 
 [dev-dependencies]
+rustical_store = { workspace = true, features = ["test"] }
 insta.workspace = true
 similar-asserts.workspace = true

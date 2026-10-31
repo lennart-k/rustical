@@ -4,19 +4,25 @@ use async_trait::async_trait;
 use axum::{extract::Request, handler::Handler, response::Response};
 use futures_util::future::BoxFuture;
 use rustical_dav::resource::{AxumMethods, ResourceService};
-use rustical_store::{AddressbookStore, auth::Principal};
+use rustical_store::access::{self, Resolved};
+use rustical_store::shared::{IfMatch, IfNoneMatch};
+use rustical_store::{AddressbookStore, Preconditions, ShareStore, auth::Principal, shared};
 use serde::{Deserialize, Deserializer};
 use std::{convert::Infallible, sync::Arc};
 use tower::Service;
 
 pub struct AddressObjectResourceService<AS: AddressbookStore> {
     pub(crate) addr_store: Arc<AS>,
+    pub(crate) share_store: Arc<dyn ShareStore>,
 }
 
 impl<AS: AddressbookStore> AddressObjectResourceService<AS> {
     #[must_use]
-    pub const fn new(addr_store: Arc<AS>) -> Self {
-        Self { addr_store }
+    pub const fn new(addr_store: Arc<AS>, share_store: Arc<dyn ShareStore>) -> Self {
+        Self {
+            addr_store,
+            share_store,
+        }
     }
 }
 
@@ -24,7 +30,28 @@ impl<AS: AddressbookStore> Clone for AddressObjectResourceService<AS> {
     fn clone(&self) -> Self {
         Self {
             addr_store: self.addr_store.clone(),
+            share_store: self.share_store.clone(),
         }
+    }
+}
+
+impl<AS: AddressbookStore> AddressObjectResourceService<AS> {
+    /// The addressbook of an object path
+    pub(crate) async fn addressbook(
+        &self,
+        principal: &str,
+        addressbook_id: &str,
+        show_deleted: bool,
+    ) -> Result<Resolved, Error> {
+        let (resolved, _addressbook) = access::resolve_addressbook(
+            self.share_store.as_ref(),
+            self.addr_store.as_ref(),
+            principal,
+            addressbook_id,
+            show_deleted,
+        )
+        .await?;
+        Ok(resolved)
     }
 }
 
@@ -56,18 +83,28 @@ impl<AS: AddressbookStore> ResourceService for AddressObjectResourceService<AS> 
         }: &Self::PathComponents,
         show_deleted: bool,
     ) -> Result<Self::Resource, Self::Error> {
-        let object = self
-            .addr_store
-            .get_object(principal, addressbook_id, object_id, show_deleted)
-            .await?;
+        let resolved = self.addressbook(principal, addressbook_id, true).await?;
+        let object =
+            shared::address_object(self.addr_store.as_ref(), &resolved, object_id, show_deleted)
+                .await?;
         Ok(AddressObjectResource {
             object,
             object_id: object_id.to_owned(),
             principal: principal.to_owned(),
+            resolved,
         })
     }
 
     async fn delete_resource(
+        &self,
+        path: &Self::PathComponents,
+        use_trashbin: bool,
+    ) -> Result<(), Self::Error> {
+        self.delete_resource_with_preconditions(path, use_trashbin, None, None)
+            .await
+    }
+
+    async fn delete_resource_with_preconditions(
         &self,
         AddressObjectPathComponents {
             principal,
@@ -75,10 +112,23 @@ impl<AS: AddressbookStore> ResourceService for AddressObjectResourceService<AS> 
             object_id,
         }: &Self::PathComponents,
         use_trashbin: bool,
+        if_match: Option<&IfMatch>,
+        if_none_match: Option<&IfNoneMatch>,
     ) -> Result<(), Self::Error> {
-        self.addr_store
-            .delete_object(principal, addressbook_id, object_id, use_trashbin)
-            .await?;
+        let resolved = self.addressbook(principal, addressbook_id, true).await?;
+        // Through a share checked again in the transaction of the deletion
+        shared::delete_address_object(
+            self.addr_store.as_ref(),
+            self.share_store.as_ref(),
+            &resolved,
+            object_id,
+            use_trashbin,
+            Preconditions {
+                if_match,
+                if_none_match,
+            },
+        )
+        .await?;
         Ok(())
     }
 }

@@ -144,6 +144,7 @@ web-push = { git = "https://github.com/lennart-k/rust-web-push" }
 [dev-dependencies]
 rstest.workspace = true
 rustical_store_sqlite = { workspace = true, features = ["test"] }
+rustical_store = { workspace = true, features = ["test"] }
 insta.workspace = true
 similar-asserts.workspace = true
 tempfile = "3.24"

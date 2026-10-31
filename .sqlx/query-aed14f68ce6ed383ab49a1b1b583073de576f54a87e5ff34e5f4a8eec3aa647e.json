@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT access FROM calendar_shares WHERE (owner, cal_id, sharee) = (?, ?, ?)",
+  "describe": {
+    "columns": [
+      {
+        "name": "access",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendar_shares",
+            "name": "access"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "aed14f68ce6ed383ab49a1b1b583073de576f54a87e5ff34e5f4a8eec3aa647e"
+}

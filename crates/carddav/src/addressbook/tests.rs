@@ -39,6 +39,13 @@ fn test_propfind() {
     let resource = AddressbookResource {
         addressbook: addressbook.clone(),
         vapid_pubkey,
+        home: addressbook.principal.clone(),
+        name: addressbook.id.clone(),
+        resolved: rustical_store::access::Resolved::for_tests(
+            addressbook.principal.clone(),
+            addressbook.id.clone(),
+            rustical_store::access::ResolvedKind::Own,
+        ),
     };
     let response = resource
         .propfind(

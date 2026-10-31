@@ -1,0 +1,21 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT EXISTS(SELECT 1 FROM addressbook_shares WHERE (sharee, name) = (?, ?)) AS \"taken!: bool\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "taken!: bool",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "165c0d1410a13faa519957917e0e2b1d202ad654b290d50654140958d4b213c2"
+}

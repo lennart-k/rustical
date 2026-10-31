@@ -9,7 +9,7 @@ use axum::{
 use axum_extra::TypedHeader;
 use headers::Referer;
 use http::StatusCode;
-use rustical_store::{Calendar, CalendarStore, auth::Principal};
+use rustical_store::{Calendar, CalendarStore, access, auth::Principal};
 use std::sync::Arc;
 
 #[derive(Template, WebTemplate)]
@@ -30,8 +30,8 @@ pub async fn route_calendar<C: CalendarStore>(
     Extension(store): Extension<Arc<C>>,
     user: Principal,
 ) -> Result<Response, rustical_store::Error> {
-    if !user.is_principal(&owner) {
-        return Ok(StatusCode::UNAUTHORIZED.into_response());
+    if !access::may_use_home(&user, &owner) {
+        return Ok(StatusCode::FORBIDDEN.into_response());
     }
     Ok(CalendarPage {
         calendar: store.get_calendar(&owner, &cal_id, true).await?,
@@ -46,8 +46,8 @@ pub async fn route_calendar_restore<CS: CalendarStore>(
     user: Principal,
     referer: Option<TypedHeader<Referer>>,
 ) -> Result<Response, rustical_store::Error> {
-    if !user.is_principal(&owner) {
-        return Ok(StatusCode::UNAUTHORIZED.into_response());
+    if !access::may_use_home(&user, &owner) {
+        return Ok(StatusCode::FORBIDDEN.into_response());
     }
     store.restore_calendar(&owner, &cal_id).await?;
     Ok(referer.map_or_else(

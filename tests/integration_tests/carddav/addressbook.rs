@@ -125,6 +125,17 @@ async fn test_carddav_multiget_invalid_hrefs(
 ) {
     let app = get_app(context.await);
     let mut request = Request::builder()
+        .method("MKCOL")
+        .uri("/carddav/principal/user/contacts")
+        .body(Body::from(mkcol_template("Contacts", "Test contacts")))
+        .unwrap();
+    request
+        .headers_mut()
+        .typed_insert(Authorization::basic("user", "pass"));
+    let response = app.clone().oneshot(request).await.unwrap();
+    assert_eq!(response.status(), StatusCode::CREATED);
+
+    let mut request = Request::builder()
         .method("REPORT")
         .uri("/carddav/principal/user/contacts")
         .body(Body::from(format!(

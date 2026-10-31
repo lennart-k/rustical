@@ -122,7 +122,7 @@ pub struct AuthCallbackQuery {
     state: String,
 }
 
-/// Resolves the OIDC callback data to get the user id an the groups claim
+/// Resolves the OIDC callback data to get the user id, the groups claim and the e-mail address
 async fn resolve_oidc_callback(
     config: &OidcConfig,
     host: &Host,
@@ -130,7 +130,7 @@ async fn resolve_oidc_callback(
     code: AuthorizationCode,
     pkce_verifier: PkceCodeVerifier,
     nonce: &Nonce,
-) -> Result<(String, Vec<String>), OidcError> {
+) -> Result<(String, Vec<String>, Option<String>), OidcError> {
     let callback_uri = format!("https://{host}{callback_path}");
 
     let oidc_client = get_oidc_client(
@@ -172,7 +172,13 @@ async fn resolve_oidc_callback(
         .clone()
         .unwrap_or_default();
 
-    Ok((user_id, groups))
+    // Only an address the provider does not call unverified
+    let email = user_info_claims
+        .email()
+        .filter(|_| user_info_claims.email_verified() != Some(false))
+        .map(|email| email.as_str().to_owned());
+
+    Ok((user_id, groups, email))
 }
 
 // Handle callback from IdP page
@@ -194,7 +200,7 @@ pub async fn route_get_oidc_callback<US: UserStore>(
         .ok_or(OidcError::Other("No local OIDC state"))?;
     assert_eq!(oidc_state.state.secret(), &state);
 
-    let (user_id, groups) = resolve_oidc_callback(
+    let (user_id, groups, email) = resolve_oidc_callback(
         &oidc_config,
         &host,
         service_config.callback_path,
@@ -230,7 +236,10 @@ pub async fn route_get_oidc_callback<US: UserStore>(
     }
     // Create new user. This is also executed when the user already exists
     // since it also ensures the correct group memberships
-    if let Err(err) = user_store.ensure_user(&user_id, &assign_memberships).await {
+    if let Err(err) = user_store
+        .ensure_user(&user_id, &assign_memberships, email.as_deref())
+        .await
+    {
         return Ok(err.into_response());
     }
 

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE addressbook_shares SET access = ? WHERE (owner, addressbook_id, sharee) = (?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "04826cf5cb47f28591519344177ff7e03fe35f062bfa2406cf85af20cde0cfea"
+}

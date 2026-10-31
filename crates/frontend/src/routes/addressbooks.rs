@@ -30,7 +30,7 @@ pub async fn route_addressbooks<AS: AddressbookStore + PrefixedCalendarStore>(
     user: Principal,
 ) -> impl IntoResponse {
     if user_id != user.id {
-        return StatusCode::UNAUTHORIZED.into_response();
+        return StatusCode::FORBIDDEN.into_response();
     }
 
     let mut addressbooks = vec![];

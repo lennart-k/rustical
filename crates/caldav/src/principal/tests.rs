@@ -20,10 +20,12 @@ async fn test_principal_resource(
         cal_store,
         dav_push_store,
         principal_store: auth_provider,
+        share_store,
         ..
     } = context.await;
     let service = PrincipalResourceService {
         cal_store: Arc::new(cal_store),
+        share_store: Arc::new(share_store),
         dav_push_store: Arc::new(dav_push_store),
         auth_provider: Arc::new(auth_provider),
         simplified_home_set: false,
@@ -73,6 +75,7 @@ async fn test_propfind() {
         principal: principal.clone(),
         members: vec![],
         simplified_home_set: false,
+        sharees: vec![],
     };
 
     let response = resource

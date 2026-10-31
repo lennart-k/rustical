@@ -10,9 +10,11 @@ pub mod app_token;
 mod health;
 pub mod membership;
 pub mod principals;
+mod share;
 
 pub use health::{HealthArgs, cmd_health};
 pub use principals::{PrincipalsArgs, cmd_principals};
+pub use share::{ShareArgs, cmd_share};
 
 #[derive(Debug, Parser)]
 pub struct GenConfigArgs {}

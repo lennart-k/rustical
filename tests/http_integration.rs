@@ -112,6 +112,8 @@ async fn test_initial_setup() {
                     remove_password: false,
                     for_testing_password_from_arg: Some("pass".to_owned()),
                     principal_type: Some(PrincipalType::Individual),
+                    email: None,
+                    remove_email: false,
                 }),
             },
             Config {
@@ -263,6 +265,8 @@ async fn test_principal_impersonation() {
                     remove_password: false,
                     for_testing_password_from_arg: Some("pass".to_owned()),
                     principal_type: Some(PrincipalType::Individual),
+                    email: None,
+                    remove_email: false,
                 }),
             },
             config.clone(),

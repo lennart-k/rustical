@@ -1,0 +1,33 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT push_topic, subscription_url IS NOT NULL AS \"subscription!: bool\"\n                FROM calendars WHERE (principal, id) = (?, ?) AND deleted_at IS NULL",
+  "describe": {
+    "columns": [
+      {
+        "name": "push_topic",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "push_topic"
+          }
+        }
+      },
+      {
+        "name": "subscription!: bool",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "5dcf70174522510da4f1dea0368d3d0a26ee489025359619c3baad12c785b46d"
+}

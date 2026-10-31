@@ -1,6 +1,5 @@
 use crate::Error;
 use crate::calendar::CalendarResourceService;
-use crate::calendar::resource::CalendarResource;
 use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Response};
 use http::{HeaderMap, HeaderValue, StatusCode, header};
@@ -9,6 +8,7 @@ use rustical_dav::resource::Resource;
 use rustical_dav_push::register::PushRegister;
 use rustical_dav_push::{DavPushStore, Subscription};
 use rustical_store::CalendarStore;
+use rustical_store::access::{self, Need};
 use rustical_store::auth::Principal;
 use rustical_xml::XmlDocument;
 use tracing::instrument;
@@ -20,39 +20,30 @@ pub async fn route_post<C: CalendarStore, DP: DavPushStore>(
     State(resource_service): State<CalendarResourceService<C, DP>>,
     body: String,
 ) -> Result<Response, Error> {
-    if !user.is_principal(&principal) {
-        return Err(Error::Unauthorized);
-    }
-
-    let calendar = resource_service
-        .cal_store
-        .get_calendar(&principal, &cal_id, false)
+    access::check_home(&user, &principal)?;
+    let calendar_resource = resource_service
+        .resource(&principal, &cal_id, false)
         .await?;
-    let vapid_pubkey = resource_service
-        .dav_push_store
-        .get_vapid_pubkey_b64()
-        .await?
-        .clone();
-    let calendar_resource = CalendarResource {
-        cal: calendar,
-        read_only: true,
-        vapid_pubkey,
-    };
+    calendar_resource.resolved.check(Need::Read)?;
 
     if !calendar_resource
         .get_user_privileges(&user)?
         .has(&UserPrivilege::Read)
     {
-        return Err(Error::Unauthorized);
+        return Err(rustical_store::Error::Forbidden.into());
     }
 
     let request = PushRegister::parse_str(&body)?;
     let sub_id = uuid::Uuid::new_v4().to_string();
 
+    // At most a week: after a share ends a former sharee gets content-free pings at most this long
+    let latest = chrono::Utc::now().fixed_offset() + chrono::Duration::weeks(1);
     let expires = if let Some(expires) = request.expires {
-        chrono::DateTime::parse_from_rfc2822(&expires).map_err(Error::from)?
+        chrono::DateTime::parse_from_rfc2822(&expires)
+            .map_err(Error::from)?
+            .min(latest)
     } else {
-        chrono::Utc::now().fixed_offset() + chrono::Duration::weeks(1)
+        latest
     };
 
     let subscription = Subscription {

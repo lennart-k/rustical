@@ -29,12 +29,7 @@ impl Error {
     #[must_use]
     pub const fn status_code(&self) -> StatusCode {
         match self {
-            Self::StoreError(err) => match err {
-                rustical_store::Error::NotFound => StatusCode::NOT_FOUND,
-                rustical_store::Error::AlreadyExists => StatusCode::CONFLICT,
-                rustical_store::Error::ReadOnly => StatusCode::FORBIDDEN,
-                _ => StatusCode::INTERNAL_SERVER_ERROR,
-            },
+            Self::StoreError(err) => err.status_code(),
             Self::DavError(err) => err.status_code(),
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
             Self::XmlDecodeError(_) => StatusCode::BAD_REQUEST,
@@ -46,6 +41,9 @@ impl Error {
 
 impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
+        if let Self::DavError(err @ rustical_dav::Error::InvalidSyncToken) = self {
+            return err.into_response();
+        }
         (self.status_code(), self.to_string()).into_response()
     }
 }

@@ -9,39 +9,28 @@ use caldata::parser::ParserOptions;
 use headers::{ContentType, ETag, HeaderMapExt, IfMatch, IfNoneMatch};
 use http::{HeaderMap, HeaderValue, Method, StatusCode};
 use rustical_ical::CalendarObject;
-use rustical_store::CalendarStore;
+use rustical_store::access::{self, Need};
 use rustical_store::auth::Principal;
+use rustical_store::{CalendarStore, Preconditions, shared};
 use std::str::FromStr;
 use tracing::{instrument, warn};
 
-#[instrument(skip(cal_store))]
+#[instrument(skip(service))]
 pub async fn get_event<C: CalendarStore>(
     Path(CalendarObjectPathComponents {
         principal,
         calendar_id,
         object_id,
     }): Path<CalendarObjectPathComponents>,
-    State(CalendarObjectResourceService {
-        cal_store,
-        config: _,
-    }): State<CalendarObjectResourceService<C>>,
+    State(service): State<CalendarObjectResourceService<C>>,
     user: Principal,
     method: Method,
 ) -> Result<Response, Error> {
-    if !user.is_principal(&principal) {
-        return Err(crate::Error::Unauthorized);
-    }
+    access::check_home(&user, &principal)?;
+    let (resolved, _calendar) = service.calendar(&principal, &calendar_id, false).await?;
+    resolved.check(Need::Read)?;
 
-    let calendar = cal_store
-        .get_calendar(&principal, &calendar_id, false)
-        .await?;
-    if !user.is_principal(&calendar.principal) {
-        return Err(crate::Error::Unauthorized);
-    }
-
-    let event = cal_store
-        .get_object(&principal, &calendar_id, &object_id, false)
-        .await?;
+    let event = shared::object(service.cal_store.as_ref(), &resolved, &object_id, false).await?;
 
     let mut resp = Response::builder().status(StatusCode::OK);
     let hdrs = resp.headers_mut().unwrap();
@@ -54,25 +43,23 @@ pub async fn get_event<C: CalendarStore>(
     }
 }
 
-#[instrument(skip(cal_store))]
+#[instrument(skip(service))]
 pub async fn put_event<C: CalendarStore>(
     Path(CalendarObjectPathComponents {
         principal,
         calendar_id,
         object_id,
     }): Path<CalendarObjectPathComponents>,
-    State(CalendarObjectResourceService { cal_store, config }): State<
-        CalendarObjectResourceService<C>,
-    >,
+    State(service): State<CalendarObjectResourceService<C>>,
     user: Principal,
     mut if_none_match: Option<TypedHeader<IfNoneMatch>>,
     mut if_match: Option<TypedHeader<IfMatch>>,
     header_map: HeaderMap,
     body: String,
 ) -> Result<Response, Error> {
-    if !user.is_principal(&principal) {
-        return Err(crate::Error::Unauthorized);
-    }
+    access::check_home(&user, &principal)?;
+    let (resolved, _calendar) = service.calendar(&principal, &calendar_id, true).await?;
+    resolved.check(Need::Write)?;
 
     // https://github.com/hyperium/headers/issues/204
     if !header_map.contains_key("If-None-Match") {
@@ -83,15 +70,14 @@ pub async fn put_event<C: CalendarStore>(
     }
 
     if if_match.is_some() || if_none_match.is_some() {
-        // TODO: Put into transaction?
-        let existing = match cal_store
-            .get_object(&principal, &calendar_id, &object_id, false)
-            .await
-        {
-            Ok(existing) => Some(existing),
-            Err(rustical_store::Error::NotFound) => None,
-            Err(err) => Err(err)?,
-        };
+        // The object as this path shows it: the ETag the client knows. Through a share the
+        // write checks the conditions again in its transaction.
+        let existing =
+            match shared::object(service.cal_store.as_ref(), &resolved, &object_id, false).await {
+                Ok(existing) => Some(existing),
+                Err(rustical_store::Error::NotFound) => None,
+                Err(err) => Err(err)?,
+            };
 
         // There's an already existing object
         if let Some(existing) = existing {
@@ -133,7 +119,7 @@ pub async fn put_event<C: CalendarStore>(
     let object = match CalendarObject::import(
         &body,
         Some(ParserOptions {
-            rfc7809: config.rfc7809,
+            rfc7809: service.config.rfc7809,
         }),
     ) {
         Ok(object) => object,
@@ -143,15 +129,27 @@ pub async fn put_event<C: CalendarStore>(
             return Err(Error::PreconditionFailed(Precondition::ValidCalendarData));
         }
     };
-    let etag = object.get_etag();
-    cal_store
-        .put_object(&principal, &calendar_id, &object_id, object, true)
-        .await?;
+    let etag = shared::put_object(
+        service.cal_store.as_ref(),
+        service.share_store.as_ref(),
+        &resolved,
+        &object_id,
+        object,
+        true,
+        Preconditions {
+            if_match: if_match.as_ref().map(|TypedHeader(header)| header),
+            if_none_match: if_none_match.as_ref().map(|TypedHeader(header)| header),
+        },
+    )
+    .await?;
 
     let mut headers = HeaderMap::new();
-    headers.insert(
-        "ETag",
-        HeaderValue::from_str(&etag).expect("Contains no invalid characters"),
-    );
+    // Without an ETag when what is stored differs from what was sent (alarms of the owner)
+    if let Some(etag) = etag {
+        headers.insert(
+            "ETag",
+            HeaderValue::from_str(&etag).expect("Contains no invalid characters"),
+        );
+    }
     Ok((StatusCode::CREATED, headers).into_response())
 }

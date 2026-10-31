@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE calendarobjects\n                    SET uid = ?, ics = ?, first_occurence = date(?), last_occurence = date(?), etag = ?, object_type = ?, updated_at = datetime()\n                    WHERE (principal, cal_id, id) = (?, ?, ?) AND deleted_at IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 9
+    },
+    "nullable": []
+  },
+  "hash": "e1cd5f171da91231626273cb0f48e36a19350efa2f42146f9290b81327bb3fe1"
+}

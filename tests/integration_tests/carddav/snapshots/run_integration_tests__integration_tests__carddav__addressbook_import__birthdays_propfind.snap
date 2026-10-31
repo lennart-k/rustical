@@ -123,7 +123,13 @@ END:VCALENDAR&#13;
                 </current-user-principal>
                 <current-user-privilege-set>
                     <privilege>
-                        <all/>
+                        <read/>
+                    </privilege>
+                    <privilege>
+                        <read-acl/>
+                    </privilege>
+                    <privilege>
+                        <read-current-user-privilege-set/>
                     </privilege>
                 </current-user-privilege-set>
                 <owner>
@@ -166,7 +172,13 @@ END:VCALENDAR&#13;
                 </current-user-principal>
                 <current-user-privilege-set>
                     <privilege>
-                        <all/>
+                        <read/>
+                    </privilege>
+                    <privilege>
+                        <read-acl/>
+                    </privilege>
+                    <privilege>
+                        <read-current-user-privilege-set/>
                     </privilege>
                 </current-user-privilege-set>
                 <owner>

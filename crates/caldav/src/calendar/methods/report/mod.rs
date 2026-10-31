@@ -10,7 +10,7 @@ use axum::{
     extract::{MatchedPath, OriginalUri, Path, State},
     response::IntoResponse,
 };
-use calendar_multiget::{CalendarMultigetRequest, get_objects_calendar_multiget};
+use calendar_multiget::{CalendarMultigetRequest, get_objects_calendar_multiget_presented};
 use calendar_query::{CalendarQueryRequest, get_objects_calendar_query};
 use http::{StatusCode, Uri};
 use rustical_dav::{
@@ -23,7 +23,12 @@ use rustical_dav::{
 };
 use rustical_dav_push::DavPushStore;
 use rustical_ical::CalendarObject;
-use rustical_store::{CalendarStore, auth::Principal};
+use rustical_store::{
+    CalendarStore,
+    access::{self, Need, Resolved},
+    auth::Principal,
+    shared,
+};
 use rustical_xml::{XmlDeserialize, XmlDocument};
 use sync_collection::handle_sync_collection;
 use tracing::instrument;
@@ -58,6 +63,8 @@ fn objects_response(
     not_found: Vec<Uri>,
     path: &str,
     principal: &str,
+    read_only: bool,
+    resolved: &Resolved,
     puri: &impl PrincipalUri,
     user: &Principal,
     prop: &PropfindType<CalendarObjectPropWrapperName>,
@@ -71,11 +78,9 @@ fn objects_response(
             object_id = rfc_3986_percent_encode(&object_id)
         );
 
-        let resource = CalendarObjectResource {
-            object,
-            object_id,
-            principal: principal.to_owned(),
-        };
+        let level = shared::level(resolved, &object);
+        let resource =
+            CalendarObjectResource::new(object, object_id, principal, resolved, read_only, level);
         let response = match resource.propfind(&path, prop, None, puri, user) {
             Ok(response) => response,
             // NotFound is thrown when the expanded calendar object doesn't fall into the request
@@ -103,33 +108,36 @@ fn objects_response(
     })
 }
 
-#[instrument(skip(cal_store))]
+#[instrument(skip(service))]
 pub async fn route_report_calendar<C: CalendarStore, DP: DavPushStore>(
     Path((principal, cal_id)): Path<(String, String)>,
     user: Principal,
     Extension(puri): Extension<CalDavPrincipalUri>,
-    State(CalendarResourceService { cal_store, .. }): State<CalendarResourceService<C, DP>>,
+    State(service): State<CalendarResourceService<C, DP>>,
     OriginalUri(uri): OriginalUri,
     matched_path: MatchedPath,
     body: String,
 ) -> Result<impl IntoResponse, Error> {
-    if !user.is_principal(&principal) {
-        return Err(Error::Unauthorized);
-    }
+    access::check_home(&user, &principal)?;
+    let calendar = service.resource(&principal, &cal_id, false).await?;
+    let resolved = &calendar.resolved;
+    resolved.check(Need::Read)?;
+    let read_only = calendar.read_only;
+    let cal_store = service.cal_store.as_ref();
 
     let request = ReportRequest::parse_str(&body)?;
     let props = request.props();
 
     Ok(match &request {
         ReportRequest::CalendarQuery(cal_query) => {
-            let objects =
-                get_objects_calendar_query(cal_query, &principal, &cal_id, cal_store.as_ref())
-                    .await?;
+            let objects = get_objects_calendar_query(cal_query, resolved, cal_store).await?;
             objects_response(
                 objects,
                 vec![],
                 uri.path(),
                 &principal,
+                read_only,
+                resolved,
                 &puri,
                 &user,
                 props,
@@ -137,12 +145,13 @@ pub async fn route_report_calendar<C: CalendarStore, DP: DavPushStore>(
             )?
         }
         ReportRequest::CalendarMultiget(cal_multiget) => {
-            let (objects, not_found) = get_objects_calendar_multiget(
+            let (objects, not_found) = get_objects_calendar_multiget_presented(
                 cal_multiget,
                 &uri,
-                &principal,
-                &cal_id,
-                cal_store.as_ref(),
+                resolved.owner(),
+                resolved.id(),
+                cal_store,
+                |object| shared::present(resolved, object),
             )
             .await?;
             objects_response(
@@ -150,6 +159,8 @@ pub async fn route_report_calendar<C: CalendarStore, DP: DavPushStore>(
                 not_found,
                 uri.path(),
                 &principal,
+                read_only,
+                resolved,
                 &puri,
                 &user,
                 props,
@@ -163,8 +174,9 @@ pub async fn route_report_calendar<C: CalendarStore, DP: DavPushStore>(
                 &puri,
                 &user,
                 &principal,
-                &cal_id,
-                cal_store.as_ref(),
+                resolved,
+                read_only,
+                cal_store,
             )
             .await?
         }
@@ -353,6 +365,12 @@ END:VCALENDAR"
             vec!["/caldav/principal/user/not%20found.ics".parse().unwrap()],
             "/caldav/principal/user%40rustical.dev/cal",
             "user@rustical.dev",
+            false,
+            &Resolved::for_tests(
+                "user@rustical.dev".to_string(),
+                "cal".to_string(),
+                rustical_store::access::ResolvedKind::Own,
+            ),
             &CalDavPrincipalUri::new("/caldav"),
             &Principal {
                 id: "user@rustical.dev".to_string(),
@@ -408,6 +426,12 @@ END:VCALENDAR"
             vec![],
             "/caldav/principal/user%40rustical.dev/cal",
             "user@rustical.dev",
+            false,
+            &Resolved::for_tests(
+                "user@rustical.dev".to_string(),
+                "cal".to_string(),
+                rustical_store::access::ResolvedKind::Own,
+            ),
             &CalDavPrincipalUri::new("/caldav"),
             &Principal {
                 id: "user@rustical.dev".to_string(),

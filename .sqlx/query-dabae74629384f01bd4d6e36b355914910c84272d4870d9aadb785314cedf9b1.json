@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT id, ics FROM calendarobjects\n                WHERE (principal, cal_id) = (?, ?) AND deleted_at IS NULL",
+  "describe": {
+    "columns": [
+      {
+        "name": "id",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendarobjects",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "name": "ics",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendarobjects",
+            "name": "ics"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "dabae74629384f01bd4d6e36b355914910c84272d4870d9aadb785314cedf9b1"
+}

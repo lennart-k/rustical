@@ -1,0 +1,122 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT s.owner, s.addressbook_id, s.sharee, s.name, s.access, s.displayname, s.color, s.created_at AS \"created_at: NaiveDateTime\", s.created_by\n                    FROM addressbook_shares AS s\n                    JOIN addressbooks AS a ON (a.principal, a.id) = (s.owner, s.addressbook_id)\n                    WHERE s.sharee = ? AND a.deleted_at IS NULL\n                    ORDER BY s.name",
+  "describe": {
+    "columns": [
+      {
+        "name": "owner",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressbook_shares",
+            "name": "owner"
+          }
+        }
+      },
+      {
+        "name": "addressbook_id",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressbook_shares",
+            "name": "addressbook_id"
+          }
+        }
+      },
+      {
+        "name": "sharee",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressbook_shares",
+            "name": "sharee"
+          }
+        }
+      },
+      {
+        "name": "name",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressbook_shares",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "name": "access",
+        "ordinal": 4,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressbook_shares",
+            "name": "access"
+          }
+        }
+      },
+      {
+        "name": "displayname",
+        "ordinal": 5,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressbook_shares",
+            "name": "displayname"
+          }
+        }
+      },
+      {
+        "name": "color",
+        "ordinal": 6,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressbook_shares",
+            "name": "color"
+          }
+        }
+      },
+      {
+        "name": "created_at: NaiveDateTime",
+        "ordinal": 7,
+        "type_info": "Datetime",
+        "origin": {
+          "Table": {
+            "table": "addressbook_shares",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "name": "created_by",
+        "ordinal": 8,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressbook_shares",
+            "name": "created_by"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true
+    ]
+  },
+  "hash": "93825b66858f655f5cda1510d62a30a0eba7fdddd9d34453a674afe2909fac28"
+}

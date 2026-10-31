@@ -11,29 +11,31 @@ use http::HeaderValue;
 use http::Method;
 use http::{HeaderMap, StatusCode};
 use rustical_ical::AddressObject;
-use rustical_store::AddressbookStore;
+use rustical_store::access::{self, Need};
 use rustical_store::auth::Principal;
+use rustical_store::{AddressbookStore, Preconditions, shared};
 use std::str::FromStr;
 use tracing::instrument;
 
-#[instrument(skip(addr_store))]
+#[instrument(skip(service))]
 pub async fn get_object<AS: AddressbookStore>(
     Path(AddressObjectPathComponents {
         principal,
         addressbook_id,
         object_id,
     }): Path<AddressObjectPathComponents>,
-    State(AddressObjectResourceService { addr_store }): State<AddressObjectResourceService<AS>>,
+    State(service): State<AddressObjectResourceService<AS>>,
     user: Principal,
     method: Method,
 ) -> Result<Response, Error> {
-    if !user.is_principal(&principal) {
-        return Err(Error::Unauthorized);
-    }
-
-    let object = addr_store
-        .get_object(&principal, &addressbook_id, &object_id, false)
+    access::check_home(&user, &principal)?;
+    let resolved = service
+        .addressbook(&principal, &addressbook_id, false)
         .await?;
+    resolved.check(Need::Read)?;
+
+    let object =
+        shared::address_object(service.addr_store.as_ref(), &resolved, &object_id, false).await?;
 
     let mut resp = Response::builder().status(StatusCode::OK);
     let hdrs = resp.headers_mut().unwrap();
@@ -46,23 +48,25 @@ pub async fn get_object<AS: AddressbookStore>(
     }
 }
 
-#[instrument(skip(addr_store, body))]
+#[instrument(skip(service, body))]
 pub async fn put_object<AS: AddressbookStore>(
     Path(AddressObjectPathComponents {
         principal,
         addressbook_id,
         object_id,
     }): Path<AddressObjectPathComponents>,
-    State(AddressObjectResourceService { addr_store }): State<AddressObjectResourceService<AS>>,
+    State(service): State<AddressObjectResourceService<AS>>,
     user: Principal,
     mut if_none_match: Option<TypedHeader<IfNoneMatch>>,
     mut if_match: Option<TypedHeader<IfMatch>>,
     header_map: HeaderMap,
     body: String,
 ) -> Result<Response, Error> {
-    if !user.is_principal(&principal) {
-        return Err(Error::Unauthorized);
-    }
+    access::check_home(&user, &principal)?;
+    let resolved = service
+        .addressbook(&principal, &addressbook_id, true)
+        .await?;
+    resolved.check(Need::Write)?;
 
     // https://github.com/hyperium/headers/issues/204
     if !header_map.contains_key("If-None-Match") {
@@ -74,14 +78,14 @@ pub async fn put_object<AS: AddressbookStore>(
 
     if if_match.is_some() || if_none_match.is_some() {
         // TODO: Put into transaction?
-        let existing = match addr_store
-            .get_object(&principal, &addressbook_id, &object_id, false)
-            .await
-        {
-            Ok(existing) => Some(existing),
-            Err(rustical_store::Error::NotFound) => None,
-            Err(err) => Err(err)?,
-        };
+        let existing =
+            match shared::address_object(service.addr_store.as_ref(), &resolved, &object_id, false)
+                .await
+            {
+                Ok(existing) => Some(existing),
+                Err(rustical_store::Error::NotFound) => None,
+                Err(err) => Err(err)?,
+            };
 
         // There's an already existing object
         if let Some(existing) = existing {
@@ -124,15 +128,26 @@ pub async fn put_object<AS: AddressbookStore>(
         Ok(object) => object,
         Err(err) => return Ok((StatusCode::BAD_REQUEST, err.to_string()).into_response()),
     };
-    let etag = object.get_etag();
-    addr_store
-        .put_object(&principal, &addressbook_id, &object_id, object, true)
-        .await?;
+    let etag = shared::put_address_object(
+        service.addr_store.as_ref(),
+        service.share_store.as_ref(),
+        &resolved,
+        &object_id,
+        object,
+        true,
+        Preconditions {
+            if_match: if_match.as_ref().map(|TypedHeader(header)| header),
+            if_none_match: if_none_match.as_ref().map(|TypedHeader(header)| header),
+        },
+    )
+    .await?;
 
     let mut headers = HeaderMap::new();
-    headers.insert(
-        "ETag",
-        HeaderValue::from_str(&etag).expect("Contains no invalid characters"),
-    );
+    if let Some(etag) = etag {
+        headers.insert(
+            "ETag",
+            HeaderValue::from_str(&etag).expect("Contains no invalid characters"),
+        );
+    }
     Ok((StatusCode::CREATED, headers).into_response())
 }

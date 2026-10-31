@@ -23,7 +23,12 @@ impl<AP: AuthenticationProvider> UserStore for OidcUserStore<AP> {
     /// Also adds memberships, but does NOT remove previous ones
     /// If assigning a membership fails (e.g. due to the principal not existing),
     /// the method will not fail but only log an error.
-    async fn ensure_user(&self, id: &str, memberships: &[&str]) -> Result<(), Self::Error> {
+    async fn ensure_user(
+        &self,
+        id: &str,
+        memberships: &[&str],
+        email: Option<&str>,
+    ) -> Result<(), Self::Error> {
         // Ensure user exists at all
         match self
             .0
@@ -55,6 +60,11 @@ impl<AP: AuthenticationProvider> UserStore for OidcUserStore<AP> {
                     "Failed to assign membership {membership} to principal {id}: {err}"
                 );
             }
+        }
+
+        // The identity provider is the authority on e-mail addresses (sharing by address)
+        if let Some(email) = email {
+            self.0.set_principal_email(id, Some(email)).await?;
         }
 
         Ok(())

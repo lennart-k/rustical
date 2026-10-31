@@ -14,6 +14,7 @@ pub fn get_app(context: TestStoreContext) -> axum::Router {
         cal_store,
         principal_store,
         dav_push_store,
+        share_store,
         ..
     } = context;
 
@@ -22,6 +23,7 @@ pub fn get_app(context: TestStoreContext) -> axum::Router {
         Arc::new(cal_store),
         Arc::new(dav_push_store),
         Arc::new(principal_store),
+        Arc::new(share_store),
         FrontendConfig {
             enabled: true,
             allow_password_login: true,
@@ -65,5 +67,8 @@ async fn test_ping(
     assert!(response.status().is_success());
 }
 
+mod access;
 mod caldav;
 mod carddav;
+mod sharing;
+mod visibility;
