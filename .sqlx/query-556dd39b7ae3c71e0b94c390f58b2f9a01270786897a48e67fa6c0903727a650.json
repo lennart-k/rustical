@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE app_tokens SET last_used = CURRENT_TIMESTAMP WHERE (principal, id) = (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "556dd39b7ae3c71e0b94c390f58b2f9a01270786897a48e67fa6c0903727a650"
+}

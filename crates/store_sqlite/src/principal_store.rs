@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use derive_more::Constructor;
 use password_hash::{CustomizedPasswordHasher, phc::Salt};
 use pbkdf2::Params;
 use rand::rngs::SysRng;
@@ -8,7 +7,16 @@ use rustical_store::{
     auth::{AppToken, AuthenticationProvider, Principal},
 };
 use sqlx::{SqlitePool, types::Json};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex, PoisonError},
+    time::{Duration, Instant},
+};
 use tracing::instrument;
+
+/// The use of one app token is written at most this often, so that a client which syncs
+/// every few minutes does not cause a database write per request.
+const TOUCH_INTERVAL: Duration = Duration::from_hours(1);
 
 #[derive(Debug, Default, Clone)]
 struct PrincipalRow {
@@ -39,9 +47,29 @@ impl TryFrom<PrincipalRow> for Principal {
     }
 }
 
-#[derive(Debug, Clone, Constructor)]
+#[derive(Clone)]
 pub struct SqlitePrincipalStore {
     db: SqlitePool,
+    /// When the use of each app token was last written, shared by all clones.
+    touched: Arc<Mutex<HashMap<String, Instant>>>,
+}
+
+impl SqlitePrincipalStore {
+    #[must_use]
+    pub fn new(db: SqlitePool) -> Self {
+        Self {
+            db,
+            touched: Arc::default(),
+        }
+    }
+}
+
+impl std::fmt::Debug for SqlitePrincipalStore {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SqlitePrincipalStore")
+            .field("db", &self.db)
+            .finish_non_exhaustive()
+    }
 }
 
 #[async_trait]
@@ -137,7 +165,7 @@ impl AuthenticationProvider for SqlitePrincipalStore {
     async fn get_app_tokens(&self, principal: &str) -> Result<Vec<AppToken>, Error> {
         Ok(sqlx::query_as!(
             AppToken,
-            r#"SELECT id, displayname AS name, token, created_at AS "created_at: _" FROM app_tokens WHERE principal = ?"#,
+            r#"SELECT id, displayname AS name, token, created_at AS "created_at: _", last_used AS "last_used: _" FROM app_tokens WHERE principal = ?"#,
             principal
         )
         .fetch_all(&self.db)
@@ -149,6 +177,36 @@ impl AuthenticationProvider for SqlitePrincipalStore {
     async fn remove_app_token(&self, user_id: &str, token_id: &str) -> Result<(), Error> {
         sqlx::query!(
             r#"DELETE FROM app_tokens WHERE (principal, id) = (?, ?)"#,
+            user_id,
+            token_id
+        )
+        .execute(&self.db)
+        .await
+        .map_err(crate::Error::from)?;
+        self.touched
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .remove(token_id);
+        Ok(())
+    }
+
+    #[instrument]
+    async fn touch_app_token(&self, user_id: &str, token_id: &str) -> Result<(), Error> {
+        {
+            // Claimed before the write: concurrent first requests write once, and a busy or
+            // failing database costs one attempt per interval instead of one per request
+            // (each attempt may wait for the busy timeout).
+            let mut touched = self.touched.lock().unwrap_or_else(PoisonError::into_inner);
+            if touched
+                .get(token_id)
+                .is_some_and(|at| at.elapsed() < TOUCH_INTERVAL)
+            {
+                return Ok(());
+            }
+            touched.insert(token_id.to_owned(), Instant::now());
+        }
+        sqlx::query!(
+            r#"UPDATE app_tokens SET last_used = CURRENT_TIMESTAMP WHERE (principal, id) = (?, ?)"#,
             user_id,
             token_id
         )

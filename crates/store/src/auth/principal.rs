@@ -13,6 +13,9 @@ pub struct AppToken {
     pub name: String,
     pub token: Secret<String>,
     pub created_at: Option<DateTime<Utc>>,
+    /// When the token last authenticated a request, `None` if never (or not recorded).
+    /// Stores may record this coarsely, e.g. at most once per hour.
+    pub last_used: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

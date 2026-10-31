@@ -67,6 +67,10 @@ pub trait AuthenticationProvider: Send + Sync + 'static {
                 continue;
             }
             if password_auth::verify_password(token, app_token.token.as_ref()).is_ok() {
+                // Only bookkeeping: a failure to record the use must not reject a valid token.
+                if let Err(err) = self.touch_app_token(user_id, &app_token.id).await {
+                    tracing::warn!("Could not record the use of an app token: {err}");
+                }
                 return self.get_principal(user_id).await;
             }
         }
@@ -81,6 +85,12 @@ pub trait AuthenticationProvider: Send + Sync + 'static {
         token: String,
     ) -> Result<String, Error>;
     async fn remove_app_token(&self, user_id: &str, token_id: &str) -> Result<(), Error>;
+
+    /// Records that an app token has just authenticated a request.
+    /// Called by `validate_app_token`; the default implementation does nothing.
+    async fn touch_app_token(&self, _user_id: &str, _token_id: &str) -> Result<(), Error> {
+        Ok(())
+    }
 
     async fn get_app_tokens(&self, principal: &str) -> Result<Vec<AppToken>, Error>;
 

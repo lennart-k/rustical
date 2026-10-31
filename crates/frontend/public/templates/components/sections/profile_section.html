@@ -16,6 +16,7 @@
     <tr>
       <th>Name</th>
       <th>Created at</th>
+      <th>Last used</th>
       <th></th>
     </tr>
   </thead>
@@ -26,6 +27,13 @@
       <td>
         {% if let Some(created_at) = app_token.created_at %}
         {{ chrono_humanize::HumanTime::from(created_at.to_owned()) }}
+        {% endif %}
+      </td>
+      <td>
+        {% if let Some(last_used) = app_token.last_used %}
+        {{ chrono_humanize::HumanTime::from(last_used.to_owned()) }}
+        {% else %}
+        never
         {% endif %}
       </td>
       <td>
