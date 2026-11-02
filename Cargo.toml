@@ -46,7 +46,7 @@ rustical_ical = { path = "./crates/ical/" }
 base64ct = "1.8"
 pbkdf2 = { version = "0.13", features = ["phc"] }
 matchit = "0.9"
-uuid = { version = "1.19", features = ["v4", "fast-rng"] }
+uuid = { version = "1.29", features = ["v4", "fast-rng"] }
 async-trait = "0.1"
 axum = "0.8"
 tracing = { version = "0.1", features = ["async-await"] }
@@ -55,11 +55,11 @@ serde = { version = "1.0", features = ["serde_derive", "derive", "rc"] }
 futures-util = "0.3"
 password-auth = { version = "1.0", features = ["argon2", "pbkdf2"] }
 chrono = { version = "0.4", features = ["serde"] }
-regex = "1.12"
+regex = "1.13"
 rstest = "0.28"
 rstest_reuse = "0.7"
 sha2 = "0.11"
-tokio = { version = "1.53", features = [
+tokio = { version = "1.54", features = [
   "net",
   "tracing",
   "macros",
@@ -97,7 +97,7 @@ sqlx = { version = "0.9", default-features = false, features = [
   "migrate",
   "json",
 ] }
-http = "1.4"
+http = "1.5"
 headers = "0.4"
 strum = "0.28"
 strum_macros = "0.28"
@@ -125,12 +125,12 @@ proc-macro2 = "1.0"
 heck = "0.5"
 darling = "0.24"
 reqwest = { version = "0.13" }
-openidconnect = "4.0"
+openidconnect = "4.1"
 clap = { version = "4.6", features = ["derive", "env"] }
 matchit-serde = "0.1"
 vtimezones-rs = "0.3"
 similar-asserts = "2.0"
-insta = { version = "1.48", features = ["filters"] }
+insta = { version = "1.49", features = ["filters"] }
 criterion = { version = "0.8", features = ["async_tokio"] }
 web-push = { git = "https://github.com/lennart-k/rust-web-push" }
 
