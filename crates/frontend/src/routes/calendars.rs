@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use crate::pages::user::{Section, UserPage};
+use crate::{
+    FrontendConfig,
+    pages::user::{Section, UserPage},
+};
 use askama::Template;
 use askama_web::WebTemplate;
 use axum::{Extension, extract::Path, response::IntoResponse};
@@ -24,6 +27,7 @@ pub struct CalendarsSection {
 pub async fn route_calendars<CS: CalendarStore>(
     Path(user_id): Path<String>,
     Extension(cal_store): Extension<Arc<CS>>,
+    Extension(config): Extension<FrontendConfig>,
     user: Principal,
 ) -> impl IntoResponse {
     if user_id != user.id {
@@ -62,6 +66,8 @@ pub async fn route_calendars<CS: CalendarStore>(
         ));
     }
 
+    let show_admin_settings = config.admin.is_admin(&user);
+
     UserPage {
         section: CalendarsSection {
             user: user.clone(),
@@ -69,6 +75,7 @@ pub async fn route_calendars<CS: CalendarStore>(
             deleted_calendars: deleted_calendar_infos,
         },
         user,
+        show_admin_settings,
     }
     .into_response()
 }

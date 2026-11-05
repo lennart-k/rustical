@@ -1,0 +1,20 @@
+{% extends "layouts/default.html" %}
+
+{% block title %}Settings - RustiCal{% endblock %}
+
+{% block imports %}
+<script type="module" src="/frontend/assets/js/bundle.mjs"></script>
+{% endblock %}
+
+{% block header_center %}
+<nav class="header-center">
+  <a href="/frontend/user/{{ user.id|urlencode }}">{% include "icons/user.svg" %}Profile</a>
+  <a href="/frontend/user/{{ user.id|urlencode }}/calendar">{% include "icons/calendar.svg" %}Calendars</a>
+  <a href="/frontend/user/{{ user.id|urlencode }}/addressbook">{% include "icons/group.svg" %}Addressbooks</a>
+  <a href="/frontend/settings" {% if section_name == "principals" || section_name == "principal" || section_name == "group" %}class="active"{% endif %}>Settings</a>
+</nav>
+{% endblock %}
+
+{% block content %}
+{{ section|safe }}
+{% endblock %}

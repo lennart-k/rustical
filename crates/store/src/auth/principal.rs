@@ -45,6 +45,14 @@ impl Principal {
             .any(|membership| membership == principal)
     }
 
+    /// Returns true if the principal is a direct member of `group`.
+    #[must_use]
+    pub fn is_member_of(&self, group: &str) -> bool {
+        self.memberships
+            .iter()
+            .any(|membership| membership == group)
+    }
+
     /// Returns all principals the user implements
     pub fn memberships(&self) -> Vec<&str> {
         std::iter::once(self.id.as_str())

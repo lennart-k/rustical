@@ -8,6 +8,7 @@ use clap::{Parser, Subcommand};
 use config::{DataStoreConfig, SqliteDataStoreConfig};
 use provided_listeners::ProvidedListeners;
 use rustical_dav_push::{DavPushService, DavPushStore, VapidStore};
+use rustical_frontend::bootstrap_admin;
 use rustical_store::auth::AuthenticationProvider;
 use rustical_store::{AddressbookStore, CalendarStore, CollectionOperation, PrefixedCalendarStore};
 use rustical_store_sqlite::SqliteAddressbookStore;
@@ -17,6 +18,7 @@ use rustical_store_sqlite::{SqliteDavPushStore, create_db_pool};
 use setup_tracing::setup_tracing;
 use std::fs;
 use std::os::unix::fs::FileTypeExt;
+use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::Notify;
 use tokio::sync::mpsc::Receiver;
@@ -48,6 +50,10 @@ pub enum Command {
     #[command(about = "Run the RustiCal server")]
     Serve,
     GenConfig(commands::GenConfigArgs),
+    #[command(
+        about = "Print an Argon2 hash for use as `password_hash` in the frontend admin config"
+    )]
+    HashPassword(HashPasswordArgs),
     #[command(
         about = "Healthcheck for running instance (Used for HEALTHCHECK in Docker container)"
     )]
@@ -136,6 +142,15 @@ pub async fn cmd_serve(
         tokio::spawn(async move {
             dav_push_service.notifier_loop(update_recv).await;
         });
+    }
+
+    if config.frontend.enabled && config.frontend.admin.enabled() {
+        bootstrap_admin(
+            principal_store.as_ref(),
+            &config.frontend.admin,
+            Path::new(&args.config_file),
+        )
+        .await?;
     }
 
     let app = make_app(

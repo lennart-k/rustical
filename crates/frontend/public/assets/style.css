@@ -51,6 +51,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 html {
   background: var(--background-color-01);
   color: var(--text);
@@ -74,6 +78,9 @@ a {
 }
 
 header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
   background: var(--background-color-03);
   border-bottom: 1px solid var(--border);
   display: flex;
@@ -129,11 +136,15 @@ header {
   }
 }
 
+main {
+  padding: 1em 0em;
+}
+
 .content-pane {
   width: 100%;
   max-width: 100%;
   overflow: auto;
-  padding: 1em .3em 1em;
+  padding: 0em .3em 1em;
   display: grid;
   grid-template-columns: 1fr min(100%, 1000px) 1fr;
   grid-auto-rows: min-content;
@@ -159,6 +170,17 @@ button, .button {
     border-color: color-mix(in srgb, var(--border), var(--text) 15%);
   }
 
+  &.warning {
+    background: var(--background-color-warning-card);
+    border-color: var(--border-color-warning-card);
+    color: var(--text-color-warning);
+
+    &:hover {
+      background: color-mix(in srgb, var(--orange), transparent 78%);
+      border-color: var(--orange);
+    }
+  }
+
   &.delete, &.cancel {
     background: color-mix(in srgb, var(--danger), transparent 90%);
     border-color: color-mix(in srgb, var(--danger), transparent 60%);
@@ -175,6 +197,7 @@ button, .button {
 input[type="text"],
 input[type="url"],
 input[type="password"],
+input[type="search"],
 input[type="file"],
 select {
   background: var(--background-color-04);
@@ -192,6 +215,10 @@ select {
     border-color: var(--primary);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary), transparent 80%);
   }
+}
+
+input[type="search"] {
+  appearance: none;
 }
 
 input[type="color"] {
@@ -580,6 +607,330 @@ generate-app-token-form {
       display: block;
       line-height: 1.5;
     }
+  }
+}
+
+
+admin-principal-table {
+  .admin-meta {
+    color: var(--text-muted);
+    font-size: .9rem;
+
+  }
+  
+  .admin-separator {
+    margin: 0 .35em;
+  }
+  
+  .admin-list {
+    display: grid;
+    gap: .75em;
+  }
+
+  .admin-toolbar {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 1rem;
+    align-items: end;
+  }
+
+  .admin-toolbar button {
+    min-height: 38px;
+    min-width: 8.5em;
+  }
+
+  .admin-search {
+    position: relative;
+  }
+
+  .admin-search-label {
+    display: block;
+    font-size: .8rem;
+    color: var(--text-muted);
+    margin-bottom: .25em;
+  }
+
+  .admin-search input {
+    width: 100%;
+  }
+
+  .admin-table {
+    table-layout: auto;
+    min-width: max-content;
+    overflow: hidden;
+    border-radius: 0;
+  }
+
+  .admin-table thead th {
+    position: sticky;
+    top: -1px;
+    z-index: 2;
+    background: var(--background-color-03);
+  }
+
+  .admin-table tbody tr.admin-row {
+    cursor: pointer;
+  }
+
+  .admin-table tbody tr.admin-row:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+  }
+
+  .admin-table td {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .admin-table tfoot td {
+    border-top: 1px solid var(--border);
+    border-bottom: none;
+    background: var(--background-color-04);
+  }
+
+  .admin-pagination {
+    display: flex;
+    align-items: center;
+    gap: .75em;
+    flex-wrap: wrap;
+  }
+
+  .admin-pagination span {
+    color: var(--text-muted);
+  }
+}
+
+admin-principal-suggest {
+  input {
+    width: 100%;
+  }
+
+  .admin-suggestions {
+    position: absolute;
+    z-index: 30;
+    top: calc(100% + .25em);
+    left: 0;
+    right: 0;
+    max-height: 17rem;
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+    list-style: none;
+    background: var(--background-color-03);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 12px 28px var(--shadow-md);
+  }
+
+  .admin-suggestions li {
+    display: flex;
+    justify-content: space-between;
+    gap: .75em;
+    align-items: center;
+    padding: .55em .75em;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+
+  .admin-suggestions li:last-child {
+    border-bottom: none;
+  }
+
+  .admin-suggestions li:hover,
+  .admin-suggestions li[aria-selected="true"] {
+    background: var(--background-color-02);
+  }
+
+  .admin-suggestion-name,
+  .admin-suggestion-meta {
+    min-width: 0;
+  }
+
+  .admin-suggestion-name {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .admin-suggestion-meta {
+    color: var(--text-muted);
+    font-size: .82rem;
+    text-align: right;
+    white-space: normal;
+  }
+}
+
+create-principal-form,
+create-group-form {
+  .admin-create-form {
+    display: grid;
+    gap: 1rem;
+    margin: 0;
+  }
+
+  .admin-create-form label {
+    display: grid;
+    gap: .35em;
+  }
+
+  .admin-create-form label:first-of-type {
+    margin-top: 0;
+  }
+
+  .admin-create-form button[type="submit"] {
+    min-height: 38px;
+    min-width: 8.5em;
+  }
+}
+
+.admin-overlay {
+  width: min(1100px, calc(100vw - 1.5rem));
+  max-height: calc(100vh - 2rem);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--background-color-03);
+  color: var(--text);
+  box-shadow: 0 18px 45px var(--shadow-md);
+  overflow: hidden;
+
+  &::backdrop {
+    background: rgba(15, 23, 42, .48);
+  }
+
+  .admin-overlay-panel {
+    max-height: calc(100vh - 2rem);
+    overflow: auto;
+    padding: 0;
+    background: var(--background-color-03);
+  }
+
+  .admin-overlay-controls {
+    display: flex;
+    justify-content: flex-end;
+    position: sticky;
+    top: 0;
+    width: 100%;
+    background: var(--background-color-03);
+    border-bottom: 1px solid var(--border);
+    padding: .75rem 1.5rem;
+    z-index: 2;
+  }
+
+  [data-admin-overlay-content] {
+    padding: 1.25rem 1.5rem 2rem;
+  }
+
+  .admin-overlay-close {
+    font-weight: 700;
+  }
+}
+
+admin-principal-card {
+  .admin-status {
+    color: var(--danger);
+    background: color-mix(in srgb, var(--danger), transparent 90%);
+    border: 1px solid color-mix(in srgb, var(--danger), transparent 65%);
+    border-radius: var(--radius);
+    padding: .75em;
+    margin-bottom: 1em;
+  }
+
+  .admin-grid {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .admin-card {
+    background: var(--background-color-03);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+  }
+
+  .admin-card > * + * {
+    margin-top: .85rem;
+  }
+
+  .admin-card h3 {
+    margin-top: 0;
+  }
+
+  .admin-card form {
+    display: grid;
+    gap: .65rem;
+    margin: 0;
+  }
+
+  .admin-card form + form {
+    margin-top: 1rem;
+  }
+
+  .admin-card p + form {
+    margin-top: 1rem;
+  }
+
+  .admin-suggest {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: .5em;
+    align-items: end;
+    position: relative;
+  }
+
+  .admin-suggest label {
+    display: block;
+    position: relative;
+  }
+
+  .admin-card .admin-suggest label {
+    margin-block-end: 0;
+  }
+
+  .admin-suggest button {
+    align-self: end;
+    min-height: 38px;
+  }
+
+  .admin-danger-zone {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .admin-card .admin-oauth-toggle {
+    align-items: center;
+    display: inline-flex;
+    gap: .5em;
+    margin-block-end: .8em;
+  }
+
+  .admin-card label {
+    display: grid;
+    gap: .35em;
+    margin-block-end: .8em;
+  }
+
+  .admin-card p:last-child {
+    margin-bottom: 0;
+  }
+
+  .admin-inline-table {
+    table-layout: fixed;
+    margin-bottom: 1em;
+  }
+
+  .admin-inline-table td {
+    border-bottom-color: var(--background-color-02);
+  }
+}
+
+@media (max-width: 720px) {
+  admin-principal-table .admin-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  admin-principal-card .admin-suggest {
+    grid-template-columns: 1fr;
   }
 }
 

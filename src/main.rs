@@ -5,7 +5,7 @@ use figment::Figment;
 use figment::providers::{Env, Format, Toml};
 use rustical::config::Config;
 use rustical::{Args, Command};
-use rustical::{cmd_gen_config, cmd_health, cmd_principals, cmd_serve};
+use rustical::{cmd_gen_config, cmd_hash_password, cmd_health, cmd_principals, cmd_serve};
 use tracing::warn;
 
 #[tokio::main(flavor = "multi_thread")]
@@ -23,6 +23,7 @@ async fn main() -> Result<()> {
 
     match args.command {
         Command::GenConfig(gen_config_args) => cmd_gen_config(gen_config_args),
+        Command::HashPassword(hash_password_args) => cmd_hash_password(hash_password_args),
         Command::Principals(principals_args) => {
             cmd_principals(principals_args, parse_config()?).await
         }

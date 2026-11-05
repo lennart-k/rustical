@@ -3782,6 +3782,7 @@ dependencies = [
  "serde_json",
  "thiserror 2.0.21",
  "tokio",
+ "toml_edit 0.25.17+spec-1.1.0",
  "tower",
  "tower-http 0.7.1",
  "tower-sessions",
@@ -3831,6 +3832,7 @@ name = "rustical_store"
 version = "0.18.0"
 dependencies = [
  "anyhow",
+ "argon2 0.6.0",
  "async-trait",
  "axum",
  "caldata",
@@ -3842,6 +3844,7 @@ dependencies = [
  "headers",
  "http",
  "password-auth",
+ "password-hash 0.6.1",
  "regex",
  "rstest",
  "rstest_reuse",
@@ -4975,6 +4978,7 @@ dependencies = [
  "indexmap 2.14.2",
  "toml_datetime 1.1.2+spec-1.1.0",
  "toml_parser",
+ "toml_writer",
  "winnow 1.0.4",
 ]
 

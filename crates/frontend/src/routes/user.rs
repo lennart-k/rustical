@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use crate::pages::user::{Section, UserPage};
+use crate::{
+    FrontendConfig,
+    pages::user::{Section, UserPage},
+};
 use askama::Template;
 use askama_web::WebTemplate;
 use axum::{
@@ -30,6 +33,7 @@ pub struct ProfileSection {
 pub async fn route_user_named<AP: AuthenticationProvider>(
     Path(user_id): Path<String>,
     Extension(auth_provider): Extension<Arc<AP>>,
+    Extension(config): Extension<FrontendConfig>,
     TypedHeader(host): TypedHeader<Host>,
     user: Principal,
     headers: HeaderMap,
@@ -42,6 +46,8 @@ pub async fn route_user_named<AP: AuthenticationProvider>(
     let davx5_hostname =
         ua.and_then(|ua| ua.as_str().contains("Android").then_some(host.to_string()));
 
+    let show_admin_settings = config.admin.is_admin(&user);
+
     UserPage {
         section: ProfileSection {
             user: user.clone(),
@@ -49,6 +55,7 @@ pub async fn route_user_named<AP: AuthenticationProvider>(
             davx5_hostname,
         },
         user,
+        show_admin_settings,
     }
     .into_response()
 }

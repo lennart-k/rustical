@@ -9,7 +9,6 @@ use axum::{
 };
 use headers::{ContentType, HeaderMapExt};
 use http::{Method, StatusCode};
-use routes::{addressbooks::route_addressbooks, calendars::route_calendars};
 use rustical_oidc::{OidcConfig, OidcServiceConfig, oidc_router};
 use rustical_store::{
     AddressbookStore, CalendarStore, PrefixedCalendarStore,
@@ -18,6 +17,7 @@ use rustical_store::{
 use std::sync::Arc;
 use url::Url;
 
+mod admin;
 mod assets;
 mod config;
 pub mod nextcloud_login;
@@ -25,13 +25,17 @@ mod oidc_user_store;
 pub(crate) mod pages;
 mod routes;
 
-pub use config::FrontendConfig;
+pub use admin::bootstrap_admin;
+pub use config::{AdminConfig, BootstrapAdmins, FrontendConfig, InitialAdminConfig};
 use oidc_user_store::OidcUserStore;
 
 use crate::routes::{
     addressbook::{route_addressbook, route_addressbook_restore},
+    addressbooks::route_addressbooks,
+    admin::settings_router,
     app_token::{route_delete_app_token, route_post_app_token},
     calendar::{route_calendar, route_calendar_restore},
+    calendars::route_calendars,
     login::{route_get_login, route_post_login, route_post_logout},
     timezones::route_timezones,
     user::{route_get_home, route_root, route_user_named},
@@ -80,9 +84,12 @@ pub fn frontend_router<
         )
         .layer(middleware::from_fn(unauthorized_handler));
 
+    let settings_router = settings_router::<AP>();
+
     let router = Router::new()
         .route("/", get(route_root))
         .nest("/user", user_router)
+        .nest("/settings", settings_router)
         .route("/login", get(route_get_login).post(route_post_login::<AP>))
         .route("/logout", post(route_post_logout))
         .route(
