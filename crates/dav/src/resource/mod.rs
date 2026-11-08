@@ -4,7 +4,7 @@ use crate::xml::multistatus::{PropTagWrapper, PropstatElement, PropstatWrapper};
 use crate::xml::{PropElement, PropfindElement, PropfindType, Resourcetype};
 use crate::xml::{TagList, multistatus::ResponseElement};
 use headers::{ETag, IfMatch, IfNoneMatch};
-use http::{StatusCode, Uri};
+use http::StatusCode;
 use itertools::Itertools;
 use quick_xml::name::Namespace;
 pub use resource_service::ResourceService;
@@ -17,8 +17,10 @@ use std::str::FromStr;
 mod axum_methods;
 mod axum_service;
 mod methods;
+mod path;
 mod principal_uri;
 mod resource_service;
+pub use path::*;
 
 pub use axum_methods::{AxumMethods, MethodFunction};
 pub use axum_service::AxumService;
@@ -122,16 +124,15 @@ pub trait Resource: Clone + Send + 'static {
 
     fn propfind(
         &self,
-        path: &str,
+        mut path: DavPath,
         prop: &PropfindType<<Self::Prop as PropName>::Names>,
         include: Option<&PropElement<<Self::Prop as PropName>::Names>>,
         principal_uri: &impl PrincipalUri,
         principal: &Self::Principal,
     ) -> Result<ResponseElement<Self::Prop>, Self::Error> {
         // Collections have a trailing slash
-        let mut path = path.to_string();
-        if self.is_collection() && !path.ends_with('/') {
-            path.push('/');
+        if self.is_collection() {
+            path = path.with_trailing_slash();
         }
 
         let (mut props, mut invalid_props): (Vec<<Self::Prop as PropName>::Names>, Vec<_>) =
@@ -143,7 +144,7 @@ pub trait Resource: Clone + Send + 'static {
                         .collect_vec();
 
                     return Ok(ResponseElement {
-                        href: Uri::from_str(&path).unwrap(),
+                        href: path.into(),
                         propstat: vec![PropstatWrapper::TagList(PropstatElement {
                             prop: TagList::from(props),
                             status: StatusCode::OK,
@@ -185,7 +186,7 @@ pub trait Resource: Clone + Send + 'static {
             }));
         }
         Ok(ResponseElement {
-            href: Uri::from_str(&path).unwrap(),
+            href: path.into(),
             propstat: propstats,
             status: None,
         })
