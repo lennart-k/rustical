@@ -4,6 +4,7 @@ use crate::config::{
 };
 use clap::Parser;
 use rustical_caldav::CalDavConfig;
+use rustical_carddav::CardDavConfig;
 use rustical_frontend::FrontendConfig;
 
 pub mod app_token;
@@ -22,6 +23,7 @@ pub fn cmd_gen_config(_args: GenConfigArgs) -> anyhow::Result<()> {
     let config = Config {
         http: HttpConfig::default(),
         caldav: CalDavConfig::default(),
+        carddav: CardDavConfig::default(),
         data_store: DataStoreConfig::Sqlite(SqliteDataStoreConfig {
             db_url: "/var/lib/rustical/db.sqlite3".to_owned(),
             run_repairs: true,

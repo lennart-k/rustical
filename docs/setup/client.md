@@ -65,6 +65,19 @@ This is because Apple does not properly adhere to the CalDAV specification (whic
 **Note**: Since Apple Calendar does not properly support the `calendar-home-set` property the `/caldav-compat` endpoints should be used.
 That also means that Apple Calendar is not able to automatically discover group collections so in that case you'll have to manually add all principals with `/caldav-compat/principal/<principal_id>`.
 
+## Apple Contacts
+
+macOS Contacts rejects vCard 4.0 and then marks the whole address-book sync as failed. Clients such as DAVx5 write 4.0 whenever the server advertises it.
+
+If Apple Contacts shares an address book with those clients, disable advertising vCard 4.0:
+
+```toml
+[carddav]
+advertise_vcard4 = false
+```
+
+The server still accepts 4.0 PUTs; it just stops listing 4.0 in `supported-address-data` so new writes stay on 3.0.
+
 ## Evolution
 
 Set up a collection account in the account settings.

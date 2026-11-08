@@ -6,7 +6,7 @@ use crate::addressbook::methods::get::route_get;
 use crate::addressbook::methods::import::route_import;
 use crate::addressbook::methods::post::route_post;
 use crate::addressbook::resource::AddressbookResource;
-use crate::{CardDavPrincipalUri, Error};
+use crate::{CardDavConfig, CardDavPrincipalUri, Error};
 use async_trait::async_trait;
 use axum::Router;
 use axum::extract::Request;
@@ -24,13 +24,19 @@ use tower::Service;
 pub struct AddressbookResourceService<AS: AddressbookStore, DP: DavPushStore> {
     pub(crate) addr_store: Arc<AS>,
     pub(crate) dav_push_store: Arc<DP>,
+    pub(crate) config: Arc<CardDavConfig>,
 }
 
 impl<A: AddressbookStore, DP: DavPushStore> AddressbookResourceService<A, DP> {
-    pub const fn new(addr_store: Arc<A>, dav_push_store: Arc<DP>) -> Self {
+    pub const fn new(
+        addr_store: Arc<A>,
+        dav_push_store: Arc<DP>,
+        config: Arc<CardDavConfig>,
+    ) -> Self {
         Self {
             addr_store,
             dav_push_store,
+            config,
         }
     }
 }
@@ -40,6 +46,7 @@ impl<A: AddressbookStore, DP: DavPushStore> Clone for AddressbookResourceService
         Self {
             addr_store: self.addr_store.clone(),
             dav_push_store: self.dav_push_store.clone(),
+            config: self.config.clone(),
         }
     }
 }
@@ -71,6 +78,7 @@ impl<AS: AddressbookStore, DP: DavPushStore> ResourceService
         Ok(AddressbookResource {
             addressbook,
             vapid_pubkey,
+            advertise_vcard4: self.config.advertise_vcard4,
         })
     }
 

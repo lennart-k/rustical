@@ -36,6 +36,7 @@ pub async fn route_post<AS: AddressbookStore, DP: DavPushStore>(
     let addressbook_resource = AddressbookResource {
         addressbook,
         vapid_pubkey,
+        advertise_vcard4: resource_service.config.advertise_vcard4,
     };
     if !addressbook_resource
         .get_user_privileges(&user)?

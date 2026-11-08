@@ -3,6 +3,7 @@ use axum::{body::Body, response::Response};
 use rstest::rstest;
 use rustical::{app::make_app, config::NextcloudLoginConfig};
 use rustical_caldav::CalDavConfig;
+use rustical_carddav::CardDavConfig;
 use rustical_frontend::FrontendConfig;
 use rustical_store_sqlite::tests::{TestStoreContext, test_store_context};
 use std::sync::Arc;
@@ -28,6 +29,7 @@ pub fn get_app(context: TestStoreContext) -> axum::Router {
         },
         None,
         CalDavConfig::default(),
+        CardDavConfig::default(),
         &NextcloudLoginConfig { enabled: false },
         false,
         true,
