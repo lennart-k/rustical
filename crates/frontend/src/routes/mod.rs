@@ -1,5 +1,6 @@
 pub mod addressbook;
 pub mod addressbooks;
+pub mod admin;
 pub mod app_token;
 pub mod calendar;
 pub mod calendars;

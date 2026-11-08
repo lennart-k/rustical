@@ -1,5 +1,6 @@
 use rustical_store::auth::Principal;
 
+pub mod admin;
 pub mod user;
 
 /// Required by the base layout

@@ -32,7 +32,9 @@ tower.workspace = true
 futures-core.workspace = true
 tower-sessions.workspace = true
 vtimezones-rs.workspace = true
+argon2.workspace = true
 password-auth.workspace = true
+password-hash.workspace = true
 
 [dev-dependencies]
 rstest.workspace = true

@@ -13,6 +13,7 @@ pub trait Section: Template {
 pub struct UserPage<S: Section> {
     pub user: Principal,
     pub section: S,
+    pub show_admin_settings: bool,
 }
 
 impl<S: Section> DefaultLayoutData for UserPage<S> {
