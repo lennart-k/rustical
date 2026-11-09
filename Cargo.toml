@@ -53,7 +53,7 @@ tracing = { version = "0.1", features = ["async-await"] }
 anyhow = { version = "1.0", features = ["backtrace"] }
 serde = { version = "1.0", features = ["serde_derive", "derive", "rc"] }
 futures-util = "0.3"
-password-auth = { version = "1.0", features = ["argon2", "pbkdf2"] }
+password-auth = { version = "2.0", features = ["argon2", "pbkdf2"] }
 chrono = { version = "0.4", features = ["serde"] }
 regex = "1.13"
 rstest = "0.28"

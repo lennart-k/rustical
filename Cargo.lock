@@ -99,26 +99,14 @@ checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
 name = "argon2"
-version = "0.5.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c3610892ee6e0cbce8ae2700349fcf8f98adb0dbfbee85aec3c9179d29cc072"
-dependencies = [
- "base64ct",
- "blake2 0.10.6",
- "cpufeatures 0.2.17",
- "password-hash 0.5.0",
-]
-
-[[package]]
-name = "argon2"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "134c52ddac6d63c576bef8168db10c83c49c26444ecbc68060fef078925a901c"
 dependencies = [
  "base64ct",
- "blake2 0.11.0",
+ "blake2",
  "cpufeatures 0.3.1",
- "password-hash 0.6.1",
+ "password-hash",
 ]
 
 [[package]]
@@ -383,15 +371,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3ded4057c258ba199e2d26386d3af3780957ecaee6c4ef4041c6b4b8b97c0b06"
 dependencies = [
  "serde_core",
-]
-
-[[package]]
-name = "blake2"
-version = "0.10.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46502ad458c9a52b69d4d4d32775c788b7a1b85e8bc9d482d92250fc0e3f8efe"
-dependencies = [
- "digest 0.10.7",
 ]
 
 [[package]]
@@ -2611,26 +2590,14 @@ dependencies = [
 
 [[package]]
 name = "password-auth"
-version = "1.0.0"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a2a4764cc1f8d961d802af27193c6f4f0124bd0e76e8393cf818e18880f0524"
+checksum = "bc13a5c07b2e3daa8d110979358bfc25c451398ba2944e7c1b08ba671a4a0b34"
 dependencies = [
- "argon2 0.5.3",
- "getrandom 0.2.17",
- "password-hash 0.5.0",
- "pbkdf2 0.12.2",
- "rand_core 0.6.4",
-]
-
-[[package]]
-name = "password-hash"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "346f04948ba92c43e8469c1ee6736c7563d71012b17d40745260fe106aac2166"
-dependencies = [
- "base64ct",
- "rand_core 0.6.4",
- "subtle",
+ "argon2",
+ "getrandom 0.4.3",
+ "password-hash",
+ "pbkdf2",
 ]
 
 [[package]]
@@ -2646,25 +2613,13 @@ dependencies = [
 
 [[package]]
 name = "pbkdf2"
-version = "0.12.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8ed6a7761f76e3b9f92dfb0a60a6a6477c61024b775147ff0973a02653abaf2"
-dependencies = [
- "digest 0.10.7",
- "hmac 0.12.1",
- "password-hash 0.5.0",
- "sha2 0.10.9",
-]
-
-[[package]]
-name = "pbkdf2"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "112d82ceb8c5bf524d9af484d4e4970c9fd5a0cc15ba14ad93dccd28873b0629"
 dependencies = [
  "digest 0.11.3",
  "hmac 0.13.0",
- "password-hash 0.6.1",
+ "password-hash",
  "sha2 0.11.1",
 ]
 
@@ -3575,7 +3530,7 @@ name = "rustical"
 version = "0.18.0"
 dependencies = [
  "anyhow",
- "argon2 0.6.0",
+ "argon2",
  "async-trait",
  "axum",
  "axum-extra",
@@ -3591,8 +3546,8 @@ dependencies = [
  "opentelemetry-otlp",
  "opentelemetry-semantic-conventions",
  "opentelemetry_sdk",
- "password-hash 0.6.1",
- "pbkdf2 0.13.0",
+ "password-hash",
+ "pbkdf2",
  "provided-listeners",
  "quick-xml",
  "rand 0.10.3",
@@ -3870,8 +3825,8 @@ dependencies = [
  "derive_more",
  "hex",
  "password-auth",
- "password-hash 0.6.1",
- "pbkdf2 0.13.0",
+ "password-hash",
+ "pbkdf2",
  "rand 0.10.3",
  "regex",
  "rstest",
