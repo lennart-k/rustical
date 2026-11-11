@@ -108,6 +108,6 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v7
       - name: Install cargo-about
-        run: cargo install cargo-about
+        run: cargo install cargo-about --features cli
       - name: Generate licenses.html
         run: cargo about generate about.hbs | diff -u crates/frontend/public/assets/licenses.html -
