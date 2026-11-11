@@ -536,6 +536,12 @@ user-id = 4556 # Dirkjan Ochtman (djc)
 start = "2023-06-14"
 end = "2027-10-21"
 
+[[trusted.rustls-pki-types]]
+criteria = "safe-to-deploy"
+user-id = 2751 # Joe Birr-Pixton (ctz)
+start = "2023-09-07"
+end = "2027-11-11"
+
 [[trusted.rustls-platform-verifier]]
 criteria = "safe-to-deploy"
 user-id = 4556 # Dirkjan Ochtman (djc)
@@ -796,9 +802,21 @@ end = "2027-09-06"
 
 [[trusted.webpki-root-certs]]
 criteria = "safe-to-deploy"
+user-id = 2751 # Joe Birr-Pixton (ctz)
+start = "2024-11-21"
+end = "2027-11-11"
+
+[[trusted.webpki-root-certs]]
+criteria = "safe-to-deploy"
 user-id = 209038 # Daniel McCarney (cpu)
 start = "2024-08-07"
 end = "2027-10-21"
+
+[[trusted.webpki-roots]]
+criteria = "safe-to-deploy"
+user-id = 2751 # Joe Birr-Pixton (ctz)
+start = "2019-07-21"
+end = "2027-11-11"
 
 [[trusted.webpki-roots]]
 criteria = "safe-to-deploy"
