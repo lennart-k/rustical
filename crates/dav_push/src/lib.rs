@@ -139,7 +139,7 @@ impl<DP: SubscriptionStore> DavPushService<DP> {
                     subscription.id, subscription.topic
                 );
                 self.try_delete_subscription(&subscription.id).await;
-                return Ok(());
+                continue;
             }
 
             let Ok(url) = Url::parse(&subscription.push_resource) else {
@@ -148,13 +148,13 @@ impl<DP: SubscriptionStore> DavPushService<DP> {
                     subscription.id, subscription.topic
                 );
                 self.try_delete_subscription(&subscription.id).await;
-                return Ok(());
+                continue;
             };
 
             if let Some(allowed_push_servers) = &self.allowed_push_servers
                 && !allowed_push_servers.contains(&url.origin().unicode_serialization())
             {
-                return Ok(());
+                continue;
             }
 
             if let Err(err) = self
