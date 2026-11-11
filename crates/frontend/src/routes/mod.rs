@@ -4,5 +4,6 @@ pub mod app_token;
 pub mod calendar;
 pub mod calendars;
 pub mod login;
+pub mod sharing;
 pub mod timezones;
 pub mod user;

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE calendar_shares SET access = ? WHERE (owner, cal_id, sharee) = (?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "1c3560980171f36f8c4cf54b976aa022ca9e5338cb5e9d939fecdee154bea853"
+}

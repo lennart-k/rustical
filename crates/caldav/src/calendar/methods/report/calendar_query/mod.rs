@@ -1,6 +1,6 @@
 use crate::Error;
 use rustical_ical::CalendarObject;
-use rustical_store::CalendarStore;
+use rustical_store::{CalendarStore, access::Resolved, shared};
 
 mod comp_filter;
 mod elements;
@@ -13,15 +13,13 @@ pub use elements::*;
 #[allow(unused_imports)]
 pub use prop_filter::PropFilterElement;
 
-pub async fn get_objects_calendar_query<C: CalendarStore>(
+pub async fn get_objects_calendar_query(
     cal_query: &CalendarQueryRequest,
-    principal: &str,
-    cal_id: &str,
-    store: &C,
+    resolved: &Resolved,
+    store: &dyn CalendarStore,
 ) -> Result<Vec<(String, CalendarObject)>, Error> {
-    let mut objects = store
-        .calendar_query(principal, cal_id, cal_query.into())
-        .await?;
+    // The filter runs on what the path shows (for a share the views), never on hidden content
+    let mut objects = shared::query(store, resolved, cal_query.into()).await?;
     if let Some(filter) = &cal_query.filter {
         objects.retain(|(_id, object)| filter.matches(object.get_inner()));
     }

@@ -1,0 +1,134 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT s.owner, s.cal_id, s.sharee, s.name, s.access, s.displayname, s.color, s.\"order\", s.created_at AS \"created_at: NaiveDateTime\", s.created_by\n                FROM calendar_shares AS s\n                JOIN calendars AS c ON (c.principal, c.id) = (s.owner, s.cal_id)\n                WHERE (s.sharee, s.name) = (?, ?) AND c.deleted_at IS NULL",
+  "describe": {
+    "columns": [
+      {
+        "name": "owner",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendar_shares",
+            "name": "owner"
+          }
+        }
+      },
+      {
+        "name": "cal_id",
+        "ordinal": 1,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendar_shares",
+            "name": "cal_id"
+          }
+        }
+      },
+      {
+        "name": "sharee",
+        "ordinal": 2,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendar_shares",
+            "name": "sharee"
+          }
+        }
+      },
+      {
+        "name": "name",
+        "ordinal": 3,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendar_shares",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "name": "access",
+        "ordinal": 4,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendar_shares",
+            "name": "access"
+          }
+        }
+      },
+      {
+        "name": "displayname",
+        "ordinal": 5,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendar_shares",
+            "name": "displayname"
+          }
+        }
+      },
+      {
+        "name": "color",
+        "ordinal": 6,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendar_shares",
+            "name": "color"
+          }
+        }
+      },
+      {
+        "name": "order",
+        "ordinal": 7,
+        "type_info": "Integer",
+        "origin": {
+          "Table": {
+            "table": "calendar_shares",
+            "name": "order"
+          }
+        }
+      },
+      {
+        "name": "created_at: NaiveDateTime",
+        "ordinal": 8,
+        "type_info": "Datetime",
+        "origin": {
+          "Table": {
+            "table": "calendar_shares",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "name": "created_by",
+        "ordinal": 9,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendar_shares",
+            "name": "created_by"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      true
+    ]
+  },
+  "hash": "366b090b6bb84538bb683a62d9b3d046f2b86d12b33138b2b14fc72407cbda77"
+}

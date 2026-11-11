@@ -1,0 +1,21 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT (\n                    EXISTS(SELECT 1 FROM calendars WHERE (principal, id) = (?1, ?2))\n                    OR EXISTS(SELECT 1 FROM calendar_shares WHERE (sharee, name) = (?1, ?2))\n                ) AS \"taken!: bool\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "taken!: bool",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "2ca1ba37ece91bcaebcedabcbf81e537b35cff2ccc0249a4fb878932297363a9"
+}

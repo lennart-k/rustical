@@ -11,6 +11,7 @@ use http::StatusCode;
 use rustical_dav::header::Overwrite;
 use rustical_dav_push::DavPushStore;
 use rustical_ical::CalendarObjectType;
+use rustical_store::access;
 use rustical_store::{Calendar, CalendarMetadata, CalendarStore, auth::Principal};
 use tracing::instrument;
 
@@ -22,9 +23,7 @@ pub async fn route_import<C: CalendarStore, DP: DavPushStore>(
     overwrite: Option<TypedHeader<Overwrite>>,
     body: String,
 ) -> Result<Response, Error> {
-    if !user.is_principal(&principal) {
-        return Err(Error::Unauthorized);
-    }
+    access::check_home(&user, &principal)?;
 
     let overwrite = overwrite
         .map(|TypedHeader(overwrite)| overwrite)

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE calendar_shares SET color = ? WHERE (sharee, name) = (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "576f5384fd5f3b994b70b693efdaf072281334ad3d3ce51cd9bae7343261511b"
+}

@@ -1,13 +1,13 @@
 use crate::calendar::CalendarResourceService;
-use crate::calendar::resource::CalendarResource;
+use crate::calendar::resource::{CalendarResource, objects_read_only};
 use crate::principal::PrincipalResource;
 use crate::{CalDavConfig, CalDavPrincipalUri, Error};
 use async_trait::async_trait;
 use axum::Router;
 use rustical_dav::resource::{AxumMethods, ResourceService};
 use rustical_dav_push::DavPushStore;
-use rustical_store::CalendarStore;
 use rustical_store::auth::{AuthenticationProvider, Principal};
+use rustical_store::{CalendarStore, ShareStore, access};
 use std::sync::Arc;
 
 #[derive(Debug)]
@@ -16,6 +16,7 @@ pub struct PrincipalResourceService<AP: AuthenticationProvider, DP: DavPushStore
     pub(crate) auth_provider: Arc<AP>,
     pub(crate) dav_push_store: Arc<DP>,
     pub(crate) cal_store: Arc<CS>,
+    pub(crate) share_store: Arc<dyn ShareStore>,
     // If true only return the principal as the calendar home set, otherwise also groups
     pub(crate) simplified_home_set: bool,
     pub(crate) config: Arc<CalDavConfig>,
@@ -29,6 +30,7 @@ impl<AP: AuthenticationProvider, DP: DavPushStore, CS: CalendarStore> Clone
             auth_provider: self.auth_provider.clone(),
             dav_push_store: self.dav_push_store.clone(),
             cal_store: self.cal_store.clone(),
+            share_store: self.share_store.clone(),
             simplified_home_set: self.simplified_home_set,
             config: self.config.clone(),
         }
@@ -60,6 +62,12 @@ impl<AP: AuthenticationProvider, DP: DavPushStore, CS: CalendarStore> ResourceSe
             .ok_or(crate::Error::NotFound)?;
         Ok(PrincipalResource {
             members: self.auth_provider.list_members(&user.id).await?,
+            sharees: access::calendar_sharees(
+                self.share_store.as_ref(),
+                self.cal_store.as_ref(),
+                &user.id,
+            )
+            .await?,
             principal: user,
             simplified_home_set: self.simplified_home_set,
         })
@@ -69,15 +77,27 @@ impl<AP: AuthenticationProvider, DP: DavPushStore, CS: CalendarStore> ResourceSe
         &self,
         (principal,): &Self::PathComponents,
     ) -> Result<Vec<Self::MemberType>, Self::Error> {
-        let calendars = self.cal_store.get_calendars(principal).await?;
         let vapid_pubkey = self.dav_push_store.get_vapid_pubkey_b64().await?;
-
-        Ok(calendars
+        // The home's own calendars and the calendars shared with it
+        let own = access::own_calendars(self.cal_store.as_ref(), principal)
+            .await?
             .into_iter()
-            .map(|cal| CalendarResource {
-                read_only: self.cal_store.is_read_only(&cal.id),
+            .map(|(resolved, cal)| (cal.id.clone(), resolved, cal));
+        let shared = access::shared_calendars(
+            self.share_store.as_ref(),
+            self.cal_store.as_ref(),
+            principal,
+        )
+        .await?;
+        Ok(own
+            .chain(shared)
+            .map(|(name, resolved, cal)| CalendarResource {
+                read_only: objects_read_only(self.cal_store.as_ref(), &cal),
                 cal,
                 vapid_pubkey: vapid_pubkey.clone(),
+                home: principal.to_owned(),
+                name,
+                resolved,
             })
             .collect())
     }
@@ -88,6 +108,7 @@ impl<AP: AuthenticationProvider, DP: DavPushStore, CS: CalendarStore> ResourceSe
                 "/{calendar_id}",
                 CalendarResourceService::new(
                     self.cal_store.clone(),
+                    self.share_store.clone(),
                     self.dav_push_store.clone(),
                     self.config.clone(),
                 )

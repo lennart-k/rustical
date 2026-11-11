@@ -1,0 +1,33 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT vcf, deleted_at IS NOT NULL AS \"deleted!: bool\" FROM addressobjects\n                WHERE (principal, addressbook_id, id) = (?, ?, ?)",
+  "describe": {
+    "columns": [
+      {
+        "name": "vcf",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressobjects",
+            "name": "vcf"
+          }
+        }
+      },
+      {
+        "name": "deleted!: bool",
+        "ordinal": 1,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "43613503a515f8f250469f511677a60e08bfa90314568d8a2ec2e5fb50c04cfd"
+}

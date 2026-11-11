@@ -10,7 +10,7 @@ use axum::{
 use axum_extra::TypedHeader;
 use headers::Referer;
 use http::StatusCode;
-use rustical_store::{Addressbook, AddressbookStore, auth::Principal};
+use rustical_store::{Addressbook, AddressbookStore, access, auth::Principal};
 
 use crate::pages::DefaultLayoutData;
 
@@ -32,8 +32,8 @@ pub async fn route_addressbook<AS: AddressbookStore>(
     Extension(store): Extension<Arc<AS>>,
     user: Principal,
 ) -> Result<Response, rustical_store::Error> {
-    if !user.is_principal(&owner) {
-        return Ok(StatusCode::UNAUTHORIZED.into_response());
+    if !access::may_use_home(&user, &owner) {
+        return Ok(StatusCode::FORBIDDEN.into_response());
     }
     Ok(AddressbookPage {
         addressbook: store.get_addressbook(&owner, &addrbook_id, true).await?,
@@ -48,8 +48,8 @@ pub async fn route_addressbook_restore<AS: AddressbookStore>(
     user: Principal,
     referer: Option<TypedHeader<Referer>>,
 ) -> Result<Response, rustical_store::Error> {
-    if !user.is_principal(&owner) {
-        return Ok(StatusCode::UNAUTHORIZED.into_response());
+    if !access::may_use_home(&user, &owner) {
+        return Ok(StatusCode::FORBIDDEN.into_response());
     }
     store.restore_addressbook(&owner, &addressbook_id).await?;
     Ok(referer.map_or_else(

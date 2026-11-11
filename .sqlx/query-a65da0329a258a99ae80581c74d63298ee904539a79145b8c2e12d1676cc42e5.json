@@ -1,0 +1,21 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT (\n                    EXISTS(SELECT 1 FROM addressbooks WHERE (principal, id) = (?1, ?2))\n                    OR EXISTS(SELECT 1 FROM addressbook_shares WHERE (sharee, name) = (?1, ?2))\n                ) AS \"taken!: bool\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "taken!: bool",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "a65da0329a258a99ae80581c74d63298ee904539a79145b8c2e12d1676cc42e5"
+}

@@ -11,7 +11,7 @@ use caldata::{
 };
 use http::StatusCode;
 use rustical_dav_push::DavPushStore;
-use rustical_store::{Addressbook, AddressbookStore, auth::Principal};
+use rustical_store::{Addressbook, AddressbookStore, access, auth::Principal};
 use tracing::instrument;
 
 #[instrument(skip(resource_service))]
@@ -21,9 +21,7 @@ pub async fn route_import<AS: AddressbookStore, DP: DavPushStore>(
     State(resource_service): State<AddressbookResourceService<AS, DP>>,
     body: String,
 ) -> Result<Response, Error> {
-    if !user.is_principal(&principal) {
-        return Err(Error::Unauthorized);
-    }
+    access::check_home(&user, &principal)?;
 
     let parser = VcardParser::from_slice(body.as_bytes());
 

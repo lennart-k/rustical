@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT access FROM addressbook_shares WHERE (owner, addressbook_id, sharee) = (?, ?, ?)",
+  "describe": {
+    "columns": [
+      {
+        "name": "access",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressbook_shares",
+            "name": "access"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "b6b60488133280ac853068726df55c27de796e9dfadbde5df7b7340fc2e28178"
+}

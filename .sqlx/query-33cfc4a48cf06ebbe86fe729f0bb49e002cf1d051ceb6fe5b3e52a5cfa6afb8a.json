@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT principal FROM principal_emails WHERE email = ?",
+  "describe": {
+    "columns": [
+      {
+        "name": "principal",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "principal_emails",
+            "name": "principal"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "33cfc4a48cf06ebbe86fe729f0bb49e002cf1d051ceb6fe5b3e52a5cfa6afb8a"
+}

@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT push_topic FROM calendars\n                WHERE (principal, id) = (?, ?) AND deleted_at IS NULL",
+  "describe": {
+    "columns": [
+      {
+        "name": "push_topic",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "calendars",
+            "name": "push_topic"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "cccba099ef193e4e1e758f879503202420e0b5234db8b76909be987ef15551c2"
+}

@@ -89,7 +89,7 @@ pub async fn route_proppatch<R: ResourceService>(
         .await?;
     let privileges = resource.get_user_privileges(principal)?;
     if !privileges.has(&UserPrivilege::WriteProperties) {
-        return Err(Error::Unauthorized.into());
+        return Err(Error::Forbidden.into());
     }
 
     let mut props_ok = Vec::new();

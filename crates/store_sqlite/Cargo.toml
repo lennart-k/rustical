@@ -19,6 +19,7 @@ harness = false
 rstest.workspace = true
 criterion.workspace = true
 rustical_ical = { workspace = true, features = ["test"] }
+rustical_store = { workspace = true, features = ["test"] }
 
 [dependencies]
 caldata.workspace = true

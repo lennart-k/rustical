@@ -9,6 +9,7 @@ use http::{Method, StatusCode};
 use rustical_dav::xml::HrefElement;
 use rustical_dav_push::DavPushStore;
 use rustical_ical::CalendarObjectType;
+use rustical_store::access;
 use rustical_store::auth::Principal;
 use rustical_store::{Calendar, CalendarMetadata, CalendarStore};
 use rustical_xml::{Unparsed, XmlDeserialize, XmlDocument, XmlRootTag};
@@ -72,9 +73,7 @@ pub async fn route_mkcalendar<C: CalendarStore, DP: DavPushStore>(
     method: Method,
     body: String,
 ) -> Result<Response, Error> {
-    if !user.is_principal(&principal) {
-        return Err(Error::Unauthorized);
-    }
+    access::check_home(&user, &principal)?;
 
     let mut request = match method.as_str() {
         "MKCALENDAR" => MkcalendarRequest::parse_str(&body)?.set.prop,

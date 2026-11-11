@@ -5,7 +5,7 @@ use axum::{
 };
 use http::StatusCode;
 use rustical_dav_push::DavPushStore;
-use rustical_store::{Addressbook, AddressbookStore, auth::Principal};
+use rustical_store::{Addressbook, AddressbookStore, access, auth::Principal};
 use rustical_xml::{XmlDeserialize, XmlDocument, XmlRootTag};
 use tracing::instrument;
 
@@ -49,9 +49,7 @@ pub async fn route_mkcol<AS: AddressbookStore, DP: DavPushStore>(
     State(AddressbookResourceService { addr_store, .. }): State<AddressbookResourceService<AS, DP>>,
     body: String,
 ) -> Result<Response, Error> {
-    if !user.is_principal(&principal) {
-        return Err(Error::Unauthorized);
-    }
+    access::check_home(&user, &principal)?;
 
     let mut request = MkcolRequest::parse_str(&body)?.set.prop;
     if request.displayname.as_deref() == Some("") {

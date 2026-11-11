@@ -5,7 +5,7 @@ use figment::Figment;
 use figment::providers::{Env, Format, Toml};
 use rustical::config::Config;
 use rustical::{Args, Command};
-use rustical::{cmd_gen_config, cmd_health, cmd_principals, cmd_serve};
+use rustical::{cmd_gen_config, cmd_health, cmd_principals, cmd_serve, cmd_share};
 use tracing::warn;
 
 fn env_provider() -> Env {
@@ -34,6 +34,7 @@ async fn main() -> Result<()> {
         Command::Principals(principals_args) => {
             cmd_principals(principals_args, parse_config()?).await
         }
+        Command::Share(share_args) => cmd_share(share_args, parse_config()?).await,
         Command::Health(health_args) => {
             let config: Config = parse_config()?;
             cmd_health(config.http, health_args).await

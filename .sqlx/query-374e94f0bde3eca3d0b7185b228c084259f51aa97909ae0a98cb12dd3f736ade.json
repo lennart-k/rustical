@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT push_topic FROM addressbooks WHERE (principal, id) = (?, ?) AND deleted_at IS NULL",
+  "describe": {
+    "columns": [
+      {
+        "name": "push_topic",
+        "ordinal": 0,
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "addressbooks",
+            "name": "push_topic"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "374e94f0bde3eca3d0b7185b228c084259f51aa97909ae0a98cb12dd3f736ade"
+}

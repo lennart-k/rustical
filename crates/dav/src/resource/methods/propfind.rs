@@ -53,7 +53,7 @@ pub async fn route_propfind<R: ResourceService>(
         .await?;
     let privileges = resource.get_user_privileges(principal)?;
     if !privileges.has(&UserPrivilege::Read) {
-        return Err(Error::Unauthorized.into());
+        return Err(Error::Forbidden.into());
     }
 
     // A request body is optional. If empty we MUST return all props
@@ -62,8 +62,14 @@ pub async fn route_propfind<R: ResourceService>(
 
     let mut member_responses = Vec::new();
     if depth != &Depth::Zero {
-        // TODO: authorization check for member resources
         for member in resource_service.get_members(path_components).await? {
+            // Only list members the user may read
+            if !member
+                .get_user_privileges(principal)?
+                .has(&UserPrivilege::Read)
+            {
+                continue;
+            }
             member_responses.push(member.propfind(
                 &format!(
                     "{}/{}{}",

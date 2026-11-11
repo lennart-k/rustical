@@ -12,6 +12,7 @@ use rustical_dav::{
     xml::{MultistatusElement, PropfindType, multistatus::ResponseElement},
 };
 use rustical_ical::AddressObject;
+use rustical_store::access::Resolved;
 use rustical_store::{AddressbookStore, addressbook_store::AddressbookReadStore, auth::Principal};
 use rustical_xml::XmlDeserialize;
 
@@ -69,14 +70,14 @@ pub async fn handle_addressbook_multiget<AS: AddressbookStore>(
     puri: &impl PrincipalUri,
     user: &Principal,
     principal: &str,
-    cal_id: &str,
+    resolved: &Resolved,
     addr_store: &AS,
 ) -> Result<MultistatusElement<AddressObjectPropWrapper, String>, Error> {
     let (objects, not_found) = get_objects_addressbook_multiget(
         addr_multiget,
         collection_uri,
-        principal,
-        cal_id,
+        resolved.owner(),
+        resolved.id(),
         addr_store,
     )
     .await?;
@@ -93,6 +94,7 @@ pub async fn handle_addressbook_multiget<AS: AddressbookStore>(
                 object,
                 object_id,
                 principal: principal.to_owned(),
+                resolved: resolved.clone(),
             }
             .propfind(&path, prop, None, puri, user)?,
         );

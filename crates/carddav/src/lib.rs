@@ -13,7 +13,7 @@ use rustical_dav::rfc_3986_percent_encode;
 use rustical_dav_push::DavPushStore;
 use rustical_store::auth::middleware::AuthenticationLayer;
 use rustical_store::{
-    AddressbookStore,
+    AddressbookStore, ShareStore,
     auth::{AuthenticationProvider, Principal},
 };
 use std::sync::Arc;
@@ -46,10 +46,11 @@ pub fn carddav_router<AP: AuthenticationProvider, A: AddressbookStore, DP: DavPu
     prefix: &'static str,
     auth_provider: Arc<AP>,
     store: Arc<A>,
+    share_store: Arc<dyn ShareStore>,
     dav_push_store: Arc<DP>,
 ) -> Router {
     let principal_service =
-        PrincipalResourceService::new(store, auth_provider.clone(), dav_push_store);
+        PrincipalResourceService::new(store, share_store, auth_provider.clone(), dav_push_store);
     Router::new()
         .nest(
             prefix,

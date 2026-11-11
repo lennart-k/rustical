@@ -1,0 +1,21 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT subscription_url IS NOT NULL AS \"subscription!: bool\"\n                FROM calendars WHERE (principal, id) = (?, ?) AND deleted_at IS NULL",
+  "describe": {
+    "columns": [
+      {
+        "name": "subscription!: bool",
+        "ordinal": 0,
+        "type_info": "Integer",
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "bd8b75564684202ced7e5929991fe69988cc0c8f10fb81e352d164983328a997"
+}

@@ -29,7 +29,11 @@ use rustical_dav::{
 };
 use rustical_dav_push::DavPushStore;
 use rustical_ical::AddressObject;
-use rustical_store::{AddressbookStore, auth::Principal};
+use rustical_store::{
+    AddressbookStore,
+    access::{self, Need, Resolved},
+    auth::Principal,
+};
 use rustical_xml::{XmlDeserialize, XmlDocument};
 use sync_collection::handle_sync_collection;
 use tracing::instrument;
@@ -58,11 +62,13 @@ impl ReportRequest {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn objects_response(
     objects: Vec<(String, AddressObject)>,
     not_found: Vec<String>,
     path: &str,
     principal: &str,
+    resolved: &Resolved,
     puri: &impl PrincipalUri,
     user: &Principal,
     prop: &PropfindType<AddressObjectPropWrapperName>,
@@ -79,6 +85,7 @@ fn objects_response(
                 object,
                 object_id,
                 principal: principal.to_owned(),
+                resolved: resolved.clone(),
             }
             .propfind(&path, prop, None, puri, user)?,
         );
@@ -100,18 +107,20 @@ fn objects_response(
     })
 }
 
-#[instrument(skip(addr_store))]
+#[instrument(skip(service))]
 pub async fn route_report_addressbook<AS: AddressbookStore, DP: DavPushStore>(
     Path((principal, addressbook_id)): Path<(String, String)>,
     user: Principal,
     OriginalUri(uri): OriginalUri,
     Extension(puri): Extension<CardDavPrincipalUri>,
-    State(AddressbookResourceService { addr_store, .. }): State<AddressbookResourceService<AS, DP>>,
+    State(service): State<AddressbookResourceService<AS, DP>>,
     body: String,
 ) -> Result<impl IntoResponse, Error> {
-    if !user.is_principal(&principal) {
-        return Err(Error::Unauthorized);
-    }
+    access::check_home(&user, &principal)?;
+    let addressbook = service.resource(&principal, &addressbook_id, false).await?;
+    let resolved = &addressbook.resolved;
+    resolved.check(Need::Read)?;
+    let addr_store = service.addr_store.as_ref();
 
     let request = ReportRequest::parse_str(&body)?;
 
@@ -124,8 +133,8 @@ pub async fn route_report_addressbook<AS: AddressbookStore, DP: DavPushStore>(
                 &puri,
                 &user,
                 &principal,
-                &addressbook_id,
-                addr_store.as_ref(),
+                resolved,
+                addr_store,
             )
             .await?
         }
@@ -136,17 +145,17 @@ pub async fn route_report_addressbook<AS: AddressbookStore, DP: DavPushStore>(
                 &puri,
                 &user,
                 &principal,
-                &addressbook_id,
-                addr_store.as_ref(),
+                resolved,
+                addr_store,
             )
             .await?
         }
         ReportRequest::AddressbookQuery(addr_query) => {
             let objects = get_objects_addressbook_query(
                 addr_query,
-                &principal,
-                &addressbook_id,
-                addr_store.as_ref(),
+                resolved.owner(),
+                resolved.id(),
+                addr_store,
             )
             .await?;
             objects_response(
@@ -154,6 +163,7 @@ pub async fn route_report_addressbook<AS: AddressbookStore, DP: DavPushStore>(
                 vec![],
                 uri.path(),
                 &principal,
+                resolved,
                 &puri,
                 &user,
                 &addr_query.prop,

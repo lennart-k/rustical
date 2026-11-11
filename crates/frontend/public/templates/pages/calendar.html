@@ -14,6 +14,10 @@
 </h1>
 {% if let Some(description) = calendar.meta.description %}<p>{{ description }}</p>{% endif%}
 
+{% if calendar.subscription_url.is_none() && calendar.deleted_at.is_none() %}
+<p><a class="button" href="/frontend/user/{{ calendar.principal }}/calendar/{{ calendar.id }}/shares">Sharing</a></p>
+{% endif %}
+
 {% if let Some(subscription_url) = calendar.subscription_url %}
 <h2>Subscription URL</h2>
 <a href="{{ subscription_url }}">{{ subscription_url }}</a>

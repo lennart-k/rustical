@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM calendar_shares WHERE (owner, cal_id, sharee) = (?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "6a35324ec21d9a9a6c702ed1e6aaa7143fdfb4ac800919acdfdd6e7d09969baa"
+}

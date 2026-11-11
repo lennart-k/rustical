@@ -24,6 +24,7 @@ fn test_propfind() {
     let resource = PrincipalResource {
         principal: principal.clone(),
         members: vec![],
+        sharees: vec![],
     };
 
     let response = resource

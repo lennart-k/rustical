@@ -5,7 +5,7 @@ use rustical_dav::privileges::UserPrivilegeSet;
 use rustical_dav::resource::{PrincipalUri, Resource, ResourceName};
 use rustical_dav::resourcetype;
 use rustical_dav::xml::{GroupMemberSet, GroupMembership, HrefElement, Resourcetype};
-use rustical_store::auth::Principal;
+use rustical_store::{access, auth::Principal};
 use std::borrow::Cow;
 
 mod service;
@@ -19,6 +19,8 @@ pub mod tests;
 pub struct PrincipalResource {
     pub principal: Principal,
     pub members: Vec<String>,
+    /// Whom this principal shares addressbooks with: they see the principal, but only its name
+    pub sharees: Vec<String>,
 }
 
 impl ResourceName for PrincipalResource {
@@ -47,6 +49,8 @@ impl Resource for PrincipalResource {
         prop: &PrincipalPropWrapperName,
     ) -> Result<Self::Prop, Self::Error> {
         let principal_href = HrefElement::new(puri.principal_uri(&self.principal.id));
+        // A sharee learns who the owner is, not its homes, groups or members
+        let full = access::may_use_home(user, &self.principal.id);
 
         Ok(match prop {
             PrincipalPropWrapperName::Principal(prop) => {
@@ -57,6 +61,7 @@ impl Resource for PrincipalResource {
                             self.principal
                                 .memberships()
                                 .iter()
+                                .filter(|_| full)
                                 .map(|principal| puri.principal_uri(principal).into())
                                 .collect(),
                         ))
@@ -67,6 +72,7 @@ impl Resource for PrincipalResource {
                             self.principal
                                 .memberships_without_self()
                                 .iter()
+                                .filter(|_| full)
                                 .map(|principal| puri.principal_uri(principal).into())
                                 .collect(),
                         ))
@@ -75,6 +81,7 @@ impl Resource for PrincipalResource {
                         PrincipalProp::GroupMemberSet(GroupMemberSet(
                             self.members
                                 .iter()
+                                .filter(|_| full)
                                 .map(|principal| puri.principal_uri(principal).into())
                                 .collect(),
                         ))
@@ -106,8 +113,14 @@ impl Resource for PrincipalResource {
     }
 
     fn get_user_privileges(&self, user: &Principal) -> Result<UserPrivilegeSet, Self::Error> {
-        Ok(UserPrivilegeSet::owner_only(
-            user.is_principal(&self.principal.id),
-        ))
+        if access::may_use_home(user, &self.principal.id) {
+            Ok(UserPrivilegeSet::all())
+        } else {
+            Ok(UserPrivilegeSet::owner_read(access::may_see_principal(
+                user,
+                &self.principal.id,
+                &self.sharees,
+            )))
+        }
     }
 }

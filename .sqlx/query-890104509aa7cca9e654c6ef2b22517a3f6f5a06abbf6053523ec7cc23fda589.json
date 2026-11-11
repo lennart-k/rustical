@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO calendarobjects (principal, cal_id, id, uid, ics, first_occurence, last_occurence, etag, object_type)\n                    VALUES (?, ?, ?, ?, ?, date(?), date(?), ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 9
+    },
+    "nullable": []
+  },
+  "hash": "890104509aa7cca9e654c6ef2b22517a3f6f5a06abbf6053523ec7cc23fda589"
+}

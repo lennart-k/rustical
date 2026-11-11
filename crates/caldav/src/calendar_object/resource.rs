@@ -4,23 +4,54 @@ use super::prop::{
 };
 use crate::Error;
 use caldata::generator::Emitter;
-use derive_more::derive::{From, Into};
 use rustical_dav::{
     extensions::CommonPropertiesExtension,
-    privileges::UserPrivilegeSet,
+    privileges::{UserPrivilege, UserPrivilegeSet},
     resource::{PrincipalUri, Resource, ResourceName},
     resourcetype,
     xml::Resourcetype,
 };
 use rustical_ical::CalendarObject;
+use rustical_store::Access;
+use rustical_store::access::{self, Resolved, ResolvedKind};
 use rustical_store::auth::Principal;
+use rustical_store::shared::FULL_LEVEL;
 use std::borrow::Cow;
 
-#[derive(Clone, From, Into)]
+#[derive(Clone)]
 pub struct CalendarObjectResource {
+    /// The object as the path shows it (for a share the sharee's view)
     pub object: CalendarObject,
     pub object_id: String,
+    /// The home of the path
     pub principal: String,
+    /// The calendar's objects are read-only (subscription or read-only store)
+    pub read_only: bool,
+    /// The calendar the object belongs to
+    pub resolved: Resolved,
+    /// The visibility level of the object in `resolved` (always full in an own calendar)
+    pub level: u8,
+}
+
+impl CalendarObjectResource {
+    #[must_use]
+    pub fn new(
+        object: CalendarObject,
+        object_id: String,
+        home: &str,
+        resolved: &Resolved,
+        read_only: bool,
+        level: u8,
+    ) -> Self {
+        Self {
+            object,
+            object_id,
+            principal: home.to_owned(),
+            read_only,
+            resolved: resolved.clone(),
+            level,
+        }
+    }
 }
 
 impl ResourceName for CalendarObjectResource {
@@ -89,7 +120,7 @@ impl Resource for CalendarObjectResource {
     }
 
     fn get_owner(&self) -> Option<&str> {
-        Some(&self.principal)
+        Some(self.resolved.owner())
     }
 
     fn get_etag(&self) -> Option<String> {
@@ -97,9 +128,25 @@ impl Resource for CalendarObjectResource {
     }
 
     fn get_user_privileges(&self, user: &Principal) -> Result<UserPrivilegeSet, Self::Error> {
-        Ok(UserPrivilegeSet::owner_only(
-            user.is_principal(&self.principal),
-        ))
+        let may_use = access::may_use_home(user, &self.principal);
+        if self.read_only {
+            return Ok(UserPrivilegeSet::owner_read(may_use));
+        }
+        match self.resolved.kind() {
+            ResolvedKind::Own => Ok(UserPrivilegeSet::owner_only(may_use)),
+            // A sharee changes only what it sees in full
+            ResolvedKind::Copy {
+                access: Access::Write,
+                ..
+            } if may_use && self.level >= FULL_LEVEL => Ok(UserPrivilegeSet::from([
+                UserPrivilege::Read,
+                UserPrivilege::ReadCurrentUserPrivilegeSet,
+                UserPrivilege::Write,
+                UserPrivilege::WriteProperties,
+                UserPrivilege::WriteContent,
+            ])),
+            ResolvedKind::Copy { .. } => Ok(UserPrivilegeSet::owner_read(may_use)),
+        }
     }
 }
 
@@ -123,6 +170,13 @@ mod tests {
         let resource = CalendarObjectResource {
             principal: "user@rustical.dev".to_string(),
             object_id: "asd".to_string(),
+            read_only: false,
+            resolved: rustical_store::access::Resolved::for_tests(
+                "user@rustical.dev".to_string(),
+                "cal".to_string(),
+                rustical_store::access::ResolvedKind::Own,
+            ),
+            level: rustical_store::shared::FULL_LEVEL,
             object: CalendarObject::from_ics(
                 r"BEGIN:VCALENDAR
 VERSION:2.0

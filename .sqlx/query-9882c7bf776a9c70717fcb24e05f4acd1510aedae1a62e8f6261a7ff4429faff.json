@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE addressobjects SET vcf = ?, updated_at = datetime()\n                        WHERE (principal, addressbook_id, id) = (?, ?, ?) AND deleted_at IS NULL",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "9882c7bf776a9c70717fcb24e05f4acd1510aedae1a62e8f6261a7ff4429faff"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO calendar_visibility (principal, cal_id, private, confidential) VALUES (?, ?, ?, ?)\n                ON CONFLICT(principal, cal_id) DO UPDATE SET (private, confidential) = (excluded.private, excluded.confidential)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "30ea380c6a154562e19f09a3a7cc4a6ca5630cd8d9accd780b5cd76bc10243bb"
+}

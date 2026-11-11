@@ -27,7 +27,7 @@ pub async fn route_calendars<CS: CalendarStore>(
     user: Principal,
 ) -> impl IntoResponse {
     if user_id != user.id {
-        return StatusCode::UNAUTHORIZED.into_response();
+        return StatusCode::FORBIDDEN.into_response();
     }
 
     let mut calendars = vec![];

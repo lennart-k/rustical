@@ -7,6 +7,9 @@
 {% let name = addressbook.displayname.to_owned().unwrap_or(addressbook.id.to_owned()) %}
 <h1>{{ name }}</h1>
 {% if let Some(description) = addressbook.description %}<p>{{ description }}</p>{% endif%}
+{% if addressbook.deleted_at.is_none() %}
+<p><a class="button" href="/frontend/user/{{ addressbook.principal }}/addressbook/{{ addressbook.id }}/shares">Sharing</a></p>
+{% endif %}
 
 <h2>Debug information</h2>
 <pre>{{ addressbook|json(2) }}</pre>

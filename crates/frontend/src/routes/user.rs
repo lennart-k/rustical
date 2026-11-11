@@ -35,7 +35,7 @@ pub async fn route_user_named<AP: AuthenticationProvider>(
     headers: HeaderMap,
 ) -> impl IntoResponse {
     if user_id != user.id {
-        return StatusCode::UNAUTHORIZED.into_response();
+        return StatusCode::FORBIDDEN.into_response();
     }
 
     let ua = headers.typed_get::<UserAgent>();

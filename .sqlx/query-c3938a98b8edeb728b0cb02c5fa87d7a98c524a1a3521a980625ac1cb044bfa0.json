@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE addressbook_shares SET displayname = ? WHERE (sharee, name) = (?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "c3938a98b8edeb728b0cb02c5fa87d7a98c524a1a3521a980625ac1cb044bfa0"
+}

@@ -16,7 +16,9 @@ use rustical_dav::{
 };
 use rustical_store::{
     AddressbookStore,
+    access::Resolved,
     auth::Principal,
+    shared,
     synctoken::{format_synctoken, parse_synctoken},
 };
 
@@ -26,13 +28,23 @@ pub async fn handle_sync_collection<AS: AddressbookStore>(
     puri: &impl PrincipalUri,
     user: &Principal,
     principal: &str,
-    addressbook_id: &str,
+    resolved: &Resolved,
     addr_store: &AS,
 ) -> Result<MultistatusElement<AddressObjectPropWrapper, String>, Error> {
-    let old_synctoken = parse_synctoken(&sync_collection.sync_token).unwrap_or(0);
-    let (new_objects, deleted_objects, new_synctoken) = addr_store
-        .sync_changes(principal, addressbook_id, old_synctoken)
-        .await?;
+    // RFC 6578 section 3.2: an empty token asks for the initial sync, an unknown one is an error
+    let sync_token = sync_collection.sync_token.trim();
+    let initial_sync = sync_token.is_empty();
+    let old_synctoken = if initial_sync {
+        0
+    } else {
+        parse_synctoken(sync_token).ok_or(rustical_dav::Error::InvalidSyncToken)?
+    };
+    let (new_objects, mut deleted_objects, new_synctoken) =
+        shared::address_sync_changes(addr_store, resolved, old_synctoken).await?;
+    // RFC 6578 section 3.4: the initial sync reports no removed members
+    if initial_sync {
+        deleted_objects.clear();
+    }
 
     let mut responses = Vec::new();
     for (object_id, object) in new_objects {
@@ -46,6 +58,7 @@ pub async fn handle_sync_collection<AS: AddressbookStore>(
                 object,
                 object_id,
                 principal: principal.to_owned(),
+                resolved: resolved.clone(),
             }
             .propfind(&path, &sync_collection.prop, None, puri, user)?,
         );
