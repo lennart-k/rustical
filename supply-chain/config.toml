@@ -1130,10 +1130,6 @@ criteria = "safe-to-deploy"
 version = "0.2.130"
 criteria = "safe-to-deploy"
 
-[[exemptions.web-push]]
-version = "0.11.0@git:e74d6128ef0b605577537c0018aff35bdbf6e2a0"
-criteria = "safe-to-deploy"
-
 [[exemptions.web-sys]]
 version = "0.3.107"
 criteria = "safe-to-deploy"
