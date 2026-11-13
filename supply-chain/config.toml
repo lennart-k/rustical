@@ -27,6 +27,10 @@ version = "0.1.6"
 criteria = "safe-to-deploy"
 
 [[exemptions.argon2]]
+version = "0.5.3"
+criteria = "safe-to-deploy"
+
+[[exemptions.argon2]]
 version = "0.6.0"
 criteria = "safe-to-deploy"
 
@@ -100,6 +104,10 @@ criteria = "safe-to-deploy"
 
 [[exemptions.bitflags]]
 version = "2.13.2"
+criteria = "safe-to-deploy"
+
+[[exemptions.blake2]]
+version = "0.10.6"
 criteria = "safe-to-deploy"
 
 [[exemptions.blake2]]
@@ -319,7 +327,7 @@ version = "0.3.6"
 criteria = "safe-to-deploy"
 
 [[exemptions.errno]]
-version = "0.3.14"
+version = "0.3.15"
 criteria = "safe-to-deploy"
 
 [[exemptions.etcetera]]
@@ -623,11 +631,19 @@ version = "0.9.12"
 criteria = "safe-to-deploy"
 
 [[exemptions.password-auth]]
-version = "2.0.0"
+version = "1.0.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.password-hash]]
+version = "0.5.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.password-hash]]
 version = "0.6.1"
+criteria = "safe-to-deploy"
+
+[[exemptions.pbkdf2]]
+version = "0.12.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.pbkdf2]]
@@ -727,15 +743,15 @@ version = "0.10.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.prost]]
-version = "0.14.5"
+version = "0.14.6"
 criteria = "safe-to-deploy"
 
 [[exemptions.prost-derive]]
-version = "0.14.5"
+version = "0.14.6"
 criteria = "safe-to-deploy"
 
 [[exemptions.prost-types]]
-version = "0.14.5"
+version = "0.14.6"
 criteria = "safe-to-deploy"
 
 [[exemptions.provided-listeners]]
@@ -824,10 +840,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.rustls-platform-verifier-android]]
 version = "0.2.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.rustls-webpki]]
-version = "0.103.15"
 criteria = "safe-to-deploy"
 
 [[exemptions.schannel]]

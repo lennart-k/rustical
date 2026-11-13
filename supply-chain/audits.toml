@@ -560,6 +560,12 @@ user-id = 209038 # Daniel McCarney (cpu)
 start = "2024-07-29"
 end = "2027-10-05"
 
+[[trusted.rustls-webpki]]
+criteria = "safe-to-deploy"
+user-id = 209038 # Daniel McCarney (cpu)
+start = "2023-07-04"
+end = "2027-11-13"
+
 [[trusted.rustversion]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)

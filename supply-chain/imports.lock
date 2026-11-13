@@ -556,6 +556,13 @@ user-id = 2751
 user-login = "ctz"
 user-name = "Joe Birr-Pixton"
 
+[[publisher.rustls-webpki]]
+version = "0.103.17"
+when = "2026-11-12"
+user-id = 209038
+user-login = "cpu"
+user-name = "Daniel McCarney"
+
 [[publisher.rustversion]]
 version = "1.0.23"
 when = "2026-07-07"
@@ -1323,12 +1330,6 @@ maintainers are relatively well trusted as well.
 who = "Pat Hickey <p.hickey@f5.com>"
 criteria = "safe-to-deploy"
 delta = "0.23.45 -> 0.23.46"
-
-[[audits.bytecode-alliance.audits.rustls-webpki]]
-who = "Alex Crichton <alex@alexcrichton.com>"
-criteria = "safe-to-deploy"
-delta = "0.103.15 -> 0.103.16"
-notes = "Updated with new certificates"
 
 [[audits.bytecode-alliance.audits.semver]]
 who = "Pat Hickey <phickey@fastly.com>"
