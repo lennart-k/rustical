@@ -105,12 +105,42 @@ pub use middleware::AuthenticationMiddleware;
 
 #[cfg(test)]
 mod tests {
-    const AUTH_TOKEN_0_18: &str =
-        "ZZDlOOeqqWj6DKz2EoS8fvT54YITxKXYnpkZOc2jbTCOwncR0Zkpe62FV10Vdq3F";
-    const HASH_0_18: &str = "$pbkdf2-sha512$i=1000,l=32$ZLThcnZeCH7TodsV4A60aA$KogO//I83AZPnMLXOk9eLGFr3KTR4doZq9bDOSojCec";
-
-    #[test]
-    fn test_password_auth_validates_tokens() {
-        password_auth::verify_password(AUTH_TOKEN_0_18, HASH_0_18).unwrap();
+    #[rstest::rstest]
+    // 0.18.0 example
+    #[case(
+        "ZZDlOOeqqWj6DKz2EoS8fvT54YITxKXYnpkZOc2jbTCOwncR0Zkpe62FV10Vdq3F",
+        "$pbkdf2-sha512$i=1000,l=32$ZLThcnZeCH7TodsV4A60aA$KogO//I83AZPnMLXOk9eLGFr3KTR4doZq9bDOSojCec"
+    )]
+    #[case(
+        "yZXlwdGKJrvpOYcgYNmvBt9vEoGlvqHhzyD800cZ1OxuIpdHxvBBqA4quqeADpjA",
+        "$pbkdf2-sha512$i=1000,l=32$Akwa7kQ7UWX17cnliam8sw$b5p2wGfe933MfT0FpBfiFm/lFXK9CGnNxpBNU69UtQU"
+    )]
+    // 0.16.0
+    #[case(
+        "vbZ3DbFCzV0myGRqb6RWD7lm5P4rfArk3EErY9YYwYp4VDr3Y0Rw9eoTieBa03Q5",
+        "$pbkdf2-sha512$i=1000,l=32$hkuHqLKRTSXppYS+dTu9ZA$ee9g4khayH7RK44Qz33uMidx+yItLVuuOok5qSeHCT4"
+    )]
+    // 0.15.0
+    #[case(
+        "YSLcThYIhtFuoebHmK8n3UiqLVi86jGwGGblGfODTNyqE3C92TK16vwHufmxk0Rw",
+        "$pbkdf2-sha512$i=1000,l=32$3WaZ7rhZLxF+ddO1geEpdA$buXL9nxbXqUEEzgrt/bGNMSMcbP03yHjKbkXYVFtEYY"
+    )]
+    // 0.14.0
+    #[case(
+        "HTTuayJ0zw4nOKA7LFZ0EsE2OtyjedIIsWbpt9FhJhpjBknd6nxDOpBsCZULz77d",
+        "$pbkdf2-sha512$i=1000,l=32$CBYnva+LjWqGhfvMz2SyLQ$WthPDeNIKKA6B+CdD5M6MwhOTxBlGmEOTbgWblhG6uM"
+    )]
+    // 0.13.0
+    #[case(
+        "ZPbWO4eexd8ki5GDWDFLtD6Vx1aOfXbLVU1BnbteWBCrNUffvJ58cQMxyY3BHyMR",
+        "$pbkdf2-sha512$i=1000,l=32$5Gz4A2JIZpbM2R79K8gxoA$Na92vSJFFCZCZtE3E/lKP10gGweaUNO7eknVKDrD2/U"
+    )]
+    // 0.12.0
+    #[case(
+        "S7h7hU859y9zyCZ5MeeBSQxyGy1ckAE8NMiNBCYBcpBLqP2KL3TcPNDgArg6jMNf",
+        "$pbkdf2-sha256$i=2,l=32$kq9i4C+MQhxKqHpFlmQxhQ$dOBHgWQ28Z2yEgpDwFOJZGYFI/tfCFwMqu6fKAJ+sVE"
+    )]
+    fn test_password_auth_validates_tokens(#[case] token: &str, #[case] hash: &str) {
+        password_auth::verify_password(token, hash).unwrap();
     }
 }
