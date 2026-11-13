@@ -102,3 +102,15 @@ pub trait AuthenticationProvider: Send + Sync + 'static {
 }
 
 pub use middleware::AuthenticationMiddleware;
+
+#[cfg(test)]
+mod tests {
+    const AUTH_TOKEN_0_18: &str =
+        "ZZDlOOeqqWj6DKz2EoS8fvT54YITxKXYnpkZOc2jbTCOwncR0Zkpe62FV10Vdq3F";
+    const HASH_0_18: &str = "$pbkdf2-sha512$i=1000,l=32$ZLThcnZeCH7TodsV4A60aA$KogO//I83AZPnMLXOk9eLGFr3KTR4doZq9bDOSojCec";
+
+    #[test]
+    fn test_password_auth_validates_tokens() {
+        password_auth::verify_password(AUTH_TOKEN_0_18, HASH_0_18).unwrap();
+    }
+}
