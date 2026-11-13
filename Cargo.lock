@@ -3619,7 +3619,6 @@ dependencies = [
  "thiserror 2.0.21",
  "tokio",
  "tower",
- "tower-http 0.7.1",
  "tracing",
  "url",
  "uuid",
@@ -3654,7 +3653,6 @@ dependencies = [
  "thiserror 2.0.21",
  "tokio",
  "tower",
- "tower-http 0.7.1",
  "tracing",
  "url",
  "uuid",
@@ -3686,7 +3684,6 @@ dependencies = [
  "tokio",
  "tower",
  "tracing",
- "url",
 ]
 
 [[package]]
@@ -3756,7 +3753,6 @@ dependencies = [
 name = "rustical_ical"
 version = "0.19.1"
 dependencies = [
- "axum",
  "caldata",
  "chrono",
  "chrono-tz",

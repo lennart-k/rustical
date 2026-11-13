@@ -53,15 +53,10 @@ impl PropFilterElement {
             return false;
         }
 
-        if !self
+        self
             .param_filter
             .iter()
             .all(|param_filter| param_filter.match_property(property))
-        {
-            return false;
-        }
-
-        true
     }
 
     pub fn match_component(&self, comp: &impl PropFilterable) -> bool {

@@ -141,8 +141,7 @@ async fn unauthorized_handler(mut request: Request, next: Next) -> Response {
         let path = login_url.path();
         let query = login_url
             .query()
-            .map(|query| format!("?{query}"))
-            .unwrap_or_default();
+            .map_or_default(|query| format!("?{query}"));
         let login_url = format!("{path}{query}");
         let mut resp = Response::builder().status(StatusCode::UNAUTHORIZED);
         let hdrs = resp.headers_mut().unwrap();

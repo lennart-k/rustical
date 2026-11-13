@@ -84,8 +84,7 @@ pub async fn route_get<C: CalendarStore, DP: DavPushStore>(
             .meta
             .displayname
             .as_deref()
-            .map(|name| format!("_{name}"))
-            .unwrap_or_default()
+            .map_or_default(|name| format!("_{name}"))
     );
     let filename = rfc_3986_percent_encode(&filename);
     hdrs.insert(

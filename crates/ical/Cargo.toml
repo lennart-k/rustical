@@ -21,7 +21,8 @@ caldata.workspace = true
 regex.workspace = true
 serde.workspace = true
 sha2.workspace = true
-axum.workspace = true
+hex.workspace = true
+
+[dev-dependencies]
 rstest.workspace = true
 similar-asserts.workspace = true
-hex.workspace = true

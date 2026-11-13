@@ -26,7 +26,7 @@ pub async fn axum_route_propfind<R: ResourceService>(
     Extension(puri): Extension<R::PrincipalUri>,
     body: String,
 ) -> Result<RSMultistatus<R>, R::Error> {
-    let depth = depth.map(|TypedHeader(depth)| depth).unwrap_or_default();
+    let depth = depth.map_or_default(|TypedHeader(depth)| depth);
     route_propfind::<R>(
         &path,
         uri.path(),

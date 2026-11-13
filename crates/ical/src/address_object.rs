@@ -72,7 +72,7 @@ impl AddressObject {
         };
         let uid = format!("{uid}{suffix}");
         let year = date.get_year();
-        let year_suffix = year.map(|year| format!(" {year}")).unwrap_or_default();
+        let year_suffix = year.map_or_default(|year| format!(" {year}"));
         let Some(month) = date.get_month() else {
             return Ok(None);
         };
