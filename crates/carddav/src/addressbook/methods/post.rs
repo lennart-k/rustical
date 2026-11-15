@@ -61,7 +61,7 @@ pub async fn route_post<AS: AddressbookStore, DP: DavPushStore>(
             .push_resource
             .clone(),
         topic: addressbook_resource.addressbook.push_topic,
-        expiration: expires.naive_local(),
+        expiration: expires.naive_utc(),
         public_key: request
             .subscription
             .web_push_subscription
