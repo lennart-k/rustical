@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use crate::BEGIN_IMMEDIATE;
 use async_trait::async_trait;
+use chrono::NaiveDateTime;
 use rustical_dav_push::{
     Subscription, SubscriptionStore, VapidKeypair, VapidPublicKeyB64, VapidStore,
 };
@@ -79,6 +80,17 @@ impl SubscriptionStore for SqliteDavPushStore {
             .await
             .map_err(crate::Error::from)?;
         Ok(())
+    }
+
+    async fn delete_expired_subscriptions(&self, before: NaiveDateTime) -> Result<u64, Error> {
+        let result = sqlx::query!(
+            r#"DELETE FROM davpush_subscriptions WHERE expiration < ?"#,
+            before
+        )
+        .execute(&self.db)
+        .await
+        .map_err(crate::Error::from)?;
+        Ok(result.rows_affected())
     }
 }
 
@@ -171,8 +183,58 @@ mod tests {
         SqliteDavPushStore,
         tests::{TestStoreContext, test_store_context},
     };
+    use chrono::{Duration, Utc};
     use rstest::rstest;
-    use rustical_dav_push::VapidStore;
+    use rustical_dav_push::{Subscription, SubscriptionStore, VapidStore};
+
+    fn subscription(id: &str, expiration: chrono::NaiveDateTime) -> Subscription {
+        Subscription {
+            id: id.to_owned(),
+            topic: "topic".to_owned(),
+            expiration,
+            push_resource: "https://push.example.com/abc".to_owned(),
+            public_key: "key".to_owned(),
+            public_key_type: "p256dh".to_owned(),
+            auth_secret: "secret".to_owned(),
+        }
+    }
+
+    #[rstest]
+    #[tokio::test]
+    async fn test_delete_expired_subscriptions(
+        #[from(test_store_context)]
+        #[future]
+        context: TestStoreContext,
+    ) {
+        let store = context.await.dav_push_store;
+        let now = Utc::now().naive_utc();
+
+        store
+            .upsert_subscription(subscription("expired", now - Duration::days(2)))
+            .await
+            .unwrap();
+        store
+            .upsert_subscription(subscription("valid", now + Duration::days(2)))
+            .await
+            .unwrap();
+
+        let deleted = store.delete_expired_subscriptions(now).await.unwrap();
+        assert_eq!(
+            deleted, 1,
+            "test that only the expired subscription is deleted"
+        );
+        assert!(
+            store.get_subscription("expired").await.is_err(),
+            "test that the expired subscription is gone"
+        );
+        assert!(
+            store.get_subscription("valid").await.is_ok(),
+            "test that the valid subscription is kept"
+        );
+
+        let deleted = store.delete_expired_subscriptions(now).await.unwrap();
+        assert_eq!(deleted, 0, "test that a second run deletes nothing");
+    }
 
     #[rstest]
     #[tokio::test]
