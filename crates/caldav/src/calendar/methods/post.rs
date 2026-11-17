@@ -63,7 +63,7 @@ pub async fn route_post<C: CalendarStore, DP: DavPushStore>(
             .push_resource
             .clone(),
         topic: calendar_resource.cal.push_topic,
-        expiration: expires.naive_local(),
+        expiration: expires.naive_utc(),
         public_key: request
             .subscription
             .web_push_subscription

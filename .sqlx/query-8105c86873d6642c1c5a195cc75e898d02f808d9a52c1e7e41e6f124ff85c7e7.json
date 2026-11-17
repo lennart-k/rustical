@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM davpush_subscriptions WHERE expiration < ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "8105c86873d6642c1c5a195cc75e898d02f808d9a52c1e7e41e6f124ff85c7e7"
+}
