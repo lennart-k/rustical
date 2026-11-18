@@ -1,4 +1,4 @@
-use chrono::{DateTime, NaiveDateTime, TimeZone};
+use chrono::{DateTime, TimeZone, Utc};
 use web_push::SubscriptionKeys;
 
 // Represents a DAV Push subscription in the database
@@ -7,7 +7,7 @@ pub struct Subscription {
     pub topic: String,
     // Naive because sqlite has no concept of timezones
     // In reality, this is UTC
-    pub expiration: NaiveDateTime,
+    pub expiration: DateTime<Utc>,
     // The endpoint where the push message is sent to
     pub push_resource: String,
     // The public key from the client, currently only p256dh
@@ -22,7 +22,7 @@ pub struct Subscription {
 impl Subscription {
     #[must_use]
     pub fn is_expired(&self, now: &DateTime<impl TimeZone>) -> bool {
-        self.expiration < now.naive_utc()
+        &self.expiration < now
     }
 }
 

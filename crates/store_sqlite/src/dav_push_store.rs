@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::BEGIN_IMMEDIATE;
 use async_trait::async_trait;
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 use rustical_dav_push::{
     Subscription, SubscriptionStore, VapidKeypair, VapidPublicKeyB64, VapidStore,
 };
@@ -33,7 +33,7 @@ impl SubscriptionStore for SqliteDavPushStore {
     async fn get_subscriptions(&self, topic: &str) -> Result<Vec<Subscription>, Error> {
         Ok(sqlx::query_as!(
             Subscription,
-            r#"SELECT id, topic, expiration, push_resource, public_key, public_key_type, auth_secret
+            r#"SELECT id, topic, expiration as "expiration: chrono::DateTime<chrono::Utc>", push_resource, public_key, public_key_type, auth_secret
                 FROM davpush_subscriptions
                 WHERE (topic) = (?)"#,
             topic
@@ -46,7 +46,7 @@ impl SubscriptionStore for SqliteDavPushStore {
     async fn get_subscription(&self, id: &str) -> Result<Subscription, Error> {
         Ok(sqlx::query_as!(
             Subscription,
-            r#"SELECT id, topic, expiration, push_resource, public_key, public_key_type, auth_secret
+            r#"SELECT id, topic, expiration as "expiration: chrono::DateTime<chrono::Utc>", push_resource, public_key, public_key_type, auth_secret
                 FROM davpush_subscriptions
                 WHERE (id) = (?)"#,
             id
@@ -82,7 +82,7 @@ impl SubscriptionStore for SqliteDavPushStore {
         Ok(())
     }
 
-    async fn delete_expired_subscriptions(&self, before: NaiveDateTime) -> Result<u64, Error> {
+    async fn delete_expired_subscriptions(&self, before: DateTime<Utc>) -> Result<u64, Error> {
         let result = sqlx::query!(
             r#"DELETE FROM davpush_subscriptions WHERE expiration < ?"#,
             before
@@ -183,11 +183,11 @@ mod tests {
         SqliteDavPushStore,
         tests::{TestStoreContext, test_store_context},
     };
-    use chrono::{Duration, Utc};
+    use chrono::{DateTime, Duration, Utc};
     use rstest::rstest;
     use rustical_dav_push::{Subscription, SubscriptionStore, VapidStore};
 
-    fn subscription(id: &str, expiration: chrono::NaiveDateTime) -> Subscription {
+    fn subscription(id: &str, expiration: DateTime<Utc>) -> Subscription {
         Subscription {
             id: id.to_owned(),
             topic: "topic".to_owned(),
@@ -207,7 +207,7 @@ mod tests {
         context: TestStoreContext,
     ) {
         let store = context.await.dav_push_store;
-        let now = Utc::now().naive_utc();
+        let now = Utc::now();
 
         store
             .upsert_subscription(subscription("expired", now - Duration::days(2)))

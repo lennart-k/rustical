@@ -67,7 +67,7 @@ pub async fn cleanup_expired_push_subscriptions(
     loop {
         tokio::select! {
             _ = interval.tick() => {
-                match dav_push_store.delete_expired_subscriptions(chrono::Utc::now().naive_utc()).await {
+                match dav_push_store.delete_expired_subscriptions(chrono::Utc::now()).await {
                     Ok(count) => tracing::info!("Maintenance cleanup removed {count} expired DAV Push subscriptions"),
                     Err(error) => tracing::error!(
                         ?error,
