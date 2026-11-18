@@ -53,8 +53,7 @@ impl PropFilterElement {
             return false;
         }
 
-        self
-            .param_filter
+        self.param_filter
             .iter()
             .all(|param_filter| param_filter.match_property(property))
     }

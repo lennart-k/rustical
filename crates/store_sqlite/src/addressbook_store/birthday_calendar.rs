@@ -56,7 +56,7 @@ impl PrefixedCalendarStore for SqliteAddressbookStore {
 
 impl SqliteAddressbookStore {
     #[instrument]
-    pub async fn _get_birthday_calendar<'e, E: Executor<'e, Database = Sqlite>>(
+    pub async fn get_birthday_calendar_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         id: &str,
@@ -86,7 +86,7 @@ impl SqliteAddressbookStore {
     }
 
     #[instrument]
-    pub async fn _get_birthday_calendars<'e, E: Executor<'e, Database = Sqlite>>(
+    pub async fn get_birthday_calendars_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         deleted: bool,
@@ -151,7 +151,7 @@ impl SqliteAddressbookStore {
     }
 
     #[instrument]
-    pub async fn _insert_birthday_calendar<'e, E: Executor<'e, Database = Sqlite>>(
+    pub async fn insert_birthday_calendar_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         calendar: &Calendar,
     ) -> Result<(), rustical_store::Error> {
@@ -177,7 +177,7 @@ impl SqliteAddressbookStore {
         Ok(())
     }
 
-    async fn _delete_birthday_calendar<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn delete_birthday_calendar_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         id: &str,
@@ -205,7 +205,7 @@ impl SqliteAddressbookStore {
         Ok(())
     }
 
-    async fn _restore_birthday_calendar<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn restore_birthday_calendar_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         id: &str,
@@ -221,7 +221,7 @@ impl SqliteAddressbookStore {
         Ok(())
     }
 
-    async fn _prune_deleted_calendars<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn prune_deleted_calendars_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         before: chrono::NaiveDate,
     ) -> Result<u64, Error> {
@@ -237,7 +237,7 @@ impl SqliteAddressbookStore {
     }
 
     #[instrument]
-    async fn _update_birthday_calendar<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn update_birthday_calendar_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         calendar: &Calendar,
@@ -273,17 +273,17 @@ impl CalendarReadStore for SqliteAddressbookStore {
         show_deleted: bool,
     ) -> Result<Calendar, Error> {
         let id = id.strip_prefix(BIRTHDAYS_PREFIX).ok_or(Error::NotFound)?;
-        Self::_get_birthday_calendar(&self.db, principal, id, show_deleted).await
+        Self::get_birthday_calendar_impl(&self.db, principal, id, show_deleted).await
     }
 
     #[instrument]
     async fn get_calendars(&self, principal: &str) -> Result<Vec<Calendar>, Error> {
-        Self::_get_birthday_calendars(&self.db, principal, false).await
+        Self::get_birthday_calendars_impl(&self.db, principal, false).await
     }
 
     #[instrument]
     async fn get_deleted_calendars(&self, principal: &str) -> Result<Vec<Calendar>, Error> {
-        Self::_get_birthday_calendars(&self.db, principal, true).await
+        Self::get_birthday_calendars_impl(&self.db, principal, true).await
     }
 
     #[instrument]
@@ -406,12 +406,12 @@ impl CalendarWriteStore for SqliteAddressbookStore {
             .strip_prefix(BIRTHDAYS_PREFIX)
             .ok_or(Error::NotFound)?
             .to_string();
-        Self::_update_birthday_calendar(&self.db, principal, &calendar).await
+        Self::update_birthday_calendar_impl(&self.db, principal, &calendar).await
     }
 
     #[instrument]
     async fn insert_calendar(&self, calendar: Calendar) -> Result<(), Error> {
-        Self::_insert_birthday_calendar(&self.db, &calendar).await
+        Self::insert_birthday_calendar_impl(&self.db, &calendar).await
     }
 
     #[instrument]
@@ -424,7 +424,7 @@ impl CalendarWriteStore for SqliteAddressbookStore {
         let Some(id) = id.strip_prefix(BIRTHDAYS_PREFIX) else {
             return Ok(());
         };
-        Self::_delete_birthday_calendar(&self.db, principal, id, use_trashbin).await
+        Self::delete_birthday_calendar_impl(&self.db, principal, id, use_trashbin).await
     }
 
     #[instrument]
@@ -432,7 +432,7 @@ impl CalendarWriteStore for SqliteAddressbookStore {
         let Some(id) = id.strip_prefix(BIRTHDAYS_PREFIX) else {
             return Err(Error::NotFound);
         };
-        Self::_restore_birthday_calendar(&self.db, principal, id).await
+        Self::restore_birthday_calendar_impl(&self.db, principal, id).await
     }
 
     #[instrument]
@@ -482,7 +482,7 @@ impl CalendarWriteStore for SqliteAddressbookStore {
 impl CalendarStorePruneDeleted for SqliteAddressbookStore {
     #[instrument(skip(self), fields(count = tracing::field::Empty))]
     async fn prune_deleted_calendars(&self, before: chrono::NaiveDate) -> Result<(), Error> {
-        let count = Self::_prune_deleted_calendars(&self.db, before).await?;
+        let count = Self::prune_deleted_calendars_impl(&self.db, before).await?;
         tracing::Span::current().record("count", count);
         Ok(())
     }
