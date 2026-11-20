@@ -29,7 +29,7 @@ jaeger-start:
       --name jaeger-rustical \
       -p 16686:16686 \
       -p 4317:4317  \
-      jaegertracing/all-in-one:latest
+      cr.jaegertracing.io/jaegertracing/jaeger:2.23.0
 
 jaeger-stop:
     podman stop jaeger-rustical

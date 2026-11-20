@@ -139,7 +139,7 @@ impl<DP: SubscriptionStore> DavPushService<DP> {
                     subscription.id, subscription.topic
                 );
                 self.try_delete_subscription(&subscription.id).await;
-                return Ok(());
+                continue;
             }
 
             let Ok(url) = Url::parse(&subscription.push_resource) else {
@@ -148,13 +148,13 @@ impl<DP: SubscriptionStore> DavPushService<DP> {
                     subscription.id, subscription.topic
                 );
                 self.try_delete_subscription(&subscription.id).await;
-                return Ok(());
+                continue;
             };
 
             if let Some(allowed_push_servers) = &self.allowed_push_servers
                 && !allowed_push_servers.contains(&url.origin().unicode_serialization())
             {
-                return Ok(());
+                continue;
             }
 
             if let Err(err) = self
@@ -217,7 +217,7 @@ mod tests {
             expiration: NaiveDateTime::new(
                 NaiveDate::from_ymd_opt(2021, 1, 1).unwrap(),
                 NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
-            ),
+            ).and_utc(),
             auth_secret: "VG60BKYQf6ZFIEIfLB5CdQ".to_string(),
             push_resource: "https://ntfy.example.com/upL00-v4L3SGM2".to_string(),
             public_key: "BNfY5sCh5FqswvkO3KNHeR3vjzOSV0sSmvwS0mePb86ve6CBaoiyQYuX7PIJ0rvDLvOIa2HDWFxnDCyMB7HrqlE".to_string(),

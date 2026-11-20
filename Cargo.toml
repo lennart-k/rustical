@@ -2,7 +2,7 @@
 members = ["crates/*"]
 
 [workspace.package]
-version = "0.18.0"
+version = "0.19.2"
 rust-version = "1.99"
 edition = "2024"
 description = "A CalDAV server"
@@ -16,6 +16,7 @@ version.workspace = true
 rust-version.workspace = true
 edition.workspace = true
 description.workspace = true
+documentation.workspace = true
 repository.workspace = true
 license.workspace = true
 resolver = "2"

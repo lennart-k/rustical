@@ -99,7 +99,7 @@ pub struct CalendarQueryRequest {
 
 impl From<&CalendarQueryRequest> for CalendarQuery {
     fn from(value: &CalendarQueryRequest) -> Self {
-        value.filter.as_ref().map(Self::from).unwrap_or_default()
+        value.filter.as_ref().map_or_default(Self::from)
     }
 }
 

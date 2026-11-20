@@ -115,7 +115,8 @@ impl SqliteAddressbookStore {
     pub async fn validate_objects(&self, principal: &str) -> Result<(), Error> {
         let mut success = true;
         for addressbook in self.get_addressbooks(principal).await? {
-            for (object_id, res) in Self::_get_objects(&self.db, principal, &addressbook.id).await?
+            for (object_id, res) in
+                Self::get_objects_impl(&self.db, principal, &addressbook.id).await?
             {
                 if let Err(err) = res {
                     warn!(
@@ -191,7 +192,7 @@ impl SqliteAddressbookStore {
         }
     }
 
-    async fn _get_addressbook<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn get_addressbook_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         id: &str,
@@ -213,7 +214,7 @@ impl SqliteAddressbookStore {
         Ok(addressbook)
     }
 
-    async fn _get_addressbooks<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn get_addressbooks_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
     ) -> Result<Vec<Addressbook>, rustical_store::Error> {
@@ -230,7 +231,7 @@ impl SqliteAddressbookStore {
         Ok(addressbooks)
     }
 
-    async fn _get_deleted_addressbooks<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn get_deleted_addressbooks_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
     ) -> Result<Vec<Addressbook>, rustical_store::Error> {
@@ -247,7 +248,7 @@ impl SqliteAddressbookStore {
         Ok(addressbooks)
     }
 
-    async fn _update_addressbook<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn update_addressbook_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         id: &str,
@@ -273,7 +274,7 @@ impl SqliteAddressbookStore {
         Ok(())
     }
 
-    async fn _insert_addressbook<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn insert_addressbook_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         addressbook: &Addressbook,
     ) -> Result<(), rustical_store::Error> {
@@ -292,7 +293,7 @@ impl SqliteAddressbookStore {
         Ok(())
     }
 
-    async fn _delete_addressbook<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn delete_addressbook_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         addressbook_id: &str,
@@ -321,7 +322,7 @@ impl SqliteAddressbookStore {
         Ok(())
     }
 
-    async fn _restore_addressbook<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn restore_addressbook_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         addressbook_id: &str,
@@ -337,7 +338,7 @@ impl SqliteAddressbookStore {
         Ok(())
     }
 
-    async fn _sync_changes<'a, A: Acquire<'a, Database = Sqlite>>(
+    async fn sync_changes_impl<'a, A: Acquire<'a, Database = Sqlite>>(
         acquire: A,
         principal: &str,
         addressbook_id: &str,
@@ -374,13 +375,14 @@ impl SqliteAddressbookStore {
         .map_err(crate::Error::from)?;
 
         let addressbook =
-            Self::_get_addressbook(&mut *conn, principal, addressbook_id, false).await?;
+            Self::get_addressbook_impl(&mut *conn, principal, addressbook_id, false).await?;
 
         let mut updated_objects = vec![];
         let mut deleted_objects = vec![];
 
         for Row { object_id, .. } in changes {
-            match Self::_get_object(&mut *conn, principal, addressbook_id, &object_id, false).await
+            match Self::get_object_impl(&mut *conn, principal, addressbook_id, &object_id, false)
+                .await
             {
                 Ok(object) => updated_objects.push((object_id, object)),
                 Err(rustical_store::Error::NotFound) => deleted_objects.push(object_id),
@@ -391,7 +393,7 @@ impl SqliteAddressbookStore {
         Ok((updated_objects, deleted_objects, addressbook.synctoken))
     }
 
-    async fn _list_objects<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn list_objects_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         addressbook_id: &str,
@@ -413,7 +415,7 @@ impl SqliteAddressbookStore {
         .collect())
     }
 
-    async fn _get_objects<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn get_objects_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         addressbook_id: &str,
@@ -431,7 +433,7 @@ impl SqliteAddressbookStore {
         )
     }
 
-    async fn _get_object<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn get_object_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         addressbook_id: &str,
@@ -454,7 +456,7 @@ impl SqliteAddressbookStore {
         Ok(object)
     }
 
-    async fn _put_object<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn put_object_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         addressbook_id: &str,
@@ -489,7 +491,7 @@ impl SqliteAddressbookStore {
         Ok(())
     }
 
-    async fn _delete_object<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn delete_object_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         addressbook_id: &str,
@@ -519,7 +521,7 @@ impl SqliteAddressbookStore {
         Ok(())
     }
 
-    async fn _restore_object<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn restore_object_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         addressbook_id: &str,
@@ -546,7 +548,7 @@ impl AddressbookReadStore for SqliteAddressbookStore {
         id: &str,
         show_deleted: bool,
     ) -> Result<Addressbook, rustical_store::Error> {
-        Self::_get_addressbook(&self.db, principal, id, show_deleted).await
+        Self::get_addressbook_impl(&self.db, principal, id, show_deleted).await
     }
 
     #[instrument]
@@ -554,7 +556,7 @@ impl AddressbookReadStore for SqliteAddressbookStore {
         &self,
         principal: &str,
     ) -> Result<Vec<Addressbook>, rustical_store::Error> {
-        Self::_get_addressbooks(&self.db, principal).await
+        Self::get_addressbooks_impl(&self.db, principal).await
     }
 
     #[instrument]
@@ -562,7 +564,7 @@ impl AddressbookReadStore for SqliteAddressbookStore {
         &self,
         principal: &str,
     ) -> Result<Vec<Addressbook>, rustical_store::Error> {
-        Self::_get_deleted_addressbooks(&self.db, principal).await
+        Self::get_deleted_addressbooks_impl(&self.db, principal).await
     }
 
     #[instrument]
@@ -572,7 +574,7 @@ impl AddressbookReadStore for SqliteAddressbookStore {
         addressbook_id: &str,
         synctoken: i64,
     ) -> Result<(Vec<(String, AddressObject)>, Vec<String>, i64), rustical_store::Error> {
-        Self::_sync_changes(&self.db, principal, addressbook_id, synctoken).await
+        Self::sync_changes_impl(&self.db, principal, addressbook_id, synctoken).await
     }
 
     #[instrument]
@@ -583,7 +585,7 @@ impl AddressbookReadStore for SqliteAddressbookStore {
     ) -> Result<CollectionMetadata, rustical_store::Error> {
         let mut sizes = vec![];
         let mut deleted_sizes = vec![];
-        for (size, deleted) in Self::_list_objects(&self.db, principal, addressbook_id).await? {
+        for (size, deleted) in Self::list_objects_impl(&self.db, principal, addressbook_id).await? {
             if deleted {
                 deleted_sizes.push(size);
             } else {
@@ -604,7 +606,7 @@ impl AddressbookReadStore for SqliteAddressbookStore {
         principal: &str,
         addressbook_id: &str,
     ) -> Result<Vec<(String, AddressObject)>, rustical_store::Error> {
-        let objects = Self::_get_objects(&self.db, principal, addressbook_id).await?;
+        let objects = Self::get_objects_impl(&self.db, principal, addressbook_id).await?;
         if self.skip_broken {
             Ok(objects
                 .filter_map(|(id, res)| Some((id, res.ok()?)))
@@ -624,7 +626,7 @@ impl AddressbookReadStore for SqliteAddressbookStore {
         object_id: &str,
         show_deleted: bool,
     ) -> Result<AddressObject, rustical_store::Error> {
-        Self::_get_object(&self.db, principal, addressbook_id, object_id, show_deleted).await
+        Self::get_object_impl(&self.db, principal, addressbook_id, object_id, show_deleted).await
     }
 }
 
@@ -639,7 +641,7 @@ impl AddressbookWriteStore for SqliteAddressbookStore {
     ) -> Result<(), rustical_store::Error> {
         assert_eq!(principal, &addressbook.principal);
         assert_eq!(id, &addressbook.id);
-        Self::_update_addressbook(&self.db, principal, id, &addressbook).await
+        Self::update_addressbook_impl(&self.db, principal, id, &addressbook).await
     }
 
     #[instrument]
@@ -652,9 +654,9 @@ impl AddressbookWriteStore for SqliteAddressbookStore {
             .begin_with(BEGIN_IMMEDIATE)
             .await
             .map_err(crate::Error::from)?;
-        Self::_insert_addressbook(&mut *tx, &addressbook).await?;
+        Self::insert_addressbook_impl(&mut *tx, &addressbook).await?;
         let birthday_cal = Self::default_birthday_calendar(addressbook);
-        Self::_insert_birthday_calendar(&mut *tx, &birthday_cal).await?;
+        Self::insert_birthday_calendar_impl(&mut *tx, &birthday_cal).await?;
         tx.commit().await.map_err(crate::Error::from)?;
         Ok(())
     }
@@ -673,13 +675,15 @@ impl AddressbookWriteStore for SqliteAddressbookStore {
             .map_err(crate::Error::from)?;
 
         let addressbook =
-            match Self::_get_addressbook(&mut *tx, principal, addressbook_id, use_trashbin).await {
+            match Self::get_addressbook_impl(&mut *tx, principal, addressbook_id, use_trashbin)
+                .await
+            {
                 Ok(addressbook) => Some(addressbook),
                 Err(Error::NotFound) => None,
                 Err(err) => return Err(err),
             };
 
-        Self::_delete_addressbook(&mut *tx, principal, addressbook_id, use_trashbin).await?;
+        Self::delete_addressbook_impl(&mut *tx, principal, addressbook_id, use_trashbin).await?;
         tx.commit().await.map_err(crate::Error::from)?;
 
         if let Some(addressbook) = addressbook {
@@ -695,7 +699,7 @@ impl AddressbookWriteStore for SqliteAddressbookStore {
         principal: &str,
         addressbook_id: &str,
     ) -> Result<(), rustical_store::Error> {
-        Self::_restore_addressbook(&self.db, principal, addressbook_id).await
+        Self::restore_addressbook_impl(&self.db, principal, addressbook_id).await
     }
 
     #[instrument]
@@ -713,7 +717,7 @@ impl AddressbookWriteStore for SqliteAddressbookStore {
             .await
             .map_err(crate::Error::from)?;
 
-        Self::_put_object(
+        Self::put_object_impl(
             &mut *tx,
             principal,
             addressbook_id,
@@ -759,7 +763,8 @@ impl AddressbookWriteStore for SqliteAddressbookStore {
             .await
             .map_err(crate::Error::from)?;
 
-        Self::_delete_object(&mut *tx, principal, addressbook_id, object_id, use_trashbin).await?;
+        Self::delete_object_impl(&mut *tx, principal, addressbook_id, object_id, use_trashbin)
+            .await?;
 
         let sync_token = Self::log_object_operation(
             &mut tx,
@@ -795,7 +800,7 @@ impl AddressbookWriteStore for SqliteAddressbookStore {
             .await
             .map_err(crate::Error::from)?;
 
-        Self::_restore_object(&mut *tx, principal, addressbook_id, object_id).await?;
+        Self::restore_object_impl(&mut *tx, principal, addressbook_id, object_id).await?;
 
         let sync_token = Self::log_object_operation(
             &mut tx,
@@ -831,24 +836,28 @@ impl AddressbookWriteStore for SqliteAddressbookStore {
             .await
             .map_err(crate::Error::from)?;
 
-        let existing =
-            match Self::_get_addressbook(&mut *tx, &addressbook.principal, &addressbook.id, true)
-                .await
-            {
-                Ok(addressbook) => Some(addressbook),
-                Err(Error::NotFound) => None,
-                Err(err) => return Err(err),
-            };
+        let existing = match Self::get_addressbook_impl(
+            &mut *tx,
+            &addressbook.principal,
+            &addressbook.id,
+            true,
+        )
+        .await
+        {
+            Ok(addressbook) => Some(addressbook),
+            Err(Error::NotFound) => None,
+            Err(err) => return Err(err),
+        };
         if existing.is_some() && !merge_existing {
             return Err(Error::AlreadyExists);
         }
         if existing.is_none() {
-            Self::_insert_addressbook(&mut *tx, &addressbook).await?;
+            Self::insert_addressbook_impl(&mut *tx, &addressbook).await?;
         }
 
         let mut sync_token = None;
         for (object_id, object) in objects {
-            Self::_put_object(
+            Self::put_object_impl(
                 &mut *tx,
                 &addressbook.principal,
                 &addressbook.id,

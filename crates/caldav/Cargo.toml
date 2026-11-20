@@ -12,6 +12,7 @@ publish = false
 rustical_store_sqlite = { workspace = true, features = ["test"] }
 rstest.workspace = true
 serde_json.workspace = true
+similar-asserts.workspace = true
 insta.workspace = true
 
 [dependencies]
@@ -40,10 +41,8 @@ rustical_dav_push.workspace = true
 rustical_ical.workspace = true
 http.workspace = true
 headers.workspace = true
-tower-http.workspace = true
 strum.workspace = true
 strum_macros.workspace = true
 vtimezones-rs.workspace = true
-similar-asserts.workspace = true
 matchit.workspace = true
 matchit-serde.workspace = true

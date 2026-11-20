@@ -22,8 +22,7 @@ pub async fn axum_route_copy<R: ResourceService>(
     TypedHeader(host): TypedHeader<Host>,
 ) -> Result<Response, R::Error> {
     let overwrite = overwrite
-        .map(|TypedHeader(overwrite)| overwrite)
-        .unwrap_or_default()
+        .map_or_default(|TypedHeader(overwrite)| overwrite)
         .into();
     let destination = header_map
         .get("Destination")

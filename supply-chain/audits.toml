@@ -68,6 +68,12 @@ criteria = "safe-to-deploy"
 version = "0.11.0"
 notes = "It's a fork I maintain"
 
+[[audits.web-push]]
+who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.11.0 -> 0.11.0@git:cac560851cea81c894ff822af40cdcebbb3ce4cf"
+importable = false
+
 [[trusted.aho-corasick]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
@@ -536,6 +542,12 @@ user-id = 4556 # Dirkjan Ochtman (djc)
 start = "2023-06-14"
 end = "2027-10-21"
 
+[[trusted.rustls-pki-types]]
+criteria = "safe-to-deploy"
+user-id = 2751 # Joe Birr-Pixton (ctz)
+start = "2023-09-07"
+end = "2027-11-11"
+
 [[trusted.rustls-platform-verifier]]
 criteria = "safe-to-deploy"
 user-id = 4556 # Dirkjan Ochtman (djc)
@@ -547,6 +559,12 @@ criteria = "safe-to-deploy"
 user-id = 209038 # Daniel McCarney (cpu)
 start = "2024-07-29"
 end = "2027-10-05"
+
+[[trusted.rustls-webpki]]
+criteria = "safe-to-deploy"
+user-id = 209038 # Daniel McCarney (cpu)
+start = "2023-07-04"
+end = "2027-11-13"
 
 [[trusted.rustversion]]
 criteria = "safe-to-deploy"
@@ -796,9 +814,21 @@ end = "2027-09-06"
 
 [[trusted.webpki-root-certs]]
 criteria = "safe-to-deploy"
+user-id = 2751 # Joe Birr-Pixton (ctz)
+start = "2024-11-21"
+end = "2027-11-11"
+
+[[trusted.webpki-root-certs]]
+criteria = "safe-to-deploy"
 user-id = 209038 # Daniel McCarney (cpu)
 start = "2024-08-07"
 end = "2027-10-21"
+
+[[trusted.webpki-roots]]
+criteria = "safe-to-deploy"
+user-id = 2751 # Joe Birr-Pixton (ctz)
+start = "2019-07-21"
+end = "2027-11-11"
 
 [[trusted.webpki-roots]]
 criteria = "safe-to-deploy"

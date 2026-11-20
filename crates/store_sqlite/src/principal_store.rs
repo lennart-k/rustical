@@ -38,8 +38,7 @@ impl TryFrom<PrincipalRow> for Principal {
             principal_type: value.principal_type.as_str().try_into()?,
             memberships: value
                 .memberships
-                .map(|val| val.0)
-                .unwrap_or_default()
+                .map_or_default(|val| val.0)
                 .into_iter()
                 .flatten()
                 .collect(),

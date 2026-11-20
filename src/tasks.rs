@@ -3,6 +3,7 @@ use core::num::NonZeroU32;
 use std::sync::Arc;
 
 use chrono::NaiveDate;
+use rustical_dav_push::SubscriptionStore;
 use rustical_store::CalendarStorePruneDeleted;
 
 pub async fn cleanup_trashed_calendar_entities(
@@ -47,6 +48,33 @@ pub async fn cleanup_trashed_calendar_entities(
         tokio::select! {
             _ = interval.tick() => {
                 delete_trashed_calendar_entities(chrono::Utc::now().naive_utc().date(), &*cal_store, trash_retention_days).await;
+            }
+            _ = &mut shutdown_signal => {
+                break;
+            }
+        }
+    }
+}
+
+pub async fn cleanup_expired_push_subscriptions(
+    dav_push_store: Arc<dyn SubscriptionStore>,
+    shutdown_signal: impl Future + Send + 'static,
+) {
+    let mut shutdown_signal = core::pin::pin!(shutdown_signal);
+    // Expired subscriptions are only removed when a notification is sent to their topic.
+    // Subscriptions on rarely changed or deleted collections would otherwise stay forever.
+    let mut interval = tokio::time::interval(tokio::time::Duration::from_hours(24));
+    loop {
+        tokio::select! {
+            _ = interval.tick() => {
+                match dav_push_store.delete_expired_subscriptions(chrono::Utc::now()).await {
+                    Ok(count) => tracing::info!("Maintenance cleanup removed {count} expired DAV Push subscriptions"),
+                    Err(error) => tracing::error!(
+                        ?error,
+                        "Maintenance cleanup of expired DAV Push subscriptions failed: {}",
+                        error
+                    ),
+                }
             }
             _ = &mut shutdown_signal => {
                 break;

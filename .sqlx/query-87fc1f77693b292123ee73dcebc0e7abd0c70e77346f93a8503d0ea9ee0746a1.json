@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT id, topic, expiration, push_resource, public_key, public_key_type, auth_secret\n                FROM davpush_subscriptions\n                WHERE (id) = (?)",
+  "query": "SELECT id, topic, expiration as \"expiration: chrono::DateTime<chrono::Utc>\", push_resource, public_key, public_key_type, auth_secret\n                FROM davpush_subscriptions\n                WHERE (topic) = (?)",
   "describe": {
     "columns": [
       {
@@ -26,7 +26,7 @@
         }
       },
       {
-        "name": "expiration",
+        "name": "expiration: chrono::DateTime<chrono::Utc>",
         "ordinal": 2,
         "type_info": "Datetime",
         "origin": {
@@ -94,5 +94,5 @@
       false
     ]
   },
-  "hash": "ef6cf801df2237b82b55754f1b0a5da51089810fe7a0feb0d68ea801b4e2721c"
+  "hash": "87fc1f77693b292123ee73dcebc0e7abd0c70e77346f93a8503d0ea9ee0746a1"
 }

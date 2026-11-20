@@ -186,7 +186,9 @@ impl SqliteCalendarStore {
     pub async fn validate_objects(&self, principal: &str) -> Result<(), Error> {
         let mut success = true;
         for calendar in self.get_calendars(principal).await? {
-            for (object_id, res) in Self::_get_objects(&self.db, principal, &calendar.id).await? {
+            for (object_id, res) in
+                Self::get_objects_impl(&self.db, principal, &calendar.id).await?
+            {
                 if let Err(err) = res {
                     warn!(
                         "Invalid calendar object found at {principal}/{cal_id}/{object_id}.ics. Error: {err}",
@@ -336,7 +338,7 @@ impl SqliteCalendarStore {
         Ok(())
     }
 
-    async fn _get_calendar<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn get_calendar_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         id: &str,
@@ -358,7 +360,7 @@ impl SqliteCalendarStore {
         Ok(cal.into())
     }
 
-    async fn _get_calendars<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn get_calendars_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
     ) -> Result<Vec<Calendar>, Error> {
@@ -375,7 +377,7 @@ impl SqliteCalendarStore {
         Ok(cals.into_iter().map(Calendar::from).collect())
     }
 
-    async fn _get_deleted_calendars<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn get_deleted_calendars_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
     ) -> Result<Vec<Calendar>, Error> {
@@ -392,7 +394,7 @@ impl SqliteCalendarStore {
         Ok(cals.into_iter().map(Calendar::from).collect())
     }
 
-    async fn _insert_calendar<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn insert_calendar_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         calendar: Calendar,
     ) -> Result<(), Error> {
@@ -420,7 +422,7 @@ impl SqliteCalendarStore {
         Ok(())
     }
 
-    async fn _update_calendar<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn update_calendar_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         id: &str,
@@ -451,7 +453,7 @@ impl SqliteCalendarStore {
         Ok(())
     }
 
-    async fn _delete_calendar<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn delete_calendar_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         id: &str,
@@ -479,7 +481,7 @@ impl SqliteCalendarStore {
         Ok(())
     }
 
-    async fn _restore_calendar<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn restore_calendar_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         id: &str,
@@ -495,7 +497,7 @@ impl SqliteCalendarStore {
         Ok(())
     }
 
-    async fn _prune_deleted_calendars<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn prune_deleted_calendars_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         before: chrono::NaiveDate,
     ) -> Result<u64, Error> {
@@ -510,7 +512,7 @@ impl SqliteCalendarStore {
         .map_err(Into::into)
     }
 
-    async fn _list_objects<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn list_objects_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         cal_id: &str,
@@ -532,7 +534,7 @@ impl SqliteCalendarStore {
         .collect())
     }
 
-    async fn _get_objects<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn get_objects_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         cal_id: &str,
@@ -550,7 +552,7 @@ impl SqliteCalendarStore {
         )
     }
 
-    async fn _calendar_query<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn calendar_query_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         cal_id: &str,
@@ -583,7 +585,7 @@ impl SqliteCalendarStore {
         .map(Into::into))
     }
 
-    async fn _get_object<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn get_object_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         cal_id: &str,
@@ -607,7 +609,7 @@ impl SqliteCalendarStore {
     }
 
     #[instrument]
-    async fn _put_object<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn put_object_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         cal_id: &str,
@@ -668,7 +670,7 @@ impl SqliteCalendarStore {
     }
 
     #[instrument]
-    async fn _delete_object<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn delete_object_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         cal_id: &str,
@@ -699,7 +701,7 @@ impl SqliteCalendarStore {
     }
 
     #[instrument]
-    async fn _restore_object<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn restore_object_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         principal: &str,
         cal_id: &str,
@@ -716,7 +718,7 @@ impl SqliteCalendarStore {
         Ok(())
     }
 
-    async fn _sync_changes<'a, A: Acquire<'a, Database = Sqlite>>(
+    async fn sync_changes_impl<'a, A: Acquire<'a, Database = Sqlite>>(
         acquire: A,
         principal: &str,
         cal_id: &str,
@@ -753,13 +755,13 @@ impl SqliteCalendarStore {
         .await
         .map_err(crate::Error::from)?;
 
-        let calendar = Self::_get_calendar(&mut *conn, principal, cal_id, false).await?;
+        let calendar = Self::get_calendar_impl(&mut *conn, principal, cal_id, false).await?;
 
         let mut updated_objects = vec![];
         let mut deleted_objects = vec![];
 
         for Row { object_id, .. } in changes {
-            match Self::_get_object(&mut *conn, principal, cal_id, &object_id, false).await {
+            match Self::get_object_impl(&mut *conn, principal, cal_id, &object_id, false).await {
                 Ok(object) => updated_objects.push((object_id, object)),
                 Err(rustical_store::Error::NotFound) => deleted_objects.push(object_id),
                 // Skip broken object
@@ -771,7 +773,7 @@ impl SqliteCalendarStore {
         Ok((updated_objects, deleted_objects, calendar.synctoken))
     }
 
-    async fn _prune_deleted_objects<'e, E: Executor<'e, Database = Sqlite>>(
+    async fn prune_deleted_objects_impl<'e, E: Executor<'e, Database = Sqlite>>(
         executor: E,
         before: chrono::NaiveDate,
     ) -> Result<u64, Error> {
@@ -796,17 +798,17 @@ impl CalendarReadStore for SqliteCalendarStore {
         id: &str,
         show_deleted: bool,
     ) -> Result<Calendar, Error> {
-        Self::_get_calendar(&self.db, principal, id, show_deleted).await
+        Self::get_calendar_impl(&self.db, principal, id, show_deleted).await
     }
 
     #[instrument]
     async fn get_calendars(&self, principal: &str) -> Result<Vec<Calendar>, Error> {
-        Self::_get_calendars(&self.db, principal).await
+        Self::get_calendars_impl(&self.db, principal).await
     }
 
     #[instrument]
     async fn get_deleted_calendars(&self, principal: &str) -> Result<Vec<Calendar>, Error> {
-        Self::_get_deleted_calendars(&self.db, principal).await
+        Self::get_deleted_calendars_impl(&self.db, principal).await
     }
 
     #[instrument]
@@ -816,7 +818,7 @@ impl CalendarReadStore for SqliteCalendarStore {
         cal_id: &str,
         query: CalendarQuery,
     ) -> Result<Vec<(String, CalendarObject)>, Error> {
-        let objects = Self::_calendar_query(&self.db, principal, cal_id, query).await?;
+        let objects = Self::calendar_query_impl(&self.db, principal, cal_id, query).await?;
         if self.skip_broken {
             Ok(objects
                 .filter_map(|(id, res)| Some((id, res.ok()?)))
@@ -835,7 +837,7 @@ impl CalendarReadStore for SqliteCalendarStore {
     ) -> Result<CollectionMetadata, Error> {
         let mut sizes = vec![];
         let mut deleted_sizes = vec![];
-        for (size, deleted) in Self::_list_objects(&self.db, principal, cal_id).await? {
+        for (size, deleted) in Self::list_objects_impl(&self.db, principal, cal_id).await? {
             if deleted {
                 deleted_sizes.push(size);
             } else {
@@ -856,7 +858,7 @@ impl CalendarReadStore for SqliteCalendarStore {
         principal: &str,
         cal_id: &str,
     ) -> Result<Vec<(String, CalendarObject)>, Error> {
-        let objects = Self::_get_objects(&self.db, principal, cal_id).await?;
+        let objects = Self::get_objects_impl(&self.db, principal, cal_id).await?;
         if self.skip_broken {
             Ok(objects
                 .filter_map(|(id, res)| Some((id, res.ok()?)))
@@ -876,7 +878,7 @@ impl CalendarReadStore for SqliteCalendarStore {
         object_id: &str,
         show_deleted: bool,
     ) -> Result<CalendarObject, Error> {
-        Self::_get_object(&self.db, principal, cal_id, object_id, show_deleted).await
+        Self::get_object_impl(&self.db, principal, cal_id, object_id, show_deleted).await
     }
 
     #[instrument]
@@ -886,7 +888,7 @@ impl CalendarReadStore for SqliteCalendarStore {
         cal_id: &str,
         synctoken: i64,
     ) -> Result<(Vec<(String, CalendarObject)>, Vec<String>, i64), Error> {
-        Self::_sync_changes(&self.db, principal, cal_id, synctoken, self.skip_broken).await
+        Self::sync_changes_impl(&self.db, principal, cal_id, synctoken, self.skip_broken).await
     }
 
     fn is_read_only(&self, _cal_id: &str) -> bool {
@@ -898,7 +900,7 @@ impl CalendarReadStore for SqliteCalendarStore {
 impl CalendarWriteStore for SqliteCalendarStore {
     #[instrument]
     async fn insert_calendar(&self, calendar: Calendar) -> Result<(), Error> {
-        Self::_insert_calendar(&self.db, calendar).await
+        Self::insert_calendar_impl(&self.db, calendar).await
     }
 
     #[instrument]
@@ -908,7 +910,7 @@ impl CalendarWriteStore for SqliteCalendarStore {
         id: &str,
         calendar: Calendar,
     ) -> Result<(), Error> {
-        Self::_update_calendar(&self.db, principal, id, calendar).await
+        Self::update_calendar_impl(&self.db, principal, id, calendar).await
     }
 
     // Does not actually delete the calendar but just disables it
@@ -925,13 +927,13 @@ impl CalendarWriteStore for SqliteCalendarStore {
             .await
             .map_err(crate::Error::from)?;
 
-        let cal = match Self::_get_calendar(&mut *tx, principal, id, true).await {
+        let cal = match Self::get_calendar_impl(&mut *tx, principal, id, true).await {
             Ok(cal) => Some(cal),
             Err(Error::NotFound) => None,
             Err(err) => return Err(err),
         };
 
-        Self::_delete_calendar(&mut *tx, principal, id, use_trashbin).await?;
+        Self::delete_calendar_impl(&mut *tx, principal, id, use_trashbin).await?;
         tx.commit().await.map_err(crate::Error::from)?;
 
         if let Some(cal) = cal {
@@ -942,7 +944,7 @@ impl CalendarWriteStore for SqliteCalendarStore {
 
     #[instrument]
     async fn restore_calendar(&self, principal: &str, id: &str) -> Result<(), Error> {
-        Self::_restore_calendar(&self.db, principal, id).await
+        Self::restore_calendar_impl(&self.db, principal, id).await
     }
 
     #[instrument]
@@ -958,23 +960,29 @@ impl CalendarWriteStore for SqliteCalendarStore {
             .await
             .map_err(crate::Error::from)?;
 
-        let existing_cal =
-            match Self::_get_calendar(&mut *tx, &calendar.principal, &calendar.id, true).await {
-                Ok(cal) => Some(cal),
-                Err(Error::NotFound) => None,
-                Err(err) => return Err(err),
-            };
+        let existing_cal = match Self::get_calendar_impl(
+            &mut *tx,
+            &calendar.principal,
+            &calendar.id,
+            true,
+        )
+        .await
+        {
+            Ok(cal) => Some(cal),
+            Err(Error::NotFound) => None,
+            Err(err) => return Err(err),
+        };
         if existing_cal.is_some() && !merge_existing {
             return Err(Error::AlreadyExists);
         }
         if existing_cal.is_none() {
-            Self::_insert_calendar(&mut *tx, calendar.clone()).await?;
+            Self::insert_calendar_impl(&mut *tx, calendar.clone()).await?;
         }
 
         let mut sync_token = None;
         for object in objects {
             let object_id = object.get_uid();
-            Self::_put_object(
+            Self::put_object_impl(
                 &mut *tx,
                 &calendar.principal,
                 &calendar.id,
@@ -1023,7 +1031,7 @@ impl CalendarWriteStore for SqliteCalendarStore {
             .await
             .map_err(crate::Error::from)?;
 
-        let calendar = Self::_get_calendar(&mut *tx, principal, cal_id, true).await?;
+        let calendar = Self::get_calendar_impl(&mut *tx, principal, cal_id, true).await?;
         if calendar.subscription_url.is_some() {
             // We cannot commit an object to a subscription calendar
             return Err(Error::ReadOnly);
@@ -1041,7 +1049,8 @@ impl CalendarWriteStore for SqliteCalendarStore {
                 )
                 .await?,
             );
-            Self::_put_object(&mut *tx, principal, cal_id, &object_id, &object, overwrite).await?;
+            Self::put_object_impl(&mut *tx, principal, cal_id, &object_id, &object, overwrite)
+                .await?;
         }
 
         tx.commit().await.map_err(crate::Error::from)?;
@@ -1069,7 +1078,7 @@ impl CalendarWriteStore for SqliteCalendarStore {
             .await
             .map_err(crate::Error::from)?;
 
-        Self::_delete_object(&mut *tx, principal, cal_id, id, use_trashbin).await?;
+        Self::delete_object_impl(&mut *tx, principal, cal_id, id, use_trashbin).await?;
 
         let sync_token =
             Self::log_object_operation(&mut tx, principal, cal_id, id, ChangeOperation::Delete)
@@ -1097,7 +1106,7 @@ impl CalendarWriteStore for SqliteCalendarStore {
             .await
             .map_err(crate::Error::from)?;
 
-        Self::_restore_object(&mut *tx, principal, cal_id, object_id).await?;
+        Self::restore_object_impl(&mut *tx, principal, cal_id, object_id).await?;
 
         let sync_token =
             Self::log_object_operation(&mut tx, principal, cal_id, object_id, ChangeOperation::Add)
@@ -1116,14 +1125,14 @@ impl CalendarWriteStore for SqliteCalendarStore {
 impl CalendarStorePruneDeleted for SqliteCalendarStore {
     #[instrument(skip(self), fields(count = tracing::field::Empty))]
     async fn prune_deleted_calendars(&self, before: chrono::NaiveDate) -> Result<(), Error> {
-        let count = Self::_prune_deleted_calendars(&self.db, before).await?;
+        let count = Self::prune_deleted_calendars_impl(&self.db, before).await?;
         tracing::Span::current().record("count", count);
         Ok(())
     }
 
     #[instrument(skip(self), fields(count = tracing::field::Empty))]
     async fn prune_deleted_objects(&self, before: chrono::NaiveDate) -> Result<(), Error> {
-        let count = Self::_prune_deleted_objects(&self.db, before).await?;
+        let count = Self::prune_deleted_objects_impl(&self.db, before).await?;
         tracing::Span::current().record("count", count);
         Ok(())
     }

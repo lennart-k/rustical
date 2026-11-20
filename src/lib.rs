@@ -142,6 +142,10 @@ pub async fn cmd_serve(
         tokio::spawn(async move {
             dav_push_service.notifier_loop(update_recv).await;
         });
+        tokio::spawn(tasks::cleanup_expired_push_subscriptions(
+            dav_push_store.clone(),
+            shutdown_signal(),
+        ));
     }
 
     if config.frontend.enabled && config.frontend.admin.enabled() {

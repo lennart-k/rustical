@@ -43,8 +43,7 @@ a CalDAV/CardDAV server
 
 ## Contributing
 
-If you want to contribute bug fixes, tests, or smaller features for your use case, feel free to create a PR. :)
+If you want to contribute bug fixes, tests, or new features, feel free to create a PR. :)
+For larger changes I recommend to open up an issue first to discuss it.
 
-Larger contributions are also welcome, but please open up an issue first to discuss it.
-I'll feel extremely bad for rejecting the PR you put a lot of work into,
-but I also need to make sure that it's compatible with the plans I have for this project. :)
+Please don't submit code that was fully AI-authored without a human in the loop.

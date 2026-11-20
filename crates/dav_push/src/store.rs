@@ -1,5 +1,6 @@
 use crate::{Subscription, VapidKeypair, VapidPublicKeyB64};
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use rustical_store::Error;
 
 #[async_trait]
@@ -9,6 +10,9 @@ pub trait SubscriptionStore: Send + Sync + 'static {
     /// Returns whether a subscription under the id already existed
     async fn upsert_subscription(&self, sub: Subscription) -> Result<bool, Error>;
     async fn delete_subscription(&self, id: &str) -> Result<(), Error>;
+    /// Deletes all subscriptions that expired before `before` (UTC).
+    /// Returns the number of deleted subscriptions
+    async fn delete_expired_subscriptions(&self, before: DateTime<Utc>) -> Result<u64, Error>;
 }
 
 #[async_trait]
