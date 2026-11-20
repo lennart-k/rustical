@@ -59,15 +59,19 @@ This example will add a user to `group.mygroup` if it is in the IdP's `mygroup` 
 ```toml title="RustiCal configuration"
 [oidc.assign_memberships]
 mygroup = ["group.mygroup"]
+
+# Grants frontend admin settings access to users in the IdP group.
+admin_group = ["group.admin"]
 ```
 
 ```sh
 RUSTICAL_OIDC__ASSIGN_MEMBERSHIPS__mygroup: '["group.mygroup"]'
+RUSTICAL_OIDC__ASSIGN_MEMBERSHIPS__admin_group: '["group.admin"]'
 ```
 
 Note that:
 
-- The group will not be automatically created, you have to do that manually through the CLI
+- The group will not be automatically created, you have to do that manually through the CLI (or through the admin UI) unless it is created as a missing admin group during initial admin bootstrap
 - If adding a membership fails (e.g. because the principal is missing), the error will only be logged and the user can still log in
 - Assigning memberships only happens when the user logs in to the frontend using OIDC.
 - Assigning memberships ONLY ADDS memberships. You have to revoke them manually.

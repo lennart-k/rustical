@@ -1,0 +1,14 @@
+<h2>Principals and groups</h2>
+
+<admin-principal-table {% if oidc_configured %}oidc-configured{% endif %}{% if allow_password_login %} allow-password-login{% endif %}>
+  <p class="admin-meta">
+    <strong>Admin group:</strong>
+    {% match admin_group %}
+    {% when Some with (group) %}{{ group }}
+    {% when None %}none
+    {% endmatch %}
+    <span class="admin-separator">·</span>
+    <strong>Password login:</strong>
+    {% if allow_password_login %}enabled in server config{% else %}disabled in server config{% endif %}
+  </p>
+</admin-principal-table>

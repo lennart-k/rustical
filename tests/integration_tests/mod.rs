@@ -3,7 +3,7 @@ use axum::{body::Body, response::Response};
 use rstest::rstest;
 use rustical::{app::make_app, config::NextcloudLoginConfig};
 use rustical_caldav::CalDavConfig;
-use rustical_frontend::FrontendConfig;
+use rustical_frontend::{AdminConfig, FrontendConfig};
 use rustical_store_sqlite::tests::{TestStoreContext, test_store_context};
 use std::sync::Arc;
 use tower::ServiceExt;
@@ -25,6 +25,7 @@ pub fn get_app(context: TestStoreContext) -> axum::Router {
         FrontendConfig {
             enabled: true,
             allow_password_login: true,
+            admin: AdminConfig::default(),
         },
         None,
         CalDavConfig::default(),

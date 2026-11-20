@@ -5,7 +5,7 @@
 * SPDX-License-Identifier: BSD-3-Clause
 */
 var t$4 = globalThis;
-var e$5 = t$4.ShadowRoot && (void 0 === t$4.ShadyCSS || t$4.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype;
+var e$7 = t$4.ShadowRoot && (void 0 === t$4.ShadyCSS || t$4.ShadyCSS.nativeShadow) && "adoptedStyleSheets" in Document.prototype && "replace" in CSSStyleSheet.prototype;
 var s$4 = Symbol();
 var o$6 = /* @__PURE__ */ new WeakMap();
 var n$6 = class {
@@ -16,7 +16,7 @@ var n$6 = class {
 	get styleSheet() {
 		let t = this.o;
 		const s = this.t;
-		if (e$5 && void 0 === t) {
+		if (e$7 && void 0 === t) {
 			const e = void 0 !== s && 1 === s.length;
 			e && (t = o$6.get(s)), void 0 === t && ((this.o = t = new CSSStyleSheet()).replaceSync(this.cssText), e && o$6.set(s, t));
 		}
@@ -26,25 +26,25 @@ var n$6 = class {
 		return this.cssText;
 	}
 };
-var r$5 = (t) => new n$6("string" == typeof t ? t : t + "", void 0, s$4);
+var r$6 = (t) => new n$6("string" == typeof t ? t : t + "", void 0, s$4);
 var S$1 = (s, o) => {
-	if (e$5) s.adoptedStyleSheets = o.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
+	if (e$7) s.adoptedStyleSheets = o.map((t) => t instanceof CSSStyleSheet ? t : t.styleSheet);
 	else for (const e of o) {
 		const o = document.createElement("style"), n = t$4.litNonce;
 		void 0 !== n && o.setAttribute("nonce", n), o.textContent = e.cssText, s.appendChild(o);
 	}
 };
-var c$4 = e$5 ? (t) => t : (t) => t instanceof CSSStyleSheet ? ((t) => {
+var c$4 = e$7 ? (t) => t : (t) => t instanceof CSSStyleSheet ? ((t) => {
 	let e = "";
 	for (const s of t.cssRules) e += s.cssText;
-	return r$5(e);
+	return r$6(e);
 })(t) : t;
 // node_modules/.deno/@lit+reactive-element@2.1.2/node_modules/@lit/reactive-element/reactive-element.js
 /**
 * @license
 * Copyright 2017 Google LLC
 * SPDX-License-Identifier: BSD-3-Clause
-*/ var { is: i$4, defineProperty: e$4, getOwnPropertyDescriptor: h$4, getOwnPropertyNames: r$4, getOwnPropertySymbols: o$5, getPrototypeOf: n$5 } = Object, a$1 = globalThis, c$3 = a$1.trustedTypes, l$2 = c$3 ? c$3.emptyScript : "", p$2 = a$1.reactiveElementPolyfillSupport, d$2 = (t, s) => t, u$2 = {
+*/ var { is: i$4, defineProperty: e$6, getOwnPropertyDescriptor: h$4, getOwnPropertyNames: r$5, getOwnPropertySymbols: o$5, getPrototypeOf: n$5 } = Object, a$1 = globalThis, c$3 = a$1.trustedTypes, l$2 = c$3 ? c$3.emptyScript : "", p$2 = a$1.reactiveElementPolyfillSupport, d$2 = (t, s) => t, u$2 = {
 	toAttribute(t, s) {
 		switch (s) {
 			case Boolean:
@@ -92,7 +92,7 @@ var y$1 = class extends HTMLElement {
 	static createProperty(t, s = b$1) {
 		if (s.state && (s.attribute = !1), this._$Ei(), this.prototype.hasOwnProperty(t) && ((s = Object.create(s)).wrapped = !0), this.elementProperties.set(t, s), !s.noAccessor) {
 			const i = Symbol(), h = this.getPropertyDescriptor(t, i, s);
-			void 0 !== h && e$4(this.prototype, t, h);
+			void 0 !== h && e$6(this.prototype, t, h);
 		}
 	}
 	static getPropertyDescriptor(t, s, i) {
@@ -125,7 +125,7 @@ var y$1 = class extends HTMLElement {
 	static finalize() {
 		if (this.hasOwnProperty(d$2("finalized"))) return;
 		if (this.finalized = !0, this._$Ei(), this.hasOwnProperty(d$2("properties"))) {
-			const t = this.properties, s = [...r$4(t), ...o$5(t)];
+			const t = this.properties, s = [...r$5(t), ...o$5(t)];
 			for (const i of s) this.createProperty(i, t[i]);
 		}
 		const t = this[Symbol.metadata];
@@ -277,11 +277,11 @@ y$1.elementStyles = [], y$1.shadowRootOptions = { mode: "open" }, y$1[d$2("eleme
 var t$3 = globalThis;
 var i$3 = (t) => t;
 var s$3 = t$3.trustedTypes;
-var e$3 = s$3 ? s$3.createPolicy("lit-html", { createHTML: (t) => t }) : void 0;
+var e$5 = s$3 ? s$3.createPolicy("lit-html", { createHTML: (t) => t }) : void 0;
 var h$3 = "$lit$";
 var o$4 = `lit$${Math.random().toFixed(9).slice(2)}$`;
 var n$4 = "?" + o$4;
-var r$3 = `<${n$4}>`;
+var r$4 = `<${n$4}>`;
 var l$1 = document;
 var c$2 = () => l$1.createComment("");
 var a = (t) => null === t || "object" != typeof t && "function" != typeof t;
@@ -308,7 +308,7 @@ var C = /* @__PURE__ */ new WeakMap();
 var P = l$1.createTreeWalker(l$1, 129);
 function V(t, i) {
 	if (!u$1(t) || !t.hasOwnProperty("raw")) throw Error("invalid template strings array");
-	return void 0 !== e$3 ? e$3.createHTML(i) : i;
+	return void 0 !== e$5 ? e$5.createHTML(i) : i;
 }
 var N = (t, i) => {
 	const s = t.length - 1, e = [];
@@ -318,7 +318,7 @@ var N = (t, i) => {
 		let a, u, d = -1, f = 0;
 		for (; f < s.length && (c.lastIndex = f, u = c.exec(s), null !== u);) f = c.lastIndex, c === v$1 ? "!--" === u[1] ? c = _ : void 0 !== u[1] ? c = m$1 : void 0 !== u[2] ? (y.test(u[2]) && (n = RegExp("</" + u[2], "g")), c = p$1) : void 0 !== u[3] && (c = p$1) : c === p$1 ? ">" === u[0] ? (c = n ?? v$1, d = -1) : void 0 === u[1] ? d = -2 : (d = c.lastIndex - u[2].length, a = u[1], c = void 0 === u[3] ? p$1 : "\"" === u[3] ? $ : g) : c === $ || c === g ? c = p$1 : c === _ || c === m$1 ? c = v$1 : (c = p$1, n = void 0);
 		const x = c === p$1 && t[i + 1].startsWith("/>") ? " " : "";
-		l += c === v$1 ? s + r$3 : d >= 0 ? (e.push(a), s.slice(0, d) + h$3 + s.slice(d) + o$4 + x) : s + o$4 + (-2 === d ? i : x);
+		l += c === v$1 ? s + r$4 : d >= 0 ? (e.push(a), s.slice(0, d) + h$3 + s.slice(d) + o$4 + x) : s + o$4 + (-2 === d ? i : x);
 	}
 	return [V(t, l + (t[s] || "<?>") + (2 === i ? "</svg>" : 3 === i ? "</math>" : "")), e];
 };
@@ -617,7 +617,7 @@ var t$2 = (t) => (e, o) => {
 	reflect: !1,
 	hasChanged: f$3
 };
-var r$2 = (t = o$2, e, r) => {
+var r$3 = (t = o$2, e, r) => {
 	const { kind: n, metadata: i } = r;
 	let s = globalThis.litPropertyMetadata.get(i);
 	if (void 0 === s && globalThis.litPropertyMetadata.set(i, s = /* @__PURE__ */ new Map()), "setter" === n && ((t = Object.create(t)).wrapped = !0), s.set(r.name, t), "accessor" === n) {
@@ -642,7 +642,7 @@ var r$2 = (t = o$2, e, r) => {
 	throw Error("Unsupported decorator location: " + n);
 };
 function n$3(t) {
-	return (e, o) => "object" == typeof o ? r$2(t, e, o) : ((t, e, o) => {
+	return (e, o) => "object" == typeof o ? r$3(t, e, o) : ((t, e, o) => {
 		const r = e.hasOwnProperty(o);
 		return e.constructor.createProperty(o, t), r ? Object.getOwnPropertyDescriptor(e, o) : void 0;
 	})(t, e, o);
@@ -652,7 +652,503 @@ function n$3(t) {
 * @license
 * Copyright 2017 Google LLC
 * SPDX-License-Identifier: BSD-3-Clause
+*/ function r$2(r) {
+	return n$3({
+		...r,
+		state: !0,
+		attribute: !1
+	});
+}
+// node_modules/.deno/@lit+reactive-element@2.1.2/node_modules/@lit/reactive-element/decorators/base.js
+/**
+* @license
+* Copyright 2017 Google LLC
+* SPDX-License-Identifier: BSD-3-Clause
 */
+var e$4 = (e, t, c) => (c.configurable = !0, c.enumerable = !0, Reflect.decorate && "object" != typeof t && Object.defineProperty(e, t, c), c);
+// node_modules/.deno/@lit+reactive-element@2.1.2/node_modules/@lit/reactive-element/decorators/query.js
+/**
+* @license
+* Copyright 2017 Google LLC
+* SPDX-License-Identifier: BSD-3-Clause
+*/ function e$3(e, r) {
+	return (n, s, i) => {
+		const o = (t) => t.renderRoot?.querySelector(e) ?? null;
+		if (r) {
+			const { get: e, set: r } = "object" == typeof s ? n : i ?? (() => {
+				const t = Symbol();
+				return {
+					get() {
+						return this[t];
+					},
+					set(e) {
+						this[t] = e;
+					}
+				};
+			})();
+			return e$4(n, s, { get() {
+				let t = e.call(this);
+				return void 0 === t && (t = o(this), (null !== t || this.hasUpdated) && r.call(this, t)), t;
+			} });
+		}
+		return e$4(n, s, { get() {
+			return o(this);
+		} });
+	};
+}
+// lib/admin-shared.ts
+var PRINCIPALS_URL = "/frontend/settings/principals";
+var SEARCH_URL = "/frontend/settings/principals/search";
+var SUGGEST_URL = "/frontend/settings/principals/suggest";
+var LOGIN_URL = "/frontend/login";
+var ADMIN_CHANGED_EVENT = "admin-principal-changed";
+var ADMIN_DELETED_EVENT = "admin-principal-deleted";
+var ADMIN_CREATED_EVENT = "admin-principal-created";
+function principalPath(id) {
+	return `/frontend/settings/principals/${encodeURIComponent(id)}`;
+}
+function groupPath(id) {
+	return `/frontend/settings/groups/${encodeURIComponent(id)}`;
+}
+async function adminFetch(input, init) {
+	const response = await fetch(input, init);
+	if (response.status === 401) window.location.assign(LOGIN_URL);
+	return response;
+}
+function formParams(form) {
+	const params = new URLSearchParams();
+	for (const [key, value] of new FormData(form)) params.append(key, value instanceof File ? value.name : value);
+	return params;
+}
+async function submitForm(action, data) {
+	const response = await adminFetch(action, {
+		method: "POST",
+		body: data.toString(),
+		headers: { "Content-Type": "application/x-www-form-urlencoded" }
+	});
+	if (!response.ok) throw new Error(await response.text() || "The action failed.");
+}
+var overlay = null;
+var overlayContent = null;
+function ensureOverlay() {
+	if (overlay) return;
+	overlay = document.createElement("dialog");
+	overlay.className = "admin-overlay";
+	overlay.innerHTML = "<div class=\"admin-overlay-panel\" data-admin-overlay-panel><form method=\"dialog\" class=\"admin-overlay-controls\"><button class=\"admin-overlay-close\" value=\"close\">Close</button></form><div data-admin-overlay-content></div></div>";
+	document.body.append(overlay);
+	overlayContent = overlay.querySelector("[data-admin-overlay-content]");
+}
+function openAdminOverlay(content) {
+	ensureOverlay();
+	overlayContent?.replaceChildren(content);
+	if (!overlay?.open) overlay?.showModal();
+}
+function closeAdminOverlay() {
+	overlay?.close();
+}
+// \0@oxc-project+runtime@0.156.0/helpers/esm/decorate.js
+function __decorate(decorators, target, key, desc) {
+	var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+	if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+	else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+	return c > 3 && r && Object.defineProperty(target, key, r), r;
+}
+// lib/admin-principal-suggest.ts
+var nextSuggestId = 0;
+var AdminPrincipalSuggest = class AdminPrincipalSuggest extends i$2 {
+	constructor() {
+		super();
+		this.kind = "all";
+		this.name = "";
+		this.placeholder = "";
+		this.items = [];
+		this.visible = false;
+		this.activeIndex = -1;
+		this.inputId = `admin-suggest-input-${nextSuggestId}`;
+		this.listId = `admin-suggest-list-${nextSuggestId}`;
+		this.closeOutside = (event) => {
+			if (!this.contains(event.target)) this.hide();
+		};
+		nextSuggestId += 1;
+	}
+	createRenderRoot() {
+		return this;
+	}
+	connectedCallback() {
+		super.connectedCallback();
+		document.addEventListener("mousedown", this.closeOutside);
+	}
+	disconnectedCallback() {
+		document.removeEventListener("mousedown", this.closeOutside);
+		super.disconnectedCallback();
+	}
+	get value() {
+		return this.input?.value ?? "";
+	}
+	updated() {
+		this.querySelector("li[aria-selected=\"true\"]")?.scrollIntoView({ block: "nearest" });
+	}
+	onInput() {
+		if (this.timer) clearTimeout(this.timer);
+		this.timer = setTimeout(() => this.load(), 140);
+	}
+	async load() {
+		const q = this.input.value.trim();
+		if (!q) {
+			this.hide();
+			return;
+		}
+		const params = new URLSearchParams({
+			kind: this.kind,
+			q,
+			limit: "10"
+		});
+		try {
+			const response = await adminFetch(`${SUGGEST_URL}?${params.toString()}`, { headers: { Accept: "application/json" } });
+			if (!response.ok) {
+				this.hide();
+				return;
+			}
+			const data = await response.json();
+			this.items = data.items ?? [];
+			this.visible = this.items.length > 0;
+			this.activeIndex = -1;
+		} catch {
+			this.hide();
+		}
+	}
+	onKeydown(event) {
+		if (event.key === "Escape") {
+			this.hide();
+			return;
+		}
+		if (event.key === "ArrowDown") {
+			event.preventDefault();
+			this.move(1);
+			return;
+		}
+		if (event.key === "ArrowUp") {
+			event.preventDefault();
+			this.move(-1);
+			return;
+		}
+		if (event.key === "Enter" && this.activeIndex >= 0) {
+			const item = this.items[this.activeIndex];
+			if (item) {
+				event.preventDefault();
+				this.pick(item);
+			}
+		}
+	}
+	move(delta) {
+		if (this.items.length === 0) return;
+		this.activeIndex = Math.min(Math.max(this.activeIndex + delta, 0), this.items.length - 1);
+	}
+	hide() {
+		this.visible = false;
+		this.activeIndex = -1;
+	}
+	pick(item) {
+		this.input.value = item.id;
+		this.hide();
+		this.dispatchEvent(new CustomEvent("suggest-pick", {
+			bubbles: true,
+			composed: true,
+			detail: { id: item.id }
+		}));
+	}
+	suggestionMeta(item) {
+		const extra = [];
+		if (item.principal_type) extra.push(item.principal_type);
+		if (item.is_admin) extra.push("admin");
+		if (item.memberships.length > 0) extra.push(`${item.memberships.length} groups`);
+		return extra.join(" · ");
+	}
+	render() {
+		return b`
+      <input
+        id=${this.inputId}
+        type="search"
+        name=${this.name}
+        autocomplete="off"
+        placeholder=${this.placeholder}
+        aria-controls=${this.listId}
+        aria-expanded=${this.visible ? "true" : "false"}
+        @input=${this.onInput}
+        @keydown=${this.onKeydown}
+      />
+      <ul id=${this.listId} class="admin-suggestions" ?hidden=${!this.visible}>
+        ${this.items.map((item, index) => b`
+          <li
+            data-id=${item.id}
+            aria-selected=${index === this.activeIndex ? "true" : "false"}
+            @mousedown=${(event) => {
+			event.preventDefault();
+			this.pick(item);
+		}}
+          >
+            <span class="admin-suggestion-name">${item.display_name ? `${item.id} · ${item.display_name}` : item.id}</span>
+            <span class="admin-suggestion-meta">${this.suggestionMeta(item)}</span>
+          </li>
+        `)}
+      </ul>
+    `;
+	}
+};
+__decorate([n$3()], AdminPrincipalSuggest.prototype, "kind", void 0);
+__decorate([n$3()], AdminPrincipalSuggest.prototype, "name", void 0);
+__decorate([n$3()], AdminPrincipalSuggest.prototype, "placeholder", void 0);
+__decorate([e$3("input")], AdminPrincipalSuggest.prototype, "input", void 0);
+__decorate([r$2()], AdminPrincipalSuggest.prototype, "items", void 0);
+__decorate([r$2()], AdminPrincipalSuggest.prototype, "visible", void 0);
+__decorate([r$2()], AdminPrincipalSuggest.prototype, "activeIndex", void 0);
+AdminPrincipalSuggest = __decorate([t$2("admin-principal-suggest")], AdminPrincipalSuggest);
+// lib/admin-principal-card.ts
+var AdminPrincipalCard = class AdminPrincipalCard extends i$2 {
+	constructor(..._args) {
+		super(..._args);
+		this.principalId = "";
+		this.embedded = false;
+		this.data = null;
+		this.error = "";
+		this.showPasswordForm = false;
+	}
+	createRenderRoot() {
+		return this;
+	}
+	firstUpdated() {
+		this.load();
+	}
+	async load() {
+		if (!this.principalId) {
+			this.error = "No principal id given.";
+			return;
+		}
+		try {
+			const response = await adminFetch(`${principalPath(this.principalId)}/data`, { headers: { Accept: "application/json" } });
+			if (!response.ok) {
+				this.data = null;
+				this.error = await response.text() || "Could not load this principal.";
+				return;
+			}
+			this.data = await response.json();
+			this.error = "";
+			this.showPasswordForm = false;
+		} catch (error) {
+			this.data = null;
+			this.error = String(error.message ?? error);
+		}
+	}
+	notifyChanged() {
+		this.dispatchEvent(new CustomEvent(ADMIN_CHANGED_EVENT, {
+			bubbles: true,
+			composed: true
+		}));
+	}
+	async run(action, data) {
+		try {
+			await submitForm(action, data);
+		} catch (error) {
+			alert(String(error.message ?? error));
+			return;
+		}
+		await this.load();
+		this.notifyChanged();
+	}
+	saveProfile(event) {
+		event.preventDefault();
+		const form = event.target;
+		this.run(`${principalPath(this.principalId)}/update`, formParams(form));
+	}
+	changePassword(event) {
+		event.preventDefault();
+		const form = event.target;
+		this.run(`${principalPath(this.principalId)}/update`, formParams(form));
+	}
+	toggleOAuthOnly(event) {
+		if (event.target.checked) this.run(`${principalPath(this.principalId)}/update`, new URLSearchParams({ remove_password: "on" }));
+		else this.showPasswordForm = true;
+	}
+	addMembership(event) {
+		event.preventDefault();
+		const form = event.target;
+		const data = formParams(form);
+		form.reset();
+		this.run(`${principalPath(this.principalId)}/memberships/add`, data);
+	}
+	removeMembership(group) {
+		if (this.data?.admin_group === group && this.data.is_current_user && !confirm("Remove yourself from the admin group? You will lose admin access until the next server start, when initial admins are added back.")) return;
+		this.run(`${principalPath(this.principalId)}/memberships/remove`, new URLSearchParams({ group }));
+	}
+	addGroupMember(event) {
+		event.preventDefault();
+		const form = event.target;
+		const data = formParams(form);
+		form.reset();
+		this.run(`${groupPath(this.principalId)}/members/add`, data);
+	}
+	removeGroupMember(memberId) {
+		this.run(`${groupPath(this.principalId)}/members/remove`, new URLSearchParams({ principal: memberId }));
+	}
+	async deletePrincipal() {
+		const message = this.data !== null && this.data.admin_group === this.principalId ? `Delete the admin group "${this.principalId}"? All admins will lose admin access until the next server start, when initial admins are added back.` : `Delete principal "${this.principalId}"?`;
+		if (!confirm(message)) return;
+		try {
+			await submitForm(`${principalPath(this.principalId)}/delete`, new URLSearchParams());
+		} catch (error) {
+			alert(String(error.message ?? error));
+			return;
+		}
+		if (this.embedded) this.dispatchEvent(new CustomEvent(ADMIN_DELETED_EVENT, {
+			bubbles: true,
+			composed: true
+		}));
+		else window.location.assign(PRINCIPALS_URL);
+	}
+	submitClosestForm(event) {
+		const form = event.target.closest("form");
+		if (form && typeof form.requestSubmit === "function") form.requestSubmit();
+	}
+	render() {
+		return b`
+      ${this.embedded ? A : b`
+        <p class="admin-overlay-back"><a href=${PRINCIPALS_URL}>Back to principals and groups</a></p>
+      `}
+      <h2>${this.principalId}</h2>
+      ${this.error ? b`<p class="admin-status">${this.error}</p>` : A}
+      ${this.data ? this.renderCards(this.data) : A}
+    `;
+	}
+	renderCards(data) {
+		const principal = data.principal;
+		const passwordFieldHidden = data.oidc_configured && !principal.has_password && !this.showPasswordForm;
+		return b`
+      <div class="admin-grid">
+        <div class="admin-card">
+          <p><strong>Admin:</strong> ${principal.is_admin ? "yes" : "no"}</p>
+          <p><strong>Type:</strong> ${principal.principal_type}</p>
+          <p><strong>Local password:</strong> ${principal.has_password ? "enabled" : "disabled"}</p>
+          ${data.is_current_user ? b`<p>You are signed in as this principal.</p>` : A}
+        </div>
+
+        <form class="admin-card" @submit=${this.saveProfile}>
+          <h3>Principal</h3>
+          <label>
+            Display name
+            <input type="text" name="displayname" .value=${principal.displayname ?? ""} />
+          </label>
+          <button type="submit">Save changes</button>
+        </form>
+
+        ${data.allow_password_login ? b`
+          <div class="admin-card">
+            <h3>Authentication</h3>
+            ${data.oidc_configured ? b`
+              <label class="admin-oauth-toggle">
+                <input type="checkbox" .checked=${!principal.has_password} @change=${this.toggleOAuthOnly} />
+                <span>OAuth only</span>
+              </label>
+            ` : A}
+            <form ?hidden=${passwordFieldHidden} @submit=${this.changePassword}>
+              <label>
+                Set or change password
+                <input type="password" name="password" autocomplete="new-password" placeholder="Leave empty to keep the current password" />
+              </label>
+              <button type="submit">Change password</button>
+            </form>
+          </div>
+        ` : A}
+
+        ${this.renderMemberships(principal)}
+
+        ${principal.principal_type === "GROUP" ? this.renderGroupMembers(data) : this.renderMembers(data)}
+
+        <section class="admin-danger-zone">
+          <button
+            type="button"
+            class="delete"
+            ?disabled=${data.is_current_user}
+            title=${data.is_current_user ? "You cannot delete the signed-in principal" : A}
+            @click=${this.deletePrincipal}
+          >Delete principal</button>
+        </section>
+      </div>
+    `;
+	}
+	renderMemberships(principal) {
+		return b`
+      <section class="admin-card">
+        <h3>Group memberships</h3>
+        ${principal.memberships.length > 0 ? b`
+          <table class="admin-inline-table">
+            <tbody>
+              ${principal.memberships.map((membership) => b`
+                <tr>
+                  <td>${membership}</td>
+                  <td><button type="button" @click=${() => this.removeMembership(membership)}>Remove</button></td>
+                </tr>
+              `)}
+            </tbody>
+          </table>
+        ` : b`<p>This principal has no group memberships.</p>`}
+
+        <form class="admin-suggest" @submit=${this.addMembership}>
+          <label>
+            Add group
+            <admin-principal-suggest kind="group" name="group" placeholder="Search groups by ID or display name" @suggest-pick=${this.submitClosestForm}></admin-principal-suggest>
+          </label>
+          <button type="submit">Add group</button>
+        </form>
+      </section>
+    `;
+	}
+	renderGroupMembers(data) {
+		return b`
+      <section class="admin-card">
+        <h3>Group members</h3>
+        ${data.members.length > 0 ? b`
+          <table class="admin-inline-table">
+            <tbody>
+              ${data.members.map((member) => b`
+                <tr>
+                  <td>${member.id}</td>
+                  <td>${member.principal_type}</td>
+                  <td><button type="button" @click=${() => this.removeGroupMember(member.id)}>Remove</button></td>
+                </tr>
+              `)}
+            </tbody>
+          </table>
+        ` : b`<p>No principals are members of this group.</p>`}
+
+        <form class="admin-suggest" @submit=${this.addGroupMember}>
+          <label>
+            Add principal to group
+            <admin-principal-suggest kind="person" name="principal" placeholder="Search users by ID or display name" @suggest-pick=${this.submitClosestForm}></admin-principal-suggest>
+          </label>
+          <button type="submit">Add member</button>
+        </form>
+      </section>
+    `;
+	}
+	renderMembers(data) {
+		return b`
+      <section class="admin-card">
+        <h3>Members</h3>
+        ${data.members.length > 0 ? b`
+          <ul>
+            ${data.members.map((member) => b`<li>${member.id} · ${member.principal_type}</li>`)}
+          </ul>
+        ` : b`<p>No principals directly implement this principal.</p>`}
+      </section>
+    `;
+	}
+};
+__decorate([n$3({ attribute: "principal-id" })], AdminPrincipalCard.prototype, "principalId", void 0);
+__decorate([n$3({ type: Boolean })], AdminPrincipalCard.prototype, "embedded", void 0);
+__decorate([r$2()], AdminPrincipalCard.prototype, "data", void 0);
+__decorate([r$2()], AdminPrincipalCard.prototype, "error", void 0);
+__decorate([r$2()], AdminPrincipalCard.prototype, "showPasswordForm", void 0);
+AdminPrincipalCard = __decorate([t$2("admin-principal-card")], AdminPrincipalCard);
 // node_modules/.deno/lit-html@3.3.3/node_modules/lit-html/directive-helpers.js
 /**
 * @license
@@ -783,6 +1279,323 @@ var n = e$1(class extends f {
 		this.rt(this.ct);
 	}
 });
+// lib/create-principal-form.ts
+var CreatePrincipalForm = class CreatePrincipalForm extends i$2 {
+	constructor(..._args) {
+		super(..._args);
+		this.oidcConfigured = false;
+		this.allowPasswordLogin = false;
+		this.dialog = e();
+		this.form = e();
+	}
+	createRenderRoot() {
+		return this;
+	}
+	render() {
+		return b`
+      <button class="button" @click=${() => this.dialog.value?.showModal()}>New user</button>
+      <dialog ${n(this.dialog)}>
+        <h3>Create user</h3>
+        <form class="admin-create-form" ${n(this.form)} @submit=${this.submit}>
+          <label>
+            ID
+            <input type="text" name="id" required />
+          </label>
+          <label>
+            Display name
+            <input type="text" name="displayname" />
+          </label>
+          <label>
+            Type
+            <select name="principal_type">
+              <option value="INDIVIDUAL" selected>Individual</option>
+              <option value="RESOURCE">Resource</option>
+              <option value="ROOM">Room</option>
+            </select>
+          </label>
+          ${this.allowPasswordLogin ? b`
+            <label>
+              Password
+              <input type="password" name="password" autocomplete="new-password" placeholder=${this.oidcConfigured ? "Leave empty for OAuth only" : "Optional local password"} />
+            </label>
+          ` : A}
+          ${this.oidcConfigured ? b`
+            <label>
+              <input type="checkbox" name="oauth_only" value="on" />
+              OAuth only (create without a local password)
+            </label>
+          ` : A}
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Create user</button>
+            <button type="button" class="cancel" @click=${() => this.dialog.value?.close()}>Cancel</button>
+          </div>
+        </form>
+      </dialog>
+    `;
+	}
+	async submit(e) {
+		e.preventDefault();
+		const form = this.form.value;
+		if (!form) return;
+		const data = formParams(form);
+		try {
+			await submitForm("/frontend/settings/users/create", data);
+		} catch (error) {
+			alert(String(error.message ?? error));
+			return;
+		}
+		form.reset();
+		this.dialog.value?.close();
+		this.dispatchEvent(new CustomEvent(ADMIN_CREATED_EVENT, {
+			bubbles: true,
+			composed: true,
+			detail: { id: data.get("id") }
+		}));
+	}
+};
+__decorate([n$3({
+	type: Boolean,
+	attribute: "oidc-configured"
+})], CreatePrincipalForm.prototype, "oidcConfigured", void 0);
+__decorate([n$3({
+	type: Boolean,
+	attribute: "allow-password-login"
+})], CreatePrincipalForm.prototype, "allowPasswordLogin", void 0);
+CreatePrincipalForm = __decorate([t$2("create-principal-form")], CreatePrincipalForm);
+// lib/create-group-form.ts
+var CreateGroupForm = class CreateGroupForm extends i$2 {
+	constructor(..._args) {
+		super(..._args);
+		this.dialog = e();
+		this.form = e();
+	}
+	createRenderRoot() {
+		return this;
+	}
+	render() {
+		return b`
+      <button class="button" @click=${() => this.dialog.value?.showModal()}>New group</button>
+      <dialog ${n(this.dialog)}>
+        <h3>Create group</h3>
+        <form class="admin-create-form" ${n(this.form)} @submit=${this.submit}>
+          <label>
+            ID
+            <input type="text" name="id" required />
+          </label>
+          <label>
+            Display name
+            <input type="text" name="displayname" />
+          </label>
+          <div class="margin-top-m">
+            <button type="submit" class="primary">Create group</button>
+            <button type="button" class="cancel" @click=${() => this.dialog.value?.close()}>Cancel</button>
+          </div>
+        </form>
+      </dialog>
+    `;
+	}
+	async submit(e) {
+		e.preventDefault();
+		const form = this.form.value;
+		if (!form) return;
+		const data = formParams(form);
+		try {
+			await submitForm("/frontend/settings/groups/create", data);
+		} catch (error) {
+			alert(String(error.message ?? error));
+			return;
+		}
+		form.reset();
+		this.dialog.value?.close();
+		this.dispatchEvent(new CustomEvent(ADMIN_CREATED_EVENT, {
+			bubbles: true,
+			composed: true,
+			detail: { id: data.get("id") }
+		}));
+	}
+};
+CreateGroupForm = __decorate([t$2("create-group-form")], CreateGroupForm);
+// lib/admin-principal-table.ts
+var AdminPrincipalTable = class AdminPrincipalTable extends i$2 {
+	constructor(..._args) {
+		super(..._args);
+		this.oidcConfigured = false;
+		this.allowPasswordLogin = false;
+		this.q = "";
+		this.page = 1;
+		this.items = [];
+		this.result = null;
+		this.error = "";
+		this.reload = () => {
+			this.load();
+		};
+		this.onDeleted = () => {
+			closeAdminOverlay();
+			this.load();
+		};
+		this.onCreated = (event) => {
+			this.load();
+			const id = event.detail?.id;
+			if (id) this.openDetail(id);
+		};
+	}
+	createRenderRoot() {
+		return this;
+	}
+	connectedCallback() {
+		super.connectedCallback();
+		const params = new URLSearchParams(window.location.search);
+		this.q = params.get("q") ?? "";
+		const page = Number(params.get("page") ?? "1");
+		this.page = Number.isFinite(page) && page >= 1 ? page : 1;
+		document.addEventListener(ADMIN_CHANGED_EVENT, this.reload);
+		document.addEventListener(ADMIN_DELETED_EVENT, this.onDeleted);
+		document.addEventListener(ADMIN_CREATED_EVENT, this.onCreated);
+		this.load();
+	}
+	disconnectedCallback() {
+		document.removeEventListener(ADMIN_CHANGED_EVENT, this.reload);
+		document.removeEventListener(ADMIN_DELETED_EVENT, this.onDeleted);
+		document.removeEventListener(ADMIN_CREATED_EVENT, this.onCreated);
+		super.disconnectedCallback();
+	}
+	async load() {
+		const params = new URLSearchParams();
+		if (this.q) params.set("q", this.q);
+		params.set("page", String(this.page));
+		try {
+			const response = await adminFetch(`${SEARCH_URL}?${params.toString()}`, { headers: { Accept: "application/json" } });
+			if (!response.ok) {
+				this.items = [];
+				this.result = null;
+				this.error = await response.text();
+				return;
+			}
+			const data = await response.json();
+			this.items = data.items ?? [];
+			this.result = data;
+			this.error = "";
+			this.updateUrl();
+		} catch (error) {
+			this.items = [];
+			this.result = null;
+			this.error = String(error.message ?? error);
+		}
+	}
+	onSearch(event) {
+		this.q = event.target.value;
+		this.page = 1;
+		if (this.timer) clearTimeout(this.timer);
+		this.timer = setTimeout(() => this.load(), 160);
+	}
+	goToPage(page) {
+		this.page = page;
+		this.load();
+	}
+	openDetail(id) {
+		const card = document.createElement("admin-principal-card");
+		card.principalId = id;
+		card.embedded = true;
+		openAdminOverlay(card);
+	}
+	updateUrl() {
+		const url = new URL(window.location.href);
+		if (this.q) url.searchParams.set("q", this.q);
+		else url.searchParams.delete("q");
+		if (this.page > 1) url.searchParams.set("page", String(this.page));
+		else url.searchParams.delete("page");
+		window.history.replaceState({}, "", url);
+	}
+	render() {
+		return b`
+      <section class="admin-list">
+        <div class="admin-toolbar">
+          <div class="admin-search">
+            <label class="admin-search-label" for="admin-search">Search principals and groups</label>
+            <input
+              id="admin-search"
+              type="search"
+              .value=${this.q}
+              placeholder="Search by ID, display name, type, or group"
+              autocomplete="off"
+              @input=${this.onSearch}
+            />
+          </div>
+          <create-principal-form ?oidc-configured=${this.oidcConfigured} ?allow-password-login=${this.allowPasswordLogin}></create-principal-form>
+          <create-group-form></create-group-form>
+        </div>
+
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Display name</th>
+              <th>Type</th>
+              <th>Groups</th>
+              <th>Admin</th>
+              <th>Password</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${this.error ? b`<tr><td colspan="6">${this.error}</td></tr>` : this.items.length === 0 ? b`<tr><td colspan="6">No principals match this search.</td></tr>` : this.items.map((item) => b`
+            <tr
+              class="admin-row"
+              tabindex="0"
+              role="button"
+              @click=${() => this.openDetail(item.id)}
+              @keydown=${(event) => {
+			if (event.key === "Enter" || event.key === " ") {
+				event.preventDefault();
+				this.openDetail(item.id);
+			}
+		}}
+            >
+              <td>${item.id}</td>
+              <td>${item.display_name ?? ""}</td>
+              <td>${item.principal_type}</td>
+              <td>${item.memberships.join(", ")}</td>
+              <td>${item.is_admin ? "yes" : "no"}</td>
+              <td>${item.has_password ? "yes" : "no"}</td>
+            </tr>
+          `)}
+          </tbody>
+          <tfoot>
+            ${this.result ? this.renderPagination(this.result) : A}
+          </tfoot>
+        </table>
+      </section>
+    `;
+	}
+	renderPagination(result) {
+		const previousPage = result.previous_page;
+		const nextPage = result.next_page;
+		return b`
+      <tr>
+        <td colspan="6">
+          <div class="admin-pagination">
+            <span>${result.total} result(s) · page ${result.page} of ${result.total_pages} · max ${result.per_page}</span>
+            ${previousPage ? b`<button type="button" @click=${() => this.goToPage(previousPage)}>Previous</button>` : A}
+            ${nextPage ? b`<button type="button" @click=${() => this.goToPage(nextPage)}>Next</button>` : A}
+          </div>
+        </td>
+      </tr>
+    `;
+	}
+};
+__decorate([n$3({
+	type: Boolean,
+	attribute: "oidc-configured"
+})], AdminPrincipalTable.prototype, "oidcConfigured", void 0);
+__decorate([n$3({
+	type: Boolean,
+	attribute: "allow-password-login"
+})], AdminPrincipalTable.prototype, "allowPasswordLogin", void 0);
+__decorate([r$2()], AdminPrincipalTable.prototype, "q", void 0);
+__decorate([r$2()], AdminPrincipalTable.prototype, "page", void 0);
+__decorate([r$2()], AdminPrincipalTable.prototype, "items", void 0);
+__decorate([r$2()], AdminPrincipalTable.prototype, "result", void 0);
+__decorate([r$2()], AdminPrincipalTable.prototype, "error", void 0);
+AdminPrincipalTable = __decorate([t$2("admin-principal-table")], AdminPrincipalTable);
 // lib/index.ts
 function escapeXml(unsafe) {
 	return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
@@ -805,13 +1618,6 @@ var SVG_ICON_INTERNET = w`<!-- Adapted from https://iconoir.com/ -->
   <path fill-rule="evenodd" clip-rule="evenodd" d="M21.8789 17.9174C22.3727 18.2211 22.3423 18.9604 21.8337 19.0181L19.2671 19.309L18.1159 21.6213C17.8878 22.0795 17.1827 21.8552 17.0661 21.2873L15.8108 15.1713C15.7123 14.6913 16.1437 14.3892 16.561 14.646L21.8789 17.9174Z"></path>
 </svg>
 `;
-// \0@oxc-project+runtime@0.156.0/helpers/esm/decorate.js
-function __decorate(decorators, target, key, desc) {
-	var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-	if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-	else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-	return c > 3 && r && Object.defineProperty(target, key, r), r;
-}
 // lib/create-addressbook-form.ts
 var CreateAddressbookForm = class CreateAddressbookForm extends i$2 {
 	constructor() {
@@ -1641,4 +2447,4 @@ __decorate([n$3()], GenerateAppTokenForm.prototype, "user", void 0);
 __decorate([n$3()], GenerateAppTokenForm.prototype, "token", void 0);
 __decorate([n$3()], GenerateAppTokenForm.prototype, "uaApple", void 0);
 GenerateAppTokenForm = __decorate([t$2("generate-app-token-form")], GenerateAppTokenForm);
-export { CreateAddressbookForm, CreateBirthdayCalendarForm, CreateCalendarForm, DeleteButton, EditAddressbookForm, EditCalendarForm, GenerateAppTokenForm, ImportAddressbookForm, ImportCalendarForm };
+export { AdminPrincipalCard, AdminPrincipalSuggest, AdminPrincipalTable, CreateAddressbookForm, CreateBirthdayCalendarForm, CreateCalendarForm, CreateGroupForm, CreatePrincipalForm, DeleteButton, EditAddressbookForm, EditCalendarForm, GenerateAppTokenForm, ImportAddressbookForm, ImportCalendarForm };
