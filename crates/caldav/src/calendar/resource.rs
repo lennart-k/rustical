@@ -1,7 +1,7 @@
 use super::prop::{SupportedCalendarComponentSet, SupportedCalendarData};
 use crate::Error;
 use crate::calendar::prop::{ReportMethod, SupportedCollationSet};
-use caldata::IcalParser;
+use caldata::IcalTimeZoneObjectParser;
 use caldata::types::CalDateTime;
 use chrono::{DateTime, Utc};
 use derive_more::derive::{From, Into};
@@ -219,7 +219,7 @@ impl Resource for CalendarResource {
                 CalendarProp::CalendarTimezone(timezone) => {
                     if let Some(tz) = timezone {
                         // TODO: Proper error (calendar-timezone precondition)
-                        let calendar = IcalParser::from_slice(tz.as_bytes())
+                        let timezone = IcalTimeZoneObjectParser::from_slice(tz.as_bytes())
                             .next()
                             .ok_or_else(|| {
                                 rustical_dav::Error::BadRequest(
@@ -230,15 +230,15 @@ impl Resource for CalendarResource {
                                 rustical_dav::Error::BadRequest(
                                     "No timezone data provided".to_owned(),
                                 )
-                            })?;
+                            })?
+                            .timezone;
 
-                        let timezone = calendar.vtimezones.values().next().ok_or_else(|| {
-                            rustical_dav::Error::BadRequest("No timezone data provided".to_owned())
-                        })?;
-                        let timezone: Option<chrono_tz::Tz> = timezone.into();
-                        let timezone = timezone.ok_or_else(|| {
-                            rustical_dav::Error::BadRequest("No timezone data provided".to_owned())
-                        })?;
+                        let timezone =
+                            chrono_tz::Tz::from_str(timezone.get_tzid()).map_err(|_| {
+                                rustical_dav::Error::BadRequest(
+                                    "No timezone data provided".to_owned(),
+                                )
+                            })?;
                         self.cal.timezone_id = Some(timezone.name().to_owned());
                     }
                     Ok(())

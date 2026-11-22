@@ -1,5 +1,7 @@
+use std::borrow::Cow;
+
 use super::{Allof, ParamFilterElement};
-use caldata::{component::Component, parser::ContentLine};
+use caldata::{component::GetContentLines, parser::ContentLine};
 use rustical_dav::xml::TextMatchElement;
 use rustical_ical::AddressObject;
 use rustical_xml::XmlDeserialize;
@@ -62,16 +64,22 @@ impl PropFilterElement {
         }
 
         // The filter matches when one property instance matches
-        properties.any(|prop| self.match_property(prop))
+        properties.any(|prop| self.match_property(prop.as_ref()))
     }
 }
 
 pub trait PropFilterable {
-    fn get_named_properties<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a ContentLine>;
+    fn get_named_properties<'a>(
+        &'a self,
+        name: &'a str,
+    ) -> impl Iterator<Item = Cow<'a, ContentLine>>;
 }
 
 impl PropFilterable for AddressObject {
-    fn get_named_properties<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a ContentLine> {
-        self.get_vcard().get_named_properties(name)
+    fn get_named_properties<'a>(
+        &'a self,
+        name: &'a str,
+    ) -> impl Iterator<Item = Cow<'a, ContentLine>> {
+        self.get_vcard().get_named_content_line(name).into_iter()
     }
 }

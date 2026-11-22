@@ -1,12 +1,8 @@
 use std::sync::OnceLock;
 
 use crate::Error;
-use caldata::{
-    IcalObjectParser,
-    component::{CalendarInnerData, IcalCalendarObject},
-    generator::Emitter,
-    parser::ParserOptions,
-};
+use caldata::{CalendarInnerData, IcalCalendarObject};
+use caldata::{IcalObjectParser, generator::Emitter, parser::ParserOptions};
 use derive_more::Display;
 use hex::ToHex;
 use serde::Deserialize;

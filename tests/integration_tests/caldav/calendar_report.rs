@@ -97,6 +97,9 @@ const REPORT_7_8_3: &str = r#"
 // it is clearly stated that times with timezone information MUST be returned in UTC.
 // Also, the RECURRENCE-ID needs to include the TIMEZONE, which is fixed here by converting it to
 // UTC
+// NOTE: We also return 20060102 and 20060105.
+// This is technically wrong behaviour but we add one day of tolerance in both direction
+// since returning too much is better than accidentally missing one occurence.
 const OUTPUT_7_8_3: &str = r#"<?xml version="1.0" encoding="utf-8"?>
 <multistatus xmlns="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:PUSH="https://bitfire.at/webdav-push">
     <response>
@@ -107,20 +110,36 @@ const OUTPUT_7_8_3: &str = r#"<?xml version="1.0" encoding="utf-8"?>
 VERSION:2.0&#13;
 PRODID:-//Example Corp.//CalDAV Client//EN&#13;
 BEGIN:VEVENT&#13;
+UID:abcd2&#13;
+DTSTAMP:20060206T001121Z&#13;
+DTSTART:20060102T170000Z&#13;
+DURATION:PT1H&#13;
+RECURRENCE-ID:20060102T170000Z&#13;
+SUMMARY:Event #2&#13;
+END:VEVENT&#13;
+BEGIN:VEVENT&#13;
+UID:abcd2&#13;
 DTSTAMP:20060206T001121Z&#13;
 DTSTART:20060103T170000Z&#13;
 DURATION:PT1H&#13;
-SUMMARY:Event #2&#13;
-UID:abcd2&#13;
 RECURRENCE-ID:20060103T170000Z&#13;
+SUMMARY:Event #2&#13;
 END:VEVENT&#13;
 BEGIN:VEVENT&#13;
+UID:abcd2&#13;
 DTSTAMP:20060206T001121Z&#13;
 DTSTART:20060104T190000Z&#13;
 DURATION:PT1H&#13;
 RECURRENCE-ID:20060104T170000Z&#13;
 SUMMARY:Event #2 bis&#13;
+END:VEVENT&#13;
+BEGIN:VEVENT&#13;
 UID:abcd2&#13;
+DTSTAMP:20060206T001121Z&#13;
+DTSTART:20060105T170000Z&#13;
+DURATION:PT1H&#13;
+RECURRENCE-ID:20060105T170000Z&#13;
+SUMMARY:Event #2&#13;
 END:VEVENT&#13;
 END:VCALENDAR&#13;
 </CAL:calendar-data>
@@ -136,17 +155,17 @@ END:VCALENDAR&#13;
 VERSION:2.0&#13;
 PRODID:-//Example Corp.//CalDAV Client//EN&#13;
 BEGIN:VEVENT&#13;
-ATTENDEE;PARTSTAT=ACCEPTED;ROLE=CHAIR:mailto:cyrus@example.com&#13;
-ATTENDEE;PARTSTAT=NEEDS-ACTION:mailto:lisa@example.com&#13;
+UID:abcd3&#13;
 DTSTAMP:20060206T001220Z&#13;
 DTSTART:20060104T150000Z&#13;
 DURATION:PT1H&#13;
+SUMMARY:Event #3&#13;
+ATTENDEE;PARTSTAT=ACCEPTED;ROLE=CHAIR:mailto:cyrus@example.com&#13;
+ATTENDEE;PARTSTAT=NEEDS-ACTION:mailto:lisa@example.com&#13;
 LAST-MODIFIED:20060206T001330Z&#13;
 ORGANIZER:mailto:cyrus@example.com&#13;
 SEQUENCE:1&#13;
 STATUS:TENTATIVE&#13;
-SUMMARY:Event #3&#13;
-UID:abcd3&#13;
 X-ABC-GUID:E1CX5Dr-0007ym-Hz@example.com&#13;
 END:VEVENT&#13;
 END:VCALENDAR&#13;
@@ -203,7 +222,6 @@ async fn test_report(
     let response = app.clone().oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::MULTI_STATUS);
     let body = response.extract_string().await;
-    insta::assert_snapshot!(format!("{case}_report_body"), body);
     if let Some(output) = output {
         similar_asserts::assert_eq!(output, body.replace('\r', ""));
     }

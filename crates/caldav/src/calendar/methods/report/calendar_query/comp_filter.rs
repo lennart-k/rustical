@@ -1,12 +1,13 @@
+use std::borrow::Cow;
+
 use crate::calendar::methods::report::calendar_query::{
     TimeRangeElement,
     prop_filter::{PropFilterElement, PropFilterable},
 };
 use caldata::{
-    component::{
-        CalendarInnerData, Component, IcalAlarm, IcalCalendarObject, IcalEvent, IcalTimeZone,
-        IcalTodo,
-    },
+    CalendarInnerData, IcalAlarm, IcalCalendarObject, IcalEvent, IcalJournal, IcalTimeZone,
+    IcalTodo,
+    component::{Component, GetContentLines},
     parser::ContentLine,
 };
 use rustical_xml::XmlDeserialize;
@@ -76,22 +77,23 @@ pub trait CompFilterable: PropFilterable + Sized {
 impl CompFilterable for CalendarInnerData {
     fn get_comp_name(&self) -> &'static str {
         match self {
-            Self::Event(main, _) => main.get_comp_name(),
-            Self::Journal(main, _) => main.get_comp_name(),
-            Self::Todo(main, _) => main.get_comp_name(),
+            Self::Event(_, _) => IcalEvent::NAME,
+            Self::Journal(_, _) => IcalJournal::NAME,
+            Self::Todo(_, _) => IcalTodo::NAME,
         }
     }
 
     fn match_time_range(&self, time_range: &TimeRangeElement) -> bool {
+        // TODO: Use calendar-timezone for floating time
         if let Some(start) = &time_range.start
             && let Some(last_end) = self.get_last_occurence()
-            && start.to_utc() > last_end.utc()
+            && start.0 > last_end
         {
             return false;
         }
         if let Some(end) = &time_range.end
             && let Some(first_start) = self.get_first_occurence()
-            && end.to_utc() < first_start.utc()
+            && end.0 < first_start
         {
             return false;
         }
@@ -102,11 +104,11 @@ impl CompFilterable for CalendarInnerData {
         match self {
             Self::Event(main, overrides) => std::iter::once(main)
                 .chain(overrides.iter())
-                .flat_map(IcalEvent::get_alarms)
+                .flat_map(|event| &event.alarms)
                 .any(|alarm| alarm.matches(comp_filter)),
             Self::Todo(main, overrides) => std::iter::once(main)
                 .chain(overrides.iter())
-                .flat_map(IcalTodo::get_alarms)
+                .flat_map(|event| &event.alarms)
                 .any(|alarm| alarm.matches(comp_filter)),
             // VJOURNAL has no subcomponents
             Self::Journal(_, _) => comp_filter.is_not_defined.is_some(),
@@ -115,14 +117,17 @@ impl CompFilterable for CalendarInnerData {
 }
 
 impl PropFilterable for IcalAlarm {
-    fn get_named_properties<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a ContentLine> {
-        Component::get_named_properties(self, name)
+    fn get_named_properties<'a>(
+        &'a self,
+        name: &'a str,
+    ) -> impl Iterator<Item = Cow<'a, ContentLine>> {
+        self.get_named_content_line(name).into_iter()
     }
 }
 
 impl CompFilterable for IcalAlarm {
     fn get_comp_name(&self) -> &'static str {
-        Component::get_comp_name(self)
+        Self::NAME
     }
 
     fn match_time_range(&self, _time_range: &TimeRangeElement) -> bool {
@@ -139,26 +144,29 @@ impl PropFilterable for CalendarInnerData {
     fn get_named_properties<'a>(
         &'a self,
         name: &'a str,
-    ) -> Box<dyn Iterator<Item = &'a ContentLine> + 'a> {
+    ) -> impl Iterator<Item = Cow<'a, ContentLine>> {
         // TODO: If we were pedantic, we would have to do recurrence expansion first
         // and take into account the overrides :(
         match self {
-            Self::Event(main, _) => Box::new(main.get_named_properties(name)),
-            Self::Todo(main, _) => Box::new(main.get_named_properties(name)),
-            Self::Journal(main, _) => Box::new(main.get_named_properties(name)),
+            Self::Event(main, _) => Box::new(main.get_named_content_line(name).into_iter()),
+            Self::Todo(main, _) => Box::new(main.get_named_content_line(name).into_iter()),
+            Self::Journal(main, _) => Box::new(main.get_named_content_line(name).into_iter()),
         }
     }
 }
 
 impl PropFilterable for IcalCalendarObject {
-    fn get_named_properties<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a ContentLine> {
-        Component::get_named_properties(self, name)
+    fn get_named_properties<'a>(
+        &'a self,
+        name: &'a str,
+    ) -> impl Iterator<Item = Cow<'a, ContentLine>> {
+        GetContentLines::get_named_content_line(self, name).into_iter()
     }
 }
 
 impl CompFilterable for IcalCalendarObject {
     fn get_comp_name(&self) -> &'static str {
-        Component::get_comp_name(self)
+        Self::NAME
     }
 
     fn match_time_range(&self, _time_range: &TimeRangeElement) -> bool {
@@ -182,14 +190,17 @@ impl CompFilterable for IcalCalendarObject {
 }
 
 impl PropFilterable for IcalTimeZone {
-    fn get_named_properties<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a ContentLine> {
-        Component::get_named_properties(self, name)
+    fn get_named_properties<'a>(
+        &'a self,
+        name: &'a str,
+    ) -> impl Iterator<Item = Cow<'a, ContentLine>> {
+        self.get_named_content_line(name).into_iter()
     }
 }
 
 impl CompFilterable for IcalTimeZone {
     fn get_comp_name(&self) -> &'static str {
-        Component::get_comp_name(self)
+        Self::NAME
     }
     fn match_time_range(&self, _time_range: &TimeRangeElement) -> bool {
         false

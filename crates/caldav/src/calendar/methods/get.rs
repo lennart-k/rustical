@@ -3,7 +3,7 @@ use crate::calendar::CalendarResourceService;
 use axum::body::Body;
 use axum::extract::State;
 use axum::{extract::Path, response::Response};
-use caldata::component::IcalCalendar;
+use caldata::IcalCalendar;
 use caldata::generator::Emitter;
 use caldata::parser::ContentLine;
 use headers::{ContentType, HeaderMapExt};

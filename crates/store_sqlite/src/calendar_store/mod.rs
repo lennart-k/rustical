@@ -2,8 +2,7 @@ use super::ChangeOperation;
 use crate::BEGIN_IMMEDIATE;
 use async_trait::async_trait;
 use caldata::parser::ParserError;
-use caldata::types::CalDateTime;
-use chrono::TimeDelta;
+use chrono::{DateTime, TimeDelta};
 use regex::Regex;
 use rustical_ical::{CalendarObject, CalendarObjectType};
 use rustical_store::calendar_store::{CalendarQuery, CalendarReadStore, CalendarWriteStore};
@@ -624,13 +623,8 @@ impl SqliteCalendarStore {
             .get_inner()
             .get_first_occurence()
             .as_ref()
-            .map(CalDateTime::date_floor);
-        let last_occurence = object
-            .get_inner()
-            .get_inner()
-            .get_last_occurence()
-            .as_ref()
-            .map(CalDateTime::date_ceil);
+            .map(DateTime::date_naive);
+        let last_occurence = object.get_inner().get_inner().get_last_occurence();
         let etag = object.get_etag();
         let object_type = object.get_object_type() as u8;
 

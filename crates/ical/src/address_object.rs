@@ -1,10 +1,7 @@
 use crate::{CalendarObject, Error};
 use caldata::{
-    VcardParser,
-    component::{
-        CalendarInnerDataBuilder, ComponentMut, IcalAlarmBuilder, IcalCalendarObjectBuilder,
-        IcalEventBuilder, VcardContact,
-    },
+    IcalAlarmBuilder, IcalCalendarObjectBuilder, IcalEventBuilder, VcardParser,
+    component::{ComponentMut, vcard::VcardContact},
     generator::Emitter,
     parser::{ContentLine, ParserOptions},
     property::{
@@ -13,7 +10,7 @@ use caldata::{
         IcalUIDProperty, IcalVERSIONProperty, IcalVersion, VcardANNIVERSARYProperty,
         VcardBDAYProperty, VcardFNProperty,
     },
-    types::{CalDate, PartialDate, Tz},
+    types::{CalDate, CalDateOrDateTime, PartialDate},
 };
 use chrono::{NaiveDate, Utc};
 use hex::ToHex;
@@ -82,8 +79,7 @@ impl AddressObject {
         let Some(dtstart) = NaiveDate::from_ymd_opt(year.unwrap_or(1900), month, day) else {
             return Ok(None);
         };
-        let start_date = CalDate(dtstart, Tz::Local);
-        let Some(end_date) = start_date.succ_opt() else {
+        let Some(end_date) = dtstart.succ_opt() else {
             // start_date is MAX_DATE, this should never happen but FAPP also not raise an error
             return Ok(None);
         };
@@ -93,10 +89,11 @@ impl AddressObject {
         let summary = format!("{summary_prefix} {fullname}{year_suffix}");
 
         let event = IcalEventBuilder {
-            properties: vec![
+            content_lines: vec![
                 IcalDTSTAMPProperty(Utc::now().into(), vec![].into()).into(),
-                IcalDTSTARTProperty(start_date.into(), vec![].into()).into(),
-                IcalDTENDProperty(end_date.into(), vec![].into()).into(),
+                IcalDTSTARTProperty(CalDateOrDateTime::Date(CalDate(dtstart)), vec![].into())
+                    .into(),
+                IcalDTENDProperty(CalDateOrDateTime::Date(CalDate(end_date)), vec![].into()).into(),
                 IcalUIDProperty(uid, vec![].into()).into(),
                 IcalRRULEProperty(
                     caldata::rrule::RRule::from_str("FREQ=YEARLY").unwrap(),
@@ -111,7 +108,7 @@ impl AddressObject {
                 },
             ],
             alarms: vec![IcalAlarmBuilder {
-                properties: vec![
+                content_lines: vec![
                     ContentLine {
                         name: "TRIGGER".to_owned(),
                         value: "-PT0M".to_owned(),
@@ -133,7 +130,7 @@ impl AddressObject {
 
         Ok(Some(
             IcalCalendarObjectBuilder {
-                properties: vec![
+                content_lines: vec![
                     IcalVERSIONProperty(IcalVersion::Version2_0, vec![].into()).into(),
                     IcalCALSCALEProperty(Calscale::Gregorian, vec![].into()).into(),
                     IcalPRODIDProperty(
@@ -142,7 +139,7 @@ impl AddressObject {
                     )
                     .into(),
                 ],
-                inner: Some(CalendarInnerDataBuilder::Event(vec![event])),
+                inner: Some(caldata::CalendarInnerDataBuilder::Event(vec![event])),
                 vtimezones: BTreeMap::default(),
             }
             .build(&ParserOptions::default(), None)?
@@ -162,7 +159,7 @@ impl AddressObject {
     }
 
     pub fn get_birthday_object(&self) -> Result<Option<CalendarObject>, Error> {
-        let Some(VcardBDAYProperty(bday, _)) = &self.inner.birthday else {
+        let Some(VcardBDAYProperty(bday, _)) = &self.inner.bday else {
             return Ok(None);
         };
         let Some(date) = &bday.date else {

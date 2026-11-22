@@ -4,7 +4,7 @@ use crate::calendar::prop::SupportedCalendarComponentSet;
 use crate::error::Precondition;
 use axum::extract::{Path, State};
 use axum::response::{IntoResponse, Response};
-use caldata::IcalParser;
+use caldata::IcalTimeZoneObjectParser;
 use http::{Method, StatusCode};
 use rustical_dav::xml::HrefElement;
 use rustical_dav_push::DavPushStore;
@@ -94,29 +94,15 @@ pub async fn route_mkcalendar<C: CalendarStore, DP: DavPushStore>(
         }
         Some(tzid)
     } else if let Some(tz) = request.calendar_timezone {
-        let calendar = IcalParser::from_slice(tz.as_bytes())
+        // TODO: Proper error (calendar-timezone precondition)
+        let timezone = IcalTimeZoneObjectParser::from_slice(tz.as_bytes())
             .next()
-            .ok_or(Error::PreconditionFailed(Precondition::CalendarTimezone(
-                "No timezone data provided",
-            )))?
-            .map_err(|err| {
-                tracing::error!(%err);
-                Error::PreconditionFailed(Precondition::CalendarTimezone("Error parsing timezone"))
-            })
-            .inspect_err(|e| tracing::error!(%e))?;
+            .ok_or_else(|| rustical_dav::Error::BadRequest("No timezone data provided".to_owned()))?
+            .map_err(|_| rustical_dav::Error::BadRequest("No timezone data provided".to_owned()))?
+            .timezone;
 
-        let timezone = calendar
-            .vtimezones
-            .values()
-            .next()
-            .ok_or(Error::PreconditionFailed(Precondition::CalendarTimezone(
-                "No timezone data provided",
-            )))?;
-        let timezone: Option<chrono_tz::Tz> = timezone.into();
-        let timezone = timezone.ok_or(Error::PreconditionFailed(
-            Precondition::CalendarTimezone("No timezone data provided"),
-        ))?;
-
+        let timezone = chrono_tz::Tz::from_str(timezone.get_tzid())
+            .map_err(|_| rustical_dav::Error::BadRequest("No timezone data provided".to_owned()))?;
         Some(timezone.name().to_owned())
     } else {
         None

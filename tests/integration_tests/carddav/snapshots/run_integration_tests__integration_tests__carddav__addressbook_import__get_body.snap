@@ -4,10 +4,10 @@ expression: body
 ---
 BEGIN:VCARD
 VERSION:4.0
-FN:John Doe
+UID:amazing-uid
 N:Doe;John;;;,
 BDAY:--0203
 ANNIVERSARY:--0303
+FN:John Doe
 GENDER:M
-UID:amazing-uid
 END:VCARD

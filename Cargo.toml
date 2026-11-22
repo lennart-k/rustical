@@ -104,7 +104,7 @@ strum = "0.28"
 strum_macros = "0.28"
 serde_json = { version = "1.0", features = ["raw_value"] }
 sqlx-sqlite = { version = "0.9", features = ["bundled"] }
-caldata = { version = "0.18" }
+caldata = { path = "../caldata-rs/" }
 toml = "1.1"
 tower = "0.5"
 tower-http = { version = "0.7", features = [

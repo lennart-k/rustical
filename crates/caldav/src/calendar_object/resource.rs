@@ -64,9 +64,11 @@ impl Resource for CalendarObjectResource {
                                 Ok(self
                                     .object
                                     .get_inner()
+                                    .clone()
                                     .expand_recurrence(
                                         Some(expand.start.to_utc()),
                                         Some(expand.end.to_utc()),
+                                        1024,
                                     )
                                     .ok_or(Error::NotFound)?
                                     .generate_string())

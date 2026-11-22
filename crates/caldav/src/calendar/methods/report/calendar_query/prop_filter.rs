@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use super::{ParamFilterElement, TimeRangeElement};
 use caldata::{parser::ContentLine, types::CalDateTime};
 use rustical_dav::xml::TextMatchElement;
@@ -22,7 +24,10 @@ pub struct PropFilterElement {
 }
 
 pub trait PropFilterable {
-    fn get_named_properties<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a ContentLine>;
+    fn get_named_properties<'a>(
+        &'a self,
+        name: &'a str,
+    ) -> impl Iterator<Item = Cow<'a, ContentLine>>;
 }
 
 impl PropFilterElement {
@@ -66,6 +71,6 @@ impl PropFilterElement {
 
         // The filter matches when one property instance matches
         // Example where this matters: We have multiple attendees and want to match one
-        properties.any(|prop| self.match_property(prop))
+        properties.any(|prop| self.match_property(prop.as_ref()))
     }
 }
