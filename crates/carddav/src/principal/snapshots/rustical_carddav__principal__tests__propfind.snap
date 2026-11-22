@@ -1,8 +1,0 @@
----
-source: crates/carddav/src/principal/tests.rs
-expression: propfind
----
-PropfindElement {
-    prop: Allprop,
-    include: None,
-}
