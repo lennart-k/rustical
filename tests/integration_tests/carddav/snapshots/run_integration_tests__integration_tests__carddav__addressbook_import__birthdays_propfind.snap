@@ -98,15 +98,15 @@ expression: body
                 <getcontenttype>text/calendar;charset=utf-8</getcontenttype>
                 <CAL:calendar-data>BEGIN:VCALENDAR&#13;
 VERSION:2.0&#13;
-CALSCALE:GREGORIAN&#13;
 PRODID:-//github.com/lennart-k/rustical birthday calendar//EN&#13;
+CALSCALE:GREGORIAN&#13;
 BEGIN:VEVENT&#13;
+UID:amazing-uid-birthday&#13;
 DTSTAMP:[DTSTAMP]&#13;
 DTSTART;VALUE=DATE:19000203&#13;
 DTEND;VALUE=DATE:19000204&#13;
-UID:amazing-uid-birthday&#13;
-RRULE:FREQ=YEARLY&#13;
 SUMMARY:🎂 John Doe&#13;
+RRULE:FREQ=YEARLY&#13;
 TRANSP:TRANSPARENT&#13;
 BEGIN:VALARM&#13;
 TRIGGER;VALUE=DURATION:-PT0M&#13;
@@ -141,15 +141,15 @@ END:VCALENDAR&#13;
                 <getcontenttype>text/calendar;charset=utf-8</getcontenttype>
                 <CAL:calendar-data>BEGIN:VCALENDAR&#13;
 VERSION:2.0&#13;
-CALSCALE:GREGORIAN&#13;
 PRODID:-//github.com/lennart-k/rustical birthday calendar//EN&#13;
+CALSCALE:GREGORIAN&#13;
 BEGIN:VEVENT&#13;
+UID:amazing-uid-anniversary&#13;
 DTSTAMP:[DTSTAMP]&#13;
 DTSTART;VALUE=DATE:19000303&#13;
 DTEND;VALUE=DATE:19000304&#13;
-UID:amazing-uid-anniversary&#13;
-RRULE:FREQ=YEARLY&#13;
 SUMMARY:💍 John Doe&#13;
+RRULE:FREQ=YEARLY&#13;
 TRANSP:TRANSPARENT&#13;
 BEGIN:VALARM&#13;
 TRIGGER;VALUE=DURATION:-PT0M&#13;

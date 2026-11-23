@@ -461,9 +461,9 @@ checksum = "776dfebd015e2d8732c684a2c71003674ccb49457b539b9e82151ba38e96dd7c"
 
 [[package]]
 name = "caldata"
-version = "0.18.0"
+version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4c2f85ce182d29b84762786c202524a0cfccbaf473fe78f558763f9e6a749f5"
+checksum = "5650cb7d1f2bf1d97efe92418a5c5e1ab165b234fabd1da750081a695568b828"
 dependencies = [
  "chrono",
  "chrono-tz",
@@ -471,6 +471,7 @@ dependencies = [
  "itertools 0.15.0",
  "lazy_static",
  "log",
+ "paste",
  "phf 0.14.0",
  "regex",
  "thiserror 2.0.21",
@@ -2683,6 +2684,12 @@ dependencies = [
  "phc",
  "rand_core 0.10.1",
 ]
+
+[[package]]
+name = "paste"
+version = "1.0.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
 name = "pbkdf2"

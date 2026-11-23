@@ -1,8 +1,8 @@
 use super::prop::{SupportedCalendarComponentSet, SupportedCalendarData};
 use crate::Error;
 use crate::calendar::prop::{ReportMethod, SupportedCollationSet};
-use caldata::IcalParser;
-use caldata::types::CalDateTime;
+use caldata::IcalTimeZoneObjectParser;
+use caldata::types::{CalDateTime, Value};
 use chrono::{DateTime, Utc};
 use derive_more::derive::{From, Into};
 use http::Uri;
@@ -186,12 +186,12 @@ impl Resource for CalendarResource {
                         })
                         .map(HrefElement::from),
                 ),
-                CalendarPropName::MinDateTime => {
-                    CalendarProp::MinDateTime(CalDateTime::from(DateTime::<Utc>::MIN_UTC).format())
-                }
-                CalendarPropName::MaxDateTime => {
-                    CalendarProp::MaxDateTime(CalDateTime::from(DateTime::<Utc>::MAX_UTC).format())
-                }
+                CalendarPropName::MinDateTime => CalendarProp::MinDateTime(
+                    CalDateTime::from(DateTime::<Utc>::MIN_UTC).generate_string(),
+                ),
+                CalendarPropName::MaxDateTime => CalendarProp::MaxDateTime(
+                    CalDateTime::from(DateTime::<Utc>::MAX_UTC).generate_string(),
+                ),
             }),
             CalendarPropWrapperName::SyncToken(prop) => {
                 CalendarPropWrapper::SyncToken(SyncTokenExtension::get_prop(self, prop)?)
@@ -219,7 +219,7 @@ impl Resource for CalendarResource {
                 CalendarProp::CalendarTimezone(timezone) => {
                     if let Some(tz) = timezone {
                         // TODO: Proper error (calendar-timezone precondition)
-                        let calendar = IcalParser::from_slice(tz.as_bytes())
+                        let timezone = IcalTimeZoneObjectParser::from_slice(tz.as_bytes())
                             .next()
                             .ok_or_else(|| {
                                 rustical_dav::Error::BadRequest(
@@ -230,15 +230,15 @@ impl Resource for CalendarResource {
                                 rustical_dav::Error::BadRequest(
                                     "No timezone data provided".to_owned(),
                                 )
-                            })?;
+                            })?
+                            .timezone;
 
-                        let timezone = calendar.vtimezones.values().next().ok_or_else(|| {
-                            rustical_dav::Error::BadRequest("No timezone data provided".to_owned())
-                        })?;
-                        let timezone: Option<chrono_tz::Tz> = timezone.into();
-                        let timezone = timezone.ok_or_else(|| {
-                            rustical_dav::Error::BadRequest("No timezone data provided".to_owned())
-                        })?;
+                        let timezone =
+                            chrono_tz::Tz::from_str(timezone.get_tzid()).map_err(|_| {
+                                rustical_dav::Error::BadRequest(
+                                    "No timezone data provided".to_owned(),
+                                )
+                            })?;
                         self.cal.timezone_id = Some(timezone.name().to_owned());
                     }
                     Ok(())

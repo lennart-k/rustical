@@ -1,6 +1,6 @@
 use super::comp_filter::{CompFilterElement, CompFilterable};
 use crate::calendar_object::CalendarObjectPropWrapperName;
-use caldata::{component::IcalCalendarObject, parser::ContentLine};
+use caldata::{IcalCalendarObject, parser::ContentLine};
 use rustical_dav::xml::{PropfindType, TextMatchElement};
 use rustical_ical::UtcDateTime;
 use rustical_store::calendar_store::CalendarQuery;

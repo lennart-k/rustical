@@ -133,7 +133,7 @@ async fn test_put_thunderbird(
             .typed_insert(Authorization::basic("user", "pass"));
         let response = app.clone().oneshot(request).await.unwrap();
         let body = response.extract_string().await;
-        similar_asserts::assert_eq!(body.replace("\r", ""), ical);
+        insta::assert_snapshot!("get_response", body);
     }
 
     {
@@ -186,7 +186,19 @@ async fn test_put_special_characters(
     let response = app.clone().oneshot(request).await.unwrap();
     assert_eq!(response.status(), StatusCode::CREATED);
 
-    let ical = include_str!("resources/ical_thunderbird.ics");
+    // Invalid calendar data
+    let ical = r"BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Example Corp.//CalDAV Client//EN
+BEGIN:VEVENT
+UID:20010712T182145Z-123401@example.com
+DTSTAMP:20060712T182145Z
+DTSTART:20060714T170000Z
+DTEND:20060715T040000Z
+SUMMARY:Yeet
+END:VEVENT
+END:VCALENDAR
+";
 
     let mut request = Request::builder()
         .method("PUT")

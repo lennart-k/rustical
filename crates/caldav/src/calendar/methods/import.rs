@@ -5,8 +5,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum_extra::TypedHeader;
-use caldata::component::{Component, ComponentMut};
-use caldata::{IcalParser, parser::ParserOptions};
+use caldata::IcalParser;
 use http::StatusCode;
 use rustical_dav::header::Overwrite;
 use rustical_dav_push::DavPushStore;
@@ -31,30 +30,31 @@ pub async fn route_import<C: CalendarStore, DP: DavPushStore>(
         .into();
 
     let parser = IcalParser::from_slice(body.as_bytes());
-    let mut cal = match parser.expect_one() {
-        Ok(cal) => cal.mutable(),
+    let cal = match parser.expect_one() {
+        Ok(cal) => cal,
         Err(err) => return Ok((StatusCode::BAD_REQUEST, err.to_string()).into_response()),
     };
 
-    // Extract calendar metadata
     let displayname = cal
-        .get_property("X-WR-CALNAME")
+        .other_properties
+        .iter()
+        .find(|prop| prop.name == "X-WR-CALNAME")
         .map(|prop| prop.value.clone());
     let description = cal
-        .get_property("X-WR-CALDESC")
+        .other_properties
+        .iter()
+        .find(|prop| prop.name == "X-WR-CALDESC")
         .map(|prop| prop.value.clone());
     let color = cal
-        .get_property("X-WR-CALCOLOR")
+        .other_properties
+        .iter()
+        .find(|prop| prop.name == "X-WR-CALCOLOR")
         .map(|prop| prop.value.clone());
     let timezone_id = cal
-        .get_property("X-WR-TIMEZONE")
+        .other_properties
+        .iter()
+        .find(|prop| prop.name == "X-WR-TIMEZONE")
         .map(|prop| prop.value.clone());
-    // These properties should not appear in the expanded calendar objects
-    cal.remove_property("X-WR-CALNAME");
-    cal.remove_property("X-WR-CALDESC");
-    cal.remove_property("X-WR-CALCOLOR");
-    cal.remove_property("X-WR-TIMEZONE");
-    let cal = cal.build(&ParserOptions::default(), None).unwrap();
 
     // Make sure timezone is valid
     if let Some(timezone_id) = timezone_id.as_ref() {
@@ -65,13 +65,13 @@ pub async fn route_import<C: CalendarStore, DP: DavPushStore>(
     }
     // // Extract necessary component types
     let mut cal_components = vec![];
-    if !cal.events.is_empty() {
+    if !cal.event.is_empty() {
         cal_components.push(CalendarObjectType::Event);
     }
-    if !cal.journals.is_empty() {
+    if !cal.journal.is_empty() {
         cal_components.push(CalendarObjectType::Journal);
     }
-    if !cal.todos.is_empty() {
+    if !cal.todo.is_empty() {
         cal_components.push(CalendarObjectType::Todo);
     }
 

@@ -4,15 +4,12 @@ use axum::{
     extract::{Path, State},
     response::{IntoResponse, Response},
 };
-use caldata::{
-    VcardParser,
-    component::{Component, ComponentMut},
-    parser::{ContentLine, ParserOptions},
-};
+use caldata::VcardParser;
 use http::StatusCode;
 use rustical_dav_push::DavPushStore;
 use rustical_store::{Addressbook, AddressbookStore, auth::Principal};
 use tracing::instrument;
+use uuid::Uuid;
 
 #[instrument(skip(resource_service))]
 pub async fn route_import<AS: AddressbookStore, DP: DavPushStore>(
@@ -32,13 +29,7 @@ pub async fn route_import<AS: AddressbookStore, DP: DavPushStore>(
         let mut card = res.unwrap();
         let uid = card.get_uid();
         if uid.is_none() {
-            let mut card_mut = card.mutable();
-            card_mut.add_content_line(ContentLine {
-                name: "UID".to_owned(),
-                value: uuid::Uuid::new_v4().to_string(),
-                params: vec![].into(),
-            });
-            card = card_mut.build(&ParserOptions::default(), None).unwrap();
+            card.set_uid(Some(Uuid::new_v4().to_string()));
         }
         // TODO: Make nicer
         let uid = card.get_uid().unwrap();
