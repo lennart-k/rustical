@@ -76,7 +76,7 @@ notes = "It's a fork I maintain"
 [[audits.web-push]]
 who = "Lennart Kämmle <18233294+lennart-k@users.noreply.github.com>"
 criteria = "safe-to-deploy"
-delta = "0.11.0 -> 0.11.0@git:cac560851cea81c894ff822af40cdcebbb3ce4cf"
+delta = "0.11.0 -> 0.11.0@git:2d8b85ff53296e8a7b51f1e4cbbc683c39fbd6d9"
 importable = false
 
 [[trusted.aho-corasick]]
