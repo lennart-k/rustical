@@ -8,33 +8,21 @@ permissions:
   pages: write
 jobs:
   deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/configure-pages@v6
       - uses: actions/checkout@v7
-
       - uses: actions/setup-python@v7
         with:
           python-version: 3.x
 
       - run: rustup update
-
-      - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
-
-      - name: Set up build cache
-        uses: actions/cache/restore@v6
-        with:
-          key: zensical-docs-${{ hashfiles('.cache/**') }}
-          path: .cache
-          restore-keys: |
-            zensical-docs-
       - run: pip install zensical
-      - run: zensical build --clean --strict
 
-      - name: Save build cache
-        uses: actions/cache/save@v6
-        with:
-          key: mkdocs-material-${{ hashfiles('.cache/**') }}
-          path: .cache
+      - run: zensical build --clean
 
       - name: Build crate docs
         run: |
