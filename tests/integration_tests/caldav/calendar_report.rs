@@ -177,15 +177,14 @@ END:VCALENDAR&#13;
 </multistatus>"#;
 
 #[rstest]
-#[case(0, ICS_1, REPORT_7_8_1, None)]
-#[case(1, ICS_1, REPORT_7_8_2, None)]
-#[case(2, ICS_1, REPORT_7_8_3, Some(OUTPUT_7_8_3))]
+#[case(ICS_1, REPORT_7_8_1, None)]
+#[case(ICS_1, REPORT_7_8_2, None)]
+#[case(ICS_1, REPORT_7_8_3, Some(OUTPUT_7_8_3))]
 #[tokio::test]
 async fn test_report(
     #[from(test_store_context)]
     #[future]
     context: TestStoreContext,
-    #[case] case: usize,
     #[case] ics: &'static str,
     #[case] report: &'static str,
     #[case] output: Option<&'static str>,
