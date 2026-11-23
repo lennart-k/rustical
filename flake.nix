@@ -37,6 +37,7 @@
             ++ (with pkgs-unstable; [
               # For documentation
               zensical
+              cargo-release
             ]);
         };
       }
