@@ -25,10 +25,10 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background-color-01: #0F172A;
+    --background-color-01: #121929;
     --background-color-02: #1E293B;
-    --background-color-03: #1A2540;
-    --background-color-04: #1E2B47;
+    --background-color-03: #181F31;
+    --background-color-04: #28334C;
     --border: #2D3A52;
     --text: #E2E8F0;
     --text-muted: #94A3B8;
