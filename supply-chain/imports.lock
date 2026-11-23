@@ -431,6 +431,13 @@ user-id = 4556
 user-login = "djc"
 user-name = "Dirkjan Ochtman"
 
+[[publisher.paste]]
+version = "1.0.15"
+when = "2024-05-07"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
 [[publisher.phf]]
 version = "0.12.1"
 when = "2025-06-19"
