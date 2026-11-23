@@ -31,6 +31,7 @@
             cargo-vet
             cargo-about
             cargo-deny
+            cargo-insta
           ];
         };
       }
