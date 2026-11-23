@@ -16,7 +16,11 @@ allow = [
 
 [advisories]
 ignore = [
-  { id = "RUSTSEC-2023-0071", reason = "We don't really use RSA" }
+  { id = "RUSTSEC-2023-0071", reason = "We don't really use RSA" },
+  { id = "RUSTSEC-2026-0543", reason = "chrono: We'll switch to jiff in the future" },
+  { id = "RUSTSEC-2026-0555", reason = "chrono-tz: We'll switch to jiff in the future" },
+  { id = "RUSTSEC-2024-0436", reason = "paste: No good alternative. We need to wait for https://github.com/rust-lang/rust/issues/124225 and fork if if paste breaks" },
+  { id = "RUSTSEC-2026-0374", reason = "basic-toml: used by askama, fixed in its next release" },
 ]
 
 [bans]
