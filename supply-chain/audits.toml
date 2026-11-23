@@ -134,6 +134,12 @@ user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2019-04-02"
 end = "2027-08-30"
 
+[[trusted.bytes]]
+criteria = "safe-to-deploy"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2021-01-11"
+end = "2027-11-23"
+
 [[trusted.cc]]
 criteria = "safe-to-deploy"
 user-id = 55123 # rust-lang-owner
@@ -218,11 +224,23 @@ trusted-publisher = "github:rust-lang/cc-rs"
 start = "2025-09-05"
 end = "2027-10-05"
 
+[[trusted.form_urlencoded]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2021-02-19"
+end = "2027-11-23"
+
 [[trusted.h2]]
 criteria = "safe-to-deploy"
 user-id = 359 # Sean McArthur (seanmonstar)
 start = "2019-03-13"
 end = "2027-08-30"
+
+[[trusted.hashbrown]]
+criteria = "safe-to-deploy"
+user-id = 55123 # rust-lang-owner
+start = "2025-04-30"
+end = "2027-11-23"
 
 [[trusted.headers]]
 criteria = "safe-to-deploy"
@@ -338,11 +356,23 @@ user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2024-02-17"
 end = "2027-08-30"
 
+[[trusted.jiff]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:BurntSushi/jiff"
+start = "2026-11-02"
+end = "2027-11-23"
+
 [[trusted.jiff-core]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2026-06-30"
 end = "2027-08-30"
+
+[[trusted.jiff-core]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:BurntSushi/jiff"
+start = "2026-11-02"
+end = "2027-11-23"
 
 [[trusted.jiff-static]]
 criteria = "safe-to-deploy"
@@ -350,7 +380,25 @@ user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2025-03-06"
 end = "2027-08-30"
 
+[[trusted.jiff-static]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:BurntSushi/jiff"
+start = "2026-11-02"
+end = "2027-11-23"
+
 [[trusted.jiff-tzdb]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2024-07-09"
+end = "2027-08-30"
+
+[[trusted.jiff-tzdb]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:BurntSushi/jiff"
+start = "2026-11-14"
+end = "2027-11-23"
+
+[[trusted.jiff-tzdb-platform]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2024-07-09"
@@ -358,9 +406,9 @@ end = "2027-08-30"
 
 [[trusted.jiff-tzdb-platform]]
 criteria = "safe-to-deploy"
-user-id = 189 # Andrew Gallant (BurntSushi)
-start = "2024-07-09"
-end = "2027-08-30"
+trusted-publisher = "github:BurntSushi/jiff"
+start = "2026-11-15"
+end = "2027-11-23"
 
 [[trusted.js-sys]]
 criteria = "safe-to-deploy"
@@ -487,6 +535,12 @@ criteria = "safe-to-deploy"
 trusted-publisher = "github:rust-random/rand"
 start = "2026-01-26"
 end = "2027-09-20"
+
+[[trusted.rand_pcg]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:rust-random/rand"
+start = "2026-02-08"
+end = "2027-11-23"
 
 [[trusted.ref-cast]]
 criteria = "safe-to-deploy"
@@ -757,6 +811,12 @@ criteria = "safe-to-deploy"
 user-id = 1139 # Manish Goregaokar (Manishearth)
 start = "2023-07-27"
 end = "2027-11-02"
+
+[[trusted.url]]
+criteria = "safe-to-deploy"
+user-id = 1139 # Manish Goregaokar (Manishearth)
+start = "2021-02-18"
+end = "2027-11-23"
 
 [[trusted.uuid]]
 criteria = "safe-to-deploy"
