@@ -1,0 +1,53 @@
+---
+source: crates/caldav/src/principal/tests.rs
+expression: response.serialize_to_string().unwrap()
+---
+<?xml version="1.0" encoding="utf-8"?>
+<response xmlns="DAV:">
+    <href>/caldav/principal/user/</href>
+    <propstat>
+        <prop xmlns="DAV:">
+            <calendar-user-type xmlns="urn:ietf:params:xml:ns:caldav">INDIVIDUAL</calendar-user-type>
+            <calendar-user-address-set xmlns="urn:ietf:params:xml:ns:caldav">
+                <href xmlns="DAV:">/caldav/principal/user/</href>
+            </calendar-user-address-set>
+            <principal-URL xmlns="DAV:">
+                <href xmlns="DAV:">/caldav/principal/user/</href>
+            </principal-URL>
+            <group-membership xmlns="DAV:">
+                <href xmlns="DAV:">/caldav/principal/group/</href>
+            </group-membership>
+            <group-member-set xmlns="DAV:">
+            </group-member-set>
+            <alternate-URI-set xmlns="DAV:"/>
+            <supported-report-set xmlns="DAV:">
+                <supported-report xmlns="DAV:">
+                    <report xmlns="DAV:">
+                        <principal-match xmlns="DAV:"/>
+                    </report>
+                </supported-report>
+            </supported-report-set>
+            <calendar-home-set xmlns="urn:ietf:params:xml:ns:caldav">
+                <href xmlns="DAV:">/caldav/principal/user/</href>
+                <href xmlns="DAV:">/caldav/principal/group/</href>
+            </calendar-home-set>
+            <resourcetype xmlns="DAV:">
+                <collection xmlns="DAV:"/>
+                <principal xmlns="DAV:"/>
+            </resourcetype>
+            <displayname xmlns="DAV:">user</displayname>
+            <current-user-principal xmlns="DAV:">
+                <href xmlns="DAV:">/caldav/principal/user/</href>
+            </current-user-principal>
+            <current-user-privilege-set xmlns="DAV:">
+                <privilege>
+                    <all/>
+                </privilege>
+            </current-user-privilege-set>
+            <owner xmlns="DAV:">
+                <href xmlns="DAV:">/caldav/principal/user/</href>
+            </owner>
+        </prop>
+        <status xmlns="DAV:">HTTP/1.1 200 OK</status>
+    </propstat>
+</response>

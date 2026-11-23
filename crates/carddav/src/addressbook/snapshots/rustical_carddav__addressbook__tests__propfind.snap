@@ -1,0 +1,8 @@
+---
+source: crates/carddav/src/addressbook/tests.rs
+expression: propfind
+---
+PropfindElement {
+    prop: Allprop,
+    include: None,
+}
