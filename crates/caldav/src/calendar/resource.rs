@@ -2,7 +2,7 @@ use super::prop::{SupportedCalendarComponentSet, SupportedCalendarData};
 use crate::Error;
 use crate::calendar::prop::{ReportMethod, SupportedCollationSet};
 use caldata::IcalTimeZoneObjectParser;
-use caldata::types::CalDateTime;
+use caldata::types::{CalDateTime, Value};
 use chrono::{DateTime, Utc};
 use derive_more::derive::{From, Into};
 use http::Uri;
@@ -186,12 +186,12 @@ impl Resource for CalendarResource {
                         })
                         .map(HrefElement::from),
                 ),
-                CalendarPropName::MinDateTime => {
-                    CalendarProp::MinDateTime(CalDateTime::from(DateTime::<Utc>::MIN_UTC).format())
-                }
-                CalendarPropName::MaxDateTime => {
-                    CalendarProp::MaxDateTime(CalDateTime::from(DateTime::<Utc>::MAX_UTC).format())
-                }
+                CalendarPropName::MinDateTime => CalendarProp::MinDateTime(
+                    CalDateTime::from(DateTime::<Utc>::MIN_UTC).generate_string(),
+                ),
+                CalendarPropName::MaxDateTime => CalendarProp::MaxDateTime(
+                    CalDateTime::from(DateTime::<Utc>::MAX_UTC).generate_string(),
+                ),
             }),
             CalendarPropWrapperName::SyncToken(prop) => {
                 CalendarPropWrapper::SyncToken(SyncTokenExtension::get_prop(self, prop)?)
