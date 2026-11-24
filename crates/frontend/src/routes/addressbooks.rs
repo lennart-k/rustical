@@ -8,7 +8,10 @@ use rustical_store::{
 };
 use std::sync::Arc;
 
-use crate::pages::user::{Section, UserPage};
+use crate::{
+    FrontendConfig,
+    pages::user::{Section, UserPage},
+};
 
 impl Section for AddressbooksSection {
     fn name() -> &'static str {
@@ -27,6 +30,7 @@ pub struct AddressbooksSection {
 pub async fn route_addressbooks<AS: AddressbookStore + PrefixedCalendarStore>(
     Path(user_id): Path<String>,
     Extension(addr_store): Extension<Arc<AS>>,
+    Extension(config): Extension<FrontendConfig>,
     user: Principal,
 ) -> impl IntoResponse {
     if user_id != user.id {
@@ -85,6 +89,8 @@ pub async fn route_addressbooks<AS: AddressbookStore + PrefixedCalendarStore>(
         ));
     }
 
+    let show_admin_settings = config.admin.is_admin(&user);
+
     UserPage {
         section: AddressbooksSection {
             user: user.clone(),
@@ -92,6 +98,7 @@ pub async fn route_addressbooks<AS: AddressbookStore + PrefixedCalendarStore>(
             deleted_addressbooks: deleted_addressbook_infos,
         },
         user,
+        show_admin_settings,
     }
     .into_response()
 }

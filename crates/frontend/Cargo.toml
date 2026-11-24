@@ -20,6 +20,7 @@ askama.workspace = true
 askama_web.workspace = true
 async-trait.workspace = true
 serde.workspace = true
+toml_edit.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 rustical_store.workspace = true

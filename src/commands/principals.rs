@@ -1,42 +1,12 @@
-use std::io::IsTerminal;
-
-use super::membership::MembershipArgs;
+use super::{membership::MembershipArgs, prompt_password_or_read_stdio};
 use crate::{
     app_token::{AppTokenArgs, cmd_app_token},
     config::Config,
     get_data_stores,
     membership::cmd_membership,
 };
-use anyhow::anyhow;
-use argon2::password_hash::PasswordHasher;
 use clap::{Parser, Subcommand};
-use password_hash::phc::SaltString;
-use rustical_store::{
-    Secret,
-    auth::{AuthenticationProvider, Principal, PrincipalType},
-};
-
-fn prompt_password_or_read_stdio() -> anyhow::Result<String> {
-    let stdin = std::io::stdin();
-    let password = if stdin.is_terminal() {
-        rpassword::prompt_password_with_config(
-            "Type in a password: ",
-            rpassword::ConfigBuilder::new()
-                .password_feedback_mask('*')
-                .build(),
-        )?
-    } else {
-        let mut password = String::new();
-        let _ = stdin.read_line(&mut password)?;
-        password.trim_end().to_string()
-    };
-
-    if password.is_empty() {
-        return Err(anyhow!("Password is empty"));
-    }
-
-    Ok(password)
-}
+use rustical_store::auth::{AuthenticationProvider, Principal, PrincipalType, hash_password};
 
 #[derive(Parser, Debug)]
 pub struct PrincipalsArgs {
@@ -129,15 +99,9 @@ pub async fn cmd_principals(args: PrincipalsArgs, config: Config) -> anyhow::Res
             } else {
                 None
             };
-            let password = password.map(|password| {
-                let salt = SaltString::generate();
-                Secret::from(
-                    argon2::Argon2::default()
-                        .hash_password_with_salt(password.as_bytes(), salt.as_bytes())
-                        .unwrap()
-                        .to_string(),
-                )
-            });
+            let password = password
+                .map(|password| hash_password(&password))
+                .transpose()?;
 
             principal_store
                 .insert_principal(
@@ -181,15 +145,9 @@ pub async fn cmd_principals(args: PrincipalsArgs, config: Config) -> anyhow::Res
             } else {
                 None
             };
-            let password = password.map(|password| {
-                let salt = SaltString::generate();
-                Secret::from(
-                    argon2::Argon2::default()
-                        .hash_password_with_salt(password.as_bytes(), salt.as_bytes())
-                        .unwrap()
-                        .to_string(),
-                )
-            });
+            let password = password
+                .map(|password| hash_password(&password))
+                .transpose()?;
             if password.is_some() {
                 principal.password = password;
             }

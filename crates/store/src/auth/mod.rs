@@ -9,6 +9,9 @@ pub use principal_type::*;
 mod error;
 pub use error::UnauthorizedError;
 
+mod password;
+pub use password::hash_password;
+
 pub use principal::{AppToken, Principal};
 
 /// The `AuthenticationProvider` is the principal store for rustical.
