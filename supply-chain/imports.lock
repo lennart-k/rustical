@@ -97,15 +97,15 @@ user-id = 55123
 user-login = "rust-lang-owner"
 
 [[publisher.clap]]
-version = "4.6.9"
-when = "2026-11-20"
+version = "4.6.10"
+when = "2026-11-24"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.clap_builder]]
-version = "4.6.7"
-when = "2026-09-14"
+version = "4.6.10"
+when = "2026-11-24"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
@@ -186,8 +186,8 @@ user-login = "Manishearth"
 user-name = "Manish Goregaokar"
 
 [[publisher.h2]]
-version = "0.4.20"
-when = "2026-10-06"
+version = "0.4.21"
+when = "2026-11-24"
 user-id = 359
 user-login = "seanmonstar"
 user-name = "Sean McArthur"
@@ -234,8 +234,8 @@ user-login = "seanmonstar"
 user-name = "Sean McArthur"
 
 [[publisher.hyper]]
-version = "1.12.0"
-when = "2026-10-06"
+version = "1.13.0"
+when = "2026-11-23"
 user-id = 359
 user-login = "seanmonstar"
 user-name = "Sean McArthur"
@@ -323,8 +323,8 @@ when = "2026-11-15"
 trusted-publisher = "github:BurntSushi/jiff"
 
 [[publisher.jiff]]
-version = "1.0.2"
-when = "2026-11-21"
+version = "1.0.3"
+when = "2026-11-24"
 trusted-publisher = "github:BurntSushi/jiff"
 
 [[publisher.jiff-core]]
@@ -333,8 +333,8 @@ when = "2026-11-15"
 trusted-publisher = "github:BurntSushi/jiff"
 
 [[publisher.jiff-core]]
-version = "1.0.1"
-when = "2026-11-18"
+version = "1.0.2"
+when = "2026-11-24"
 trusted-publisher = "github:BurntSushi/jiff"
 
 [[publisher.jiff-static]]
@@ -343,8 +343,8 @@ when = "2026-11-15"
 trusted-publisher = "github:BurntSushi/jiff"
 
 [[publisher.jiff-static]]
-version = "1.0.2"
-when = "2026-11-21"
+version = "1.0.3"
+when = "2026-11-24"
 trusted-publisher = "github:BurntSushi/jiff"
 
 [[publisher.jiff-tzdb]]
@@ -1089,13 +1089,13 @@ user-login = "robertbastian"
 user-name = "Robert Bastian"
 
 [[publisher.zerocopy]]
-version = "0.8.64"
-when = "2026-11-21"
+version = "0.8.65"
+when = "2026-11-24"
 trusted-publisher = "github:google/zerocopy"
 
 [[publisher.zerocopy-derive]]
-version = "0.8.64"
-when = "2026-11-21"
+version = "0.8.65"
+when = "2026-11-24"
 trusted-publisher = "github:google/zerocopy"
 
 [[publisher.zerofrom-derive]]
